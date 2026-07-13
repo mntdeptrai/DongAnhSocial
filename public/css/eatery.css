@@ -1,0 +1,767 @@
+/* Eatery Spotlight Cards */
+.eatery-card {
+    display: flex;
+    gap: 20px;
+    padding: 16px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid var(--border-glow);
+}
+
+.eatery-card:hover {
+    border-color: var(--primary-hover);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-hover);
+    background: rgba(14, 165, 233, 0.03);
+}
+
+.eatery-img-wrapper {
+    width: 140px;
+    height: 140px;
+    border-radius: 12px;
+    overflow: hidden;
+    flex-shrink: 0;
+    position: relative;
+}
+
+.eatery-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+}
+
+.eatery-card:hover .eatery-img {
+    transform: scale(1.08);
+}
+
+.eatery-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.eatery-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.eatery-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--text-main);
+    margin-bottom: 4px;
+}
+
+.eatery-title:hover {
+    color: var(--primary);
+}
+
+.rating-stars {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: #ffc107;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.eatery-desc {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2; /* Fixed CSS warning at line 508: added standard line-clamp */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin: 6px 0;
+}
+
+.eatery-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.eatery-meta-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* Detail View Layout - Sleek & Compact Apple-style Sizing */
+.detail-hero {
+    height: 220px !important;
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+    display: flex !important;
+    align-items: flex-end !important;
+    background-size: cover;
+    background-position: center;
+    padding: 0 !important; /* Force reset competing padding to keep text perfectly pinned at the bottom */
+}
+
+.detail-hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(0,0,0,0.2) 0%, rgba(9,9,11,0.95) 100%);
+}
+
+.detail-hero-content {
+    position: relative;
+    padding-bottom: 16px !important; /* Lock the content precisely 16px from the bottom edge */
+    padding-top: 60px !important; /* Prevent text clipping on narrow screens */
+    width: 100%;
+}
+
+.detail-hero-content h1 {
+    font-size: clamp(1.6rem, 2.2vw, 2.1rem) !important;
+    margin-bottom: 6px !important;
+}
+
+.detail-hero-content p {
+    font-size: clamp(0.85rem, 0.95vw, 0.95rem) !important;
+}
+
+.detail-hero-content .tag-badge-accent {
+    font-size: 0.76rem !important;
+    padding: 4px 12px !important;
+}
+
+.detail-grid {
+    display: grid;
+    grid-template-columns: 2.85fr 1.15fr; /* Perfectly balanced sidebar-to-content ratio */
+    gap: 24px;
+    padding: 24px 0 !important;
+}
+
+/* CRITICAL: Grid items must have min-width: 0 to prevent the
+   "1fr = minmax(auto, 1fr)" trap where tracks grow wider than available space */
+.detail-grid > * {
+    min-width: 0;
+}
+
+.detail-section {
+    margin-bottom: 24px !important;
+}
+
+.section-title {
+    font-size: 1.22rem !important;
+    margin-bottom: 16px !important;
+    border-left: 4.5px solid var(--primary) !important;
+    padding-left: 10px !important;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 8px;
+}
+
+.menu-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.dish-card {
+    display: flex;
+    gap: 16px;
+    padding: 16px;
+    border-radius: 12px;
+    border: 1px solid var(--border-glow);
+    background: rgba(255,255,255,0.01);
+}
+
+.dish-img {
+    width: 90px;
+    height: 90px;
+    object-fit: cover;
+    border-radius: 8px;
+    flex-shrink: 0;
+}
+
+.dish-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.dish-name {
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--text-main);
+}
+
+.dish-price {
+    color: var(--primary);
+    font-weight: 700;
+    font-size: 1rem;
+    font-family: var(--font-heading);
+}
+
+/* Reviews Box */
+.review-submit {
+    padding: 20px;
+    margin-bottom: 30px;
+}
+
+.review-form-group {
+    margin-bottom: 16px;
+}
+
+.review-form-label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+.form-input {
+    width: 100%;
+    background: var(--bg-input, rgba(255,255,255,0.05));
+    border: 1px solid var(--border-glow);
+    border-radius: 8px;
+    padding: 10px 16px;
+    color: var(--text-main);
+    outline: none;
+    transition: all 0.3s ease;
+}
+
+.form-input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.2);
+}
+
+.stars-rating-select {
+    display: flex;
+    gap: 8px;
+    font-size: 1.5rem;
+    color: var(--text-muted);
+}
+
+.stars-rating-select span {
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.stars-rating-select span:hover,
+.stars-rating-select span.selected {
+    color: #ffc107;
+}
+
+.review-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.review-item {
+    padding: 16px;
+    border-bottom: 1px solid var(--border-glow);
+}
+
+.review-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.review-user {
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+/* Sidebar Widgets */
+.sidebar-widget {
+    padding: 24px;
+    margin-bottom: 24px;
+}
+
+.widget-info-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    list-style: none;
+}
+
+.widget-info-item {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+}
+
+.widget-info-icon {
+    color: var(--primary);
+    margin-top: 4px;
+    flex-shrink: 0;
+}
+
+.mini-map-container {
+    height: 220px;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-top: 16px;
+    border: 1px solid var(--border-glow);
+}
+
+/* ==========================================================================
+   🏛️ KHÔNG GIAN SỐ LƯU GIỮ VĂN HÓA ẨM THỰC ĐÔNG ANH (DI SẢN)
+   ========================================================================== */
+
+.heritage-museum-card {
+    position: relative;
+    border-radius: 24px !important;
+    padding: 36px;
+    margin-bottom: 48px;
+    box-shadow: 0 20px 50px -12px rgba(212, 175, 55, 0.15), var(--shadow-main) !important;
+    border: 1px solid rgba(212, 175, 55, 0.3) !important;
+    background: linear-gradient(145deg, rgba(212, 175, 55, 0.08) 0%, rgba(255, 255, 255, 0.02) 50%, var(--bg-surface) 100%) !important;
+    overflow: hidden;
+    backdrop-filter: blur(20px);
+}
+
+/* Đông Sơn Bronze Drum style watermark background pattern */
+.heritage-pattern-overlay {
+    position: absolute;
+    inset: 0;
+    opacity: 0.04;
+    background-image: url('https://upload.wikimedia.org/wikipedia/commons/e/ee/Trong_dong_Dong_Son_Vector.svg');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 80%;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.heritage-badge {
+    background: linear-gradient(135deg, rgba(212, 175, 55, 0.2) 0%, rgba(255, 111, 0, 0.1) 100%);
+    color: #ffb300;
+    font-size: 0.78rem;
+    font-weight: 800;
+    padding: 6px 14px;
+    border-radius: 30px;
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    letter-spacing: 1.5px;
+    display: inline-block;
+}
+
+.ocop-star-badge {
+    text-align: right;
+    background: var(--bg-btn-secondary, rgba(255, 255, 255, 0.05));
+    border: 1px solid rgba(212, 175, 55, 0.2);
+    padding: 12px 18px;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.04);
+}
+
+/* Dynamic AI Narrator Play Button */
+.audio-play-btn {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #ffb300, #ff6f00);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    color: #ffffff;
+    font-size: 1.4rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 25px rgba(255, 111, 0, 0.4), inset 0 2px 4px rgba(255,255,255,0.4);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    z-index: 3;
+}
+
+.audio-play-btn:hover {
+    transform: scale(1.1) translateY(-2px);
+    box-shadow: 0 12px 30px rgba(255, 111, 0, 0.6), inset 0 2px 4px rgba(255,255,255,0.4);
+}
+
+.audio-play-btn.playing {
+    background: linear-gradient(135deg, #f05e35, #d9381e);
+    box-shadow: 0 0 15px rgba(240, 94, 53, 0.6);
+    animation: pulsePlayBtn 2s infinite;
+}
+
+@keyframes pulsePlayBtn {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.06); }
+    100% { transform: scale(1); }
+}
+
+/* Speech Equalizer Visualizer */
+.equalizer-container {
+    display: flex;
+    align-items: flex-end;
+    gap: 4px;
+    height: 24px;
+}
+
+.eq-bar {
+    width: 4px;
+    background: #ffb300;
+    border-radius: 2px;
+    height: 3px;
+    transition: height 0.25s ease;
+}
+
+.playing-audio .eq-bar {
+    animation: eqAnimation 1.2s infinite ease-in-out alternate;
+}
+
+.playing-audio .eq-bar:nth-child(1) { animation-delay: 0.1s; }
+.playing-audio .eq-bar:nth-child(2) { animation-delay: 0.4s; }
+.playing-audio .eq-bar:nth-child(3) { animation-delay: 0.2s; }
+.playing-audio .eq-bar:nth-child(4) { animation-delay: 0.6s; }
+.playing-audio .eq-bar:nth-child(5) { animation-delay: 0.3s; }
+.playing-audio .eq-bar:nth-child(6) { animation-delay: 0.5s; }
+
+@keyframes eqAnimation {
+    0% { height: 3px; }
+    100% { height: 24px; }
+}
+
+/* Tab buttons */
+.heritage-tab-buttons {
+    display: flex;
+    gap: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding-bottom: 12px;
+    margin-bottom: 24px;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.heritage-tab-buttons::-webkit-scrollbar {
+    display: none;
+}
+
+.heritage-tab-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-family: var(--font-heading);
+    font-size: 0.95rem;
+    font-weight: 600;
+    padding: 10px 20px;
+    cursor: pointer;
+    border-radius: 30px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    white-space: nowrap;
+    position: relative;
+    overflow: hidden;
+}
+
+.heritage-tab-btn:hover {
+    color: var(--text-main);
+    background: var(--bg-btn-secondary-hover, rgba(255, 255, 255, 0.05));
+    transform: translateY(-1px);
+}
+
+.heritage-tab-btn.active {
+    color: #ffffff;
+    background: linear-gradient(135deg, rgba(212, 175, 55, 0.8), rgba(255, 111, 0, 0.8));
+    border: 1px solid rgba(212, 175, 55, 0.5);
+    box-shadow: 0 4px 15px rgba(255, 111, 0, 0.2);
+}
+
+.heritage-tab-content {
+    display: none;
+    animation: fadeInContent 0.5s ease;
+}
+
+.heritage-tab-content.active-content {
+    display: block;
+}
+
+@keyframes fadeInContent {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Vertical Timeline of Heritage */
+.heritage-timeline {
+    position: relative;
+    padding-left: 24px;
+    border-left: 2px solid rgba(212, 175, 55, 0.25);
+    margin-left: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.heritage-timeline-item {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* Bullet indicator on the vertical timeline line */
+.heritage-timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -30px; /* Align with border-left */
+    top: 6px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #ffb300, #ff6f00);
+    border: 2px solid var(--bg-surface);
+    box-shadow: 0 0 6px rgba(255, 111, 0, 0.4);
+    z-index: 2;
+}
+
+.heritage-timeline-badge {
+    display: inline-block;
+    align-self: flex-start;
+    background: linear-gradient(135deg, #ffb300, #ff6f00);
+    color: #000000;
+    font-family: var(--font-heading);
+    font-weight: 800;
+    font-size: 0.72rem;
+    padding: 3px 10px;
+    border-radius: 20px;
+    box-shadow: 0 2px 8px rgba(255, 111, 0, 0.2);
+    white-space: nowrap;
+    margin-left: 10px;
+}
+
+.heritage-timeline-content {
+    padding: 16px 20px;
+    background: var(--bg-btn-secondary, rgba(255,255,255,0.02));
+    border-radius: 12px;
+    border: 1px solid var(--border-glow);
+    margin-left: 10px;
+}
+
+/* ==========================================================================
+   ⚡ ELITE COMPACT OVERRIDES FOR EATERY & HERITAGE DETAIL VIEWS 
+   ========================================================================== */
+
+/* Main Content Blocks */
+.detail-section {
+    padding: 20px 24px !important;
+    border-radius: 16px !important;
+    margin-bottom: 24px !important;
+}
+
+.heritage-museum-card {
+    padding: 20px 24px !important;
+    margin-bottom: 28px !important;
+    border-radius: 20px !important;
+}
+
+.heritage-museum-card h2 {
+    font-size: clamp(1.3rem, 1.6vw, 1.55rem) !important;
+    margin-top: 4px !important;
+    margin-bottom: 2px !important;
+}
+
+/* Star Rating and Badges */
+.ocop-star-badge {
+    padding: 6px 12px !important;
+    border-radius: 8px !important;
+}
+
+.ocop-star-badge span:first-child {
+    font-size: 0.65rem !important;
+    letter-spacing: 0.5px !important;
+}
+
+.ocop-star-badge div {
+    font-size: 1rem !important;
+    margin-top: 2px !important;
+    gap: 1px !important;
+}
+
+.ocop-star-badge span:last-child {
+    font-size: 0.65rem !important;
+    margin-top: 2px !important;
+}
+
+/* Audio story widget */
+.audio-storyteller-widget {
+    padding: 10px 16px !important;
+    border-radius: 12px !important;
+    margin-bottom: 20px !important;
+    gap: 12px !important;
+}
+
+.audio-storyteller-widget strong {
+    font-size: 0.88rem !important;
+}
+
+.audio-storyteller-widget span {
+    font-size: 0.76rem !important;
+}
+
+.audio-play-btn {
+    width: 44px !important;
+    height: 44px !important;
+    font-size: 1rem !important;
+    box-shadow: 0 4px 12px rgba(255, 111, 0, 0.25) !important;
+}
+
+.equalizer-container {
+    height: 16px !important;
+    gap: 3px !important;
+}
+
+.eq-bar {
+    width: 3px !important;
+}
+
+/* Museum Tabs */
+.heritage-tab-buttons {
+    gap: 6px !important;
+    margin-bottom: 16px !important;
+    padding-bottom: 8px !important;
+}
+
+.heritage-tab-btn {
+    font-size: 0.8rem !important;
+    padding: 6px 14px !important;
+}
+
+/* Text sizes in museum tabs */
+.heritage-tab-content p {
+    font-size: 0.9rem !important;
+    line-height: 1.65 !important;
+    margin-bottom: 14px !important;
+}
+
+.heritage-tab-content div {
+    padding: 12px !important;
+    font-size: 0.86rem !important;
+    line-height: 1.6 !important;
+}
+
+/* Ingredients Grid */
+.heritage-tab-content .glass-panel {
+    padding: 10px 16px !important;
+    border-radius: 10px !important;
+}
+
+.heritage-tab-content .glass-panel span:first-child {
+    font-size: 1.1rem !important;
+}
+
+.heritage-tab-content .glass-panel span:last-child {
+    font-size: 0.86rem !important;
+}
+
+/* Trivia Widget */
+.trivia-widget {
+    padding: 14px 18px !important;
+    margin-top: 20px !important;
+    border-radius: 12px !important;
+    gap: 12px !important;
+}
+
+.trivia-widget span {
+    font-size: 1.6rem !important;
+}
+
+.trivia-widget h4 {
+    font-size: 0.9rem !important;
+    margin-bottom: 4px !important;
+}
+
+.trivia-widget p {
+    font-size: 0.85rem !important;
+    line-height: 1.6 !important;
+}
+
+/* Trust Hub Section Card */
+.trust-hub-card {
+    padding: 20px 24px !important;
+    margin-bottom: 24px !important;
+    border-radius: 20px !important;
+}
+
+.trust-hub-card h2 {
+    font-size: 1.25rem !important;
+}
+
+.trust-shield-banner {
+    padding: 12px 18px !important;
+    margin-bottom: 16px !important;
+    border-radius: 12px !important;
+    gap: 12px !important;
+}
+
+.trust-shield-banner div:first-child {
+    font-size: 1.6rem !important;
+}
+
+.trust-shield-banner h4 {
+    font-size: 0.9rem !important;
+    margin-bottom: 2px !important;
+}
+
+.trust-shield-banner p {
+    font-size: 0.82rem !important;
+    line-height: 1.55 !important;
+}
+
+.trust-tab-buttons {
+    gap: 6px !important;
+    margin-bottom: 16px !important;
+    padding-bottom: 6px !important;
+}
+
+.trust-tab-btn {
+    font-size: 0.8rem !important;
+    padding: 6px 12px !important;
+}
+
+.cert-image-preview {
+    width: 120px !important;
+    height: 160px !important;
+}
+
+/* Sidebar Info Block Sizing */
+.sidebar-widget {
+    padding: 16px 20px !important;
+    margin-bottom: 16px !important;
+    border-radius: 16px !important;
+}
+
+.sidebar-widget h3 {
+    font-size: 1.12rem !important;
+    margin-bottom: 14px !important;
+}
+
+.widget-info-list {
+    gap: 12px !important;
+}
+
+.widget-info-item {
+    gap: 10px !important;
+}
+
+.widget-info-icon {
+    font-size: 1.1rem !important;
+    margin-top: 2px !important;
+}
+
+.widget-info-item div strong {
+    font-size: 0.72rem !important;
+    letter-spacing: 0.2px !important;
+}
+
+.widget-info-item div span:last-child {
+    font-size: 0.84rem !important;
+    line-height: 1.4 !important;
+}
+
+.mini-map-container {
+    height: 180px !important;
+    margin-top: 12px !important;
+    border-radius: 8px !important;
+}

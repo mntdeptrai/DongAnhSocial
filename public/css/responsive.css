@@ -1,0 +1,432 @@
+/* Theme specific soft overrides */
+[data-theme="light"] .eatery-card:hover {
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.06);
+    background: rgba(0, 0, 0, 0.015);
+}
+
+[data-theme="light"] .detail-hero::before {
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.05) 0%, rgba(244, 245, 247, 0.95) 100%);
+}
+
+[data-theme="light"] .dish-card {
+    background: rgba(0, 0, 0, 0.015);
+}
+
+[data-theme="light"] .admin-table tr:hover {
+    background: rgba(0, 0, 0, 0.015);
+}
+
+[data-theme="light"] .suggestion-item {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+/* ==========================================================================
+   GLOBAL PREMIUM MOBILE-NATIVE RESPONSIVE SYSTEM OVERRIDES (WHOLE WEBSITE)
+   ========================================================================== */
+
+/* 📱 Base Container Padding mobile-safety */
+@media (max-width: 576px) {
+    .container {
+        padding: 0 16px !important;
+    }
+}
+
+/* Removed old Header & Navigation Responsive Overrides to mobile-native.css */
+
+/* 📱 Homepage Map & Eatery List Split Layout Responsive overrides */
+@media (max-width: 768px) {
+    .split-screen {
+        flex-direction: column-reverse !important;
+        height: auto !important;
+        overflow: visible !important;
+    }
+
+    .split-list {
+        width: 100% !important;
+        padding: 16px !important;
+        overflow-y: visible !important;
+    }
+
+    .split-map-container {
+        width: 100% !important;
+        height: 320px !important;
+        border-left: none !important;
+        border-bottom: 1px solid var(--border-glow) !important;
+    }
+
+    .reels-floating-fab {
+        top: 15px !important;
+        left: 15px !important;
+        padding: 10px 18px !important;
+        font-size: 0.85rem !important;
+    }
+}
+
+/* 📱 Eatery Cards responsive stack */
+@media (max-width: 576px) {
+    .eatery-card {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        padding: 14px !important;
+        gap: 14px !important;
+        border-radius: 16px !important;
+    }
+
+    .eatery-img-wrapper {
+        width: 100% !important;
+        height: 180px !important;
+        border-radius: 12px !important;
+    }
+
+    .eatery-img {
+        border-radius: 12px !important;
+    }
+
+    .eatery-info {
+        padding: 0 !important;
+    }
+
+    .eatery-title {
+        font-size: 1.1rem !important;
+    }
+}
+
+/* 📱 Detail Page Layout Responsive Overrides */
+@media (max-width: 1200px) {
+    .detail-grid {
+        grid-template-columns: minmax(0, 1fr) !important;
+        gap: 28px !important;
+        padding: 24px 0 !important;
+    }
+
+    .detail-hero {
+        height: 180px !important;
+        /* Space-efficient and elegant on mobile/tablets */
+        padding: 0 !important;
+        display: flex !important;
+        align-items: flex-end !important;
+    }
+
+    .detail-hero-content {
+        padding-bottom: 12px !important;
+        padding-top: 40px !important;
+    }
+}
+
+/* 📱 Menu grid & Dishes Responsive overrides */
+@media (max-width: 576px) {
+    .menu-grid {
+        grid-template-columns: 1fr !important;
+        gap: 14px !important;
+    }
+
+    .dish-card {
+        padding: 12px !important;
+        gap: 12px !important;
+    }
+
+    .dish-img {
+        width: 75px !important;
+        height: 75px !important;
+    }
+}
+
+/* 📱 Admin & Seller dashboard sidebar Responsive overrides */
+@media (max-width: 768px) {
+    .admin-layout {
+        flex-direction: column !important;
+    }
+
+    .admin-sidebar {
+        width: 100% !important;
+        border-right: none !important;
+        border-bottom: 1px solid var(--border-glow) !important;
+        padding: 16px !important;
+        gap: 8px !important;
+    }
+
+    .admin-content {
+        padding: 24px 16px !important;
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr !important;
+        gap: 16px !important;
+        margin-bottom: 24px !important;
+    }
+}
+
+/* 📱 Footer Grid Responsive overrides */
+@media (max-width: 768px) {
+    .footer-grid {
+        grid-template-columns: 1fr !important;
+        gap: 32px !important;
+        text-align: center !important;
+    }
+
+    .footer-grid ul {
+        align-items: center !important;
+    }
+}
+
+/* Responsive adjustments from original file */
+@media (max-width: 1200px) {
+    .split-screen {
+        flex-direction: column-reverse;
+        height: auto;
+    }
+
+    .split-list {
+        width: 100%;
+        overflow-y: visible;
+    }
+
+    .split-map-container {
+        width: 100%;
+        height: 400px;
+    }
+
+    .detail-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .menu-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-layout {
+        flex-direction: column;
+    }
+
+    .admin-sidebar {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid var(--border-glow);
+    }
+}
+
+/* Styles for responsive TikTok reels phone frame */
+@media (max-width: 580px) {
+    #reelsPhoneFrame {
+        width: 100% !important;
+        height: 100% !important;
+        max-height: none !important;
+        border-radius: 0 !important;
+        border: none !important;
+    }
+
+    .nav-arrow-desktop {
+        display: none !important;
+    }
+}
+
+/* FadeIn keyframe */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* 📱 Responsive overrides for Food Tour Layout */
+@media (max-width: 1200px) {
+    .tour-layout {
+        grid-template-columns: 1fr !important;
+        grid-template-rows: 1fr 420px !important;
+        height: calc(100vh - 70px) !important;
+    }
+
+    .tour-sidebar-panel {
+        order: 2 !important;
+        width: 100% !important;
+        border-right: none !important;
+        border-top: 1px solid var(--border-glow) !important;
+    }
+
+    .tour-map-panel {
+        order: 1 !important;
+        height: 100% !important;
+    }
+
+    .start-journey-active .tour-sidebar-panel {
+        width: 100% !important;
+        height: 100% !important;
+    }
+}
+
+/* 💻 Laptop/Mid-sized Screen Header Scale-down Optimization (Prevents menu/auth overlaps) */
+@media (min-width: 1320px) {
+    .nav-wrapper {
+        gap: 12px !important;
+        padding: 0 16px !important;
+    }
+
+    .main-nav-container {
+        margin-left: 0 !important;
+    }
+
+    .nav-menu {
+        gap: 2px !important;
+    }
+
+    .nav-link {
+        font-size: 0.8rem !important;
+        padding: 6px 10px !important;
+        border-radius: 16px !important;
+    }
+
+    .user-actions {
+        gap: 8px !important;
+    }
+
+    .user-actions span {
+        font-size: 0.8rem !important;
+    }
+
+    .user-actions a,
+    .user-actions button {
+        padding: 6px 12px !important;
+        font-size: 0.8rem !important;
+        border-radius: 16px !important;
+    }
+
+    .logo {
+        font-size: 1.15rem !important;
+    }
+}
+
+/* 💻 Small Laptop/High-Zoom Screen Header Scale-down Optimization (Prevents wrapping/overflow) */
+@media (min-width: 1200px) and (max-width: 1320px) {
+    .nav-wrapper {
+        gap: 8px !important;
+        padding: 0 12px !important;
+    }
+
+    .main-nav-container {
+        margin-left: 0 !important;
+    }
+
+    .nav-menu {
+        gap: 1px !important;
+    }
+
+    .nav-link {
+        font-size: 0.72rem !important;
+        padding: 5px 8px !important;
+        border-radius: 14px !important;
+    }
+
+    .user-actions {
+        gap: 6px !important;
+    }
+
+    .user-actions span {
+        font-size: 0.75rem !important;
+    }
+
+    .user-actions a,
+    .user-actions button {
+        padding: 5px 10px !important;
+        font-size: 0.75rem !important;
+        border-radius: 14px !important;
+    }
+
+    .logo {
+        font-size: 1.05rem !important;
+    }
+}
+
+/* ==========================================================================
+   📱 ELITE MOBILE-ONLY SCROLLING & MOMENTUM TOUCH FIX
+   ========================================================================== */
+@media (max-width: 992px) {
+
+    /* 1. Prevent iOS Safari scroll-lock bug - DO NOT clip overflow on html/body.
+       Instead use proper child containment (max-width: 100%, box-sizing) */
+    html {
+        overflow-y: auto;
+        height: auto;
+    }
+
+    body {
+        overflow-y: auto;
+        height: auto;
+        -webkit-overflow-scrolling: touch;
+        /* Force native smooth momentum scrolling on iOS */
+    }
+
+    /* 2. Narrow the padding of detail sections & heritage museum cards to avoid screen overflow */
+    .detail-section {
+        padding: 16px !important;
+        border-radius: 12px !important;
+        margin-bottom: 16px !important;
+    }
+
+    .heritage-museum-card {
+        padding: 16px !important;
+        border-radius: 16px !important;
+        margin-bottom: 20px !important;
+        box-shadow: none !important;
+    }
+
+    /* 3. Stack the Heritage Dossier header vertically so the title and OCOP badge fit side-by-side rows */
+    .heritage-museum-card>div>div:first-of-type,
+    .heritage-museum-card>div>div[style*="display: flex"] {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 12px !important;
+    }
+
+    .heritage-museum-card h2 {
+        font-size: 1.35rem !important;
+        /* Shrunk title to fit mobile screens perfectly */
+        line-height: 1.3 !important;
+        word-wrap: break-word !important;
+        word-break: break-word !important;
+    }
+
+    /* 4. Fix OCOP badge alignment when stacked */
+    .ocop-star-badge {
+        text-align: left !important;
+        align-self: flex-start !important;
+        padding: 8px 12px !important;
+        border-radius: 8px !important;
+    }
+
+    .ocop-star-badge div {
+        justify-content: flex-start !important;
+    }
+
+    /* 5. Fix the Audio Storytelling widget to fit small screens */
+    .audio-storyteller-widget {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        padding: 12px !important;
+        gap: 16px !important;
+    }
+
+    .audio-storyteller-widget>div {
+        min-width: 100% !important;
+    }
+
+    /* 6. Detail grid: constrain width without hiding overflow */
+    .detail-grid {
+        max-width: 100% !important;
+        width: 100% !important;
+        overflow-y: visible !important;
+        height: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+
+    /* 7. Enable smooth horizontal swipe inside tab contents without page wiggling */
+    .heritage-tab-buttons,
+    .trust-tab-buttons {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+}

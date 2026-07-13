@@ -1,0 +1,392 @@
+================================================================================
+  FOOD_MAP — HƯỚNG DẪN DEPLOY PRODUCTION (aaPanel VPS)
+  Cập nhật: 2026-05-29
+================================================================================
+
+Project này dùng: Laravel 12, MySQL (6 database), Laravel Reverb (WebSocket),
+Queue Database, Cloudflare R2 (file upload).
+
+--------------------------------------------------------------------------------
+MỤC LỤC
+  [1] Upload code lên VPS
+  [2] Cài đặt PHP Dependencies
+  [3] Cấu hình .env Production
+  [4] Database & Migration
+  [5] Cấu hình Queue Worker (Supervisor)
+  [6] Cấu hình Reverb WebSocket (Supervisor)
+  [7] Cấu hình Nginx Reverse Proxy (WebSocket)
+  [8] Cache & Tối ưu Production
+  [9] Mở Firewall Port
+  [10] Kiểm tra hệ thống
+  [11] Lệnh Maintenance thường dùng
+--------------------------------------------------------------------------------
+
+
+================================================================================
+[1] UPLOAD CODE LÊN VPS
+================================================================================
+
+# Cách 1: Git Pull (khuyên dùng)
+cd /www/wwwroot/YOUR_DOMAIN
+git pull origin main
+
+# Cách 2: Upload bằng FileManager của aaPanel, sau đó giải nén vào:
+# /www/wwwroot/YOUR_DOMAIN/
+
+
+================================================================================
+[2] CÀI ĐẶT PHP DEPENDENCIES
+================================================================================
+
+cd /www/wwwroot/YOUR_DOMAIN
+
+# Cài Composer dependencies (không cài dev packages)
+composer install --no-dev --optimize-autoloader --no-interaction
+
+# Kiểm tra phiên bản PHP (cần >= 8.2)
+php -v
+
+# Kiểm tra các PHP extension cần thiết
+php -m | grep -E "pdo|mbstring|openssl|tokenizer|xml|ctype|json|bcmath|fileinfo"
+
+
+================================================================================
+[3] CẤU HÌNH .env PRODUCTION
+================================================================================
+
+# Copy file .env mẫu (nếu chưa có)
+cp .env.example .env
+
+# Sinh APP_KEY mới
+php artisan key:generate
+
+# ---- Chỉnh sửa file .env ----
+# Mở bằng nano hoặc vi:
+nano .env
+
+# Các giá trị QUAN TRỌNG cần thay đổi cho production:
+
+APP_NAME="Bản đồ số Đông Anh"
+APP_ENV=production
+APP_DEBUG=false
+APP_URL=https://YOUR_DOMAIN.com
+
+# --- Database chính ---
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=food_map
+DB_USERNAME=your_db_user
+DB_PASSWORD=your_db_password
+
+# --- 5 Database phụ (Stay, Wellness, Market, Education, Culture) ---
+# (Cập nhật password tương ứng cho từng DB)
+DB_STAY_PASSWORD=your_password
+DB_WELLNESS_PASSWORD=your_password
+DB_MARKET_PASSWORD=your_password
+DB_EDUCATION_PASSWORD=your_password
+DB_CULTURE_PASSWORD=your_password
+
+# --- Queue ---
+QUEUE_CONNECTION=database
+
+# --- Broadcasting / Reverb WebSocket ---
+BROADCAST_CONNECTION=reverb
+REVERB_APP_ID=370452
+REVERB_APP_KEY=jibbpqd4pcb53dlkcodn
+REVERB_APP_SECRET=9pimdbger4phl5hwqtnz
+REVERB_HOST=127.0.0.1
+REVERB_PORT=8080
+REVERB_SCHEME=http
+
+# Nếu site dùng HTTPS (SSL), đổi thành:
+# REVERB_SCHEME=https
+# REVERB_PORT=443
+
+# --- Cloudflare R2 (file upload) ---
+R2_ACCESS_KEY_ID=your_r2_key
+R2_SECRET_ACCESS_KEY=your_r2_secret
+R2_BUCKET=your_bucket_name
+R2_ENDPOINT=https://YOUR_ACCOUNT_ID.r2.cloudflarestorage.com
+R2_URL=https://your_r2_public_url
+
+
+================================================================================
+[4] DATABASE & MIGRATION
+================================================================================
+
+# Chạy migration cho TẤT CẢ 6 database:
+php artisan migrate --database=mysql --force
+php artisan migrate --database=mysql_stay --force
+php artisan migrate --database=mysql_wellness --force
+php artisan migrate --database=mysql_market --force
+php artisan migrate --database=mysql_education --force
+php artisan migrate --database=mysql_culture --force
+
+# Tạo bảng Queue jobs (dùng cho queue workers)
+php artisan queue:table
+php artisan migrate --force
+
+# (Tuỳ chọn) Seed dữ liệu mẫu:
+php artisan db:seed --force
+
+
+================================================================================
+[5] CẤU HÌNH QUEUE WORKER — SUPERVISOR (aaPanel)
+================================================================================
+
+# Trong aaPanel → Supervisor → Add Program
+# Hoặc tạo thủ công file config:
+
+sudo nano /etc/supervisor/conf.d/food-map-queue.conf
+
+# Nội dung file:
+# -----------------------------------------------
+[program:food-map-queue]
+process_name=%(program_name)s_%(process_num)02d
+command=php /www/wwwroot/YOUR_DOMAIN/artisan queue:work database --sleep=3 --tries=3 --max-time=3600
+directory=/www/wwwroot/YOUR_DOMAIN
+autostart=true
+autorestart=true
+stopasgroup=true
+killasgroup=true
+user=www
+numprocs=2
+redirect_stderr=true
+stdout_logfile=/www/wwwroot/YOUR_DOMAIN/storage/logs/queue-worker.log
+stopwaitsecs=3600
+# -----------------------------------------------
+
+# Reload Supervisor:
+sudo supervisorctl reread
+sudo supervisorctl update
+sudo supervisorctl start food-map-queue:*
+
+# Kiểm tra trạng thái:
+sudo supervisorctl status
+
+
+================================================================================
+[6] CẤU HÌNH REVERB WEBSOCKET — SUPERVISOR (aaPanel)
+================================================================================
+
+sudo nano /etc/supervisor/conf.d/food-map-reverb.conf
+
+# Nội dung file:
+# -----------------------------------------------
+[program:food-map-reverb]
+command=php /www/wwwroot/YOUR_DOMAIN/artisan reverb:start --host=0.0.0.0 --port=8080
+directory=/www/wwwroot/YOUR_DOMAIN
+autostart=true
+autorestart=true
+stopasgroup=true
+killasgroup=true
+user=www
+redirect_stderr=true
+stdout_logfile=/www/wwwroot/YOUR_DOMAIN/storage/logs/reverb.log
+# -----------------------------------------------
+
+# Reload Supervisor:
+sudo supervisorctl reread
+sudo supervisorctl update
+sudo supervisorctl start food-map-reverb
+
+# Kiểm tra Reverb đang chạy:
+sudo supervisorctl status food-map-reverb
+
+# Hoặc kiểm tra port đang lắng nghe:
+ss -tlnp | grep 8080
+
+
+================================================================================
+[7] CẤU HÌNH NGINX REVERSE PROXY CHO WEBSOCKET (HTTPS)
+================================================================================
+
+# Thêm block sau vào trong server block của Nginx site config
+# (aaPanel → Website → Config → Nginx Config)
+# Dán vào TRƯỚC dòng "location / { ... }")
+
+# -----------------------------------------------
+    # Reverse Proxy cho Reverb WebSocket
+    location /app {
+        proxy_pass             http://127.0.0.1:8080;
+        proxy_http_version     1.1;
+        proxy_set_header       Upgrade $http_upgrade;
+        proxy_set_header       Connection "Upgrade";
+        proxy_set_header       Host $host;
+        proxy_set_header       X-Real-IP $remote_addr;
+        proxy_set_header       X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header       X-Forwarded-Proto $scheme;
+        proxy_read_timeout     60s;
+        proxy_connect_timeout  60s;
+        proxy_send_timeout     60s;
+    }
+# -----------------------------------------------
+
+# Sau khi chỉnh Nginx, reload:
+sudo nginx -t
+sudo nginx -s reload
+
+# Nếu dùng HTTPS, cập nhật .env:
+# REVERB_SCHEME=https
+# REVERB_PORT=443
+# Và trong file .env của Vite (nếu dùng Vite build):
+# VITE_REVERB_SCHEME=https
+# VITE_REVERB_PORT=443
+
+
+================================================================================
+[8] CACHE & TỐI ƯU PRODUCTION
+================================================================================
+
+# Xóa cache cũ trước
+php artisan config:clear
+php artisan route:clear
+php artisan view:clear
+php artisan cache:clear
+php artisan event:clear
+
+# Build cache production (tăng tốc đáng kể)
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+php artisan event:cache
+
+# Tối ưu Composer autoloader
+composer dump-autoload --optimize --no-dev
+
+# Phân quyền thư mục storage và bootstrap/cache
+chmod -R 775 storage bootstrap/cache
+chown -R www:www storage bootstrap/cache
+
+# Tạo symlink storage (nếu dùng local disk, bỏ qua nếu dùng R2)
+php artisan storage:link
+
+
+================================================================================
+[9] MỞ FIREWALL PORT (aaPanel)
+================================================================================
+
+# aaPanel → Security → Firewall → Add Rule:
+# Port: 8080 | Protocol: TCP | Action: Accept | Remark: Reverb WebSocket
+
+# Hoặc dùng lệnh:
+sudo ufw allow 8080/tcp
+sudo ufw reload
+
+# Kiểm tra firewall:
+sudo ufw status
+
+# LƯU Ý: Nếu dùng Nginx reverse proxy (HTTPS setup ở mục [7]),
+# KHÔNG cần mở port 8080 ra ngoài — chỉ cần mở 80 và 443.
+
+
+================================================================================
+[10] KIỂM TRA HỆ THỐNG
+================================================================================
+
+# Kiểm tra Laravel hoạt động bình thường
+php artisan about
+
+# Kiểm tra kết nối tất cả databases
+php artisan db:show --database=mysql
+php artisan db:show --database=mysql_stay
+php artisan db:show --database=mysql_wellness
+
+# Kiểm tra Broadcasting config
+php artisan config:show broadcasting
+
+# Kiểm tra Queue
+php artisan queue:monitor database:default
+
+# Test broadcast thủ công (test event real-time)
+php artisan tinker
+# Trong tinker chạy:
+# >>> broadcast(new \App\Events\NewCheckinPosted(\App\Models\Checkin::first()))
+
+# Kiểm tra Reverb logs:
+tail -f storage/logs/reverb.log
+
+# Kiểm tra Queue worker logs:
+tail -f storage/logs/queue-worker.log
+
+# Kiểm tra Laravel logs:
+tail -f storage/logs/laravel.log
+
+# Kiểm tra Supervisor tổng quan:
+sudo supervisorctl status all
+
+
+================================================================================
+[11] LỆNH MAINTENANCE THƯỜNG DÙNG
+================================================================================
+
+# === DEPLOY MỚI (sau mỗi lần update code) ===
+git pull origin main
+composer install --no-dev --optimize-autoloader
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+php artisan migrate --force
+sudo supervisorctl restart food-map-queue:*
+sudo supervisorctl restart food-map-reverb
+
+# === BẬT / TẮT MAINTENANCE MODE ===
+php artisan down --message="Hệ thống đang bảo trì, vui lòng quay lại sau ít phút." --retry=60
+php artisan up
+
+# === RESTART SERVICES ===
+sudo supervisorctl restart food-map-queue:*
+sudo supervisorctl restart food-map-reverb
+sudo nginx -s reload
+
+# === XEM LOGS REALTIME ===
+tail -f storage/logs/laravel.log
+tail -f storage/logs/reverb.log
+tail -f storage/logs/queue-worker.log
+
+# === CLEAR CACHE KHI GẶP LỖI ===
+php artisan optimize:clear
+
+# === KIỂM TRA PHP ARTISAN ROUTES ===
+php artisan route:list
+php artisan route:list --path=admin
+php artisan route:list --path=api/v1
+
+# === QUEUE MANAGEMENT ===
+php artisan queue:work --once             # Chạy 1 job rồi dừng
+php artisan queue:flush                  # Xóa toàn bộ failed jobs
+php artisan queue:retry all              # Retry tất cả failed jobs
+
+# === REVERB WEBSOCKET ===
+php artisan reverb:start                 # Chạy thủ công (debug)
+php artisan reverb:start --debug         # Chạy với verbose log
+
+
+================================================================================
+LƯU Ý BẢO MẬT QUAN TRỌNG
+================================================================================
+
+1. Đảm bảo APP_DEBUG=false trong production
+2. Đảm bảo APP_ENV=production
+3. File .env phải thuộc sở hữu user www và có quyền 640:
+   chown www:www .env && chmod 640 .env
+4. Không bao giờ commit file .env lên Git
+5. Cấu hình SSL/HTTPS cho toàn bộ site (Let's Encrypt trên aaPanel)
+6. Bật Cloudflare nếu có để bảo vệ DDoS và cache tĩnh
+7. Backup database định kỳ — cấu hình trong aaPanel → Databases → Backup
+
+
+================================================================================
+CẤU TRÚC 6 DATABASE CỦA PROJECT
+================================================================================
+
+  food_map              → Dữ liệu chính (eateries, users, checkins, reviews)
+  stay_in_dong_anh      → Lưu trú (rooms, hotels)
+  wellness_care         → Sức khỏe (clinics, wellness services)
+  dong_anh_market       → Thị trường (OCOP products, shops)
+  smart_education_map   → Giáo dục (schools, education programs)
+  dong_anh_culture_hub  → Văn hóa (heritage sites, cultural events)
+
+================================================================================
+php artisan reverb:start

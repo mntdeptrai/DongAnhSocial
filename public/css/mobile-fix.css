@@ -1,0 +1,425 @@
+/* ==========================================================================
+   📱 MOBILE VIEWPORT FIT — Ôm gọn nội dung trong màn hình điện thoại
+   Chiến lược đúng: html { overflow-x: hidden } làm safety net (base.css)
+   File này fix TỪNG NGUỒN GÂY OVERFLOW cụ thể để chúng không phình ra.
+   ========================================================================== */
+
+@media (max-width: 992px) {
+
+    /* -----------------------------------------------------------------------
+       1. CONTAINER: ép chiều rộng + padding an toàn
+    ----------------------------------------------------------------------- */
+    .container {
+        width: 100% !important;
+        max-width: 100vw !important;
+        padding-left: 16px !important;
+        padding-right: 16px !important;
+        box-sizing: border-box !important;
+        /* KHÔNG dùng overflow: hidden ở đây — để position:fixed hoạt động đúng */
+    }
+
+    /* -----------------------------------------------------------------------
+       2. DETAIL GRID: Fix lỗi CSS Grid "1fr phình rộng hơn viewport"
+       
+       VẤN ĐỀ: `grid-template-columns: 1fr` thực ra là `minmax(auto, 1fr)`.
+       Nghĩa là track có thể TỰ GIÃN nếu bên trong có phần tử có
+       intrinsic minimum width lớn (vd: button với white-space: nowrap).
+       Khi 4 tab buttons với nowrap có tổng width ~600px, grid track giãn
+       lên ~600px → toàn bộ nội dung trang rộng hơn viewport!
+       
+       FIX ĐÚNG: dùng `minmax(0, 1fr)` — minimum là 0 thay vì auto,
+       grid track KHÔNG thể giãn ra ngoài available space.
+    ----------------------------------------------------------------------- */
+    .detail-grid {
+        grid-template-columns: minmax(0, 1fr) !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        padding: 16px 0 !important;
+        gap: 16px !important;
+    }
+
+    /* Grid items: min-width: 0 để không đẩy grid track rộng ra */
+    .detail-grid > div,
+    .detail-grid > aside {
+        min-width: 0 !important;
+        max-width: 100% !important;
+        overflow-x: hidden; /* chặn overflow ở grid item, cho phép scroll bên trong */
+    }
+
+    /* Khôi phục scroll cho các phần tử được thiết kế scroll ngang */
+    .detail-grid .heritage-tab-buttons,
+    .detail-grid .trust-tab-buttons,
+    .detail-grid .menu-slider-wrapper,
+    .detail-grid [style*="overflow-x: auto"],
+    .detail-grid [style*="overflow-x:auto"] {
+        overflow-x: auto !important;
+    }
+
+    /* -----------------------------------------------------------------------
+       3. TẤT CẢ CARDS: ôm gọn và không tràn
+    ----------------------------------------------------------------------- */
+    .detail-section,
+    .heritage-museum-card,
+    .trust-hub-card,
+    .sidebar-widget,
+    .glass-panel {
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        overflow: hidden !important;
+    }
+
+    .detail-section {
+        padding: 16px !important;
+        margin-bottom: 16px !important;
+    }
+
+    .heritage-museum-card {
+        padding: 16px !important;
+        margin-bottom: 16px !important;
+    }
+
+    .trust-hub-card {
+        padding: 16px !important;
+    }
+
+    /* -----------------------------------------------------------------------
+       4. HERITAGE CARD: xoá min-width cứng, bật flex-wrap
+    ----------------------------------------------------------------------- */
+
+    /* Header dossier (title + OCOP badge): xếp dọc */
+    .heritage-museum-card > div > div:first-child {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 12px !important;
+        width: 100% !important;
+    }
+
+    /* Tiêu đề H2: co font + xuống dòng */
+    .heritage-museum-card h2 {
+        font-size: clamp(1.1rem, 4.5vw, 1.4rem) !important;
+        line-height: 1.35 !important;
+        white-space: normal !important;
+        word-break: break-word !important;
+        overflow-wrap: break-word !important;
+        max-width: 100% !important;
+    }
+
+    /* Mô tả italic bên dưới h2 */
+    .heritage-museum-card p {
+        max-width: 100% !important;
+        word-break: break-word !important;
+    }
+
+    /* OCOP badge: căn trái */
+    .ocop-star-badge {
+        text-align: left !important;
+        align-self: flex-start !important;
+        max-width: 100% !important;
+    }
+
+    /* Audio storytelling widget: xếp dọc */
+    .audio-storyteller-widget {
+        flex-direction: column !important;
+        flex-wrap: wrap !important;
+        max-width: 100% !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    .audio-storyteller-widget > div {
+        min-width: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+
+    /* -----------------------------------------------------------------------
+       5. HERITAGE TABS: scroll ngang nội bộ
+    ----------------------------------------------------------------------- */
+    .heritage-tab-buttons {
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+        -webkit-overflow-scrolling: touch !important;
+        scrollbar-width: none !important;
+        gap: 6px !important;
+        padding-bottom: 8px !important;
+        max-width: 100% !important;
+        width: 100% !important;
+    }
+
+    .heritage-tab-buttons::-webkit-scrollbar {
+        display: none !important;
+    }
+
+    .heritage-tab-btn {
+        flex: 0 0 auto !important;
+        white-space: nowrap !important;
+        font-size: 0.78rem !important;
+        padding: 6px 12px !important;
+        min-width: 0 !important;
+    }
+
+    /* Tab content: text xuống dòng */
+    .heritage-tab-content {
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow: hidden !important;
+    }
+
+    .heritage-tab-content p,
+    .heritage-tab-content div {
+        max-width: 100% !important;
+        word-break: break-word !important;
+        overflow-wrap: break-word !important;
+    }
+
+    /* Grid nguyên liệu: 1 cột */
+    #tab-ingredients > div {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* -----------------------------------------------------------------------
+       6. TRIVIA WIDGET (Bạn có biết?)
+    ----------------------------------------------------------------------- */
+    .trivia-widget {
+        flex-wrap: wrap !important;
+        max-width: 100% !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        overflow: hidden !important;
+    }
+
+    .trivia-widget p {
+        max-width: 100% !important;
+        word-break: break-word !important;
+    }
+
+    /* -----------------------------------------------------------------------
+       7. TRUST HUB TABS: scroll ngang nội bộ
+    ----------------------------------------------------------------------- */
+    .trust-tab-buttons {
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+        -webkit-overflow-scrolling: touch !important;
+        scrollbar-width: none !important;
+        gap: 6px !important;
+        max-width: 100% !important;
+        width: 100% !important;
+    }
+
+    .trust-tab-buttons::-webkit-scrollbar {
+        display: none !important;
+    }
+
+    .trust-tab-btn {
+        flex: 0 0 auto !important;
+        white-space: nowrap !important;
+        font-size: 0.78rem !important;
+        padding: 6px 10px !important;
+    }
+
+    /* Trust cert: xếp dọc */
+    #trust-cert > div {
+        flex-direction: column !important;
+        gap: 12px !important;
+    }
+
+    .cert-image-preview {
+        width: 130px !important;
+        height: 180px !important;
+    }
+
+    /* Table: không tràn */
+    table {
+        width: 100% !important;
+        max-width: 100% !important;
+        table-layout: fixed !important;
+        box-sizing: border-box !important;
+    }
+
+    table td {
+        word-break: break-word !important;
+        overflow-wrap: break-word !important;
+        white-space: normal !important;
+        max-width: 0; /* kết hợp với table-layout:fixed để cell không phình */
+    }
+
+    table td:first-child {
+        width: 38% !important;
+    }
+
+    /* Trust shield banner */
+    .trust-shield-banner {
+        flex-wrap: wrap !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    /* -----------------------------------------------------------------------
+       8. SLIDER THỰC ĐƠN
+    ----------------------------------------------------------------------- */
+    .menu-slider-wrapper {
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow-x: auto !important;
+        box-sizing: border-box !important;
+    }
+
+    .menu-slider-content .dish-card {
+        flex: 0 0 calc(85vw - 32px) !important; /* 85% viewport trừ padding container */
+        min-width: 0 !important;
+        max-width: calc(85vw - 32px) !important;
+    }
+
+    /* -----------------------------------------------------------------------
+       9. HERO SECTION
+    ----------------------------------------------------------------------- */
+    .detail-hero {
+        height: auto !important;
+        min-height: 150px !important;
+        width: 100% !important;
+        max-width: 100vw !important;
+        box-sizing: border-box !important;
+    }
+
+    .detail-hero-content {
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        padding-left: 16px !important;
+        padding-right: 16px !important;
+        padding-top: 70px !important;
+        padding-bottom: 20px !important;
+    }
+
+    .detail-hero-content h1 {
+        font-size: clamp(1.25rem, 5.5vw, 2rem) !important;
+        white-space: normal !important;
+        word-break: break-word !important;
+        overflow-wrap: break-word !important;
+        max-width: 100% !important;
+    }
+
+    .detail-hero-content p {
+        font-size: 0.88rem !important;
+        white-space: normal !important;
+        word-break: break-word !important;
+        max-width: 100% !important;
+    }
+
+    /* -----------------------------------------------------------------------
+       10. SIDEBAR: full width trên mobile
+    ----------------------------------------------------------------------- */
+    aside,
+    .sidebar-widget {
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    /* -----------------------------------------------------------------------
+       11. TẤT CẢ INLINE min-width GÂY PHÌNH LAYOUT
+    ----------------------------------------------------------------------- */
+    /* Override bằng attribute selector */
+    [style*="min-width: 4"],
+    [style*="min-width: 3"],
+    [style*="min-width: 28"],
+    [style*="min-width: 26"],
+    [style*="min-width: 25"],
+    [style*="min-width: 22"],
+    [style*="min-width: 20"] {
+        min-width: 0 !important;
+    }
+
+    /* -----------------------------------------------------------------------
+       12. TYPOGRAPHY: chữ xuống dòng thay vì tràn ngang
+    ----------------------------------------------------------------------- */
+    p, h1, h2, h3, h4, h5, h6,
+    span:not(.heritage-tab-btn):not(.trust-tab-btn):not(.modal-tab-btn),
+    li, td, th, label, blockquote {
+        word-break: break-word !important;
+        overflow-wrap: break-word !important;
+        max-width: 100% !important;
+    }
+
+    /* White-space nowrap chỉ được phép trong scroll containers */
+    p [style*="white-space: nowrap"],
+    div:not(.heritage-tab-buttons):not(.trust-tab-buttons):not(.menu-slider-wrapper) > [style*="white-space: nowrap"] {
+        white-space: normal !important;
+    }
+
+    /* -----------------------------------------------------------------------
+       13. ẢNH VÀ MEDIA: co vừa container
+    ----------------------------------------------------------------------- */
+    img, video, iframe, svg, canvas {
+        max-width: 100% !important;
+        height: auto;
+    }
+
+    /* -----------------------------------------------------------------------
+       14. SECTION TITLE
+    ----------------------------------------------------------------------- */
+    .section-title {
+        font-size: 1.05rem !important;
+        flex-wrap: wrap !important;
+        gap: 6px !important;
+        max-width: 100% !important;
+    }
+
+    /* -----------------------------------------------------------------------
+       15. FLEX CONTAINERS: bật wrap để tránh tràn ngang
+    ----------------------------------------------------------------------- */
+    .detail-section > div[style*="display: flex"],
+    .heritage-museum-card > div > div[style*="display: flex"],
+    .trust-hub-card > div[style*="display: flex"] {
+        flex-wrap: wrap !important;
+        max-width: 100% !important;
+    }
+}
+
+/* ==========================================================================
+   Màn hình rất nhỏ (< 400px) — iPhone SE, Galaxy A cũ
+   ========================================================================== */
+@media (max-width: 400px) {
+    .container {
+        padding-left: 12px !important;
+        padding-right: 12px !important;
+    }
+
+    .detail-section,
+    .heritage-museum-card,
+    .trust-hub-card {
+        padding: 12px !important;
+    }
+
+    .detail-hero-content h1 {
+        font-size: 1.15rem !important;
+    }
+
+    .heritage-tab-btn,
+    .trust-tab-btn {
+        font-size: 0.72rem !important;
+        padding: 5px 8px !important;
+    }
+
+    .dish-card {
+        flex-direction: column !important;
+        align-items: center !important;
+    }
+
+    .dish-img {
+        width: 100% !important;
+        height: 150px !important;
+        max-width: 100% !important;
+    }
+
+    .menu-slider-content .dish-card {
+        flex: 0 0 calc(92vw - 24px) !important;
+        max-width: calc(92vw - 24px) !important;
+    }
+}
