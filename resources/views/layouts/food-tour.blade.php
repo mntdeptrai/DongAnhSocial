@@ -111,6 +111,8 @@
             color: #475569;
         }
     </style>
+
+    @yield('styles')
 </head>
 <body style="min-height: 100vh; display: flex; flex-direction: column; background: var(--bg-base); color: var(--text-main); font-family: var(--font-body); margin: 0; padding: 0;">
 

@@ -419,6 +419,7 @@
             }
         </style>
 
+        @if(session()->has('user_id'))
         <div class="locket-widget-wrapper">
             <div class="locket-widget-card glass-panel">
                 <div class="locket-header">
@@ -528,6 +529,22 @@
                 </div>
             </div>
         </div>
+        @else
+        {{-- Guest: show login nudge --}}
+        <div class="locket-widget-wrapper">
+            <div class="locket-widget-card glass-panel" style="gap: 20px; text-align: center; padding: 32px 24px;">
+                <div style="width: 72px; height: 72px; border-radius: 50%; background: rgba(var(--primary-rgb), 0.1); border: 2px solid rgba(var(--primary-rgb), 0.25); display: flex; align-items: center; justify-content: center; font-size: 2.2rem; margin: 0 auto;">📸</div>
+                <div>
+                    <div style="font-size: 1.05rem; font-weight: 800; color: var(--text-main); margin-bottom: 8px;">Đăng nhập để Check-in</div>
+                    <div style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.6;">Chia sẻ khoảnh khắc khám phá Đông Anh của bạn cùng cộng đồng. Chụp ảnh, đánh giá địa điểm và lưu nhật ký hành trình.</div>
+                </div>
+                <div style="display: flex; gap: 10px; width: 100%;">
+                    <a href="/auth/login" class="btn-primary" style="flex: 1; text-align: center; padding: 11px 16px; font-size: 0.9rem; font-weight: 700; border-radius: 12px; text-decoration: none;">🔑 Đăng nhập</a>
+                    <a href="/auth/register" style="flex: 1; text-align: center; padding: 11px 16px; font-size: 0.9rem; font-weight: 700; border-radius: 12px; text-decoration: none; background: transparent; border: 1.5px solid var(--border-glow); color: var(--text-main);">✨ Đăng ký</a>
+                </div>
+            </div>
+        </div>
+        @endif
 
         <!-- Success Alert -->
         @if(session('success'))
