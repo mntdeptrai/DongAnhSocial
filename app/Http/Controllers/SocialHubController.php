@@ -228,47 +228,61 @@ class SocialHubController extends Controller
         }
     }
 
-    public function getMessages($friendId)
+    public function getMessages($friendId, Request $request)
     {
-        $userId = Auth::id();
+        $userId   = Auth::id();
+        $limit    = 50;
+        $beforeId = $request->query('before_id');
 
-        // Lấy tin nhắn giữa 2 người
-        $messages = Message::with('foodTour')
-            ->where(function($q) use ($userId, $friendId) {
-                $q->where(function($sub) use ($userId, $friendId) {
+        $query = Message::with('foodTour')
+            ->where(function ($q) use ($userId, $friendId) {
+                $q->where(function ($sub) use ($userId, $friendId) {
                     $sub->where('sender_id', $userId)->where('receiver_id', $friendId);
-                })->orWhere(function($sub) use ($userId, $friendId) {
+                })->orWhere(function ($sub) use ($userId, $friendId) {
                     $sub->where('sender_id', $friendId)->where('receiver_id', $userId);
                 });
-            })
-            ->orderBy('created_at', 'asc')
-            ->get()
-            ->map(function($msg) {
-                return [
-                    'id' => $msg->id,
-                    'sender_id' => $msg->sender_id,
-                    'receiver_id' => $msg->receiver_id,
-                    'message' => $msg->message,
-                    'food_tour_id' => $msg->food_tour_id,
-                    'media_path' => $msg->media_path,
-                    'media_type' => $msg->media_type,
-                    'food_tour' => $msg->foodTour ? [
-                        'id' => $msg->foodTour->id,
-                        'name' => $msg->foodTour->name,
-                        'slug' => $msg->foodTour->slug,
-                        'description' => $msg->foodTour->description,
-                        'duration' => $msg->foodTour->duration,
-                        'distance' => $msg->foodTour->distance,
-                        'budget' => $msg->foodTour->budget,
-                        'difficulty' => $msg->foodTour->difficulty,
-                        'best_time' => $msg->foodTour->best_time,
-                        'thumbnail' => $msg->foodTour->thumbnail,
-                    ] : null,
-                    'is_read' => (bool)$msg->is_read,
-                    'created_at_human' => $msg->created_at->diffForHumans(),
-                    'created_at_format' => $msg->created_at->format('d/m/Y H:i'),
-                ];
             });
+
+        // Cursor-based: nếu có before_id thì lấy tin cũ hơn cursor đó
+        if ($beforeId) {
+            $query->where('id', '<', (int) $beforeId);
+        }
+
+        // Lấy $limit+1 để biết còn tin cũ không
+        $rawMessages = $query
+            ->orderBy('created_at', 'desc')
+            ->take($limit + 1)
+            ->get();
+
+        $hasMore = $rawMessages->count() > $limit;
+        $rawMessages = $rawMessages->take($limit)->reverse()->values();
+
+        $messages = $rawMessages->map(function ($msg) {
+            return [
+                'id'               => $msg->id,
+                'sender_id'        => $msg->sender_id,
+                'receiver_id'      => $msg->receiver_id,
+                'message'          => $msg->message,
+                'food_tour_id'     => $msg->food_tour_id,
+                'media_path'       => $msg->media_path,
+                'media_type'       => $msg->media_type,
+                'food_tour'        => $msg->foodTour ? [
+                    'id'          => $msg->foodTour->id,
+                    'name'        => $msg->foodTour->name,
+                    'slug'        => $msg->foodTour->slug,
+                    'description' => $msg->foodTour->description,
+                    'duration'    => $msg->foodTour->duration,
+                    'distance'    => $msg->foodTour->distance,
+                    'budget'      => $msg->foodTour->budget,
+                    'difficulty'  => $msg->foodTour->difficulty,
+                    'best_time'   => $msg->foodTour->best_time,
+                    'thumbnail'   => $msg->foodTour->thumbnail,
+                ] : null,
+                'is_read'           => (bool) $msg->is_read,
+                'created_at_human'  => $msg->created_at->diffForHumans(),
+                'created_at_format' => $msg->created_at->format('d/m/Y H:i'),
+            ];
+        });
 
         // Đánh dấu tin nhắn nhận từ bạn bè là đã đọc
         Message::where('sender_id', $friendId)
@@ -276,7 +290,10 @@ class SocialHubController extends Controller
             ->where('is_read', false)
             ->update(['is_read' => true]);
 
-        return response()->json($messages);
+        return response()->json([
+            'messages' => $messages,
+            'has_more' => $hasMore,
+        ]);
     }
 
     /**

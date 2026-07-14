@@ -53,22 +53,53 @@ export default function SocialHub() {
     }, []);
 
     const messagesEndRef = useRef(null);
+    const messagesContainerRef = useRef(null);
+    const loadMoreTopRef = useRef(null);
     const echoRef = useRef(null);
     const activeFriendRef = useRef(activeFriend);
+
+    // Pagination state
+    const [hasMore, setHasMore] = useState(false);
+    const [isLoadingMore, setIsLoadingMore] = useState(false);
 
     // Keep activeFriendRef updated with the latest activeFriend
     useEffect(() => {
         activeFriendRef.current = activeFriend;
     }, [activeFriend]);
 
-    // Auto scroll chat to bottom
-    const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    // Scroll chat container to bottom
+    const scrollToBottom = (smooth = false) => {
+        const container = messagesContainerRef.current;
+        if (container) {
+            container.scrollTop = container.scrollHeight;
+        }
     };
 
+    // Scroll to bottom when new messages arrive (sent or received)
     useEffect(() => {
-        scrollToBottom();
+        // Only auto-scroll if we're near the bottom already
+        const container = messagesContainerRef.current;
+        if (!container) return;
+        const distFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
+        if (distFromBottom < 200) {
+            scrollToBottom();
+        }
     }, [messages]);
+
+    // IntersectionObserver: auto-load older messages when scrolling to top
+    useEffect(() => {
+        if (!loadMoreTopRef.current || !hasMore) return;
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting && hasMore && !isLoadingMore) {
+                    loadOlderMessages();
+                }
+            },
+            { root: messagesContainerRef.current, threshold: 0.1 }
+        );
+        observer.observe(loadMoreTopRef.current);
+        return () => observer.disconnect();
+    }, [hasMore, isLoadingMore, messages]);
 
     // Connect to Laravel Reverb via Pusher Client
     useEffect(() => {
@@ -152,15 +183,48 @@ export default function SocialHub() {
     // Fetch message history when active friend changes
     useEffect(() => {
         if (!activeFriend) return;
-        
+        setHasMore(false);
+        setIsLoadingMore(false);
+
         axios.get(`/social/messages/${activeFriend.id}`)
             .then(res => {
-                setMessages(res.data);
+                const data = res.data;
+                setMessages(data.messages || data); // backward compat
+                setHasMore(data.has_more || false);
+                // Scroll to bottom after initial load
+                setTimeout(() => scrollToBottom(), 50);
             })
             .catch(err => {
                 console.error("Lỗi tải tin nhắn:", err);
             });
     }, [activeFriend]);
+
+    // Load older messages (infinite scroll up)
+    const loadOlderMessages = () => {
+        if (!activeFriend || isLoadingMore || !hasMore) return;
+        const oldestId = messages[0]?.id;
+        if (!oldestId) return;
+
+        setIsLoadingMore(true);
+        const container = messagesContainerRef.current;
+        const prevScrollHeight = container ? container.scrollHeight : 0;
+
+        axios.get(`/social/messages/${activeFriend.id}`, { params: { before_id: oldestId } })
+            .then(res => {
+                const data = res.data;
+                const older = data.messages || [];
+                setHasMore(data.has_more || false);
+                setMessages(prev => [...older, ...prev]);
+                // Restore scroll position so view doesn't jump
+                setTimeout(() => {
+                    if (container) {
+                        container.scrollTop = container.scrollHeight - prevScrollHeight;
+                    }
+                }, 0);
+            })
+            .catch(err => console.error("Lỗi tải tin cũ:", err))
+            .finally(() => setIsLoadingMore(false));
+    };
 
     // Periodically update active presence status of friends
     useEffect(() => {
@@ -425,7 +489,7 @@ export default function SocialHub() {
     }, []);
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: 'var(--bg-base)', color: '#f4f4f5' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden', background: 'var(--bg-base)', color: '#f4f4f5' }}>
             <style>{`
                 .header-action-btn {
                     width: 36px;
@@ -1001,7 +1065,31 @@ export default function SocialHub() {
                             </div>
 
                             {/* Chat Messages Body */}
-                            <div style={{ flex: 1, padding: '20px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px', background: 'var(--bg-base)' }}>
+                            <div
+                                ref={messagesContainerRef}
+                                style={{ flex: 1, minHeight: 0, padding: '20px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px', background: 'var(--bg-base)' }}
+                            >
+                                {/* Load more older messages trigger */}
+                                {hasMore && (
+                                    <div ref={loadMoreTopRef} style={{ display: 'flex', justifyContent: 'center', padding: '8px 0' }}>
+                                        {isLoadingMore ? (
+                                            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                <span style={{ display: 'inline-block', width: '14px', height: '14px', border: '2px solid var(--primary)', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }}></span>
+                                                Đang tải tin cũ hơn...
+                                            </span>
+                                        ) : (
+                                            <button
+                                                onClick={loadOlderMessages}
+                                                style={{ fontSize: '0.75rem', color: 'var(--primary)', background: 'rgba(var(--primary-rgb),0.08)', border: '1px solid rgba(var(--primary-rgb),0.2)', borderRadius: '20px', padding: '4px 14px', cursor: 'pointer' }}
+                                            >
+                                                ↑ Tải tin nhắn cũ hơn
+                                            </button>
+                                        )}
+                                    </div>
+                                )}
+
+                                {/* Spacer: đẩy tin nhắn xuống đáy khi ít, tự co khi nhiều để scroll hoạt động */}
+                                <div style={{ flex: 1, minHeight: 0 }} />
                                 {messages.length === 0 ? (
                                     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', gap: '8px' }}>
                                         <span style={{ fontSize: '2.5rem' }}>💬</span>
