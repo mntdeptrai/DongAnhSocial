@@ -228,6 +228,33 @@ class SocialHubController extends Controller
         }
     }
 
+    public function getFriends()
+    {
+        $user = Auth::user();
+        
+        $sentFriendIds = Friendship::where('user_id', $user->id)
+            ->where('status', 'accepted')
+            ->pluck('friend_id');
+            
+        $receivedFriendIds = Friendship::where('friend_id', $user->id)
+            ->where('status', 'accepted')
+            ->pluck('user_id');
+
+        $friendIds = $sentFriendIds->merge($receivedFriendIds)->unique();
+        $friends = User::whereIn('id', $friendIds)->get()->map(function($f) {
+            return [
+                'id' => $f->id,
+                'name' => $f->name,
+                'email' => $f->email,
+                'avatar' => $f->avatar,
+                'avatar_url' => $f->avatar_url,
+                'is_online' => $f->is_online ?? false,
+            ];
+        });
+
+        return response()->json($friends);
+    }
+
     public function getMessages($friendId, Request $request)
     {
         $userId   = Auth::id();

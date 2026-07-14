@@ -30,6 +30,14 @@ Route::prefix('v1')->group(function () {
 
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('/auth/token/revoke', [\App\Http\Controllers\Api\CheckinApiController::class, 'revokeToken']);
+        
+        // Chat routes for mobile
+        Route::get('/friends', [\App\Http\Controllers\SocialHubController::class, 'getFriends']);
+        Route::get('/messages/{friendId}', [\App\Http\Controllers\SocialHubController::class, 'getMessages']);
+        Route::post('/messages', [\App\Http\Controllers\SocialHubController::class, 'sendMessage']);
+        
+        // Checkin history for mobile
+        Route::get('/checkins/my', [\App\Http\Controllers\Api\CheckinApiController::class, 'getMyCheckins']);
     });
 
     // -----------------------------------------------------------------------

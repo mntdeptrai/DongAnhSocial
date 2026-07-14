@@ -249,6 +249,43 @@ class CheckinApiController extends Controller
         ], 201);
     }
 
+    public function getMyCheckins(Request $request)
+    {
+        $user = $request->user();
+        
+        $checkins = Checkin::with(['user', 'eatery.category', 'eatery.commune'])
+            ->where('user_id', $user->id)
+            ->orderBy('created_at', 'desc')
+            ->get();
+            
+        $feed = collect();
+        foreach ($checkins as $c) {
+            $feed->push([
+                'id'                => $c->id,
+                'type'              => 'checkin',
+                'display_name'      => $c->display_name,
+                'avatar_char'       => mb_substr($user->name, 0, 1, 'UTF-8'),
+                'role'              => $user->role,
+                'rating'            => $c->rating,
+                'comment'           => $c->comment,
+                'image_path'        => $c->image_path,
+                'created_at_human'  => $c->created_at->diffForHumans(),
+                'created_at_format' => $c->created_at->format('d/m/Y H:i'),
+                'eatery'            => $c->eatery ? [
+                    'name'     => $c->eatery->name,
+                    'slug'     => $c->eatery->slug,
+                    'category' => $c->eatery->category?->name,
+                    'commune'  => $c->eatery->commune?->name,
+                ] : null,
+            ]);
+        }
+        
+        return response()->json([
+            'success' => true,
+            'checkins' => $feed
+        ]);
+    }
+
     /**
      * Gửi reaction từ Mobile App
      */

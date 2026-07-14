@@ -22,3 +22,16 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# Flutter ignoring
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+build/
+android/app/local.properties
+android/app/flutter_bootstrap.gradle
+ios/Flutter/Generated.xcconfig
+ios/Flutter/flutter_export_environment.sh
