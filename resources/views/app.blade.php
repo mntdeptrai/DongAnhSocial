@@ -22,7 +22,7 @@
     <link rel="stylesheet" href="{{ asset('css/checkin.css') }}">
     <link rel="stylesheet" href="{{ asset('css/mobile-fix.css') }}">
     <link rel="stylesheet" media="screen and (max-width: 1200px)" href="{{ asset('css/mobile-native.css') }}?v={{ file_exists(public_path('css/mobile-native.css')) ? filemtime(public_path('css/mobile-native.css')) : '1.0.0' }}">
-
+    <!--minhnguyen@123-->
     @viteReactRefresh
     @vite('resources/js/app.jsx')
     @inertiaHead
