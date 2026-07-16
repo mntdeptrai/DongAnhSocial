@@ -97,10 +97,18 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
     Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
     Route::post('/checkout/apply-voucher', [CheckoutController::class, 'applyVoucher'])->name('checkout.apply-voucher');
+    Route::post('/checkout/remove-voucher', [CheckoutController::class, 'removeVoucher'])->name('checkout.remove-voucher');
     Route::get('/checkout/payment/{id}', [CheckoutController::class, 'payment'])->name('checkout.payment');
     Route::post('/checkout/payment/{id}/process', [CheckoutController::class, 'processPayment'])->name('checkout.process-payment');
     Route::get('/checkout/success/{id}', [CheckoutController::class, 'success'])->name('checkout.success');
     Route::get('/orders', [CheckoutController::class, 'ordersList'])->name('orders.index');
+    Route::get('/orders/{id}', [CheckoutController::class, 'show'])->name('orders.show');
+    
+    Route::get('/api/orders', [CheckoutController::class, 'apiOrdersList'])->name('api.orders.index');
+    Route::get('/api/orders/{id}', [CheckoutController::class, 'apiOrdersShow'])->name('api.orders.show');
+    Route::post('/api/orders/{id}/cancel', [CheckoutController::class, 'cancel'])->name('api.orders.cancel');
+    Route::post('/api/orders/{id}/reorder', [CheckoutController::class, 'reorder'])->name('api.orders.reorder');
+    Route::post('/api/orders/{id}/review', [CheckoutController::class, 'review'])->name('api.orders.review');
 });
 
 

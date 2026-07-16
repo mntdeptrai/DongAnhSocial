@@ -1,8 +1,6 @@
-@extends('layouts.app')
+<?php $__env->startSection('title', 'Cổng thanh toán giả lập - Đông Anh Map'); ?>
 
-@section('title', 'Cổng thanh toán giả lập - Đông Anh Map')
-
-@section('content')
+<?php $__env->startSection('content'); ?>
 <div class="container" style="max-width: 600px; padding: 50px 20px; font-family: 'Be Vietnam Pro', sans-serif;">
     <div class="glass-panel" style="padding: 35px; border-radius: 24px; border: 1px solid var(--border-glow); background: rgba(255,255,255,0.015); box-shadow: 0 15px 40px rgba(0,0,0,0.15); text-align: center;">
         
@@ -28,13 +26,13 @@
         <div style="background: rgba(255, 255, 255, 0.02); border: 1.5px solid var(--border-glow); border-radius: 18px; padding: 24px; margin-bottom: 30px; display: flex; flex-direction: column; align-items: center; gap: 16px;">
             <!-- QR code generated dynamically via API -->
             <div style="background: #ffffff; padding: 14px; border-radius: 16px; border: 1px solid rgba(0,0,0,0.06); box-shadow: 0 4px 12px rgba(0,0,0,0.06); cursor: pointer;">
-                <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://donganh.hanoi.gov.vn/payment-simulated-order-{{ $order->id }}" alt="QR Code Payment" style="width: 170px; height: 170px; display: block; mix-blend-mode: multiply;">
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://donganh.hanoi.gov.vn/payment-simulated-order-<?php echo e($order->id); ?>" alt="QR Code Payment" style="width: 170px; height: 170px; display: block; mix-blend-mode: multiply;">
             </div>
             
             <div style="width: 100%; text-align: left; display: flex; flex-direction: column; gap: 10px; font-size: 0.9rem; border-top: 1px dashed var(--border-glow); padding-top: 16px; margin-top: 8px;">
                 <div style="display: flex; justify-content: space-between;">
                     <span style="color: var(--text-muted);">Mã đơn hàng:</span>
-                    <strong style="color: var(--text-main);">#DA-{{ str_pad($order->id, 6, '0', STR_PAD_LEFT) }}</strong>
+                    <strong style="color: var(--text-main);">#DA-<?php echo e(str_pad($order->id, 6, '0', STR_PAD_LEFT)); ?></strong>
                 </div>
                 <div style="display: flex; justify-content: space-between;">
                     <span style="color: var(--text-muted);">Đơn vị thụ hưởng:</span>
@@ -43,15 +41,15 @@
                 <div style="display: flex; justify-content: space-between; align-items: center; font-size: 1.1rem; border-top: 1px solid var(--border-glow); padding-top: 10px; margin-top: 4px;">
                     <span style="color: var(--text-muted); font-weight: 700;">Số tiền cần chuyển:</span>
                     <strong style="color: var(--primary); font-size: 1.25rem; font-weight: 800; font-family: var(--font-heading);">
-                        {{ number_format($order->total_amount, 0, ',', '.') }}đ
+                        <?php echo e(number_format($order->total_amount, 0, ',', '.')); ?>đ
                     </strong>
                 </div>
             </div>
         </div>
 
         <!-- Simulation Actions Form -->
-        <form action="{{ route('checkout.process-payment', $order->id) }}" method="POST" id="paymentProcessForm">
-            @csrf
+        <form action="<?php echo e(route('checkout.process-payment', $order->id)); ?>" method="POST" id="paymentProcessForm">
+            <?php echo csrf_field(); ?>
             <input type="hidden" name="simulate_success" id="simulateSuccessInput" value="1">
             
             <div style="display: flex; flex-direction: column; gap: 12px;">
@@ -67,9 +65,9 @@
 
     </div>
 </div>
-@endsection
+<?php $__env->stopSection(); ?>
 
-@section('scripts')
+<?php $__env->startSection('scripts'); ?>
 <script>
     // Countdown Timer logic
     document.addEventListener('DOMContentLoaded', () => {
@@ -97,4 +95,6 @@
         document.getElementById('paymentProcessForm').submit();
     }
 </script>
-@endsection
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH D:\DA_DISCOVERY\resources\views/checkout/payment.blade.php ENDPATH**/ ?>

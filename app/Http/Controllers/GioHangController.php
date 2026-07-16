@@ -24,16 +24,38 @@ class GioHangController extends Controller
     {
         $cart->load('items');
 
-        $items = $cart->items->map(function ($item) {
+        $foodColors = ['#FF6B6B','#FF8E53','#FFA726','#66BB6A','#26C6DA','#42A5F5','#AB47BC','#EF5350'];
+        $foodEmojis = ['🍜','🍲','🥘','🍛','🥗','🍤','🥩','🍱','🍝','🍣'];
+
+        $items = $cart->items->map(function ($item) use ($foodColors, $foodEmojis) {
+            $product = $item->product;
+            $eatery = $product ? $product->eatery : null;
+
+            // Resolve image URL
+            $imgRaw = $item->product_image;
+            if ($imgRaw) {
+                $imageUrl = asset($imgRaw);
+            } else {
+                // Generate a deterministic colored placeholder based on item id
+                $colorIndex = $item->id % count($foodColors);
+                $emojiIndex = $item->id % count($foodEmojis);
+                $color = ltrim($foodColors[$colorIndex], '#');
+                $emoji = $foodEmojis[$emojiIndex];
+                $name = urlencode(mb_substr($item->product_name, 0, 10));
+                $imageUrl = "https://placehold.co/80x80/{$color}/ffffff?text={$emoji}";
+            }
+
             return [
-                'id'       => $item->id,
-                'dish_id'  => $item->dish_id,
+                'id'          => $item->id,
+                'dish_id'     => $item->dish_id,
                 'ocop_product_id' => $item->ocop_product_id,
-                'name'     => $item->product_name,
-                'price'    => (int)$item->product_price,
-                'image'    => $item->product_image ? asset($item->product_image) : asset('images/no-image.png'),
-                'quantity' => (int)$item->quantity,
-                'total'    => (int)$item->thanh_tien,
+                'name'        => $item->product_name,
+                'price'       => (int)$item->product_price,
+                'image'       => $imageUrl,
+                'quantity'    => (int)$item->quantity,
+                'total'       => (int)$item->thanh_tien,
+                'eatery_id'   => $eatery ? $eatery->id : 0,
+                'eatery_name' => $eatery ? $eatery->name : 'Khác',
             ];
         })->values();
 

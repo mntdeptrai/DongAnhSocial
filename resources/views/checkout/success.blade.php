@@ -109,12 +109,15 @@
         </div>
 
         <!-- Return Actions -->
-        <div style="display: flex; gap: 14px; justify-content: center; border-top: 1px solid var(--border-glow); padding-top: 24px;">
-            <a href="/" class="btn-secondary" style="padding: 12px 24px; font-size: 0.9rem; border-radius: 10px; font-weight: 700; text-decoration: none;">
-                🏠 Quay lại Trang chủ
+        <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; border-top: 1px solid var(--border-glow); padding-top: 24px;">
+            <a href="/" class="btn-secondary" style="padding: 12px 20px; font-size: 0.88rem; border-radius: 10px; font-weight: 700; text-decoration: none; border: 1.5px solid rgba(0,0,0,0.1); color: var(--text-main); background: transparent;">
+                🏠 Trang chủ
             </a>
-            <a href="/tim-kiem" class="btn-primary" style="padding: 12px 24px; font-size: 0.9rem; border-radius: 10px; font-weight: 700; text-decoration: none; box-shadow: 0 4px 15px rgba(255, 126, 41, 0.25);">
-                🗺️ Tiếp tục khám phá Bản đồ
+            <a href="/orders/{{ $order->id }}" class="btn-secondary" style="padding: 12px 20px; font-size: 0.88rem; border-radius: 10px; font-weight: 700; text-decoration: none; border: 1.5px solid var(--primary, #ff7e29); color: var(--primary, #ff7e29); background: transparent;">
+                🔍 Chi tiết đơn hàng
+            </a>
+            <a href="/tim-kiem" class="btn-primary" style="padding: 12px 20px; font-size: 0.88rem; border-radius: 10px; font-weight: 700; text-decoration: none; box-shadow: 0 4px 15px rgba(255, 126, 41, 0.25);">
+                🗺️ Tiếp tục khám phá
             </a>
         </div>
 

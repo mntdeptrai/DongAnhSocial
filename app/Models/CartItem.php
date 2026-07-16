@@ -55,7 +55,14 @@ class CartItem extends Model
     public function getProductImageAttribute()
     {
         $product = $this->product;
-        return $product ? $product->image_path : null;
+        if (!$product || !$product->image_path) {
+            // Return appropriate placeholder based on product type
+            if ($this->ocop_product_id) {
+                return 'images/ocop-placeholder.png';
+            }
+            return null; // will fallback to generated placeholder in controller
+        }
+        return $product->image_path;
     }
 
     public function getThanhTienAttribute()
