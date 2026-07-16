@@ -11,16 +11,16 @@
     </script>
     
     <!-- SEO Meta Tags -->
-    <title>@yield('title', 'Bản đồ số Đông Anh - Dong Anh Map')</title>
-    <meta name="description" content="@yield('meta_description', 'Bản đồ số Đông Anh - Số hóa toàn bộ trường học, bệnh viện, khách sạn, nhà hàng, quán ăn và đặc sản tại Đông Anh. Chỉ đường nhanh, thông tin chi tiết, liên kết Google Maps.')">
+    <title><?php echo $__env->yieldContent('title', 'Bản đồ số Đông Anh - Dong Anh Map'); ?></title>
+    <meta name="description" content="<?php echo $__env->yieldContent('meta_description', 'Bản đồ số Đông Anh - Số hóa toàn bộ trường học, bệnh viện, khách sạn, nhà hàng, quán ăn và đặc sản tại Đông Anh. Chỉ đường nhanh, thông tin chi tiết, liên kết Google Maps.'); ?>">
     <meta name="keywords" content="bản đồ đông anh, trường học đông anh, bệnh viện đông anh, đặc sản đông anh, khách sạn đông anh, địa điểm đông anh">
-    <link rel="canonical" href="@yield('canonical_url', request()->url())">
+    <link rel="canonical" href="<?php echo $__env->yieldContent('canonical_url', request()->url()); ?>">
     
     <!-- OpenGraph Social Tags -->
     <meta property="og:site_name" content="Dong Anh Map">
-    <meta property="og:title" content="@yield('title', 'Bản đồ số Đông Anh - Dong Anh Map')">
-    <meta property="og:description" content="@yield('meta_description', 'Bản đồ số Đông Anh - Số hóa trường học, bệnh viện, khách sạn, nhà hàng và đặc sản.')">
-    <meta property="og:image" content="@yield('og_image', 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=800&q=80')">
+    <meta property="og:title" content="<?php echo $__env->yieldContent('title', 'Bản đồ số Đông Anh - Dong Anh Map'); ?>">
+    <meta property="og:description" content="<?php echo $__env->yieldContent('meta_description', 'Bản đồ số Đông Anh - Số hóa trường học, bệnh viện, khách sạn, nhà hàng và đặc sản.'); ?>">
+    <meta property="og:image" content="<?php echo $__env->yieldContent('og_image', 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=800&q=80'); ?>">
     <meta property="og:type" content="website">
     
     <!-- Leaflet.js Map Assets -->
@@ -32,16 +32,16 @@
     <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,500&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     
     <!-- Custom Theme Styling -->
-    <link rel="stylesheet" href="{{ asset('css/app.css') }}?v={{ file_exists(public_path('css/app.css')) ? filemtime(public_path('css/app.css')) : '1.0.0' }}">
+    <link rel="stylesheet" href="<?php echo e(asset('css/app.css')); ?>?v=<?php echo e(file_exists(public_path('css/app.css')) ? filemtime(public_path('css/app.css')) : '1.0.0'); ?>">
     
     <!-- Mobile Native Overrides (Only load for mobile and high zoom desktops) -->
-    <link rel="stylesheet" media="screen and (max-width: 1200px)" href="{{ asset('css/mobile-native.css') }}?v={{ file_exists(public_path('css/mobile-native.css')) ? filemtime(public_path('css/mobile-native.css')) : '1.0.0' }}">
+    <link rel="stylesheet" media="screen and (max-width: 1200px)" href="<?php echo e(asset('css/mobile-native.css')); ?>?v=<?php echo e(file_exists(public_path('css/mobile-native.css')) ? filemtime(public_path('css/mobile-native.css')) : '1.0.0'); ?>">
 
     <!-- 📱 Mobile Viewport Fit Fix — Ôm gọn nội dung, không scroll ngang -->
-    <link rel="stylesheet" href="{{ asset('css/mobile-fix.css') }}?v={{ file_exists(public_path('css/mobile-fix.css')) ? filemtime(public_path('css/mobile-fix.css')) : '1.0.0' }}">
+    <link rel="stylesheet" href="<?php echo e(asset('css/mobile-fix.css')); ?>?v=<?php echo e(file_exists(public_path('css/mobile-fix.css')) ? filemtime(public_path('css/mobile-fix.css')) : '1.0.0'); ?>">
     
     <!-- Dynamic Schema.org JSON-LD Structured Data for Google Indexing -->
-    @yield('seo_schema')
+    <?php echo $__env->yieldContent('seo_schema'); ?>
     
     <!-- Alpine.js for Modern Client Interactions -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
@@ -164,25 +164,25 @@
             <div class="nav-collapse main-nav-container" id="navCollapse">
                 <nav>
                 <ul class="nav-menu">
-                    <li><a href="/" class="nav-link {{ request()->is('/') && !request()->has('cat') ? 'active' : '' }}">Trang chủ</a></li>
-                    <li><a href="/tim-kiem" class="nav-link {{ request()->is('tim-kiem*') ? 'active' : '' }}">Bản đồ & Tìm kiếm</a></li>
-                    <li><a href="/food-tours" class="nav-link {{ request()->is('food-tours*') || (request()->is('food-tour*') && !request()->is('food-tour/tu-tay-lam-dac-san-co-loa*')) ? 'active' : '' }}">Food Tour</a></li>
-                    <li><a href="/exp-corner" class="nav-link {{ request()->is('exp-corner*') || request()->is('food-tour/tu-tay-lam-dac-san-co-loa*') ? 'active' : '' }}">Góc trải nghiệm thực tế</a></li>
-                    <li><a href="/checkin" class="nav-link {{ request()->is('checkin*') ? 'active' : '' }}">Góc Check-in</a></li>
-                    @if(session()->has('user_id'))
-                        <li><a href="/social" class="nav-link {{ request()->is('social*') ? 'active' : '' }}">💬 Kết nối bạn bè</a></li>
-                    @endif
+                    <li><a href="/" class="nav-link <?php echo e(request()->is('/') && !request()->has('cat') ? 'active' : ''); ?>">Trang chủ</a></li>
+                    <li><a href="/tim-kiem" class="nav-link <?php echo e(request()->is('tim-kiem*') ? 'active' : ''); ?>">Bản đồ & Tìm kiếm</a></li>
+                    <li><a href="/food-tours" class="nav-link <?php echo e(request()->is('food-tours*') || (request()->is('food-tour*') && !request()->is('food-tour/tu-tay-lam-dac-san-co-loa*')) ? 'active' : ''); ?>">Food Tour</a></li>
+                    <li><a href="/exp-corner" class="nav-link <?php echo e(request()->is('exp-corner*') || request()->is('food-tour/tu-tay-lam-dac-san-co-loa*') ? 'active' : ''); ?>">Góc trải nghiệm thực tế</a></li>
+                    <li><a href="/checkin" class="nav-link <?php echo e(request()->is('checkin*') ? 'active' : ''); ?>">Góc Check-in</a></li>
+                    <?php if(session()->has('user_id')): ?>
+                        <li><a href="/social" class="nav-link <?php echo e(request()->is('social*') ? 'active' : ''); ?>">💬 Kết nối bạn bè</a></li>
+                    <?php endif; ?>
                     <li><a href="#" onclick="openGuideModal(event)" class="nav-link">Giới thiệu & Hướng dẫn</a></li>
                 </ul>
                 </nav>
             
                 <div class="user-actions" style="display: flex; align-items: center; gap: 10px;">
-                    @if(session()->has('user_id'))
-                        @php
+                    <?php if(session()->has('user_id')): ?>
+                        <?php
                             $pendingCount = \App\Models\Friendship::where('friend_id', session('user_id'))
                                 ->where('status', 'pending')
                                 ->count();
-                        @endphp
+                        ?>
                         
                         <!-- Nút Chat (Messenger Dropdown) -->
                         <div class="chat-dropdown" x-data="{ 
@@ -210,7 +210,7 @@
                                     <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
                                 </svg>
                                 <!-- Unread indicator dot -->
-                                <template x-if="chats.some(c => !c.is_read && c.latest_message_sender_id !== {{ session('user_id') }})">
+                                <template x-if="chats.some(c => !c.is_read && c.latest_message_sender_id !== <?php echo e(session('user_id')); ?>)">
                                     <span class="badge" style="position: absolute; top: -2px; right: -2px; background: #0ea5e9; width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid #fff; padding: 0;"></span>
                                 </template>
                             </button>
@@ -265,15 +265,15 @@
                                                     <span style="font-size: 0.72rem; color: var(--text-muted, #64748b); flex-shrink: 0;" x-text="chat.latest_message_time"></span>
                                                 </div>
                                                 <div style="font-size: 0.8rem; display: flex; align-items: center; justify-content: space-between; gap: 8px;">
-                                                    <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" :style="!chat.is_read && chat.latest_message_sender_id !== {{ session('user_id') }} ? 'font-weight: 800; color: var(--text-main, #0f172a);' : 'color: var(--text-muted, #64748b);'">
-                                                        <template x-if="chat.latest_message_sender_id === {{ session('user_id') }}">
+                                                    <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" :style="!chat.is_read && chat.latest_message_sender_id !== <?php echo e(session('user_id')); ?> ? 'font-weight: 800; color: var(--text-main, #0f172a);' : 'color: var(--text-muted, #64748b);'">
+                                                        <template x-if="chat.latest_message_sender_id === <?php echo e(session('user_id')); ?>">
                                                             <span style="opacity: 0.8;">Bạn: </span>
                                                         </template>
                                                         <span x-text="chat.latest_message || 'Bắt đầu cuộc trò chuyện...'"></span>
                                                     </span>
                                                     
                                                     <!-- Unread indicator dot in item -->
-                                                    <span x-show="!chat.is_read && chat.latest_message_sender_id !== {{ session('user_id') }}" style="width: 8px; height: 8px; border-radius: 50%; background: #0ea5e9; flex-shrink: 0;"></span>
+                                                    <span x-show="!chat.is_read && chat.latest_message_sender_id !== <?php echo e(session('user_id')); ?>" style="width: 8px; height: 8px; border-radius: 50%; background: #0ea5e9; flex-shrink: 0;"></span>
                                                 </div>
                                             </div>
                                         </a>
@@ -294,20 +294,20 @@
                                 <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
                                 <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
                             </svg>
-                            @if($pendingCount > 0)
-                                <span class="badge">{{ $pendingCount }}</span>
-                            @endif
+                            <?php if($pendingCount > 0): ?>
+                                <span class="badge"><?php echo e($pendingCount); ?></span>
+                            <?php endif; ?>
                         </a>
 
                         <div class="profile-dropdown" x-data="{ open: false }" @click.outside="open = false">
                             <button @click="open = !open" class="profile-trigger-btn">
-                                @php $navUser = Auth::user() ?? \App\Models\User::find(session('user_id')); @endphp
+                                <?php $navUser = Auth::user() ?? \App\Models\User::find(session('user_id')); ?>
                                 <div class="profile-avatar-container">
-                                    @if($navUser && $navUser->avatar && str_starts_with($navUser->avatar, 'avatars/'))
-                                        <img src="{{ rtrim(env('R2_PUBLIC_URL'), '/') . '/' . $navUser->avatar }}" alt="avatar" style="width: 100%; height: 100%; object-fit: cover;">
-                                    @else
-                                        <span style="font-size: 1.2rem;">{{ $navUser->avatar ?? '👤' }}</span>
-                                    @endif
+                                    <?php if($navUser && $navUser->avatar && str_starts_with($navUser->avatar, 'avatars/')): ?>
+                                        <img src="<?php echo e(rtrim(env('R2_PUBLIC_URL'), '/') . '/' . $navUser->avatar); ?>" alt="avatar" style="width: 100%; height: 100%; object-fit: cover;">
+                                    <?php else: ?>
+                                        <span style="font-size: 1.2rem;"><?php echo e($navUser->avatar ?? '👤'); ?></span>
+                                    <?php endif; ?>
                                 </div>
                                 <div class="profile-chevron-badge">
                                     <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
@@ -317,44 +317,44 @@
                             </button>
                             <div x-show="open" x-transition class="profile-dropdown-menu">
                                 <div class="user-info-header">
-                                    <div class="user-name">{{ session('user_name') }}</div>
+                                    <div class="user-name"><?php echo e(session('user_name')); ?></div>
                                     <div class="user-role">
-                                        @if(session('user_role') === 'admin')
+                                        <?php if(session('user_role') === 'admin'): ?>
                                             🏛️ Quản trị viên
-                                        @elseif(session('user_role') === 'seller')
+                                        <?php elseif(session('user_role') === 'seller'): ?>
                                             🏪 Chủ cơ sở kinh doanh
-                                        @else
+                                        <?php else: ?>
                                             👤 Thành viên cộng đồng
-                                        @endif
+                                        <?php endif; ?>
                                     </div>
                                 </div>
                                 
-                                @if(session('user_role') === 'admin' || session('user_role') === 'seller')
+                                <?php if(session('user_role') === 'admin' || session('user_role') === 'seller'): ?>
                                     <a href="/admin/dashboard" class="dropdown-item">
                                         <span>📊</span> Trang quản lý
                                     </a>
-                                @endif
+                                <?php endif; ?>
                                 
                                 <a href="/profile" class="dropdown-item">
                                     <span>👤</span> Trang cá nhân
                                 </a>
                                 
-                                <a href="{{ route('orders.index') }}" class="dropdown-item">
+                                <a href="<?php echo e(route('orders.index')); ?>" class="dropdown-item">
                                     <span>📦</span> Quản lý đơn hàng
                                 </a>
                                 
                                 <form action="/auth/logout" method="POST" style="margin: 0; width: 100%;">
-                                    @csrf
+                                    <?php echo csrf_field(); ?>
                                     <button type="submit" class="dropdown-item dropdown-item-logout">
                                         <span>🚪</span> Đăng xuất
                                     </button>
                                 </form>
                             </div>
                         </div>
-                    @else
+                    <?php else: ?>
                         <a href="/auth/login" class="btn-secondary" style="text-decoration: none; padding: 6px 14px; font-size: 0.85rem; border-radius: 8px;">Đăng nhập</a>
                         <a href="/auth/register" class="btn-primary" style="text-decoration: none; padding: 6px 14px; font-size: 0.85rem; border-radius: 8px;">Đăng ký</a>
-                    @endif
+                    <?php endif; ?>
                 </div>
             </div> <!-- End nav-collapse -->
 
@@ -368,7 +368,7 @@
 
     <!-- Main Content Slot -->
     <main>
-        @yield('content')
+        <?php echo $__env->yieldContent('content'); ?>
     </main>
 
     <!-- Footer -->
@@ -581,9 +581,9 @@
         </div>
     </div>
     
-    @yield('scripts')
+    <?php echo $__env->yieldContent('scripts'); ?>
 
-    @if(session()->has('user_id'))
+    <?php if(session()->has('user_id')): ?>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             function sendHeartbeat() {
@@ -591,7 +591,7 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>',
                         'Accept': 'application/json'
                     },
                     body: JSON.stringify({})
@@ -603,9 +603,9 @@
             setInterval(sendHeartbeat, 60000); // 1 minute
         });
     </script>
-    @endif
+    <?php endif; ?>
 
-    @if(session()->has('user_id'))
+    <?php if(session()->has('user_id')): ?>
     <style>
         @keyframes spin {
             0% { transform: rotate(0deg); }
@@ -809,13 +809,13 @@
                             </template>
 
                             <!-- Message Row: row-reverse = sent (right), row = received (left) -->
-                            <div class="fchat-msg-row" :class="msg.sender_id == {{ session('user_id') }} ? 'sent' : 'received'">
+                            <div class="fchat-msg-row" :class="msg.sender_id == <?php echo e(session('user_id')); ?> ? 'sent' : 'received'">
                                 
                                 <!-- Avatar slot for received messages -->
-                                <template x-if="msg.sender_id != {{ session('user_id') }}">
+                                <template x-if="msg.sender_id != <?php echo e(session('user_id')); ?>">
                                     <div class="fchat-avatar-slot">
                                         <!-- Show avatar only for the last consecutive received message -->
-                                        <template x-if="!(chat.messages[mi+1] && chat.messages[mi+1].sender_id != {{ session('user_id') }})">
+                                        <template x-if="!(chat.messages[mi+1] && chat.messages[mi+1].sender_id != <?php echo e(session('user_id')); ?>)">
                                             <div style="width: 24px; height: 24px; border-radius: 50%; background: #fff3cd; overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: 0.75rem;">
                                                 <template x-if="chat.avatar_url">
                                                     <img :src="chat.avatar_url" style="width: 100%; height: 100%; object-fit: cover;">
@@ -833,7 +833,7 @@
                                     <!-- Text Bubble -->
                                     <template x-if="msg.message">
                                         <div class="fchat-bubble"
-                                             :class="msg.sender_id == {{ session('user_id') }} ? 'fchat-bubble-sent' : 'fchat-bubble-received'">
+                                             :class="msg.sender_id == <?php echo e(session('user_id')); ?> ? 'fchat-bubble-sent' : 'fchat-bubble-received'">
                                             <span x-text="msg.message"></span>
                                         </div>
                                     </template>
@@ -974,7 +974,7 @@
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>',
                             'Accept': 'application/json'
                         },
                         body: JSON.stringify({
@@ -1020,7 +1020,7 @@
                     fetch('/api/v1/upload', {
                         method: 'POST',
                         headers: {
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                            'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>'
                         },
                         body: formData
                     })
@@ -1067,12 +1067,12 @@
                 authEndpoint: '/broadcasting/auth',
                 auth: {
                     headers: {
-                        'X-CSRF-Token': '{{ csrf_token() }}',
+                        'X-CSRF-Token': '<?php echo e(csrf_token()); ?>',
                     }
                 }
             });
 
-            const channel = pusher.subscribe('private-chat.{{ session('user_id') }}');
+            const channel = pusher.subscribe('private-chat.<?php echo e(session('user_id')); ?>');
             
             channel.bind('MessageSent', function(data) {
                 const store = Alpine.store('chatStore');
@@ -1102,7 +1102,7 @@
             window.pusherClient = pusher;
         });
     </script>
-    @endif
+    <?php endif; ?>
 
     <!-- Shopping Cart Sidebar Drawer & Toast Container -->
     <div id="cartToastContainer" style="position: fixed; bottom: 24px; left: 24px; z-index: 9999999; display: flex; flex-direction: column; gap: 10px;"></div>
@@ -1317,7 +1317,7 @@
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>',
                     'Accept': 'application/json'
                 },
                 body: JSON.stringify(payload)
@@ -1354,7 +1354,7 @@
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>',
                     'Accept': 'application/json'
                 },
                 body: JSON.stringify({ quantity: newQty })
@@ -1374,7 +1374,7 @@
             fetch(`/cart/remove/${itemId}`, {
                 method: 'DELETE',
                 headers: {
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>',
                     'Accept': 'application/json'
                 }
             })
@@ -1393,7 +1393,7 @@
             fetch('/cart/clear', {
                 method: 'POST',
                 headers: {
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>',
                     'Accept': 'application/json'
                 }
             })
@@ -1428,7 +1428,8 @@
         </button>
     </div>
 
-    {{-- Laravel Echo + Reverb WebSocket client — chỉ load trên trang cần real-time --}}
-    @stack('realtime-scripts')
+    
+    <?php echo $__env->yieldPushContent('realtime-scripts'); ?>
 </body>
 </html>
+<?php /**PATH D:\DA_DISCOVERY\resources\views/layouts/app.blade.php ENDPATH**/ ?>

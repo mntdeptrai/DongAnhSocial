@@ -1,19 +1,18 @@
-@extends('layouts.app')
-
 <!-- Tối ưu hóa SEO: Tiêu đề động chính xác theo yêu cầu khách hàng -->
-@section('title', $eatery->name . ' - ' . $eatery->category->name . ' ngon tại ' . $eatery->commune->name . ', Đông Anh')
+<?php $__env->startSection('title', $eatery->name . ' - ' . $eatery->category->name . ' ngon tại ' . $eatery->commune->name . ', Đông Anh'); ?>
 
 <!-- Tối ưu hóa SEO: Thẻ mô tả Meta tự sinh chân thực -->
-@section('meta_description', 'Khám phá ' . $eatery->name . ' tại ' . $eatery->address . ', ' . $eatery->commune->name . ', Đông Anh. Số điện thoại liên hệ: ' . $eatery->phone . '. Thực đơn món đặc sắc: ' . $eatery->dishes->take(2)->pluck('name')->implode(', ') . '. Xem đánh giá khách hàng và bản đồ hướng dẫn đường đi chi tiết.')
+<?php $__env->startSection('meta_description', 'Khám phá ' . $eatery->name . ' tại ' . $eatery->address . ', ' . $eatery->commune->name . ', Đông Anh. Số điện thoại liên hệ: ' . $eatery->phone . '. Thực đơn món đặc sắc: ' . $eatery->dishes->take(2)->pluck('name')->implode(', ') . '. Xem đánh giá khách hàng và bản đồ hướng dẫn đường đi chi tiết.'); ?>
 
-@section('og_image', $eatery->image_path ?: 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=800&q=80')
+<?php $__env->startSection('og_image', $eatery->image_path ?: 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=800&q=80'); ?>
 
 <!-- Tối ưu hóa SEO Google: Nhúng mã JSON-LD Schema.org động sinh từ Controller -->
-@section('seo_schema')
-    {!! $jsonLd !!}
-@endsection
+<?php $__env->startSection('seo_schema'); ?>
+    <?php echo $jsonLd; ?>
 
-@section('content')
+<?php $__env->stopSection(); ?>
+
+<?php $__env->startSection('content'); ?>
 <style>
     .detail-header-wrapper {
         display: flex;
@@ -266,34 +265,37 @@
     }
 </style>
 
-@php
+<?php
     $categorySlug = $eatery->category->slug;
-@endphp
+?>
 <!-- Detail Header Info -->
 <div class="container" style="padding-top: 40px; margin-bottom: 24px;">
     <div class="detail-header-wrapper">
         <div class="detail-header-left">
             <div class="detail-header-badges">
                 <span class="tag-badge-accent" style="display: inline-block; font-size: 0.85rem; color: var(--text-main); background: var(--bg-card); border-color: var(--border-glow); backdrop-filter: blur(8px); font-weight: 600;">
-                    {{ $eatery->category->icon }} {{ $eatery->category->name }}
+                    <?php echo e($eatery->category->icon); ?> <?php echo e($eatery->category->name); ?>
+
                 </span>
-                @if($eatery->foodSafetyCertificate)
+                <?php if($eatery->foodSafetyCertificate): ?>
                     <a href="#trust-hub-section" onclick="scrollToTrustHub(event)" class="tag-badge-accent" style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.85rem; color: #ffffff; background: #2ecc71; border: 1px solid #27ae60; border-radius: 30px; padding: 6px 14px; cursor: pointer; text-decoration: none; font-weight: 800; box-shadow: 0 4px 15px rgba(46, 204, 113, 0.4); transition: all 0.3s; animation: pulse-shield 2.5s infinite;" onmouseover="this.style.background='#27ae60'; this.style.transform='scale(1.05)';" onmouseout="this.style.background='#2ecc71'; this.style.transform='none';">
                         🛡️ <span style="color: #ffffff;">Xác minh An Toàn</span>
                     </a>
-                @endif
-                @if($eatery->phone)
-                    <a href="tel:{{ $eatery->phone }}" class="tag-badge-accent" style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.85rem; color: #ffffff; background: linear-gradient(135deg, #ff7e29 0%, #ff4f18 100%); border: 1px solid #ff4f18; border-radius: 30px; padding: 6px 14px; cursor: pointer; text-decoration: none; font-weight: 800; box-shadow: 0 4px 15px rgba(255, 126, 41, 0.4); transition: all 0.3s;" onmouseover="this.style.transform='scale(1.05)';" onmouseout="this.style.transform='none';">
-                        📞 <span style="color: #ffffff;">Gọi ngay: {{ $eatery->phone }}</span>
+                <?php endif; ?>
+                <?php if($eatery->phone): ?>
+                    <a href="tel:<?php echo e($eatery->phone); ?>" class="tag-badge-accent" style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.85rem; color: #ffffff; background: linear-gradient(135deg, #ff7e29 0%, #ff4f18 100%); border: 1px solid #ff4f18; border-radius: 30px; padding: 6px 14px; cursor: pointer; text-decoration: none; font-weight: 800; box-shadow: 0 4px 15px rgba(255, 126, 41, 0.4); transition: all 0.3s;" onmouseover="this.style.transform='scale(1.05)';" onmouseout="this.style.transform='none';">
+                        📞 <span style="color: #ffffff;">Gọi ngay: <?php echo e($eatery->phone); ?></span>
                     </a>
-                @endif
+                <?php endif; ?>
             </div>
             
             <h1 class="detail-title-main">
-                {{ $eatery->name }}
+                <?php echo e($eatery->name); ?>
+
             </h1>
             <p class="detail-address-sub">
-                <span>📍</span> {{ $eatery->address }}
+                <span>📍</span> <?php echo e($eatery->address); ?>
+
             </p>
         </div>
         
@@ -309,7 +311,7 @@
     </div>
 </div>
 
-@php
+<?php
     $allMedia = [];
 
     // 1. Ảnh đại diện chính của cơ sở
@@ -342,54 +344,54 @@
     while (count($allMedia) < 5) {
         $allMedia[] = $firstMedia;
     }
-@endphp
+?>
 
 <!-- Modern Airbnb-style Gallery Grid -->
 <div class="container" style="margin-bottom: 40px;">
     <div class="hero-gallery-grid" style="display: grid; grid-template-columns: 2fr 1fr 1fr; grid-template-rows: 220px 220px; gap: 12px; border-radius: 24px; overflow: hidden; position: relative;">
         <!-- Image 1: Main Large -->
         <div onclick="openHeroGalleryModal(0)" style="grid-column: 1; grid-row: 1 / 3; cursor: pointer; position: relative; overflow: hidden;" class="gallery-item">
-            @if($allMedia[0]['type'] === 'video')
-                <video src="{{ $allMedia[0]['url'] }}" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s;" autoplay muted loop playsinline></video>
+            <?php if($allMedia[0]['type'] === 'video'): ?>
+                <video src="<?php echo e($allMedia[0]['url']); ?>" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s;" autoplay muted loop playsinline></video>
                 <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.2);">
                     <div style="width: 60px; height: 60px; border-radius: 50%; background: rgba(255,255,255,0.8); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: #ff4f18;">▶</div>
                 </div>
-            @else
-                <img src="{{ $allMedia[0]['url'] }}" alt="{{ $eatery->name }}" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s;">
-            @endif
+            <?php else: ?>
+                <img src="<?php echo e($allMedia[0]['url']); ?>" alt="<?php echo e($eatery->name); ?>" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s;">
+            <?php endif; ?>
             <div class="gallery-overlay" style="position: absolute; inset: 0; background: rgba(0,0,0,0.1); opacity: 0; transition: opacity 0.3s;"></div>
         </div>
         
         <!-- Image 2 -->
         <div onclick="openHeroGalleryModal(1)" style="cursor: pointer; position: relative; overflow: hidden;" class="gallery-item">
-            <img src="{{ $allMedia[1]['url'] }}" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s;">
+            <img src="<?php echo e($allMedia[1]['url']); ?>" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s;">
             <div class="gallery-overlay" style="position: absolute; inset: 0; background: rgba(0,0,0,0.1); opacity: 0; transition: opacity 0.3s;"></div>
         </div>
         
         <!-- Image 3 -->
         <div onclick="openHeroGalleryModal(2)" style="cursor: pointer; position: relative; overflow: hidden;" class="gallery-item">
-            <img src="{{ $allMedia[2]['url'] }}" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s;">
+            <img src="<?php echo e($allMedia[2]['url']); ?>" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s;">
             <div class="gallery-overlay" style="position: absolute; inset: 0; background: rgba(0,0,0,0.1); opacity: 0; transition: opacity 0.3s;"></div>
         </div>
         
         <!-- Image 4 -->
         <div onclick="openHeroGalleryModal(3)" style="cursor: pointer; position: relative; overflow: hidden;" class="gallery-item">
-            <img src="{{ $allMedia[3]['url'] }}" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s;">
+            <img src="<?php echo e($allMedia[3]['url']); ?>" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s;">
             <div class="gallery-overlay" style="position: absolute; inset: 0; background: rgba(0,0,0,0.1); opacity: 0; transition: opacity 0.3s;"></div>
         </div>
         
         <!-- Image 5: Show all photos overlay -->
         <div onclick="openHeroGalleryModal(4)" style="cursor: pointer; position: relative; overflow: hidden;" class="gallery-item">
-            @if($allMedia[4]['type'] === 'video')
-                <video src="{{ $allMedia[4]['url'] }}" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s;" muted playsinline></video>
-            @else
-                <img src="{{ $allMedia[4]['url'] }}" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s;">
-            @endif
+            <?php if($allMedia[4]['type'] === 'video'): ?>
+                <video src="<?php echo e($allMedia[4]['url']); ?>" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s;" muted playsinline></video>
+            <?php else: ?>
+                <img src="<?php echo e($allMedia[4]['url']); ?>" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s;">
+            <?php endif; ?>
             <div style="position: absolute; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; transition: background 0.3s;" onmouseover="this.style.background='rgba(0,0,0,0.3)'" onmouseout="this.style.background='rgba(0,0,0,0.4)'">
                 <div style="text-align: center;">
                     <div style="font-size: 1.8rem; margin-bottom: 4px;">🖼️</div>
                     <span style="color: white; font-weight: 700; font-size: 1.05rem; display: block;">
-                        Xem tất cả {{ count($allMedia) }} Ảnh
+                        Xem tất cả <?php echo e(count($allMedia)); ?> Ảnh
                     </span>
                 </div>
             </div>
@@ -416,12 +418,13 @@
     
     <!-- Counter Indicator -->
     <div style="position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); color: white; font-size: 1.1rem; font-weight: 600; background: rgba(0,0,0,0.5); padding: 8px 16px; border-radius: 30px; backdrop-filter: blur(5px);">
-        <span id="heroGalleryCounter">1</span> / {{ count($allMedia) }}
+        <span id="heroGalleryCounter">1</span> / <?php echo e(count($allMedia)); ?>
+
     </div>
 </div>
 
 <script>
-    const allGalleryMedia = {!! json_encode($allMedia) !!};
+    const allGalleryMedia = <?php echo json_encode($allMedia); ?>;
     let currentGalleryIndex = 0;
 
     function openHeroGalleryModal(index = 0) {
@@ -544,11 +547,11 @@
         <!-- Left Side: Core Info, Menu, and Reviews -->
         <div>
             <!-- Giới thiệu hoặc Không gian di sản văn hóa ẩm thực -->
-            @php
+            <?php
                 $dossier = $eatery->heritage_dossier;
-            @endphp
+            ?>
 
-            @if($dossier)
+            <?php if($dossier): ?>
                 <!-- Premium Digital Museum Showcase for Heritage Specialties -->
                 <div class="detail-section glass-panel heritage-museum-card" style="padding: 28px; margin-bottom: 40px;">
                     
@@ -561,10 +564,12 @@
                             <div style="flex: 1; min-width: 0;">
 
                                 <h2 style="font-size: 2rem; font-family: var(--font-heading); color: var(--text-main); font-weight: 800; margin-top: 8px; margin-bottom: 4px;">
-                                    Hồ Sơ Di Sản: {{ $eatery->name }}
+                                    Hồ Sơ Di Sản: <?php echo e($eatery->name); ?>
+
                                 </h2>
                                 <p style="font-style: italic; color: var(--primary); font-size: 0.95rem; font-weight: 600; display: flex; align-items: center; gap: 6px;">
-                                    <span>🌾</span> {{ $dossier['heritage_year'] }}
+                                    <span>🌾</span> <?php echo e($dossier['heritage_year']); ?>
+
                                 </p>
                             </div>
                             
@@ -572,11 +577,11 @@
                             <div class="ocop-star-badge" style="flex-shrink: 0;">
                                 <span style="font-weight: 900; font-size: 0.75rem; color: var(--primary); display: block; letter-spacing: 1px;">CHỨNG NHẬN OCOP</span>
                                 <div style="color: #ffc107; font-size: 1.2rem; margin-top: 4px; display: flex; gap: 2px; justify-content: flex-end;">
-                                    @for($i=1; $i<=5; $i++)
-                                        <span style="{{ $i <= $dossier['ocop_stars'] ? 'color: #ffb300; text-shadow: 0 0 10px rgba(255, 179, 0, 0.5);' : 'color: var(--border-glow);' }}">★</span>
-                                    @endfor
+                                    <?php for($i=1; $i<=5; $i++): ?>
+                                        <span style="<?php echo e($i <= $dossier['ocop_stars'] ? 'color: #ffb300; text-shadow: 0 0 10px rgba(255, 179, 0, 0.5);' : 'color: var(--border-glow);'); ?>">★</span>
+                                    <?php endfor; ?>
                                 </div>
-                                <span style="font-size: 0.7rem; color: var(--text-muted); display: block; margin-top: 4px;">{{ $dossier['ocop_stars'] }} Sao Cấp Quốc Gia</span>
+                                <span style="font-size: 0.7rem; color: var(--text-muted); display: block; margin-top: 4px;"><?php echo e($dossier['ocop_stars']); ?> Sao Cấp Quốc Gia</span>
                             </div>
                         </div>
 
@@ -615,13 +620,15 @@
                             <!-- Tab 1: Nguồn gốc -->
                             <div id="tab-story" class="heritage-tab-content active-content">
                                 <p style="font-size: 1.05rem; line-height: 1.8; color: var(--text-main); margin-bottom: 20px;">
-                                    {{ $dossier['story'] }}
+                                    <?php echo e($dossier['story']); ?>
+
                                 </p>
-                                @if(!empty($eatery->description) && $eatery->description !== 'null')
+                                <?php if(!empty($eatery->description) && $eatery->description !== 'null'): ?>
                                 <div style="background: rgba(255,255,255,0.01); border-left: 3px solid #ffb300; padding: 16px; border-radius: 4px; font-size: 0.95rem; line-height: 1.6;">
-                                    {{ $eatery->description }}
+                                    <?php echo e($eatery->description); ?>
+
                                 </div>
-                                @endif
+                                <?php endif; ?>
                             </div>
 
                             <!-- Tab 2: Nghệ nhân -->
@@ -630,7 +637,8 @@
                                     <div style="flex: 1; min-width: 260px;">
                                         <h4 style="color: var(--primary); font-size: 1.15rem; margin-bottom: 12px; font-weight: 700;">Gặp Gỡ Những Người Giữ Lửa Di Sản</h4>
                                         <p style="font-size: 1.02rem; line-height: 1.8; color: var(--text-main); font-style: italic; background: var(--bg-btn-secondary); padding: 20px; border-radius: 12px; border: 1px dashed var(--border-glow-hover); margin: 0;">
-                                            {{ $dossier['artisans'] }}
+                                            <?php echo e($dossier['artisans']); ?>
+
                                         </p>
                                     </div>
                                 </div>
@@ -640,26 +648,26 @@
                             <div id="tab-ingredients" class="heritage-tab-content">
                                 <h4 style="color: var(--primary); font-size: 1.15rem; margin-bottom: 16px; font-weight: 700;">Bảng Thành Phần Bản Địa Thuần Khiết</h4>
                                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px;">
-                                    @foreach($dossier['ingredients'] as $ingredient)
+                                    <?php $__currentLoopData = $dossier['ingredients']; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $ingredient): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                         <div class="glass-panel" style="padding: 14px 20px; background: rgba(212, 175, 55, 0.03); border: 1px solid rgba(212, 175, 55, 0.15); display: flex; align-items: center; gap: 12px;">
                                             <span style="font-size: 1.3rem;">✨</span>
-                                            <span style="font-size: 0.95rem; font-weight: 600; color: var(--text-main);">{{ $ingredient }}</span>
+                                            <span style="font-size: 0.95rem; font-weight: 600; color: var(--text-main);"><?php echo e($ingredient); ?></span>
                                         </div>
-                                    @endforeach
+                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                 </div>
                             </div>
  
                             <!-- Tab 4: Timeline -->
                             <div id="tab-timeline" class="heritage-tab-content">
                                 <div class="heritage-timeline">
-                                    @foreach($dossier['timeline'] as $item)
+                                    <?php $__currentLoopData = $dossier['timeline']; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $item): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                         <div class="heritage-timeline-item">
-                                            <div class="heritage-timeline-badge">{{ $item['year'] }}</div>
+                                            <div class="heritage-timeline-badge"><?php echo e($item['year']); ?></div>
                                             <div class="heritage-timeline-content glass-panel" style="margin-left: 20px;">
-                                                <p style="font-size: 0.95rem; margin: 0; line-height: 1.6; color: var(--text-main);">{{ $item['event'] }}</p>
+                                                <p style="font-size: 0.95rem; margin: 0; line-height: 1.6; color: var(--text-main);"><?php echo e($item['event']); ?></p>
                                             </div>
                                         </div>
-                                    @endforeach
+                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                 </div>
                             </div>
                         </div>
@@ -670,7 +678,8 @@
                             <div>
                                 <h4 style="font-size: 1.1rem; color: var(--primary); font-weight: 700; margin-bottom: 6px;">BẠN CÓ BIẾT?</h4>
                                 <p style="font-size: 0.95rem; line-height: 1.7; color: var(--text-main); margin: 0;">
-                                    {{ $dossier['fun_fact'] }}
+                                    <?php echo e($dossier['fun_fact']); ?>
+
                                 </p>
                             </div>
                         </div>
@@ -678,31 +687,32 @@
 
                     </div>
                 </div>
-            @else
-                @if(!empty($eatery->description) && $eatery->description !== 'null')
+            <?php else: ?>
+                <?php if(!empty($eatery->description) && $eatery->description !== 'null'): ?>
                 <div class="detail-section glass-panel" style="padding: 28px; margin-bottom: 40px;">
                     <h2 class="section-title">
                         <span>📝</span> 
-                        @if($categorySlug === 'dong-anh-food-map')
+                        <?php if($categorySlug === 'dong-anh-food-map'): ?>
                             Giới thiệu về quán
-                        @elseif($categorySlug === 'stay-in-dong-anh')
+                        <?php elseif($categorySlug === 'stay-in-dong-anh'): ?>
                             Giới thiệu địa điểm lưu trú
-                        @elseif($categorySlug === 'wellness-care')
+                        <?php elseif($categorySlug === 'wellness-care'): ?>
                             Giới thiệu về cơ sở chăm sóc
-                        @elseif($categorySlug === 'dong-anh-market')
+                        <?php elseif($categorySlug === 'dong-anh-market'): ?>
                             Giới thiệu về cơ sở
-                        @elseif($categorySlug === 'smart-education-map')
+                        <?php elseif($categorySlug === 'smart-education-map'): ?>
                             Giới thiệu về nhà trường
-                        @else
+                        <?php else: ?>
                             Giới thiệu chi tiết
-                        @endif
+                        <?php endif; ?>
                     </h2>
                     <p style="font-size: 1rem; color: var(--text-main); line-height: 1.8;">
-                        {{ $eatery->description }}
+                        <?php echo e($eatery->description); ?>
+
                     </p>
                 </div>
-                @endif
-            @endif
+                <?php endif; ?>
+            <?php endif; ?>
 
             <!-- CSS đặc thù cho Hệ thống Minh bạch Thực phẩm sạch (Trust Hub) -->
             <style>
@@ -763,7 +773,7 @@
             </div>
 
             <!-- Dynamic Category Details Section -->
-            @php
+            <?php
                 $categorySlug = $eatery->category->slug;
                 $items = collect();
                 $title = 'Thực đơn & Món ăn đặc trưng';
@@ -823,138 +833,139 @@
                     $items = $eatery->dishes;
                     $modalTitle = 'Thực Đơn Chi Tiết - ' . $eatery->name;
                 }
-            @endphp
+            ?>
 
             <div class="detail-section glass-panel" style="padding: 28px;">
                 <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
-                    <h2 class="section-title" style="margin-bottom: 0;"><span>{!! $icon !!}</span> {{ $title }}</h2>
-                    @if($items->count() > 0)
+                    <h2 class="section-title" style="margin-bottom: 0;"><span><?php echo $icon; ?></span> <?php echo e($title); ?></h2>
+                    <?php if($items->count() > 0): ?>
                         <button onclick="openFullMenuModal()" class="btn-secondary" style="font-size: 0.85rem; padding: 8px 18px; border-radius: 8px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; background: rgba(255, 126, 41, 0.05); border-color: rgba(255, 126, 41, 0.2); color: var(--primary);">
-                            {!! $icon !!} {{ $btnText }}
+                            <?php echo $icon; ?> <?php echo e($btnText); ?>
+
                         </button>
-                    @endif
+                    <?php endif; ?>
                 </div>
-                @if($items->count() > 0)
+                <?php if($items->count() > 0): ?>
                     <div style="position: relative; width: 100%;">
                         
                         <div class="menu-slider-wrapper" id="menuSliderWrapper">
                             <div class="menu-slider-content" id="menuSliderContent">
-                                @foreach($items as $item)
-                                    @if(in_array($categorySlug, ['hanh-trinh-di-san', 'discover-dong-anh-community-culture-hub']))
+                                <?php $__currentLoopData = $items; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $item): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                    <?php if(in_array($categorySlug, ['hanh-trinh-di-san', 'discover-dong-anh-community-culture-hub'])): ?>
                                         <div class="dish-card glass-panel" style="background: rgba(255, 255, 255, 0.02); flex: 0 0 350px; min-width: 320px; display: flex; flex-direction: column; gap: 0; padding: 0; overflow: hidden; border: 1.5px solid rgba(16, 185, 129, 0.2); transition: all 0.3s ease; border-radius: 16px;">
                                             <div style="position: relative; height: 160px; overflow: hidden; width: 100%;">
-                                                <img src="{{ $item->image_path ?: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80' }}" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease;" alt="{{ $item->name }}">
+                                                <img src="<?php echo e($item->image_path ?: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80'); ?>" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease;" alt="<?php echo e($item->name); ?>">
                                                 <div style="position: absolute; top: 12px; left: 12px; display: flex; flex-direction: column; gap: 6px; z-index: 2;">
-                                                    @if($item->type === 'experience')
+                                                    <?php if($item->type === 'experience'): ?>
                                                         <span style="background: rgba(3, 105, 161, 0.95); color: #fff; padding: 4px 10px; border-radius: 20px; font-size: 0.68rem; font-weight: 800; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">🏛️ Trải nghiệm</span>
-                                                    @elseif($item->type === 'ticket')
+                                                    <?php elseif($item->type === 'ticket'): ?>
                                                         <span style="background: rgba(21, 128, 61, 0.95); color: #fff; padding: 4px 10px; border-radius: 20px; font-size: 0.68rem; font-weight: 800; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">🎫 Vé tham quan</span>
-                                                    @elseif($item->type === 'service')
+                                                    <?php elseif($item->type === 'service'): ?>
                                                         <span style="background: rgba(161, 98, 7, 0.95); color: #fff; padding: 4px 10px; border-radius: 20px; font-size: 0.68rem; font-weight: 800; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">🙏 Dịch vụ di tích</span>
-                                                    @else
+                                                    <?php else: ?>
                                                         <span style="background: rgba(71, 85, 105, 0.95); color: #fff; padding: 4px 10px; border-radius: 20px; font-size: 0.68rem; font-weight: 800; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">🏛️ Khác</span>
-                                                    @endif
-                                                    @if($item->discount_note && $item->discount_note !== 'null')
-                                                        <span style="background: rgba(221, 107, 32, 0.95); color: #fff; padding: 4px 10px; border-radius: 20px; font-size: 0.68rem; font-weight: 800; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">🏷️ {{ $item->discount_note }}</span>
-                                                    @endif
+                                                    <?php endif; ?>
+                                                    <?php if($item->discount_note && $item->discount_note !== 'null'): ?>
+                                                        <span style="background: rgba(221, 107, 32, 0.95); color: #fff; padding: 4px 10px; border-radius: 20px; font-size: 0.68rem; font-weight: 800; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">🏷️ <?php echo e($item->discount_note); ?></span>
+                                                    <?php endif; ?>
                                                 </div>
                                             </div>
                                             <div style="padding: 20px; display: flex; flex-direction: column; flex-grow: 1; justify-content: space-between; gap: 12px;">
                                                 <div>
-                                                    <h3 style="font-size: 1.05rem; font-weight: 800; color: var(--text-main); line-height: 1.4; margin: 0 0 8px 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 2.8em;" title="{{ $item->name }}">{{ $item->name }}</h3>
-                                                    @if($item->description && $item->description !== 'null' && $item->description !== 'NULL')
-                                                        <p style="font-size: 0.82rem; color: var(--text-muted); line-height: 1.5; margin: 0; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; min-height: 6em;" title="{{ $item->description }}">{{ $item->description }}</p>
-                                                    @else
+                                                    <h3 style="font-size: 1.05rem; font-weight: 800; color: var(--text-main); line-height: 1.4; margin: 0 0 8px 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 2.8em;" title="<?php echo e($item->name); ?>"><?php echo e($item->name); ?></h3>
+                                                    <?php if($item->description && $item->description !== 'null' && $item->description !== 'NULL'): ?>
+                                                        <p style="font-size: 0.82rem; color: var(--text-muted); line-height: 1.5; margin: 0; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; min-height: 6em;" title="<?php echo e($item->description); ?>"><?php echo e($item->description); ?></p>
+                                                    <?php else: ?>
                                                         <div style="min-height: 6em;"></div>
-                                                    @endif
+                                                    <?php endif; ?>
                                                 </div>
                                                 <div style="display: flex; align-items: center; justify-content: space-between; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.06); margin-top: auto;">
                                                     <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">💰 Dự chi:</span>
                                                     <strong style="color: #10b981; font-size: 1.05rem; font-weight: 800;">
-                                                        @if($item->price !== null && $item->price > 0)
-                                                            {{ number_format($item->price, 0, ',', '.') }}đ <span style="font-size: 0.75rem; font-weight: 500; color: var(--text-muted);">/ {{ $item->unit ?: 'lượt' }}</span>
-                                                        @else
-                                                            Theo yêu cầu <span style="font-size: 0.75rem; font-weight: 500; color: var(--text-muted);">/ {{ $item->unit ?: 'lượt' }}</span>
-                                                        @endif
+                                                        <?php if($item->price !== null && $item->price > 0): ?>
+                                                            <?php echo e(number_format($item->price, 0, ',', '.')); ?>đ <span style="font-size: 0.75rem; font-weight: 500; color: var(--text-muted);">/ <?php echo e($item->unit ?: 'lượt'); ?></span>
+                                                        <?php else: ?>
+                                                            Theo yêu cầu <span style="font-size: 0.75rem; font-weight: 500; color: var(--text-muted);">/ <?php echo e($item->unit ?: 'lượt'); ?></span>
+                                                        <?php endif; ?>
                                                     </strong>
                                                 </div>
                                             </div>
                                         </div>
-                                    @else
-                                        @php
+                                    <?php else: ?>
+                                        <?php
                                             $hasProductDossier = !empty($item->story) || !empty($item->artisans) || !empty($item->heritage_year) || !empty($item->fun_fact) || !empty($item->ingredients) || !empty($item->timeline);
-                                        @endphp
+                                        ?>
                                         <div class="dish-card glass-panel" 
-                                             style="background: rgba(255,255,255,0.02); flex: 0 0 calc(50% - 10px); min-width: 290px; transition: all 0.3s ease; {{ $hasProductDossier ? 'cursor: pointer;' : '' }}"
-                                             @if($hasProductDossier)
-                                                 onclick="const el = document.getElementById('heritage-dossier-{{ $item->id }}'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });"
+                                             style="background: rgba(255,255,255,0.02); flex: 0 0 calc(50% - 10px); min-width: 290px; transition: all 0.3s ease; <?php echo e($hasProductDossier ? 'cursor: pointer;' : ''); ?>"
+                                             <?php if($hasProductDossier): ?>
+                                                 onclick="const el = document.getElementById('heritage-dossier-<?php echo e($item->id); ?>'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });"
                                                  onmouseover="this.style.borderColor='var(--primary)'; this.style.boxShadow='0 0 15px rgba(255, 126, 41, 0.15)'"
                                                  onmouseout="this.style.borderColor='rgba(255,255,255,0.08)'; this.style.boxShadow='none'"
-                                             @endif>
-                                            <img src="{{ $item->image_path ?: ($categorySlug === 'smart-education-map' ? 'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?auto=format&fit=crop&w=150&q=80' : ($categorySlug === 'wellness-care' ? 'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?auto=format&fit=crop&w=150&q=80' : ($categorySlug === 'stay-in-dong-anh' ? 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=150&q=80' : ($categorySlug === 'dong-anh-market' ? 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=150&q=80' : 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=150&q=80')))) }}" class="dish-img" alt="{{ $item->name }}">
+                                             <?php endif; ?>>
+                                            <img src="<?php echo e($item->image_path ?: ($categorySlug === 'smart-education-map' ? 'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?auto=format&fit=crop&w=150&q=80' : ($categorySlug === 'wellness-care' ? 'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?auto=format&fit=crop&w=150&q=80' : ($categorySlug === 'stay-in-dong-anh' ? 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=150&q=80' : ($categorySlug === 'dong-anh-market' ? 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=150&q=80' : 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=150&q=80'))))); ?>" class="dish-img" alt="<?php echo e($item->name); ?>">
                                             <div class="dish-info" style="flex: 1;">
                                                 <div>
-                                                    @if($categorySlug === 'dong-anh-market' && $hasProductDossier)
+                                                    <?php if($categorySlug === 'dong-anh-market' && $hasProductDossier): ?>
                                                         <span class="tag-badge" style="padding: 1px 6px; font-size: 0.65rem; font-weight: 700; margin-bottom: 4px; display: inline-block; background: rgba(212, 175, 55, 0.1); border-color: rgba(212, 175, 55, 0.3); color: #ffb300; animation: pulse-trust 2s infinite;">🏺 Xem Chi Tiết Di Sản</span>
-                                                    @endif
-                                                    @if($categorySlug === 'smart-education-map')
-                                                        <span class="tag-badge" style="padding: 1px 6px; font-size: 0.65rem; font-weight: 700; margin-bottom: 4px; display: inline-block; background: rgba(52, 152, 219, 0.1); border-color: rgba(52, 152, 219, 0.2); color: #3498db;">⏱️ {{ $item->duration }}</span>
-                                                    @elseif($categorySlug === 'wellness-care' && $item->duration)
-                                                        <span class="tag-badge" style="padding: 1px 6px; font-size: 0.65rem; font-weight: 700; margin-bottom: 4px; display: inline-block; background: rgba(46, 204, 113, 0.1); border-color: rgba(46, 204, 113, 0.2); color: #2ecc71;">⏱️ {{ $item->duration }}</span>
-                                                    @elseif($categorySlug === 'stay-in-dong-anh')
-                                                        <span class="tag-badge" style="padding: 1px 6px; font-size: 0.65rem; font-weight: 700; margin-bottom: 4px; display: inline-block; background: rgba(155, 89, 182, 0.1); border-color: rgba(155, 89, 182, 0.2); color: #9b59b6;">🛏️ {{ $item->bed_type }} | 👤 Sức chứa: {{ $item->capacity }}</span>
-                                                    @elseif($categorySlug === 'dong-anh-market' && $item->star_rating)
-                                                        <span class="tag-badge" style="padding: 1px 6px; font-size: 0.65rem; font-weight: 700; margin-bottom: 4px; display: inline-block; background: rgba(241, 196, 15, 0.1); border-color: rgba(241, 196, 15, 0.2); color: #f1c40f;">⭐ OCOP: {{ $item->star_rating }}</span>
-                                                    @elseif(isset($item->is_signature) && $item->is_signature)
+                                                    <?php endif; ?>
+                                                    <?php if($categorySlug === 'smart-education-map'): ?>
+                                                        <span class="tag-badge" style="padding: 1px 6px; font-size: 0.65rem; font-weight: 700; margin-bottom: 4px; display: inline-block; background: rgba(52, 152, 219, 0.1); border-color: rgba(52, 152, 219, 0.2); color: #3498db;">⏱️ <?php echo e($item->duration); ?></span>
+                                                    <?php elseif($categorySlug === 'wellness-care' && $item->duration): ?>
+                                                        <span class="tag-badge" style="padding: 1px 6px; font-size: 0.65rem; font-weight: 700; margin-bottom: 4px; display: inline-block; background: rgba(46, 204, 113, 0.1); border-color: rgba(46, 204, 113, 0.2); color: #2ecc71;">⏱️ <?php echo e($item->duration); ?></span>
+                                                    <?php elseif($categorySlug === 'stay-in-dong-anh'): ?>
+                                                        <span class="tag-badge" style="padding: 1px 6px; font-size: 0.65rem; font-weight: 700; margin-bottom: 4px; display: inline-block; background: rgba(155, 89, 182, 0.1); border-color: rgba(155, 89, 182, 0.2); color: #9b59b6;">🛏️ <?php echo e($item->bed_type); ?> | 👤 Sức chứa: <?php echo e($item->capacity); ?></span>
+                                                    <?php elseif($categorySlug === 'dong-anh-market' && $item->star_rating): ?>
+                                                        <span class="tag-badge" style="padding: 1px 6px; font-size: 0.65rem; font-weight: 700; margin-bottom: 4px; display: inline-block; background: rgba(241, 196, 15, 0.1); border-color: rgba(241, 196, 15, 0.2); color: #f1c40f;">⭐ OCOP: <?php echo e($item->star_rating); ?></span>
+                                                    <?php elseif(isset($item->is_signature) && $item->is_signature): ?>
                                                         <span class="tag-badge" style="padding: 1px 6px; font-size: 0.65rem; font-weight: 700; margin-bottom: 4px; display: inline-block;">★ Món đặc trưng</span>
-                                                    @endif
-                                                    <h3 class="dish-name">{{ $item->name }}</h3>
-                                                    @if($item->description && $item->description !== 'null' && $item->description !== 'NULL')
-                                                        <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; line-height: 1.4;">{{ $item->description }}</p>
-                                                    @endif
+                                                    <?php endif; ?>
+                                                    <h3 class="dish-name"><?php echo e($item->name); ?></h3>
+                                                    <?php if($item->description && $item->description !== 'null' && $item->description !== 'NULL'): ?>
+                                                        <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; line-height: 1.4;"><?php echo e($item->description); ?></p>
+                                                    <?php endif; ?>
                                                 </div>
                                                 <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 8px; width: 100%;">
-                                                    @if($categorySlug === 'smart-education-map')
-                                                        <span class="dish-price" style="font-size: 0.95rem;">{{ $item->tuition_fee ?: 'Liên hệ trường' }}</span>
-                                                    @elseif(isset($item->price) && $item->price > 0)
-                                                        <span class="dish-price">{{ number_format($item->price, 0, ',', '.') }}đ{{ $categorySlug === 'stay-in-dong-anh' ? ' / đêm' : '' }}</span>
-                                                    @else
+                                                    <?php if($categorySlug === 'smart-education-map'): ?>
+                                                        <span class="dish-price" style="font-size: 0.95rem;"><?php echo e($item->tuition_fee ?: 'Liên hệ trường'); ?></span>
+                                                    <?php elseif(isset($item->price) && $item->price > 0): ?>
+                                                        <span class="dish-price"><?php echo e(number_format($item->price, 0, ',', '.')); ?>đ<?php echo e($categorySlug === 'stay-in-dong-anh' ? ' / đêm' : ''); ?></span>
+                                                    <?php else: ?>
                                                         <span class="dish-price" style="font-size: 0.95rem; color: var(--text-muted);">Liên hệ</span>
-                                                    @endif
+                                                    <?php endif; ?>
 
-                                                    @if(!in_array($categorySlug, ['stay-in-dong-anh', 'wellness-care', 'smart-education-map', 'discover-dong-anh-community-culture-hub']) && isset($item->price) && $item->price > 0)
+                                                    <?php if(!in_array($categorySlug, ['stay-in-dong-anh', 'wellness-care', 'smart-education-map', 'discover-dong-anh-community-culture-hub']) && isset($item->price) && $item->price > 0): ?>
                                                         <button class="btn-add-to-cart-mini" 
-                                                                data-id="{{ $item->id }}" 
-                                                                data-type="{{ $categorySlug === 'dong-anh-market' ? 'ocop_product' : 'dish' }}"
+                                                                data-id="<?php echo e($item->id); ?>" 
+                                                                data-type="<?php echo e($categorySlug === 'dong-anh-market' ? 'ocop_product' : 'dish'); ?>"
                                                                 style="background: var(--primary-grad); border: none; color: white; padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s; box-shadow: 0 4px 10px rgba(255, 126, 41, 0.2);"
                                                                 onclick="addToCart(event, this)">
                                                             Thêm 🛒
                                                         </button>
-                                                    @endif
+                                                    <?php endif; ?>
                                                 </div>
                                             </div>
                                         </div>
-                                    @endif
-                                @endforeach
+                                    <?php endif; ?>
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                             </div>
                         </div>
                     </div>
 
                     <!-- Flat Heritage Dossiers Section -->
-                    @php
+                    <?php
                         $heritageProducts = $items->filter(function($prod) {
                             return !empty($prod->story) || !empty($prod->artisans) || !empty($prod->heritage_year) || !empty($prod->fun_fact) || !empty($prod->ingredients) || !empty($prod->timeline);
                         });
-                    @endphp
+                    ?>
 
-                    @if($heritageProducts->count() > 0)
+                    <?php if($heritageProducts->count() > 0): ?>
                         <div class="heritage-flat-section" style="margin-top: 35px; border-top: 1.5px dashed rgba(255,255,255,0.08); padding-top: 30px;">
                             <h3 style="font-size: 1.2rem; font-weight: 800; color: #ffb300; margin-bottom: 24px; display: flex; align-items: center; gap: 10px; text-shadow: 0 0 10px rgba(255,179,0,0.15);">
                                 🏺 Hồ Sơ Di Sản & Câu Chuyện Đặc Sản Làng Nghề
                             </h3>
                             <div style="display: flex; flex-direction: column; gap: 30px;">
-                                @foreach($heritageProducts as $prod)
-                                    <div id="heritage-dossier-{{ $prod->id }}" class="glass-panel" style="background: rgba(255, 255, 255, 0.02); border: 1.5px solid rgba(212, 175, 55, 0.25); border-radius: 20px; padding: 24px; position: relative; overflow: hidden;">
+                                <?php $__currentLoopData = $heritageProducts; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $prod): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                    <div id="heritage-dossier-<?php echo e($prod->id); ?>" class="glass-panel" style="background: rgba(255, 255, 255, 0.02); border: 1.5px solid rgba(212, 175, 55, 0.25); border-radius: 20px; padding: 24px; position: relative; overflow: hidden;">
                                         <!-- Decorative background patterns -->
                                         <div class="heritage-pattern-overlay" style="opacity: 0.08;"></div>
                                         
@@ -963,39 +974,41 @@
                                             <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 16px;">
                                                 <div>
                                                     <h4 style="font-size: 1.35rem; font-weight: 800; color: #ffb300; margin: 0 0 6px 0; text-shadow: 0 0 10px rgba(255,179,0,0.15);">
-                                                        Hồ Sơ Di Sản: {{ $prod->name }}
+                                                        Hồ Sơ Di Sản: <?php echo e($prod->name); ?>
+
                                                     </h4>
-                                                    @if($prod->heritage_year)
+                                                    <?php if($prod->heritage_year): ?>
                                                         <p style="font-style: italic; color: var(--primary); font-size: 0.95rem; font-weight: 600; margin: 0; display: flex; align-items: center; gap: 6px;">
-                                                            🌾 {{ $prod->heritage_year }}
+                                                            🌾 <?php echo e($prod->heritage_year); ?>
+
                                                         </p>
-                                                    @endif
+                                                    <?php endif; ?>
                                                 </div>
-                                                @if($prod->star_rating)
-                                                    @php
+                                                <?php if($prod->star_rating): ?>
+                                                    <?php
                                                         $starsMatch = [];
                                                         preg_match('/\d+/', $prod->star_rating, $starsMatch);
                                                         $starsCount = !empty($starsMatch) ? (int)$starsMatch[0] : 0;
-                                                    @endphp
-                                                    @if($starsCount > 0)
+                                                    ?>
+                                                    <?php if($starsCount > 0): ?>
                                                         <div class="ocop-star-badge" style="flex-shrink: 0; text-align: center; background: rgba(14, 165, 233, 0.05); border: 1px solid rgba(14, 165, 233, 0.15); padding: 8px 16px; border-radius: 12px; min-width: 140px;">
                                                             <span style="font-weight: 900; font-size: 0.65rem; color: #0ea5e9; display: block; letter-spacing: 1px; margin-bottom: 4px;">CHỨNG NHẬN OCOP</span>
                                                             <div style="color: #ffb300; font-size: 1.1rem; display: flex; gap: 2px; justify-content: center; margin-bottom: 4px;">
-                                                                @for($i = 1; $i <= 5; $i++)
-                                                                    <span style="{{ $i <= $starsCount ? 'color: #ffb300; text-shadow: 0 0 10px rgba(255, 179, 0, 0.5);' : 'color: rgba(255,255,255,0.15);' }}">★</span>
-                                                                @endfor
+                                                                <?php for($i = 1; $i <= 5; $i++): ?>
+                                                                    <span style="<?php echo e($i <= $starsCount ? 'color: #ffb300; text-shadow: 0 0 10px rgba(255, 179, 0, 0.5);' : 'color: rgba(255,255,255,0.15);'); ?>">★</span>
+                                                                <?php endfor; ?>
                                                             </div>
-                                                            <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: 500;">{{ $prod->star_rating }} Cấp Quốc Gia</span>
+                                                            <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: 500;"><?php echo e($prod->star_rating); ?> Cấp Quốc Gia</span>
                                                         </div>
-                                                    @endif
-                                                @endif
+                                                    <?php endif; ?>
+                                                <?php endif; ?>
                                             </div>
 
                                             <!-- TTS Audio Widget (Flat, standalone!) -->
-                                            @if($prod->audio_narrative)
+                                            <?php if($prod->audio_narrative): ?>
                                                 <div class="audio-storyteller-widget glass-panel" style="background: rgba(212, 175, 55, 0.04); border: 1px solid rgba(212, 175, 55, 0.15); padding: 16px 20px; border-radius: 16px; display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap;">
                                                     <div style="display: flex; align-items: center; gap: 16px; flex: 1; min-width: 0;">
-                                                        <button class="audio-play-btn flat-audio-play-btn" data-narrative="{{ $prod->audio_narrative }}" onclick="toggleFlatAudio(this)" aria-label="Play narrative audio" style="outline: none; background: linear-gradient(135deg, #f79d00, #f87a00); border: none; width: 44px; height: 44px; border-radius: 50%; cursor: pointer; transition: transform 0.2s ease; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(248, 122, 0, 0.3);">
+                                                        <button class="audio-play-btn flat-audio-play-btn" data-narrative="<?php echo e($prod->audio_narrative); ?>" onclick="toggleFlatAudio(this)" aria-label="Play narrative audio" style="outline: none; background: linear-gradient(135deg, #f79d00, #f87a00); border: none; width: 44px; height: 44px; border-radius: 50%; cursor: pointer; transition: transform 0.2s ease; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(248, 122, 0, 0.3);">
                                                             <span class="play-icon" style="color: #ffffff; font-size: 1.1rem; line-height: 1;">🔊</span>
                                                         </button>
                                                         <div>
@@ -1012,99 +1025,101 @@
                                                     </div>
                                                     <div class="dots-placeholder" style="color: #ffb300; letter-spacing: 2px; font-weight: 900; font-size: 1.2rem; opacity: 0.7;">......</div>
                                                 </div>
-                                            @endif
+                                            <?php endif; ?>
 
                                             <!-- Tab Buttons -->
                                             <div class="heritage-tab-buttons" style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 12px;">
-                                                <button class="flat-heritage-tab-btn active" onclick="switchFlatTab(this, 'flat-tab-story-{{ $prod->id }}')">🏛️ Nguồn Gốc & Câu Chuyện</button>
-                                                @if($prod->artisans)
-                                                    <button class="flat-heritage-tab-btn" onclick="switchFlatTab(this, 'flat-tab-artisans-{{ $prod->id }}')">🧑‍🍳 Nghệ Nhân Truyền Nghề</button>
-                                                @endif
-                                                @if(is_array($prod->ingredients) && count($prod->ingredients) > 0)
-                                                    <button class="flat-heritage-tab-btn" onclick="switchFlatTab(this, 'flat-tab-ingredients-{{ $prod->id }}')">🌾 Bí Quyết & Nguyên Liệu</button>
-                                                @endif
-                                                @if(is_array($prod->timeline) && count($prod->timeline) > 0)
-                                                    <button class="flat-heritage-tab-btn" onclick="switchFlatTab(this, 'flat-tab-timeline-{{ $prod->id }}')">📜 Hành Trình Di Sản</button>
-                                                @endif
+                                                <button class="flat-heritage-tab-btn active" onclick="switchFlatTab(this, 'flat-tab-story-<?php echo e($prod->id); ?>')">🏛️ Nguồn Gốc & Câu Chuyện</button>
+                                                <?php if($prod->artisans): ?>
+                                                    <button class="flat-heritage-tab-btn" onclick="switchFlatTab(this, 'flat-tab-artisans-<?php echo e($prod->id); ?>')">🧑‍🍳 Nghệ Nhân Truyền Nghề</button>
+                                                <?php endif; ?>
+                                                <?php if(is_array($prod->ingredients) && count($prod->ingredients) > 0): ?>
+                                                    <button class="flat-heritage-tab-btn" onclick="switchFlatTab(this, 'flat-tab-ingredients-<?php echo e($prod->id); ?>')">🌾 Bí Quyết & Nguyên Liệu</button>
+                                                <?php endif; ?>
+                                                <?php if(is_array($prod->timeline) && count($prod->timeline) > 0): ?>
+                                                    <button class="flat-heritage-tab-btn" onclick="switchFlatTab(this, 'flat-tab-timeline-<?php echo e($prod->id); ?>')">📜 Hành Trình Di Sản</button>
+                                                <?php endif; ?>
                                             </div>
 
                                             <!-- Tab Contents -->
                                             <div class="flat-tab-content-container" style="min-height: 120px; margin-top: 10px;">
                                                 <!-- Story Tab -->
-                                                <div id="flat-tab-story-{{ $prod->id }}" class="flat-tab-panel" style="display: block;">
+                                                <div id="flat-tab-story-<?php echo e($prod->id); ?>" class="flat-tab-panel" style="display: block;">
                                                     <p style="font-size: 0.92rem; color: var(--text-main); line-height: 1.7; margin: 0; text-align: justify; white-space: pre-line;">
-                                                        {{ $prod->story }}
+                                                        <?php echo e($prod->story); ?>
+
                                                     </p>
                                                 </div>
 
                                                 <!-- Artisans Tab -->
-                                                @if($prod->artisans)
-                                                    <div id="flat-tab-artisans-{{ $prod->id }}" class="flat-tab-panel" style="display: none;">
+                                                <?php if($prod->artisans): ?>
+                                                    <div id="flat-tab-artisans-<?php echo e($prod->id); ?>" class="flat-tab-panel" style="display: none;">
                                                         <div class="glass-panel" style="background: rgba(52, 152, 219, 0.02); border: 1px solid rgba(52, 152, 219, 0.15); padding: 18px; border-radius: 12px;">
                                                             <strong style="color: #3498db; display: block; font-size: 1.05rem; margin-bottom: 8px;">Gặp Gỡ Những Người Giữ Lửa Di Sản</strong>
                                                             <p style="font-size: 0.9rem; color: var(--text-main); line-height: 1.6; margin: 0; white-space: pre-line;">
-                                                                {{ $prod->artisans }}
+                                                                <?php echo e($prod->artisans); ?>
+
                                                             </p>
                                                         </div>
                                                     </div>
-                                                @endif
+                                                <?php endif; ?>
 
                                                 <!-- Ingredients Tab -->
-                                                @if(is_array($prod->ingredients) && count($prod->ingredients) > 0)
-                                                    <div id="flat-tab-ingredients-{{ $prod->id }}" class="flat-tab-panel" style="display: none;">
+                                                <?php if(is_array($prod->ingredients) && count($prod->ingredients) > 0): ?>
+                                                    <div id="flat-tab-ingredients-<?php echo e($prod->id); ?>" class="flat-tab-panel" style="display: none;">
                                                         <strong style="color: #0ea5e9; display: block; font-size: 1.05rem; margin-bottom: 12px;">Bảng Thành Phần Bản Địa Thuần Khiết</strong>
                                                         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px;">
-                                                            @foreach($prod->ingredients as $ing)
+                                                            <?php $__currentLoopData = $prod->ingredients; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $ing): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                                                 <div class="glass-panel" style="padding: 14px 18px; background: rgba(212, 175, 55, 0.03); border: 1px solid rgba(212, 175, 55, 0.15); display: flex; align-items: center; gap: 12px; border-radius: 12px; transition: transform 0.2s ease;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
                                                                     <span style="font-size: 1.25rem; color: #ffb300; filter: drop-shadow(0 0 5px rgba(255,179,0,0.4)); flex-shrink: 0;">✨</span>
-                                                                    <span style="font-size: 0.88rem; font-weight: 600; color: var(--text-main); line-height: 1.4;">{{ $ing }}</span>
+                                                                    <span style="font-size: 0.88rem; font-weight: 600; color: var(--text-main); line-height: 1.4;"><?php echo e($ing); ?></span>
                                                                 </div>
-                                                            @endforeach
+                                                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                                         </div>
                                                     </div>
-                                                @endif
+                                                <?php endif; ?>
 
                                                 <!-- Timeline Tab -->
-                                                @if(is_array($prod->timeline) && count($prod->timeline) > 0)
-                                                    <div id="flat-tab-timeline-{{ $prod->id }}" class="flat-tab-panel" style="display: none;">
+                                                <?php if(is_array($prod->timeline) && count($prod->timeline) > 0): ?>
+                                                    <div id="flat-tab-timeline-<?php echo e($prod->id); ?>" class="flat-tab-panel" style="display: none;">
                                                         <div style="position: relative; border-left: 2px solid rgba(255,255,255,0.08); margin-left: 15px; padding-left: 20px; display: flex; flex-direction: column; gap: 20px;">
-                                                            @foreach($prod->timeline as $t)
+                                                            <?php $__currentLoopData = $prod->timeline; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $t): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                                                 <div style="position: relative;">
                                                                     <div style="position: absolute; left: -27px; top: 4px; width: 12px; height: 12px; border-radius: 50%; background: #f87a00; border: 2.5px solid #1a202c;"></div>
-                                                                    <span style="background: linear-gradient(135deg, #f79d00, #f87a00); color: #fff; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 800; display: inline-block; margin-bottom: 8px; box-shadow: 0 2px 6px rgba(248,122,0,0.2);">{{ $t['year'] ?? 'Mốc thời gian' }}</span>
+                                                                    <span style="background: linear-gradient(135deg, #f79d00, #f87a00); color: #fff; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 800; display: inline-block; margin-bottom: 8px; box-shadow: 0 2px 6px rgba(248,122,0,0.2);"><?php echo e($t['year'] ?? 'Mốc thời gian'); ?></span>
                                                                     <div class="glass-panel" style="padding: 14px 18px; border: 1px solid var(--border-glow); border-radius: 12px; background: rgba(255,255,255,0.015);">
-                                                                        <p style="font-size: 0.88rem; margin: 0; line-height: 1.5; color: var(--text-main);">{{ $t['event'] ?? '' }}</p>
+                                                                        <p style="font-size: 0.88rem; margin: 0; line-height: 1.5; color: var(--text-main);"><?php echo e($t['event'] ?? ''); ?></p>
                                                                     </div>
                                                                 </div>
-                                                            @endforeach
+                                                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                                         </div>
                                                     </div>
-                                                @endif
+                                                <?php endif; ?>
                                             </div>
 
                                             <!-- Fun Fact -->
-                                            @if($prod->fun_fact)
+                                            <?php if($prod->fun_fact): ?>
                                                 <div class="glass-panel" style="background: rgba(14, 165, 233, 0.03); border: 1.5px solid rgba(14, 165, 233, 0.15); padding: 18px 20px; border-radius: 16px; display: flex; align-items: flex-start; gap: 14px; margin-top: 15px;">
                                                     <div style="font-size: 1.6rem; line-height: 1; filter: drop-shadow(0 0 8px rgba(255,179,0,0.3));">💡</div>
                                                     <div>
                                                         <strong style="color: #0ea5e9; font-size: 0.85rem; display: block; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 800;">BẠN CÓ BIẾT?</strong>
-                                                        <p style="font-size: 0.88rem; color: var(--text-muted); margin: 0; line-height: 1.5; text-align: justify;">{{ $prod->fun_fact }}</p>
+                                                        <p style="font-size: 0.88rem; color: var(--text-muted); margin: 0; line-height: 1.5; text-align: justify;"><?php echo e($prod->fun_fact); ?></p>
                                                     </div>
                                                 </div>
-                                            @endif
+                                            <?php endif; ?>
                                         </div>
                                     </div>
-                                @endforeach
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                             </div>
                         </div>
-                    @endif
-                @else
+                    <?php endif; ?>
+                <?php else: ?>
                     <div style="text-align: center; padding: 50px 20px; background: rgba(255,255,255,0.015); border-radius: 20px; border: 1px dashed rgba(255,255,255,0.1); display: flex; flex-direction: column; align-items: center; justify-content: center;">
-                        <div style="font-size: 3.5rem; opacity: 0.4; margin-bottom: 16px; filter: grayscale(1);">{!! $icon !!}</div>
+                        <div style="font-size: 3.5rem; opacity: 0.4; margin-bottom: 16px; filter: grayscale(1);"><?php echo $icon; ?></div>
                         <h4 style="color: var(--text-main); font-weight: 700; font-size: 1.15rem; margin: 0 0 8px 0;">Dữ liệu đang cập nhật</h4>
-                        <p style="color: var(--text-muted); font-size: 0.95rem; margin: 0;">{{ $emptyText }}</p>
+                        <p style="color: var(--text-muted); font-size: 0.95rem; margin: 0;"><?php echo e($emptyText); ?></p>
                     </div>
-                @endif
+                <?php endif; ?>
             </div>
 
             <!-- Styles cho Slider thực đơn -->
@@ -1228,7 +1243,8 @@
                     <!-- Modal Header -->
                     <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed var(--border-glow); padding: 20px 24px; background: rgba(255,255,255,0.01);">
                         <h3 style="margin: 0; font-size: 1.4rem; font-weight: 800; color: var(--text-main); display: flex; align-items: center; gap: 10px; font-family: var(--font-heading);">
-                            {!! $icon !!} {{ $modalTitle }}
+                            <?php echo $icon; ?> <?php echo e($modalTitle); ?>
+
                         </h3>
                         <button onclick="closeFullMenuModal()" style="background: transparent; border: none; font-size: 1.5rem; color: var(--text-muted); cursor: pointer; transition: color 0.2s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text-muted)'">✕</button>
                     </div>
@@ -1238,138 +1254,138 @@
                         <!-- Thanh tìm kiếm & Lọc nhanh -->
                         <div style="position: relative; margin-bottom: 4px;">
                             <span style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 1.1rem; pointer-events: none;">🔍</span>
-                            <input type="text" id="dishSearchInput" oninput="filterModalDishes()" placeholder="{{ $placeholderSearch }}" style="width: 100%; padding: 12px 16px 12px 46px; background: rgba(255,255,255,0.03); border: 1.5px solid var(--border-glow); border-radius: 14px; color: var(--text-main); font-size: 0.88rem; outline: none; transition: all 0.3s;" onfocus="this.style.borderColor='var(--primary)'; this.style.boxShadow='0 0 12px rgba(255, 126, 41, 0.15)'" onblur="this.style.borderColor='var(--border-glow)'; this.style.boxShadow='none'">
+                            <input type="text" id="dishSearchInput" oninput="filterModalDishes()" placeholder="<?php echo e($placeholderSearch); ?>" style="width: 100%; padding: 12px 16px 12px 46px; background: rgba(255,255,255,0.03); border: 1.5px solid var(--border-glow); border-radius: 14px; color: var(--text-main); font-size: 0.88rem; outline: none; transition: all 0.3s;" onfocus="this.style.borderColor='var(--primary)'; this.style.boxShadow='0 0 12px rgba(255, 126, 41, 0.15)'" onblur="this.style.borderColor='var(--border-glow)'; this.style.boxShadow='none'">
                         </div>
 
                         <!-- Bộ lọc nhóm món ăn -->
-                        @if($categorySlug === 'dong-anh-food-map')
+                        <?php if($categorySlug === 'dong-anh-food-map'): ?>
                         <div style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; scrollbar-width: none; -ms-overflow-style: none;">
-                            <button class="modal-tab-btn active" onclick="filterModalTab('all')" data-tab="all">📋 Tất cả ({{ $items->count() }})</button>
-                            @if($items->where('is_signature', true)->count() > 0)
-                                <button class="modal-tab-btn" onclick="filterModalTab('signature')" data-tab="signature">★ Món đặc trưng ({{ $items->where('is_signature', true)->count() }})</button>
-                            @endif
+                            <button class="modal-tab-btn active" onclick="filterModalTab('all')" data-tab="all">📋 Tất cả (<?php echo e($items->count()); ?>)</button>
+                            <?php if($items->where('is_signature', true)->count() > 0): ?>
+                                <button class="modal-tab-btn" onclick="filterModalTab('signature')" data-tab="signature">★ Món đặc trưng (<?php echo e($items->where('is_signature', true)->count()); ?>)</button>
+                            <?php endif; ?>
                             <button class="modal-tab-btn" onclick="filterModalTab('best-price')" data-tab="best-price">💰 Giá tiết kiệm (≤ 200k)</button>
                         </div>
-                        @else
+                        <?php else: ?>
                         <div style="display: none;">
                             <!-- Hidden tab selector to keep JS from breaking -->
                             <button class="modal-tab-btn active" onclick="filterModalTab('all')" data-tab="all"></button>
                         </div>
-                        @endif
+                        <?php endif; ?>
 
                         <!-- Grid hiển thị món ăn/khóa học/dịch vụ -->
-                        <div id="modalMenuGrid" style="display: grid; grid-template-columns: {{ in_array($categorySlug, ['hanh-trinh-di-san', 'discover-dong-anh-community-culture-hub']) ? 'repeat(auto-fill, minmax(300px, 1fr))' : '1fr 1fr' }}; gap: 16px;">
-                            @foreach($items as $item)
-                                @if(in_array($categorySlug, ['hanh-trinh-di-san', 'discover-dong-anh-community-culture-hub']))
+                        <div id="modalMenuGrid" style="display: grid; grid-template-columns: <?php echo e(in_array($categorySlug, ['hanh-trinh-di-san', 'discover-dong-anh-community-culture-hub']) ? 'repeat(auto-fill, minmax(300px, 1fr))' : '1fr 1fr'); ?>; gap: 16px;">
+                            <?php $__currentLoopData = $items; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $item): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                <?php if(in_array($categorySlug, ['hanh-trinh-di-san', 'discover-dong-anh-community-culture-hub'])): ?>
                                     <div class="dish-card glass-panel" 
-                                         data-name="{{ strtolower($item->name) }}" 
-                                         data-desc="{{ strtolower($item->description) }}" 
+                                         data-name="<?php echo e(strtolower($item->name)); ?>" 
+                                         data-desc="<?php echo e(strtolower($item->description)); ?>" 
                                          data-signature="false" 
-                                         data-price="{{ $item->price ?? 0 }}"
+                                         data-price="<?php echo e($item->price ?? 0); ?>"
                                          style="background: rgba(255,255,255,0.02); display: flex; flex-direction: column; gap: 0; padding: 0; border-radius: 16px; border: 1.5px solid rgba(16, 185, 129, 0.2); transition: opacity 0.25s ease, transform 0.25s ease, border-color 0.3s ease; opacity: 1; transform: translateY(0); overflow: hidden;">
                                         <div style="position: relative; height: 160px; overflow: hidden; width: 100%;">
-                                            <img src="{{ $item->image_path ?: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80' }}" style="width: 100%; height: 100%; object-fit: cover;" alt="{{ $item->name }}">
+                                            <img src="<?php echo e($item->image_path ?: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80'); ?>" style="width: 100%; height: 100%; object-fit: cover;" alt="<?php echo e($item->name); ?>">
                                             <div style="position: absolute; top: 12px; left: 12px; display: flex; flex-direction: column; gap: 6px; z-index: 2;">
-                                                @if($item->type === 'experience')
+                                                <?php if($item->type === 'experience'): ?>
                                                     <span style="background: rgba(3, 105, 161, 0.95); color: #fff; padding: 4px 10px; border-radius: 20px; font-size: 0.68rem; font-weight: 800; display: inline-flex; align-items: center; gap: 4px;">🏛️ Trải nghiệm</span>
-                                                @elseif($item->type === 'ticket')
+                                                <?php elseif($item->type === 'ticket'): ?>
                                                     <span style="background: rgba(21, 128, 61, 0.95); color: #fff; padding: 4px 10px; border-radius: 20px; font-size: 0.68rem; font-weight: 800; display: inline-flex; align-items: center; gap: 4px;">🎫 Vé tham quan</span>
-                                                @elseif($item->type === 'service')
+                                                <?php elseif($item->type === 'service'): ?>
                                                     <span style="background: rgba(161, 98, 7, 0.95); color: #fff; padding: 4px 10px; border-radius: 20px; font-size: 0.68rem; font-weight: 800; display: inline-flex; align-items: center; gap: 4px;">🙏 Dịch vụ di tích</span>
-                                                @else
+                                                <?php else: ?>
                                                     <span style="background: rgba(71, 85, 105, 0.95); color: #fff; padding: 4px 10px; border-radius: 20px; font-size: 0.68rem; font-weight: 800; display: inline-flex; align-items: center; gap: 4px;">🏛️ Khác</span>
-                                                @endif
-                                                @if($item->discount_note && $item->discount_note !== 'null')
-                                                    <span style="background: rgba(221, 107, 32, 0.95); color: #fff; padding: 4px 10px; border-radius: 20px; font-size: 0.68rem; font-weight: 800; display: inline-flex; align-items: center; gap: 4px;">🏷️ {{ $item->discount_note }}</span>
-                                                @endif
+                                                <?php endif; ?>
+                                                <?php if($item->discount_note && $item->discount_note !== 'null'): ?>
+                                                    <span style="background: rgba(221, 107, 32, 0.95); color: #fff; padding: 4px 10px; border-radius: 20px; font-size: 0.68rem; font-weight: 800; display: inline-flex; align-items: center; gap: 4px;">🏷️ <?php echo e($item->discount_note); ?></span>
+                                                <?php endif; ?>
                                             </div>
                                         </div>
                                         <div style="padding: 20px; display: flex; flex-direction: column; flex-grow: 1; justify-content: space-between; gap: 12px;">
                                             <div>
-                                                <h3 style="font-size: 1.05rem; font-weight: 800; color: var(--text-main); line-height: 1.4; margin: 0 0 8px 0;" title="{{ $item->name }}">{{ $item->name }}</h3>
-                                                @if($item->description && $item->description !== 'null' && $item->description !== 'NULL')
-                                                    <p style="font-size: 0.82rem; color: var(--text-muted); line-height: 1.5; margin: 0;">{{ $item->description }}</p>
-                                                @endif
+                                                <h3 style="font-size: 1.05rem; font-weight: 800; color: var(--text-main); line-height: 1.4; margin: 0 0 8px 0;" title="<?php echo e($item->name); ?>"><?php echo e($item->name); ?></h3>
+                                                <?php if($item->description && $item->description !== 'null' && $item->description !== 'NULL'): ?>
+                                                    <p style="font-size: 0.82rem; color: var(--text-muted); line-height: 1.5; margin: 0;"><?php echo e($item->description); ?></p>
+                                                <?php endif; ?>
                                             </div>
                                             <div style="display: flex; align-items: center; justify-content: space-between; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.06); margin-top: auto;">
                                                 <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">💰 Dự chi:</span>
                                                 <strong style="color: #10b981; font-size: 1.05rem; font-weight: 800;">
-                                                    @if($item->price !== null && $item->price > 0)
-                                                        {{ number_format($item->price, 0, ',', '.') }}đ <span style="font-size: 0.75rem; font-weight: 500; color: var(--text-muted);">/ {{ $item->unit ?: 'lượt' }}</span>
-                                                    @else
-                                                        Theo yêu cầu <span style="font-size: 0.75rem; font-weight: 500; color: var(--text-muted);">/ {{ $item->unit ?: 'lượt' }}</span>
-                                                    @endif
+                                                    <?php if($item->price !== null && $item->price > 0): ?>
+                                                        <?php echo e(number_format($item->price, 0, ',', '.')); ?>đ <span style="font-size: 0.75rem; font-weight: 500; color: var(--text-muted);">/ <?php echo e($item->unit ?: 'lượt'); ?></span>
+                                                    <?php else: ?>
+                                                        Theo yêu cầu <span style="font-size: 0.75rem; font-weight: 500; color: var(--text-muted);">/ <?php echo e($item->unit ?: 'lượt'); ?></span>
+                                                    <?php endif; ?>
                                                 </strong>
                                             </div>
                                         </div>
                                     </div>
-                                @else
-                                    @php
+                                <?php else: ?>
+                                    <?php
                                         $hasProductDossier = !empty($item->story) || !empty($item->artisans) || !empty($item->heritage_year) || !empty($item->fun_fact) || !empty($item->ingredients) || !empty($item->timeline);
-                                    @endphp
+                                    ?>
                                     <div class="dish-card glass-panel" 
-                                         data-name="{{ strtolower($item->name) }}" 
-                                         data-desc="{{ strtolower($item->description) }}" 
-                                         data-signature="{{ isset($item->is_signature) && $item->is_signature ? 'true' : 'false' }}" 
-                                         data-price="{{ $item->price ?? 0 }}"
-                                         style="background: rgba(255,255,255,0.02); display: flex; gap: 16px; padding: 16px; border-radius: 12px; border: 1px solid var(--border-glow); transition: all 0.3s ease; opacity: 1; transform: translateY(0); {{ $hasProductDossier ? 'cursor: pointer;' : '' }}"
-                                         @if($hasProductDossier)
-                                             onclick="closeFullMenuModal(); const el = document.getElementById('heritage-dossier-{{ $item->id }}'); if (el) setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'center' }), 350);"
-                                             data-product="{{ json_encode($item) }}"
+                                         data-name="<?php echo e(strtolower($item->name)); ?>" 
+                                         data-desc="<?php echo e(strtolower($item->description)); ?>" 
+                                         data-signature="<?php echo e(isset($item->is_signature) && $item->is_signature ? 'true' : 'false'); ?>" 
+                                         data-price="<?php echo e($item->price ?? 0); ?>"
+                                         style="background: rgba(255,255,255,0.02); display: flex; gap: 16px; padding: 16px; border-radius: 12px; border: 1px solid var(--border-glow); transition: all 0.3s ease; opacity: 1; transform: translateY(0); <?php echo e($hasProductDossier ? 'cursor: pointer;' : ''); ?>"
+                                         <?php if($hasProductDossier): ?>
+                                             onclick="closeFullMenuModal(); const el = document.getElementById('heritage-dossier-<?php echo e($item->id); ?>'); if (el) setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'center' }), 350);"
+                                             data-product="<?php echo e(json_encode($item)); ?>"
                                              onmouseover="this.style.borderColor='var(--primary)'; this.style.boxShadow='0 0 15px rgba(255, 126, 41, 0.15)'"
                                              onmouseout="this.style.borderColor='var(--border-glow)'; this.style.boxShadow='none'"
-                                         @endif>
-                                        <img src="{{ $item->image_path ?: ($categorySlug === 'smart-education-map' ? 'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?auto=format&fit=crop&w=150&q=80' : ($categorySlug === 'wellness-care' ? 'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?auto=format&fit=crop&w=150&q=80' : ($categorySlug === 'stay-in-dong-anh' ? 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=150&q=80' : ($categorySlug === 'dong-anh-market' ? 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=150&q=80' : 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=150&q=80')))) }}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; flex-shrink: 0;" alt="{{ $item->name }}">
+                                         <?php endif; ?>>
+                                        <img src="<?php echo e($item->image_path ?: ($categorySlug === 'smart-education-map' ? 'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?auto=format&fit=crop&w=150&q=80' : ($categorySlug === 'wellness-care' ? 'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?auto=format&fit=crop&w=150&q=80' : ($categorySlug === 'stay-in-dong-anh' ? 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=150&q=80' : ($categorySlug === 'dong-anh-market' ? 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=150&q=80' : 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=150&q=80'))))); ?>" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; flex-shrink: 0;" alt="<?php echo e($item->name); ?>">
                                         <div style="display: flex; flex-direction: column; justify-content: space-between; flex: 1;">
                                             <div>
-                                                @if($categorySlug === 'dong-anh-market' && $hasProductDossier)
+                                                <?php if($categorySlug === 'dong-anh-market' && $hasProductDossier): ?>
                                                     <span class="tag-badge" style="padding: 1px 6px; font-size: 0.65rem; font-weight: 700; margin-bottom: 4px; display: inline-block; background: rgba(212, 175, 55, 0.1); border-color: rgba(212, 175, 55, 0.3); color: #ffb300; animation: pulse-trust 2s infinite;">🏺 Xem Chi Tiết Di Sản</span>
-                                                @endif
-                                                @if($categorySlug === 'smart-education-map')
-                                                    <span class="tag-badge" style="padding: 1px 6px; font-size: 0.65rem; font-weight: 700; margin-bottom: 4px; display: inline-block; background: rgba(52, 152, 219, 0.1); border-color: rgba(52, 152, 219, 0.2); color: #3498db;">⏱️ {{ $item->duration }}</span>
-                                                @elseif($categorySlug === 'wellness-care' && $item->duration)
-                                                    <span class="tag-badge" style="padding: 1px 6px; font-size: 0.65rem; font-weight: 700; margin-bottom: 4px; display: inline-block; background: rgba(46, 204, 113, 0.1); border-color: rgba(46, 204, 113, 0.2); color: #2ecc71;">⏱️ {{ $item->duration }}</span>
-                                                @elseif($categorySlug === 'stay-in-dong-anh')
-                                                    <span class="tag-badge" style="padding: 1px 6px; font-size: 0.65rem; font-weight: 700; margin-bottom: 4px; display: inline-block; background: rgba(155, 89, 182, 0.1); border-color: rgba(155, 89, 182, 0.2); color: #9b59b6;">🛏️ {{ $item->bed_type }} | 👤 Sức chứa: {{ $item->capacity }}</span>
-                                                @elseif($categorySlug === 'dong-anh-market' && $item->star_rating)
-                                                    <span class="tag-badge" style="padding: 1px 6px; font-size: 0.65rem; font-weight: 700; margin-bottom: 4px; display: inline-block; background: rgba(241, 196, 15, 0.1); border-color: rgba(241, 196, 15, 0.2); color: #f1c40f;">⭐ OCOP: {{ $item->star_rating }}</span>
-                                                @elseif(isset($item->is_signature) && $item->is_signature)
+                                                <?php endif; ?>
+                                                <?php if($categorySlug === 'smart-education-map'): ?>
+                                                    <span class="tag-badge" style="padding: 1px 6px; font-size: 0.65rem; font-weight: 700; margin-bottom: 4px; display: inline-block; background: rgba(52, 152, 219, 0.1); border-color: rgba(52, 152, 219, 0.2); color: #3498db;">⏱️ <?php echo e($item->duration); ?></span>
+                                                <?php elseif($categorySlug === 'wellness-care' && $item->duration): ?>
+                                                    <span class="tag-badge" style="padding: 1px 6px; font-size: 0.65rem; font-weight: 700; margin-bottom: 4px; display: inline-block; background: rgba(46, 204, 113, 0.1); border-color: rgba(46, 204, 113, 0.2); color: #2ecc71;">⏱️ <?php echo e($item->duration); ?></span>
+                                                <?php elseif($categorySlug === 'stay-in-dong-anh'): ?>
+                                                    <span class="tag-badge" style="padding: 1px 6px; font-size: 0.65rem; font-weight: 700; margin-bottom: 4px; display: inline-block; background: rgba(155, 89, 182, 0.1); border-color: rgba(155, 89, 182, 0.2); color: #9b59b6;">🛏️ <?php echo e($item->bed_type); ?> | 👤 Sức chứa: <?php echo e($item->capacity); ?></span>
+                                                <?php elseif($categorySlug === 'dong-anh-market' && $item->star_rating): ?>
+                                                    <span class="tag-badge" style="padding: 1px 6px; font-size: 0.65rem; font-weight: 700; margin-bottom: 4px; display: inline-block; background: rgba(241, 196, 15, 0.1); border-color: rgba(241, 196, 15, 0.2); color: #f1c40f;">⭐ OCOP: <?php echo e($item->star_rating); ?></span>
+                                                <?php elseif(isset($item->is_signature) && $item->is_signature): ?>
                                                     <span class="tag-badge" style="padding: 1px 6px; font-size: 0.65rem; font-weight: 700; margin-bottom: 4px; display: inline-block;">★ Món đặc trưng</span>
-                                                @endif
-                                                <h4 style="font-weight: 600; font-size: 0.95rem; color: var(--text-main); margin: 0;">{{ $item->name }}</h4>
-                                                @if($item->description && $item->description !== 'null' && $item->description !== 'NULL')
-                                                    <p style="font-size: 0.78rem; color: var(--text-muted); margin: 4px 0 0 0; line-height: 1.4;">{{ $item->description }}</p>
-                                                @endif
+                                                <?php endif; ?>
+                                                <h4 style="font-weight: 600; font-size: 0.95rem; color: var(--text-main); margin: 0;"><?php echo e($item->name); ?></h4>
+                                                <?php if($item->description && $item->description !== 'null' && $item->description !== 'NULL'): ?>
+                                                    <p style="font-size: 0.78rem; color: var(--text-muted); margin: 4px 0 0 0; line-height: 1.4;"><?php echo e($item->description); ?></p>
+                                                <?php endif; ?>
                                             </div>
                                             <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 6px; width: 100%;">
-                                                @if($categorySlug === 'smart-education-map')
-                                                    <span style="color: var(--primary); font-weight: 700; font-size: 0.95rem; font-family: var(--font-heading); margin-top: 4px;">{{ $item->tuition_fee ?: 'Liên hệ trường' }}</span>
-                                                @elseif(isset($item->price) && $item->price > 0)
-                                                    <span style="color: var(--primary); font-weight: 700; font-size: 0.95rem; font-family: var(--font-heading); margin-top: 4px;">{{ number_format($item->price, 0, ',', '.') }}đ{{ $categorySlug === 'stay-in-dong-anh' ? ' / đêm' : '' }}</span>
-                                                @else
+                                                <?php if($categorySlug === 'smart-education-map'): ?>
+                                                    <span style="color: var(--primary); font-weight: 700; font-size: 0.95rem; font-family: var(--font-heading); margin-top: 4px;"><?php echo e($item->tuition_fee ?: 'Liên hệ trường'); ?></span>
+                                                <?php elseif(isset($item->price) && $item->price > 0): ?>
+                                                    <span style="color: var(--primary); font-weight: 700; font-size: 0.95rem; font-family: var(--font-heading); margin-top: 4px;"><?php echo e(number_format($item->price, 0, ',', '.')); ?>đ<?php echo e($categorySlug === 'stay-in-dong-anh' ? ' / đêm' : ''); ?></span>
+                                                <?php else: ?>
                                                     <span style="color: var(--text-muted); font-weight: 600; font-size: 0.9rem; margin-top: 4px;">Liên hệ</span>
-                                                @endif
+                                                <?php endif; ?>
 
-                                                @if(!in_array($categorySlug, ['stay-in-dong-anh', 'wellness-care', 'smart-education-map', 'discover-dong-anh-community-culture-hub']) && isset($item->price) && $item->price > 0)
+                                                <?php if(!in_array($categorySlug, ['stay-in-dong-anh', 'wellness-care', 'smart-education-map', 'discover-dong-anh-community-culture-hub']) && isset($item->price) && $item->price > 0): ?>
                                                     <button class="btn-add-to-cart-mini" 
-                                                            data-id="{{ $item->id }}" 
-                                                            data-type="{{ $categorySlug === 'dong-anh-market' ? 'ocop_product' : 'dish' }}"
+                                                            data-id="<?php echo e($item->id); ?>" 
+                                                            data-type="<?php echo e($categorySlug === 'dong-anh-market' ? 'ocop_product' : 'dish'); ?>"
                                                             style="background: var(--primary-grad); border: none; color: white; padding: 4px 10px; border-radius: 6px; font-size: 0.72rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s;"
                                                             onclick="addToCart(event, this)">
                                                         Thêm 🛒
                                                     </button>
-                                                @endif
+                                                <?php endif; ?>
                                             </div>
                                         </div>
                                     </div>
-                                @endif
-                            @endforeach
+                                <?php endif; ?>
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                         </div>
                     </div>
 
                     <!-- Modal Footer -->
                     <div style="border-top: 1px dashed var(--border-glow); padding: 16px 24px; background: rgba(255,255,255,0.01); display: flex; justify-content: space-between; align-items: center;">
-                        <span style="font-size: 0.85rem; color: var(--text-muted);">Đang hiển thị: <strong style="color: var(--accent);" id="modalVisibleCount">{{ $items->count() }} {{ $itemUnit }}</strong></span>
+                        <span style="font-size: 0.85rem; color: var(--text-muted);">Đang hiển thị: <strong style="color: var(--accent);" id="modalVisibleCount"><?php echo e($items->count()); ?> <?php echo e($itemUnit); ?></strong></span>
                         <button onclick="closeFullMenuModal()" class="btn-primary" style="font-size: 0.85rem; padding: 8px 20px; border-radius: 8px; cursor: pointer;">Đóng</button>
                     </div>
                 </div>
@@ -1379,39 +1395,40 @@
             <div class="detail-section glass-panel" style="padding: 28px;">
                 <h2 class="section-title" id="reviewsSection">
                     <span>💬</span> 
-                    @if($categorySlug === 'dong-anh-food-map')
+                    <?php if($categorySlug === 'dong-anh-food-map'): ?>
                         Đánh giá từ thực khách
-                    @elseif($categorySlug === 'stay-in-dong-anh')
+                    <?php elseif($categorySlug === 'stay-in-dong-anh'): ?>
                         Đánh giá từ khách lưu trú
-                    @elseif($categorySlug === 'wellness-care')
+                    <?php elseif($categorySlug === 'wellness-care'): ?>
                         Đánh giá từ khách hàng
-                    @elseif($categorySlug === 'dong-anh-market')
+                    <?php elseif($categorySlug === 'dong-anh-market'): ?>
                         Đánh giá từ người mua
-                    @elseif($categorySlug === 'smart-education-map')
+                    <?php elseif($categorySlug === 'smart-education-map'): ?>
                         Đánh giá từ phụ huynh & học sinh
-                    @else
+                    <?php else: ?>
                         Đánh giá từ cộng đồng
-                    @endif
+                    <?php endif; ?>
                     <span style="font-size: 0.9rem; color: var(--text-muted); font-weight: normal;">
-                        ({{ $eatery->reviews->count() }} nhận xét)
+                        (<?php echo e($eatery->reviews->count()); ?> nhận xét)
                     </span>
                 </h2>
                 
                 <!-- Hiển thị thông báo thành công khi gửi đánh giá -->
-                @if(session('success'))
+                <?php if(session('success')): ?>
                     <div class="glass-panel" style="background: rgba(32, 178, 170, 0.1); border-color: var(--accent); padding: 14px 20px; border-radius: 8px; color: var(--accent); margin-bottom: 20px; font-size: 0.95rem;">
-                        {{ session('success') }}
+                        <?php echo e(session('success')); ?>
+
                     </div>
-                @endif
+                <?php endif; ?>
                 
                 <!-- Form Đánh giá mới -->
                 <div class="review-submit glass-panel" style="background: rgba(255,255,255,0.02);">
                     <h3 style="font-size: 1.1rem; margin-bottom: 16px;">✍️ Gửi nhận xét của bạn</h3>
-                    <form action="/dia-diem/reviews/{{ $eatery->id }}" method="POST" enctype="multipart/form-data">
-                        @csrf
+                    <form action="/dia-diem/reviews/<?php echo e($eatery->id); ?>" method="POST" enctype="multipart/form-data">
+                        <?php echo csrf_field(); ?>
                         <div class="review-form-group">
                             <label class="review-form-label">Tên của bạn</label>
-                            <input type="text" name="user_name" class="form-input" required placeholder="Nhập tên..." value="{{ session('user_name') ?: '' }}">
+                            <input type="text" name="user_name" class="form-input" required placeholder="Nhập tên..." value="<?php echo e(session('user_name') ?: ''); ?>">
                         </div>
                         
                         <div class="review-form-group">
@@ -1429,19 +1446,19 @@
                         <div class="review-form-group">
                             <label class="review-form-label">Nhận xét của bạn</label>
                             <textarea name="comment" class="form-input" rows="4" 
-                                @if($categorySlug === 'dong-anh-food-map')
+                                <?php if($categorySlug === 'dong-anh-food-map'): ?>
                                     placeholder="Nhập cảm nhận của bạn về món ăn, không gian, dịch vụ quán..."
-                                @elseif($categorySlug === 'stay-in-dong-anh')
+                                <?php elseif($categorySlug === 'stay-in-dong-anh'): ?>
                                     placeholder="Nhập cảm nhận của bạn về phòng ốc, dịch vụ, tiện nghi nơi lưu trú..."
-                                @elseif($categorySlug === 'wellness-care')
+                                <?php elseif($categorySlug === 'wellness-care'): ?>
                                     placeholder="Nhập cảm nhận của bạn về chất lượng khám chữa bệnh, chăm sóc, phục vụ..."
-                                @elseif($categorySlug === 'dong-anh-market')
+                                <?php elseif($categorySlug === 'dong-anh-market'): ?>
                                     placeholder="Nhập cảm nhận của bạn về chất lượng sản phẩm, giá cả, thái độ phục vụ..."
-                                @elseif($categorySlug === 'smart-education-map')
+                                <?php elseif($categorySlug === 'smart-education-map'): ?>
                                     placeholder="Nhập cảm nhận của bạn về chất lượng đào tạo, cơ sở vật chất, giáo viên..."
-                                @else
+                                <?php else: ?>
                                     placeholder="Nhập nhận xét của bạn về địa điểm này..."
-                                @endif
+                                <?php endif; ?>
                                 style="resize: vertical;"></textarea>
                         </div>
                         
@@ -1455,115 +1472,117 @@
                 </div>
                 
                 <!-- Danh sách bình luận -->
-                @if($eatery->reviews->count() > 0)
+                <?php if($eatery->reviews->count() > 0): ?>
                     <div class="review-list" style="display: flex; flex-direction: column; gap: 24px; margin-top: 24px;">
-                        @foreach($eatery->reviews->take(5) as $rev)
+                        <?php $__currentLoopData = $eatery->reviews->take(5); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $rev): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                             <div class="review-card glass-panel" style="padding: 24px; border-radius: 20px; border: 1px solid var(--border-glow); background: rgba(255, 255, 255, 0.015); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.015); transition: all 0.3s ease; display: flex; flex-direction: column; gap: 16px;">
                                 <!-- User Info Header -->
                                 <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
                                     <div style="display: flex; align-items: center; gap: 14px;">
                                         <!-- Avatar with gradient -->
                                         <div style="width: 46px; height: 46px; border-radius: 50%; background: linear-gradient(135deg, var(--primary) 0%, #ff8b3d 100%); color: #ffffff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.1rem; box-shadow: 0 4px 15px rgba(255, 126, 41, 0.2); text-transform: uppercase;">
-                                            {{ substr($rev->user_name, 0, 2) }}
+                                            <?php echo e(substr($rev->user_name, 0, 2)); ?>
+
                                         </div>
                                         
                                         <!-- Name & Stars -->
                                         <div>
-                                            <span style="font-weight: 700; color: var(--text-main); font-size: 1.05rem; display: block;">{{ $rev->user_name }}</span>
+                                            <span style="font-weight: 700; color: var(--text-main); font-size: 1.05rem; display: block;"><?php echo e($rev->user_name); ?></span>
                                             <div style="color: #ffb03a; font-size: 0.95rem; margin-top: 2px; display: flex; gap: 3px;">
-                                                @for($i=1; $i<=5; $i++)
-                                                    @if($i <= $rev->rating)
+                                                <?php for($i=1; $i<=5; $i++): ?>
+                                                    <?php if($i <= $rev->rating): ?>
                                                         <span style="color: #ffb03a; text-shadow: 0 0 8px rgba(255, 176, 58, 0.4);">★</span>
-                                                    @else
+                                                    <?php else: ?>
                                                         <span style="color: var(--border-glow);">★</span>
-                                                    @endif
-                                                @endfor
+                                                    <?php endif; ?>
+                                                <?php endfor; ?>
                                             </div>
                                         </div>
                                     </div>
                                     
                                     <!-- Date Badge -->
                                     <span style="font-size: 0.8rem; color: var(--text-muted); background: rgba(255,255,255,0.04); padding: 4px 12px; border-radius: 30px; border: 1px solid var(--border-glow); display: inline-flex; align-items: center; gap: 4px;">
-                                        📅 {{ $rev->created_at->format('d/m/Y H:i') }}
+                                        📅 <?php echo e($rev->created_at->format('d/m/Y H:i')); ?>
+
                                     </span>
                                 </div>
 
                                 <!-- Review Comment Text -->
-                                <p style="font-size: 0.98rem; color: var(--text-main); line-height: 1.7; margin: 0; white-space: pre-line; font-weight: 450;">{{ $rev->comment }}</p>
+                                <p style="font-size: 0.98rem; color: var(--text-main); line-height: 1.7; margin: 0; white-space: pre-line; font-weight: 450;"><?php echo e($rev->comment); ?></p>
                                 
                                 <!-- Attached Media (Photos/Videos) -->
-                                @if($rev->media && $rev->media->count() > 0)
+                                <?php if($rev->media && $rev->media->count() > 0): ?>
                                     <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 4px;">
-                                        @foreach($rev->media as $mediaItem)
-                                            @if($mediaItem->file_type === 'image')
+                                        <?php $__currentLoopData = $rev->media; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $mediaItem): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                            <?php if($mediaItem->file_type === 'image'): ?>
                                                 <div style="position: relative; width: 100px; height: 100px; border-radius: 12px; overflow: hidden; border: 1.5px solid var(--border-glow); box-shadow: 0 4px 12px rgba(0,0,0,0.12); cursor: pointer; transition: all 0.25s ease;" onmouseover="this.style.transform='scale(1.05)'; this.style.borderColor='var(--primary)'" onmouseout="this.style.transform='none'; this.style.borderColor='var(--border-glow)'">
-                                                    <img src="{{ $mediaItem->file_path }}" alt="Review Image" style="width: 100%; height: 100%; object-fit: cover;">
+                                                    <img src="<?php echo e($mediaItem->file_path); ?>" alt="Review Image" style="width: 100%; height: 100%; object-fit: cover;">
                                                 </div>
-                                            @else
+                                            <?php else: ?>
                                                 <div style="position: relative; width: 140px; height: 100px; border-radius: 12px; overflow: hidden; border: 1.5px solid var(--border-glow); box-shadow: 0 4px 12px rgba(0,0,0,0.12);">
-                                                    <video src="{{ $mediaItem->file_path }}" style="width: 100%; height: 100%; object-fit: cover;" controls></video>
+                                                    <video src="<?php echo e($mediaItem->file_path); ?>" style="width: 100%; height: 100%; object-fit: cover;" controls></video>
                                                 </div>
-                                            @endif
-                                        @endforeach
+                                            <?php endif; ?>
+                                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                     </div>
-                                @endif
+                                <?php endif; ?>
 
                                 <!-- Official Seller Reply Box -->
-                                @if($rev->seller_reply)
+                                <?php if($rev->seller_reply): ?>
                                     <div class="seller-reply-bubble" style="margin-top: 8px; padding: 18px 22px; background: rgba(255, 126, 41, 0.04); border: 1.5px solid rgba(255, 126, 41, 0.15); border-radius: 18px; font-size: 0.9rem; box-shadow: 0 8px 24px rgba(255, 126, 41, 0.02); position: relative;">
                                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
                                             <strong style="color: var(--primary); display: flex; align-items: center; gap: 8px; font-size: 0.92rem; font-weight: 800;">
                                                 <span style="font-size: 1.2rem;">🏪</span> 
-                                                @if($categorySlug === 'dong-anh-food-map')
+                                                <?php if($categorySlug === 'dong-anh-food-map'): ?>
                                                     Phản hồi từ chủ quán
-                                                @elseif($categorySlug === 'stay-in-dong-anh')
+                                                <?php elseif($categorySlug === 'stay-in-dong-anh'): ?>
                                                     Phản hồi từ quản lý
-                                                @elseif($categorySlug === 'wellness-care')
+                                                <?php elseif($categorySlug === 'wellness-care'): ?>
                                                     Phản hồi từ cơ sở
-                                                @elseif($categorySlug === 'dong-anh-market')
+                                                <?php elseif($categorySlug === 'dong-anh-market'): ?>
                                                     Phản hồi từ chủ cửa hàng
-                                                @elseif($categorySlug === 'smart-education-map')
+                                                <?php elseif($categorySlug === 'smart-education-map'): ?>
                                                     Phản hồi từ nhà trường
-                                                @else
+                                                <?php else: ?>
                                                      Phản hồi từ địa điểm
-                                                @endif
+                                                <?php endif; ?>
                                             </strong>
                                             <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: 600;">
-                                                @if($categorySlug === 'smart-education-map')
+                                                <?php if($categorySlug === 'smart-education-map'): ?>
                                                     Ban giám hiệu
-                                                @elseif($categorySlug === 'stay-in-dong-anh' || $categorySlug === 'wellness-care')
+                                                <?php elseif($categorySlug === 'stay-in-dong-anh' || $categorySlug === 'wellness-care'): ?>
                                                     Ban quản lý
-                                                @else
+                                                <?php else: ?>
                                                     Chủ cơ sở
-                                                @endif
+                                                <?php endif; ?>
                                             </span>
                                         </div>
                                         <p style="margin: 0; color: var(--text-main); line-height: 1.65; font-style: italic; font-weight: 500;">
-                                            "{{ $rev->seller_reply }}"
+                                            "<?php echo e($rev->seller_reply); ?>"
                                         </p>
                                     </div>
-                                @endif
+                                <?php endif; ?>
                             </div>
-                        @endforeach
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </div>
 
-                    @if($eatery->reviews->count() > 5)
+                    <?php if($eatery->reviews->count() > 5): ?>
                         <div style="display: flex; justify-content: center; margin-top: 24px;">
                             <button onclick="openAllReviewsModal()" class="btn-secondary" style="font-size: 0.95rem; padding: 12px 28px; border-radius: 12px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; background: rgba(255, 126, 41, 0.05); border: 1.5px solid rgba(255, 126, 41, 0.2); color: var(--primary); transition: all 0.3s ease; outline: none;" onmouseover="this.style.background='rgba(255, 126, 41, 0.1)'; this.style.transform='translateY(-2px)'" onmouseout="this.style.background='rgba(255, 126, 41, 0.05)'; this.style.transform='none'">
-                                💬 Xem tất cả đánh giá & phản hồi ({{ $eatery->reviews->count() }} nhận xét)
+                                💬 Xem tất cả đánh giá & phản hồi (<?php echo e($eatery->reviews->count()); ?> nhận xét)
                             </button>
                         </div>
-                    @endif
-                @else
+                    <?php endif; ?>
+                <?php else: ?>
                     <div style="text-align: center; padding: 40px 20px; background: rgba(255,255,255,0.015); border-radius: 20px; border: 1px dashed rgba(255,255,255,0.1); margin-top: 24px;">
                         <div style="font-size: 3rem; margin-bottom: 12px; filter: grayscale(1); opacity: 0.5;">💬</div>
                         <h4 style="color: var(--text-main); font-weight: 700; font-size: 1.1rem; margin: 0 0 8px 0;">Chưa có nhận xét</h4>
                         <p style="color: var(--text-muted); font-size: 0.95rem; margin: 0;">Hãy là người đầu tiên chia sẻ cảm nhận thực tế của bạn về địa điểm này!</p>
                     </div>
-                @endif
+                <?php endif; ?>
             </div>
 
-            @if(in_array($categorySlug, ['dong-anh-food-map', 'dong-anh-market']))
+            <?php if(in_array($categorySlug, ['dong-anh-food-map', 'dong-anh-market'])): ?>
             <!-- Bridge Text and upgraded Trust Hub Card -->
             <div style="margin-top: 40px; margin-bottom: 20px; padding: 0 10px; display: flex; align-items: flex-start; gap: 12px; background: rgba(32, 178, 170, 0.03); border: 1px dashed rgba(32, 178, 170, 0.2); padding: 16px; border-radius: 12px;">
                 <span style="font-size: 1.5rem; filter: drop-shadow(0 0 5px rgba(32, 178, 170, 0.5));">🛡️</span>
@@ -1578,18 +1597,18 @@
                     <h2 class="section-title" style="margin: 0; border: none; padding: 0;">
                         <span style="display: inline-block; filter: drop-shadow(0 0 8px rgba(32, 178, 170, 0.5));">🛡️</span> Minh Bạch An Toàn & Truy Xuất Số
                     </h2>
-                    @if($eatery->foodSafetyCertificate)
+                    <?php if($eatery->foodSafetyCertificate): ?>
                         <span class="trust-badge" style="background: rgba(32, 178, 170, 0.1); border: 1px solid var(--accent); color: var(--accent); font-weight: 700; font-size: 0.8rem; padding: 4px 12px; border-radius: 20px;">
                             ✓ ĐÃ XÁC MINH CSDL
                         </span>
-                    @else
+                    <?php else: ?>
                         <span class="trust-badge" style="background: rgba(255, 193, 7, 0.1); border: 1px solid #ffc107; color: #ffc107; font-weight: 700; font-size: 0.8rem; padding: 4px 12px; border-radius: 20px;">
                             ⚠ ĐANG CHỜ CẬP NHẬT
                         </span>
-                    @endif
+                    <?php endif; ?>
                 </div>
 
-                @if($eatery->foodSafetyCertificate || $eatery->foodSupplyContracts->count() > 0 || $eatery->purchaseInvoices->count() > 0 || $eatery->dailyFoodLogs->count() > 0)
+                <?php if($eatery->foodSafetyCertificate || $eatery->foodSupplyContracts->count() > 0 || $eatery->purchaseInvoices->count() > 0 || $eatery->dailyFoodLogs->count() > 0): ?>
                     <!-- Khiên An toàn Vàng kim / Xanh ngọc (Trust Shield Banner) -->
                     <div class="trust-shield-banner glass-panel" style="background: linear-gradient(135deg, rgba(32, 178, 170, 0.08) 0%, rgba(0, 150, 136, 0.02) 100%); border: 1px solid rgba(32, 178, 170, 0.25); padding: 18px 24px; border-radius: 16px; margin-bottom: 24px; display: flex; gap: 16px; align-items: center;">
                         <div style="font-size: 2.2rem; animation: pulse-trust 2s infinite;">🛡️</div>
@@ -1611,11 +1630,11 @@
 
                         <!-- Tab 1: Giấy chứng nhận VSATTP -->
                         <div id="trust-cert" class="trust-tab-content active-content">
-                            @if($eatery->foodSafetyCertificate)
+                            <?php if($eatery->foodSafetyCertificate): ?>
                                 <div style="display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-start;">
                                     <div>
-                                        <div class="cert-image-preview" style="position: relative; width: 140px; height: 190px; border-radius: 8px; overflow: hidden; border: 1px solid var(--border-glow); cursor: pointer;" onclick="openTrustLightbox('{{ $eatery->foodSafetyCertificate->image_path }}', 'Giấy chứng nhận VSATTP số {{ $eatery->foodSafetyCertificate->certificate_number }}')">
-                                            <img src="{{ $eatery->foodSafetyCertificate->image_path }}" style="width: 100%; height: 100%; object-fit: cover;">
+                                        <div class="cert-image-preview" style="position: relative; width: 140px; height: 190px; border-radius: 8px; overflow: hidden; border: 1px solid var(--border-glow); cursor: pointer;" onclick="openTrustLightbox('<?php echo e($eatery->foodSafetyCertificate->image_path); ?>', 'Giấy chứng nhận VSATTP số <?php echo e($eatery->foodSafetyCertificate->certificate_number); ?>')">
+                                            <img src="<?php echo e($eatery->foodSafetyCertificate->image_path); ?>" style="width: 100%; height: 100%; object-fit: cover;">
                                             <div style="position: absolute; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0">
                                                 <span style="font-size: 1.5rem;">🔍</span>
                                             </div>
@@ -1629,50 +1648,50 @@
                                         <table style="width: 100%; font-size: 0.9rem; border-collapse: collapse;">
                                             <tr style="border-bottom: 1px dashed var(--border-glow);">
                                                 <td style="padding: 8px 0; color: var(--text-muted); width: 140px;">Số chứng chỉ:</td>
-                                                <td style="padding: 8px 0; font-weight: 600; color: var(--text-main);">{{ $eatery->foodSafetyCertificate->certificate_number }}</td>
+                                                <td style="padding: 8px 0; font-weight: 600; color: var(--text-main);"><?php echo e($eatery->foodSafetyCertificate->certificate_number); ?></td>
                                             </tr>
                                             <tr style="border-bottom: 1px dashed var(--border-glow);">
                                                 <td style="padding: 8px 0; color: var(--text-muted);">Cơ quan cấp:</td>
-                                                <td style="padding: 8px 0; font-weight: 600; color: var(--text-main);">{{ $eatery->foodSafetyCertificate->issued_by }}</td>
+                                                <td style="padding: 8px 0; font-weight: 600; color: var(--text-main);"><?php echo e($eatery->foodSafetyCertificate->issued_by); ?></td>
                                             </tr>
                                             <tr style="border-bottom: 1px dashed var(--border-glow);">
                                                 <td style="padding: 8px 0; color: var(--text-muted);">Ngày cấp:</td>
-                                                <td style="padding: 8px 0; font-weight: 600; color: var(--text-main);">{{ $eatery->foodSafetyCertificate->issued_at->format('d/m/Y') }}</td>
+                                                <td style="padding: 8px 0; font-weight: 600; color: var(--text-main);"><?php echo e($eatery->foodSafetyCertificate->issued_at->format('d/m/Y')); ?></td>
                                             </tr>
                                             <tr style="border-bottom: 1px dashed var(--border-glow);">
                                                 <td style="padding: 8px 0; color: var(--text-muted);">Hạn dùng đến:</td>
-                                                <td style="padding: 8px 0; font-weight: 600; color: var(--text-main);">{{ $eatery->foodSafetyCertificate->expired_at->format('d/m/Y') }}</td>
+                                                <td style="padding: 8px 0; font-weight: 600; color: var(--text-main);"><?php echo e($eatery->foodSafetyCertificate->expired_at->format('d/m/Y')); ?></td>
                                             </tr>
                                             <tr style="border-bottom: 1px dashed var(--border-glow);">
                                                 <td style="padding: 8px 0; color: var(--text-muted);">Thời hạn giám sát:</td>
                                                 <td style="padding: 8px 0; font-weight: 700;">
-                                                    @php
+                                                    <?php
                                                         $daysLeft = $eatery->foodSafetyCertificate->days_left;
                                                         $expiryStatus = $eatery->foodSafetyCertificate->expiry_status;
-                                                    @endphp
-                                                    @if($expiryStatus === 'valid')
+                                                    ?>
+                                                    <?php if($expiryStatus === 'valid'): ?>
                                                         <span style="color: #2ecc71; display: inline-flex; align-items: center; gap: 6px;">
-                                                            <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #2ecc71; box-shadow: 0 0 10px #2ecc71; animation: pulse-trust 2s infinite;"></span> Còn {{ $daysLeft }} ngày (An toàn hoạt động)
+                                                            <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #2ecc71; box-shadow: 0 0 10px #2ecc71; animation: pulse-trust 2s infinite;"></span> Còn <?php echo e($daysLeft); ?> ngày (An toàn hoạt động)
                                                         </span>
-                                                    @elseif($expiryStatus === 'warning')
+                                                    <?php elseif($expiryStatus === 'warning'): ?>
                                                         <span style="color: #ff9f43; display: inline-flex; align-items: center; gap: 6px; animation: pulse-text 2s infinite;">
-                                                            <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #ff9f43; box-shadow: 0 0 10px #ff9f43;"></span> Sắp hết hạn (Còn {{ $daysLeft }} ngày) - Hệ thống đang chuẩn bị hồ sơ gia hạn tự động
+                                                            <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #ff9f43; box-shadow: 0 0 10px #ff9f43;"></span> Sắp hết hạn (Còn <?php echo e($daysLeft); ?> ngày) - Hệ thống đang chuẩn bị hồ sơ gia hạn tự động
                                                         </span>
-                                                    @else
+                                                    <?php else: ?>
                                                         <span style="color: #e74c3c; display: inline-flex; align-items: center; gap: 6px;">
-                                                            <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #e74c3c; box-shadow: 0 0 10px #e74c3c;"></span> Đã quá hạn {{ abs($daysLeft) }} ngày - Yêu cầu gia hạn khẩn cấp
+                                                            <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #e74c3c; box-shadow: 0 0 10px #e74c3c;"></span> Đã quá hạn <?php echo e(abs($daysLeft)); ?> ngày - Yêu cầu gia hạn khẩn cấp
                                                         </span>
-                                                    @endif
+                                                    <?php endif; ?>
                                                 </td>
                                             </tr>
                                             <tr>
                                                 <td style="padding: 8px 0; color: var(--text-muted);">Trạng thái pháp lý:</td>
                                                 <td style="padding: 8px 0;">
-                                                    @if($expiryStatus === 'expired')
+                                                    <?php if($expiryStatus === 'expired'): ?>
                                                         <span style="color: #e74c3c; font-weight: 800; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.5px;">🔴 Hết hiệu lực / Tạm đình chỉ</span>
-                                                    @else
+                                                    <?php else: ?>
                                                         <span style="color: #2ecc71; font-weight: 800; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.5px;">🟢 Đang hoạt động / Được bảo hộ</span>
-                                                    @endif
+                                                    <?php endif; ?>
                                                 </td>
                                             </tr>
                                         </table>
@@ -1689,8 +1708,8 @@
                                                     Hệ thống xác thực liên kết trực tiếp với Phòng Y tế Huyện Đông Anh. Chứng thực 100% tài liệu thật, còn hiệu lực và được phê duyệt chính thức bởi UBND Huyện Đông Anh.
                                                 </p>
                                             </div>
-                                            <div style="flex-shrink: 0; background: #ffffff; padding: 8px; border-radius: 12px; border: 1px solid rgba(39, 174, 96, 0.2); box-shadow: 0 4px 10px rgba(0,0,0,0.08); text-align: center; cursor: pointer;" onclick="openTrustLightbox('https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=https://donganh.hanoi.gov.vn/phong-ban-y-te-xac-minh-id-{{ $eatery->foodSafetyCertificate->id }}', 'Mã QR Xác Thực Công Hành của UBND Huyện Đông Anh')">
-                                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=60x60&data=https://donganh.hanoi.gov.vn/phong-ban-y-te-xac-minh-id-{{ $eatery->foodSafetyCertificate->id }}" style="width: 60px; height: 60px; display: block; mix-blend-mode: multiply;">
+                                            <div style="flex-shrink: 0; background: #ffffff; padding: 8px; border-radius: 12px; border: 1px solid rgba(39, 174, 96, 0.2); box-shadow: 0 4px 10px rgba(0,0,0,0.08); text-align: center; cursor: pointer;" onclick="openTrustLightbox('https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=https://donganh.hanoi.gov.vn/phong-ban-y-te-xac-minh-id-<?php echo e($eatery->foodSafetyCertificate->id); ?>', 'Mã QR Xác Thực Công Hành của UBND Huyện Đông Anh')">
+                                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=60x60&data=https://donganh.hanoi.gov.vn/phong-ban-y-te-xac-minh-id-<?php echo e($eatery->foodSafetyCertificate->id); ?>" style="width: 60px; height: 60px; display: block; mix-blend-mode: multiply;">
                                                 <span style="display: block; font-size: 0.55rem; color: var(--text-muted); margin-top: 4px; font-weight: 700;">QUÉT THẨM ĐỊNH</span>
                                             </div>
                                         </div>
@@ -1703,51 +1722,51 @@
                                                     Bạn ăn thấy quán không đảm bảo vệ sinh như cam kết? Phản hồi ẩn danh ngay để bảo vệ sức khỏe cộng đồng.
                                                 </span>
                                             </div>
-                                            <button onclick="openFeedbackModal('{{ $eatery->name }}')" class="btn-secondary" style="font-size: 0.75rem; padding: 6px 12px; border-radius: 8px; font-weight: 700; color: #e74c3c; border-color: rgba(231, 76, 60, 0.2); background: rgba(231, 76, 60, 0.04); display: inline-flex; align-items: center; gap: 4px; transition: all 0.3s; cursor: pointer;" onmouseover="this.style.background='rgba(231, 76, 60, 0.08)'; this.style.color='#c0392b';" onmouseout="this.style.background='rgba(231, 76, 60, 0.04)'; this.style.color='#e74c3c';">
+                                            <button onclick="openFeedbackModal('<?php echo e($eatery->name); ?>')" class="btn-secondary" style="font-size: 0.75rem; padding: 6px 12px; border-radius: 8px; font-weight: 700; color: #e74c3c; border-color: rgba(231, 76, 60, 0.2); background: rgba(231, 76, 60, 0.04); display: inline-flex; align-items: center; gap: 4px; transition: all 0.3s; cursor: pointer;" onmouseover="this.style.background='rgba(231, 76, 60, 0.08)'; this.style.color='#c0392b';" onmouseout="this.style.background='rgba(231, 76, 60, 0.04)'; this.style.color='#e74c3c';">
                                                 🚨 Gửi Phản Ánh ATTP
                                             </button>
                                         </div>
                                     </div>
                                 </div>
-                            @else
+                            <?php else: ?>
                                 <p style="color: var(--text-muted); font-style: italic; text-align: center; padding: 20px 0;">Chưa cập nhật Giấy chứng nhận ATTP của cơ sở.</p>
-                            @endif
+                            <?php endif; ?>
                         </div>
 
                         <!-- Tab 2: Hợp đồng cung ứng thực phẩm sạch -->
                         <div id="trust-contracts" class="trust-tab-content">
-                            @if($eatery->foodSupplyContracts->count() > 0)
+                            <?php if($eatery->foodSupplyContracts->count() > 0): ?>
                                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
-                                    @foreach($eatery->foodSupplyContracts as $contract)
+                                    <?php $__currentLoopData = $eatery->foodSupplyContracts; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $contract): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                         <div class="glass-panel" style="padding: 16px; background: rgba(255,255,255,0.01); display: flex; gap: 16px; align-items: center; border: 1px solid var(--border-glow); border-radius: 12px;">
-                                            <div style="position: relative; width: 60px; height: 85px; border-radius: 6px; overflow: hidden; border: 1px solid var(--border-glow); cursor: pointer; flex-shrink: 0;" onclick="openTrustLightbox('{{ $contract->image_path }}', 'Bản quét hợp đồng cung cấp sạch từ {{ $contract->supplier_name }}')">
-                                                <img src="{{ $contract->image_path }}" style="width: 100%; height: 100%; object-fit: cover;">
+                                            <div style="position: relative; width: 60px; height: 85px; border-radius: 6px; overflow: hidden; border: 1px solid var(--border-glow); cursor: pointer; flex-shrink: 0;" onclick="openTrustLightbox('<?php echo e($contract->image_path); ?>', 'Bản quét hợp đồng cung cấp sạch từ <?php echo e($contract->supplier_name); ?>')">
+                                                <img src="<?php echo e($contract->image_path); ?>" style="width: 100%; height: 100%; object-fit: cover;">
                                                 <div style="position: absolute; inset: 0; background: rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0">
                                                     <span style="font-size: 1rem;">🔍</span>
                                                 </div>
                                             </div>
                                             <div style="min-width: 0; flex: 1;">
-                                                <h5 style="margin: 0 0 4px 0; font-size: 0.95rem; font-weight: 700; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ $contract->supplier_name }}</h5>
-                                                <p style="margin: 0 0 6px 0; font-size: 0.8rem; color: var(--accent); font-weight: 600; line-height: 1.3;">🌾 {{ $contract->items_supplied }}</p>
-                                                <p style="margin: 0; font-size: 0.75rem; color: var(--text-muted);">Hiệu lực: {{ $contract->signed_at->format('d/m/Y') }} - {{ $contract->expired_at->format('d/m/Y') }}</p>
-                                                <button class="btn-secondary" style="font-size: 0.7rem; padding: 3px 8px; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px;" onclick="openTrustLightbox('{{ $contract->image_path }}', 'Bản quét hợp đồng cung cấp sạch (đã ẩn chi tiết thương mại)')">
+                                                <h5 style="margin: 0 0 4px 0; font-size: 0.95rem; font-weight: 700; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><?php echo e($contract->supplier_name); ?></h5>
+                                                <p style="margin: 0 0 6px 0; font-size: 0.8rem; color: var(--accent); font-weight: 600; line-height: 1.3;">🌾 <?php echo e($contract->items_supplied); ?></p>
+                                                <p style="margin: 0; font-size: 0.75rem; color: var(--text-muted);">Hiệu lực: <?php echo e($contract->signed_at->format('d/m/Y')); ?> - <?php echo e($contract->expired_at->format('d/m/Y')); ?></p>
+                                                <button class="btn-secondary" style="font-size: 0.7rem; padding: 3px 8px; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px;" onclick="openTrustLightbox('<?php echo e($contract->image_path); ?>', 'Bản quét hợp đồng cung cấp sạch (đã ẩn chi tiết thương mại)')">
                                                     📄 Xem hợp đồng mẫu
                                                 </button>
                                             </div>
                                         </div>
-                                    @endforeach
+                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                 </div>
-                            @else
+                            <?php else: ?>
                                 <p style="color: var(--text-muted); font-style: italic; text-align: center; padding: 20px 0;">Chưa cập nhật thông tin hợp đồng cung cấp thực phẩm sạch.</p>
-                            @endif
+                            <?php endif; ?>
                         </div>
 
                         <!-- Tab 3: Hóa đơn mua bán thực tế -->
                         <div id="trust-invoices" class="trust-tab-content">
-                            @if($eatery->purchaseInvoices->count() > 0)
+                            <?php if($eatery->purchaseInvoices->count() > 0): ?>
                                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
-                                    @foreach($eatery->purchaseInvoices as $invoice)
-                                        @php
+                                    <?php $__currentLoopData = $eatery->purchaseInvoices; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $invoice): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                        <?php
                                             $itemLower = mb_strtolower($invoice->items_summary);
                                             $icon = '🧾';
                                             $iconBg = 'rgba(32, 178, 170, 0.1)';
@@ -1769,60 +1788,62 @@
                                                 $iconBg = 'rgba(52, 152, 219, 0.1)';
                                                 $iconBorder = 'rgba(52, 152, 219, 0.3)';
                                             }
-                                        @endphp
+                                        ?>
                                         <div class="glass-panel" style="padding: 16px; background: rgba(255,255,255,0.01); display: flex; gap: 16px; align-items: center; border: 1px solid var(--border-glow); border-radius: 12px;">
-                                            <div style="width: 50px; height: 50px; border-radius: 50%; background: {{ $iconBg }}; border: 1px solid {{ $iconBorder }}; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0;">
-                                                {{ $icon }}
+                                            <div style="width: 50px; height: 50px; border-radius: 50%; background: <?php echo e($iconBg); ?>; border: 1px solid <?php echo e($iconBorder); ?>; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0;">
+                                                <?php echo e($icon); ?>
+
                                             </div>
                                             <div style="min-width: 0; flex: 1;">
                                                 <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 2px;">
                                                     <div style="font-size: 0.75rem; color: var(--accent); font-weight: 700; text-transform: uppercase;">
-                                                        📅 NHẬP HÀNG: {{ $invoice->invoice_date->format('d/m/Y') }}
+                                                        📅 NHẬP HÀNG: <?php echo e($invoice->invoice_date->format('d/m/Y')); ?>
+
                                                     </div>
                                                     <span style="font-size: 0.65rem; background: rgba(32, 178, 170, 0.1); border: 1px solid var(--accent); color: var(--accent); padding: 1px 6px; border-radius: 4px; font-weight: bold; white-space: nowrap;">ĐÃ ĐỐI CHIẾU</span>
                                                 </div>
-                                                <h5 style="margin: 0 0 4px 0; font-size: 0.92rem; font-weight: 700; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ $invoice->supplier_name }}</h5>
-                                                <p style="margin: 0 0 6px 0; font-size: 0.8rem; color: var(--text-muted); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">{{ $invoice->items_summary }}</p>
-                                                <button class="btn-secondary" style="font-size: 0.7rem; padding: 3px 8px; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px;" onclick="openTrustLightbox('{{ $invoice->image_path }}', 'Bản quét hóa đơn nhập hàng sạch (dữ liệu giá trị thương mại đã được che bảo mật)')">
+                                                <h5 style="margin: 0 0 4px 0; font-size: 0.92rem; font-weight: 700; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><?php echo e($invoice->supplier_name); ?></h5>
+                                                <p style="margin: 0 0 6px 0; font-size: 0.8rem; color: var(--text-muted); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;"><?php echo e($invoice->items_summary); ?></p>
+                                                <button class="btn-secondary" style="font-size: 0.7rem; padding: 3px 8px; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px;" onclick="openTrustLightbox('<?php echo e($invoice->image_path); ?>', 'Bản quét hóa đơn nhập hàng sạch (dữ liệu giá trị thương mại đã được che bảo mật)')">
                                                     🔍 Xem hóa đơn
                                                 </button>
                                             </div>
                                         </div>
-                                    @endforeach
+                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                 </div>
-                            @else
+                            <?php else: ?>
                                 <p style="color: var(--text-muted); font-style: italic; text-align: center; padding: 20px 0;">Chưa cập nhật hóa đơn mua bán gần đây.</p>
-                            @endif
+                            <?php endif; ?>
                         </div>
 
                         <!-- Tab 4: Nhật ký hàng ngày -->
                         <div id="trust-logs" class="trust-tab-content">
-                            @if($eatery->dailyFoodLogs->count() > 0)
+                            <?php if($eatery->dailyFoodLogs->count() > 0): ?>
                                 <div style="display: flex; flex-direction: column; gap: 14px;">
-                                    @foreach($eatery->dailyFoodLogs->take(7) as $log)
-                                        @php
+                                    <?php $__currentLoopData = $eatery->dailyFoodLogs->take(7); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $log): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                        <?php
                                             $isOfficial = $log->checker_role === 'official';
-                                        @endphp
+                                        ?>
                                         <div class="glass-panel" style="padding: 18px; border-radius: 16px; transition: all 0.3s ease;
-                                            @if($isOfficial)
+                                            <?php if($isOfficial): ?>
                                                 border: 1px solid rgba(231, 76, 60, 0.3); background: rgba(231, 76, 60, 0.02); box-shadow: 0 4px 15px rgba(231, 76, 60, 0.05);
-                                            @else
+                                            <?php else: ?>
                                                 border: 1px solid rgba(46, 204, 113, 0.2); background: rgba(46, 204, 113, 0.01); box-shadow: 0 4px 15px rgba(46, 204, 113, 0.02);
-                                            @endif
+                                            <?php endif; ?>
                                         " onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
                                             
                                             <!-- Header with logo and badge -->
                                             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; border-bottom: 1px dashed var(--border-glow); padding-bottom: 10px; margin-bottom: 12px;">
                                                 <div style="display: flex; align-items: center; gap: 6px;">
-                                                    @if($isOfficial)
+                                                    <?php if($isOfficial): ?>
                                                         <span style="font-size: 1.1rem;">🏢</span>
                                                         <span style="font-weight: 700; color: #e74c3c; font-size: 0.92rem;">CƠ QUAN KIỂM TRA CHỨC NĂNG</span>
-                                                    @else
+                                                    <?php else: ?>
                                                         <span style="font-size: 1.1rem;">👨‍🍳</span>
                                                         <span style="font-weight: 700; color: #2ecc71; font-size: 0.92rem;">TỰ KIỂM TRA HÀNG NGÀY</span>
-                                                    @endif
+                                                    <?php endif; ?>
                                                 </div>
-                                                <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">📅 Ngày {{ $log->log_date->format('d/m/Y') }}</span>
+                                                <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">📅 Ngày <?php echo e($log->log_date->format('d/m/Y')); ?></span>
                                             </div>
 
                                             <!-- Checklist columns -->
@@ -1831,14 +1852,14 @@
                                                     <span style="color: #2ecc71; font-weight: bold;">✓</span>
                                                     <div>
                                                         <strong style="color: var(--primary);">Nguồn gốc nguyên liệu:</strong> 
-                                                        <span style="color: var(--text-main);">{{ $log->ingredients_origin }}</span>
+                                                        <span style="color: var(--text-main);"><?php echo e($log->ingredients_origin); ?></span>
                                                     </div>
                                                 </div>
                                                 <div style="display: flex; gap: 8px; align-items: flex-start;">
                                                     <span style="color: #2ecc71; font-weight: bold;">✓</span>
                                                     <div>
                                                         <strong style="color: var(--primary);">Bảo quản & Điều kiện:</strong> 
-                                                        <span style="color: var(--text-main);">{{ $log->storage_condition }}</span>
+                                                        <span style="color: var(--text-main);"><?php echo e($log->storage_condition); ?></span>
                                                     </div>
                                                 </div>
                                                 <div style="display: flex; gap: 8px; align-items: flex-start;">
@@ -1853,27 +1874,27 @@
                                             <!-- Footer of card with badge inspector logo -->
                                             <div style="margin-top: 12px; border-top: 1px dashed var(--border-glow); padding-top: 10px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; font-size: 0.8rem;">
                                                 <span style="color: var(--text-muted);">
-                                                    Người phê duyệt: <strong style="color: var(--text-main);">{{ $log->checker_name }}</strong>
+                                                    Người phê duyệt: <strong style="color: var(--text-main);"><?php echo e($log->checker_name); ?></strong>
                                                 </span>
-                                                @if($isOfficial)
+                                                <?php if($isOfficial): ?>
                                                     <span style="background: rgba(231, 76, 60, 0.1); border: 1px solid #e74c3c; color: #e74c3c; padding: 2px 8px; border-radius: 4px; font-weight: bold; font-size: 0.7rem; display: inline-flex; align-items: center; gap: 4px;">
                                                         🛡️ ĐÃ THẨM ĐỊNH
                                                     </span>
-                                                @else
+                                                <?php else: ?>
                                                     <span style="color: var(--text-muted); font-size: 0.72rem; font-style: italic; opacity: 0.7;">
                                                         Ghi nhận tự động
                                                     </span>
-                                                @endif
+                                                <?php endif; ?>
                                             </div>
                                         </div>
-                                    @endforeach
+                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                 </div>
-                            @else
+                            <?php else: ?>
                                 <p style="color: var(--text-muted); font-style: italic; text-align: center; padding: 20px 0;">Chưa ghi nhận nhật ký kiểm tra vệ sinh hàng ngày.</p>
-                            @endif
+                            <?php endif; ?>
                         </div>
                     </div>
-                @else
+                <?php else: ?>
                     <!-- Phân hệ thông tin chưa cập nhật -->
                     <div style="text-align: center; padding: 30px 20px;">
                         <div style="font-size: 3rem; margin-bottom: 16px; filter: drop-shadow(0 0 10px rgba(255,193,7,0.5));">🛡️</div>
@@ -1885,9 +1906,9 @@
                             📞 Hotline Ban Quản Lý ATTP Đông Anh: 024.3883.2241
                         </div>
                     </div>
-                @endif
+                <?php endif; ?>
             </div>
-            @endif
+            <?php endif; ?>
         </div>
         
         <!-- Right Side: Sidebar Information and Coordinates Map -->
@@ -1902,76 +1923,76 @@
                         <span class="widget-info-icon" style="background: rgba(255, 126, 41, 0.1); border-radius: 12px; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; border: 1px solid rgba(255, 126, 41, 0.2); flex-shrink: 0; box-shadow: inset 0 0 10px rgba(255, 126, 41, 0.05);">📞</span>
                         <div>
                             <strong style="display: block; font-size: 0.78rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Điện thoại liên hệ</strong>
-                            <a href="tel:{{ $eatery->phone }}" style="color: var(--text-main); font-weight: 700; font-size: 1.1rem; display: inline-block; margin-top: 2px;">{{ $eatery->phone ?: 'Chưa cập nhật' }}</a>
+                            <a href="tel:<?php echo e($eatery->phone); ?>" style="color: var(--text-main); font-weight: 700; font-size: 1.1rem; display: inline-block; margin-top: 2px;"><?php echo e($eatery->phone ?: 'Chưa cập nhật'); ?></a>
                         </div>
                     </li>
                     <li class="widget-info-item" style="padding: 14px 16px; margin-bottom: 12px; border-radius: 16px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); display: flex; align-items: center; gap: 14px;" onmouseover="this.style.background='var(--bg-btn-secondary)'; this.style.borderColor='var(--border-glow-hover)'; this.style.transform='translateY(-2px)';" onmouseout="this.style.background='rgba(255,255,255,0.02)'; this.style.borderColor='rgba(255,255,255,0.06)'; this.style.transform='none';">
                         <span class="widget-info-icon" style="background: rgba(32, 178, 170, 0.1); border-radius: 12px; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; border: 1px solid rgba(32, 178, 170, 0.2); flex-shrink: 0; box-shadow: inset 0 0 10px rgba(32, 178, 170, 0.05);">🕒</span>
                         <div>
                             <strong style="display: block; font-size: 0.78rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Giờ mở cửa</strong>
-                            <span style="color: var(--text-main); font-weight: 600; display: inline-block; margin-top: 2px; font-size: 0.95rem;">{{ $eatery->opening_hours ?: 'Đang cập nhật' }}</span>
+                            <span style="color: var(--text-main); font-weight: 600; display: inline-block; margin-top: 2px; font-size: 0.95rem;"><?php echo e($eatery->opening_hours ?: 'Đang cập nhật'); ?></span>
                         </div>
                     </li>
-                    @if(!in_array($eatery->category->slug, ['smart-education-map', 'hanh-trinh-di-san', 'discover-dong-anh-community-culture-hub']))
+                    <?php if(!in_array($eatery->category->slug, ['smart-education-map', 'hanh-trinh-di-san', 'discover-dong-anh-community-culture-hub'])): ?>
                     <li class="widget-info-item" style="padding: 14px 16px; margin-bottom: 12px; border-radius: 16px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); display: flex; align-items: center; gap: 14px;" onmouseover="this.style.background='var(--bg-btn-secondary)'; this.style.borderColor='var(--border-glow-hover)'; this.style.transform='translateY(-2px)';" onmouseout="this.style.background='rgba(255,255,255,0.02)'; this.style.borderColor='rgba(255,255,255,0.06)'; this.style.transform='none';">
                         <span class="widget-info-icon" style="background: rgba(255, 179, 0, 0.1); border-radius: 12px; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; border: 1px solid rgba(255, 179, 0, 0.2); flex-shrink: 0; box-shadow: inset 0 0 10px rgba(255, 179, 0, 0.05);">💰</span>
                         <div>
                             <strong style="display: block; font-size: 0.78rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Mức giá tham khảo</strong>
-                            <span style="color: #ffb300; font-weight: 800; font-size: 1.1rem; display: inline-block; margin-top: 2px; white-space: nowrap; text-shadow: 0 0 10px rgba(255,179,0,0.2);">{{ $eatery->price_range ?: 'Đang cập nhật' }}</span>
+                            <span style="color: #ffb300; font-weight: 800; font-size: 1.1rem; display: inline-block; margin-top: 2px; white-space: nowrap; text-shadow: 0 0 10px rgba(255,179,0,0.2);"><?php echo e($eatery->price_range ?: 'Đang cập nhật'); ?></span>
                         </div>
                     </li>
-                    @endif
+                    <?php endif; ?>
                     <li class="widget-info-item" style="padding: 14px 16px; margin-bottom: 0; border-radius: 16px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); display: flex; align-items: center; gap: 14px;" onmouseover="this.style.background='var(--bg-btn-secondary)'; this.style.borderColor='var(--border-glow-hover)'; this.style.transform='translateY(-2px)';" onmouseout="this.style.background='rgba(255,255,255,0.02)'; this.style.borderColor='rgba(255,255,255,0.06)'; this.style.transform='none';">
                         <span class="widget-info-icon" style="background: rgba(255, 193, 7, 0.1); border-radius: 12px; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; border: 1px solid rgba(255, 193, 7, 0.2); flex-shrink: 0; box-shadow: inset 0 0 10px rgba(255, 193, 7, 0.05);">⭐</span>
                         <div>
                             <strong style="display: block; font-size: 0.78rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Đánh giá trung bình</strong>
-                            <span style="font-weight: 900; color: #ffc107; font-size: 1.15rem; display: inline-block; margin-top: 2px; text-shadow: 0 0 10px rgba(255,193,7,0.4);">★ {{ number_format($eatery->average_rating, 1) }} <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500; text-shadow: none;">/ 5.0</span></span>
+                            <span style="font-weight: 900; color: #ffc107; font-size: 1.15rem; display: inline-block; margin-top: 2px; text-shadow: 0 0 10px rgba(255,193,7,0.4);">★ <?php echo e(number_format($eatery->average_rating, 1)); ?> <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500; text-shadow: none;">/ 5.0</span></span>
                         </div>
                     </li>
                 </ul>
-                @if($eatery->phone)
+                <?php if($eatery->phone): ?>
                 <div style="margin-top: 20px; padding-top: 16px; border-top: 1px dashed var(--border-glow);">
-                    <a href="tel:{{ $eatery->phone }}" class="btn-primary" style="width: 100%; justify-content: center; display: inline-flex; align-items: center; gap: 8px; text-decoration: none; font-weight: 700; background: linear-gradient(135deg, #ff7e29 0%, #ff4f18 100%); box-shadow: 0 4px 15px rgba(255, 126, 41, 0.3); border: none;">
+                    <a href="tel:<?php echo e($eatery->phone); ?>" class="btn-primary" style="width: 100%; justify-content: center; display: inline-flex; align-items: center; gap: 8px; text-decoration: none; font-weight: 700; background: linear-gradient(135deg, #ff7e29 0%, #ff4f18 100%); box-shadow: 0 4px 15px rgba(255, 126, 41, 0.3); border: none;">
                         📞 Gọi điện liên hệ ngay
                     </a>
                 </div>
-                @endif
+                <?php endif; ?>
             </div>
             
             <!-- Mã QR Code Thông Minh -->
             <div class="sidebar-widget glass-panel" style="text-align: center; margin-bottom: 24px; padding-top: 32px;">
                 <h3 style="font-size: 1.2rem; margin-bottom: 12px; color: var(--text-main); font-weight: 800;">
-                    @if($categorySlug === 'dong-anh-food-map')
+                    <?php if($categorySlug === 'dong-anh-food-map'): ?>
                         📲 Mã QR Nhà hàng
-                    @elseif($categorySlug === 'stay-in-dong-anh')
+                    <?php elseif($categorySlug === 'stay-in-dong-anh'): ?>
                         📲 Mã QR Nơi lưu trú
-                    @elseif($categorySlug === 'wellness-care')
+                    <?php elseif($categorySlug === 'wellness-care'): ?>
                         📲 Mã QR Cơ sở chăm sóc
-                    @elseif($categorySlug === 'dong-anh-market')
+                    <?php elseif($categorySlug === 'dong-anh-market'): ?>
                         📲 Mã QR Cửa hàng
-                    @elseif($categorySlug === 'smart-education-map')
+                    <?php elseif($categorySlug === 'smart-education-map'): ?>
                         📲 Mã QR Nhà trường
-                    @else
+                    <?php else: ?>
                         📲 Mã QR Địa điểm
-                    @endif
+                    <?php endif; ?>
                 </h3>
                 <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 20px; padding: 0 10px;">
-                    @if($categorySlug === 'dong-anh-food-map')
+                    <?php if($categorySlug === 'dong-anh-food-map'): ?>
                         Lưu mã QR hoặc đưa cho bạn bè quét để mở nhanh thực đơn quán này!
-                    @elseif($categorySlug === 'stay-in-dong-anh')
+                    <?php elseif($categorySlug === 'stay-in-dong-anh'): ?>
                         Lưu mã QR hoặc đưa cho bạn bè quét để mở nhanh thông tin và đặt phòng nơi lưu trú này!
-                    @elseif($categorySlug === 'wellness-care')
+                    <?php elseif($categorySlug === 'wellness-care'): ?>
                         Lưu mã QR hoặc đưa cho bạn bè quét để mở nhanh thông tin dịch vụ chăm sóc sức khỏe này!
-                    @elseif($categorySlug === 'dong-anh-market')
+                    <?php elseif($categorySlug === 'dong-anh-market'): ?>
                         Lưu mã QR hoặc đưa cho bạn bè quét để mở nhanh danh sách sản phẩm OCOP & đặc sản này!
-                    @elseif($categorySlug === 'smart-education-map')
+                    <?php elseif($categorySlug === 'smart-education-map'): ?>
                         Lưu mã QR hoặc đưa cho bạn bè quét để mở nhanh trang giới thiệu nhà trường này!
-                    @else
+                    <?php else: ?>
                         Lưu mã QR hoặc đưa cho bạn bè quét để mở nhanh trang giới thiệu địa điểm này!
-                    @endif
+                    <?php endif; ?>
                 </p>
                 <div style="background: #ffffff; padding: 16px; border-radius: 20px; display: inline-block; box-shadow: 0 8px 24px rgba(0,0,0,0.15), inset 0 0 0 1px rgba(0,0,0,0.05); transition: transform 0.3s ease;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='none'">
-                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data={{ urlencode(url()->current()) }}" alt="QR Code {{ $eatery->name }}" style="width: 180px; height: 180px; display: block; mix-blend-mode: multiply;">
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=<?php echo e(urlencode(url()->current())); ?>" alt="QR Code <?php echo e($eatery->name); ?>" style="width: 180px; height: 180px; display: block; mix-blend-mode: multiply;">
                 </div>
             </div>
             
@@ -1981,7 +2002,7 @@
                     🗺️ Vị trí & Chỉ đường
                 </h3>
                 <p style="font-size: 0.8rem; color: var(--text-muted);">
-                    📍 Vĩ độ: <strong>{{ $eatery->latitude }}</strong> | Kinh độ: <strong>{{ $eatery->longitude }}</strong>
+                    📍 Vĩ độ: <strong><?php echo e($eatery->latitude); ?></strong> | Kinh độ: <strong><?php echo e($eatery->longitude); ?></strong>
                 </p>
                 
                 <div class="mini-map-container">
@@ -1995,7 +2016,7 @@
                     </p>
                 </div>
                 
-                <a id="directionsLink" href="https://www.google.com/maps/dir/?api=1&destination={{ number_format($eatery->latitude, 6, '.', '') }},{{ number_format($eatery->longitude, 6, '.', '') }}" target="_blank" class="btn-primary" style="width: 100%; justify-content: center; margin-top: 10px; font-size: 0.9rem;">
+                <a id="directionsLink" href="https://www.google.com/maps/dir/?api=1&destination=<?php echo e(number_format($eatery->latitude, 6, '.', '')); ?>,<?php echo e(number_format($eatery->longitude, 6, '.', '')); ?>" target="_blank" class="btn-primary" style="width: 100%; justify-content: center; margin-top: 10px; font-size: 0.9rem;">
                     🗺️ Hướng dẫn đường đi (Google Maps)
                 </a>
             </div>
@@ -2074,7 +2095,7 @@
                     💬 Toàn bộ Đánh giá & Phản hồi
                 </h4>
                 <p style="margin: 4px 0 0 0; font-size: 0.8rem; color: var(--text-muted);">
-                    {{ $eatery->name }} • {{ $eatery->reviews->count() }} lượt nhận xét
+                    <?php echo e($eatery->name); ?> • <?php echo e($eatery->reviews->count()); ?> lượt nhận xét
                 </p>
             </div>
             <button onclick="closeAllReviewsModal()" style="background: rgba(255,255,255,0.04); border: 1px solid var(--border-glow); width: 36px; height: 36px; border-radius: 50%; font-size: 1.1rem; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;" onmouseover="this.style.color='var(--primary)'; this.style.borderColor='rgba(var(--primary-rgb), 0.3)'; this.style.background='rgba(var(--primary-rgb), 0.05)'" onmouseout="this.style.color='var(--text-muted)'; this.style.borderColor='var(--border-glow)'; this.style.background='rgba(255,255,255,0.04)'">✕</button>
@@ -2084,139 +2105,141 @@
         <div style="padding: 16px 28px; border-bottom: 1px solid var(--border-glow); background: rgba(255, 255, 255, 0.005); overflow-x: auto; scrollbar-width: none;">
             <div style="display: flex; gap: 8px; align-items: center;">
                 <button class="review-modal-tab active" onclick="filterReviewStars('all')" data-star="all" style="white-space: nowrap; font-size: 0.85rem; font-weight: 700; padding: 10px 18px; border-radius: 30px; border: 1.5px solid rgba(var(--primary-rgb), 0.2); background: rgba(var(--primary-rgb), 0.06); color: var(--primary); cursor: pointer; transition: all 0.25s ease;">
-                    🌟 Tất cả ({{ $eatery->reviews->count() }})
+                    🌟 Tất cả (<?php echo e($eatery->reviews->count()); ?>)
                 </button>
-                @for($s = 5; $s >= 1; $s--)
-                    @php
+                <?php for($s = 5; $s >= 1; $s--): ?>
+                    <?php
                         $countForStar = $eatery->reviews->where('rating', $s)->count();
-                    @endphp
-                    <button class="review-modal-tab" onclick="filterReviewStars({{ $s }})" data-star="{{ $s }}" style="white-space: nowrap; font-size: 0.85rem; font-weight: 600; padding: 8px 16px; border-radius: 30px; border: 1.5px solid var(--border-glow); background: transparent; color: var(--text-muted); cursor: pointer; transition: all 0.25s ease;" onmouseover="if(!this.classList.contains('active')){ this.style.borderColor='rgba(var(--primary-rgb), 0.2)'; this.style.color='var(--text-main)'; }" onmouseout="if(!this.classList.contains('active')){ this.style.borderColor='var(--border-glow)'; this.style.color='var(--text-muted)'; }">
-                        {{ $s }} ★ ({{ $countForStar }})
+                    ?>
+                    <button class="review-modal-tab" onclick="filterReviewStars(<?php echo e($s); ?>)" data-star="<?php echo e($s); ?>" style="white-space: nowrap; font-size: 0.85rem; font-weight: 600; padding: 8px 16px; border-radius: 30px; border: 1.5px solid var(--border-glow); background: transparent; color: var(--text-muted); cursor: pointer; transition: all 0.25s ease;" onmouseover="if(!this.classList.contains('active')){ this.style.borderColor='rgba(var(--primary-rgb), 0.2)'; this.style.color='var(--text-main)'; }" onmouseout="if(!this.classList.contains('active')){ this.style.borderColor='var(--border-glow)'; this.style.color='var(--text-muted)'; }">
+                        <?php echo e($s); ?> ★ (<?php echo e($countForStar); ?>)
                     </button>
-                @endfor
+                <?php endfor; ?>
             </div>
         </div>
 
         <!-- Scrollable Reviews List Container -->
         <div id="modalReviewListScroll" style="flex: 1; overflow-y: auto; padding: 28px; display: flex; flex-direction: column; gap: 20px; background: rgba(0,0,0,0.02);">
-            @foreach($eatery->reviews as $rev)
-                <div class="modal-review-card-item" data-rating="{{ $rev->rating }}" style="padding: 24px; border-radius: 20px; border: 1px solid var(--border-glow); background: var(--bg-card); box-shadow: 0 4px 15px rgba(0, 0, 0, 0.01); display: flex; flex-direction: column; gap: 14px; transition: all 0.3s ease;">
+            <?php $__currentLoopData = $eatery->reviews; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $rev): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                <div class="modal-review-card-item" data-rating="<?php echo e($rev->rating); ?>" style="padding: 24px; border-radius: 20px; border: 1px solid var(--border-glow); background: var(--bg-card); box-shadow: 0 4px 15px rgba(0, 0, 0, 0.01); display: flex; flex-direction: column; gap: 14px; transition: all 0.3s ease;">
                     <!-- Header -->
                     <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
                         <div style="display: flex; align-items: center; gap: 14px;">
                             <!-- Avatar -->
                             <div style="width: 44px; height: 44px; border-radius: 50%; background: var(--primary-grad); color: #ffffff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.05rem; box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.2); text-transform: uppercase;">
-                                {{ substr($rev->user_name, 0, 2) }}
+                                <?php echo e(substr($rev->user_name, 0, 2)); ?>
+
                             </div>
                             <!-- Name & Stars -->
                             <div>
-                                <span style="font-weight: 700; color: var(--text-main); font-size: 1rem; display: block;">{{ $rev->user_name }}</span>
+                                <span style="font-weight: 700; color: var(--text-main); font-size: 1rem; display: block;"><?php echo e($rev->user_name); ?></span>
                                 <div style="color: #ffb03a; font-size: 0.9rem; margin-top: 2px; display: flex; gap: 2px;">
-                                    @for($i=1; $i<=5; $i++)
-                                        @if($i <= $rev->rating)
+                                    <?php for($i=1; $i<=5; $i++): ?>
+                                        <?php if($i <= $rev->rating): ?>
                                             <span style="color: #ffb03a; text-shadow: 0 0 6px rgba(255, 176, 58, 0.4);">★</span>
-                                        @else
+                                        <?php else: ?>
                                             <span style="color: var(--border-glow);">★</span>
-                                        @endif
-                                    @endfor
+                                        <?php endif; ?>
+                                    <?php endfor; ?>
                                 </div>
                             </div>
                         </div>
                         <span style="font-size: 0.78rem; color: var(--text-muted); background: rgba(255,255,255,0.03); padding: 4px 12px; border-radius: 30px; border: 1px solid var(--border-glow);">
-                            📅 {{ $rev->created_at->format('d/m/Y H:i') }}
+                            📅 <?php echo e($rev->created_at->format('d/m/Y H:i')); ?>
+
                         </span>
                     </div>
 
                     <!-- Text -->
-                    <p style="font-size: 0.95rem; color: var(--text-main); line-height: 1.65; margin: 0; white-space: pre-line; font-weight: 450;">{{ $rev->comment }}</p>
+                    <p style="font-size: 0.95rem; color: var(--text-main); line-height: 1.65; margin: 0; white-space: pre-line; font-weight: 450;"><?php echo e($rev->comment); ?></p>
 
                     <!-- Media -->
-                    @if($rev->media && $rev->media->count() > 0)
+                    <?php if($rev->media && $rev->media->count() > 0): ?>
                         <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 2px;">
-                            @foreach($rev->media as $mediaItem)
-                                @if($mediaItem->file_type === 'image')
+                            <?php $__currentLoopData = $rev->media; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $mediaItem): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                <?php if($mediaItem->file_type === 'image'): ?>
                                     <div style="position: relative; width: 90px; height: 90px; border-radius: 10px; overflow: hidden; border: 1px solid var(--border-glow); box-shadow: 0 4px 10px rgba(0,0,0,0.1); cursor: pointer; transition: all 0.25s ease;" onmouseover="this.style.transform='scale(1.05)'; this.style.borderColor='var(--primary)'" onmouseout="this.style.transform='none'; this.style.borderColor='var(--border-glow)'">
-                                        <img src="{{ $mediaItem->file_path }}" alt="Review Media" style="width: 100%; height: 100%; object-fit: cover;">
+                                        <img src="<?php echo e($mediaItem->file_path); ?>" alt="Review Media" style="width: 100%; height: 100%; object-fit: cover;">
                                     </div>
-                                @else
+                                <?php else: ?>
                                     <div style="position: relative; width: 130px; height: 90px; border-radius: 10px; overflow: hidden; border: 1px solid var(--border-glow); box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
-                                        <video src="{{ $mediaItem->file_path }}" style="width: 100%; height: 100%; object-fit: cover;" controls></video>
+                                        <video src="<?php echo e($mediaItem->file_path); ?>" style="width: 100%; height: 100%; object-fit: cover;" controls></video>
                                     </div>
-                                @endif
-                            @endforeach
+                                <?php endif; ?>
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                         </div>
-                    @endif
+                    <?php endif; ?>
 
                     <!-- Reply -->
-                    @if($rev->seller_reply)
+                    <?php if($rev->seller_reply): ?>
                         <div class="seller-reply-bubble" style="margin-top: 4px; padding: 16px 20px; background: rgba(var(--primary-rgb), 0.04); border: 1px solid rgba(var(--primary-rgb), 0.12); border-radius: 16px; font-size: 0.88rem; box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.01);">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 8px;">
                                 <strong style="color: var(--primary); display: flex; align-items: center; gap: 6px; font-size: 0.9rem; font-weight: 800;">
                                     <span style="font-size: 1.15rem;">🏪</span> 
-                                    @if($categorySlug === 'dong-anh-food-map')
+                                    <?php if($categorySlug === 'dong-anh-food-map'): ?>
                                         Phản hồi từ chủ quán
-                                    @elseif($categorySlug === 'stay-in-dong-anh')
+                                    <?php elseif($categorySlug === 'stay-in-dong-anh'): ?>
                                         Phản hồi từ quản lý
-                                    @elseif($categorySlug === 'wellness-care')
+                                    <?php elseif($categorySlug === 'wellness-care'): ?>
                                         Phản hồi từ cơ sở
-                                    @elseif($categorySlug === 'dong-anh-market')
+                                    <?php elseif($categorySlug === 'dong-anh-market'): ?>
                                         Phản hồi từ chủ cửa hàng
-                                    @elseif($categorySlug === 'smart-education-map')
+                                    <?php elseif($categorySlug === 'smart-education-map'): ?>
                                         Phản hồi từ nhà trường
-                                    @else
+                                    <?php else: ?>
                                         Phản hồi từ địa điểm
-                                    @endif
+                                    <?php endif; ?>
                                 </strong>
                                 <span style="font-size: 0.7rem; color: var(--text-muted); font-weight: 600;">
-                                    @if($categorySlug === 'smart-education-map')
+                                    <?php if($categorySlug === 'smart-education-map'): ?>
                                         Ban giám hiệu
-                                    @elseif($categorySlug === 'stay-in-dong-anh' || $categorySlug === 'wellness-care')
+                                    <?php elseif($categorySlug === 'stay-in-dong-anh' || $categorySlug === 'wellness-care'): ?>
                                         Ban quản lý
-                                    @else
+                                    <?php else: ?>
                                         Chủ cơ sở
-                                    @endif
+                                    <?php endif; ?>
                                 </span>
                             </div>
                             <p style="margin: 0; color: var(--text-main); line-height: 1.6; font-style: italic; font-weight: 500;">
-                                "{{ $rev->seller_reply }}"
+                                "<?php echo e($rev->seller_reply); ?>"
                             </p>
                         </div>
-                    @endif
+                    <?php endif; ?>
                 </div>
-            @endforeach
+            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
 
             <!-- Empty State for filtered stars -->
             <div id="modalReviewsEmptyState" style="display: none; flex-direction: column; align-items: center; justify-content: center; padding: 60px 20px; text-align: center;">
                 <div style="font-size: 3.5rem; margin-bottom: 16px; filter: drop-shadow(0 0 10px rgba(255,126,41,0.25));">💬</div>
                 <h5 style="margin: 0 0 8px 0; font-size: 1.15rem; color: var(--text-main); font-weight: 700;">Chưa có nhận xét nào!</h5>
                 <p style="margin: 0; font-size: 0.88rem; color: var(--text-muted); max-width: 320px; line-height: 1.5;">
-                    @if($categorySlug === 'dong-anh-food-map')
+                    <?php if($categorySlug === 'dong-anh-food-map'): ?>
                         Không tìm thấy đánh giá nào có mức xếp hạng sao này cho quán ăn.
-                    @elseif($categorySlug === 'stay-in-dong-anh')
+                    <?php elseif($categorySlug === 'stay-in-dong-anh'): ?>
                         Không tìm thấy đánh giá nào có mức xếp hạng sao này cho nơi lưu trú.
-                    @elseif($categorySlug === 'wellness-care')
+                    <?php elseif($categorySlug === 'wellness-care'): ?>
                         Không tìm thấy đánh giá nào có mức xếp hạng sao này cho cơ sở.
-                    @elseif($categorySlug === 'dong-anh-market')
+                    <?php elseif($categorySlug === 'dong-anh-market'): ?>
                         Không tìm thấy đánh giá nào có mức xếp hạng sao này cho cửa hàng.
-                    @elseif($categorySlug === 'smart-education-map')
+                    <?php elseif($categorySlug === 'smart-education-map'): ?>
                         Không tìm thấy đánh giá nào có mức xếp hạng sao này cho nhà trường.
-                    @else
+                    <?php else: ?>
                         Không tìm thấy đánh giá nào có mức xếp hạng sao này cho địa điểm.
-                    @endif
+                    <?php endif; ?>
                 </p>
             </div>
         </div>
     </div>
 </div>
-@endsection
+<?php $__env->stopSection(); ?>
 
-@section('scripts')
+<?php $__env->startSection('scripts'); ?>
 <script>
     let miniMap;
-    const eateryLat = {{ number_format($eatery->latitude, 6, '.', '') }};
-    const eateryLng = {{ number_format($eatery->longitude, 6, '.', '') }};
-    const eateryName = "{{ $eatery->name }}";
-    const categoryIcon = "{{ $eatery->category->icon }}";
+    const eateryLat = <?php echo e(number_format($eatery->latitude, 6, '.', '')); ?>;
+    const eateryLng = <?php echo e(number_format($eatery->longitude, 6, '.', '')); ?>;
+    const eateryName = "<?php echo e($eatery->name); ?>";
+    const categoryIcon = "<?php echo e($eatery->category->icon); ?>";
     let userCurrentDistanceKm = null;
 
     document.addEventListener("DOMContentLoaded", function() {
@@ -2314,7 +2337,7 @@
             let utterance = null;
             let isSpeaking = false;
 
-            const audioText = `{!! isset($dossier) ? addslashes($dossier['audio_narrative']) : '' !!}`;
+            const audioText = `<?php echo isset($dossier) ? addslashes($dossier['audio_narrative']) : ''; ?>`;
 
             playBtn.addEventListener("click", function() {
                 if (!synth) {
@@ -2681,7 +2704,7 @@
         const query = document.getElementById('dishSearchInput').value.toLowerCase().trim();
         const cards = document.querySelectorAll('#modalMenuGrid .dish-card');
         let visibleCount = 0;
-        const itemUnit = "{{ $itemUnit }}";
+        const itemUnit = "<?php echo e($itemUnit); ?>";
         
         cards.forEach(card => {
             const name = card.getAttribute('data-name');
@@ -3233,12 +3256,14 @@
     </div>
 </div>
 
-@if($eatery->phone)
+<?php if($eatery->phone): ?>
 <!-- Floating Contact Button on Mobile -->
-<a href="tel:{{ $eatery->phone }}" class="mobile-call-btn" title="Gọi điện thoại liên hệ" aria-label="Gọi điện thoại liên hệ">
+<a href="tel:<?php echo e($eatery->phone); ?>" class="mobile-call-btn" title="Gọi điện thoại liên hệ" aria-label="Gọi điện thoại liên hệ">
     <svg viewBox="0 0 24 24">
         <path d="M6.62,10.79C8.06,13.62 10.38,15.94 13.21,17.38L15.41,15.18C15.69,14.9 16.08,14.82 16.43,14.93C17.55,15.3 18.75,15.5 20,15.5A1,1 0 0,1 21,16.5V20A1,1 0 0,1 20,21A17,17 0 0,1 3,4A1,1 0 0,1 4,3H7.5A1,1 0 0,1 8.5,4C8.5,5.25 8.7,6.45 9.07,7.57C9.18,7.92 9.1,8.31 8.82,8.59L6.62,10.79Z" />
     </svg>
 </a>
-@endif
-@endsection
+<?php endif; ?>
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH D:\DA_DISCOVERY\resources\views/detail.blade.php ENDPATH**/ ?>

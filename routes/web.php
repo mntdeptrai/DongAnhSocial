@@ -83,6 +83,27 @@ Route::get('/food-tour/{slug}', [FoodTourController::class, 'show'])->name('food
 Route::post('/api/food-tours/{id}/diary', [FoodTourController::class, 'storeDiary'])->name('api.food-tours.store-diary');
 
 
+// --- SHOPPING CART & CHECKOUT ROUTES (Giỏ hàng & Đặt hàng online) ---
+use App\Http\Controllers\GioHangController;
+use App\Http\Controllers\CheckoutController;
+
+Route::get('/cart', [GioHangController::class, 'index'])->name('cart.index');
+Route::post('/cart/add', [GioHangController::class, 'store'])->name('cart.add');
+Route::put('/cart/update/{id}', [GioHangController::class, 'update'])->name('cart.update');
+Route::delete('/cart/remove/{id}', [GioHangController::class, 'destroy'])->name('cart.remove');
+Route::post('/cart/clear', [GioHangController::class, 'clear'])->name('cart.clear');
+
+Route::middleware(['auth'])->group(function () {
+    Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
+    Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
+    Route::post('/checkout/apply-voucher', [CheckoutController::class, 'applyVoucher'])->name('checkout.apply-voucher');
+    Route::get('/checkout/payment/{id}', [CheckoutController::class, 'payment'])->name('checkout.payment');
+    Route::post('/checkout/payment/{id}/process', [CheckoutController::class, 'processPayment'])->name('checkout.process-payment');
+    Route::get('/checkout/success/{id}', [CheckoutController::class, 'success'])->name('checkout.success');
+    Route::get('/orders', [CheckoutController::class, 'ordersList'])->name('orders.index');
+});
+
+
 // --- AUTHENTICATION ROUTES (Đăng nhập / Đăng ký) ---
 Route::get('/auth/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/auth/login', [AuthController::class, 'login'])->middleware('throttle:10,1'); // max 10 lần/phút

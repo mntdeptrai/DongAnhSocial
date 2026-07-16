@@ -35,21 +35,21 @@ class DatabaseSeeder extends Seeder
             CommuneSeeder::class,
 
             // 2. Bảng phụ thuộc vào users + categories + communes
-            // EaterySeeder::class,
-            // MarketAndMartSeeder::class,
-            // OcopHeritageSeeder::class,
+            EaterySeeder::class,
+            MarketAndMartSeeder::class,
+            OcopHeritageSeeder::class,
             WellnessAndEducationSeeder::class,
             CulturalActivitySeeder::class,
-            // CultureHubSeeder::class,
+            CultureHubSeeder::class,
 
             // 3. Bảng phụ thuộc vào eateries
-            // DishSeeder::class,
-            // ReviewSeeder::class,
-            // ReviewVideoSeeder::class,
-            // FoodSafetyTrustSeeder::class,
+            DishSeeder::class,
+            ReviewSeeder::class,
+            ReviewVideoSeeder::class,
+            FoodSafetyTrustSeeder::class,
 
             // 4. Bảng Food Tours (độc lập với eateries)
-            // FoodTourSeeder::class,
+            FoodTourSeeder::class,
 
             // 5. Kết nối bạn bè & Tin nhắn Realtime
             SocialHubSeeder::class,

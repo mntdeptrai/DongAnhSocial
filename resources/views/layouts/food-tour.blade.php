@@ -204,6 +204,10 @@
                                     <span>👤</span> Trang cá nhân
                                 </a>
                                 
+                                <a href="{{ route('orders.index') }}" class="dropdown-item">
+                                    <span>📦</span> Quản lý đơn hàng
+                                </a>
+                                
                                 <form action="/auth/logout" method="POST" style="margin: 0; width: 100%;">
                                     @csrf
                                     <button type="submit" class="dropdown-item dropdown-item-logout">
