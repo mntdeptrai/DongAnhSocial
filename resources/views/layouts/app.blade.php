@@ -951,7 +951,7 @@
                         .then(data => {
                             const chat = this.openChats.find(c => c.id === friendId);
                             if (chat) {
-                                chat.messages = data;
+                                chat.messages = Array.isArray(data) ? data : (data.messages || []);
                                 chat.loading = false;
                                 this.scrollToBottom(friendId);
                             }
@@ -959,6 +959,41 @@
                         .catch(err => {
                             console.error('Failed to load messages', err);
                         });
+                    this.startPolling();
+                },
+
+                startPolling() {
+                    if (this._pollingTimer) return;
+                    this._pollingTimer = setInterval(() => {
+                        this.openChats.forEach(chat => {
+                            if (!chat.is_minimized) {
+                                fetch('/social/messages/' + chat.id)
+                                    .then(res => res.json())
+                                    .then(data => {
+                                        const msgs = Array.isArray(data) ? data : (data.messages || []);
+                                        if (msgs.length !== chat.messages.length) {
+                                            chat.messages = msgs;
+                                            this.scrollToBottom(chat.id);
+                                        }
+                                    })
+                                    .catch(() => {});
+                            }
+                        });
+
+                        fetch('/social/recent-chats')
+                            .then(res => res.json())
+                            .then(data => {
+                                if (Array.isArray(data)) {
+                                    this.openChats.forEach(chat => {
+                                        const matched = data.find(c => c.id === chat.id);
+                                        if (matched) {
+                                            chat.is_online = matched.is_online;
+                                        }
+                                    });
+                                }
+                            })
+                            .catch(() => {});
+                    }, 4000);
                 },
 
                 sendSubmitMessage(friendId) {

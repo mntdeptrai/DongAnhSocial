@@ -22,6 +22,7 @@ class ApiService {
   }
 
   static bool get isAuthenticated => _token != null;
+  static String? get token => _token;
 
   static Map<String, String> _getHeaders() {
     final headers = {

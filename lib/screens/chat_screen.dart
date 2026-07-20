@@ -133,7 +133,7 @@ class _ChatScreenState extends State<ChatScreen> {
                         children: [
                           CircleAvatar(
                             radius: 24,
-                            backgroundColor: primaryColor.withOpacity(0.1),
+                            backgroundColor: primaryColor.withValues(alpha: 0.1),
                             child: Text(
                               friend['avatar'] ?? (friend['name']?[0] ?? '👤'),
                               style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold, fontSize: 18),
@@ -187,29 +187,41 @@ class _ChatScreenState extends State<ChatScreen> {
 class ChatDetailScreen extends StatefulWidget {
   final int friendId;
   final String friendName;
+  final bool isEmbedded;
 
   const ChatDetailScreen({
     super.key,
     required this.friendId,
     required this.friendName,
+    this.isEmbedded = false,
   });
 
   @override
   State<ChatDetailScreen> createState() => _ChatDetailScreenState();
 }
 
-class _ChatDetailScreenState extends State<ChatDetailScreen> {
+class _ChatDetailScreenState extends State<ChatDetailScreen> with SingleTickerProviderStateMixin {
   final _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   List<dynamic> _messages = [];
   bool _isLoading = false;
   Timer? _pollingTimer;
 
+  late AnimationController _sendAnimController;
+  late Animation<double> _sendScaleAnimation;
+
   @override
   void initState() {
     super.initState();
+    _sendAnimController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 150),
+    );
+    _sendScaleAnimation = Tween<double>(begin: 1.0, end: 0.88).animate(
+      CurvedAnimation(parent: _sendAnimController, curve: Curves.easeOut),
+    );
+
     _loadMessages();
-    // Refresh messages every 4 seconds for real-time emulation
     _pollingTimer = Timer.periodic(const Duration(seconds: 4), (timer) {
       _silentRefreshMessages();
     });
@@ -218,6 +230,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   @override
   void dispose() {
     _pollingTimer?.cancel();
+    _sendAnimController.dispose();
     _messageController.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -266,17 +279,227 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     final text = _messageController.text.trim();
     if (text.isEmpty) return;
 
+    _sendAnimController.forward().then((_) => _sendAnimController.reverse());
     _messageController.clear();
+
     final res = await ApiService.sendMessage(widget.friendId, text);
     if (res['success'] == true) {
       _silentRefreshMessages();
     }
   }
 
+  Widget _buildShimmerLoading() {
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: 5,
+      itemBuilder: (context, index) {
+        final isEven = index % 2 == 0;
+        return Align(
+          alignment: isEven ? Alignment.centerLeft : Alignment.centerRight,
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 16),
+            width: 180 + (index * 20 % 60).toDouble(),
+            height: 48,
+            decoration: BoxDecoration(
+              color: isEven ? const Color(0xFFE2E8F0) : const Color(0xFFBAE6FD),
+              borderRadius: BorderRadius.circular(18),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final primaryColor = const Color(0xFF0EA5E9);
     final currentUserId = ApiService.currentUser?['id'];
+
+    final bodyContent = Column(
+      children: [
+        // Messages history list
+        Expanded(
+          child: _isLoading
+              ? _buildShimmerLoading()
+              : _messages.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              color: primaryColor.withValues(alpha: 0.1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(Icons.chat_bubble_outline, size: 48, color: primaryColor),
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            'Hãy gửi lời chào đầu tiên tới ${widget.friendName}! 👋',
+                            style: TextStyle(color: Colors.grey[600], fontWeight: FontWeight.bold, fontSize: 13),
+                          ),
+                        ],
+                      ),
+                    )
+                  : ListView.builder(
+                      controller: _scrollController,
+                      reverse: true,
+                      padding: const EdgeInsets.all(16),
+                      itemCount: _messages.length,
+                      itemBuilder: (context, index) {
+                        final msg = _messages[_messages.length - 1 - index];
+                        final isSelf = msg['sender_id'] == currentUserId;
+
+                        return Align(
+                          alignment: isSelf ? Alignment.centerRight : Alignment.centerLeft,
+                          child: Container(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            constraints: BoxConstraints(
+                              maxWidth: MediaQuery.of(context).size.width * 0.72,
+                            ),
+                            child: Row(
+                              mainAxisAlignment: isSelf ? MainAxisAlignment.end : MainAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                if (!isSelf)
+                                  CircleAvatar(
+                                    radius: 13,
+                                    backgroundColor: primaryColor,
+                                    child: Text(
+                                      widget.friendName.isNotEmpty ? widget.friendName[0].toUpperCase() : '👤',
+                                      style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                                    ),
+                                  ),
+                                if (!isSelf) const SizedBox(width: 8),
+
+                                Flexible(
+                                  child: Column(
+                                    crossAxisAlignment: isSelf ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                                        decoration: BoxDecoration(
+                                          gradient: isSelf
+                                              ? const LinearGradient(
+                                                  colors: [Color(0xFF0EA5E9), Color(0xFF0284C7)],
+                                                )
+                                              : null,
+                                          color: isSelf ? null : Colors.white,
+                                          border: isSelf ? null : Border.all(color: const Color(0xFFE2E8F0)),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black.withValues(alpha: 0.03),
+                                              blurRadius: 6,
+                                              offset: const Offset(0, 2),
+                                            ),
+                                          ],
+                                          borderRadius: BorderRadius.only(
+                                            topLeft: const Radius.circular(18),
+                                            topRight: const Radius.circular(18),
+                                            bottomLeft: isSelf ? const Radius.circular(18) : const Radius.circular(4),
+                                            bottomRight: isSelf ? const Radius.circular(4) : const Radius.circular(18),
+                                          ),
+                                        ),
+                                        child: Text(
+                                          msg['message'] ?? '',
+                                          style: TextStyle(
+                                            color: isSelf ? Colors.white : const Color(0xFF0F172A),
+                                            fontSize: 14,
+                                            height: 1.35,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 3),
+                                      Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Text(
+                                            msg['created_at_format'] ?? '',
+                                            style: TextStyle(fontSize: 9, color: Colors.grey[400]),
+                                          ),
+                                          if (isSelf) ...[
+                                            const SizedBox(width: 4),
+                                            const Icon(Icons.done_all, size: 12, color: Color(0xFF0EA5E9)),
+                                          ],
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+        ),
+
+        // Message input bar
+        SafeArea(
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 8, offset: const Offset(0, -2)),
+              ],
+            ),
+            child: Row(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.add_circle_outline, color: Color(0xFF0EA5E9), size: 22),
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Tính năng đính kèm vị trí / hình ảnh')),
+                    );
+                  },
+                ),
+                Expanded(
+                  child: TextField(
+                    controller: _messageController,
+                    decoration: InputDecoration(
+                      hintText: 'Nhập tin nhắn...',
+                      hintStyle: TextStyle(color: Colors.grey[400], fontSize: 13),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(24),
+                        borderSide: BorderSide.none,
+                      ),
+                      fillColor: const Color(0xFFF1F5F9),
+                      filled: true,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    ),
+                    onSubmitted: (_) => _sendMessage(),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                ScaleTransition(
+                  scale: _sendScaleAnimation,
+                  child: GestureDetector(
+                    onTap: _sendMessage,
+                    child: Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [Color(0xFF0EA5E9), Color(0xFF0284C7)],
+                        ),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.send_rounded, color: Colors.white, size: 18),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+
+    if (widget.isEmbedded) {
+      return bodyContent;
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -286,110 +509,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
         elevation: 0.5,
       ),
       backgroundColor: const Color(0xFFF8FAFC),
-      body: Column(
-        children: [
-          // Messages history list
-          Expanded(
-            child: _isLoading
-                ? const Center(child: CircularProgressIndicator(color: Color(0xFF0EA5E9)))
-                : _messages.isEmpty
-                    ? const Center(
-                        child: Text(
-                          'Hãy gửi lời chào đầu tiên! 👋',
-                          style: TextStyle(color: Colors.grey),
-                        ),
-                      )
-                    : ListView.builder(
-                        controller: _scrollController,
-                        padding: const EdgeInsets.all(16),
-                        itemCount: _messages.length,
-                        itemBuilder: (context, index) {
-                          final msg = _messages[index];
-                          final isSelf = msg['sender_id'] == currentUserId;
-
-                          return Align(
-                            alignment: isSelf ? Alignment.centerRight : Alignment.centerLeft,
-                            child: Column(
-                              crossAxisAlignment: isSelf ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-                              children: [
-                                Container(
-                                  margin: const EdgeInsets.only(bottom: 4),
-                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                                  decoration: BoxDecoration(
-                                    gradient: isSelf
-                                        ? LinearGradient(
-                                            colors: [primaryColor, primaryColor.withBlue(220)],
-                                          )
-                                        : null,
-                                    color: isSelf ? null : const Color(0xFFE2E8F0),
-                                    borderRadius: BorderRadius.only(
-                                      topLeft: const Radius.circular(16),
-                                      topRight: const Radius.circular(16),
-                                      bottomLeft: isSelf ? const Radius.circular(16) : const Radius.circular(2),
-                                      bottomRight: isSelf ? const Radius.circular(2) : const Radius.circular(16),
-                                    ),
-                                  ),
-                                  child: Text(
-                                    msg['message'] ?? '',
-                                    style: TextStyle(
-                                      color: isSelf ? Colors.white : Colors.grey[800],
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                ),
-                                Text(
-                                  msg['created_at_format'] ?? '',
-                                  style: TextStyle(fontSize: 9, color: Colors.grey[400]),
-                                ),
-                                const SizedBox(height: 12),
-                              ],
-                            ),
-                          );
-                        },
-                      ),
-          ),
-
-          // Message input bar
-          SafeArea(
-            child: Container(
-              color: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _messageController,
-                      decoration: InputDecoration(
-                        hintText: 'Nhập tin nhắn...',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(24),
-                          borderSide: BorderSide.none,
-                        ),
-                        fillColor: const Color(0xFFF1F5F9),
-                        filled: true,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                      ),
-                      onSubmitted: (_) => _sendMessage(),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  GestureDetector(
-                    onTap: _sendMessage,
-                    child: Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: primaryColor,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(Icons.send, color: Colors.white, size: 20),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
+      body: bodyContent,
     );
   }
 }

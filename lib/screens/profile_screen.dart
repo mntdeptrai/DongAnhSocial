@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import 'my_checkins_screen.dart';
+import '../main.dart';
 
 class ProfileScreen extends StatelessWidget {
   final VoidCallback onLogout;
@@ -81,7 +82,7 @@ class ProfileScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.grey[200]!.withOpacity(0.4),
+                    color: Colors.grey[200]!.withValues(alpha: 0.4),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -91,7 +92,7 @@ class ProfileScreen extends StatelessWidget {
                 children: [
                   CircleAvatar(
                     radius: 40,
-                    backgroundColor: primaryColor.withOpacity(0.1),
+                    backgroundColor: primaryColor.withValues(alpha: 0.1),
                     child: Text(
                       user?['name']?[0] ?? '👤',
                       style: TextStyle(color: primaryColor, fontSize: 32, fontWeight: FontWeight.bold),
@@ -164,6 +165,14 @@ class ProfileScreen extends StatelessWidget {
                         context,
                         MaterialPageRoute(builder: (context) => const MyCheckinsScreen()),
                       );
+                    }),
+                    const Divider(height: 1),
+                    _optionTile(Icons.notifications_active_outlined, 'Thông báo ứng dụng & Tin nhắn', () {
+                      NotificationHelper.openSettings();
+                    }),
+                    const Divider(height: 1),
+                    _optionTile(Icons.bubble_chart_outlined, 'Bong bóng chat nổi ngoài màn hình (System Overlay)', () {
+                      NotificationHelper.requestOverlayPermission();
                     }),
                     const Divider(height: 1),
                     _optionTile(Icons.favorite_border, 'Địa điểm đã lưu'),

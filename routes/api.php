@@ -36,6 +36,9 @@ Route::prefix('v1')->group(function () {
         Route::get('/messages/{friendId}', [\App\Http\Controllers\SocialHubController::class, 'getMessages']);
         Route::post('/messages', [\App\Http\Controllers\SocialHubController::class, 'sendMessage']);
         
+        // Unread check for native background polling
+        Route::get('/social/unread-check', [\App\Http\Controllers\SocialHubController::class, 'checkUnread']);
+        
         // Checkin history for mobile
         Route::get('/checkins/my', [\App\Http\Controllers\Api\CheckinApiController::class, 'getMyCheckins']);
     });

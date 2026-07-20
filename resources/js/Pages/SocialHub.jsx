@@ -199,6 +199,48 @@ export default function SocialHub() {
             });
     }, [activeFriend]);
 
+    // Poll friends presence & active chat messages every 4 seconds for real-time Web sync
+    useEffect(() => {
+        if (!currentUser) return;
+
+        const timer = setInterval(() => {
+            // 1. Refresh friends list & online status
+            axios.get('/api/v1/friends')
+                .then(res => {
+                    const freshFriends = res.data;
+                    if (Array.isArray(freshFriends) && freshFriends.length > 0) {
+                        setFriends(freshFriends);
+                        if (activeFriendRef.current) {
+                            const updatedActive = freshFriends.find(f => f.id === activeFriendRef.current.id);
+                            if (updatedActive) {
+                                setActiveFriend(prev => prev ? { ...prev, is_online: updatedActive.is_online } : prev);
+                            }
+                        }
+                    }
+                })
+                .catch(() => {});
+
+            // 2. Refresh active chat messages
+            const currentActive = activeFriendRef.current;
+            if (currentActive) {
+                axios.get(`/social/messages/${currentActive.id}`)
+                    .then(res => {
+                        const data = res.data;
+                        const newMsgs = data.messages || data;
+                        setMessages(prev => {
+                            if (newMsgs.length !== prev.length) {
+                                return newMsgs;
+                            }
+                            return prev;
+                        });
+                    })
+                    .catch(() => {});
+            }
+        }, 4000);
+
+        return () => clearInterval(timer);
+    }, [currentUser]);
+
     // Load older messages (infinite scroll up)
     const loadOlderMessages = () => {
         if (!activeFriend || isLoadingMore || !hasMore) return;

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'services/api_service.dart';
 import 'screens/login_screen.dart';
 import 'screens/map_screen.dart';
 import 'screens/feed_screen.dart';
 import 'screens/chat_screen.dart';
 import 'screens/profile_screen.dart';
+import 'widgets/floating_chat_bubble.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,7 +30,6 @@ class MyApp extends StatelessWidget {
           seedColor: primaryColor,
           primary: primaryColor,
           surface: Colors.white,
-          background: const Color(0xFFF8FAFC),
         ),
         scaffoldBackgroundColor: const Color(0xFFF8FAFC),
         fontFamily: 'Roboto', // Default robust system font
@@ -47,6 +48,57 @@ class MyApp extends StatelessWidget {
   }
 }
 
+class NotificationHelper {
+  static const _channel = MethodChannel('com.example.mobile/notifications');
+
+  static Future<void> requestPermission() async {
+    try {
+      await _channel.invokeMethod('requestNotificationPermission');
+    } catch (_) {}
+  }
+
+  static Future<void> openSettings() async {
+    try {
+      await _channel.invokeMethod('openNotificationSettings');
+    } catch (_) {}
+  }
+
+  static Future<bool> requestOverlayPermission() async {
+    try {
+      final res = await _channel.invokeMethod<bool>('requestOverlayPermission');
+      return res ?? false;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  static Future<bool> canDrawOverlays() async {
+    try {
+      final res = await _channel.invokeMethod<bool>('canDrawOverlays');
+      return res ?? false;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  static Future<void> showNotification({required String title, required String body}) async {
+    try {
+      await _channel.invokeMethod('showNotification', {
+        'title': title,
+        'body': body,
+      });
+    } catch (_) {}
+  }
+
+  /// Send auth token to native Kotlin background polling thread
+  static Future<void> setAuthToken(String? token) async {
+    if (token == null) return;
+    try {
+      await _channel.invokeMethod('setAuthToken', {'token': token});
+    } catch (_) {}
+  }
+}
+
 class AppEntryScreen extends StatefulWidget {
   const AppEntryScreen({super.key});
 
@@ -62,6 +114,8 @@ class _AppEntryScreenState extends State<AppEntryScreen> {
   void initState() {
     super.initState();
     _checkLoginStatus();
+    NotificationHelper.requestPermission();
+    NotificationHelper.requestOverlayPermission();
   }
 
   void _checkLoginStatus() {
@@ -69,6 +123,8 @@ class _AppEntryScreenState extends State<AppEntryScreen> {
       _isLoggedIn = ApiService.isAuthenticated;
       if (_isLoggedIn) {
         _isSkipped = false;
+        // Send auth token to native background polling
+        NotificationHelper.setAuthToken(ApiService.token);
       }
     });
   }
@@ -78,6 +134,8 @@ class _AppEntryScreenState extends State<AppEntryScreen> {
       _isLoggedIn = true;
       _isSkipped = false;
     });
+    // Send auth token to native background polling
+    NotificationHelper.setAuthToken(ApiService.token);
   }
 
   void _onSkip() {
@@ -147,23 +205,34 @@ class _MainLayoutState extends State<MainLayout> {
     ];
 
     return Scaffold(
-      body: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 300),
-        switchInCurve: Curves.easeOut,
-        switchOutCurve: Curves.easeIn,
-        transitionBuilder: (child, animation) {
-          return FadeTransition(
-            opacity: animation,
-            child: ScaleTransition(
-              scale: Tween<double>(begin: 0.98, end: 1.0).animate(animation),
-              child: child,
+      body: Stack(
+        children: [
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 300),
+            switchInCurve: Curves.easeOut,
+            switchOutCurve: Curves.easeIn,
+            transitionBuilder: (child, animation) {
+              return FadeTransition(
+                opacity: animation,
+                child: ScaleTransition(
+                  scale: Tween<double>(begin: 0.98, end: 1.0).animate(animation),
+                  child: child,
+                ),
+              );
+            },
+            child: KeyedSubtree(
+              key: ValueKey<int>(_currentIndex),
+              child: screens[_currentIndex],
             ),
-          );
-        },
-        child: KeyedSubtree(
-          key: ValueKey<int>(_currentIndex),
-          child: screens[_currentIndex],
-        ),
+          ),
+          DraggableFloatingChatBubble(
+            onOpenChatTab: () {
+              setState(() {
+                _currentIndex = 2;
+              });
+            },
+          ),
+        ],
       ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,

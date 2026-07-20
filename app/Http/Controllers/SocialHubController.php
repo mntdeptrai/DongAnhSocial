@@ -227,10 +227,43 @@ class SocialHubController extends Controller
             return back()->with('error', $e->getMessage());
         }
     }
+    /**
+     * Quick unread check for native Android background polling.
+     * Returns {"has_unread": true/false, "sender_name": "...", "last_message": "..."}
+     */
+    public function checkUnread()
+    {
+        $userId = Auth::id();
+        if (!$userId) {
+            return response()->json(['has_unread' => false]);
+        }
+
+        // Find the most recent UNREAD message sent TO the current user
+        $lastIncoming = Message::where('receiver_id', $userId)
+            ->where('is_read', false)
+            ->orderBy('created_at', 'desc')
+            ->first();
+
+        if (!$lastIncoming) {
+            return response()->json(['has_unread' => false]);
+        }
+
+        $sender = User::find($lastIncoming->sender_id);
+
+        return response()->json([
+            'has_unread' => true,
+            'sender_name' => $sender ? $sender->name : 'Bạn bè',
+            'last_message' => $lastIncoming->message ?? 'Tin nhắn mới',
+            'message_id' => $lastIncoming->id,
+        ]);
+    }
 
     public function getFriends()
     {
         $user = Auth::user();
+        if ($user) {
+            $user->update(['last_active_at' => now()]);
+        }
         
         $sentFriendIds = Friendship::where('user_id', $user->id)
             ->where('status', 'accepted')
@@ -258,6 +291,9 @@ class SocialHubController extends Controller
     public function getMessages($friendId, Request $request)
     {
         $userId   = Auth::id();
+        if ($userId) {
+            User::where('id', $userId)->update(['last_active_at' => now()]);
+        }
         $limit    = 50;
         $beforeId = $request->query('before_id');
 
