@@ -86,12 +86,36 @@ class EateryController extends Controller
             }
         }
         
+        // Lấy tất cả ID của địa điểm này trên mọi connection
+        $sameEateryIds = [$eatery->id];
+        foreach (['mysql', 'mysql_stay', 'mysql_wellness', 'mysql_market', 'mysql_education', 'mysql_culture'] as $c) {
+            try {
+                $ids = \App\Models\Eatery::on($c)->where('slug', $slug)->pluck('id')->toArray();
+                $sameEateryIds = array_merge($sameEateryIds, $ids);
+            } catch (\Exception $e) {}
+        }
+        $sameEateryIds = array_values(array_unique(array_filter($sameEateryIds)));
+
+        // Lấy danh sách ảnh check-in thực tế của thực khách tại địa điểm này
+        $checkinPhotos = \App\Models\Checkin::with('user')
+            ->whereIn('eatery_id', $sameEateryIds)
+            ->whereNotNull('image_path')
+            ->where('image_path', '!=', '')
+            ->latest()
+            ->take(15)
+            ->get();
+
+        $checkinReviews = \App\Models\Checkin::with('user')
+            ->whereIn('eatery_id', $sameEateryIds)
+            ->latest()
+            ->get();
+
         // Mã hóa Schema dữ liệu có cấu trúc sang định dạng thẻ script JSON-LD
         $jsonLd = '<script type="application/ld+json">' . PHP_EOL . 
                   json_encode($schemaData, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT) . PHP_EOL . 
                   '</script>';
         
-        return view('detail', compact('eatery', 'jsonLd'));
+        return view('detail', compact('eatery', 'jsonLd', 'checkinPhotos', 'checkinReviews'));
     }
 
     public function storeReview(Request $request, $id)

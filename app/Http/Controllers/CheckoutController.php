@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Cart;
 use App\Models\CartItem;
-use App\Models\Voucher;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Payment;
@@ -57,148 +56,7 @@ class CheckoutController extends Controller
             return redirect()->back()->with('error', 'Giỏ hàng của bạn đang trống');
         }
 
-        $vouchers = Voucher::active()->get();
-        $bestVoucherApplied = $this->autoApplyBestVoucher($subtotal);
-
-        return view('checkout.index', compact('cartItems', 'subtotal', 'vouchers', 'bestVoucherApplied'));
-    }
-
-    public function applyVoucher(Request $request)
-    {
-        $request->validate([
-            'voucher_code' => 'required|string',
-            'items' => 'nullable|string'
-        ]);
-
-        $code = trim($request->input('voucher_code'));
-
-        $cart = Cart::with(['items'])->where('user_id', Auth::user()->id)->first();
-        if (!$cart || $cart->items->isEmpty()) {
-            return response()->json(['success' => false, 'message' => 'Giỏ hàng trống'], 422);
-        }
-
-        $selectedIds = $request->input('items') ? explode(',', $request->input('items')) : null;
-        $itemsToCheckout = $selectedIds 
-            ? $cart->items->whereIn('id', $selectedIds) 
-            : $cart->items;
-
-        $subtotal = $itemsToCheckout->sum('thanh_tien');
-
-        $voucher = Voucher::where('code', $code)->active()->first();
-        if (!$voucher) {
-            return response()->json(['success' => false, 'message' => 'Mã giảm giá không hợp lệ hoặc đã hết hạn'], 422);
-        }
-
-        if ($voucher->min_order_amount && $subtotal < $voucher->min_order_amount) {
-            return response()->json(['success' => false, 'message' => 'Đơn hàng chưa đạt giá trị tối thiểu ' . number_format($voucher->min_order_amount) . 'đ'], 422);
-        }
-
-        $percent = (float)$voucher->percentage;
-        $discountValue = (int) floor($subtotal * $percent / 100);
-        $totalValue = max(0, (int)$subtotal - $discountValue);
-
-        session([
-            'checkout.voucher' => [
-                'id' => $voucher->id,
-                'code' => $voucher->code,
-                'percent' => $percent,
-                'discount' => $discountValue,
-                'total' => $totalValue,
-            ]
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'message' => "Áp dụng mã {$voucher->code} (-{$percent}%) thành công",
-            'voucher' => [
-                'code' => $voucher->code,
-                'percent' => $percent,
-                'discount' => number_format($discountValue, 0, ',', '.') . 'đ',
-                'total' => number_format($totalValue, 0, ',', '.') . 'đ',
-                'discount_value' => $discountValue,
-                'total_value' => $totalValue,
-            ]
-        ]);
-    }
-
-    public function removeVoucher(Request $request)
-    {
-        $cart = Cart::with(['items'])->where('user_id', Auth::user()->id)->first();
-        if (!$cart || $cart->items->isEmpty()) {
-            return response()->json(['success' => false, 'message' => 'Giỏ hàng trống'], 422);
-        }
-
-        $selectedIds = $request->input('items') ? explode(',', $request->input('items')) : null;
-        $itemsToCheckout = $selectedIds 
-            ? $cart->items->whereIn('id', $selectedIds) 
-            : $cart->items;
-
-        $subtotal = $itemsToCheckout->sum('thanh_tien');
-        session()->forget('checkout.voucher');
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Đã hủy bỏ áp dụng mã giảm giá',
-            'voucher' => [
-                'discount' => '0đ',
-                'total' => number_format($subtotal, 0, ',', '.') . 'đ'
-            ]
-        ]);
-    }
-
-    private function autoApplyBestVoucher($subtotal)
-    {
-        $vouchers = Voucher::active()
-            ->where(function ($query) use ($subtotal) {
-                $query->whereNull('min_order_amount')
-                    ->orWhere('min_order_amount', '<=', $subtotal);
-            })
-            ->get();
-
-        if ($vouchers->isEmpty()) {
-            return null;
-        }
-
-        $bestVoucher = null;
-        $maxDiscount = 0;
-
-        foreach ($vouchers as $voucher) {
-            $percent = (float)$voucher->percentage;
-            $discountValue = (int) floor($subtotal * $percent / 100);
-
-            if ($discountValue > $maxDiscount) {
-                $maxDiscount = $discountValue;
-                $bestVoucher = $voucher;
-            }
-        }
-
-        if (!$bestVoucher) {
-            return null;
-        }
-
-        $percent = (float)$bestVoucher->percentage;
-        $discountValue = (int) floor($subtotal * $percent / 100);
-        $totalValue = max(0, (int)$subtotal - $discountValue);
-
-        session([
-            'checkout.voucher' => [
-                'id' => $bestVoucher->id,
-                'code' => $bestVoucher->code,
-                'percent' => $percent,
-                'discount' => $discountValue,
-                'total' => $totalValue,
-            ]
-        ]);
-
-        return [
-            'id' => $bestVoucher->id,
-            'code' => $bestVoucher->code,
-            'percent' => $percent,
-            'discount' => number_format($discountValue, 0, ',', '.') . ' đ',
-            'total' => number_format($totalValue, 0, ',', '.') . ' đ',
-            'discount_value' => $discountValue,
-            'total_value' => $totalValue,
-        ];
+        return view('checkout.index', compact('cartItems', 'subtotal'));
     }
 
     public function store(Request $request)
@@ -230,11 +88,6 @@ class CheckoutController extends Controller
             return redirect()->back()->with('error', 'Giỏ hàng trống');
         }
 
-        // Apply voucher if any from session
-        $appliedVoucher = session('checkout.voucher');
-        $voucherId = $appliedVoucher['id'] ?? null;
-        $voucherPercent = $appliedVoucher['percent'] ?? 0;
-
         try {
             DB::beginTransaction();
 
@@ -250,16 +103,13 @@ class CheckoutController extends Controller
             foreach ($groupedItems as $key => $items) {
                 list($eateryId, $categorySlug) = explode('|', $key);
 
-                $subtotal = $items->sum('thanh_tien');
-                $discount = ($subtotal * $voucherPercent) / 100;
-                $totalAmount = max(0, $subtotal - $discount);
+                $totalAmount = $items->sum('thanh_tien');
 
                 // 1. Create order
                 $order = Order::create([
                     'user_id' => $user->id,
                     'eatery_id' => $eateryId,
                     'category_slug' => $categorySlug,
-                    'voucher_id' => $voucherId,
                     'customer_name' => $request->input('name'),
                     'customer_phone' => $request->input('phone'),
                     'shipping_address' => $request->input('address'),
@@ -303,9 +153,6 @@ class CheckoutController extends Controller
                 $cart->items()->delete();
                 $cart->delete();
             }
-
-            // Clear voucher session
-            session()->forget('checkout.voucher');
 
             DB::commit();
 
@@ -413,7 +260,7 @@ class CheckoutController extends Controller
             ->where('status', 'completed')
             ->sum('total_amount');
 
-        $query = Order::with(['items', 'payment', 'voucher'])
+        $query = Order::with(['items', 'payment'])
             ->where('user_id', $userId);
 
         // 1. Filter by search (mã đơn hàng hoặc tên món ăn)
@@ -483,9 +330,6 @@ class CheckoutController extends Controller
 
             $subtotal = $items->sum('total');
             $discount = 0.00;
-            if ($order->voucher) {
-                $discount = (float)($subtotal * (float)$order->voucher->percentage / 100);
-            }
             $shipping_fee = $subtotal >= 100000 ? 0 : 15000;
 
             return [
@@ -499,7 +343,7 @@ class CheckoutController extends Controller
                 'items' => $items,
                 'subtotal' => $subtotal,
                 'shipping_fee' => $shipping_fee,
-                'voucher_code' => $order->voucher ? $order->voucher->code : null,
+                'voucher_code' => null,
                 'discount' => $discount,
                 'total_amount' => (float)$order->total_amount,
                 'customer_name' => $order->customer_name,
@@ -533,7 +377,7 @@ class CheckoutController extends Controller
             return response()->json(['success' => false, 'message' => 'Vui lòng đăng nhập'], 401);
         }
 
-        $order = Order::with(['items', 'payment', 'voucher'])
+        $order = Order::with(['items', 'payment'])
             ->where('user_id', Auth::user()->id)
             ->findOrFail($id);
 
@@ -556,9 +400,6 @@ class CheckoutController extends Controller
 
         $subtotal = $items->sum('total');
         $discount = 0.00;
-        if ($order->voucher) {
-            $discount = (float)($subtotal * (float)$order->voucher->percentage / 100);
-        }
         $shipping_fee = $subtotal >= 100000 ? 0 : 15000;
 
         $formattedOrder = [
@@ -572,7 +413,7 @@ class CheckoutController extends Controller
             'items' => $items,
             'subtotal' => $subtotal,
             'shipping_fee' => $shipping_fee,
-            'voucher_code' => $order->voucher ? $order->voucher->code : null,
+            'voucher_code' => null,
             'discount' => $discount,
             'total_amount' => (float)$order->total_amount,
             'customer_name' => $order->customer_name,

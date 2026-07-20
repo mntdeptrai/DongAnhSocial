@@ -132,12 +132,13 @@ class MainLayout extends StatefulWidget {
 
 class _MainLayoutState extends State<MainLayout> {
   int _currentIndex = 0;
+  final GlobalKey<FeedScreenState> _feedScreenKey = GlobalKey<FeedScreenState>();
 
   @override
   Widget build(BuildContext context) {
     final List<Widget> screens = [
       const MapScreen(),
-      const FeedScreen(),
+      FeedScreen(key: _feedScreenKey),
       const ChatScreen(),
       ProfileScreen(
         onLogout: widget.onLogout,
@@ -146,9 +147,23 @@ class _MainLayoutState extends State<MainLayout> {
     ];
 
     return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: screens,
+      body: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 300),
+        switchInCurve: Curves.easeOut,
+        switchOutCurve: Curves.easeIn,
+        transitionBuilder: (child, animation) {
+          return FadeTransition(
+            opacity: animation,
+            child: ScaleTransition(
+              scale: Tween<double>(begin: 0.98, end: 1.0).animate(animation),
+              child: child,
+            ),
+          );
+        },
+        child: KeyedSubtree(
+          key: ValueKey<int>(_currentIndex),
+          child: screens[_currentIndex],
+        ),
       ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
@@ -156,6 +171,9 @@ class _MainLayoutState extends State<MainLayout> {
           setState(() {
             _currentIndex = index;
           });
+          if (index == 1) {
+            _feedScreenKey.currentState?.refreshCamera();
+          }
         },
         type: BottomNavigationBarType.fixed,
         backgroundColor: Colors.white,

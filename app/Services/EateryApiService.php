@@ -289,7 +289,11 @@ class EateryApiService
             }
         }
 
-        return $allEateries;
+        return $allEateries->unique(function($item) {
+            $slug = is_array($item) ? ($item['slug'] ?? '') : ($item->slug ?? '');
+            $name = is_array($item) ? ($item['name'] ?? '') : ($item->name ?? '');
+            return !empty($slug) ? $slug : mb_strtolower(trim($name));
+        })->values();
     }
 
     private static function fetchEateriesFromCategory($categorySlug, array $filters = [])

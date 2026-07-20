@@ -961,13 +961,22 @@
     let selectedLocketRating = 5;
     let locketSearchTimeout = null;
 
-    // Start camera stream automatically on page load
-    async function startLocketCamera() {
+    // Start camera stream automatically on page load or when returning to page
+    async function startLocketCamera(force = false) {
         const video = document.getElementById('locketVideo');
         if (!video) return;
 
-        if (locketStream) {
+        // Check if stream is active and video is currently playing
+        if (!force && locketStream) {
+            const tracks = locketStream.getVideoTracks();
+            if (tracks.length > 0 && tracks[0].readyState === 'live' && video.srcObject === locketStream && !video.paused) {
+                return; // Stream is already active and running
+            }
+            tracks.forEach(t => t.stop());
+            locketStream = null;
+        } else if (locketStream) {
             locketStream.getTracks().forEach(t => t.stop());
+            locketStream = null;
         }
 
         try {
@@ -976,8 +985,10 @@
                 audio: false
             });
             video.srcObject = locketStream;
+            video.play().catch(e => console.warn('Video play warning:', e));
             video.style.display = 'block';
-            document.getElementById('locketPreview').style.display = 'none';
+            const preview = document.getElementById('locketPreview');
+            if (preview) preview.style.display = 'none';
         } catch (err) {
             console.warn('Camera access denied or unavailable. Showing fallback UI.', err);
             // Replace viewfinder with fallback UI for uploading
@@ -1235,10 +1246,24 @@
         submitBtn.disabled = true;
     });
 
-    // Auto open camera on load
+    // Auto open camera on load & auto refresh camera when returning to page/tab
     document.addEventListener('DOMContentLoaded', () => {
         startLocketCamera();
         setLocketRating(5);
+    });
+
+    window.addEventListener('pageshow', () => {
+        startLocketCamera();
+    });
+
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) {
+            startLocketCamera();
+        }
+    });
+
+    window.addEventListener('focus', () => {
+        startLocketCamera();
     });
 
     // Auto expand/fill form if there are validation errors on redirect

@@ -21,6 +21,7 @@ use App\Models\FoodTour;
 use App\Models\FoodTourStop;
 use App\Models\FoodTourDiary;
 use App\Models\User;
+use App\Models\Checkin;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -151,6 +152,12 @@ class EateryApiController extends Controller
             $q->where('status', 'approved');
         }])->active();
 
+        if ($category) {
+            $query->whereHas('category', function($q) use ($category) {
+                $q->where('slug', $category);
+            });
+        }
+
         if ($request->query('is_featured') !== null) {
             $query->where('is_featured', $request->boolean('is_featured'));
         }
@@ -176,25 +183,62 @@ class EateryApiController extends Controller
     {
         $conn = $this->getConnection($category);
         
-        $relations = [
+        $baseRelations = [
             'category', 
             'commune', 
-            'dishes', 
-            'rooms',
-            'wellnessServices',
-            'ocopProducts',
-            'educationPrograms',
-            'foodSafetyCertificate', 
-            'foodSupplyContracts', 
-            'purchaseInvoices', 
-            'dailyFoodLogs',
             'reviews' => function($q) {
                 $q->orderBy('created_at', 'desc');
             }
         ];
 
-        $eatery = Eatery::on($conn)->with($relations)->where('slug', $slug)->firstOrFail();
-        return response()->json($eatery);
+        $eatery = Eatery::on($conn)->with($baseRelations)->where('slug', $slug)->firstOrFail();
+
+        $optionalRelations = [
+            'dishes', 'rooms', 'wellnessServices', 'ocopProducts', 
+            'educationPrograms', 'foodSafetyCertificate', 'foodSupplyContracts', 
+            'purchaseInvoices', 'dailyFoodLogs'
+        ];
+
+        foreach ($optionalRelations as $rel) {
+            try {
+                $eatery->load($rel);
+            } catch (\Exception $e) {
+                // Table or relationship might not exist on this specific db connection
+            }
+        }
+
+        // Lấy tất cả ID của địa điểm này trên mọi connection (tránh lệch ID giữa mysql và mysql_culture)
+        $sameEateryIds = [$eatery->id];
+        foreach (['mysql', 'mysql_stay', 'mysql_wellness', 'mysql_market', 'mysql_education', 'mysql_culture'] as $c) {
+            try {
+                $ids = Eatery::on($c)->where('slug', $slug)->pluck('id')->toArray();
+                $sameEateryIds = array_merge($sameEateryIds, $ids);
+            } catch (\Exception $e) {
+                // Ignore connection errors
+            }
+        }
+        $sameEateryIds = array_values(array_unique(array_filter($sameEateryIds)));
+
+        // Lấy các ảnh check-in thực tế của thực khách tại quán
+        $checkinPhotos = Checkin::with('user')
+            ->whereIn('eatery_id', $sameEateryIds)
+            ->whereNotNull('image_path')
+            ->where('image_path', '!=', '')
+            ->latest()
+            ->take(15)
+            ->get();
+
+        // Lấy các checkin làm review thực tế
+        $checkinReviews = Checkin::with('user')
+            ->whereIn('eatery_id', $sameEateryIds)
+            ->latest()
+            ->get();
+
+        $data = $eatery->toArray();
+        $data['checkin_photos'] = $checkinPhotos;
+        $data['checkin_reviews'] = $checkinReviews;
+
+        return response()->json($data);
     }
 
     public function store($category, Request $request)

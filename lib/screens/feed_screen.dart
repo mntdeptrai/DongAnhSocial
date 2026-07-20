@@ -2,16 +2,17 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:camera/camera.dart';
+import 'package:geolocator/geolocator.dart';
 import '../services/api_service.dart';
 
 class FeedScreen extends StatefulWidget {
   const FeedScreen({super.key});
 
   @override
-  State<FeedScreen> createState() => _FeedScreenState();
+  State<FeedScreen> createState() => FeedScreenState();
 }
 
-class _FeedScreenState extends State<FeedScreen> {
+class FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
   List<dynamic> _feedItems = [];
   bool _isLoading = false;
 
@@ -26,13 +27,13 @@ class _FeedScreenState extends State<FeedScreen> {
   int _rating = 5;
   final _commentController = TextEditingController();
   final _guestNameController = TextEditingController();
-  bool _isLoadingEateries = true;
   bool _isSendingCheckin = false;
   String? _checkinImagePath;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _loadFeed();
     _loadEateries();
     _initializeCamera();
@@ -40,23 +41,57 @@ class _FeedScreenState extends State<FeedScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _cameraController?.dispose();
     _commentController.dispose();
     _guestNameController.dispose();
     super.dispose();
   }
 
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    final CameraController? cameraController = _cameraController;
+
+    if (cameraController == null || !cameraController.value.isInitialized) {
+      if (state == AppLifecycleState.resumed) {
+        _initializeCamera();
+      }
+      return;
+    }
+
+    if (state == AppLifecycleState.inactive || state == AppLifecycleState.paused) {
+      setState(() {
+        _isCameraInitialized = false;
+      });
+      _cameraController?.dispose();
+      _cameraController = null;
+    } else if (state == AppLifecycleState.resumed) {
+      _initializeCamera();
+    }
+  }
+
+  Future<void> refreshCamera() async {
+    if (!_isCameraInitialized || _cameraController == null || !_cameraController!.value.isInitialized) {
+      await _initializeCamera();
+    }
+  }
+
   Future<void> _initializeCamera() async {
     try {
+      if (_cameraController != null) {
+        await _cameraController!.dispose();
+        _cameraController = null;
+      }
       _cameras = await availableCameras();
       if (_cameras != null && _cameras!.isNotEmpty) {
-        _cameraController = CameraController(
-          _cameras![_selectedCameraIndex],
+        final controller = CameraController(
+          _cameras![_selectedCameraIndex % _cameras!.length],
           ResolutionPreset.medium,
           enableAudio: false,
         );
+        _cameraController = controller;
 
-        await _cameraController!.initialize();
+        await controller.initialize();
         if (mounted) {
           setState(() {
             _isCameraInitialized = true;
@@ -65,6 +100,11 @@ class _FeedScreenState extends State<FeedScreen> {
       }
     } catch (e) {
       debugPrint('Lỗi khởi tạo Camera: $e');
+      if (mounted) {
+        setState(() {
+          _isCameraInitialized = false;
+        });
+      }
     }
   }
 
@@ -123,15 +163,60 @@ class _FeedScreenState extends State<FeedScreen> {
   }
 
   Future<void> _loadEateries() async {
-    final eateries = await ApiService.getEateries('am-thuc-dong-anh');
+    final eateries = await ApiService.getAllEateries();
     if (mounted) {
       setState(() {
         _eateries = eateries;
-        _isLoadingEateries = false;
         if (_eateries.isNotEmpty) {
           _selectedEateryId = _eateries[0]['id'];
         }
       });
+      _autoDetectCurrentLocationAndSelectEatery();
+    }
+  }
+
+  Future<void> _autoDetectCurrentLocationAndSelectEatery() async {
+    try {
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) return;
+      }
+      if (permission == LocationPermission.deniedForever) return;
+
+      final position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+
+      if (_eateries.isEmpty) return;
+
+      int? nearestId;
+      double minDistance = double.infinity;
+
+      for (var eatery in _eateries) {
+        final double? lat = double.tryParse(eatery['latitude']?.toString() ?? '');
+        final double? lng = double.tryParse(eatery['longitude']?.toString() ?? '');
+        if (lat != null && lng != null) {
+          final distance = Geolocator.distanceBetween(
+            position.latitude,
+            position.longitude,
+            lat,
+            lng,
+          );
+          if (distance < minDistance) {
+            minDistance = distance;
+            nearestId = eatery['id'];
+          }
+        }
+      }
+
+      if (nearestId != null && mounted) {
+        setState(() {
+          _selectedEateryId = nearestId;
+        });
+      }
+    } catch (e) {
+      debugPrint('Lỗi tự động lấy vị trí hiện tại: $e');
     }
   }
 
@@ -193,18 +278,6 @@ class _FeedScreenState extends State<FeedScreen> {
         });
         _loadFeed();
       }
-    }
-  }
-
-  void _submitComment(int commentableId, String type, String content) async {
-    if (content.trim().isEmpty) return;
-    final res = await ApiService.storeComment(
-      commentableId: commentableId,
-      commentableType: type == 'checkin' ? 'App\\Models\\Checkin' : 'App\\Models\\FoodTourDiary',
-      content: content,
-    );
-    if (res['success'] == true) {
-      _loadFeed();
     }
   }
 
@@ -414,17 +487,17 @@ class _FeedScreenState extends State<FeedScreen> {
 
     return Container(
       height: height,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(10),
       child: Card(
         elevation: 4,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         color: const Color(0xFF1E293B), // Dark card for camera page
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Header Row
+              // 1. Header Row
               Row(
                 children: [
                   Container(
@@ -435,45 +508,54 @@ class _FeedScreenState extends State<FeedScreen> {
                       shape: BoxShape.circle,
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 6),
                   const Text(
                     'LIVE CAMERA ACTIVE',
                     style: TextStyle(
                       color: Color(0xFF10B981),
                       fontWeight: FontWeight.bold,
-                      fontSize: 11,
+                      fontSize: 10,
                       letterSpacing: 0.5,
                     ),
                   ),
                   const Spacer(),
+                  IconButton(
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    icon: const Icon(Icons.refresh, color: Colors.white70, size: 18),
+                    onPressed: _initializeCamera,
+                    tooltip: 'Làm mới Camera',
+                  ),
+                  const SizedBox(width: 8),
                   const Text(
                     '📸 DAD CHECK-IN',
                     style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w900,
-                      fontSize: 12,
+                      fontSize: 11,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
 
-              // Camera Viewport (Locket-style inline preview)
+              // 2. Camera Viewport / Captured Photo Preview
               Expanded(
+                flex: _checkinImagePath != null ? 3 : 5,
                 child: Container(
                   decoration: BoxDecoration(
                     color: Colors.black,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFF334155), width: 2),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: const Color(0xFF334155), width: 1.5),
                   ),
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(12),
                     child: Stack(
                       fit: StackFit.expand,
                       children: [
                         if (_checkinImagePath == null) ...[
-                          // Real Camera Preview (Anti-distortion fitting)
-                          if (_isCameraInitialized && _cameraController != null)
+                          // Real Camera Preview
+                          if (_isCameraInitialized && _cameraController != null && _cameraController!.value.isInitialized)
                             FittedBox(
                               fit: BoxFit.cover,
                               child: SizedBox(
@@ -483,80 +565,88 @@ class _FeedScreenState extends State<FeedScreen> {
                               ),
                             )
                           else
-                            Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  const CircularProgressIndicator(color: Colors.white),
-                                  const SizedBox(height: 12),
-                                  Text(
-                                    'Đang khởi động camera...',
-                                    style: TextStyle(
-                                      color: Colors.white.withOpacity(0.7),
-                                      fontSize: 12,
+                            InkWell(
+                              onTap: _initializeCamera,
+                              child: Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                    const SizedBox(height: 10),
+                                    const Text(
+                                      'Đang kết nối Camera...',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 12,
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Chạm vào đây để tải lại',
+                                      style: TextStyle(
+                                        color: Colors.white.withOpacity(0.6),
+                                        fontSize: 10,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
 
                           // Viewfinder corners
-                          // Top-Left corner
                           Positioned(
-                            top: 12,
-                            left: 12,
+                            top: 10,
+                            left: 10,
                             child: Container(
-                              width: 16,
-                              height: 16,
+                              width: 14,
+                              height: 14,
                               decoration: const BoxDecoration(
                                 border: Border(
-                                  top: BorderSide(color: Colors.white, width: 2.5),
-                                  left: BorderSide(color: Colors.white, width: 2.5),
+                                  top: BorderSide(color: Colors.white, width: 2),
+                                  left: BorderSide(color: Colors.white, width: 2),
                                 ),
                               ),
                             ),
                           ),
-                          // Top-Right corner
                           Positioned(
-                            top: 12,
-                            right: 12,
+                            top: 10,
+                            right: 10,
                             child: Container(
-                              width: 16,
-                              height: 16,
+                              width: 14,
+                              height: 14,
                               decoration: const BoxDecoration(
                                 border: Border(
-                                  top: BorderSide(color: Colors.white, width: 2.5),
-                                  right: BorderSide(color: Colors.white, width: 2.5),
+                                  top: BorderSide(color: Colors.white, width: 2),
+                                  right: BorderSide(color: Colors.white, width: 2),
                                 ),
                               ),
                             ),
                           ),
-                          // Bottom-Left corner
                           Positioned(
-                            bottom: 12,
-                            left: 12,
+                            bottom: 10,
+                            left: 10,
                             child: Container(
-                              width: 16,
-                              height: 16,
+                              width: 14,
+                              height: 14,
                               decoration: const BoxDecoration(
                                 border: Border(
-                                  bottom: BorderSide(color: Colors.white, width: 2.5),
-                                  left: BorderSide(color: Colors.white, width: 2.5),
+                                  bottom: BorderSide(color: Colors.white, width: 2),
+                                  left: BorderSide(color: Colors.white, width: 2),
                                 ),
                               ),
                             ),
                           ),
-                          // Bottom-Right corner
                           Positioned(
-                            bottom: 12,
-                            right: 12,
+                            bottom: 10,
+                            right: 10,
                             child: Container(
-                              width: 16,
-                              height: 16,
+                              width: 14,
+                              height: 14,
                               decoration: const BoxDecoration(
                                 border: Border(
-                                  bottom: BorderSide(color: Colors.white, width: 2.5),
-                                  right: BorderSide(color: Colors.white, width: 2.5),
+                                  bottom: BorderSide(color: Colors.white, width: 2),
+                                  right: BorderSide(color: Colors.white, width: 2),
                                 ),
                               ),
                             ),
@@ -573,191 +663,229 @@ class _FeedScreenState extends State<FeedScreen> {
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
 
-              // Locket-style Camera Control Buttons
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  // Gallery selection button
-                  _circularControlButton(
-                    icon: Icons.photo_library_outlined,
-                    bgColor: const Color(0xFF334155),
-                    onPressed: _pickCheckinImageFromGallery,
-                  ),
+              const SizedBox(height: 10),
 
-                  // Large white shutter button (captures photo instantly inline)
-                  GestureDetector(
-                    onTap: _checkinImagePath == null ? _takeCheckinPicture : null,
-                    child: Container(
-                      width: 68,
-                      height: 68,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(color: const Color(0xFF475569), width: 4),
-                        color: Colors.white,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.08),
-                            blurRadius: 8,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
+              // 3. Controls & Check-in Form section
+              if (_checkinImagePath == null) ...[
+                // Shutter Controls in Camera Mode
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      _circularControlButton(
+                        icon: Icons.photo_library_outlined,
+                        bgColor: const Color(0xFF334155),
+                        onPressed: _pickCheckinImageFromGallery,
                       ),
-                      child: Center(
+                      GestureDetector(
+                        onTap: _takeCheckinPicture,
                         child: Container(
-                          width: 50,
-                          height: 50,
+                          width: 60,
+                          height: 60,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: _checkinImagePath == null ? const Color(0xFF0EA5E9) : Colors.grey[400],
+                            border: Border.all(color: const Color(0xFF475569), width: 3),
+                            color: Colors.white,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.08),
+                                blurRadius: 6,
+                                offset: const Offset(0, 3),
+                              ),
+                            ],
                           ),
-                          child: const Icon(Icons.camera_alt, color: Colors.white, size: 20),
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  // Right control button: Camera switch (if no photo) / Reset button (if photo captured)
-                  _circularControlButton(
-                    icon: _checkinImagePath != null ? Icons.refresh : Icons.cached_outlined,
-                    color: _checkinImagePath != null ? Colors.red : Colors.white,
-                    bgColor: const Color(0xFF334155),
-                    onPressed: () {
-                      if (_checkinImagePath != null) {
-                        setState(() {
-                          _checkinImagePath = null;
-                        });
-                      } else {
-                        _switchCamera();
-                      }
-                    },
-                  ),
-                ],
-              ),
-
-              // Check-in input form (Slide-up style inline form)
-              if (_checkinImagePath != null) ...[
-                const SizedBox(height: 12),
-                
-                // Choose eatery
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF334155),
-                    border: Border.all(color: const Color(0xFF475569)),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<int>(
-                      dropdownColor: const Color(0xFF334155),
-                      value: _selectedEateryId,
-                      isExpanded: true,
-                      style: const TextStyle(color: Colors.white, fontSize: 13),
-                      hint: const Text('Chọn địa điểm quán ăn...', style: TextStyle(color: Colors.white70)),
-                      items: _eateries.map<DropdownMenuItem<int>>((eatery) {
-                        return DropdownMenuItem<int>(
-                          value: eatery['id'],
-                          child: Text(
-                            '${eatery['name']} (${eatery['commune']?['name'] ?? 'Đông Anh'})',
-                            style: const TextStyle(color: Colors.white),
-                          ),
-                        );
-                      }).toList(),
-                      onChanged: (val) {
-                        setState(() {
-                          _selectedEateryId = val;
-                        });
-                      },
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 8),
-
-                Row(
-                  children: [
-                    // Stars selector
-                    Expanded(
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: List.generate(5, (index) {
-                          return GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                _rating = index + 1;
-                              });
-                            },
-                            child: Icon(
-                              index < _rating ? Icons.star : Icons.star_border,
-                              color: Colors.amber,
-                              size: 24,
+                          child: Center(
+                            child: Container(
+                              width: 44,
+                              height: 44,
+                              decoration: const BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Color(0xFF0EA5E9),
+                              ),
+                              child: const Icon(Icons.camera_alt, color: Colors.white, size: 20),
                             ),
-                          );
-                        }),
-                      ),
-                    ),
-
-                    const SizedBox(width: 8),
-
-                    // Comment input
-                    Expanded(
-                      flex: 2,
-                      child: TextField(
-                        controller: _commentController,
-                        style: const TextStyle(color: Colors.white, fontSize: 13),
-                        decoration: InputDecoration(
-                          hintText: 'Cảm nhận...',
-                          hintStyle: const TextStyle(color: Colors.white54),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide.none,
                           ),
-                          filled: true,
-                          fillColor: const Color(0xFF334155),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-
-                if (isGuest) ...[
-                  TextField(
-                    controller: _guestNameController,
-                    style: const TextStyle(color: Colors.white, fontSize: 13),
-                    decoration: InputDecoration(
-                      hintText: 'Tên của bạn (Khách vãng lai)...',
-                      hintStyle: const TextStyle(color: Colors.white54),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide.none,
+                      _circularControlButton(
+                        icon: Icons.cached_outlined,
+                        color: Colors.white,
+                        bgColor: const Color(0xFF334155),
+                        onPressed: _switchCamera,
                       ),
-                      filled: true,
-                      fillColor: const Color(0xFF334155),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    ],
+                  ),
+                ),
+              ] else ...[
+                // Responsive Scrollable Check-in Form in Photo Mode (Prevents any screen overflow!)
+                Expanded(
+                  flex: 4,
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Retake / Gallery Action Row
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            TextButton.icon(
+                              onPressed: () {
+                                setState(() {
+                                  _checkinImagePath = null;
+                                });
+                              },
+                              icon: const Icon(Icons.refresh, color: Colors.redAccent, size: 16),
+                              label: const Text('Chụp lại', style: TextStyle(color: Colors.redAccent, fontSize: 12, fontWeight: FontWeight.bold)),
+                              style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: Size.zero, tapTargetSize: MaterialTapTargetSize.shrinkWrap),
+                            ),
+                            TextButton.icon(
+                              onPressed: _pickCheckinImageFromGallery,
+                              icon: const Icon(Icons.photo_library_outlined, color: Colors.white70, size: 16),
+                              label: const Text('Đổi từ Thư viện', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                              style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: Size.zero, tapTargetSize: MaterialTapTargetSize.shrinkWrap),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+
+                        // Choose eatery with GPS location button
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF334155),
+                                  border: Border.all(color: const Color(0xFF475569)),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: DropdownButtonHideUnderline(
+                                  child: DropdownButton<int>(
+                                    dropdownColor: const Color(0xFF334155),
+                                    value: _selectedEateryId,
+                                    isExpanded: true,
+                                    style: const TextStyle(color: Colors.white, fontSize: 12),
+                                    hint: const Text('Chọn địa điểm quán ăn...', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                                    items: _eateries.map<DropdownMenuItem<int>>((eatery) {
+                                      return DropdownMenuItem<int>(
+                                        value: eatery['id'],
+                                        child: Text(
+                                          '${eatery['name']} (${eatery['commune']?['name'] ?? 'Đông Anh'})',
+                                          style: const TextStyle(color: Colors.white, fontSize: 12),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      );
+                                    }).toList(),
+                                    onChanged: (val) {
+                                      setState(() {
+                                        _selectedEateryId = val;
+                                      });
+                                    },
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            IconButton(
+                              onPressed: _autoDetectCurrentLocationAndSelectEatery,
+                              icon: const Icon(Icons.my_location, color: Color(0xFF0EA5E9), size: 20),
+                              tooltip: 'Tự động định vị quán gần nhất',
+                              style: IconButton.styleFrom(
+                                backgroundColor: const Color(0xFF334155),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                padding: const EdgeInsets.all(10),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+
+                        // Stars Rating
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: List.generate(5, (index) {
+                            return GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  _rating = index + 1;
+                                });
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 2.0),
+                                child: Icon(
+                                  index < _rating ? Icons.star : Icons.star_border,
+                                  color: Colors.amber,
+                                  size: 22,
+                                ),
+                              ),
+                            );
+                          }),
+                        ),
+                        const SizedBox(height: 8),
+
+                        // Comment input
+                        TextField(
+                          controller: _commentController,
+                          style: const TextStyle(color: Colors.white, fontSize: 12),
+                          decoration: InputDecoration(
+                            hintText: 'Nhập cảm nhận của bạn...',
+                            hintStyle: const TextStyle(color: Colors.white54, fontSize: 12),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide: BorderSide.none,
+                            ),
+                            filled: true,
+                            fillColor: const Color(0xFF334155),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+
+                        if (isGuest) ...[
+                          TextField(
+                            controller: _guestNameController,
+                            style: const TextStyle(color: Colors.white, fontSize: 12),
+                            decoration: InputDecoration(
+                              hintText: 'Tên của bạn (Khách vãng lai)...',
+                              hintStyle: const TextStyle(color: Colors.white54, fontSize: 12),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: BorderSide.none,
+                              ),
+                              filled: true,
+                              fillColor: const Color(0xFF334155),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                        ],
+
+                        // Submit Button
+                        ElevatedButton(
+                          onPressed: _isSendingCheckin || _selectedEateryId == null
+                              ? null
+                              : _submitCameraCheckin,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF0EA5E9),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          ),
+                          child: _isSendingCheckin
+                              ? const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                )
+                              : const Text('Gửi Check-in', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 8),
-                ],
-
-                ElevatedButton(
-                  onPressed: _isSendingCheckin || _selectedEateryId == null
-                      ? null
-                      : _submitCameraCheckin,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF0EA5E9),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
-                  child: _isSendingCheckin
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                        )
-                      : const Text('Gửi Check-in', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                 ),
               ],
             ],
@@ -994,16 +1122,26 @@ class _FeedScreenState extends State<FeedScreen> {
   }
 
   Widget _reactionButton(int id, String emoji, String type) {
-    return GestureDetector(
+    return InkWell(
       onTap: () => _react(id, emoji, type),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      borderRadius: BorderRadius.circular(12),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         margin: const EdgeInsets.only(right: 6),
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.15),
+          color: Colors.white.withOpacity(0.2),
           borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.white.withOpacity(0.25)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            )
+          ],
         ),
-        child: Text(emoji, style: const TextStyle(fontSize: 14)),
+        child: Text(emoji, style: const TextStyle(fontSize: 16)),
       ),
     );
   }

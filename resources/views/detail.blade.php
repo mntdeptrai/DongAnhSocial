@@ -1884,9 +1884,27 @@
                         <div style="font-size: 0.85rem; color: var(--primary); font-weight: 600; background: var(--bg-btn-secondary); display: inline-block; padding: 8px 20px; border-radius: 30px; border: 1px dashed var(--border-glow);">
                             📞 Hotline Ban Quản Lý ATTP Đông Anh: 024.3883.2241
                         </div>
+            <!-- Section: Hình ảnh thực tế từ thực khách Check-in -->
+            @if(isset($checkinPhotos) && $checkinPhotos->count() > 0)
+                <div class="detail-section glass-panel" style="padding: 28px; margin-bottom: 40px;">
+                    <h3 style="font-size: 1.3rem; font-weight: 800; color: var(--text-main); margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+                        📸 Hình Ảnh Thực Tế Từ Thực Khách Check-in ({{ $checkinPhotos->count() }})
+                    </h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 14px;">
+                        @foreach($checkinPhotos as $photo)
+                            @php
+                                $imgPath = $photo->image_path;
+                                $fullImg = str_starts_with($imgPath, 'http') ? $imgPath : asset($imgPath);
+                            @endphp
+                            <div style="position: relative; height: 130px; border-radius: 14px; overflow: hidden; border: 1px solid var(--border-glow); cursor: pointer; transition: transform 0.25s ease;" onmouseover="this.style.transform='scale(1.04)'" onmouseout="this.style.transform='none'" onclick="openTrustLightbox('{{ $fullImg }}', 'Ảnh check-in bởi {{ $photo->display_name }}')">
+                                <img src="{{ $fullImg }}" alt="Check-in Photo" style="width: 100%; height: 100%; object-fit: cover;">
+                                <div style="position: absolute; bottom: 0; inset-x: 0; background: linear-gradient(0deg, rgba(0,0,0,0.85) 0%, transparent 100%); padding: 6px 8px; color: #fff; font-size: 0.75rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                    👤 {{ $photo->display_name }}
+                                </div>
+                            </div>
+                        @endforeach
                     </div>
-                @endif
-            </div>
+                </div>
             @endif
         </div>
         
@@ -2184,6 +2202,52 @@
                     @endif
                 </div>
             @endforeach
+
+            @if(isset($checkinReviews) && $checkinReviews->count() > 0)
+                @foreach($checkinReviews as $cRev)
+                    <div class="modal-review-card-item" data-rating="{{ $cRev->rating }}" style="padding: 24px; border-radius: 20px; border: 1px solid var(--border-glow); background: var(--bg-card); box-shadow: 0 4px 15px rgba(0, 0, 0, 0.01); display: flex; flex-direction: column; gap: 14px; transition: all 0.3s ease;">
+                        <!-- Header -->
+                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+                            <div style="display: flex; align-items: center; gap: 14px;">
+                                <div style="width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, #0ea5e9, #0284c7); color: #ffffff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.05rem; box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3); text-transform: uppercase;">
+                                    {{ substr($cRev->display_name, 0, 2) }}
+                                </div>
+                                <div>
+                                    <span style="font-weight: 700; color: var(--text-main); font-size: 1rem; display: block;">{{ $cRev->display_name }}</span>
+                                    <span style="font-size: 0.72rem; color: #0ea5e9; font-weight: 600;">📍 Đã check-in tại quán</span>
+                                    <div style="color: #ffb03a; font-size: 0.9rem; margin-top: 2px; display: flex; gap: 2px;">
+                                        @for($i=1; $i<=5; $i++)
+                                            @if($i <= $cRev->rating)
+                                                <span style="color: #ffb03a; text-shadow: 0 0 6px rgba(255, 176, 58, 0.4);">★</span>
+                                            @else
+                                                <span style="color: var(--border-glow);">★</span>
+                                            @endif
+                                        @endfor
+                                    </div>
+                                </div>
+                            </div>
+                            <span style="font-size: 0.78rem; color: var(--text-muted); background: rgba(255,255,255,0.03); padding: 4px 12px; border-radius: 30px; border: 1px solid var(--border-glow);">
+                                📅 {{ $cRev->created_at->format('d/m/Y H:i') }}
+                            </span>
+                        </div>
+
+                        <!-- Text -->
+                        @if($cRev->comment)
+                            <p style="font-size: 0.95rem; color: var(--text-main); line-height: 1.65; margin: 0; white-space: pre-line; font-weight: 450;">{{ $cRev->comment }}</p>
+                        @endif
+
+                        <!-- Photo -->
+                        @if($cRev->image_path)
+                            @php
+                                $cImg = str_starts_with($cRev->image_path, 'http') ? $cRev->image_path : asset($cRev->image_path);
+                            @endphp
+                            <div style="position: relative; width: 140px; height: 110px; border-radius: 12px; overflow: hidden; border: 1px solid var(--border-glow); box-shadow: 0 4px 10px rgba(0,0,0,0.1); cursor: pointer; transition: all 0.25s ease;" onmouseover="this.style.transform='scale(1.04)'" onmouseout="this.style.transform='none'" onclick="openTrustLightbox('{{ $cImg }}', 'Ảnh check-in từ {{ $cRev->display_name }}')">
+                                <img src="{{ $cImg }}" alt="Check-in Photo" style="width: 100%; height: 100%; object-fit: cover;">
+                            </div>
+                        @endif
+                    </div>
+                @endforeach
+            @endif
 
             <!-- Empty State for filtered stars -->
             <div id="modalReviewsEmptyState" style="display: none; flex-direction: column; align-items: center; justify-content: center; padding: 60px 20px; text-align: center;">

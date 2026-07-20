@@ -96,8 +96,6 @@ Route::post('/cart/clear', [GioHangController::class, 'clear'])->name('cart.clea
 Route::middleware(['auth'])->group(function () {
     Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
     Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
-    Route::post('/checkout/apply-voucher', [CheckoutController::class, 'applyVoucher'])->name('checkout.apply-voucher');
-    Route::post('/checkout/remove-voucher', [CheckoutController::class, 'removeVoucher'])->name('checkout.remove-voucher');
     Route::get('/checkout/payment/{id}', [CheckoutController::class, 'payment'])->name('checkout.payment');
     Route::post('/checkout/payment/{id}/process', [CheckoutController::class, 'processPayment'])->name('checkout.process-payment');
     Route::get('/checkout/success/{id}', [CheckoutController::class, 'success'])->name('checkout.success');

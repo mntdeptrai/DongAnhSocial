@@ -28,6 +28,10 @@
 	<string>Ứng dụng cần quyền truy cập camera để bạn chụp ảnh check-in các địa điểm ẩm thực Đông Anh.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Ứng dụng cần quyền truy cập thư viện ảnh để bạn chọn ảnh check-in các địa điểm ẩm thực Đông Anh.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Ứng dụng cần vị trí của bạn để tự động xác định địa điểm quán ăn gần nhất.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Ứng dụng cần vị trí của bạn để tự động xác định địa điểm quán ăn gần nhất.</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>UIApplicationSceneManifest</key>

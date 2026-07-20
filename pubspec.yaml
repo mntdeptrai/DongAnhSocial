@@ -39,6 +39,7 @@ dependencies:
   geolocator: ^10.1.0
   image_picker: ^1.0.7
   camera: ^0.10.5+9
+  url_launcher: ^6.2.5
 
 dev_dependencies:
   flutter_test:

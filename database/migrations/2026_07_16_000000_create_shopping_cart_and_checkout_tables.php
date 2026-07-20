@@ -11,19 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // 1. Vouchers table
-        if (!Schema::hasTable('vouchers')) {
-            Schema::create('vouchers', function (Blueprint $table) {
-                $table->id();
-                $table->string('code', 50)->unique();
-                $table->decimal('percentage', 5, 2);
-                $table->decimal('min_order_amount', 12, 2)->nullable();
-                $table->string('status', 20)->default('active'); // active, inactive
-                $table->timestamps();
-            });
-        }
-
-        // 2. Carts table
+        // 1. Carts table
         if (!Schema::hasTable('carts')) {
             Schema::create('carts', function (Blueprint $table) {
                 $table->id();
@@ -36,7 +24,7 @@ return new class extends Migration
             });
         }
 
-        // 3. Cart Items table
+        // 2. Cart Items table
         if (!Schema::hasTable('cart_items')) {
             Schema::create('cart_items', function (Blueprint $table) {
                 $table->id();
@@ -52,14 +40,13 @@ return new class extends Migration
             });
         }
 
-        // 4. Orders table
+        // 3. Orders table
         if (!Schema::hasTable('orders')) {
             Schema::create('orders', function (Blueprint $table) {
                 $table->id();
                 $table->unsignedBigInteger('user_id')->nullable();
                 $table->unsignedBigInteger('eatery_id'); // ID of restaurant or market eatery
                 $table->string('category_slug'); // dong-anh-food-map / dong-anh-market
-                $table->unsignedBigInteger('voucher_id')->nullable();
                 $table->string('customer_name');
                 $table->string('customer_phone');
                 $table->text('shipping_address');
@@ -75,7 +62,7 @@ return new class extends Migration
             });
         }
 
-        // 5. Order Items table
+        // 4. Order Items table
         if (!Schema::hasTable('order_items')) {
             Schema::create('order_items', function (Blueprint $table) {
                 $table->id();
@@ -91,7 +78,7 @@ return new class extends Migration
             });
         }
 
-        // 6. Payments table
+        // 5. Payments table
         if (!Schema::hasTable('payments')) {
             Schema::create('payments', function (Blueprint $table) {
                 $table->id();
@@ -117,6 +104,5 @@ return new class extends Migration
         Schema::dropIfExists('orders');
         Schema::dropIfExists('cart_items');
         Schema::dropIfExists('carts');
-        Schema::dropIfExists('vouchers');
     }
 };

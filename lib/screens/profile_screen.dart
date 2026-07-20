@@ -148,27 +148,31 @@ class ProfileScreen extends StatelessWidget {
             const SizedBox(height: 24),
 
             // Options List
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.grey[100]!),
-              ),
-              child: Column(
-                children: [
-                  _optionTile(Icons.history, 'Lịch sử check-in của tôi', () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const MyCheckinsScreen()),
-                    );
-                  }),
-                  const Divider(height: 1),
-                  _optionTile(Icons.favorite_border, 'Địa điểm đã lưu'),
-                  const Divider(height: 1),
-                  _optionTile(Icons.settings_outlined, 'Cấu hình ứng dụng'),
-                  const Divider(height: 1),
-                  _optionTile(Icons.help_outline, 'Hỗ trợ & Trợ giúp'),
-                ],
+            Material(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              clipBehavior: Clip.antiAlias,
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.grey[100]!),
+                ),
+                child: Column(
+                  children: [
+                    _optionTile(Icons.history, 'Lịch sử check-in của tôi', () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const MyCheckinsScreen()),
+                      );
+                    }),
+                    const Divider(height: 1),
+                    _optionTile(Icons.favorite_border, 'Địa điểm đã lưu'),
+                    const Divider(height: 1),
+                    _optionTile(Icons.settings_outlined, 'Cấu hình ứng dụng'),
+                    const Divider(height: 1),
+                    _optionTile(Icons.help_outline, 'Hỗ trợ & Trợ giúp'),
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: 32),

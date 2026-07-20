@@ -10,7 +10,6 @@ class Order extends Model
         'user_id',
         'eatery_id',
         'category_slug',
-        'voucher_id',
         'customer_name',
         'customer_phone',
         'shipping_address',
@@ -37,11 +36,6 @@ class Order extends Model
     public function payment()
     {
         return $this->hasOne(Payment::class);
-    }
-
-    public function voucher()
-    {
-        return $this->belongsTo(Voucher::class);
     }
 
     /**
