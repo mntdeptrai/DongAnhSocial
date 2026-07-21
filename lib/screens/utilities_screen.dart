@@ -1001,44 +1001,55 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFE0F2FE),
+      backgroundColor: const Color(0xFFF1F5F9),
       body: NestedScrollView(
         headerSliverBuilder: (context, innerBoxIsScrolled) => [
           SliverAppBar(
-            expandedHeight: 60.0,
+            expandedHeight: 70.0,
             floating: false,
             pinned: true,
             elevation: 0,
-            backgroundColor: const Color(0xFF0090D9),
+            backgroundColor: const Color(0xFF0F4C8C),
+            flexibleSpace: Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Color(0xFF0F4C8C),
+                    Color(0xFF1565C0),
+                    Color(0xFF1E88E5),
+                    Color(0xFF29B6F6),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+              ),
+            ),
             bottom: PreferredSize(
-              preferredSize: const Size.fromHeight(60),
+              preferredSize: const Size.fromHeight(66),
               child: Container(
-                height: 60,
-                color: const Color(0xFF0090D9),
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                 child: Container(
+                  height: 48,
+                  padding: const EdgeInsets.all(3),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF0077B6),
+                    color: Colors.white.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(30),
-                    border: Border.all(color: const Color(0xFFFFB800), width: 2.5),
                   ),
                   child: TabBar(
                     controller: _tabController,
                     indicator: BoxDecoration(
                       borderRadius: BorderRadius.circular(26),
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFFFFB800), Color(0xFFFF9900)],
-                      ),
+                      color: Colors.white,
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFFFFB800).withOpacity(0.4),
+                          color: Colors.black.withValues(alpha: 0.1),
                           blurRadius: 8,
                           offset: const Offset(0, 2),
                         ),
                       ],
                     ),
-                    labelColor: Colors.white,
-                    unselectedLabelColor: Colors.white70,
+                    labelColor: const Color(0xFF1565C0),
+                    unselectedLabelColor: Colors.white,
                     labelStyle: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13),
                     tabs: const [
                       Tab(text: '🍴 ẨM THỰC TINH TÚY'),
@@ -1050,111 +1061,142 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
             ),
           ),
         ],
-        body: Column(
-          children: [
-            // Search Bar & Filter Strip with Yellow CTA Button
-            Container(
-              color: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              child: Column(
-                children: [
-                  // Pill Search Box matching Web
-                  Container(
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF0F9FF),
-                      borderRadius: BorderRadius.circular(22),
-                      border: Border.all(color: const Color(0xFFBAE6FD), width: 1.5),
-                    ),
-                    child: Row(
-                      children: [
-                        const SizedBox(width: 12),
-                        const Icon(Icons.search, size: 20, color: Color(0xFF00A8EE)),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: TextField(
-                            onChanged: (val) => setState(() => _searchQuery = val.trim().toLowerCase()),
-                            decoration: const InputDecoration(
-                              hintText: "Tìm 'Bún chả', 'Chợ Tó', 'Đặc sản OCOP'...",
-                              hintStyle: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
-                              border: InputBorder.none,
-                              isDense: true,
-                            ),
+        body: Container(
+          decoration: const BoxDecoration(
+            color: Color(0xFFF8FAFC),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+            children: [
+              // Search Bar & Filter Strip with Red-Orange CTA Button
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                child: Column(
+                  children: [
+                    // Pill Search Box with shadow-[0_4px_20px_rgba(0,0,0,0.15)]
+                    Container(
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(24),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.15),
+                            blurRadius: 20,
+                            offset: const Offset(0, 4),
                           ),
-                        ),
-                        Container(
-                          margin: const EdgeInsets.only(right: 3),
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                          decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFFFFB800), Color(0xFFFF9900)],
-                            ),
-                            borderRadius: BorderRadius.circular(18),
-                          ),
-                          child: const Text(
-                            'Tìm kiếm',
-                            style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w900),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-
-                  // Filter chips
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: ['Tất cả', '⭐ Nổi bật', '🛵 Giao nhanh', '🏆 OCOP'].map((filter) {
-                        final isSelected = _selectedFilter == filter;
-                        return Padding(
-                          padding: const EdgeInsets.only(right: 8),
-                          child: ChoiceChip(
-                            label: Text(filter),
-                            selected: isSelected,
-                            selectedColor: const Color(0xFF00A8EE),
-                            backgroundColor: const Color(0xFFF0F9FF),
-                            labelStyle: TextStyle(
-                              fontSize: 12,
-                              fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,
-                              color: isSelected ? Colors.white : const Color(0xFF0369A1),
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                              side: BorderSide(
-                                color: isSelected ? const Color(0xFF00A8EE) : const Color(0xFFBAE6FD),
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          const SizedBox(width: 14),
+                          const Icon(Icons.search, size: 20, color: Color(0xFF1565C0)),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: TextField(
+                              onChanged: (val) => setState(() => _searchQuery = val.trim().toLowerCase()),
+                              decoration: const InputDecoration(
+                                hintText: "Tìm 'Bún chả', 'Chợ Tó', 'Đặc sản OCOP'...",
+                                hintStyle: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                                border: InputBorder.none,
+                                isDense: true,
                               ),
                             ),
-                            onSelected: (val) {
-                              if (val) setState(() => _selectedFilter = filter);
-                            },
                           ),
-                        );
-                      }).toList(),
+                          Container(
+                            margin: const EdgeInsets.only(right: 4),
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFFFF6B35), Color(0xFFE53935)],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              borderRadius: BorderRadius.circular(20),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(0xFFE53935).withValues(alpha: 0.35),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: const Text(
+                              'Tìm kiếm',
+                              style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            ),
+                    const SizedBox(height: 10),
 
-            // Main Tab View
-            Expanded(
-              child: TabBarView(
-                controller: _tabController,
-                children: [
-                  // Tab 1: Đặt đồ ăn
-                  _isLoadingFood
-                      ? const Center(child: CircularProgressIndicator(color: Color(0xFF00A8EE)))
-                      : _buildFoodDeliveryTab(),
-
-                  // Tab 2: Chợ số & OCOP
-                  _isLoadingMarket
-                      ? const Center(child: CircularProgressIndicator(color: Color(0xFF00A8EE)))
-                      : _buildMarketShoppingTab(),
-                ],
+                    // Filter chips
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: ['Tất cả', '⭐ Nổi bật', '🛵 Giao nhanh', '🏆 OCOP'].map((filter) {
+                          final isSelected = _selectedFilter == filter;
+                          return GestureDetector(
+                            onTap: () {
+                              setState(() => _selectedFilter = filter);
+                            },
+                            child: Container(
+                              margin: const EdgeInsets.only(right: 8, top: 4, bottom: 4),
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: isSelected ? const Color(0xFF1565C0) : Colors.white,
+                                borderRadius: BorderRadius.circular(16),
+                                boxShadow: [
+                                  isSelected
+                                      ? const BoxShadow(
+                                          color: Color(0x661565C0),
+                                          blurRadius: 12,
+                                          offset: Offset(0, 4),
+                                        )
+                                      : BoxShadow(
+                                          color: Colors.black.withValues(alpha: 0.07),
+                                          blurRadius: 8,
+                                          offset: const Offset(0, 2),
+                                        ),
+                                ],
+                              ),
+                              child: Text(
+                                filter,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                                  color: isSelected ? Colors.white : const Color(0xFF64748B),
+                                ),
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+
+              // Main Tab View
+              Expanded(
+                child: TabBarView(
+                  controller: _tabController,
+                  children: [
+                    // Tab 1: Đặt đồ ăn
+                    _isLoadingFood
+                        ? const Center(child: CircularProgressIndicator(color: Color(0xFF1565C0)))
+                        : _buildFoodDeliveryTab(),
+
+                    // Tab 2: Chợ số & OCOP
+                    _isLoadingMarket
+                        ? const Center(child: CircularProgressIndicator(color: Color(0xFF1565C0)))
+                        : _buildMarketShoppingTab(),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
 
@@ -1171,7 +1213,7 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
                 border: Border.all(color: const Color(0xFFFFB800), width: 2),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFF10B981).withOpacity(0.4),
+                    color: const Color(0xFF10B981).withValues(alpha: 0.4),
                     blurRadius: 16,
                     offset: const Offset(0, 4),
                   ),
@@ -1303,9 +1345,9 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF00A8EE).withOpacity(0.08),
-                blurRadius: 14,
-                offset: const Offset(0, 4),
+                color: Colors.black.withValues(alpha: 0.07),
+                blurRadius: 12,
+                offset: const Offset(0, 2),
               ),
             ],
           ),
@@ -1350,19 +1392,19 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
                         top: 6,
                         left: 6,
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                           decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.7),
+                            color: Colors.black.withValues(alpha: 0.6),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               const Icon(Icons.star, color: Color(0xFFFFB800), size: 12),
-                              const SizedBox(width: 2),
+                              const SizedBox(width: 3),
                               Text(
                                 rating,
-                                style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                                style: const TextStyle(color: Colors.white, fontSize: 10.5, fontWeight: FontWeight.bold),
                               ),
                             ],
                           ),
@@ -1379,7 +1421,7 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
                         children: [
                           Text(
                             name,
-                            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: Color(0xFF0077B6)),
+                            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: Color(0xFF1565C0)),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -1406,17 +1448,17 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF00A8EE).withOpacity(0.1),
+                                  color: const Color(0xFF1565C0).withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: const Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Icon(Icons.delivery_dining, size: 12, color: Color(0xFF00A8EE)),
+                                    Icon(Icons.delivery_dining, size: 12, color: Color(0xFF1565C0)),
                                     SizedBox(width: 4),
                                     Text(
                                       'Giao 20p 🛵',
-                                      style: TextStyle(fontSize: 10, color: Color(0xFF00A8EE), fontWeight: FontWeight.bold),
+                                      style: TextStyle(fontSize: 10, color: Color(0xFF1565C0), fontWeight: FontWeight.bold),
                                     ),
                                   ],
                                 ),
@@ -1425,8 +1467,17 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(10),
                                   gradient: const LinearGradient(
-                                    colors: [Color(0xFFFFB800), Color(0xFFFF9900)],
+                                    colors: [Color(0xFFFB923C), Color(0xFFEF4444)],
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
                                   ),
+                                  boxShadow: const [
+                                    BoxShadow(
+                                      color: Color(0x59EF4444),
+                                      blurRadius: 10,
+                                      offset: Offset(0, 3),
+                                    ),
+                                  ],
                                 ),
                                 child: ElevatedButton(
                                   onPressed: () {
@@ -1437,7 +1488,7 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
                                     backgroundColor: Colors.transparent,
                                     foregroundColor: Colors.white,
                                     shadowColor: Colors.transparent,
-                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                                     minimumSize: Size.zero,
                                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),

@@ -62,7 +62,7 @@ class _ChatScreenState extends State<ChatScreen> {
     if (isGuest) {
       return Scaffold(
         appBar: AppBar(
-          title: const Text('Trò chuyện', style: TextStyle(fontWeight: FontWeight.bold)),
+          title: const Text('Tin nhắn', style: TextStyle(fontWeight: FontWeight.bold)),
           backgroundColor: Colors.white,
           foregroundColor: Colors.grey[800],
           elevation: 0,
@@ -89,26 +89,9 @@ class _ChatScreenState extends State<ChatScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Row(
-          children: [
-            const Text(
-              'DongAnh',
-              style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18),
-            ),
-            const Text(
-              ' Chat & AI',
-              style: TextStyle(color: Color(0xFFFFB800), fontWeight: FontWeight.w900, fontSize: 18),
-            ),
-            const SizedBox(width: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFFB800),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Text('Trực tuyến 💬', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
-            ),
-          ],
+        title: const Text(
+          'Tin nhắn',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 20),
         ),
         flexibleSpace: Container(
           decoration: const BoxDecoration(
