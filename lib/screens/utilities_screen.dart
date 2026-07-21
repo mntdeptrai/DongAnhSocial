@@ -233,6 +233,12 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
     final nameController = TextEditingController();
     final phoneController = TextEditingController();
     final addressController = TextEditingController();
+    final promoController = TextEditingController();
+    final noteController = TextEditingController();
+
+    String? appliedPromoCode;
+    String promoMessage = '';
+    bool isPromoError = false;
 
     showModalBottomSheet(
       context: context,
@@ -241,25 +247,27 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setModalState) {
+            final double subtotal = _totalCartPrice;
+            final double shippingFee = subtotal >= 200000 ? 0.0 : (subtotal > 0 ? 15000.0 : 0.0);
+            final double discountAmount = appliedPromoCode == 'GIAM10' ? subtotal * 0.10 : 0.0;
+            final double finalTotal = (subtotal + shippingFee - discountAmount).clamp(0, double.infinity);
+            final double amountNeededForFreeShip = 200000 - subtotal;
+
             return Container(
+              height: MediaQuery.of(context).size.height * 0.90,
               decoration: const BoxDecoration(
-                color: Colors.white,
+                color: Color(0xFFF8FAFC),
                 borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
               ),
-              padding: EdgeInsets.only(
-                bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-              ),
               child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Web-style Header Banner (Teal / Emerald Green matching Screenshot 1)
+                  // Blue Header matching screenshot
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                    padding: const EdgeInsets.fromLTRB(12, 14, 12, 14),
                     decoration: const BoxDecoration(
                       gradient: LinearGradient(
-                        colors: [Color(0xFF10B981), Color(0xFF059669)],
+                        colors: [Color(0xFF0F4C8C), Color(0xFF1565C0), Color(0xFF1E88E5)],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
@@ -267,91 +275,169 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.shopping_cart, color: Colors.white, size: 24),
+                        // Back Button (<)
+                        InkWell(
+                          onTap: () => Navigator.pop(context),
+                          borderRadius: BorderRadius.circular(12),
+                          child: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 18),
+                          ),
+                        ),
                         const SizedBox(width: 10),
+
+                        // Title Column
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const Text(
-                                'Giỏ hàng mua sắm',
-                                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Colors.white),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
+                                'GIỎ HÀNG CỦA BẠN',
+                                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: 0.5),
                               ),
                               Text(
-                                '${_cartItems.length} sản phẩm • ${_totalCartCount} đã chọn',
-                                style: const TextStyle(fontSize: 12, color: Colors.white70, fontWeight: FontWeight.w500),
+                                '${_totalCartCount} món đã chọn',
+                                style: const TextStyle(fontSize: 12, color: Colors.white70, fontWeight: FontWeight.w600),
                               ),
                             ],
                           ),
                         ),
-                        InkWell(
-                          onTap: () => _clearCart(setModalState),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: const Row(
-                              children: [
-                                Icon(Icons.delete_outline, size: 14, color: Colors.white),
-                                SizedBox(width: 2),
-                                Text('Xóa', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
-                              ],
-                            ),
+
+                        // Center Total Order Pill
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('Tổng đơn hàng', style: TextStyle(fontSize: 10, color: Colors.white70)),
+                              Text(
+                                '${subtotal.toInt()}đ',
+                                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: Colors.white),
+                              ),
+                            ],
                           ),
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: 10),
+
+                        // Red Delete Trash Button (Xóa toàn bộ giỏ)
                         InkWell(
-                          onTap: () => Navigator.pop(context),
-                          borderRadius: BorderRadius.circular(20),
+                          onTap: () => _clearCart(setModalState),
+                          borderRadius: BorderRadius.circular(12),
                           child: Container(
-                            padding: const EdgeInsets.all(6),
+                            padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
-                              shape: BoxShape.circle,
+                              color: const Color(0xFFEF4444),
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(0xFFEF4444).withValues(alpha: 0.4),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
                             ),
-                            child: const Icon(Icons.close, color: Colors.white, size: 18),
+                            child: const Icon(Icons.delete_outline, color: Colors.white, size: 20),
                           ),
                         ),
                       ],
                     ),
                   ),
 
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    child: Column(
-                      children: [
-                        // Select All Pill matching Web
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFECFDF5),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: const Color(0xFFA7F3D0)),
-                          ),
-                          child: Row(
+                  // Main Scrollable Cart Body
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(14),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Free Shipping Alert Banner
+                          if (subtotal < 200000)
+                            Container(
+                              width: double.infinity,
+                              margin: const EdgeInsets.only(bottom: 12),
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFFFBEB),
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(color: const Color(0xFFFDE68A)),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Text('🚚 ', style: TextStyle(fontSize: 16)),
+                                  Expanded(
+                                    child: Text.rich(
+                                      TextSpan(
+                                        children: [
+                                          const TextSpan(text: 'Mua thêm '),
+                                          TextSpan(
+                                            text: '${amountNeededForFreeShip.toInt()}đ ',
+                                            style: const TextStyle(fontWeight: FontWeight.w900, color: Color(0xFFD97706)),
+                                          ),
+                                          const TextSpan(text: 'để được '),
+                                          const TextSpan(
+                                            text: 'MIỄN PHÍ GIAO HÀNG!',
+                                            style: TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF059669)),
+                                          ),
+                                        ],
+                                      ),
+                                      style: const TextStyle(fontSize: 12, color: Color(0xFF92400E)),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                          else
+                            Container(
+                              width: double.infinity,
+                              margin: const EdgeInsets.only(bottom: 12),
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFECFDF5),
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(color: const Color(0xFFA7F3D0)),
+                              ),
+                              child: const Row(
+                                children: [
+                                  Text('🎉 ', style: TextStyle(fontSize: 16)),
+                                  Expanded(
+                                    child: Text(
+                                      'Bạn đã đạt điều kiện MIỄN PHÍ GIAO HÀNG (đơn > 200.000đ)!',
+                                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF047857)),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                          // Section Header: MÓN ĐÃ CHỌN
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Icon(Icons.check_box, color: Color(0xFF059669), size: 20),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  'Chọn tất cả (${_totalCartCount}/${_totalCartCount} món)',
-                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF047857)),
-                                ),
+                              Text(
+                                'MÓN ĐÃ CHỌN · ${_cartItems.length} MỤC',
+                                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF64748B), letterSpacing: 0.5),
+                              ),
+                              Text(
+                                '${_totalCartCount} món',
+                                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF1565C0)),
                               ),
                             ],
                           ),
-                        ),
-                        const SizedBox(height: 10),
+                          const SizedBox(height: 8),
 
-                        // Cart List items grouped by Store/HKD
-                        ConstrainedBox(
-                          constraints: const BoxConstraints(maxHeight: 230),
-                          child: ListView.separated(
+                          // Item list matching Screenshot
+                          ListView.separated(
                             shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
                             itemCount: _cartItems.length,
                             separatorBuilder: (_, __) => const SizedBox(height: 10),
                             itemBuilder: (context, index) {
@@ -359,303 +445,531 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
                               final item = entry.value;
                               final double price = (item['price'] as double);
                               final int qty = (item['quantity'] as int);
-                              final double itemTotal = price * qty;
                               final String? imgUrl = item['image'];
+                              final String subtitle = item['subtitle'] ?? 'Đặc sản Đông Anh';
 
                               return Container(
+                                padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
                                   color: Colors.white,
-                                  borderRadius: BorderRadius.circular(14),
-                                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                                  borderRadius: BorderRadius.circular(16),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.black.withOpacity(0.03),
-                                      blurRadius: 6,
+                                      color: Colors.black.withValues(alpha: 0.04),
+                                      blurRadius: 10,
                                       offset: const Offset(0, 2),
                                     ),
                                   ],
                                 ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                child: Row(
                                   children: [
-                                    // Store Header
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                      decoration: const BoxDecoration(
-                                        color: Color(0xFFF1F5F9),
-                                        borderRadius: BorderRadius.vertical(top: Radius.circular(14)),
-                                      ),
-                                      child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Expanded(
-                                            child: Text(
-                                              '🏪 ${item['subtitle']}',
-                                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Color(0xFF1E293B)),
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                          ),
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                            decoration: BoxDecoration(
-                                              color: const Color(0xFFD1FAE5),
-                                              borderRadius: BorderRadius.circular(10),
-                                            ),
-                                            child: const Text('1/1', style: TextStyle(fontSize: 10, color: Color(0xFF047857), fontWeight: FontWeight.bold)),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-
-                                    // Item Content Row
-                                    Padding(
-                                      padding: const EdgeInsets.all(10),
-                                      child: Row(
-                                        children: [
-                                          const Icon(Icons.check_box, color: Color(0xFF059669), size: 20),
-                                          const SizedBox(width: 8),
-
-                                          if (imgUrl != null && imgUrl.isNotEmpty)
-                                            ClipRRect(
-                                              borderRadius: BorderRadius.circular(8),
-                                              child: Image.network(
-                                                _formatImageUrl(imgUrl),
-                                                width: 48,
-                                                height: 48,
-                                                fit: BoxFit.cover,
-                                                errorBuilder: (_, __, ___) => Container(
-                                                  width: 48,
-                                                  height: 48,
-                                                  color: Colors.grey[200],
-                                                  child: const Icon(Icons.restaurant, size: 22, color: Colors.grey),
-                                                ),
+                                    // Item Image
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(12),
+                                      child: imgUrl != null && imgUrl.isNotEmpty
+                                          ? Image.network(
+                                              _formatImageUrl(imgUrl),
+                                              width: 58,
+                                              height: 58,
+                                              fit: BoxFit.cover,
+                                              errorBuilder: (_, __, ___) => Container(
+                                                width: 58,
+                                                height: 58,
+                                                color: const Color(0xFFF1F5F9),
+                                                child: const Icon(Icons.restaurant, color: Colors.grey, size: 28),
                                               ),
                                             )
-                                          else
-                                            Container(
-                                              width: 48,
-                                              height: 48,
-                                              decoration: BoxDecoration(
-                                                color: const Color(0xFFECFDF5),
-                                                borderRadius: BorderRadius.circular(8),
-                                              ),
-                                              child: const Icon(Icons.star, color: Color(0xFFF59E0B), size: 24),
+                                          : Container(
+                                              width: 58,
+                                              height: 58,
+                                              color: const Color(0xFFF1F5F9),
+                                              child: const Icon(Icons.restaurant, color: Color(0xFF1565C0), size: 28),
                                             ),
+                                    ),
+                                    const SizedBox(width: 12),
 
-                                          const SizedBox(width: 10),
-
-                                          Expanded(
-                                            child: Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  item['name'],
-                                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF0F172A)),
-                                                  maxLines: 1,
-                                                  overflow: TextOverflow.ellipsis,
-                                                ),
-                                                const SizedBox(height: 2),
-                                                Text(
-                                                  '${price.toInt()} đ',
-                                                  style: const TextStyle(fontSize: 12, color: Color(0xFFF59E0B), fontWeight: FontWeight.w800),
-                                                ),
-                                              ],
-                                            ),
+                                    // Name & Price
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            item['name'],
+                                            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: Color(0xFF0F172A)),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
                                           ),
-
-                                          // Quantity counter matching Web style (- qty +)
-                                          Column(
-                                            crossAxisAlignment: CrossAxisAlignment.end,
-                                            children: [
-                                              Container(
-                                                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                                                decoration: BoxDecoration(
-                                                  color: const Color(0xFFECFDF5),
-                                                  borderRadius: BorderRadius.circular(16),
-                                                  border: Border.all(color: const Color(0xFFA7F3D0)),
-                                                ),
-                                                child: Row(
-                                                  mainAxisSize: MainAxisSize.min,
-                                                  children: [
-                                                    InkWell(
-                                                      onTap: () => _updateCartQuantity(entry.key, -1, setModalState),
-                                                      child: const Padding(
-                                                        padding: EdgeInsets.symmetric(horizontal: 4),
-                                                        child: Icon(Icons.remove, size: 14, color: Color(0xFF059669)),
-                                                      ),
-                                                    ),
-                                                    Padding(
-                                                      padding: const EdgeInsets.symmetric(horizontal: 6),
-                                                      child: Text(
-                                                        '$qty',
-                                                        style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13),
-                                                      ),
-                                                    ),
-                                                    InkWell(
-                                                      onTap: () => _updateCartQuantity(entry.key, 1, setModalState),
-                                                      child: const Padding(
-                                                        padding: EdgeInsets.symmetric(horizontal: 4),
-                                                        child: Icon(Icons.add, size: 14, color: Color(0xFF059669)),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                              const SizedBox(height: 4),
-                                              Row(
-                                                children: [
-                                                  Text(
-                                                    '${itemTotal.toInt()} đ',
-                                                    style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12, color: Color(0xFF0F172A)),
-                                                  ),
-                                                  const SizedBox(width: 8),
-                                                  InkWell(
-                                                    onTap: () => _removeCartItem(entry.key, setModalState),
-                                                    child: const Padding(
-                                                      padding: EdgeInsets.all(2.0),
-                                                      child: Icon(Icons.delete_outline, size: 16, color: Colors.redAccent),
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ],
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            subtitle,
+                                            style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            '${price.toInt()}đ',
+                                            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: Color(0xFF1565C0)),
                                           ),
                                         ],
                                       ),
                                     ),
-                                  ],
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                        const SizedBox(height: 12),
 
-                        // Total summary container
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF8FAFC),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: const Color(0xFFE2E8F0)),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'Tổng tiền (${_totalCartCount} món):',
-                                style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Color(0xFF475569)),
-                              ),
-                              Text(
-                                '${_totalCartPrice.toInt()} VNĐ',
-                                style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 17, color: Color(0xFF0284C7)),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 10),
+                                    // Counter Controls: (- qty +)
+                                    Row(
+                                      children: [
+                                        // Minus Button (-)
+                                        InkWell(
+                                          onTap: () => _updateCartQuantity(entry.key, -1, setModalState),
+                                          borderRadius: BorderRadius.circular(16),
+                                          child: Container(
+                                            width: 32,
+                                            height: 32,
+                                            decoration: const BoxDecoration(
+                                              color: Color(0xFFF1F5F9),
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: const Center(
+                                              child: Icon(Icons.remove, size: 16, color: Color(0xFF64748B)),
+                                            ),
+                                          ),
+                                        ),
 
-                        TextField(
-                          controller: nameController,
-                          decoration: InputDecoration(
-                            labelText: 'Họ và tên người nhận',
-                            prefixIcon: const Icon(Icons.person_outline, size: 18, color: Color(0xFF0284C7)),
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                            isDense: true,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        TextField(
-                          controller: phoneController,
-                          keyboardType: TextInputType.phone,
-                          decoration: InputDecoration(
-                            labelText: 'Số điện thoại',
-                            prefixIcon: const Icon(Icons.phone_outlined, size: 18, color: Color(0xFF0284C7)),
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                            isDense: true,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        TextField(
-                          controller: addressController,
-                          decoration: InputDecoration(
-                            labelText: 'Địa chỉ nhận hàng (Đông Anh, Hà Nội)',
-                            prefixIcon: const Icon(Icons.location_on_outlined, size: 18, color: Color(0xFF0284C7)),
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                            isDense: true,
-                          ),
-                        ),
-                        const SizedBox(height: 14),
+                                        // Qty Text
+                                        Padding(
+                                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                                          child: Text(
+                                            '$qty',
+                                            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: Color(0xFF0F172A)),
+                                          ),
+                                        ),
 
-                        Container(
-                          width: double.infinity,
-                          height: 48,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(12),
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFF00A8EE), Color(0xFF0284C7)],
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: const Color(0xFF00A8EE).withOpacity(0.3),
-                                blurRadius: 10,
-                                offset: const Offset(0, 3),
-                              ),
-                            ],
-                          ),
-                          child: ElevatedButton.icon(
-                            icon: const Icon(Icons.send_rounded, size: 18),
-                            label: const Text('🚀 XÁC NHẬN ĐẶT HÀNG (COD)', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14)),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.transparent,
-                              foregroundColor: Colors.white,
-                              shadowColor: Colors.transparent,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            ),
-                            onPressed: () {
-                              if (nameController.text.trim().isEmpty || phoneController.text.trim().isEmpty || addressController.text.trim().isEmpty) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Vui lòng nhập đầy đủ thông tin giao hàng!')),
-                                );
-                                return;
-                              }
-                              Navigator.pop(context);
-                              setState(() {
-                                _cartItems.clear();
-                              });
-                              ApiService.clearCart();
-                              showDialog(
-                                context: context,
-                                builder: (ctx) => AlertDialog(
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                                  title: const Row(
-                                    children: [
-                                      Text('🎉 ', style: TextStyle(fontSize: 24)),
-                                      Text('Đặt hàng thành công!'),
-                                    ],
-                                  ),
-                                  content: const Text('Đơn hàng của bạn đã được đồng bộ hệ thống và gửi tới hộ kinh doanh. Shipper sẽ liên hệ giao hàng tận nơi.'),
-                                  actions: [
-                                    ElevatedButton(
-                                      onPressed: () => Navigator.pop(ctx),
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: const Color(0xFF0284C7),
-                                        foregroundColor: Colors.white,
-                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                      ),
-                                      child: const Text('Hoàn tất'),
+                                        // Plus Button (+)
+                                        InkWell(
+                                          onTap: () => _updateCartQuantity(entry.key, 1, setModalState),
+                                          borderRadius: BorderRadius.circular(16),
+                                          child: Container(
+                                            width: 32,
+                                            height: 32,
+                                            decoration: const BoxDecoration(
+                                              color: Color(0xFF1565C0),
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: const Center(
+                                              child: Icon(Icons.add, size: 16, color: Colors.white),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ],
                                 ),
                               );
                             },
                           ),
+                          const SizedBox(height: 14),
+
+                          // Section 2: Mã giảm giá
+                          Container(
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.04),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Row(
+                                  children: [
+                                    Icon(Icons.confirmation_number_outlined, color: Color(0xFFFF6B35), size: 18),
+                                    SizedBox(width: 6),
+                                    Text('Mã giảm giá', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: Color(0xFF0F172A))),
+                                  ],
+                                ),
+                                const SizedBox(height: 10),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Container(
+                                        height: 42,
+                                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFF8FAFC),
+                                          borderRadius: BorderRadius.circular(12),
+                                          border: Border.all(color: const Color(0xFFE2E8F0)),
+                                        ),
+                                        child: TextField(
+                                          controller: promoController,
+                                          textCapitalization: TextCapitalization.characters,
+                                          decoration: const InputDecoration(
+                                            hintText: 'Nhập mã khuyến mãi...',
+                                            hintStyle: TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+                                            border: InputBorder.none,
+                                            isDense: true,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    ElevatedButton(
+                                      onPressed: () {
+                                        final code = promoController.text.trim().toUpperCase();
+                                        if (code == 'GIAM10') {
+                                          appliedPromoCode = 'GIAM10';
+                                          promoMessage = 'Đã áp dụng mã GIAM10 (Giảm 10%)';
+                                          isPromoError = false;
+                                        } else {
+                                          appliedPromoCode = null;
+                                          promoMessage = 'Mã giảm giá không hợp lệ!';
+                                          isPromoError = true;
+                                        }
+                                        setModalState(() {});
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: const Color(0xFF1565C0),
+                                        foregroundColor: Colors.white,
+                                        elevation: 0,
+                                        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                      ),
+                                      child: const Text('Áp dụng', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 6),
+                                if (promoMessage.isNotEmpty)
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 2),
+                                    child: Text(
+                                      promoMessage,
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                        color: isPromoError ? Colors.redAccent : const Color(0xFF059669),
+                                      ),
+                                    ),
+                                  )
+                                else
+                                  const Text.rich(
+                                    TextSpan(
+                                      children: [
+                                        TextSpan(text: 'Thử mã: '),
+                                        TextSpan(
+                                          text: 'GIAM10',
+                                          style: TextStyle(fontWeight: FontWeight.w900, color: Color(0xFFFF6B35)),
+                                        ),
+                                        TextSpan(text: ' để giảm 10%'),
+                                      ],
+                                    ),
+                                    style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                                  ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+
+                          // Section 3: Ghi chú cho shipper
+                          Container(
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.04),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Row(
+                                  children: [
+                                    Icon(Icons.chat_bubble_outline, color: Color(0xFF1565C0), size: 18),
+                                    SizedBox(width: 6),
+                                    Text('Ghi chú cho shipper', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: Color(0xFF0F172A))),
+                                  ],
+                                ),
+                                const SizedBox(height: 10),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF8FAFC),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                                  ),
+                                  child: TextField(
+                                    controller: noteController,
+                                    decoration: const InputDecoration(
+                                      hintText: 'VD: Gọi trước khi giao, không hành, ít cay...',
+                                      hintStyle: TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+                                      border: InputBorder.none,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+
+                          // Section 4: Thông tin nhận hàng (Tùy chọn)
+                          Container(
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.04),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Row(
+                                  children: [
+                                    Icon(Icons.location_on_outlined, color: Color(0xFF1565C0), size: 18),
+                                    SizedBox(width: 6),
+                                    Text('Địa chỉ giao hàng', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: Color(0xFF0F172A))),
+                                  ],
+                                ),
+                                const SizedBox(height: 10),
+                                TextField(
+                                  controller: nameController,
+                                  decoration: InputDecoration(
+                                    labelText: 'Họ và tên người nhận',
+                                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                    isDense: true,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                TextField(
+                                  controller: phoneController,
+                                  keyboardType: TextInputType.phone,
+                                  decoration: InputDecoration(
+                                    labelText: 'Số điện thoại',
+                                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                    isDense: true,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                TextField(
+                                  controller: addressController,
+                                  decoration: InputDecoration(
+                                    labelText: 'Địa chỉ (Đông Anh, Hà Nội)',
+                                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                    isDense: true,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+
+                          // Section 5: Chi tiết thanh toán matching Screenshot
+                          Container(
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.04),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Chi tiết thanh toán',
+                                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: Color(0xFF0F172A)),
+                                ),
+                                const SizedBox(height: 10),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    const Text('Tạm tính', style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+                                    Text('${subtotal.toInt()}đ', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+                                  ],
+                                ),
+                                const SizedBox(height: 6),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    const Text('Phí giao hàng', style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+                                    Text(
+                                      shippingFee == 0 ? 'Miễn phí' : '${shippingFee.toInt()}đ',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                        color: shippingFee == 0 ? const Color(0xFF059669) : const Color(0xFF0F172A),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                if (discountAmount > 0) ...[
+                                  const SizedBox(height: 6),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      const Text('Giảm giá (GIAM10)', style: TextStyle(fontSize: 12, color: Color(0xFF059669))),
+                                      Text('-${discountAmount.toInt()}đ', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF059669))),
+                                    ],
+                                  ),
+                                ],
+                                const Padding(
+                                  padding: EdgeInsets.symmetric(vertical: 8),
+                                  child: Divider(height: 1, color: Color(0xFFE2E8F0)),
+                                ),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    const Text('Tổng cộng', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: Color(0xFF0F172A))),
+                                    Text(
+                                      '${finalTotal.toInt()}đ',
+                                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF1565C0)),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  // Bottom Sticky CTA Button (Đặt Hàng)
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.08),
+                          blurRadius: 10,
+                          offset: const Offset(0, -4),
                         ),
                       ],
+                    ),
+                    child: SafeArea(
+                      top: false,
+                      child: SizedBox(
+                        width: double.infinity,
+                        height: 50,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            final String orderCode = '#DA-${(10000 + (subtotal.toInt() % 89999))}';
+                            final String noteText = noteController.text.trim();
+
+                            Navigator.pop(context);
+                            setState(() {
+                              _cartItems.clear();
+                            });
+                            ApiService.clearCart();
+
+                            // Show Order Success Dialog with details
+                            showDialog(
+                              context: context,
+                              builder: (ctx) => AlertDialog(
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                                contentPadding: const EdgeInsets.all(20),
+                                content: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Container(
+                                      width: 64,
+                                      height: 64,
+                                      decoration: const BoxDecoration(
+                                        color: Color(0xFFECFDF5),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Icon(Icons.check_circle_rounded, color: Color(0xFF059669), size: 44),
+                                    ),
+                                    const SizedBox(height: 14),
+                                    const Text(
+                                      'ĐẶT HÀNG THÀNH CÔNG!',
+                                      style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: Color(0xFF047857)),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      'Mã đơn: $orderCode',
+                                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF1565C0)),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    const Text(
+                                      '⏱️ Thời gian dự kiến: 20 - 30 phút',
+                                      style: TextStyle(fontSize: 12, color: Color(0xFF64748B), fontWeight: FontWeight.w600),
+                                    ),
+                                    if (noteText.isNotEmpty) ...[
+                                      const SizedBox(height: 8),
+                                      Container(
+                                        padding: const EdgeInsets.all(8),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFF1F5F9),
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        child: Text(
+                                          '💬 Ghi chú: $noteText',
+                                          style: const TextStyle(fontSize: 11, color: Color(0xFF475569)),
+                                        ),
+                                      ),
+                                    ],
+                                    const SizedBox(height: 14),
+                                    Text(
+                                      'Tổng tiền thanh toán: ${finalTotal.toInt()}đ',
+                                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: Color(0xFF0F172A)),
+                                    ),
+                                    const SizedBox(height: 18),
+                                    SizedBox(
+                                      width: double.infinity,
+                                      height: 44,
+                                      child: ElevatedButton(
+                                        onPressed: () => Navigator.pop(ctx),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: const Color(0xFF1565C0),
+                                          foregroundColor: Colors.white,
+                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                        ),
+                                        child: const Text('Hoàn tất', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF1565C0),
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          ),
+                          child: Text(
+                            '🚀 ĐẶT HÀNG • ${finalTotal.toInt()}đ',
+                            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15),
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ],
