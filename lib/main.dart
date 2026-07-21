@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'services/api_service.dart';
@@ -214,27 +215,41 @@ class MainLayout extends StatefulWidget {
 class _MainLayoutState extends State<MainLayout> {
   int _currentIndex = 0;
   int _unreadNotifsCount = 0;
+  int _unreadMessagesCount = 0;
+  Timer? _pollTimer;
   final GlobalKey<FeedScreenState> _feedScreenKey = GlobalKey<FeedScreenState>();
 
   @override
   void initState() {
     super.initState();
     _fetchDynamicCounts();
+    _pollTimer = Timer.periodic(const Duration(seconds: 10), (_) {
+      _fetchDynamicCounts();
+    });
     NotificationHelper.initialize((data) {
       if (data['target'] == 'chat' && mounted) {
-        setState(() {
-          _currentIndex = 4;
-        });
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const ChatScreen()),
+        ).then((_) => _fetchDynamicCounts());
       }
     });
+  }
+
+  @override
+  void dispose() {
+    _pollTimer?.cancel();
+    super.dispose();
   }
 
   Future<void> _fetchDynamicCounts() async {
     try {
       final notifs = await ApiService.getAppNotifications();
+      final unreadMsgCount = await ApiService.getUnreadMessagesCount();
       if (mounted) {
         setState(() {
           _unreadNotifsCount = notifs.length;
+          _unreadMessagesCount = unreadMsgCount;
         });
       }
     } catch (_) {}
@@ -284,7 +299,7 @@ class _MainLayoutState extends State<MainLayout> {
           Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => const ChatScreen()),
-          );
+          ).then((_) => _fetchDynamicCounts());
         },
         onCartTap: () {
           setState(() {
@@ -292,7 +307,7 @@ class _MainLayoutState extends State<MainLayout> {
           });
         },
 
-        unreadMessagesCount: 1,
+        unreadMessagesCount: _unreadMessagesCount,
         unreadNotifsCount: _unreadNotifsCount,
       ),
       body: Stack(

@@ -235,25 +235,29 @@ class SocialHubController extends Controller
     {
         $userId = Auth::id();
         if (!$userId) {
-            return response()->json(['has_unread' => false]);
+            return response()->json(['has_unread' => false, 'unread_count' => 0]);
         }
 
-        // Find the most recent UNREAD message sent TO the current user
+        $unreadCount = Message::where('receiver_id', $userId)
+            ->where('is_read', false)
+            ->count();
+
         $lastIncoming = Message::where('receiver_id', $userId)
             ->where('is_read', false)
             ->orderBy('created_at', 'desc')
             ->first();
 
         if (!$lastIncoming) {
-            return response()->json(['has_unread' => false]);
+            return response()->json(['has_unread' => false, 'unread_count' => 0]);
         }
 
         $sender = User::find($lastIncoming->sender_id);
 
         return response()->json([
             'has_unread' => true,
+            'unread_count' => $unreadCount,
             'sender_name' => $sender ? $sender->name : 'Bạn bè',
-            'last_message' => $lastIncoming->message ?? 'Tin nhắn mới',
+            'last_message' => $lastIncoming->message ?? 'Đã gửi một tin nhắn',
             'message_id' => $lastIncoming->id,
         ]);
     }
@@ -356,6 +360,22 @@ class SocialHubController extends Controller
         return response()->json([
             'messages' => $messages,
             'has_more' => $hasMore,
+        ]);
+    }
+
+    public function checkUnread()
+    {
+        $userId = Auth::id();
+        if (!$userId) {
+            return response()->json(['has_unread' => false, 'unread_count' => 0]);
+        }
+        $count = Message::where('receiver_id', $userId)
+            ->where('is_read', false)
+            ->count();
+
+        return response()->json([
+            'has_unread' => $count > 0,
+            'unread_count' => $count,
         ]);
     }
 

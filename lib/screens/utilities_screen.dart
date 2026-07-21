@@ -201,23 +201,6 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
     }
   }
 
-  Future<void> _removeCartItem(String key, StateSetter setModalState) async {
-    final item = _cartItems[key];
-    setState(() {
-      _cartItems.remove(key);
-    });
-    setModalState(() {});
-
-    if (item != null && item['id'] != null) {
-      await ApiService.removeCartItem(item['id']);
-      _fetchCartData();
-    }
-
-    if (_cartItems.isEmpty) {
-      Navigator.pop(context);
-    }
-  }
-
   Future<void> _clearCart(StateSetter setModalState) async {
     setState(() {
       _cartItems.clear();
@@ -1169,104 +1152,6 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  void _showNotificationsModal(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-      builder: (ctx) => StatefulBuilder(
-        builder: (context, setModalState) {
-          return FutureBuilder<List<dynamic>>(
-            future: ApiService.getAppNotifications(),
-            builder: (context, snapshot) {
-              final List<dynamic> notifs = snapshot.data ?? [];
-              final bool isLoading = snapshot.connectionState == ConnectionState.waiting;
-
-              return Container(
-                padding: const EdgeInsets.all(20),
-                constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.7),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Row(
-                          children: [
-                            Icon(Icons.notifications_active, color: Color(0xFFFFB800), size: 24),
-                            SizedBox(width: 8),
-                            Text('Thông báo hệ thống & Đơn hàng', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0077B6))),
-                          ],
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.close, color: Colors.grey),
-                          onPressed: () => Navigator.pop(ctx),
-                        ),
-                      ],
-                    ),
-                    const Divider(height: 20),
-                    if (isLoading)
-                      const Padding(
-                        padding: EdgeInsets.all(32.0),
-                        child: Center(child: CircularProgressIndicator(color: Color(0xFF0284C7))),
-                      )
-                    else if (notifs.isEmpty)
-                      const Padding(
-                        padding: EdgeInsets.all(32.0),
-                        child: Center(child: Text('Chưa có thông báo mới', style: TextStyle(color: Colors.grey))),
-                      )
-                    else
-                      Expanded(
-                        child: ListView.separated(
-                          shrinkWrap: true,
-                          itemCount: notifs.length,
-                          separatorBuilder: (_, __) => const Divider(height: 1),
-                          itemBuilder: (context, index) {
-                            final item = notifs[index];
-                            final String title = item['title'] ?? 'Thông báo';
-                            final String body = item['body'] ?? '';
-                            final String time = item['time'] ?? 'Vừa xong';
-                            final String iconType = item['icon'] ?? 'notifications';
-
-                            IconData iconData = Icons.notifications;
-                            Color bg = const Color(0xFFE0F2FE);
-                            Color fg = const Color(0xFF0284C7);
-
-                            if (iconType == 'comment') {
-                              iconData = Icons.comment;
-                              bg = const Color(0xFFE0F2FE);
-                              fg = const Color(0xFF0284C7);
-                            } else if (iconType == 'card_giftcard') {
-                              iconData = Icons.card_giftcard;
-                              bg = const Color(0xFFFFFBEB);
-                              fg = const Color(0xFFD97706);
-                            } else if (iconType == 'local_shipping') {
-                              iconData = Icons.local_shipping;
-                              bg = const Color(0xFFECFDF5);
-                              fg = const Color(0xFF059669);
-                            }
-
-                            return ListTile(
-                              contentPadding: const EdgeInsets.symmetric(vertical: 4, horizontal: 0),
-                              leading: CircleAvatar(backgroundColor: bg, child: Icon(iconData, color: fg, size: 20)),
-                              title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                              subtitle: Text(body, style: const TextStyle(fontSize: 12)),
-                              trailing: Text(time, style: const TextStyle(fontSize: 10, color: Colors.grey)),
-                            );
-                          },
-                        ),
-                      ),
-                  ],
-                ),
-              );
-            },
-          );
-        },
       ),
     );
   }

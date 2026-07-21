@@ -55,7 +55,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> with Sing
       final productsRes = await ApiService.getMarketProducts();
 
       if (mounted) {
-        final data = (profileRes is Map && profileRes['data'] is Map) ? profileRes['data'] : (profileRes is Map ? profileRes : {});
+        final data = profileRes['data'] ?? profileRes;
         _merchantNameController.text = data['merchant_name'] ?? '';
         _businessItemsController.text = data['business_items'] ?? '';
         _priceListedController.text = data['price_listed'] ?? '';
@@ -66,7 +66,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> with Sing
         _hasSmartphone = data['has_smartphone'] ?? false;
         _hasAttpCertificate = data['has_attp_certificate'] ?? false;
 
-        if (productsRes is List && productsRes.isNotEmpty) {
+        if (productsRes.isNotEmpty) {
           _myProducts = List<Map<String, dynamic>>.from(productsRes);
         } else {
           _myProducts = [];

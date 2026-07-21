@@ -577,6 +577,19 @@ class ApiService {
     }
   }
 
+  /// GET /social/unread-check — Số lượng tin nhắn chưa đọc real-time
+  static Future<int> getUnreadMessagesCount() async {
+    try {
+      final response = await http.get(Uri.parse('$baseUrl/social/unread-check'), headers: _getHeaders());
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['unread_count'] is int) return data['unread_count'];
+        return data['has_unread'] == true ? 1 : 0;
+      }
+    } catch (_) {}
+    return 0;
+  }
+
 
   /// GET /market-products — Lấy danh sách sản phẩm OCOP & Gian hàng chợ
   static Future<List<dynamic>> getMarketProducts() async {
