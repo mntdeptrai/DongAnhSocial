@@ -55,69 +55,31 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> with Sing
       final productsRes = await ApiService.getMarketProducts();
 
       if (mounted) {
-        final data = profileRes['data'] ?? {};
-        _merchantNameController.text = data['merchant_name'] ?? 'Nguyễn Thị Hương';
-        _businessItemsController.text = data['business_items'] ?? 'Rau củ quả tươi, Bún Cổ Loa, Đặc sản OCOP';
-        _priceListedController.text = data['price_listed'] ?? 'Niêm yết giá đầy đủ công khai';
-        _productOriginController.text = data['product_origin'] ?? 'Tự sản xuất tại xã Cổ Loa & Hợp tác xã Đông Anh';
-        _bankAccountController.text = data['bank_account'] ?? '1028734912';
-        _bankNameController.text = data['bank_name'] ?? 'VietinBank - CN Đông Anh';
-        _phoneController.text = data['phone'] ?? '0988123456';
-        _hasSmartphone = data['has_smartphone'] ?? true;
-        _hasAttpCertificate = data['has_attp_certificate'] ?? true;
+        final data = (profileRes is Map && profileRes['data'] is Map) ? profileRes['data'] : (profileRes is Map ? profileRes : {});
+        _merchantNameController.text = data['merchant_name'] ?? '';
+        _businessItemsController.text = data['business_items'] ?? '';
+        _priceListedController.text = data['price_listed'] ?? '';
+        _productOriginController.text = data['product_origin'] ?? '';
+        _bankAccountController.text = data['bank_account'] ?? '';
+        _bankNameController.text = data['bank_name'] ?? '';
+        _phoneController.text = data['phone'] ?? '';
+        _hasSmartphone = data['has_smartphone'] ?? false;
+        _hasAttpCertificate = data['has_attp_certificate'] ?? false;
 
-        if (productsRes.isNotEmpty) {
+        if (productsRes is List && productsRes.isNotEmpty) {
           _myProducts = List<Map<String, dynamic>>.from(productsRes);
         } else {
-          _myProducts = [
-            {
-              'id': 1,
-              'name': 'Bún Mạch Tràng Cổ Loa',
-              'price': 35000,
-              'stall_name': 'Sạp 12 - Chợ Cổ Loa',
-              'seller_name': 'Cô Hương',
-              'seller_phone': '0988123456',
-              'star_rating': '4 sao',
-              'image_path': 'https://picsum.photos/200/200'
-            },
-            {
-              'id': 2,
-              'name': 'Tương Nếp Dục Tú',
-              'price': 60000,
-              'stall_name': 'Sạp 15 - Chợ Đông Anh',
-              'seller_name': 'Cô Hương',
-              'seller_phone': '0988123456',
-              'star_rating': '5 sao',
-              'image_path': 'https://picsum.photos/201/200'
-            }
-          ];
+          _myProducts = [];
         }
 
-        _receivedOrders = [
-          {
-            'id': 'ORD-8821',
-            'customer': 'Trần Văn Nam',
-            'phone': '0912345678',
-            'items': '2x Bún Mạch Tràng',
-            'total': 70000,
-            'status': 'Chờ xác nhận',
-            'time': '10 phút trước'
-          },
-          {
-            'id': 'ORD-8819',
-            'customer': 'Lê Thị Thu',
-            'phone': '0933888999',
-            'items': '1x Tương Nếp Dục Tú',
-            'total': 60000,
-            'status': 'Đã hoàn thành',
-            'time': '2 giờ trước'
-          }
-        ];
-
-        _isLoading = false;
+        _receivedOrders = [];
       }
-    } catch (_) {
-      if (mounted) setState(() => _isLoading = false);
+    } catch (e) {
+      debugPrint('SellerDashboard fetch error: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 

@@ -6,9 +6,11 @@ class TopNavBar extends StatelessWidget implements PreferredSizeWidget {
   final VoidCallback? onAddPostTap;
   final VoidCallback? onSearchTap;
   final VoidCallback? onMessengerTap;
+  final VoidCallback? onCartTap;
   final VoidCallback? onMenuTap;
   final int unreadMessagesCount;
   final int unreadNotifsCount;
+  final int cartCount;
 
   const TopNavBar({
     super.key,
@@ -17,9 +19,11 @@ class TopNavBar extends StatelessWidget implements PreferredSizeWidget {
     this.onAddPostTap,
     this.onSearchTap,
     this.onMessengerTap,
+    this.onCartTap,
     this.onMenuTap,
     this.unreadMessagesCount = 1,
     this.unreadNotifsCount = 2,
+    this.cartCount = 0,
   });
 
   @override
@@ -82,7 +86,15 @@ class TopNavBar extends StatelessWidget implements PreferredSizeWidget {
                   ),
                   const SizedBox(width: 8),
 
-                  // Action Button 3: Messenger (💬) with Red Badge
+                  // Action Button 3: Cart (🛒)
+                  _buildHeaderActionButton(
+                    icon: Icons.shopping_bag_outlined,
+                    badgeCount: cartCount,
+                    onTap: onCartTap,
+                  ),
+                  const SizedBox(width: 8),
+
+                  // Action Button 4: Messenger (💬) with Red Badge
                   _buildHeaderActionButton(
                     icon: Icons.chat_bubble,
                     badgeCount: unreadMessagesCount,

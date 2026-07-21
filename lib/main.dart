@@ -281,10 +281,17 @@ class _MainLayoutState extends State<MainLayout> {
           });
         },
         onMessengerTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const ChatScreen()),
+          );
+        },
+        onCartTap: () {
           setState(() {
-            _currentIndex = 4;
+            _currentIndex = 3;
           });
         },
+
         unreadMessagesCount: 1,
         unreadNotifsCount: _unreadNotifsCount,
       ),
