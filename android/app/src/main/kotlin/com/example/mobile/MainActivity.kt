@@ -32,8 +32,40 @@ class MainActivity : FlutterActivity() {
     private var lastNotifiedMsgId: Long = 0
     private var authToken: String? = null
 
+    private var pendingNotificationPayload: Map<String, Any>? = null
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        handleNotificationIntent(intent)
+    }
+
+    private fun handleNotificationIntent(intent: Intent?) {
+        if (intent == null) return
+        val target = intent.getStringExtra("target_screen")
+        if (target != null) {
+            val payload = mapOf(
+                "target" to target,
+                "sender_id" to intent.getIntExtra("sender_id", 0),
+                "sender_name" to (intent.getStringExtra("sender_name") ?: "")
+            )
+            pendingNotificationPayload = payload
+            notifyFlutterNotificationTapped(payload)
+        }
+    }
+
+    private fun notifyFlutterNotificationTapped(payload: Map<String, Any>) {
+        handler.post {
+            flutterEngine?.dartExecutor?.binaryMessenger?.let { messenger ->
+                MethodChannel(messenger, CHANNEL).invokeMethod("onNotificationTapped", payload)
+            }
+        }
+    }
+
     override fun configureFlutterEngine(@NonNull flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+
+        // Handle initial notification intent if app started from cold boot
+        handleNotificationIntent(intent)
 
         // Create default Notification Channel
         createNotificationChannel()
@@ -43,6 +75,11 @@ class MainActivity : FlutterActivity() {
 
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL).setMethodCallHandler { call, result ->
             when (call.method) {
+                "getInitialNotification" -> {
+                    val payload = pendingNotificationPayload
+                    pendingNotificationPayload = null
+                    result.success(payload)
+                }
                 "requestNotificationPermission" -> {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                         ActivityCompat.requestPermissions(
@@ -184,11 +221,12 @@ class MainActivity : FlutterActivity() {
                                     lastNotifiedMsgId = msgId
 
                                     val senderName = json.optString("sender_name", "Bạn bè")
+                                    val senderId = json.optInt("sender_id", 0)
                                     val lastMessage = json.optString("last_message", "Tin nhắn mới")
 
                                     Log.d("NativePolling", "Triggering notification for msgId: $msgId from $senderName")
                                     handler.post {
-                                        sendSystemNotification(senderName, "💬 $lastMessage")
+                                        sendSystemNotification(senderName, "💬 $lastMessage", senderId)
                                     }
                                 }
                             }
@@ -261,7 +299,7 @@ class MainActivity : FlutterActivity() {
                                 if (latestUnreadId > 0 && latestUnreadId != lastNotifiedMsgId) {
                                     lastNotifiedMsgId = latestUnreadId
                                     handler.post {
-                                        sendSystemNotification(friendName, "💬 $latestUnreadText")
+                                        sendSystemNotification(friendName, "💬 $latestUnreadText", friendId)
                                     }
                                 }
                             }
@@ -276,14 +314,17 @@ class MainActivity : FlutterActivity() {
         }
     }
 
-    private fun sendSystemNotification(title: String, body: String) {
+    private fun sendSystemNotification(title: String, body: String, senderId: Int = 0) {
         val intent = Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+            putExtra("target_screen", "chat")
+            putExtra("sender_id", senderId)
+            putExtra("sender_name", title)
         }
         // Content tap intent (immutable is fine)
         val contentPendingIntent = PendingIntent.getActivity(
             this,
-            0,
+            (System.currentTimeMillis() % 10000).toInt(),
             intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )

@@ -28,6 +28,13 @@ Route::prefix('v1')->group(function () {
     Route::post('/checkins/comments', [\App\Http\Controllers\Api\CheckinApiController::class, 'storeComment']);
     Route::post('/checkins/{id}/react', [\App\Http\Controllers\Api\CheckinApiController::class, 'reactToCheckin']);
 
+    // Synchronized Cart API endpoints for Mobile App & Web
+    Route::get('/cart', [\App\Http\Controllers\GioHangController::class, 'index']);
+    Route::post('/cart/add', [\App\Http\Controllers\GioHangController::class, 'store']);
+    Route::put('/cart/update/{id}', [\App\Http\Controllers\GioHangController::class, 'update']);
+    Route::delete('/cart/remove/{id}', [\App\Http\Controllers\GioHangController::class, 'destroy']);
+    Route::post('/cart/clear', [\App\Http\Controllers\GioHangController::class, 'clear']);
+
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('/auth/token/revoke', [\App\Http\Controllers\Api\CheckinApiController::class, 'revokeToken']);
         
@@ -48,6 +55,10 @@ Route::prefix('v1')->group(function () {
     // -----------------------------------------------------------------------
     Route::get('/categories', [EateryApiController::class, 'getCategories']);
     Route::get('/communes', [EateryApiController::class, 'getCommunes']);
+    Route::get('/market-products', [EateryApiController::class, 'getMarketProducts']);
+    Route::get('/notifications', [EateryApiController::class, 'getAppNotifications']);
+    Route::get('/seller/profile', [EateryApiController::class, 'getSellerProfile']);
+    Route::post('/seller/profile', [EateryApiController::class, 'updateSellerProfile']);
 
     // Videos Reels đặc sản (xem công khai)
     Route::get('/videos', [EateryApiController::class, 'getVideos']);

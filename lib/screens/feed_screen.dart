@@ -70,10 +70,26 @@ class FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
     }
   }
 
-  Future<void> refreshCamera() async {
-    if (!_isCameraInitialized || _cameraController == null || !_cameraController!.value.isInitialized) {
+  Future<void> pauseCamera() async {
+    if (_cameraController != null) {
+      if (mounted) {
+        setState(() {
+          _isCameraInitialized = false;
+        });
+      }
+      await _cameraController?.dispose();
+      _cameraController = null;
+    }
+  }
+
+  Future<void> resumeCamera() async {
+    if (_cameraController == null || !_isCameraInitialized) {
       await _initializeCamera();
     }
+  }
+
+  Future<void> refreshCamera() async {
+    await resumeCamera();
   }
 
   Future<void> _initializeCamera() async {
@@ -446,16 +462,41 @@ class FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Check-in Cộng đồng',
-          style: TextStyle(fontWeight: FontWeight.w900, fontSize: 20, letterSpacing: -0.5),
+        title: Row(
+          children: [
+            const Text(
+              'DongAnh',
+              style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18),
+            ),
+            const Text(
+              ' Feed',
+              style: TextStyle(color: Color(0xFFFFB800), fontWeight: FontWeight.w900, fontSize: 18),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFB800),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Text('Locket 📸', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+            ),
+          ],
         ),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.grey[800],
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFF38BDF8), Color(0xFF00A8EE), Color(0xFF0284C7)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
+        foregroundColor: Colors.white,
         elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh),
+            icon: const Icon(Icons.refresh, color: Colors.white),
             onPressed: _loadFeed,
           ),
         ],
@@ -469,6 +510,13 @@ class FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
                 return PageView.builder(
                   scrollDirection: Axis.vertical,
                   itemCount: _feedItems.length + 1,
+                  onPageChanged: (pageIndex) {
+                    if (pageIndex == 0) {
+                      resumeCamera();
+                    } else {
+                      pauseCamera();
+                    }
+                  },
                   itemBuilder: (context, index) {
                     if (index == 0) {
                       return _buildTikTokCameraPage(primaryColor, height);
@@ -910,16 +958,14 @@ class FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
           fit: StackFit.expand,
           children: [
             // Background Image
-            if (item['image_path'] != null)
-              Image.network(
-                item['image_path'].toString().startsWith('http')
-                    ? item['image_path']
-                    : 'https://donganhdiscovery.xadonganh.com/' + item['image_path'],
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Container(color: const Color(0xFF1E293B)),
-              )
-            else
-              Container(
+            Image.network(
+              (item['image_path'] != null && item['image_path'].toString().isNotEmpty)
+                  ? (item['image_path'].toString().startsWith('http')
+                      ? item['image_path'].toString()
+                      : 'https://donganhdiscovery.xadonganh.com/' + (item['image_path'].toString().startsWith('/') ? item['image_path'].toString().substring(1) : item['image_path'].toString()))
+                  : 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=800&q=80',
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => Container(
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
                     colors: [Color(0xFF334155), Color(0xFF0F172A)],
@@ -928,6 +974,7 @@ class FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
                   ),
                 ),
               ),
+            ),
 
             // Black overlay for text readability
             Container(

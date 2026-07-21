@@ -19,19 +19,7 @@ class OcopProductService
     public function create(OcopProductData $data, ?string $connName = null): OcopProduct
     {
         $imagePath = $this->resolveImagePath($data->image, $data->image_url);
-        
-        $action = $this->createAction;
-        if ($connName) {
-            // Set connection for current model context if specified
-            \App\Models\OcopProduct::setConnectionResolver(app('db'));
-        }
-        
-        $product = $action->execute($data, $imagePath);
-        if ($connName) {
-            $product->setConnection($connName);
-            $product->save();
-        }
-        return $product;
+        return $this->createAction->execute($data, $imagePath, $connName ?: 'mysql_market');
     }
 
     public function update($id, OcopProductData $data, ?string $connName = null): OcopProduct

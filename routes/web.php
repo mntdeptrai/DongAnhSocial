@@ -168,6 +168,15 @@ Route::prefix('admin')->middleware(['auth', 'role:admin,seller'])->group(functio
     Route::post('/videos', [AdminController::class, 'storeVideo'])->name('admin.video.store');
     Route::put('/videos/{id}', [AdminController::class, 'updateVideo'])->name('admin.video.update');
     Route::delete('/videos/{id}', [AdminController::class, 'destroyVideo'])->name('admin.video.destroy');
+
+    // Fallback GET routes chống lỗi 405 Method Not Allowed khi truy cập trực tiếp bằng phương thức GET
+    Route::get('/dishes', fn() => redirect()->route('admin.dashboard'));
+    Route::get('/cultural-activities', fn() => redirect()->route('admin.dashboard'));
+    Route::get('/ocop-products', fn() => redirect()->route('admin.dashboard'));
+    Route::get('/rooms', fn() => redirect()->route('admin.dashboard'));
+    Route::get('/wellness-services', fn() => redirect()->route('admin.dashboard'));
+    Route::get('/education-programs', fn() => redirect()->route('admin.dashboard'));
+    Route::get('/videos', fn() => redirect()->route('admin.dashboard'));
     Route::post('/videos/{id}/approve', [AdminController::class, 'approveVideo'])->name('admin.video.approve');
     Route::post('/videos/{id}/reject', [AdminController::class, 'rejectVideo'])->name('admin.video.reject');
 

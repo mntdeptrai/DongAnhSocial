@@ -182,26 +182,40 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 24),
 
-                    // Submit Button
-                    ElevatedButton(
-                      onPressed: _isLoading ? null : _submit,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: primaryColor,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        elevation: 0,
+                    // Golden Yellow Web CTA Submit Button
+                    Container(
+                      height: 52,
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFFFB800), Color(0xFFFF9900)],
+                        ),
+                        borderRadius: BorderRadius.circular(14),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFFFFB800).withOpacity(0.4),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
                       ),
-                      child: _isLoading
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                            )
-                          : Text(
-                              _isRegister ? 'Đăng Ký' : 'Đăng Nhập',
-                              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                            ),
+                      child: ElevatedButton(
+                        onPressed: _isLoading ? null : _submit,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.transparent,
+                          shadowColor: Colors.transparent,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        ),
+                        child: _isLoading
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                              )
+                            : Text(
+                                _isRegister ? 'ĐĂNG KÝ NGAY ✨' : 'ĐĂNG NHẬP NGAY ✨',
+                                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Colors.white),
+                              ),
+                      ),
                     ),
                     const SizedBox(height: 16),
 

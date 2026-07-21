@@ -7,11 +7,17 @@ use App\Models\OcopProduct;
 
 class CreateOcopProductAction
 {
-    public function execute(OcopProductData $data, ?string $imagePath): OcopProduct
+    public function execute(OcopProductData $data, ?string $imagePath, ?string $connName = null): OcopProduct
     {
         $product = new OcopProduct();
+        if ($connName) {
+            $product->setConnection($connName);
+        }
         $product->fill([
             'eatery_id' => $data->eatery_id,
+            'stall_name' => $data->stall_name,
+            'seller_name' => $data->seller_name,
+            'seller_phone' => $data->seller_phone,
             'name' => $data->name,
             'price' => $data->price,
             'description' => $data->description,

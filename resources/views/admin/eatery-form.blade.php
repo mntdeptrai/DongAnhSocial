@@ -523,6 +523,22 @@
                     </div>
                 </div>
 
+                <!-- Thông tin Gian hàng & Người bán -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 16px; background: rgba(14,165,233,0.03); padding: 14px; border-radius: 10px; border: 1px dashed rgba(14,165,233,0.2);">
+                    <div class="admin-form-group" style="margin-bottom: 0;">
+                        <label class="admin-form-label" style="font-weight: 700;">🏪 Tên Gian Hàng/Số Sạp</label>
+                        <input type="text" name="stall_name" class="admin-form-input" placeholder="Ví dụ: Gian Hàng A12">
+                    </div>
+                    <div class="admin-form-group" style="margin-bottom: 0;">
+                        <label class="admin-form-label" style="font-weight: 700;">👤 Tên Người Bán/Chủ Sạp</label>
+                        <input type="text" name="seller_name" class="admin-form-input" placeholder="Ví dụ: Cô Nguyễn Thị Hương">
+                    </div>
+                    <div class="admin-form-group" style="margin-bottom: 0;">
+                        <label class="admin-form-label" style="font-weight: 700;">📞 SĐT Liên Hệ Người Bán</label>
+                        <input type="text" name="seller_phone" class="admin-form-input" placeholder="Ví dụ: 0988xxxxxx">
+                    </div>
+                </div>
+
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
                     <div class="admin-form-group" style="margin-bottom: 0;">
                         <label class="admin-form-label">Đạt chuẩn OCOP mấy sao?</label>

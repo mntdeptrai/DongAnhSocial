@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import 'my_checkins_screen.dart';
-import '../main.dart';
+import 'seller_dashboard_screen.dart';
+import '../services/notification_helper.dart';
 
 class ProfileScreen extends StatelessWidget {
   final VoidCallback onLogout;
@@ -13,9 +14,238 @@ class ProfileScreen extends StatelessWidget {
     required this.onLoginRequest,
   });
 
+  void _showSavedPlaces(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Row(
+              children: [
+                Icon(Icons.favorite, color: Colors.redAccent, size: 24),
+                SizedBox(width: 8),
+                Text('Địa điểm đã lưu', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0077B6))),
+              ],
+            ),
+            const Divider(height: 20),
+            ListTile(
+              leading: const CircleAvatar(backgroundColor: Color(0xFFE0F2FE), child: Icon(Icons.store, color: Color(0xFF00A8EE))),
+              title: const Text('HTX nông nghiệp dược liệu KOVI', style: TextStyle(fontWeight: FontWeight.bold)),
+              subtitle: const Text('Thôn Lộc Hà, Đông Anh • ⭐ 5.0'),
+              trailing: const Icon(Icons.arrow_forward_ios, size: 14),
+              onTap: () => Navigator.pop(ctx),
+            ),
+            ListTile(
+              leading: const CircleAvatar(backgroundColor: Color(0xFFE0F2FE), child: Icon(Icons.restaurant, color: Color(0xFF00A8EE))),
+              title: const Text('Bún chả Cổ Loa', style: TextStyle(fontWeight: FontWeight.bold)),
+              subtitle: const Text('Cổ Loa, Đông Anh • ⭐ 4.8'),
+              trailing: const Icon(Icons.arrow_forward_ios, size: 14),
+              onTap: () => Navigator.pop(ctx),
+            ),
+            ListTile(
+              leading: const CircleAvatar(backgroundColor: Color(0xFFE0F2FE), child: Icon(Icons.storefront, color: Color(0xFF00A8EE))),
+              title: const Text('HKD Thảo Loan - Đặc sản OCOP', style: TextStyle(fontWeight: FontWeight.bold)),
+              subtitle: const Text('Xã Xuân Canh, Đông Anh • ⭐ 4.9'),
+              trailing: const Icon(Icons.arrow_forward_ios, size: 14),
+              onTap: () => Navigator.pop(ctx),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showAppConfig(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Row(
+          children: [
+            Icon(Icons.settings, color: Color(0xFF00A8EE)),
+            SizedBox(width: 8),
+            Text('Cấu hình ứng dụng'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SwitchListTile(
+              title: const Text('Thông báo đẩy (Push Notifications)'),
+              value: true,
+              activeColor: const Color(0xFF00A8EE),
+              onChanged: (val) {},
+            ),
+            SwitchListTile(
+              title: const Text('Âm thanh thông báo'),
+              value: true,
+              activeColor: const Color(0xFF00A8EE),
+              onChanged: (val) {},
+            ),
+            SwitchListTile(
+              title: const Text('Đồng bộ vị trí GPS thời gian thực'),
+              value: true,
+              activeColor: const Color(0xFF00A8EE),
+              onChanged: (val) {},
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Đóng'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showSupportHelp(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Row(
+          children: [
+            Icon(Icons.help_outline, color: Color(0xFF00A8EE)),
+            SizedBox(width: 8),
+            Text('Hỗ trợ & Trợ giúp'),
+          ],
+        ),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('🏛️ Trung tâm Hỗ trợ Đông Anh Discovery', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+            SizedBox(height: 8),
+            Text('📞 Hotline hỗ trợ: 0988.xxx.xxx'),
+            SizedBox(height: 4),
+            Text('✉️ Email: support@xadonganh.com'),
+            SizedBox(height: 4),
+            Text('🌐 Website: donganhdiscovery.xadonganh.com'),
+            SizedBox(height: 12),
+            Text('Đội ngũ kỹ thuật trực hỗ trợ 24/7 giải đáp mọi thắc mắc về chợ số, bản đồ & gian hàng OCOP.'),
+          ],
+        ),
+        actions: [
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF00A8EE),
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Đã hiểu'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showNotificationsModal(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setModalState) {
+          return FutureBuilder<List<dynamic>>(
+            future: ApiService.getAppNotifications(),
+            builder: (context, snapshot) {
+              final List<dynamic> notifs = snapshot.data ?? [];
+              final bool isLoading = snapshot.connectionState == ConnectionState.waiting;
+
+              return Container(
+                padding: const EdgeInsets.all(20),
+                constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.7),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Row(
+                          children: [
+                            Icon(Icons.notifications_active, color: Color(0xFFFFB800), size: 24),
+                            SizedBox(width: 8),
+                            Text('Thông báo hệ thống & Đơn hàng', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0077B6))),
+                          ],
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close, color: Colors.grey),
+                          onPressed: () => Navigator.pop(ctx),
+                        ),
+                      ],
+                    ),
+                    const Divider(height: 20),
+                    if (isLoading)
+                      const Padding(
+                        padding: EdgeInsets.all(32.0),
+                        child: Center(child: CircularProgressIndicator(color: Color(0xFF0284C7))),
+                      )
+                    else if (notifs.isEmpty)
+                      const Padding(
+                        padding: EdgeInsets.all(32.0),
+                        child: Center(child: Text('Chưa có thông báo mới', style: TextStyle(color: Colors.grey))),
+                      )
+                    else
+                      Expanded(
+                        child: ListView.separated(
+                          shrinkWrap: true,
+                          itemCount: notifs.length,
+                          separatorBuilder: (_, __) => const Divider(height: 1),
+                          itemBuilder: (context, index) {
+                            final item = notifs[index];
+                            final String title = item['title'] ?? 'Thông báo';
+                            final String body = item['body'] ?? '';
+                            final String time = item['time'] ?? 'Vừa xong';
+                            final String iconType = item['icon'] ?? 'notifications';
+
+                            IconData iconData = Icons.notifications;
+                            Color bg = const Color(0xFFE0F2FE);
+                            Color fg = const Color(0xFF0284C7);
+
+                            if (iconType == 'comment') {
+                              iconData = Icons.comment;
+                              bg = const Color(0xFFE0F2FE);
+                              fg = const Color(0xFF0284C7);
+                            } else if (iconType == 'card_giftcard') {
+                              iconData = Icons.card_giftcard;
+                              bg = const Color(0xFFFFFBEB);
+                              fg = const Color(0xFFD97706);
+                            } else if (iconType == 'local_shipping') {
+                              iconData = Icons.local_shipping;
+                              bg = const Color(0xFFECFDF5);
+                              fg = const Color(0xFF059669);
+                            }
+
+                            return ListTile(
+                              contentPadding: const EdgeInsets.symmetric(vertical: 4, horizontal: 0),
+                              leading: CircleAvatar(backgroundColor: bg, child: Icon(iconData, color: fg, size: 20)),
+                              title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                              subtitle: Text(body, style: const TextStyle(fontSize: 12)),
+                              trailing: Text(time, style: const TextStyle(fontSize: 10, color: Colors.grey)),
+                            );
+                          },
+                        ),
+                      ),
+                  ],
+                ),
+              );
+            },
+          );
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final primaryColor = const Color(0xFF0EA5E9);
+    final primaryColor = const Color(0xFF00A8EE);
     final isGuest = !ApiService.isAuthenticated;
     final user = ApiService.currentUser;
 
@@ -24,7 +254,7 @@ class ProfileScreen extends StatelessWidget {
         appBar: AppBar(
           title: const Text('Cá nhân', style: TextStyle(fontWeight: FontWeight.bold)),
           backgroundColor: Colors.white,
-          foregroundColor: Colors.grey[800],
+          foregroundColor: const Color(0xFF0F172A),
           elevation: 0,
         ),
         body: Center(
@@ -65,8 +295,14 @@ class ProfileScreen extends StatelessWidget {
           style: TextStyle(fontWeight: FontWeight.w900, fontSize: 20, letterSpacing: -0.5),
         ),
         backgroundColor: Colors.white,
-        foregroundColor: Colors.grey[800],
+        foregroundColor: const Color(0xFF0F172A),
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.notifications_outlined, color: Color(0xFF00A8EE)),
+            onPressed: () => _showNotificationsModal(context),
+          ),
+        ],
       ),
       backgroundColor: const Color(0xFFF8FAFC),
       body: SingleChildScrollView(
@@ -82,7 +318,7 @@ class ProfileScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.grey[200]!.withValues(alpha: 0.4),
+                    color: Colors.grey[200]!.withOpacity(0.4),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -92,7 +328,7 @@ class ProfileScreen extends StatelessWidget {
                 children: [
                   CircleAvatar(
                     radius: 40,
-                    backgroundColor: primaryColor.withValues(alpha: 0.1),
+                    backgroundColor: primaryColor.withOpacity(0.1),
                     child: Text(
                       user?['name']?[0] ?? '👤',
                       style: TextStyle(color: primaryColor, fontSize: 32, fontWeight: FontWeight.bold),
@@ -160,6 +396,28 @@ class ProfileScreen extends StatelessWidget {
                 ),
                 child: Column(
                   children: [
+                    Material(
+                      color: const Color(0xFF00A8EE).withOpacity(0.08),
+                      child: ListTile(
+                        leading: const CircleAvatar(
+                          backgroundColor: Color(0xFF00A8EE),
+                          child: Icon(Icons.storefront, color: Colors.white, size: 20),
+                        ),
+                        title: const Text(
+                          '🏪 Gian hàng của tôi',
+                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF00A8EE)),
+                        ),
+                        subtitle: const Text('Kê khai dữ liệu số, niêm yết giá & quản lý đơn hàng', style: TextStyle(fontSize: 11)),
+                        trailing: const Icon(Icons.arrow_forward_ios, size: 14, color: Color(0xFF00A8EE)),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const SellerDashboardScreen()),
+                          );
+                        },
+                      ),
+                    ),
+                    const Divider(height: 1),
                     _optionTile(Icons.history, 'Lịch sử check-in của tôi', () {
                       Navigator.push(
                         context,
@@ -168,18 +426,24 @@ class ProfileScreen extends StatelessWidget {
                     }),
                     const Divider(height: 1),
                     _optionTile(Icons.notifications_active_outlined, 'Thông báo ứng dụng & Tin nhắn', () {
-                      NotificationHelper.openSettings();
+                      _showNotificationsModal(context);
                     }),
                     const Divider(height: 1),
                     _optionTile(Icons.bubble_chart_outlined, 'Bong bóng chat nổi ngoài màn hình (System Overlay)', () {
                       NotificationHelper.requestOverlayPermission();
                     }),
                     const Divider(height: 1),
-                    _optionTile(Icons.favorite_border, 'Địa điểm đã lưu'),
+                    _optionTile(Icons.favorite_border, 'Địa điểm đã lưu', () {
+                      _showSavedPlaces(context);
+                    }),
                     const Divider(height: 1),
-                    _optionTile(Icons.settings_outlined, 'Cấu hình ứng dụng'),
+                    _optionTile(Icons.settings_outlined, 'Cấu hình ứng dụng', () {
+                      _showAppConfig(context);
+                    }),
                     const Divider(height: 1),
-                    _optionTile(Icons.help_outline, 'Hỗ trợ & Trợ giúp'),
+                    _optionTile(Icons.help_outline, 'Hỗ trợ & Trợ giúp', () {
+                      _showSupportHelp(context);
+                    }),
                   ],
                 ),
               ),

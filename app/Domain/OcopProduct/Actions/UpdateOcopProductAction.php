@@ -10,6 +10,9 @@ class UpdateOcopProductAction
     public function execute(OcopProduct $product, OcopProductData $data, ?string $imagePath): OcopProduct
     {
         $product->update([
+            'stall_name' => $data->stall_name,
+            'seller_name' => $data->seller_name,
+            'seller_phone' => $data->seller_phone,
             'name' => $data->name,
             'price' => $data->price,
             'description' => $data->description,

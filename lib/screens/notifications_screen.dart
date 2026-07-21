@@ -1,0 +1,172 @@
+import 'package:flutter/material.dart';
+import '../services/api_service.dart';
+
+class NotificationsScreen extends StatefulWidget {
+  const NotificationsScreen({super.key});
+
+  @override
+  State<NotificationsScreen> createState() => _NotificationsScreenState();
+}
+
+class _NotificationsScreenState extends State<NotificationsScreen> {
+  List<dynamic> _notifications = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchNotifications();
+  }
+
+  Future<void> _fetchNotifications() async {
+    setState(() => _isLoading = true);
+    try {
+      final res = await ApiService.getAppNotifications();
+      if (mounted) {
+        setState(() {
+          _notifications = res;
+          _isLoading = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    const primaryColor = Color(0xFF0EA5E9);
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Row(
+          children: [
+            const Text(
+              'DongAnh',
+              style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18),
+            ),
+            const Text(
+              ' Notifications',
+              style: TextStyle(color: Color(0xFFFFB800), fontWeight: FontWeight.w900, fontSize: 18),
+            ),
+          ],
+        ),
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFF38BDF8), Color(0xFF00A8EE), Color(0xFF0284C7)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
+        foregroundColor: Colors.white,
+        elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.done_all),
+            tooltip: 'Đánh dấu đã đọc tất cả',
+            onPressed: () {
+              setState(() {
+                for (var item in _notifications) {
+                  item['is_read'] = true;
+                }
+              });
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Đã đánh dấu đọc tất cả thông báo!')),
+              );
+            },
+          ),
+        ],
+      ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _notifications.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.notifications_none_outlined, size: 64, color: Colors.grey[400]),
+                      const SizedBox(height: 12),
+                      const Text(
+                        'Chưa có thông báo nào mới.',
+                        style: TextStyle(color: Colors.grey, fontSize: 15),
+                      ),
+                    ],
+                  ),
+                )
+              : RefreshIndicator(
+                  onRefresh: _fetchNotifications,
+                  child: ListView.separated(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    itemCount: _notifications.length,
+                    separatorBuilder: (_, __) => const Divider(height: 1),
+                    itemBuilder: (context, index) {
+                      final item = _notifications[index];
+                      final bool isRead = item['is_read'] ?? true;
+                      final type = item['type'] ?? 'system';
+
+                      IconData iconData = Icons.notifications_active;
+                      Color iconColor = primaryColor;
+
+                      if (type == 'seller_order') {
+                        iconData = Icons.storefront;
+                        iconColor = Colors.amber[800]!;
+                      } else if (type == 'my_order') {
+                        iconData = Icons.local_shipping;
+                        iconColor = Colors.green;
+                      } else if (type == 'comment' || type == 'checkin') {
+                        iconData = Icons.chat_bubble_outline;
+                        iconColor = const Color(0xFF0EA5E9);
+                      } else if (type == 'friend') {
+                        iconData = Icons.person_add_rounded;
+                        iconColor = Colors.purple;
+                      }
+
+                      return Container(
+                        color: isRead ? Colors.transparent : primaryColor.withOpacity(0.05),
+                        child: ListTile(
+                          leading: CircleAvatar(
+                            backgroundColor: iconColor.withOpacity(0.15),
+                            child: Icon(iconData, color: iconColor, size: 22),
+                          ),
+                          title: Text(
+                            item['title'] ?? 'Thông báo',
+                            style: TextStyle(
+                              fontWeight: isRead ? FontWeight.w600 : FontWeight.w800,
+                              fontSize: 15,
+                              color: Colors.grey[900],
+                            ),
+                          ),
+                          subtitle: Padding(
+                            padding: const EdgeInsets.only(top: 4.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  item['body'] ?? '',
+                                  style: TextStyle(fontSize: 13, color: Colors.grey[700]),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  item['time'] ?? '',
+                                  style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+                                ),
+                              ],
+                            ),
+                          ),
+                          onTap: () {
+                            setState(() {
+                              item['is_read'] = true;
+                            });
+                          },
+                        ),
+                      );
+                    },
+                  ),
+                ),
+    );
+  }
+}

@@ -20,7 +20,10 @@ class OcopProductData
         public ?array $ingredients,
         public ?array $timeline,
         public mixed $image = null,
-        public ?string $image_url = null
+        public ?string $image_url = null,
+        public ?string $stall_name = null,
+        public ?string $seller_name = null,
+        public ?string $seller_phone = null
     ) {}
 
     public static function fromRequest(Request $request): self
@@ -64,7 +67,10 @@ class OcopProductData
             ingredients: $ingredients,
             timeline: $timeline,
             image: $request->file('image'),
-            image_url: $request->input('image_url')
+            image_url: $request->input('image_url'),
+            stall_name: $request->input('stall_name'),
+            seller_name: $request->input('seller_name'),
+            seller_phone: $request->input('seller_phone')
         );
     }
 }

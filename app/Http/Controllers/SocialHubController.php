@@ -549,8 +549,13 @@ class SocialHubController extends Controller
     /**
      * Lấy danh sách bạn bè kèm tin nhắn gần nhất để hiển thị ở header dropdown
      */
-    public function getRecentChats()
+    public function getRecentChats(Request $request)
     {
+        // Chống truy cập trực tiếp URL API qua trình duyệt web
+        if (!$request->expectsJson() && !$request->ajax()) {
+            return redirect()->route('social.index');
+        }
+
         $user = Auth::user();
         if (!$user) {
             return response()->json([], 401);
@@ -602,6 +607,6 @@ class SocialHubController extends Controller
         // Sắp xếp các đoạn chat: Có tin nhắn mới xếp trước, sắp xếp theo timestamp giảm dần
         $sortedChats = $recentChats->sortByDesc('latest_message_timestamp')->values();
 
-        return response()->json($sortedChats);
+        return response()->json($sortedChats, 200, [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     }
 }

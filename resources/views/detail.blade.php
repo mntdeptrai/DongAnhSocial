@@ -1884,6 +1884,11 @@
                         <div style="font-size: 0.85rem; color: var(--primary); font-weight: 600; background: var(--bg-btn-secondary); display: inline-block; padding: 8px 20px; border-radius: 30px; border: 1px dashed var(--border-glow);">
                             📞 Hotline Ban Quản Lý ATTP Đông Anh: 024.3883.2241
                         </div>
+                    </div>
+                @endif
+            </div>
+            @endif
+
             <!-- Section: Hình ảnh thực tế từ thực khách Check-in -->
             @if(isset($checkinPhotos) && $checkinPhotos->count() > 0)
                 <div class="detail-section glass-panel" style="padding: 28px; margin-bottom: 40px;">

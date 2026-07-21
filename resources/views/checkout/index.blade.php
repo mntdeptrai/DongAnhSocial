@@ -59,20 +59,12 @@
                     💳 Phương thức thanh toán
                 </h3>
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 30px;">
-                    <label style="position: relative; border: 2px solid var(--border-glow); border-radius: 14px; padding: 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: all 0.25s;" class="payment-method-card active">
+                <div style="display: grid; grid-template-columns: 1fr; gap: 16px; margin-bottom: 30px;">
+                    <label style="position: relative; border: 2px solid var(--primary); border-radius: 14px; padding: 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; background: rgba(255, 126, 41, 0.03);" class="payment-method-card active">
                         <input type="radio" name="payment_method" value="COD" checked style="accent-color: var(--primary);" onchange="updatePaymentCardStyles(this)">
                         <div>
                             <strong style="display: block; font-size: 0.9rem; color: var(--text-main);">Thanh toán khi nhận hàng (COD)</strong>
                             <span style="font-size: 0.78rem; color: var(--text-muted);">Trả tiền mặt khi Shipper giao tới</span>
-                        </div>
-                    </label>
-
-                    <label style="position: relative; border: 2px solid var(--border-glow); border-radius: 14px; padding: 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: all 0.25s;" class="payment-method-card">
-                        <input type="radio" name="payment_method" value="Online" style="accent-color: var(--primary);" onchange="updatePaymentCardStyles(this)">
-                        <div>
-                            <strong style="display: block; font-size: 0.9rem; color: var(--text-main);">Thanh toán trực tuyến (Simulated)</strong>
-                            <span style="font-size: 0.78rem; color: var(--text-muted);">Cổng thanh toán giả lập bảo mật</span>
                         </div>
                     </label>
                 </div>

@@ -309,7 +309,7 @@ class EateryApiService
         }
 
         $conn = self::getConnection($categorySlug);
-        $query = Eatery::on($conn)->with(['category', 'commune', 'reviewVideos' => function($q) {
+        $query = Eatery::on($conn)->with(['category', 'commune', 'ocopProducts', 'dishes', 'reviewVideos' => function($q) {
             $q->where('status', 'approved');
         }])->withCount('reviews')->active();
 

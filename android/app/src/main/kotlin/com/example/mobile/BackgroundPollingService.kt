@@ -110,11 +110,12 @@ class BackgroundPollingService : Service() {
                                     if (msgId != lastNotifiedMsgId) {
                                         lastNotifiedMsgId = msgId
                                         val senderName = json.optString("sender_name", "Bạn bè")
+                                        val senderId = json.optInt("sender_id", 0)
                                         val lastMessage = json.optString("last_message", "Tin nhắn mới")
 
                                         Log.d("BackgroundService", "Triggering notification for msgId: $msgId from $senderName")
                                         handler.post {
-                                            sendSystemNotification(senderName, "💬 $lastMessage")
+                                            sendSystemNotification(senderName, "💬 $lastMessage", senderId)
                                         }
                                     }
                                 }
@@ -186,7 +187,7 @@ class BackgroundPollingService : Service() {
                                 if (latestUnreadId > 0 && latestUnreadId != lastNotifiedMsgId) {
                                     lastNotifiedMsgId = latestUnreadId
                                     handler.post {
-                                        sendSystemNotification(friendName, "💬 $latestUnreadText")
+                                        sendSystemNotification(friendName, "💬 $latestUnreadText", friendId)
                                     }
                                 }
                             }
@@ -201,13 +202,16 @@ class BackgroundPollingService : Service() {
         }
     }
 
-    private fun sendSystemNotification(title: String, body: String) {
+    private fun sendSystemNotification(title: String, body: String, senderId: Int = 0) {
         val intent = Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+            putExtra("target_screen", "chat")
+            putExtra("sender_id", senderId)
+            putExtra("sender_name", title)
         }
         val contentPendingIntent = PendingIntent.getActivity(
             this,
-            0,
+            (System.currentTimeMillis() % 10000).toInt(),
             intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )

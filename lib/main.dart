@@ -6,6 +6,10 @@ import 'screens/map_screen.dart';
 import 'screens/feed_screen.dart';
 import 'screens/chat_screen.dart';
 import 'screens/profile_screen.dart';
+import 'screens/my_checkins_screen.dart';
+import 'screens/notifications_screen.dart';
+import 'screens/utilities_screen.dart';
+import 'widgets/top_nav_bar.dart';
 import 'widgets/floating_chat_bubble.dart';
 
 void main() async {
@@ -32,7 +36,7 @@ class MyApp extends StatelessWidget {
           surface: Colors.white,
         ),
         scaffoldBackgroundColor: const Color(0xFFF8FAFC),
-        fontFamily: 'Roboto', // Default robust system font
+        fontFamily: 'Roboto',
         appBarTheme: const AppBarTheme(
           centerTitle: false,
           elevation: 0,
@@ -50,6 +54,28 @@ class MyApp extends StatelessWidget {
 
 class NotificationHelper {
   static const _channel = MethodChannel('com.example.mobile/notifications');
+  static Function(Map<String, dynamic>)? _onNotificationTapped;
+
+  static void initialize(Function(Map<String, dynamic>) onTapped) {
+    _onNotificationTapped = onTapped;
+    _channel.setMethodCallHandler((call) async {
+      if (call.method == 'onNotificationTapped') {
+        final data = Map<String, dynamic>.from(call.arguments as Map);
+        _onNotificationTapped?.call(data);
+      }
+    });
+    checkInitialNotification();
+  }
+
+  static Future<void> checkInitialNotification() async {
+    try {
+      final res = await _channel.invokeMethod('getInitialNotification');
+      if (res != null) {
+        final data = Map<String, dynamic>.from(res as Map);
+        _onNotificationTapped?.call(data);
+      }
+    } catch (_) {}
+  }
 
   static Future<void> requestPermission() async {
     try {
@@ -90,7 +116,6 @@ class NotificationHelper {
     } catch (_) {}
   }
 
-  /// Send auth token to native Kotlin background polling thread
   static Future<void> setAuthToken(String? token) async {
     if (token == null) return;
     try {
@@ -123,7 +148,6 @@ class _AppEntryScreenState extends State<AppEntryScreen> {
       _isLoggedIn = ApiService.isAuthenticated;
       if (_isLoggedIn) {
         _isSkipped = false;
-        // Send auth token to native background polling
         NotificationHelper.setAuthToken(ApiService.token);
       }
     });
@@ -134,7 +158,6 @@ class _AppEntryScreenState extends State<AppEntryScreen> {
       _isLoggedIn = true;
       _isSkipped = false;
     });
-    // Send auth token to native background polling
     NotificationHelper.setAuthToken(ApiService.token);
   }
 
@@ -190,21 +213,81 @@ class MainLayout extends StatefulWidget {
 
 class _MainLayoutState extends State<MainLayout> {
   int _currentIndex = 0;
+  int _unreadNotifsCount = 0;
   final GlobalKey<FeedScreenState> _feedScreenKey = GlobalKey<FeedScreenState>();
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchDynamicCounts();
+    NotificationHelper.initialize((data) {
+      if (data['target'] == 'chat' && mounted) {
+        setState(() {
+          _currentIndex = 4;
+        });
+      }
+    });
+  }
+
+  Future<void> _fetchDynamicCounts() async {
+    try {
+      final notifs = await ApiService.getAppNotifications();
+      if (mounted) {
+        setState(() {
+          _unreadNotifsCount = notifs.length;
+        });
+      }
+    } catch (_) {}
+  }
 
   @override
   Widget build(BuildContext context) {
     final List<Widget> screens = [
-      const MapScreen(),
-      FeedScreen(key: _feedScreenKey),
-      const ChatScreen(),
-      ProfileScreen(
+      FeedScreen(key: _feedScreenKey),  // Tab 0: Home (Lướt tin check-in)
+      const MyCheckinsScreen(),          // Tab 1: Check-in của tôi
+      const MapScreen(),                 // Tab 2: Map (bản đồ địa điểm)
+      const UtilitiesScreen(),          // Tab 3: Chợ số OCOP
+      const NotificationsScreen(),      // Tab 4: Thông báo
+      ProfileScreen(                     // Tab 5: Cá nhân
         onLogout: widget.onLogout,
         onLoginRequest: widget.onLoginRequest,
       ),
     ];
 
     return Scaffold(
+      appBar: TopNavBar(
+        currentIndex: _currentIndex,
+        onTabSelected: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+          if (index == 0) {
+            _feedScreenKey.currentState?.resumeCamera();
+          } else {
+            _feedScreenKey.currentState?.pauseCamera();
+          }
+          if (index == 4) {
+            _fetchDynamicCounts();
+          }
+        },
+        onAddPostTap: () {
+          setState(() {
+            _currentIndex = 1;
+          });
+        },
+        onSearchTap: () {
+          setState(() {
+            _currentIndex = 2;
+          });
+        },
+        onMessengerTap: () {
+          setState(() {
+            _currentIndex = 4;
+          });
+        },
+        unreadMessagesCount: 1,
+        unreadNotifsCount: _unreadNotifsCount,
+      ),
       body: Stack(
         children: [
           AnimatedSwitcher(
@@ -227,49 +310,11 @@ class _MainLayoutState extends State<MainLayout> {
           ),
           DraggableFloatingChatBubble(
             onOpenChatTab: () {
-              setState(() {
-                _currentIndex = 2;
-              });
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const ChatScreen()),
+              );
             },
-          ),
-        ],
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-          if (index == 1) {
-            _feedScreenKey.currentState?.refreshCamera();
-          }
-        },
-        type: BottomNavigationBarType.fixed,
-        backgroundColor: Colors.white,
-        selectedItemColor: const Color(0xFF0EA5E9),
-        unselectedItemColor: Colors.grey[400],
-        selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
-        unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.map_outlined),
-            activeIcon: Icon(Icons.map),
-            label: 'Bản đồ',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.feed_outlined),
-            activeIcon: Icon(Icons.feed),
-            label: 'Feed',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.chat_bubble_outline),
-            activeIcon: Icon(Icons.chat_bubble),
-            label: 'Chat',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline),
-            activeIcon: Icon(Icons.person),
-            label: 'Cá nhân',
           ),
         ],
       ),

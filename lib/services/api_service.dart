@@ -110,6 +110,86 @@ class ApiService {
   }
 
   // =========================================================================
+  // CART API: Giỏ hàng đồng bộ với Web
+  // =========================================================================
+
+  /// GET /cart — Lấy toàn bộ giỏ hàng
+  static Future<Map<String, dynamic>> getCart() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/cart'),
+        headers: _getHeaders(),
+      );
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      }
+    } catch (_) {}
+    return {'success': false, 'data': [], 'count': 0, 'total': 0};
+  }
+
+  /// POST /cart/add — Thêm sản phẩm OCOP hoặc món ăn vào giỏ
+  static Future<Map<String, dynamic>> addToCart({int? dishId, int? ocopProductId, int quantity = 1}) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/cart/add'),
+        headers: _getHeaders(),
+        body: jsonEncode({
+          if (dishId != null) 'dish_id': dishId,
+          if (ocopProductId != null) 'ocop_product_id': ocopProductId,
+          'quantity': quantity,
+        }),
+      );
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      }
+    } catch (_) {}
+    return {'success': false};
+  }
+
+  /// PUT /cart/update/{id} — Cập nhật số lượng món ăn trong giỏ
+  static Future<Map<String, dynamic>> updateCartItem(int cartItemId, int quantity) async {
+    try {
+      final response = await http.put(
+        Uri.parse('$baseUrl/cart/update/$cartItemId'),
+        headers: _getHeaders(),
+        body: jsonEncode({'quantity': quantity}),
+      );
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      }
+    } catch (_) {}
+    return {'success': false};
+  }
+
+  /// DELETE /cart/remove/{id} — Xóa món ăn khỏi giỏ
+  static Future<Map<String, dynamic>> removeCartItem(int cartItemId) async {
+    try {
+      final response = await http.delete(
+        Uri.parse('$baseUrl/cart/remove/$cartItemId'),
+        headers: _getHeaders(),
+      );
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      }
+    } catch (_) {}
+    return {'success': false};
+  }
+
+  /// POST /cart/clear — Xóa toàn bộ giỏ hàng
+  static Future<Map<String, dynamic>> clearCart() async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/cart/clear'),
+        headers: _getHeaders(),
+      );
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      }
+    } catch (_) {}
+    return {'success': false};
+  }
+
+  // =========================================================================
   // CATEGORIES & COMMUNES: Danh mục & Xã/Phường
   // =========================================================================
 
@@ -495,5 +575,54 @@ class ApiService {
     } catch (e) {
       return {'success': false, 'message': 'Lỗi kết nối'};
     }
+  }
+
+
+  /// GET /market-products — Lấy danh sách sản phẩm OCOP & Gian hàng chợ
+  static Future<List<dynamic>> getMarketProducts() async {
+    try {
+      final response = await http.get(Uri.parse('$baseUrl/market-products'), headers: _getHeaders());
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      }
+    } catch (_) {}
+    return [];
+  }
+
+  /// GET /notifications — Lấy danh sách thông báo cho Mobile App
+  static Future<List<dynamic>> getAppNotifications() async {
+    try {
+      final response = await http.get(Uri.parse('$baseUrl/notifications'), headers: _getHeaders());
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      }
+    } catch (_) {}
+    return [];
+  }
+
+  /// GET /seller/profile — Lấy hồ sơ kê khai tiểu thương sạp chợ
+  static Future<Map<String, dynamic>> getSellerProfile() async {
+    try {
+      final response = await http.get(Uri.parse('$baseUrl/seller/profile'), headers: _getHeaders());
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      }
+    } catch (_) {}
+    return {};
+  }
+
+  /// POST /seller/profile — Cập nhật hồ sơ kê khai tiểu thương sạp chợ
+  static Future<Map<String, dynamic>> updateSellerProfile(Map<String, dynamic> body) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/seller/profile'),
+        headers: _getHeaders(),
+        body: jsonEncode(body),
+      );
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      }
+    } catch (_) {}
+    return {'success': false};
   }
 }

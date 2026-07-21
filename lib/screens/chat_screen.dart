@@ -89,16 +89,41 @@ class _ChatScreenState extends State<ChatScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Đoạn chat',
-          style: TextStyle(fontWeight: FontWeight.w900, fontSize: 20, letterSpacing: -0.5),
+        title: Row(
+          children: [
+            const Text(
+              'DongAnh',
+              style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18),
+            ),
+            const Text(
+              ' Chat & AI',
+              style: TextStyle(color: Color(0xFFFFB800), fontWeight: FontWeight.w900, fontSize: 18),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFB800),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Text('Trực tuyến 💬', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+            ),
+          ],
         ),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.grey[800],
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFF38BDF8), Color(0xFF00A8EE), Color(0xFF0284C7)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
+        foregroundColor: Colors.white,
         elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh),
+            icon: const Icon(Icons.refresh, color: Colors.white),
             onPressed: _loadFriends,
           ),
         ],

@@ -7,8 +7,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class OcopProduct extends Model
 {
+    protected $connection = 'mysql_market';
+
     protected $fillable = [
         'eatery_id',
+        'stall_name',
+        'seller_name',
+        'seller_phone',
         'name',
         'price',
         'description',

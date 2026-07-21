@@ -37,13 +37,29 @@ class _MyCheckinsScreenState extends State<MyCheckinsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Lịch sử check-in của tôi',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+        title: Row(
+          children: [
+            const Text(
+              'DongAnh',
+              style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18),
+            ),
+            const Text(
+              ' Check-ins',
+              style: TextStyle(color: Color(0xFFFFB800), fontWeight: FontWeight.w900, fontSize: 18),
+            ),
+          ],
         ),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.grey[800],
-        elevation: 0.5,
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFF38BDF8), Color(0xFF00A8EE), Color(0xFF0284C7)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
+        foregroundColor: Colors.white,
+        elevation: 0,
       ),
       backgroundColor: const Color(0xFFF8FAFC),
       body: _isLoading
@@ -154,7 +170,7 @@ class _MyCheckinsScreenState extends State<MyCheckinsScreen> {
                 child: Image.network(
                   item['image_path'].toString().startsWith('http')
                       ? item['image_path']
-                      : 'https://donganhdiscovery.xadonganh.com/' + item['image_path'],
+                      : 'https://donganhdiscovery.xadonganh.com/' + (item['image_path'].toString().startsWith('/') ? item['image_path'].toString().substring(1) : item['image_path'].toString()),
                   height: 160,
                   width: double.infinity,
                   fit: BoxFit.cover,

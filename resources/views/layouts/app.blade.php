@@ -193,7 +193,9 @@
                             fetchChats() {
                                 if (this.chats.length === 0) {
                                     this.loading = true;
-                                    fetch('/social/recent-chats')
+                                    fetch('/social/recent-chats', {
+                                        headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+                                    })
                                         .then(res => res.json())
                                         .then(data => {
                                             this.chats = data;
@@ -980,7 +982,9 @@
                             }
                         });
 
-                        fetch('/social/recent-chats')
+                        fetch('/social/recent-chats', {
+                            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+                        })
                             .then(res => res.json())
                             .then(data => {
                                 if (Array.isArray(data)) {

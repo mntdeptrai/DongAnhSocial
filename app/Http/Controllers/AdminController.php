@@ -530,6 +530,9 @@ class AdminController extends Controller
         $request->validate([
             'eatery_id' => 'required',
             'name' => 'required|string|max:100',
+            'stall_name' => 'nullable|string|max:100',
+            'seller_name' => 'nullable|string|max:100',
+            'seller_phone' => 'nullable|string|max:20',
             'price' => 'nullable|numeric|min:0',
             'description' => 'nullable|string',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
@@ -566,6 +569,9 @@ class AdminController extends Controller
 
         $request->validate([
             'name' => 'required|string|max:100',
+            'stall_name' => 'nullable|string|max:100',
+            'seller_name' => 'nullable|string|max:100',
+            'seller_phone' => 'nullable|string|max:20',
             'price' => 'nullable|numeric|min:0',
             'description' => 'nullable|string',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',

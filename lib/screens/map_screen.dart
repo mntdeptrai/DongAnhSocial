@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../services/api_service.dart';
 import 'eatery_detail_screen.dart';
+import 'notifications_screen.dart';
 
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
@@ -615,6 +616,16 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                                 maxLines: 1,
                               ),
                             ),
+                            IconButton(
+                              icon: const Icon(Icons.notifications_outlined, color: Colors.white),
+                              tooltip: 'Thông báo',
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (context) => const NotificationsScreen()),
+                                );
+                              },
+                            ),
                           ],
                         ),
                       ),
@@ -888,28 +899,29 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
               ],
             ),
 
-            // 2. Top Banner Header & Search Bar (Web-style Red Header & Real-time Search)
+            // 2. Top Banner Header
             Positioned(
               top: 10,
               left: 12,
               right: 12,
               child: Column(
                 children: [
-                  // Web-style Red Header Title Card
+                  // Web-style Sky Blue Header Title Card matching DongAnh Discovery theme
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
-                        colors: [Color(0xFFDC2626), Color(0xFFB91C1C)],
+                        colors: [Color(0xFF38BDF8), Color(0xFF00A8EE), Color(0xFF0284C7)],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
                       borderRadius: BorderRadius.circular(16),
-                      boxShadow: const [
+                      border: Border.all(color: const Color(0xFFFFB800), width: 2),
+                      boxShadow: [
                         BoxShadow(
-                          color: Colors.black26,
-                          blurRadius: 8,
-                          offset: Offset(0, 3),
+                          color: const Color(0xFF00A8EE).withOpacity(0.3),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
                         ),
                       ],
                     ),
@@ -919,7 +931,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                           width: 32,
                           height: 32,
                           decoration: const BoxDecoration(
-                            color: Colors.white24,
+                            color: Color(0xFFFFB800),
                             shape: BoxShape.circle,
                           ),
                           child: const Center(
@@ -931,25 +943,47 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                'Bản đồ số Đông Anh',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w900,
-                                  fontSize: 15,
-                                  letterSpacing: 0.3,
-                                ),
+                              Row(
+                                children: [
+                                  Text(
+                                    'DongAnh',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w900,
+                                      fontSize: 15,
+                                    ),
+                                  ),
+                                  Text(
+                                    ' Discovery',
+                                    style: TextStyle(
+                                      color: Color(0xFFFFB800),
+                                      fontWeight: FontWeight.w900,
+                                      fontSize: 15,
+                                    ),
+                                  ),
+                                ],
                               ),
                               Text(
-                                '100+ Di tích, Trường học, Y tế & Đặc sản',
+                                'Bản đồ số du lịch, di sản & chợ OCOP 🗺️',
                                 style: TextStyle(
-                                  color: Colors.white70,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w500,
+                                  color: Colors.white,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
                                 ),
                               ),
                             ],
                           ),
+                        ),
+                        IconButton(
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          icon: const Icon(Icons.notifications_active, color: Color(0xFFFFB800), size: 20),
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => const NotificationsScreen()),
+                            );
+                          },
                         ),
                       ],
                     ),

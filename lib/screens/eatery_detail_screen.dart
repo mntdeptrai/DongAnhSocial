@@ -69,6 +69,41 @@ class _EateryDetailScreenState extends State<EateryDetailScreen> {
       debugPrint('Lỗi tải checkin feed bổ sung: $e');
     }
 
+    // Bổ sung OCOP Products từ Market API nếu rỗng
+    try {
+      final List existingOcop = (_eatery?['ocop_products'] is List && (_eatery!['ocop_products'] as List).isNotEmpty)
+          ? _eatery!['ocop_products'] as List
+          : ((_eatery?['ocopProducts'] is List && (_eatery!['ocopProducts'] as List).isNotEmpty)
+              ? _eatery!['ocopProducts'] as List
+              : []);
+
+      if (existingOcop.isEmpty) {
+        final allMarketProds = await ApiService.getMarketProducts();
+        final String currentSlug = widget.eaterySlug.trim().toLowerCase();
+        final String currentName = (_eatery?['name'] ?? widget.initialData?['name'] ?? '').toString().trim().toLowerCase();
+        final dynamic currentId = _eatery?['id'];
+
+        final matchedProds = allMarketProds.where((p) {
+          final pEateryId = p['eatery_id'];
+          final pSlug = p['eatery_slug']?.toString().trim().toLowerCase() ?? '';
+          final pStall = p['stall_name']?.toString().trim().toLowerCase() ?? '';
+
+          return (currentId != null && pEateryId == currentId) ||
+                 (currentSlug.isNotEmpty && pSlug == currentSlug) ||
+                 (currentName.isNotEmpty && pStall == currentName) ||
+                 (currentName.isNotEmpty && currentName.contains(pStall)) ||
+                 (pStall.isNotEmpty && currentName.contains(pStall));
+        }).toList();
+
+        if (matchedProds.isNotEmpty) {
+          _eatery ??= Map<String, dynamic>.from(widget.initialData ?? {});
+          _eatery!['ocop_products'] = matchedProds;
+        }
+      }
+    } catch (e) {
+      debugPrint('Lỗi tải OCOP products bổ sung: $e');
+    }
+
     if (mounted) {
       setState(() {
         _isLoading = false;
@@ -87,6 +122,206 @@ class _EateryDetailScreenState extends State<EateryDetailScreen> {
     } catch (e) {
       debugPrint('Lỗi mở Google Maps: $e');
     }
+  }
+
+  Widget _buildShopeeProductCard(BuildContext context, Map<String, dynamic> item, {bool isOcop = true}) {
+    final String pName = item['name'] ?? item['product_name'] ?? 'Sản phẩm OCOP';
+    final double pPrice = double.tryParse(item['price']?.toString() ?? '0') ?? 0;
+    final String pStar = item['star_rating'] ?? (item['star'] != null ? '${item['star']} SAO' : '4 SAO');
+    final String pImgRaw = item['image_path'] ?? item['image'] ?? item['cover_image_url'] ?? item['avatar'] ?? '';
+    final String pImgUrl = pImgRaw.startsWith('http')
+        ? pImgRaw
+        : (pImgRaw.isNotEmpty
+            ? 'https://donganhdiscovery.xadonganh.com/' + (pImgRaw.startsWith('/') ? pImgRaw.substring(1) : pImgRaw)
+            : 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=400&q=80');
+
+    final int rawId = item['id'] is int ? item['id'] : (int.tryParse(item['id']?.toString() ?? '') ?? 1);
+    final int salesCount = rawId * 14 + 18;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Product Thumbnail Image with Shopee Badges Overlaid
+          Stack(
+            children: [
+              AspectRatio(
+                aspectRatio: 1.0,
+                child: ClipRRect(
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                  child: Image.network(
+                    pImgUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Container(
+                      color: const Color(0xFFFFFBEB),
+                      child: const Icon(Icons.shopping_bag_outlined, color: Colors.amber, size: 40),
+                    ),
+                  ),
+                ),
+              ),
+              // Badge Top Left: "OCOP 4 SAO" / "Yêu thích+"
+              Positioned(
+                top: 6,
+                left: 0,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFEE4D2D), // Shopee Orange Red
+                    borderRadius: BorderRadius.horizontal(right: Radius.circular(4)),
+                  ),
+                  child: Text(
+                    isOcop ? 'OCOP 🏆 $pStar' : 'Yêu thích+',
+                    style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+              // Badge Bottom Left: "VOUCHER XTRA"
+              Positioned(
+                bottom: 6,
+                left: 6,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFB800), // Golden Yellow
+                    borderRadius: BorderRadius.circular(3),
+                    boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 2)],
+                  ),
+                  child: const Text(
+                    'VOUCHER XTRA',
+                    style: TextStyle(color: Color(0xFFB91C1C), fontSize: 8, fontWeight: FontWeight.w900),
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          // Product Information Container
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(7.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  // Title (2 lines max)
+                  Text(
+                    pName,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                      color: Color(0xFF0F172A),
+                      height: 1.2,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+
+                  // Promo tag line
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFEF2F2),
+                      borderRadius: BorderRadius.circular(3),
+                      border: Border.all(color: const Color(0xFFFCA5A5)),
+                    ),
+                    child: const Text(
+                      'Mua 3 giảm 2%',
+                      style: TextStyle(fontSize: 8.5, color: Color(0xFFDC2626), fontWeight: FontWeight.w700),
+                    ),
+                  ),
+
+                  // Price & Discount Line
+                  Row(
+                    children: [
+                      Text(
+                        pPrice > 0 ? '${pPrice.toInt()}đ' : 'Liên hệ',
+                        style: const TextStyle(
+                          color: Color(0xFFEE4D2D), // Shopee Price Red
+                          fontWeight: FontWeight.w900,
+                          fontSize: 13.5,
+                        ),
+                      ),
+                      if (pPrice > 0) ...[
+                        const SizedBox(width: 4),
+                        Text(
+                          '${(pPrice * 1.25).toInt()}đ',
+                          style: const TextStyle(
+                            color: Colors.grey,
+                            fontSize: 9.5,
+                            decoration: TextDecoration.lineThrough,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+
+                  // Rating ⭐ and Sales Count Row
+                  Row(
+                    children: [
+                      const Icon(Icons.star, color: Color(0xFFFFB800), size: 11),
+                      const SizedBox(width: 2),
+                      const Text('5.0', style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+                      const SizedBox(width: 4),
+                      Text('| Đã bán $salesCount', style: const TextStyle(fontSize: 9.5, color: Colors.grey)),
+                    ],
+                  ),
+
+                  // CTA Button: "+ Thêm Giỏ"
+                  SizedBox(
+                    width: double.infinity,
+                    height: 26,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        final int? itemId = item['id'] is int ? item['id'] : int.tryParse(item['id']?.toString() ?? '');
+                        if (isOcop) {
+                          ApiService.addToCart(ocopProductId: itemId);
+                        } else {
+                          ApiService.addToCart(dishId: itemId);
+                        }
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('🛒 Đã thêm "$pName" vào giỏ hàng!'),
+                            backgroundColor: const Color(0xFF059669),
+                            duration: const Duration(seconds: 2),
+                          ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFFFB800),
+                        foregroundColor: Colors.white,
+                        padding: EdgeInsets.zero,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                      ),
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.add_shopping_cart, size: 12),
+                          SizedBox(width: 3),
+                          Text('+ Thêm Giỏ', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w900)),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showImagePreviewDialog(BuildContext context, String imageUrl) {
@@ -166,10 +401,12 @@ class _EateryDetailScreenState extends State<EateryDetailScreen> {
     final catColor = _getCategoryColor(catSlug);
     final catIcon = _getCategoryIcon(catSlug);
 
-    final String imagePath = eatery?['image_path'] ?? '';
-    final String fullImgUrl = imagePath.startsWith('http')
-        ? imagePath
-        : (imagePath.isNotEmpty ? 'https://donganhdiscovery.xadonganh.com/' + imagePath : '');
+    final String rawPath = eatery?['image_path'] ?? eatery?['cover_image_url'] ?? eatery?['avatar'] ?? '';
+    final String fullImgUrl = rawPath.startsWith('http')
+        ? rawPath
+        : (rawPath.isNotEmpty
+            ? 'https://donganhdiscovery.xadonganh.com/' + (rawPath.startsWith('/') ? rawPath.substring(1) : rawPath)
+            : 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=800&q=80');
 
     final double? lat = double.tryParse(eatery?['latitude']?.toString() ?? '');
     final double? lng = double.tryParse(eatery?['longitude']?.toString() ?? '');
@@ -397,80 +634,98 @@ class _EateryDetailScreenState extends State<EateryDetailScreen> {
                               const SizedBox(height: 24),
                             ],
 
-                            // Menu / Dishes / Offerings List Section
-                            if (eatery['dishes'] != null && (eatery['dishes'] as List).isNotEmpty) ...[
-                              const Text(
-                                'Thực đơn & Món đặc sắc',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF0F172A),
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              ListView.separated(
-                                shrinkWrap: true,
-                                physics: const NeverScrollableScrollPhysics(),
-                                itemCount: (eatery['dishes'] as List).length,
-                                separatorBuilder: (_, __) => const SizedBox(height: 10),
-                                itemBuilder: (context, idx) {
-                                  final dish = eatery['dishes'][idx];
-                                  final dishImg = dish['image_path'] ?? '';
-                                  final dishImgUrl = dishImg.startsWith('http')
-                                      ? dishImg
-                                      : (dishImg.isNotEmpty ? 'https://donganhdiscovery.xadonganh.com/' + dishImg : '');
+                            // Menu / OCOP Products / Dishes / Offerings List Section
+                            Builder(
+                              builder: (context) {
+                                final List ocopList = (eatery['ocop_products'] is List && (eatery['ocop_products'] as List).isNotEmpty)
+                                    ? eatery['ocop_products'] as List
+                                    : ((eatery['ocopProducts'] is List && (eatery['ocopProducts'] as List).isNotEmpty)
+                                        ? eatery['ocopProducts'] as List
+                                        : []);
 
-                                  return Container(
-                                    padding: const EdgeInsets.all(10),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(color: Colors.grey[200]!),
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        ClipRRect(
-                                          borderRadius: BorderRadius.circular(8),
-                                          child: Container(
-                                            width: 54,
-                                            height: 54,
-                                            color: Colors.grey[100],
-                                            child: dishImgUrl.isNotEmpty
-                                                ? Image.network(dishImgUrl, fit: BoxFit.cover)
-                                                : const Icon(Icons.restaurant_menu, color: Colors.grey),
+                                final List dishList = (eatery['dishes'] is List) ? eatery['dishes'] as List : [];
+
+                                if (ocopList.isEmpty && dishList.isEmpty) return const SizedBox.shrink();
+
+                                return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    if (ocopList.isNotEmpty) ...[
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          const Text(
+                                            '🛒 Sản phẩm OCOP & Đặc sản',
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w900,
+                                              color: Color(0xFF0F172A),
+                                            ),
                                           ),
-                                        ),
-                                        const SizedBox(width: 12),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                dish['name'] ?? '',
-                                                style: const TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: 14,
-                                                ),
-                                              ),
-                                              if (dish['price'] != null)
-                                                Text(
-                                                  '${dish['price']} VNĐ',
-                                                  style: const TextStyle(
-                                                    color: Color(0xFF0EA5E9),
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 12,
-                                                  ),
-                                                ),
-                                            ],
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFFFEF3C7),
+                                              borderRadius: BorderRadius.circular(12),
+                                              border: Border.all(color: const Color(0xFFF59E0B)),
+                                            ),
+                                            child: Text(
+                                              '${ocopList.length} sản phẩm',
+                                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFFD97706)),
+                                            ),
                                           ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 12),
+                                      GridView.builder(
+                                        shrinkWrap: true,
+                                        physics: const NeverScrollableScrollPhysics(),
+                                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                          crossAxisCount: 2,
+                                          crossAxisSpacing: 10,
+                                          mainAxisSpacing: 10,
+                                          childAspectRatio: 0.61,
                                         ),
-                                      ],
-                                    ),
-                                  );
-                                },
-                              ),
-                              const SizedBox(height: 24),
-                            ],
+                                        itemCount: ocopList.length,
+                                        itemBuilder: (context, idx) {
+                                          final item = ocopList[idx];
+                                          return _buildShopeeProductCard(context, item, isOcop: true);
+                                        },
+                                      ),
+                                      const SizedBox(height: 24),
+                                    ],
+
+                                    if (dishList.isNotEmpty) ...[
+                                      const Text(
+                                        'Thực đơn & Món đặc sắc',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                          color: Color(0xFF0F172A),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 12),
+                                      GridView.builder(
+                                        shrinkWrap: true,
+                                        physics: const NeverScrollableScrollPhysics(),
+                                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                          crossAxisCount: 2,
+                                          crossAxisSpacing: 10,
+                                          mainAxisSpacing: 10,
+                                          childAspectRatio: 0.61,
+                                        ),
+                                        itemCount: dishList.length,
+                                        itemBuilder: (context, idx) {
+                                          final dish = dishList[idx];
+                                          return _buildShopeeProductCard(context, dish, isOcop: false);
+                                        },
+                                      ),
+                                      const SizedBox(height: 24),
+                                    ],
+                                  ],
+                                );
+                              },
+                            ),
 
                             // Check-in Photos Gallery Section
                             Builder(
