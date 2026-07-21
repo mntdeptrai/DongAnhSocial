@@ -1025,24 +1025,38 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
               ),
             ),
             bottom: PreferredSize(
-              preferredSize: const Size.fromHeight(66),
+              preferredSize: const Size.fromHeight(64),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Container(
                   height: 48,
-                  padding: const EdgeInsets.all(3),
+                  padding: const EdgeInsets.all(4),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(30),
+                    color: Colors.white.withValues(alpha: 0.18),
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.25),
+                      width: 1,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.1),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
                   child: TabBar(
                     controller: _tabController,
+                    indicatorSize: TabBarIndicatorSize.tab,
+                    dividerColor: Colors.transparent,
+                    labelPadding: EdgeInsets.zero,
                     indicator: BoxDecoration(
-                      borderRadius: BorderRadius.circular(26),
                       color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.1),
+                          color: Colors.black.withValues(alpha: 0.12),
                           blurRadius: 8,
                           offset: const Offset(0, 2),
                         ),
@@ -1050,10 +1064,17 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
                     ),
                     labelColor: const Color(0xFF1565C0),
                     unselectedLabelColor: Colors.white,
-                    labelStyle: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13),
+                    labelStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, letterSpacing: 0.3),
+                    unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, letterSpacing: 0.3),
                     tabs: const [
-                      Tab(text: '🍴 ẨM THỰC TINH TÚY'),
-                      Tab(text: '🛒 CHỢ SỐ & OCOP'),
+                      Tab(
+                        height: 40,
+                        child: Center(child: Text('ẨM THỰC TINH TÚY')),
+                      ),
+                      Tab(
+                        height: 40,
+                        child: Center(child: Text('CHỢ SỐ & OCOP')),
+                      ),
                     ],
                   ),
                 ),
