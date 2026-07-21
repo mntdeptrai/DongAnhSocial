@@ -1407,88 +1407,150 @@ YÊU CẦU TRẢ VỀ CHỈ LÀ CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU, KHÔNG C
         try {
             $products = collect();
 
-            // 1. Lấy tất cả Địa điểm, Chợ, Gian Hàng & Hộ Kinh Doanh OCOP qua EateryApiService
-            $allEateries = \App\Services\EateryApiService::getEateries();
+            // =====================================================================
+            // 1. Query TRỰC TIẾP từ bảng ocop_products (mysql_market DB)
+            //    Đây là nguồn chính — bypass hoàn toàn EateryApiService HTTP mode
+            // =====================================================================
+            foreach (['mysql_market', 'mysql'] as $conn) {
+                try {
+                    $items = \App\Models\OcopProduct::on($conn)
+                        ->with(['eatery'])
+                        ->orderBy('id', 'desc')
+                        ->get();
 
-            foreach ($allEateries as $eatery) {
-                $stallName = $eatery->name ?? 'Gian hàng chợ';
-                $sellerName = $eatery->owner_name ?? ($eatery->contact_person ?? 'Chủ hộ kinh doanh');
-                $sellerPhone = $eatery->phone ?? ($eatery->hotline ?? '');
-
-                // Nạp sản phẩm OCOP thuộc cơ sở / HKD này
-                if (!empty($eatery->ocopProducts) && count($eatery->ocopProducts) > 0) {
-                    foreach ($eatery->ocopProducts as $p) {
-                        $pArr = is_array($p) ? $p : $p->toArray();
-                        $pName = $pArr['name'] ?? 'Sản phẩm OCOP';
-
-                        if (!$products->contains('name', $pName)) {
+                    foreach ($items as $item) {
+                        if (!$products->contains('name', $item->name)) {
+                            $eatery = $item->eatery;
                             $products->push([
-                                'id' => $pArr['id'] ?? rand(100, 999),
-                                'eatery_id' => $eatery->id,
-                                'eatery_slug' => $eatery->slug,
-                                'category_slug' => $eatery->category['slug'] ?? 'dong-anh-market',
-                                'name' => $pName,
-                                'price' => $pArr['price'] ?? 50000,
-                                'stall_name' => !empty($pArr['stall_name']) ? $pArr['stall_name'] : $stallName,
-                                'seller_name' => !empty($pArr['seller_name']) ? $pArr['seller_name'] : $sellerName,
-                                'seller_phone' => !empty($pArr['seller_phone']) ? $pArr['seller_phone'] : $sellerPhone,
-                                'star_rating' => !empty($pArr['star_rating']) ? $pArr['star_rating'] : ($pArr['star'] ? $pArr['star'] . ' sao' : '4 sao'),
-                                'image_path' => $pArr['image_path'] ?? ($eatery->image_path ?? 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=300&q=80'),
-                                'description' => $pArr['description'] ?? 'Sản phẩm OCOP / Đặc sản làng nghề Đông Anh',
+                                'id'            => $item->id,
+                                'eatery_id'     => $item->eatery_id,
+                                'eatery_slug'   => $eatery?->slug ?? '',
+                                'category_slug' => 'dong-anh-market',
+                                'name'          => $item->name,
+                                'price'         => $item->price,
+                                'stall_name'    => $item->stall_name ?: ($eatery?->name ?? 'Gian hàng OCOP Đông Anh'),
+                                'seller_name'   => $item->seller_name ?: 'Chủ hộ kinh doanh',
+                                'seller_phone'  => $item->seller_phone ?: ($eatery?->phone ?? ''),
+                                'star_rating'   => $item->star_rating ?: '4 sao',
+                                'image_path'    => $item->image_path ?: ($eatery?->image_path ?? ''),
+                                'description'   => $item->description ?: ('Sản phẩm OCOP & Đặc sản của ' . ($eatery?->name ?? 'Đông Anh')),
                             ]);
                         }
                     }
-                }
-
-                // Nạp món ăn / đặc sản làng nghề của cơ sở
-                if (!empty($eatery->dishes) && count($eatery->dishes) > 0) {
-                    foreach ($eatery->dishes as $d) {
-                        $dArr = is_array($d) ? $d : $d->toArray();
-                        $pName = $dArr['name'] ?? ($dArr['dish_name'] ?? 'Đặc sản OCOP');
-                        if (!$products->contains('name', $pName)) {
-                            $products->push([
-                                'id' => $dArr['id'] ?? rand(100, 999),
-                                'eatery_id' => $eatery->id,
-                                'eatery_slug' => $eatery->slug,
-                                'category_slug' => $eatery->category['slug'] ?? 'dong-anh-market',
-                                'name' => $pName,
-                                'price' => $dArr['price'] ?? 35000,
-                                'stall_name' => $stallName,
-                                'seller_name' => $sellerName,
-                                'seller_phone' => $sellerPhone,
-                                'star_rating' => '4 sao',
-                                'image_path' => $dArr['image_path'] ?? ($eatery->image_path ?? 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=300&q=80'),
-                                'description' => $dArr['description'] ?? 'Sản phẩm OCOP / Đặc sản làng nghề Đông Anh',
-                            ]);
-                        }
-                    }
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\Log::warning("getMarketProducts: lỗi query OcopProduct trên [{$conn}]: " . $e->getMessage());
                 }
             }
 
-            // 2. Tìm thêm OcopProduct từ database (mysql_market, mysql)
-            foreach (['mysql_market', 'mysql'] as $conn) {
+            // =====================================================================
+            // 2. Fallback: Nếu OcopProduct table trống → gọi eatery detail từng cái
+            //    để lấy ocop_products đính kèm (data đã có trên web)
+            // =====================================================================
+            if ($products->isEmpty()) {
                 try {
-                    $items = \App\Models\OcopProduct::on($conn)->orderBy('id', 'desc')->get();
-                    foreach ($items as $item) {
-                        if (!$products->contains('name', $item->name)) {
-                            $matchedEatery = $allEateries->firstWhere('id', $item->eatery_id);
-                            $stallName = $item->stall_name ?: ($matchedEatery->name ?? 'Gian hàng OCOP');
-                            $sellerName = $item->seller_name ?: ($matchedEatery->owner_name ?? ($matchedEatery->contact_person ?? 'Chủ hộ kinh doanh'));
-                            $sellerPhone = $item->seller_phone ?: ($matchedEatery->phone ?? ($matchedEatery->hotline ?? ''));
+                    // Lấy danh sách eatery slug từ dong-anh-market
+                    $listResponse = \Illuminate\Support\Facades\Http::timeout(10)
+                        ->get(config('app.url') . '/api/v1/dong-anh-market/eateries');
 
+                    if ($listResponse->successful()) {
+                        $eateryList = collect($listResponse->json());
+
+                        foreach ($eateryList as $e) {
+                            $slug = $e['slug'] ?? '';
+                            if (empty($slug)) continue;
+
+                            try {
+                                $detailResp = \Illuminate\Support\Facades\Http::timeout(8)
+                                    ->get(config('app.url') . "/api/v1/dong-anh-market/eateries/{$slug}");
+
+                                if (!$detailResp->successful()) continue;
+                                $detail = $detailResp->json();
+
+                                $stallName   = $detail['name'] ?? 'Gian hàng OCOP';
+                                $sellerPhone = $detail['phone'] ?? '';
+                                $eateryImg   = $detail['image_path'] ?? '';
+                                $eaterySlug  = $detail['slug'] ?? $slug;
+                                $eateryId    = $detail['id'] ?? null;
+
+                                // ocop_products từ detail
+                                $ocopList = $detail['ocop_products'] ?? [];
+                                foreach ($ocopList as $p) {
+                                    $pName = $p['name'] ?? 'Sản phẩm OCOP';
+                                    if (!$products->contains('name', $pName)) {
+                                        $products->push([
+                                            'id'            => $p['id'] ?? rand(10000, 99999),
+                                            'eatery_id'     => $eateryId,
+                                            'eatery_slug'   => $eaterySlug,
+                                            'category_slug' => 'dong-anh-market',
+                                            'name'          => $pName,
+                                            'price'         => $p['price'] ?? null,
+                                            'stall_name'    => !empty($p['stall_name']) ? $p['stall_name'] : $stallName,
+                                            'seller_name'   => $p['seller_name'] ?? 'Chủ hộ kinh doanh',
+                                            'seller_phone'  => $p['seller_phone'] ?? $sellerPhone,
+                                            'star_rating'   => $p['star_rating'] ?? '4 sao',
+                                            'image_path'    => $p['image_path'] ?? $eateryImg,
+                                            'description'   => $p['description'] ?? ('Sản phẩm OCOP của ' . $stallName),
+                                        ]);
+                                    }
+                                }
+
+                                // dishes từ detail
+                                $dishes = $detail['dishes'] ?? [];
+                                foreach ($dishes as $d) {
+                                    $pName = $d['name'] ?? ($d['dish_name'] ?? 'Đặc sản');
+                                    if (!$products->contains('name', $pName)) {
+                                        $products->push([
+                                            'id'            => $d['id'] ?? rand(10000, 99999),
+                                            'eatery_id'     => $eateryId,
+                                            'eatery_slug'   => $eaterySlug,
+                                            'category_slug' => 'dong-anh-market',
+                                            'name'          => $pName,
+                                            'price'         => $d['price'] ?? null,
+                                            'stall_name'    => $stallName,
+                                            'seller_name'   => 'Chủ hộ kinh doanh',
+                                            'seller_phone'  => $sellerPhone,
+                                            'star_rating'   => '4 sao',
+                                            'image_path'    => $d['image_path'] ?? $eateryImg,
+                                            'description'   => $d['description'] ?? ('Đặc sản của ' . $stallName),
+                                        ]);
+                                    }
+                                }
+                            } catch (\Exception $inner) {}
+                        }
+                    }
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\Log::warning("getMarketProducts fallback HTTP: " . $e->getMessage());
+                }
+            }
+
+            // =====================================================================
+            // 3. Last-resort fallback: expose chính các gian hàng HTX/HKD/Cơ sở
+            //    như card sản phẩm khi cả hai bước trên đều rỗng
+            // =====================================================================
+            if ($products->isEmpty()) {
+                try {
+                    $listResponse = \Illuminate\Support\Facades\Http::timeout(10)
+                        ->get(config('app.url') . '/api/v1/dong-anh-market/eateries');
+
+                    if ($listResponse->successful()) {
+                        foreach ($listResponse->json() as $e) {
+                            $eName = $e['name'] ?? 'Cơ sở OCOP Đông Anh';
+                            $desc  = $e['description'] ?? ('Gian hàng & sản phẩm OCOP của ' . $eName . ' tại Đông Anh, Hà Nội');
                             $products->push([
-                                'id' => $item->id,
-                                'eatery_id' => $item->eatery_id ?: ($matchedEatery->id ?? null),
-                                'eatery_slug' => $matchedEatery ? $matchedEatery->slug : '',
+                                'id'            => 'e_' . ($e['id'] ?? rand(1, 999)),
+                                'eatery_id'     => $e['id'] ?? null,
+                                'eatery_slug'   => $e['slug'] ?? '',
                                 'category_slug' => 'dong-anh-market',
-                                'name' => $item->name,
-                                'price' => $item->price ?? 50000,
-                                'stall_name' => $stallName,
-                                'seller_name' => $sellerName,
-                                'seller_phone' => $sellerPhone,
-                                'star_rating' => $item->star_rating ?: '4 sao',
-                                'image_path' => $item->image_path ?: ($matchedEatery->image_path ?? 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=300&q=80'),
-                                'description' => $item->description ?: 'Sản phẩm OCOP & Đặc sản làng nghề Đông Anh',
+                                'name'          => $eName,
+                                'price'         => null,
+                                'stall_name'    => $eName,
+                                'seller_name'   => 'Chủ hộ kinh doanh',
+                                'seller_phone'  => $e['phone'] ?? '',
+                                'star_rating'   => !empty($e['rating']) ? round((float)$e['rating'], 1) . ' sao' : '4 sao',
+                                'image_path'    => $e['image_path'] ?? '',
+                                'description'   => mb_substr($desc, 0, 200),
+                                'address'       => $e['address'] ?? '',
+                                'is_eatery'     => true,
                             ]);
                         }
                     }
@@ -1508,6 +1570,7 @@ YÊU CẦU TRẢ VỀ CHỈ LÀ CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU, KHÔNG C
     {
         $notifications = [];
         $user = Auth::guard('sanctum')->user() ?? Auth::user();
+
 
         try {
             if ($user) {

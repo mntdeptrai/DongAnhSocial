@@ -154,46 +154,50 @@ class TopNavBar extends StatelessWidget implements PreferredSizeWidget {
     int badgeCount = 0,
     VoidCallback? onTap,
   }) {
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        Container(
-          width: 38,
-          height: 38,
-          decoration: const BoxDecoration(
-            color: Color(0xFF3A3B3C), // Facebook circle action button bg
-            shape: BoxShape.circle,
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Container(
+            width: 38,
+            height: 38,
+            decoration: const BoxDecoration(
+              color: Color(0xFF3A3B3C), // Facebook circle action button bg
+              shape: BoxShape.circle,
+            ),
+            child: Center(
+              child: Icon(icon, color: Colors.white, size: 20),
+            ),
           ),
-          child: IconButton(
-            icon: Icon(icon, color: Colors.white, size: 20),
-            padding: EdgeInsets.zero,
-            onPressed: onTap,
-          ),
-        ),
-        if (badgeCount > 0)
-          Positioned(
-            top: -2,
-            right: -2,
-            child: Container(
-              padding: const EdgeInsets.all(4),
-              decoration: const BoxDecoration(
-                color: Color(0xFFE41E3F), // Facebook notification red badge
-                shape: BoxShape.circle,
-              ),
-              constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
-              child: Center(
-                child: Text(
-                  '$badgeCount',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
+          if (badgeCount > 0)
+            Positioned(
+              top: -2,
+              right: -2,
+              child: IgnorePointer(
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFE41E3F), // Facebook notification red badge
+                    shape: BoxShape.circle,
+                  ),
+                  constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
+                  child: Center(
+                    child: Text(
+                      '$badgeCount',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-      ],
+        ],
+      ),
     );
   }
 
