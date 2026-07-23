@@ -158,7 +158,7 @@ class _EateryDetailScreenState extends State<EateryDetailScreen> {
           Stack(
             children: [
               AspectRatio(
-                aspectRatio: 1.0,
+                aspectRatio: 1.15,
                 child: ClipRRect(
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
                   child: Image.network(
@@ -187,23 +187,6 @@ class _EateryDetailScreenState extends State<EateryDetailScreen> {
                   ),
                 ),
               ),
-              // Badge Bottom Left: "VOUCHER XTRA"
-              Positioned(
-                bottom: 6,
-                left: 6,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFFB800), // Golden Yellow
-                    borderRadius: BorderRadius.circular(3),
-                    boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 2)],
-                  ),
-                  child: const Text(
-                    'VOUCHER XTRA',
-                    style: TextStyle(color: Color(0xFFB91C1C), fontSize: 8, fontWeight: FontWeight.w900),
-                  ),
-                ),
-              ),
             ],
           ),
 
@@ -226,20 +209,6 @@ class _EateryDetailScreenState extends State<EateryDetailScreen> {
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                  ),
-
-                  // Promo tag line
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFEF2F2),
-                      borderRadius: BorderRadius.circular(3),
-                      border: Border.all(color: const Color(0xFFFCA5A5)),
-                    ),
-                    child: const Text(
-                      'Mua 3 giảm 2%',
-                      style: TextStyle(fontSize: 8.5, color: Color(0xFFDC2626), fontWeight: FontWeight.w700),
-                    ),
                   ),
 
                   // Price & Discount Line
@@ -684,7 +653,7 @@ class _EateryDetailScreenState extends State<EateryDetailScreen> {
                                           crossAxisCount: 2,
                                           crossAxisSpacing: 10,
                                           mainAxisSpacing: 10,
-                                          childAspectRatio: 0.61,
+                                          childAspectRatio: 0.58,
                                         ),
                                         itemCount: ocopList.length,
                                         itemBuilder: (context, idx) {
@@ -712,7 +681,7 @@ class _EateryDetailScreenState extends State<EateryDetailScreen> {
                                           crossAxisCount: 2,
                                           crossAxisSpacing: 10,
                                           mainAxisSpacing: 10,
-                                          childAspectRatio: 0.61,
+                                          childAspectRatio: 0.58,
                                         ),
                                         itemCount: dishList.length,
                                         itemBuilder: (context, idx) {

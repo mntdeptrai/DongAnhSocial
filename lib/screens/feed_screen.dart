@@ -537,8 +537,12 @@ class FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
       height: height,
       padding: const EdgeInsets.all(10),
       child: Card(
-        elevation: 4,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        elevation: 6,
+        shadowColor: const Color(0xFF0EA5E9).withOpacity(0.25),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(22),
+          side: BorderSide(color: const Color(0xFF0EA5E9).withOpacity(0.2), width: 1.2),
+        ),
         color: const Color(0xFF1E293B), // Dark card for camera page
         child: Padding(
           padding: const EdgeInsets.all(12),

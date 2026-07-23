@@ -67,19 +67,29 @@
     .eatery-card {
         flex-direction: column !important;
         align-items: stretch !important;
-        padding: 14px !important;
+        padding: 16px !important;
         gap: 14px !important;
-        border-radius: 16px !important;
+        border-radius: var(--radius-outer-mobile, 22px) !important;
+        background: var(--bg-card, rgba(255, 255, 255, 0.85)) !important;
+        border: var(--border-bezel, 1px solid rgba(6, 182, 212, 0.12)) !important;
+        box-shadow: var(--shadow-bezel, 0 10px 30px -8px rgba(6, 182, 212, 0.1)) !important;
+        transition: transform 0.25s var(--ease-spring) !important;
+    }
+
+    .eatery-card:active {
+        transform: scale(0.98) !important;
     }
 
     .eatery-img-wrapper {
         width: 100% !important;
-        height: 180px !important;
-        border-radius: 12px !important;
+        height: 190px !important;
+        border-radius: var(--radius-inner-mobile, 14px) !important;
+        overflow: hidden !important;
     }
 
     .eatery-img {
-        border-radius: 12px !important;
+        border-radius: var(--radius-inner-mobile, 14px) !important;
+        object-fit: cover !important;
     }
 
     .eatery-info {
@@ -87,7 +97,10 @@
     }
 
     .eatery-title {
-        font-size: 1.1rem !important;
+        font-family: var(--font-heading) !important;
+        font-size: 1.15rem !important;
+        font-weight: 700 !important;
+        letter-spacing: -0.02em !important;
     }
 }
 
@@ -95,20 +108,21 @@
 @media (max-width: 1200px) {
     .detail-grid {
         grid-template-columns: minmax(0, 1fr) !important;
-        gap: 28px !important;
-        padding: 24px 0 !important;
+        gap: 24px !important;
+        padding: 20px 0 !important;
     }
 
     .detail-hero {
         height: 180px !important;
-        /* Space-efficient and elegant on mobile/tablets */
         padding: 0 !important;
         display: flex !important;
         align-items: flex-end !important;
+        border-radius: 0 0 var(--radius-outer-mobile, 22px) var(--radius-outer-mobile, 22px) !important;
+        overflow: hidden !important;
     }
 
     .detail-hero-content {
-        padding-bottom: 12px !important;
+        padding-bottom: 16px !important;
         padding-top: 40px !important;
     }
 }
@@ -121,13 +135,23 @@
     }
 
     .dish-card {
-        padding: 12px !important;
-        gap: 12px !important;
+        padding: 14px !important;
+        gap: 14px !important;
+        border-radius: var(--radius-inner-mobile, 14px) !important;
+        border: 1px solid rgba(14, 165, 233, 0.1) !important;
+        background: var(--bg-surface, #ffffff) !important;
+        transition: transform 0.25s var(--ease-spring) !important;
+    }
+
+    .dish-card:active {
+        transform: scale(0.97) !important;
     }
 
     .dish-img {
-        width: 75px !important;
-        height: 75px !important;
+        width: 80px !important;
+        height: 80px !important;
+        border-radius: 12px !important;
+        object-fit: cover !important;
     }
 }
 
