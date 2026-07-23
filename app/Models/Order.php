@@ -10,6 +10,7 @@ class Order extends Model
         'user_id',
         'eatery_id',
         'category_slug',
+        'stall_name',
         'customer_name',
         'customer_phone',
         'shipping_address',

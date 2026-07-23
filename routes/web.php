@@ -8,6 +8,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\FoodTourController;
 use App\Http\Controllers\SocialHubController;
+use App\Http\Controllers\MarketStallController;
 
 /*
 |--------------------------------------------------------------------------
@@ -32,6 +33,14 @@ Route::post('/api/checkins/{id}/react', [HomeController::class, 'reactToCheckin'
 // URL Thân thiện chuẩn SEO Google cho địa điểm ẩm thực & đặc sản
 Route::get('/dia-diem/{slug}', [EateryController::class, 'show'])->name('eatery.show');
 Route::post('/dia-diem/reviews/{id}', [EateryController::class, 'storeReview'])->name('eatery.review.store');
+Route::get('/api/market-chat/{eateryId}/messages', [\App\Http\Controllers\MarketChatController::class, 'getMessages'])->name('market.chat.messages');
+Route::post('/api/market-chat/{eateryId}/send', [\App\Http\Controllers\MarketChatController::class, 'sendMessage'])->name('market.chat.send');
+Route::get('/api/market-stalls/{eateryId}/reviews', [\App\Http\Controllers\MarketChatController::class, 'getStallReviews'])->name('market.stalls.reviews');
+Route::post('/api/market-stalls/{eateryId}/reviews', [\App\Http\Controllers\MarketChatController::class, 'storeStallReview'])->name('market.stalls.reviews.store');
+
+// Trang chi tiết gian hàng số (SEO-friendly, shareable)
+Route::get('/cho/{marketSlug}/gian-hang/{stallSlug}', [MarketStallController::class, 'show'])->name('market.stall.show');
+Route::post('/cho/{marketSlug}/gian-hang/{stallSlug}/reviews', [MarketStallController::class, 'storeReview'])->name('market.stall.review.store');
 
 // SEO Sitemap Route
 Route::get('/sitemap.xml', [HomeController::class, 'sitemap'])->name('sitemap');

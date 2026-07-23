@@ -17,10 +17,20 @@
 <!-- AOS Library CDN for Scroll Animations -->
 <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
 <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+<!-- Leaflet MarkerCluster CDN -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 
 <?php
     $products = $eatery->ocopProducts;
     $groupedStalls = $products->groupBy('stall_name');
+    
+    $stallReviews = \App\Models\Review::on($eatery->getConnectionName())->where('eatery_id', $eatery->id)
+        ->whereNotNull('stall_name')
+        ->latest()
+        ->get()
+        ->groupBy('stall_name');
     
     $totalStalls = $groupedStalls->count();
     $totalProducts = $products->count();
@@ -114,6 +124,16 @@
 
 <style>
     /* Premium Smart City Style Sheet - Integrated with App Design Language */
+    @keyframes highlightStallGlow {
+        0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(14, 165, 233, 0.7); outline: 2.5px solid #0ea5e9; }
+        50% { transform: scale(1.02); box-shadow: 0 0 30px 8px rgba(14, 165, 233, 0.4); outline: 3px solid #0ea5e9; }
+        100% { transform: scale(1); box-shadow: 0 4px 20px rgba(0,0,0,0.05); outline: 2.5px solid transparent; }
+    }
+    .highlight-stall-card {
+        animation: highlightStallGlow 2.5s ease-in-out forwards;
+        border-color: #0ea5e9 !important;
+    }
+
     body {
         font-family: 'Be Vietnam Pro', sans-serif !important;
         background-color: var(--bg-base) !important;
@@ -237,18 +257,20 @@
 
     /* Small stat badges */
     .hero-stat-pill {
-        background: var(--bg-card);
-        border: 1px solid var(--border-glow);
-        border-radius: 14px;
-        padding: 12px 18px;
+        background: var(--bg-card) !important;
+        border: 1px solid var(--border-glow) !important;
+        border-radius: 16px !important;
+        padding: 12px 20px !important;
         display: flex;
         align-items: center;
         gap: 12px;
-        transition: all 0.3s;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02) !important;
+        transition: all 0.3s var(--ease-premium) !important;
     }
     .hero-stat-pill:hover {
-        border-color: var(--primary);
-        transform: translateY(-2px);
+        border-color: var(--primary) !important;
+        box-shadow: 0 8px 20px rgba(14, 165, 233, 0.12) !important;
+        transform: translateY(-3px) !important;
     }
     .hero-stat-num {
         font-family: var(--font-heading);
@@ -264,20 +286,105 @@
         letter-spacing: 0.5px;
     }
 
+    /* Premium Smart City - Metrics & Dashboard cards styles */
+    .metric-card-premium {
+        background: var(--bg-card) !important;
+        border: 1px solid var(--border-glow) !important;
+        border-radius: 24px !important;
+        padding: 24px !important;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.02), 0 8px 16px -6px rgba(0, 0, 0, 0.02) !important;
+        transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        min-height: 180px;
+    }
+
+    .metric-card-premium:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.08) !important;
+    }
+
+    .theme-blue:hover {
+        border-color: rgba(59, 130, 246, 0.4) !important;
+        box-shadow: 0 20px 35px -10px rgba(59, 130, 246, 0.15) !important;
+    }
+
+    .theme-emerald:hover {
+        border-color: rgba(16, 185, 129, 0.4) !important;
+        box-shadow: 0 20px 35px -10px rgba(16, 185, 129, 0.15) !important;
+    }
+
+    .theme-orange {
+        border: 1px dashed rgba(245, 158, 11, 0.4) !important;
+        background: linear-gradient(135deg, var(--bg-card) 0%, rgba(245, 158, 11, 0.02) 100%) !important;
+    }
+
+    .theme-orange:hover {
+        border-color: rgba(245, 158, 11, 0.6) !important;
+        box-shadow: 0 20px 35px -10px rgba(245, 158, 11, 0.12) !important;
+        transform: translateY(-4px);
+    }
+
+    .metric-icon-box {
+        width: 48px;
+        height: 48px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.35rem;
+        box-shadow: 0 6px 15px -3px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s;
+    }
+
+    .metric-card-premium:hover .metric-icon-box {
+        transform: scale(1.1) rotate(5deg);
+    }
+
+    .grad-blue {
+        background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%) !important;
+    }
+
+    .grad-emerald {
+        background: linear-gradient(135deg, #10b981 0%, #047857 100%) !important;
+    }
+
+    .grad-orange {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+    }
+
+    .grad-indigo {
+        background: linear-gradient(135deg, #6366f1 0%, #4338ca 100%) !important;
+    }
+
+    .grad-purple {
+        background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%) !important;
+    }
+
+    .metric-progress-wrapper {
+        margin-top: auto;
+        padding-top: 14px;
+    }
+
     /* Custom Responsive Grids */
     .top-db-row {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-        gap: 20px;
+        gap: 24px;
         position: relative;
         z-index: 10;
-        padding-bottom: 30px;
+        padding-bottom: 40px;
     }
     
     .db-card-metric {
         font-family: var(--font-heading);
         font-size: 2.2rem;
         font-weight: 900;
+        line-height: 1.1;
         color: var(--text-main);
         background: linear-gradient(135deg, var(--primary) 0%, #2563EB 100%);
         -webkit-background-clip: text;
@@ -983,37 +1090,53 @@
 <div class="market-container" style="margin-bottom: 40px;" data-aos="fade-up">
     <div style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 24px; border-bottom: 1px solid var(--border-glow); padding-bottom: 30px;">
         <div>
-            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;">
-                <span class="gov-badge badge-verify-sky" style="font-size: 0.78rem; padding: 6px 14px;">🏪 CHỢ SỐ 4.0 ĐÔNG ANH</span>
-                <span class="gov-badge badge-attp-blue" style="font-size: 0.78rem; padding: 6px 14px;">🛡️ Đạt chuẩn ATTP</span>
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap;">
+                <span class="gov-badge" style="font-size: 0.78rem; padding: 6px 14px; background: linear-gradient(135deg, rgba(14, 165, 233, 0.08) 0%, rgba(37, 99, 235, 0.08) 100%); color: #0284c7; border: 1px solid rgba(14, 165, 233, 0.2); font-weight: 700; border-radius: 20px;">
+                    <i class="bi bi-shop me-1"></i> CHỢ SỐ 4.0 ĐÔNG ANH
+                </span>
+                <span class="gov-badge" style="font-size: 0.78rem; padding: 6px 14px; background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(5, 150, 105, 0.08) 100%); color: #059669; border: 1px solid rgba(16, 185, 129, 0.2); font-weight: 700; border-radius: 20px;">
+                    <i class="bi bi-shield-fill-check me-1"></i> ĐẠT CHUẨN ATTP
+                </span>
             </div>
-            <h1 style="font-family: var(--font-heading); font-size: 2.6rem; font-weight: 900; color: var(--text-main); margin: 0 0 8px 0;">
+            <h1 style="font-family: var(--font-heading); font-size: 2.8rem; font-weight: 900; color: var(--text-main); margin: 0 0 8px 0; letter-spacing: -0.5px;">
                 <?php echo e($eatery->name); ?>
 
             </h1>
-            <p style="font-size: 1.05rem; color: var(--text-muted); margin: 0; font-weight: 500;">
-                📍 <?php echo e($eatery->address); ?>
+            <p style="font-size: 1.05rem; color: var(--text-muted); margin: 0; font-weight: 500; display: flex; align-items: center; gap: 4px;">
+                <i class="bi bi-geo-alt-fill text-danger"></i> <?php echo e($eatery->address); ?>
 
             </p>
         </div>
         
         <!-- Info stat widgets row -->
-        <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+        <div style="display: flex; gap: 14px; flex-wrap: wrap;">
             <div class="hero-stat-pill">
-                <div class="hero-stat-num"><?php echo e($totalStalls); ?></div>
-                <div class="hero-stat-lbl">Hộ kinh doanh</div>
+                <i class="bi bi-shop text-primary" style="font-size: 1.25rem;"></i>
+                <div>
+                    <div class="hero-stat-num"><?php echo e($totalStalls); ?></div>
+                    <div class="hero-stat-lbl">Hộ kinh doanh</div>
+                </div>
             </div>
             <div class="hero-stat-pill">
-                <div class="hero-stat-num"><?php echo e($totalProducts); ?></div>
-                <div class="hero-stat-lbl">Mặt hàng</div>
+                <i class="bi bi-box-seam" style="color: #6366f1; font-size: 1.25rem;"></i>
+                <div>
+                    <div class="hero-stat-num"><?php echo e($totalProducts); ?></div>
+                    <div class="hero-stat-lbl">Mặt hàng</div>
+                </div>
             </div>
             <div class="hero-stat-pill">
-                <div class="hero-stat-num">95%</div>
-                <div class="hero-stat-lbl">Thanh toán số</div>
+                <i class="bi bi-currency-exchange text-success" style="font-size: 1.25rem;"></i>
+                <div>
+                    <div class="hero-stat-num">95%</div>
+                    <div class="hero-stat-lbl">Thanh toán số</div>
+                </div>
             </div>
             <div class="hero-stat-pill">
-                <div class="hero-stat-num"><?php echo e($qrPercentage); ?>%</div>
-                <div class="hero-stat-lbl">Có mã QR</div>
+                <i class="bi bi-qr-code-scan text-success" style="font-size: 1.25rem;"></i>
+                <div>
+                    <div class="hero-stat-num"><?php echo e($qrPercentage); ?>%</div>
+                    <div class="hero-stat-lbl">Có mã QR</div>
+                </div>
             </div>
         </div>
     </div>
@@ -1021,147 +1144,111 @@
 
 <!-- Content Container -->
 <div class="market-container">
-    
-    <!-- II. DASHBOARD THỐNG KÊ CHI TIẾT -->
-    <div class="top-db-row">
-        <!-- 1. Total Stalls -->
-        <div class="premium-panel premium-panel-metric" data-aos="fade-up" data-aos-delay="50" style="margin-bottom:0;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                <span class="db-card-metric"><?php echo e($totalStalls); ?></span>
-                <span style="font-size: 1.8rem;">🏪</span>
-            </div>
-            <h4 style="font-family: var(--font-heading); font-size: 0.95rem; font-weight: 800; margin: 0 0 6px 0; color: var(--text-main);">Tổng số Hộ kinh doanh</h4>
-            <p style="font-size: 0.78rem; color: var(--text-muted); margin: 0;">Số lượng hộ đăng ký gian hàng số chính thức.</p>
-        </div>
-
-        <!-- 2. Total Products -->
-        <div class="premium-panel premium-panel-metric" data-aos="fade-up" data-aos-delay="100" style="margin-bottom:0;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                <span class="db-card-metric"><?php echo e($totalProducts); ?></span>
-                <span style="font-size: 1.8rem;">📦</span>
-            </div>
-            <h4 style="font-family: var(--font-heading); font-size: 0.95rem; font-weight: 800; margin: 0 0 6px 0; color: var(--text-main);">Tổng số Mặt hàng</h4>
-            <p style="font-size: 0.78rem; color: var(--text-muted); margin: 0;">Nông sản sạch, ẩm thực đặc sắc và hàng tiêu dùng thiết yếu.</p>
-        </div>
-
-        <!-- 3. Stalls with QR -->
-        <div class="premium-panel premium-panel-metric premium-panel-success" data-aos="fade-up" data-aos-delay="150" style="margin-bottom:0;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                <span class="db-card-metric"><?php echo e($stallsWithQr); ?></span>
-                <span style="font-size: 1.8rem; color: #10B981;">💳</span>
-            </div>
-            <h4 style="font-family: var(--font-heading); font-size: 0.95rem; font-weight: 800; margin: 0 0 6px 0; color: var(--text-main);">
-                <span class="pulse-indicator-success"></span>Số hộ có mã QR
-            </h4>
-            <p style="font-size: 0.78rem; color: var(--text-muted); margin: 0;">Tỷ lệ phủ mã VietQR đạt <strong><?php echo e($qrPercentage); ?>%</strong>.</p>
-        </div>
-
-        <!-- 4. Cashless Payment rate -->
-        <div class="premium-panel premium-panel-metric premium-panel-success" data-aos="fade-up" data-aos-delay="200" style="margin-bottom:0;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                <span class="db-card-metric">95%</span>
-                <span style="font-size: 1.8rem; color: var(--primary);">📈</span>
-            </div>
-            <h4 style="font-family: var(--font-heading); font-size: 0.95rem; font-weight: 800; margin: 0 0 6px 0; color: var(--text-main);">Tỷ lệ thanh toán số</h4>
-            <p style="font-size: 0.78rem; color: var(--text-muted); margin: 0;">Tỷ trọng giao dịch không tiền mặt trên hệ thống.</p>
-        </div>
-
-        <!-- 5. Smartphone count -->
-        <div class="premium-panel premium-panel-metric" data-aos="fade-up" data-aos-delay="250" style="margin-bottom:0;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                <span class="db-card-metric"><?php echo e($stallsWithSmartphone); ?></span>
-                <span style="font-size: 1.8rem;">📱</span>
-            </div>
-            <h4 style="font-family: var(--font-heading); font-size: 0.95rem; font-weight: 800; margin: 0 0 6px 0; color: var(--text-main);">Hộ dùng Smartphone</h4>
-            <p style="font-size: 0.78rem; color: var(--text-muted); margin: 0;">Tỷ lệ sử dụng thiết bị thông minh đạt <strong><?php echo e($phonePercentage); ?>%</strong>.</p>
-        </div>
-
-        <!-- 6. Bank account count -->
-        <div class="premium-panel premium-panel-metric" data-aos="fade-up" data-aos-delay="300" style="margin-bottom:0;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                <span class="db-card-metric"><?php echo e($stallsWithBank); ?></span>
-                <span style="font-size: 1.8rem;">🏛️</span>
-            </div>
-            <h4 style="font-family: var(--font-heading); font-size: 0.95rem; font-weight: 800; margin: 0 0 6px 0; color: var(--text-main);">Hộ có tài khoản ngân hàng</h4>
-            <p style="font-size: 0.78rem; color: var(--text-muted); margin: 0;">Tài khoản ngân hàng số liên kết trực tiếp.</p>
-        </div>
-
-        <!-- 7. Wifi Status -->
-        <div class="premium-panel premium-panel-metric premium-panel-warning" data-aos="fade-up" data-aos-delay="350" style="margin-bottom:0;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                <span style="font-family: var(--font-heading); font-size: 1.05rem; font-weight: 800; color: #F59E0B;">
-                    <span class="pulse-indicator-pending"></span>Chưa triển khai
-                </span>
-                <span style="font-size: 1.8rem;">📶</span>
-            </div>
-            <h4 style="font-family: var(--font-heading); font-size: 0.95rem; font-weight: 800; margin: 0 0 6px 0; color: var(--text-main);">Wifi công cộng miễn phí</h4>
-            <p style="font-size: 0.78rem; color: var(--text-muted); margin: 0;">Đang lập dự án hạ tầng mạng công cộng.</p>
-        </div>
-
-        <!-- 8. Camera Status -->
-        <div class="premium-panel premium-panel-metric premium-panel-warning" data-aos="fade-up" data-aos-delay="400" style="margin-bottom:0;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                <span style="font-family: var(--font-heading); font-size: 1.05rem; font-weight: 800; color: #F59E0B;">
-                    <span class="pulse-indicator-pending"></span>Chưa triển khai
-                </span>
-                <span style="font-size: 1.8rem;">📹</span>
-            </div>
-            <h4 style="font-family: var(--font-heading); font-size: 0.95rem; font-weight: 800; margin: 0 0 6px 0; color: var(--text-main);">Camera AI giám sát an ninh</h4>
-            <p style="font-size: 0.78rem; color: var(--text-muted); margin: 0;">Lắp đặt hệ thống giám sát an ninh trung tâm.</p>
-        </div>
-    </div>
-
-    <!-- III. BIỂU ĐỒ PHÂN TÍCH (CHART.JS) -->
-    <div class="premium-panel" data-aos="fade-up">
-        <h3 style="font-family: var(--font-heading); font-weight: 800; font-size: 1.4rem; margin-bottom: 24px; color: var(--text-main); display: flex; align-items: center; gap: 10px;">
-            📊 Trung tâm Phân Tích Dữ Liệu Chợ Số 4.0
-        </h3>
-        
-        <div class="charts-grid-custom">
-            <!-- 1. Pie Phân bố ngành hàng -->
-            <div style="background: var(--bg-base); border-radius: 16px; padding: 20px; border: 1px solid var(--border-glow); height: 100%;">
-                <h5 style="font-size: 0.9rem; font-weight: 700; margin-bottom: 15px; text-align: center; color: var(--text-main);">Ngành hàng kinh doanh</h5>
-                <div style="position: relative; height: 220px;">
-                    <canvas id="categoryPieChart"></canvas>
-                </div>
-            </div>
-            <!-- 2. Doughnut Tỷ lệ QR -->
-            <div style="background: var(--bg-base); border-radius: 16px; padding: 20px; border: 1px solid var(--border-glow); height: 100%;">
-                <h5 style="font-size: 0.9rem; font-weight: 700; margin-bottom: 15px; text-align: center; color: var(--text-main);">Đăng ký mã VietQR</h5>
-                <div style="position: relative; height: 220px;">
-                    <canvas id="qrDoughnutChart"></canvas>
-                </div>
-            </div>
-            <!-- 3. Doughnut Smartphone & Ngân hàng -->
-            <div style="background: var(--bg-base); border-radius: 16px; padding: 20px; border: 1px solid var(--border-glow); height: 100%;">
-                <h5 style="font-size: 0.9rem; font-weight: 700; margin-bottom: 15px; text-align: center; color: var(--text-main);">Thiết bị & Liên kết Ngân hàng</h5>
-                <div style="position: relative; height: 220px;">
-                    <canvas id="smartDoughnutChart"></canvas>
-                </div>
-            </div>
-            <!-- 4. Bar Nguồn gốc hàng hóa -->
-            <div class="chart-full-width" style="background: var(--bg-base); border-radius: 16px; padding: 20px; border: 1px solid var(--border-glow); margin-top: 24px;">
-                <h5 style="font-size: 0.9rem; font-weight: 700; margin-bottom: 15px; color: var(--text-main);">Truy xuất Nguồn gốc Hàng hóa nông sản (%)</h5>
-                <div style="position: relative; height: 260px;">
-                    <canvas id="originBarChart"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <!-- IV. BẢN ĐỒ SỐ VỊ TRÍ KHÔNG GIAN -->
     <div class="premium-panel" data-aos="fade-up">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
             <div>
                 <span class="gov-badge badge-verify-sky">📍 ĐỊA ĐIỂM SỐ</span>
                 <h3 style="font-family: var(--font-heading); font-weight: 800; font-size: 1.4rem; margin-top: 6px; margin-bottom: 0; color: var(--text-main);">Bản đồ Số Vị trí Không gian</h3>
             </div>
-            <button onclick="toggleMapFullscreen()" class="btn-stall-action" style="padding: 8px 16px; border-radius: 12px; font-weight: 700; font-size: 0.85rem; width: auto; gap: 8px; border: 1px solid var(--border-glow); background: var(--bg-base);">
-                <i class="bi bi-arrows-fullscreen"></i> Xem toàn màn hình
-            </button>
         </div>
         
-        <div id="miniMap"></div>
+        <div style="position: relative; border-radius: 20px; overflow: hidden; border: 1px solid var(--border-glow); box-shadow: var(--shadow-sm);">
+            <!-- Overlay Button: Fullscreen -->
+            <button onclick="toggleMapFullscreen()" style="position: absolute; top: 14px; right: 14px; z-index: 1000; background: rgba(255,255,255,0.92); backdrop-filter: blur(10px); border: 1px solid var(--border-glow); color: var(--text-main); padding: 8px 16px; border-radius: 12px; font-weight: 800; font-size: 0.8rem; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 14px rgba(0,0,0,0.12); transition: all 0.2s;" onmouseover="this.style.transform='scale(1.05)';" onmouseout="this.style.transform='none';">
+                <i class="bi bi-arrows-fullscreen" style="color: var(--primary);"></i> Xem toàn màn hình
+            </button>
+
+            <!-- Map Legend (Bảng Chú Giải) -->
+            <div class="map-legend-overlay" style="position: absolute; bottom: 16px; left: 16px; z-index: 1000; background: rgba(255,255,255,0.92); backdrop-filter: blur(10px); border: 1px solid var(--border-glow); border-radius: 14px; padding: 10px 14px; box-shadow: 0 6px 18px rgba(0,0,0,0.12); font-family: 'Be Vietnam Pro', sans-serif;">
+                <span style="font-size: 0.7rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px;">🗺️ Chú giải phân khu:</span>
+                <div style="display: flex; gap: 12px; flex-wrap: wrap; font-size: 0.76rem; font-weight: 800; color: var(--text-main);">
+                    <span style="display: inline-flex; align-items: center; gap: 5px;"><span style="width: 10px; height: 10px; border-radius: 50%; background: #0EA5E9; display: inline-block;"></span> Khối A (Ẩm thực)</span>
+                    <span style="display: inline-flex; align-items: center; gap: 5px;"><span style="width: 10px; height: 10px; border-radius: 50%; background: #10B981; display: inline-block;"></span> Khối B (Rau củ)</span>
+                    <span style="display: inline-flex; align-items: center; gap: 5px;"><span style="width: 10px; height: 10px; border-radius: 50%; background: #F59E0B; display: inline-block;"></span> Khối C (Đồ khô)</span>
+                    <span style="display: inline-flex; align-items: center; gap: 5px;"><span style="width: 10px; height: 10px; border-radius: 50%; background: #EC4899; display: inline-block;"></span> Khối D (Thịt tươi)</span>
+                </div>
+            </div>
+
+            <div id="miniMap" style="height: 480px; width: 100%; z-index: 1;"></div>
+        </div>
+    </div>
+
+    <!-- V. BẢNG TIN SỐ BAN QUẢN LÝ CHỢ (LOA CHỢ SỐ) -->
+    <div class="premium-panel" style="background: linear-gradient(135deg, rgba(14, 165, 233, 0.06) 0%, rgba(6, 182, 212, 0.03) 100%) !important; border: 1.5px solid rgba(14, 165, 233, 0.25) !important; position: relative;" data-aos="fade-up">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 14px;">
+            <div style="display: flex; align-items: center; gap: 14px;">
+                <div style="width: 48px; height: 48px; border-radius: 14px; background: var(--primary-grad); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; box-shadow: 0 8px 20px rgba(14, 165, 233, 0.35);">
+                    <i class="bi bi-megaphone-fill"></i>
+                </div>
+                <div>
+                    <h3 style="font-family: var(--font-heading); font-weight: 900; font-size: 1.35rem; margin: 0 0 2px 0; color: var(--text-main); letter-spacing: -0.3px;">
+                        📢 Bảng Tin Số Ban Quản Lý Chợ
+                    </h3>
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">Thông báo &amp; Thông tin điều hành chính thức từ BQL <?php echo e($eatery->name); ?></span>
+                </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                <span style="background: rgba(16, 185, 129, 0.12); color: #059669; border: 1px solid rgba(16, 185, 129, 0.3); padding: 6px 14px; border-radius: 20px; font-size: 0.78rem; font-weight: 800; display: inline-flex; align-items: center; gap: 8px;">
+                    <span style="width: 8px; height: 8px; border-radius: 50%; background: #10B981; box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.3);"></span>
+                    LOA PHÁT TIN SỐ
+                </span>
+                <?php if($eatery->phone): ?>
+                <a href="tel:<?php echo e($eatery->phone); ?>" style="background: linear-gradient(135deg, #0ea5e9, #0284c7); color: #fff; padding: 8px 18px; border-radius: 12px; font-size: 0.82rem; font-weight: 800; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 14px rgba(14, 165, 233, 0.3); transition: all 0.2s;" onmouseover="this.style.transform='translateY(-2px)';" onmouseout="this.style.transform='none';">
+                    <i class="bi bi-telephone-fill"></i> Hotline BQL: <?php echo e($eatery->phone); ?>
+
+                </a>
+                <?php endif; ?>
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 18px;">
+            
+            <div style="background: var(--bg-card); border: 1px solid var(--border-glow); border-left: 5px solid #10B981 !important; border-radius: 18px; padding: 20px; display: flex; gap: 16px; align-items: flex-start; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 6px 20px rgba(0,0,0,0.03);" onmouseover="this.style.transform='translateY(-4px)'; this.style.borderColor='rgba(16,185,129,0.5)'; this.style.boxShadow='0 14px 30px -8px rgba(16,185,129,0.2)';" onmouseout="this.style.transform='none'; this.style.borderColor='var(--border-glow)'; this.style.boxShadow='0 6px 20px rgba(0,0,0,0.03)';">
+                <div style="width: 44px; height: 44px; border-radius: 12px; background: linear-gradient(135deg, #10B981, #059669); color: #ffffff; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; flex-shrink: 0; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35);">
+                    <i class="bi bi-shield-fill-check"></i>
+                </div>
+                <div style="flex: 1;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <span style="background: rgba(16, 185, 129, 0.12); color: #059669; font-size: 0.7rem; font-weight: 800; padding: 3px 10px; border-radius: 12px;">🛡️ KIỂM ĐỊNH ATTP</span>
+                        <span style="font-size: 0.7rem; color: var(--text-muted); font-weight: 600;">Mới cập nhật</span>
+                    </div>
+                    <h4 style="font-size: 0.92rem; font-weight: 800; color: var(--text-main); margin: 0 0 6px 0; line-height: 1.35;">100% sạp đạt chuẩn ATTP Tháng 7/2026</h4>
+                    <p style="font-size: 0.78rem; color: var(--text-muted); margin: 0; line-height: 1.45;">Đoàn kiểm tra liên ngành đã nghiệm thu chất lượng nguồn gốc nông sản &amp; vệ sinh quầy hàng.</p>
+                </div>
+            </div>
+
+            
+            <div style="background: var(--bg-card); border: 1px solid var(--border-glow); border-left: 5px solid #0ea5e9 !important; border-radius: 18px; padding: 20px; display: flex; gap: 16px; align-items: flex-start; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 6px 20px rgba(0,0,0,0.03);" onmouseover="this.style.transform='translateY(-4px)'; this.style.borderColor='rgba(14,165,233,0.5)'; this.style.boxShadow='0 14px 30px -8px rgba(14,165,233,0.2)';" onmouseout="this.style.transform='none'; this.style.borderColor='var(--border-glow)'; this.style.boxShadow='0 6px 20px rgba(0,0,0,0.03)';">
+                <div style="width: 44px; height: 44px; border-radius: 12px; background: linear-gradient(135deg, #0ea5e9, #0284c7); color: #ffffff; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; flex-shrink: 0; box-shadow: 0 4px 12px rgba(14, 165, 233, 0.35);">
+                    <i class="bi bi-droplet-fill"></i>
+                </div>
+                <div style="flex: 1;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <span style="background: rgba(14, 165, 233, 0.12); color: #0284c7; font-size: 0.7rem; font-weight: 800; padding: 3px 10px; border-radius: 12px;">🧼 VỆ SINH ĐỊNH KỲ</span>
+                        <span style="font-size: 0.7rem; color: var(--text-muted); font-weight: 600;">18h00 Chủ Nhật</span>
+                    </div>
+                    <h4 style="font-size: 0.92rem; font-weight: 800; color: var(--text-main); margin: 0 0 6px 0; line-height: 1.35;">Lịch phun khử khuẩn toàn chợ</h4>
+                    <p style="font-size: 0.78rem; color: var(--text-muted); margin: 0; line-height: 1.45;">BQL tiến hành dọn vệ sinh tổng thể &amp; phun tiêu độc khử khuẩn định kỳ vào cuối tuần.</p>
+                </div>
+            </div>
+
+            
+            <div style="background: var(--bg-card); border: 1px solid var(--border-glow); border-left: 5px solid #f59e0b !important; border-radius: 18px; padding: 20px; display: flex; gap: 16px; align-items: flex-start; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 6px 20px rgba(0,0,0,0.03);" onmouseover="this.style.transform='translateY(-4px)'; this.style.borderColor='rgba(245,158,11,0.5)'; this.style.boxShadow='0 14px 30px -8px rgba(245,158,11,0.2)';" onmouseout="this.style.transform='none'; this.style.borderColor='var(--border-glow)'; this.style.boxShadow='0 6px 20px rgba(0,0,0,0.03)';">
+                <div style="width: 44px; height: 44px; border-radius: 12px; background: linear-gradient(135deg, #f59e0b, #d97706); color: #ffffff; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; flex-shrink: 0; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.35);">
+                    <i class="bi bi-calendar-event-fill"></i>
+                </div>
+                <div style="flex: 1;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <span style="background: rgba(245, 158, 11, 0.12); color: #b45309; font-size: 0.7rem; font-weight: 800; padding: 3px 10px; border-radius: 12px;">🎪 SỰ KIỆN NÔNG SẢN</span>
+                        <span style="font-size: 0.7rem; color: var(--text-muted); font-weight: 600;">Sáng Thứ 7</span>
+                    </div>
+                    <h4 style="font-size: 0.92rem; font-weight: 800; color: var(--text-main); margin: 0 0 6px 0; line-height: 1.35;">Phiên Chợ Nông Sản Sạch Đông Anh</h4>
+                    <p style="font-size: 0.78rem; color: var(--text-muted); margin: 0; line-height: 1.45;">Quy tụ các hợp tác xã nông sản sạch, rau VietGAP &amp; OCOP giá ưu đãi tại Khối B.</p>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- V. SƠ ĐỒ PHÂN KHU TƯƠNG TÁC -->
@@ -1237,7 +1324,7 @@
                 </select>
             </div>
             
-            <div class="filter-item-wrapper">
+                    <div class="filter-item-wrapper">
                 <label class="custom-label">Nguồn gốc hàng hóa</label>
                 <select id="filterOrigin" onchange="applyFilters()" class="custom-select">
                     <option value="">Tất cả nguồn gốc</option>
@@ -1266,9 +1353,10 @@
     </div>
 
     <!-- VI. DANH SÁCH GIAN HÀNG TIỂU THƯƠNG -->
-    <div style="margin-bottom: 40px;">
+    <div style="margin-top: 40px; margin-bottom: 40px;">
         <h2 style="font-family: var(--font-heading); font-weight: 900; font-size: 1.8rem; margin-bottom: 24px; color: var(--text-main);">
-            🏪 Hệ thống Gian Hàng Số Chợ Mạch Tràng
+            🏪 Hệ thống Gian Hàng Số <?php echo e($eatery->name); ?>
+
         </h2>
         
         <div class="stalls-grid-custom" id="stallsContainer">
@@ -1302,9 +1390,15 @@
                     if (preg_match('/Nguồn gốc: (.*?)\./', $first->description, $match)) {
                         $originText = trim($match[1]);
                     }
+
+                    $thisStallReviews = $stallReviews->get($stallName) ?? collect();
+                    $reviewCount = $thisStallReviews->count();
+                    $avgRating = $reviewCount > 0 ? round($thisStallReviews->avg('rating'), 1) : 5.0;
+                    $latestReview = $reviewCount > 0 ? $thisStallReviews->first()->comment : 'Sản phẩm rất tươi ngon, chủ quán thân thiện, thanh toán QR siêu nhanh chóng!';
                 ?>
                 
                 <div class="stall-card-wrapper" 
+                     id="stall-card-<?php echo e(\Illuminate\Support\Str::slug($stallName)); ?>"
                      data-name="<?php echo e(strtolower($stallName)); ?>" 
                      data-seller="<?php echo e(strtolower($sellerName)); ?>"
                      data-category="<?php echo e($category); ?>"
@@ -1352,7 +1446,7 @@
                                   onmouseover="this.style.background='rgba(14, 165, 233, 0.15)'" 
                                   onmouseout="this.style.background='rgba(14, 165, 233, 0.08)'"
                                   onclick="openStallDetailAndScrollToReviews('<?php echo e($stallName); ?>', '<?php echo e($sellerName); ?>', '<?php echo e($sellerPhone); ?>', '<?php echo e($bankInfo); ?>', '<?php echo e($category); ?>', '<?php echo e($originText); ?>', '<?php echo e($hasSmartphone ? 'yes' : 'no'); ?>', <?php echo e(json_encode($stallProducts)); ?>, '<?php echo e($first->latitude ?? ''); ?>', '<?php echo e($first->longitude ?? ''); ?>')">
-                                ⭐ 5.0 (1 Đánh giá)
+                                ⭐ <?php echo e(number_format($avgRating, 1)); ?> (<?php echo e($reviewCount); ?> Đánh giá)
                             </span>
                             <span class="gov-badge badge-attp-blue">✓ ATTP</span>
                             <?php if($hasQr): ?>
@@ -1370,7 +1464,7 @@
                             <div>
                                 <h5 style="font-size: 0.78rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;">Sản phẩm nổi bật</h5>
                                 <div style="display: flex; flex-direction: column; gap: 2px;">
-                                    <?php $__currentLoopData = $stallProducts; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $prod): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                    <?php $__currentLoopData = $stallProducts->take(3); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $prod): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                         <div class="product-item-gov" style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
                                             <div style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0;">
                                                 <span style="font-size: 1rem;">🍎</span>
@@ -1378,7 +1472,8 @@
                                             </div>
                                             <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
                                                 <span class="product-price-txt">
-                                                    <?php echo e(number_format($prod->price, 0, ',', '.')); ?>đ
+                                                    <?php echo e(number_format($prod->price, 0, ',', '.')); ?>đ/<?php echo e($prod->unit ?: 'kg'); ?>
+
                                                 </span>
                                                 <button class="add-to-cart-btn" data-id="<?php echo e($prod->id); ?>" data-type="ocop_product" onclick="addToCart(event, this); animateFlyToCart(this);" style="background: rgba(14, 165, 233, 0.08); border: 1.5px solid rgba(14, 165, 233, 0.25); color: var(--primary); border-radius: 20px; padding: 4px 10px; font-size: 0.72rem; font-weight: 700; cursor: pointer; transition: all 0.2s; white-space: nowrap; display: flex; align-items: center; gap: 3px;" onmouseover="this.style.background='var(--primary)'; this.style.color='#ffffff'; this.style.borderColor='var(--primary)';" onmouseout="this.style.background='rgba(14, 165, 233, 0.08)'; this.style.color='var(--primary)'; this.style.borderColor='rgba(14, 165, 233, 0.25)';">
                                                     🛒 Đặt trước
@@ -1386,18 +1481,48 @@
                                             </div>
                                         </div>
                                     <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+
+                                    <?php if($stallProducts->count() > 3): ?>
+                                        <div style="text-align: center; margin-top: 10px; border-top: 1px dashed var(--border-glow); padding-top: 8px;">
+                                            <a href="<?php echo e(route('market.stall.show', ['marketSlug' => $eatery->slug, 'stallSlug' => \Illuminate\Support\Str::slug($stallName)])); ?>" style="background: none; border: none; color: var(--primary); font-size: 0.75rem; font-weight: 800; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s;" onmouseover="this.style.opacity='0.8'; this.style.transform='translateX(2px)';" onmouseout="this.style.opacity='1'; this.style.transform='none';">
+                                                Xem toàn bộ gian hàng (<?php echo e($stallProducts->count()); ?> sản phẩm) ➔
+                                            </a>
+                                        </div>
+                                    <?php endif; ?>
                                 </div>
                             </div>
 
-                            <!-- Comment snippet preview -->
-                            <div style="margin-top: 16px; border-top: 1px dashed var(--border-glow); padding-top: 14px; cursor: pointer;" 
+                            <!-- Comment snippet preview (Mini quote card) -->
+                            <div style="margin-top: 14px; background: rgba(0, 0, 0, 0.015); border: 1px solid var(--border-glow); border-radius: 12px; padding: 10px 12px; cursor: pointer; transition: all 0.2s;" 
+                                 onmouseover="this.style.background='rgba(14, 165, 233, 0.04)';" 
+                                 onmouseout="this.style.background='rgba(0, 0, 0, 0.015)';"
                                  onclick="openStallDetailAndScrollToReviews('<?php echo e($stallName); ?>', '<?php echo e($sellerName); ?>', '<?php echo e($sellerPhone); ?>', '<?php echo e($bankInfo); ?>', '<?php echo e($category); ?>', '<?php echo e($originText); ?>', '<?php echo e($hasSmartphone ? 'yes' : 'no'); ?>', <?php echo e(json_encode($stallProducts)); ?>, '<?php echo e($first->latitude ?? ''); ?>', '<?php echo e($first->longitude ?? ''); ?>')">
-                                <span style="font-size: 0.72rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px;">Đánh giá mới nhất</span>
-                                <div style="font-size: 0.8rem; color: var(--text-main); font-style: italic; display: flex; gap: 8px; align-items: flex-start; font-weight: 500;">
-                                    <span style="color: #F59E0B; font-size: 0.95rem;">💬</span>
-                                    <span style="line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
-                                        "Sản phẩm rất tươi ngon, chủ quán thân thiện, thanh toán QR siêu nhanh chóng!"
-                                    </span>
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                                    <span style="font-size: 0.68rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Đánh giá mới nhất</span>
+                                    <?php if($reviewCount > 0): ?>
+                                        <span style="color: #F59E0B; font-size: 0.72rem; font-weight: 700;">
+                                            <?php echo e(str_repeat('★', $thisStallReviews->first()->rating)); ?><?php echo e(str_repeat('☆', 5 - $thisStallReviews->first()->rating)); ?>
+
+                                        </span>
+                                    <?php endif; ?>
+                                </div>
+                                <div style="display: flex; gap: 8px; align-items: flex-start;">
+                                    <span style="font-size: 0.95rem; line-height: 1;">💬</span>
+                                    <div style="flex: 1; min-width: 0;">
+                                        <?php if($reviewCount > 0): ?>
+                                            <strong style="font-size: 0.75rem; color: var(--text-main); display: block; margin-bottom: 2px; text-align: left;">
+                                                <?php echo e($thisStallReviews->first()->user_name); ?>
+
+                                            </strong>
+                                            <p style="font-size: 0.75rem; color: var(--text-muted); font-style: italic; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.3; text-align: left;">
+                                                "<?php echo e($latestReview); ?>"
+                                            </p>
+                                        <?php else: ?>
+                                            <p style="font-size: 0.75rem; color: var(--text-muted); font-style: italic; margin: 0; line-height: 1.3; text-align: left;">
+                                                Chưa có đánh giá. Nhấn gửi nhận xét đầu tiên!
+                                            </p>
+                                        <?php endif; ?>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -1410,9 +1535,9 @@
                             <a href="https://zalo.me/<?php echo e($sellerPhone); ?>" target="_blank" class="btn-stall-action">
                                 <i class="bi bi-chat-text-fill"></i> Zalo
                             </a>
-                            <button onclick="openStallDetail('<?php echo e($stallName); ?>', '<?php echo e($sellerName); ?>', '<?php echo e($sellerPhone); ?>', '<?php echo e($bankInfo); ?>', '<?php echo e($category); ?>', '<?php echo e($originText); ?>', '<?php echo e($hasSmartphone ? 'yes' : 'no'); ?>', <?php echo e(json_encode($stallProducts)); ?>, '<?php echo e($first->latitude ?? ''); ?>', '<?php echo e($first->longitude ?? ''); ?>')" class="btn-stall-action">
+                            <a href="<?php echo e(route('market.stall.show', ['marketSlug' => $eatery->slug, 'stallSlug' => \Illuminate\Support\Str::slug($stallName)])); ?>" class="btn-stall-action" style="background: var(--primary-grad); color: #fff; border-color: transparent;">
                                 <i class="bi bi-info-circle-fill"></i> Chi tiết
-                            </button>
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -1453,6 +1578,221 @@
                 <strong style="font-size: 0.88rem; color: var(--text-main); display: block;">Ngày 20/07/2026</strong>
                 <span style="font-size: 0.82rem; color: #10B981; font-weight: 700;">🛡️ ĐẠT TIÊU CHUẨN</span>
                 <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; margin-bottom: 0;">Tổng kiểm tra chứng chỉ tập huấn vệ sinh an toàn thực phẩm toàn bộ 17 hộ kinh doanh.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- VII. DỮ LIỆU BÁO CÁO & TRUNG TÂM PHÂN TÍCH QUẢN TRỊ CHỢ SỐ 4.0 -->
+    <div style="margin-top: 50px; margin-bottom: 20px;">
+        <h2 style="font-family: var(--font-heading); font-weight: 900; font-size: 1.6rem; margin-bottom: 8px; color: var(--text-main); display: flex; align-items: center; gap: 10px;">
+            📊 Trung Tâm Dữ Liệu &amp; Báo Cáo Hạ Tầng Chợ Số 4.0
+        </h2>
+        <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 24px;">Báo cáo chỉ số số hóa, tỷ lệ liên kết ngân hàng và phân tích xu hướng nông sản chính thức từ BQL <?php echo e($eatery->name); ?>.</p>
+    </div>
+
+    <!-- II. DASHBOARD THỐNG KÊ CHI TIẾT -->
+    <div class="top-db-row">
+        <!-- 1. Total Stalls -->
+        <div class="metric-card-premium theme-blue" data-aos="fade-up" data-aos-delay="50">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                <span class="db-card-metric"><?php echo e($totalStalls); ?></span>
+                <div class="metric-icon-box grad-blue">
+                    <i class="bi bi-shop"></i>
+                </div>
+            </div>
+            <h4 style="font-family: var(--font-heading); font-size: 0.95rem; font-weight: 800; margin: 0 0 6px 0; color: var(--text-main);">Tổng Hộ kinh doanh</h4>
+            <p style="font-size: 0.78rem; color: var(--text-muted); margin: 0 0 12px 0; line-height: 1.4;">Số lượng hộ đăng ký gian hàng số chính thức.</p>
+            <div style="margin-top: auto;">
+                <span style="font-size: 0.7rem; font-weight: 800; background: rgba(59, 130, 246, 0.08); color: #2563eb; padding: 4px 10px; border-radius: 20px; display: inline-flex; align-items: center; gap: 4px;">
+                    <span style="width: 6px; height: 6px; border-radius: 50%; background: #2563eb; display: inline-block;"></span> Đã xác minh
+                </span>
+            </div>
+        </div>
+
+        <!-- 2. Total Products -->
+        <div class="metric-card-premium theme-blue" data-aos="fade-up" data-aos-delay="100">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                <span class="db-card-metric"><?php echo e($totalProducts); ?></span>
+                <div class="metric-icon-box grad-indigo">
+                    <i class="bi bi-box-seam"></i>
+                </div>
+            </div>
+            <h4 style="font-family: var(--font-heading); font-size: 0.95rem; font-weight: 800; margin: 0 0 6px 0; color: var(--text-main);">Tổng số Mặt hàng</h4>
+            <p style="font-size: 0.78rem; color: var(--text-muted); margin: 0 0 12px 0; line-height: 1.4;">Nông sản sạch, ẩm thực đặc sắc và tiêu dùng thiết yếu.</p>
+            <div style="margin-top: auto;">
+                <span style="font-size: 0.7rem; font-weight: 800; background: rgba(99, 102, 241, 0.08); color: #4f46e5; padding: 4px 10px; border-radius: 20px; display: inline-flex; align-items: center; gap: 4px;">
+                    <span style="width: 6px; height: 6px; border-radius: 50%; background: #4f46e5; display: inline-block;"></span> Sản phẩm sạch
+                </span>
+            </div>
+        </div>
+
+        <!-- 3. Stalls with QR -->
+        <div class="metric-card-premium theme-emerald" data-aos="fade-up" data-aos-delay="150">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                <span class="db-card-metric"><?php echo e($stallsWithQr); ?></span>
+                <div class="metric-icon-box grad-emerald">
+                    <i class="bi bi-qr-code-scan"></i>
+                </div>
+            </div>
+            <h4 style="font-family: var(--font-heading); font-size: 0.95rem; font-weight: 800; margin: 0 0 6px 0; color: var(--text-main); display: flex; align-items: center;">
+                <span class="pulse-indicator-success" style="margin-right: 6px;"></span>Số hộ có mã QR
+            </h4>
+            <p style="font-size: 0.78rem; color: var(--text-muted); margin: 0; line-height: 1.4;">Tỷ lệ phủ mã VietQR hỗ trợ thanh toán số cực kỳ nhanh chóng.</p>
+            <div class="metric-progress-wrapper">
+                <div style="display: flex; justify-content: space-between; font-size: 0.72rem; font-weight: 700; color: var(--text-muted); margin-bottom: 4px;">
+                    <span>Tỷ lệ phủ</span>
+                    <span style="color: #10B981;"><?php echo e($qrPercentage); ?>%</span>
+                </div>
+                <div style="height: 6px; background: rgba(0,0,0,0.05); border-radius: 10px; overflow: hidden;">
+                    <div style="height: 100%; width: <?php echo e($qrPercentage); ?>%; background: linear-gradient(90deg, #10B981, #34D399); border-radius: 10px;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. Cashless Payment rate -->
+        <div class="metric-card-premium theme-emerald" data-aos="fade-up" data-aos-delay="200">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                <span class="db-card-metric">95%</span>
+                <div class="metric-icon-box grad-emerald">
+                    <i class="bi bi-currency-exchange"></i>
+                </div>
+            </div>
+            <h4 style="font-family: var(--font-heading); font-size: 0.95rem; font-weight: 800; margin: 0 0 6px 0; color: var(--text-main);">Tỷ lệ thanh toán số</h4>
+            <p style="font-size: 0.78rem; color: var(--text-muted); margin: 0; line-height: 1.4;">Tỷ trọng giao dịch không tiền mặt của tiểu thương trên hệ thống.</p>
+            <div class="metric-progress-wrapper">
+                <div style="display: flex; justify-content: space-between; font-size: 0.72rem; font-weight: 700; color: var(--text-muted); margin-bottom: 4px;">
+                    <span>Thanh toán số</span>
+                    <span style="color: #10B981;">95%</span>
+                </div>
+                <div style="height: 6px; background: rgba(0,0,0,0.05); border-radius: 10px; overflow: hidden;">
+                    <div style="height: 100%; width: 95%; background: linear-gradient(90deg, #10B981, #059669); border-radius: 10px;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5. Smartphone count -->
+        <div class="metric-card-premium theme-blue" data-aos="fade-up" data-aos-delay="250">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                <span class="db-card-metric"><?php echo e($stallsWithSmartphone); ?></span>
+                <div class="metric-icon-box grad-blue">
+                    <i class="bi bi-phone"></i>
+                </div>
+            </div>
+            <h4 style="font-family: var(--font-heading); font-size: 0.95rem; font-weight: 800; margin: 0 0 6px 0; color: var(--text-main);">Hộ dùng Smartphone</h4>
+            <p style="font-size: 0.78rem; color: var(--text-muted); margin: 0; line-height: 1.4;">Tỷ lệ sử dụng điện thoại thông minh để quản lý kinh doanh.</p>
+            <div class="metric-progress-wrapper">
+                <div style="display: flex; justify-content: space-between; font-size: 0.72rem; font-weight: 700; color: var(--text-muted); margin-bottom: 4px;">
+                    <span>Sử dụng</span>
+                    <span style="color: #3b82f6;"><?php echo e($phonePercentage); ?>%</span>
+                </div>
+                <div style="height: 6px; background: rgba(0,0,0,0.05); border-radius: 10px; overflow: hidden;">
+                    <div style="height: 100%; width: <?php echo e($phonePercentage); ?>%; background: linear-gradient(90deg, #3b82f6, #60a5fa); border-radius: 10px;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 6. Bank account count -->
+        <div class="metric-card-premium theme-blue" data-aos="fade-up" data-aos-delay="300">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                <span class="db-card-metric"><?php echo e($stallsWithBank); ?></span>
+                <div class="metric-icon-box grad-purple">
+                    <i class="bi bi-bank"></i>
+                </div>
+            </div>
+            <h4 style="font-family: var(--font-heading); font-size: 0.95rem; font-weight: 800; margin: 0 0 6px 0; color: var(--text-main);">Hộ có TK ngân hàng</h4>
+            <p style="font-size: 0.78rem; color: var(--text-muted); margin: 0; line-height: 1.4;">Tài khoản ngân hàng số liên kết trực tiếp để nhận tiền chuyển khoản.</p>
+            <div class="metric-progress-wrapper">
+                <div style="display: flex; justify-content: space-between; font-size: 0.72rem; font-weight: 700; color: var(--text-muted); margin-bottom: 4px;">
+                    <span>Tỷ lệ liên kết</span>
+                    <span style="color: #8b5cf6;"><?php echo e($bankPercentage); ?>%</span>
+                </div>
+                <div style="height: 6px; background: rgba(0,0,0,0.05); border-radius: 10px; overflow: hidden;">
+                    <div style="height: 100%; width: <?php echo e($bankPercentage); ?>%; background: linear-gradient(90deg, #8b5cf6, #a78bfa); border-radius: 10px;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 7. Wifi Status -->
+        <div class="metric-card-premium theme-orange" data-aos="fade-up" data-aos-delay="350">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                <span style="font-family: var(--font-heading); font-size: 1.25rem; font-weight: 900; color: #F59E0B; display: flex; align-items: center; gap: 4px; line-height: 1.2;">
+                    <span class="pulse-indicator-pending" style="margin-right: 0;"></span>Đang quy hoạch
+                </span>
+                <div class="metric-icon-box grad-orange" style="opacity: 0.85;">
+                    <i class="bi bi-wifi"></i>
+                </div>
+            </div>
+            <h4 style="font-family: var(--font-heading); font-size: 0.95rem; font-weight: 800; margin: 0 0 6px 0; color: var(--text-main);">Wifi công cộng miễn phí</h4>
+            <p style="font-size: 0.78rem; color: var(--text-muted); margin: 0; line-height: 1.4;">Đang khảo sát lập phương án thiết kế hạ tầng mạng diện rộng.</p>
+            <div class="metric-progress-wrapper">
+                <div style="display: flex; justify-content: space-between; font-size: 0.72rem; font-weight: 700; color: var(--text-muted); margin-bottom: 4px;">
+                    <span>Khảo sát dự án</span>
+                    <span style="color: #F59E0B;">35%</span>
+                </div>
+                <div style="height: 6px; background: rgba(0,0,0,0.05); border-radius: 10px; overflow: hidden;">
+                    <div style="height: 100%; width: 35%; background: linear-gradient(90deg, #F59E0B, #fbbf24); border-radius: 10px;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 8. Camera Status -->
+        <div class="metric-card-premium theme-orange" data-aos="fade-up" data-aos-delay="400">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                <span style="font-family: var(--font-heading); font-size: 1.25rem; font-weight: 900; color: #F59E0B; display: flex; align-items: center; gap: 4px; line-height: 1.2;">
+                    <span class="pulse-indicator-pending" style="margin-right: 0;"></span>Đang lập dự án
+                </span>
+                <div class="metric-icon-box grad-orange" style="opacity: 0.85;">
+                    <i class="bi bi-camera-video"></i>
+                </div>
+            </div>
+            <h4 style="font-family: var(--font-heading); font-size: 0.95rem; font-weight: 800; margin: 0 0 6px 0; color: var(--text-main);">Camera AI giám sát an ninh</h4>
+            <p style="font-size: 0.78rem; color: var(--text-muted); margin: 0; line-height: 1.4;">Thiết kế hệ thống giám sát an ninh tự động trung tâm.</p>
+            <div class="metric-progress-wrapper">
+                <div style="display: flex; justify-content: space-between; font-size: 0.72rem; font-weight: 700; color: var(--text-muted); margin-bottom: 4px;">
+                    <span>Lập dự án</span>
+                    <span style="color: #F59E0B;">20%</span>
+                </div>
+                <div style="height: 6px; background: rgba(0,0,0,0.05); border-radius: 10px; overflow: hidden;">
+                    <div style="height: 100%; width: 20%; background: linear-gradient(90deg, #F59E0B, #fbbf24); border-radius: 10px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- III. BIỂU ĐỒ PHÂN TÍCH (CHART.JS) -->
+    <div class="premium-panel" data-aos="fade-up">
+        <h3 style="font-family: var(--font-heading); font-weight: 800; font-size: 1.4rem; margin-bottom: 24px; color: var(--text-main); display: flex; align-items: center; gap: 10px;">
+            📊 Trung tâm Phân Tích Dữ Liệu Chợ Số 4.0
+        </h3>
+        
+        <div class="charts-grid-custom">
+            <!-- 1. Pie Phân bố ngành hàng -->
+            <div style="background: var(--bg-base); border-radius: 16px; padding: 20px; border: 1px solid var(--border-glow); height: 100%;">
+                <h5 style="font-size: 0.9rem; font-weight: 700; margin-bottom: 15px; text-align: center; color: var(--text-main);">Ngành hàng kinh doanh</h5>
+                <div style="position: relative; height: 220px;">
+                    <canvas id="categoryPieChart"></canvas>
+                </div>
+            </div>
+            <!-- 2. Doughnut Tỷ lệ QR -->
+            <div style="background: var(--bg-base); border-radius: 16px; padding: 20px; border: 1px solid var(--border-glow); height: 100%;">
+                <h5 style="font-size: 0.9rem; font-weight: 700; margin-bottom: 15px; text-align: center; color: var(--text-main);">Đăng ký mã VietQR</h5>
+                <div style="position: relative; height: 220px;">
+                    <canvas id="qrDoughnutChart"></canvas>
+                </div>
+            </div>
+            <!-- 3. Doughnut Smartphone & Ngân hàng -->
+            <div style="background: var(--bg-base); border-radius: 16px; padding: 20px; border: 1px solid var(--border-glow); height: 100%;">
+                <h5 style="font-size: 0.9rem; font-weight: 700; margin-bottom: 15px; text-align: center; color: var(--text-main);">Thiết bị & Liên kết Ngân hàng</h5>
+                <div style="position: relative; height: 220px;">
+                    <canvas id="smartDoughnutChart"></canvas>
+                </div>
+            </div>
+            <!-- 4. Bar Nguồn gốc hàng hóa -->
+            <div class="chart-full-width" style="background: var(--bg-base); border-radius: 16px; padding: 20px; border: 1px solid var(--border-glow); margin-top: 24px;">
+                <h5 style="font-size: 0.9rem; font-weight: 700; margin-bottom: 15px; color: var(--text-main);">Truy xuất Nguồn gốc Hàng hóa nông sản (%)</h5>
+                <div style="position: relative; height: 260px;">
+                    <canvas id="originBarChart"></canvas>
+                </div>
             </div>
         </div>
     </div>
@@ -1542,43 +1882,7 @@
         </div>
     </div>
 
-    <!-- Bún Mạch Tràng Cổ Loa Heritage (Special for ID 16) -->
-    <?php if($eatery->id === 16): ?>
-        <div class="premium-panel" style="border-color: rgba(212,175,55,0.4) !important; background: linear-gradient(135deg, var(--bg-card) 0%, rgba(212,175,55,0.03) 100%) !important;" data-aos="fade-up">
-            <span class="premium-badge" style="background: rgba(212,175,55,0.1); border-color: rgba(212,175,55,0.4); color: #ffb300; font-weight: 800; padding: 6px 14px; border-radius: 20px; display: inline-block;">🏛️ DI SẢN ẨM THỰC TRUYỀN THUYẾT CỔ LOA</span>
-            
-            <div style="display: flex; gap: 30px; flex-wrap: wrap; margin-top: 16px;">
-                <div style="flex: 2; min-width: 300px; display: flex; flex-direction: column; gap: 14px;">
-                    <h3 style="font-family: var(--font-heading); font-size: 1.6rem; font-weight: 900; color: var(--text-main); margin: 0;">
-                        Bún Mạch Tràng Cổ Loa - Hương Vị Ngàn Năm
-                    </h3>
-                    <p style="font-size: 0.9rem; line-height: 1.6; color: var(--text-muted); margin: 0;">
-                        Tương truyền, trong quá trình xây dựng thành Cổ Loa, người dân làng Mạch Tràng đã làm ra những sợi bún có màu ngà tự nhiên làm lương thực dâng lên vua An Dương Vương và các tướng sĩ. Trải qua hàng ngàn năm, sợi bún đặc trưng không dùng chất tẩy trắng này vẫn gìn giữ nguyên vẹn vị ngọt thanh mát, dẻo dai từ gạo nguyên bản, trở thành một di sản sống của vùng đất kinh đô cổ.
-                    </p>
-                    
-                    <div style="background: var(--bg-base); border: 1px solid var(--border-glow); border-radius: 16px; padding: 14px 18px; display: flex; align-items: center; gap: 16px;">
-                        <button onclick="toggleAudio()" id="audioBtn" style="width: 44px; height: 44px; border-radius: 50%; background: var(--primary); border: none; color: #ffffff; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.2s;">
-                            ▶️
-                        </button>
-                        <div>
-                            <strong style="display: block; font-size: 0.85rem; color: var(--text-main);">Nghe Thuyết Minh Di Sản Bún Mạch Tràng</strong>
-                            <span style="font-size: 0.75rem; color: var(--text-muted);" id="audioStatus">Bấm để bắt đầu nghe thuyết minh tự động</span>
-                        </div>
-                        <audio id="heritageAudio" src="https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&q=Bún%20Mạch%20Tràng%20có%20lịch%20sử%20hào%20hùng%20gắn%20liền%20với%20truyền%20thuyết%20Cổ%20Loa%20thành.%20Tương%20truyền,%20trong%20quá%20trình%20xây%20dựng%20thành%20Cổ%20Loa,%20người%20dân%20làng%20Mạch%20Tràng%20đã%20làm%20ra%20những%20sợi%20bún%20có%20màu%20ngà%20tự%20nhiên%20làm%20lương%20thực%20dâng%20lên%20vua%20An%20Dương%20Vương%20và%20các%20tướng%20sĩ.&tl=vi"></audio>
-                    </div>
-                </div>
-                
-                <div style="flex: 1; min-width: 250px; background: rgba(0,0,0,0.015); border: 1px solid var(--border-glow); border-radius: 20px; padding: 20px;">
-                    <strong style="display: block; color: var(--text-main); font-size: 0.95rem; margin-bottom: 12px;">Đạt Chuẩn OCOP 4 Sao</strong>
-                    <div style="font-size: 0.82rem; display: flex; flex-direction: column; gap: 10px; color: var(--text-muted);">
-                        <div>🏆 <strong>Sản phẩm tiêu biểu:</strong> Đạt chứng nhận sản phẩm nông nghiệp tiêu biểu Hà Nội.</div>
-                        <div>🌱 <strong>Cam kết:</strong> Ngâm gạo, lên men tự nhiên 3 ngày đêm, hoàn toàn không chất tẩy trắng.</div>
-                        <div>👵 <strong>Nghệ nhân tiêu biểu:</strong> Nguyễn Văn Cường (Đời thứ 4 làng Mạch Tràng).</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    <?php endif; ?>
+
     
 </div>
 
@@ -1613,7 +1917,7 @@
                     </div>
                     
                     <h5 style="font-family: var(--font-heading); font-size: 0.95rem; font-weight: 800; margin-bottom: 12px; color: var(--text-main);">Danh sách sản phẩm niêm yết</h5>
-                    <div id="mdProductsList" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px;">
+                    <div id="mdProductsList" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px; max-height: 270px; overflow-y: auto; padding-right: 6px; scrollbar-width: thin;">
                         <!-- JS generated items -->
                     </div>
 
@@ -1682,7 +1986,7 @@
                 </form>
 
                 <!-- Reviews list mock -->
-                <div style="display: flex; flex-direction: column; gap: 14px;">
+                <div id="mdReviewsList" style="display: flex; flex-direction: column; gap: 14px;">
                     <div style="display: flex; gap: 12px; background: var(--bg-base); padding: 12px; border-radius: 12px; border: 1px solid var(--border-glow);">
                         <span style="font-size: 1.5rem;">👨</span>
                         <div>
@@ -1719,6 +2023,559 @@
 
     </div>
 </div>
+
+<!-- FLOATING CHAT BUBBLE & PANEL FOR CHỢ SỐ 4.0 -->
+<!-- Floating Trigger Bubble -->
+<div id="marketChatBubbleTrigger" onclick="toggleFloatingChat()" style="position: fixed; bottom: 95px; right: 24px; width: 62px; height: 62px; border-radius: 50%; background: linear-gradient(135deg, #FF9F43, #FF7A00); color: white; display: flex; align-items: center; justify-content: center; font-size: 1.7rem; cursor: pointer; box-shadow: 0 6px 20px rgba(255, 122, 0, 0.35); z-index: 99999; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);" onmouseover="this.style.transform='scale(1.08) translateY(-2px)'" onmouseout="this.style.transform='none'">
+    💬
+    <!-- Unread indicator count -->
+    <span id="chatBubbleUnreadBadge" style="display: none; position: absolute; top: -2px; right: -2px; background: #ef4444; color: white; font-size: 0.68rem; font-weight: 800; padding: 2px 6px; border-radius: 10px; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">0</span>
+</div>
+
+<!-- Floating Chat Panel -->
+<div id="marketFloatingChatPanel" style="display: none; position: fixed; bottom: 175px; right: 24px; width: 850px; height: 580px; background: var(--bg-card); border: 1.5px solid var(--border-glow); border-radius: 24px; box-shadow: 0 12px 40px rgba(0,0,0,0.18); z-index: 99999; flex-direction: column; overflow: hidden; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); opacity: 0; transform: translateY(20px);">
+    <!-- Panel Header -->
+    <div style="background: linear-gradient(135deg, #FF9F43, #FF7A00); color: white; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; z-index: 10; border-bottom: 1px solid rgba(255,255,255,0.1);">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 1.4rem;">💬</span>
+            <div style="text-align: left;">
+                <h3 style="font-family: var(--font-heading); font-weight: 800; font-size: 0.95rem; margin: 0; color: white; line-height: 1.2;">
+                    Cổng Chợ Số 4.0 <?php echo e($eatery->name); ?>
+
+                </h3>
+                <p style="font-size: 0.72rem; opacity: 0.9; margin: 2px 0 0 0; color: white; line-height: 1.1;">
+                    Giao lưu cộng đồng & Nhắn riêng tiểu thương trực tuyến
+                </p>
+            </div>
+        </div>
+        <button onclick="toggleFloatingChat()" style="background: rgba(255,255,255,0.18); border: none; width: 28px; height: 28px; border-radius: 50%; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; font-weight: bold; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.18)'">✕</button>
+    </div>
+
+    <!-- Inner Chat Wrapper -->
+    <div class="market-chat-container" style="height: calc(100% - 58px); margin-top: 0; border: none; border-radius: 0; box-shadow: none;">
+            <!-- Left panel: Rooms & Grouped Stalls Directory -->
+            <div class="market-chat-sidebar" style="overflow-y: auto; scrollbar-width: thin; padding-right: 12px;">
+                <!-- Room Switcher Tabs -->
+                <div class="active-merchants-list" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px;">
+                    <div class="merchant-active-card chat-room-tab active" id="tabPublicRoom" onclick="switchChatRoom('public')" style="cursor: pointer; font-weight: 700; border-color: var(--primary);">
+                        <span style="font-size: 1.35rem;">💬</span>
+                        <div style="flex: 1; min-width: 0;">
+                            <strong style="font-size: 0.85rem; color: var(--text-main); display: block;">Phòng Chat Chung</strong>
+                            <span style="font-size: 0.72rem; color: var(--text-muted); display: block;">Mọi người thảo luận</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Search Bar -->
+                <div style="margin-bottom: 12px; margin-top: 4px;">
+                    <div class="custom-input-group" style="position: relative;">
+                        <span class="custom-input-icon" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); display: flex; align-items: center; justify-content: center; pointer-events: none;"><i class="bi bi-search" style="font-size: 0.85rem;"></i></span>
+                        <input type="text" id="chatStallSearch" oninput="filterChatStalls()" class="custom-input" style="font-size: 0.78rem; border-radius: 12px; padding: 8px 12px 8px 36px !important; width: 100%;" placeholder="Tìm tên sạp / chủ hộ...">
+                    </div>
+                </div>
+
+                <!-- Dynamic Grouped Merchant List for Private Chat -->
+                <div id="stallsGroupedAccordion">
+                    <?php
+                        $groupedByCategory = [
+                            'Ăn uống' => [],
+                            'Rau củ' => [],
+                            'Thực phẩm khô' => [],
+                            'Thịt tươi' => [],
+                            'Khác' => []
+                        ];
+
+                        foreach($groupedStalls as $stallName => $stallProducts) {
+                            $first = $stallProducts->first();
+                            $category = 'Khác';
+                            if (str_contains($stallName, 'Ăn uống') || str_contains($stallName, 'Ăn sáng') || str_contains($stallName, 'Ẩm thực')) {
+                                $category = 'Ăn uống';
+                            } elseif (str_contains($stallName, 'Rau củ') || str_contains($stallName, 'Rau')) {
+                                $category = 'Rau củ';
+                            } elseif (str_contains($stallName, 'Thực phẩm khô') || str_contains($stallName, 'Hoa quả')) {
+                                $category = 'Thực phẩm khô';
+                            } elseif (str_contains($stallName, 'Thịt') || str_contains($stallName, 'Giò chả')) {
+                                $category = 'Thịt tươi';
+                            }
+                            $groupedByCategory[$category][$stallName] = $stallProducts;
+                        }
+                        
+                        $categoryEmojis = [
+                            'Ăn uống' => '🍲 Ẩm thực',
+                            'Rau củ' => '🥦 Rau củ quả',
+                            'Thực phẩm khô' => '🥜 Đồ khô & Đồ khô',
+                            'Thịt tươi' => '🥩 Thịt tươi sống',
+                            'Khác' => '🏪 Ngành hàng khác'
+                        ];
+
+                        $merchantCount = 0;
+                    ?>
+
+                    <?php $__currentLoopData = $groupedByCategory; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $catName => $stallsList): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                        <?php if(count($stallsList) > 0): ?>
+                            <div class="chat-category-group" id="catGroup_<?php echo e(preg_replace('/[^a-zA-Z0-9]/', '', $catName)); ?>" style="margin-bottom: 14px;">
+                                <div style="font-size: 0.72rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border-glow); padding-bottom: 4px;">
+                                    <span><?php echo e($categoryEmojis[$catName]); ?></span>
+                                    <span style="background: rgba(0,0,0,0.05); padding: 1px 5px; border-radius: 6px; font-size: 0.65rem;"><?php echo e(count($stallsList)); ?></span>
+                                </div>
+                                <div style="display: flex; flex-direction: column; gap: 8px;">
+                                    <?php $__currentLoopData = $stallsList; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $stallName => $stallProducts): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                        <?php
+                                            $first = $stallProducts->first();
+                                            $sellerName = $first->seller_name;
+                                            $merchantCount++;
+                                            $avatars = ['👵','👩','👨','👩‍🍳','👨‍🌾','👵','👨‍🍳','👩‍🌾'];
+                                            $avatar = $avatars[$merchantCount % count($avatars)];
+                                            
+                                            $safeStallId = preg_replace('/[^a-zA-Z0-9]/', '', $stallName);
+
+                                            // Realistic simulated last active time
+                                            $activityLogs = ['Vừa truy cập', 'Đang trực tuyến', 'Hoạt động 2 phút trước', 'Hoạt động 5 phút trước'];
+                                            $activityText = $activityLogs[$merchantCount % count($activityLogs)];
+                                        ?>
+                                        <div class="merchant-active-card chat-room-tab chat-stall-card-item" id="tabStall_<?php echo e($safeStallId); ?>" data-stall-raw-name="<?php echo e($stallName); ?>" data-stall-name="<?php echo e(strtolower($stallName)); ?>" data-seller-name="<?php echo e(strtolower($sellerName)); ?>" onclick="switchChatRoom('private', '<?php echo e($stallName); ?>')" style="cursor: pointer; position: relative;">
+                                            <span style="font-size: 1.35rem;"><?php echo e($avatar); ?></span>
+                                            <div style="flex: 1; min-width: 0;">
+                                                <strong style="font-size: 0.82rem; color: var(--text-main); display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                                    <?php echo e($stallName); ?>
+
+                                                </strong>
+                                                <span style="font-size: 0.72rem; color: var(--text-muted); display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                                    Chủ sạp: <?php echo e($sellerName); ?>
+
+                                                </span>
+                                                <span style="font-size: 0.64rem; color: #2ecc71; font-weight: 700; display: flex; align-items: center; gap: 3px; margin-top: 2px;">
+                                                    <span class="active-dot-pulsing" style="margin: 0; width: 6px; height: 6px;"></span> <?php echo e($activityText); ?>
+
+                                                </span>
+                                            </div>
+                                            <!-- Red dot indicator for unread messages -->
+                                            <span class="unread-badge-dot" id="unreadStall_<?php echo e($safeStallId); ?>" style="display: none; position: absolute; top: 10px; right: 10px; width: 8px; height: 8px; border-radius: 50%; background: #ef4444;"></span>
+                                        </div>
+                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                </div>
+                            </div>
+                        <?php endif; ?>
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                </div>
+
+                <!-- If current user is a merchant, show customer list who sent PMs to them -->
+                <?php if(Auth::check()): ?>
+                    <?php
+                        $user = Auth::user();
+                        $userPhone = $user->phone ?? '';
+                        $merchantStall = \App\Models\OcopProduct::on('mysql_market')
+                            ->where('eatery_id', $eatery->id)
+                            ->where('seller_phone', $userPhone)
+                            ->whereNotNull('stall_name')
+                            ->first();
+                    ?>
+                    <?php if($merchantStall): ?>
+                        <div id="merchantPrivateChatsSection" style="border-top: 1px solid var(--border-glow); margin-top: 18px; padding-top: 14px;">
+                            <h4 style="font-family: var(--font-heading); font-size: 0.85rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
+                                📩 Khách hàng nhắn riêng
+                            </h4>
+                            <div id="merchantCustomersList" style="display: flex; flex-direction: column; gap: 8px;">
+                                <div style="font-size: 0.72rem; color: var(--text-muted); text-align: center; padding: 10px 0;">Chưa có khách hàng nhắn riêng</div>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+                <?php endif; ?>
+            </div>
+
+            <!-- Right panel: Chatbox -->
+            <div class="market-chat-main">
+                <!-- Pinned message banner / Recipient header -->
+                <div class="pinned-message-banner" id="chatRoomHeader" style="background: rgba(14, 165, 233, 0.04); border-color: rgba(14, 165, 233, 0.25); color: var(--text-main);">
+                    <span style="font-size: 1.1rem; flex-shrink: 0;" id="chatHeaderIcon">📢</span>
+                    <div style="flex: 1; min-width: 0; font-size: 0.78rem; font-weight: 600; line-height: 1.4;">
+                        <span id="chatHeaderSubtitle" style="color: var(--primary); text-transform: uppercase; font-size: 0.72rem; font-weight: 800; display: block; margin-bottom: 2px;">Thông báo từ Ban Quản Lý</span>
+                        <span id="chatHeaderContent">Chào mừng bà con đến với Cổng Chợ Số 4.0 <?php echo e($eatery->name); ?>. Hãy quét QR VietQR để thanh toán không tiền mặt và tích lũy điểm tiêu dùng xanh!</span>
+                    </div>
+                </div>
+
+                <!-- Chat history window -->
+                <div class="chat-messages-window" id="marketChatMessages">
+                    <div style="display: flex; justify-content: center; align-items: center; height: 100%; color: var(--text-muted);">
+                        <div style="width: 24px; height: 24px; border: 2px solid rgba(0,0,0,0.05); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; margin-right: 8px;"></div>
+                        <span style="font-size: 0.82rem; font-weight: 600;">Đang tải hội thoại...</span>
+                    </div>
+                </div>
+
+                <!-- Product attachment preview -->
+                <div class="product-attachment-preview" id="chatProductPreview" style="display: none;">
+                    <div style="font-size: 0.78rem; font-weight: 700; color: #FF7A00; display: flex; align-items: center; gap: 4px; margin-bottom: 6px;">
+                        <span>🏷️</span> Đang gắn kèm sản phẩm:
+                    </div>
+                    <div style="display: flex; gap: 10px; align-items: center; background: var(--bg-base); padding: 8px 12px; border-radius: 12px; border: 1px solid var(--border-glow); position: relative;">
+                        <img id="chatAttachedImg" src="" style="width: 44px; height: 44px; border-radius: 8px; object-fit: cover;" onerror="this.src='https://placehold.co/44x44/00A86B/ffffff?text=Product'">
+                        <div style="flex: 1; min-width: 0;">
+                            <strong id="chatAttachedName" style="font-size: 0.82rem; color: var(--text-main); display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Tên</strong>
+                            <span id="chatAttachedPrice" style="font-size: 0.78rem; color: #FF7A00; font-weight: 800;">0đ</span>
+                        </div>
+                        <button type="button" onclick="removeAttachedProduct()" style="background: rgba(0,0,0,0.05); border: none; width: 24px; height: 24px; border-radius: 50%; color: var(--text-muted); font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;" onmouseover="this.style.background='rgba(239, 68, 68, 0.1)'; this.style.color='#ef4444'" onmouseout="this.style.background='rgba(0,0,0,0.05)'; this.style.color='var(--text-muted)'">✕</button>
+                    </div>
+                    <input type="hidden" id="chatAttachedProductId" value="">
+                </div>
+
+                <!-- Image attachment preview -->
+                <div class="product-attachment-preview" id="chatImagePreview" style="display: none; background: rgba(16, 185, 129, 0.03); border-color: rgba(16, 185, 129, 0.25);">
+                    <div style="font-size: 0.78rem; font-weight: 700; color: #10B981; display: flex; align-items: center; gap: 4px; margin-bottom: 6px;">
+                        <span>📷</span> Đang đính kèm hình ảnh:
+                    </div>
+                    <div style="display: flex; gap: 10px; align-items: center; background: var(--bg-base); padding: 8px 12px; border-radius: 12px; border: 1px solid var(--border-glow); position: relative; width: fit-content;">
+                        <img id="chatAttachedImgFile" src="" style="max-width: 80px; max-height: 80px; border-radius: 8px; object-fit: contain;">
+                        <button type="button" onclick="removeAttachedImage()" style="position: absolute; top: -8px; right: -8px; background: #ef4444; border: none; width: 20px; height: 20px; border-radius: 50%; color: white; font-size: 0.7rem; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">✕</button>
+                    </div>
+                </div>
+
+                <!-- Input area -->
+                <div id="chatLoginPrompt" style="display: none; background: rgba(0,0,0,0.015); border: 1.5px dashed var(--border-glow); border-radius: 16px; padding: 14px; text-align: center; margin-top: 10px;">
+                    <span style="font-size: 0.82rem; color: var(--text-muted); font-weight: 600;">
+                        🔑 Vui lòng <a href="/login" style="color: var(--primary); text-decoration: underline !important; font-weight: 750;">đăng nhập</a> để bắt đầu cuộc trò chuyện riêng tư với chủ sạp.
+                    </span>
+                </div>
+
+                <form id="marketChatForm" onsubmit="sendChatMessage(event)" style="border-top: 1px solid var(--border-glow); padding-top: 12px; display: flex; flex-direction: column; gap: 10px;">
+                    
+                    <!-- Quick Replies Row -->
+                    <div class="quick-replies-wrap" style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 2px;">
+                        <span class="quick-reply-pill" onclick="sendQuickReply('Sản phẩm này còn hàng không ạ?')">Sản phẩm này còn không?</span>
+                        <span class="quick-reply-pill" onclick="sendQuickReply('Giá bao nhiêu vậy ạ?')">Giá bao nhiêu vậy ạ?</span>
+                        <span class="quick-reply-pill" onclick="sendQuickReply('Hàng có sẵn để qua lấy luôn không ạ?')">Có sẵn không ạ?</span>
+                        <span class="quick-reply-pill" onclick="sendQuickReply('Nhớ bọc kỹ giúp mình nhé!')">Bọc kỹ giúp mình nhé!</span>
+                    </div>
+
+                    <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                        <?php if(Auth::check() && $merchantStall): ?>
+                            <!-- Share product button for merchants -->
+                            <div style="position: relative;">
+                                <button type="button" onclick="toggleMerchantProductSelector()" class="btn-attach-product" style="padding: 5px 10px; font-size: 0.72rem; font-weight: 700; border-radius: 8px; background: rgba(0, 168, 107, 0.08); border: 1px solid rgba(0, 168, 107, 0.25); color: #00A86B; cursor: pointer; display: flex; align-items: center; gap: 4px; transition: all 0.2s;">
+                                    🏷️ Gắn sản phẩm sạp của tôi
+                                </button>
+                                <div class="merchant-product-dropdown" id="merchantProductDropdown" style="display: none; position: absolute; bottom: 32px; left: 0; width: 240px; max-height: 200px; overflow-y: auto; background: var(--bg-card); border: 1px solid var(--border-glow); border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 10; padding: 6px 0;">
+                                    <?php
+                                        $stallsProds = \App\Models\OcopProduct::on('mysql_market')
+                                            ->where('eatery_id', $eatery->id)
+                                            ->where('stall_name', $merchantStall->stall_name)
+                                            ->get();
+                                    ?>
+                                    <?php if($stallsProds->count() === 0): ?>
+                                        <div style="font-size: 0.75rem; color: var(--text-muted); text-align: center; padding: 10px 0;">Sạp của bạn chưa có sản phẩm</div>
+                                    <?php else: ?>
+                                        <?php $__currentLoopData = $stallsProds; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $sp): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                            <div class="dropdown-product-item" onclick="attachProduct(<?php echo e($sp->id); ?>, '<?php echo e($sp->name); ?>', <?php echo e((float)$sp->price); ?>, '<?php echo e($sp->image_path ? asset($sp->image_path) : ''); ?>')">
+                                                <strong><?php echo e($sp->name); ?></strong>
+                                                <span><?php echo e(number_format($sp->price)); ?>đ</span>
+                                            </div>
+                                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <!-- Image Upload Button (Camera icon) -->
+                        <button type="button" onclick="document.getElementById('chatImageInputFile').click()" style="padding: 10px 12px; background: rgba(0,0,0,0.03); border: 1px solid var(--border-glow); border-radius: 12px; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;" title="Đính kèm hình ảnh" onmouseover="this.style.background='rgba(0,168,107,0.08)'; this.style.color='#00A86B'" onmouseout="this.style.background='rgba(0,0,0,0.03)'; this.style.color='var(--text-muted)'">
+                            <i class="bi bi-camera" style="font-size: 1.15rem;"></i>
+                        </button>
+                        <input type="file" id="chatImageInputFile" style="display: none;" accept="image/*" onchange="handleChatImageSelect(this)">
+
+                        <?php if(!Auth::check()): ?>
+                            <div class="custom-input-group" style="width: 140px; flex-shrink: 0;">
+                                <span class="custom-input-icon"><i class="bi bi-person"></i></span>
+                                <input type="text" id="chatGuestName" class="custom-input custom-input-with-icon" style="font-size: 0.78rem; padding: 6px 6px 6px 28px; border-radius: 10px;" placeholder="Tên của bạn" required>
+                            </div>
+                        <?php endif; ?>
+
+                        <input type="text" id="chatMessageInput" class="custom-input" style="flex: 1; border-radius: 14px; font-size: 0.85rem;" placeholder="Nhập tin nhắn với tư cách <?php echo e(Auth::check() ? Auth::user()->name : 'Khách vãng lai'); ?>..." required>
+                        <button type="submit" class="btn-send-chat" style="padding: 10px 20px; font-size: 0.85rem; font-weight: 800; border-radius: 14px; border: none; background: linear-gradient(135deg, #FF9F43, #FF7A00); color: white; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 10px rgba(255, 122, 0, 0.2); transition: all 0.2s;" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='none'">
+                            Gửi <i class="bi bi-send-fill"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+<!-- Additional styles for Market Group Chat -->
+<style>
+    .quick-reply-pill {
+        font-size: 0.74rem;
+        font-weight: 700;
+        background: rgba(255, 122, 0, 0.05);
+        border: 1px solid rgba(255, 122, 0, 0.16);
+        color: var(--primary);
+        padding: 6px 14px;
+        border-radius: 20px;
+        cursor: pointer;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        display: inline-block;
+        user-select: none;
+        box-shadow: 0 1px 3px rgba(255, 122, 0, 0.02);
+    }
+    .quick-reply-pill:hover {
+        background: linear-gradient(135deg, #FF9F43, #FF7A00);
+        color: white;
+        border-color: var(--primary);
+        transform: translateY(-2px) scale(1.02);
+        box-shadow: 0 4px 12px rgba(255, 122, 0, 0.25);
+    }
+
+    .market-chat-container {
+        display: flex;
+        gap: 0;
+        height: 100%;
+        background: var(--bg-card);
+        border: none;
+        border-radius: 0;
+        overflow: hidden;
+        margin-top: 0;
+        box-shadow: none;
+    }
+
+    @media (max-width: 900px) {
+        #marketFloatingChatPanel {
+            width: calc(100% - 32px) !important;
+            height: 520px !important;
+            right: 16px !important;
+            bottom: 160px !important;
+        }
+    }
+
+    @media (max-width: 600px) {
+        #marketFloatingChatPanel {
+            width: 100% !important;
+            height: 100% !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            border-radius: 0 !important;
+        }
+        #marketChatBubbleTrigger {
+            bottom: 16px !important;
+            right: 16px !important;
+            width: 54px !important;
+            height: 54px !important;
+            font-size: 1.5rem !important;
+        }
+    }
+
+    .market-chat-sidebar {
+        width: 32%;
+        background: rgba(0, 0, 0, 0.005);
+        border-right: 1px solid var(--border-glow);
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        flex-shrink: 0;
+        height: 100%;
+    }
+
+    .market-chat-main {
+        width: 68%;
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        min-width: 0;
+        padding: 16px;
+        background: rgba(0, 0, 0, 0.002);
+        height: 100%;
+    }
+
+    .merchant-active-card {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 14px;
+        background: var(--bg-card);
+        border: 1px solid var(--border-glow);
+        border-radius: 14px;
+        cursor: pointer;
+        transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+        margin-right: 4px;
+    }
+
+    .merchant-active-card:hover {
+        border-color: var(--primary);
+        background: rgba(255, 122, 0, 0.02);
+        transform: translateY(-1.5px);
+        box-shadow: 0 4px 12px rgba(255, 122, 0, 0.05);
+    }
+
+    .merchant-active-card.active {
+        border-color: var(--primary) !important;
+        background: rgba(255, 122, 0, 0.04) !important;
+        font-weight: 700;
+        box-shadow: 0 4px 12px rgba(255, 122, 0, 0.08);
+    }
+
+    .active-dot-pulsing {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #2ecc71;
+        box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.4);
+        animation: pulse-active-dot 1.8s infinite ease-in-out;
+        flex-shrink: 0;
+        margin-left: auto;
+    }
+
+    @keyframes pulse-active-dot {
+        0% { box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.4); }
+        70% { box-shadow: 0 0 0 6px rgba(46, 204, 113, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(46, 204, 113, 0); }
+    }
+
+    .pinned-message-banner {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        background: rgba(245, 158, 11, 0.04);
+        border: 1px dashed rgba(245, 158, 11, 0.25);
+        border-radius: 14px;
+        padding: 10px 14px;
+        margin-bottom: 12px;
+        color: var(--text-main);
+    }
+
+    .chat-messages-window {
+        flex: 1;
+        overflow-y: auto;
+        border: 1px solid var(--border-glow);
+        border-radius: 16px;
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        background: rgba(0, 0, 0, 0.015);
+        margin-bottom: 12px;
+        scrollbar-width: thin;
+    }
+
+    .chat-bubble-row {
+        display: flex;
+        flex-direction: column;
+        max-width: 75%;
+        margin-bottom: 2px;
+        align-self: flex-start;
+    }
+
+    .chat-bubble-row.own-message {
+        align-self: flex-end;
+    }
+
+    .chat-bubble-header {
+        font-size: 0.72rem;
+        color: var(--text-muted);
+        margin-bottom: 4px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .own-message .chat-bubble-header {
+        justify-content: flex-end;
+    }
+
+    .chat-badge {
+        font-size: 0.62rem;
+        font-weight: 800;
+        padding: 1px 5px;
+        border-radius: 4px;
+        color: white;
+        text-transform: uppercase;
+    }
+
+    .badge-admin { background: #ef4444; }
+    .badge-merchant { background: #10b981; }
+    .badge-user { background: #64748b; }
+
+    .chat-bubble-text {
+        background: var(--bg-card);
+        border: 1px solid var(--border-glow);
+        color: var(--text-main);
+        padding: 10px 14px;
+        border-radius: 16px;
+        border-top-left-radius: 4px;
+        font-size: 0.85rem;
+        line-height: 1.4;
+        word-break: break-word;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.01);
+    }
+
+    .own-message .chat-bubble-text {
+        background: linear-gradient(135deg, #FF9F43, #FF7A00);
+        border-color: #FF7A00;
+        color: white;
+        border-radius: 16px;
+        border-top-right-radius: 4px;
+        box-shadow: 0 3px 8px rgba(255, 122, 0, 0.15);
+    }
+
+    .chat-product-card-msg {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        background: var(--bg-base);
+        border: 1.5px solid var(--border-glow);
+        border-radius: 12px;
+        padding: 10px;
+        margin-top: 6px;
+        max-width: 280px;
+    }
+
+    .own-message .chat-product-card-msg {
+        border-color: rgba(255,255,255,0.25);
+        background: rgba(255,255,255,0.1);
+        color: white;
+    }
+
+    .dropdown-product-item {
+        padding: 8px 14px;
+        cursor: pointer;
+        font-size: 0.78rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: background 0.2s;
+    }
+
+    .dropdown-product-item:hover {
+        background: rgba(0,0,0,0.03);
+        color: var(--primary);
+    }
+
+    .product-attachment-preview {
+        background: rgba(255, 122, 0, 0.03);
+        border: 1.5px dashed rgba(255, 122, 0, 0.25);
+        border-radius: 14px;
+        padding: 10px 14px;
+        margin-bottom: 12px;
+    }
+
+    @media (max-width: 768px) {
+        .market-chat-container {
+            flex-direction: column;
+            height: auto;
+        }
+        .market-chat-sidebar {
+            width: 100%;
+            border-right: none;
+            border-bottom: 1px solid var(--border-glow);
+            padding-right: 0;
+            padding-bottom: 14px;
+            margin-bottom: 14px;
+        }
+        .market-chat-main {
+            width: 100%;
+            padding-left: 0;
+        }
+        .chat-messages-window {
+            height: 300px;
+        }
+    }
+</style>
 
 <?php $__env->startSection('scripts'); ?>
 <script>
@@ -1854,7 +2711,622 @@
                 }
             });
         }
+
+        // Start Chat Polling
+        if (document.getElementById('marketChatMessages')) {
+            loadChatMessages();
+            startChatPolling(10000);
+        }
     });
+
+    // --- CHỢ SỐ 4.0: PHÒNG CHAT CỘNG ĐỒNG ---
+    const marketId = <?php echo e($eatery->id); ?>;
+    const marketName = <?php echo json_encode($eatery->name); ?>;
+    const messagesWindow = document.getElementById('marketChatMessages');
+    let lastLoadedMsgId = 0;
+    
+    // Private chat states
+    let activeRoomType = 'public'; // 'public' or 'private'
+    let activeStallName = null;
+    let activeCustomerId = null;
+    let activeCustomerName = null;
+    
+    const isLoggedIn = <?php echo e(Auth::check() ? 'true' : 'false'); ?>;
+    const isMerchant = <?php echo e((isset($merchantStall) && $merchantStall) ? 'true' : 'false'); ?>;
+    const merchantStallName = <?php echo (isset($merchantStall) && $merchantStall) ? json_encode($merchantStall->stall_name) : 'null'; ?>;
+
+    // Keep track of last read message IDs for unread badges
+    let lastReadMsgIds = JSON.parse(localStorage.getItem(`market_${marketId}_last_read_msgs`) || '{}');
+
+    let chatInterval = null;
+    function startChatPolling(ms = 3000) {
+        if (chatInterval) clearInterval(chatInterval);
+        chatInterval = setInterval(loadChatMessages, ms);
+    }
+
+    window.toggleFloatingChat = function() {
+        const panel = document.getElementById('marketFloatingChatPanel');
+        if (!panel) return;
+        
+        if (panel.style.display === 'none') {
+            panel.style.display = 'flex';
+            panel.offsetHeight; // force reflow
+            panel.style.opacity = '1';
+            panel.style.transform = 'translateY(0)';
+            
+            startChatPolling(3000);
+            
+            const msgInput = document.getElementById('chatMessageInput');
+            if (msgInput) msgInput.focus();
+            
+            if (messagesWindow) {
+                setTimeout(() => {
+                    messagesWindow.scrollTop = messagesWindow.scrollHeight;
+                }, 50);
+            }
+        } else {
+            panel.style.opacity = '0';
+            panel.style.transform = 'translateY(20px)';
+            saveReadProgress();
+            
+            setTimeout(() => {
+                panel.style.display = 'none';
+            }, 300);
+            
+            startChatPolling(10000);
+        }
+    };
+
+    function switchChatRoom(roomType, stallName, customerId, customerName) {
+        // Update read pointer for the room we are leaving
+        saveReadProgress();
+
+        activeRoomType = roomType;
+        activeStallName = stallName || null;
+        activeCustomerId = customerId || null;
+        activeCustomerName = customerName || null;
+        lastLoadedMsgId = 0; // force reload
+
+        // Remove active class from all tabs
+        document.querySelectorAll('.chat-room-tab').forEach(el => {
+            el.classList.remove('active');
+            el.style.borderColor = 'var(--border-glow)';
+        });
+
+        // Set active class on selected tab & clear its badge immediately
+        if (roomType === 'public') {
+            const tab = document.getElementById('tabPublicRoom');
+            if (tab) {
+                tab.classList.add('active');
+                tab.style.borderColor = 'var(--primary)';
+            }
+            
+            // Restore default header
+            document.getElementById('chatRoomHeader').style.background = 'rgba(14, 165, 233, 0.04)';
+            document.getElementById('chatRoomHeader').style.borderColor = 'rgba(14, 165, 233, 0.25)';
+            document.getElementById('chatHeaderIcon').textContent = '📢';
+            document.getElementById('chatHeaderSubtitle').textContent = 'Thông báo từ Ban Quản Lý';
+            document.getElementById('chatHeaderContent').textContent = 'Chào mừng bà con đến với Cổng Chợ Số 4.0 ' + marketName + '. Hãy quét QR VietQR để thanh toán không tiền mặt và tích lũy điểm tiêu dùng xanh!';
+        } else {
+            if (isMerchant && customerId) {
+                // Stall owner replying to customer
+                const tab = document.getElementById(`tabCustomer_${customerId}`);
+                if (tab) {
+                    tab.classList.add('active');
+                    tab.style.borderColor = 'var(--primary)';
+                }
+                
+                // Hide unread badge dot immediately
+                const badge = document.getElementById(`badgeCustomer_${customerId}`);
+                if (badge) badge.style.display = 'none';
+
+                document.getElementById('chatRoomHeader').style.background = 'rgba(16, 185, 129, 0.04)';
+                document.getElementById('chatRoomHeader').style.borderColor = 'rgba(16, 185, 129, 0.25)';
+                document.getElementById('chatHeaderIcon').textContent = '✉️';
+                document.getElementById('chatHeaderSubtitle').textContent = 'Trả lời khách hàng';
+                document.getElementById('chatHeaderContent').innerHTML = `Đang phản hồi riêng tư cho Khách hàng: <strong>${customerName}</strong>.`;
+            } else {
+                // Customer chatting with stall
+                const safeId = stallName.replace(/[^a-zA-Z0-9]/g, '');
+                const tab = document.getElementById(`tabStall_${safeId}`);
+                if (tab) {
+                    tab.classList.add('active');
+                    tab.style.borderColor = 'var(--primary)';
+                }
+                
+                // Hide unread badge dot immediately
+                const badge = document.getElementById(`unreadStall_${safeId}`);
+                if (badge) badge.style.display = 'none';
+
+                document.getElementById('chatRoomHeader').style.background = 'rgba(245, 158, 11, 0.04)';
+                document.getElementById('chatRoomHeader').style.borderColor = 'rgba(245, 158, 11, 0.25)';
+                document.getElementById('chatHeaderIcon').textContent = '💬';
+                document.getElementById('chatHeaderSubtitle').textContent = 'Hội thoại riêng';
+                document.getElementById('chatHeaderContent').innerHTML = `Đang trò chuyện riêng tư với sạp: <strong>${stallName}</strong>. Tin nhắn chỉ có bạn và chủ sạp nhìn thấy.`;
+            }
+        }
+
+        // Toggle input form / login prompt for private chat
+        const chatForm = document.getElementById('marketChatForm');
+        const loginPrompt = document.getElementById('chatLoginPrompt');
+        
+        if (roomType === 'private' && !isLoggedIn) {
+            if (chatForm) chatForm.style.display = 'none';
+            if (loginPrompt) loginPrompt.style.display = 'block';
+        } else {
+            if (chatForm) chatForm.style.display = 'flex';
+            if (loginPrompt) loginPrompt.style.display = 'none';
+        }
+
+        // Trigger load
+        loadChatMessages();
+    }
+
+    function saveReadProgress() {
+        if (lastLoadedMsgId > 0) {
+            let roomKey = 'public';
+            if (activeRoomType === 'private') {
+                roomKey = isMerchant ? 'customer_' + activeCustomerId : 'private_' + activeStallName;
+            }
+            lastReadMsgIds[roomKey] = lastLoadedMsgId;
+            localStorage.setItem(`market_${marketId}_last_read_msgs`, JSON.stringify(lastReadMsgIds));
+        }
+    }
+
+    function loadChatMessages() {
+        if (!messagesWindow) return;
+        
+        // Build query string
+        const url = new URL(`/api/market-chat/${marketId}/messages`, window.location.origin);
+        url.searchParams.append('room', activeRoomType);
+        if (activeStallName) url.searchParams.append('private_stall_name', activeStallName);
+        if (activeCustomerId) url.searchParams.append('private_user_id', activeCustomerId);
+
+        fetch(url)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    const messages = data.messages;
+                    if (messages.length === 0) {
+                        if (activeRoomType === 'private' && !isLoggedIn) {
+                            messagesWindow.innerHTML = `
+                                <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100%; color: var(--text-muted); text-align: center; padding: 20px;">
+                                    <span style="font-size: 2.2rem; margin-bottom: 6px;">🔒</span>
+                                    <strong style="font-size: 0.9rem; color: var(--text-main);">Hội thoại riêng tư</strong>
+                                    <p style="font-size: 0.78rem; margin: 4px 0 0 0; max-width: 240px;">Vui lòng đăng nhập để bắt đầu hội thoại và xem tin nhắn riêng tư với sạp này.</p>
+                                </div>
+                            `;
+                        } else {
+                            messagesWindow.innerHTML = `
+                                <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100%; color: var(--text-muted); text-align: center; padding: 20px;">
+                                    <span style="font-size: 2.2rem; margin-bottom: 6px;">💬</span>
+                                    <strong style="font-size: 0.9rem; color: var(--text-main);">Chưa có tin nhắn nào</strong>
+                                    <p style="font-size: 0.78rem; margin: 4px 0 0 0; max-width: 240px;">Hãy là người đầu tiên mở đầu cuộc trò chuyện!</p>
+                                </div>
+                            `;
+                        }
+                    } else {
+                        let html = '';
+                        let hasNew = false;
+                        let lastDateGroup = '';
+                        
+                        messages.forEach(msg => {
+                            if (msg.id > lastLoadedMsgId) {
+                                hasNew = true;
+                            }
+                            
+                            // Render Time Divider
+                            if (msg.date_group !== lastDateGroup) {
+                                html += `
+                                    <div style="text-align: center; margin: 16px 0 8px 0; position: relative;">
+                                        <div style="position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: var(--border-glow); z-index: 1;"></div>
+                                        <span style="position: relative; z-index: 2; background: var(--bg-card); border: 1px solid var(--border-glow); padding: 4px 12px; border-radius: 20px; font-size: 0.68rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">
+                                            ${msg.date_group}
+                                        </span>
+                                    </div>
+                                `;
+                                lastDateGroup = msg.date_group;
+                            }
+                            
+                            const isOwn = msg.is_own;
+                            const badgeHtml = msg.sender_role === 'admin' 
+                                ? '<span class="chat-badge badge-admin">🛡️ BQL Chợ</span>' 
+                                : (msg.sender_role === 'merchant' ? `<span class="chat-badge badge-merchant">🏪 Sạp: ${msg.stall_name}</span>` : '');
+
+                            // Image attachment element
+                            let imageAttachHtml = '';
+                            if (msg.image_url) {
+                                imageAttachHtml = `
+                                    <div style="margin-top: 6px; max-width: 240px; border-radius: 12px; overflow: hidden; border: 1px solid var(--border-glow);">
+                                        <a href="${msg.image_url}" target="_blank">
+                                            <img src="${msg.image_url}" style="width: 100%; max-height: 180px; object-fit: cover; cursor: zoom-in;" onerror="this.style.display='none'">
+                                        </a>
+                                    </div>
+                                `;
+                            }
+
+                            let productCardHtml = '';
+                            if (msg.product) {
+                                productCardHtml = `
+                                    <div class="chat-product-card-msg">
+                                        <img src="${msg.product.image}" style="width: 44px; height: 44px; border-radius: 8px; object-fit: cover;" onerror="this.src='https://placehold.co/44x44/00A86B/ffffff?text=Product'">
+                                        <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+                                            <strong style="font-size: 0.78rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; color: inherit;">${msg.product.name}</strong>
+                                            <span style="font-size: 0.75rem; font-weight: 850; color: #FF7A00;">${new Intl.NumberFormat('vi-VN').format(msg.product.price)}đ</span>
+                                            <button type="button" class="btn-pay-stall" onclick="event.preventDefault(); event.stopPropagation(); addProductToCart(${msg.product.id}, this)" style="padding: 4px 8px; font-size: 0.68rem; font-weight: 700; border-radius: 6px; margin-top: 2px; width: fit-content; border: none; cursor: pointer; display: flex; align-items: center; gap: 3px;">
+                                                🛒 Thêm vào giỏ
+                                            </button>
+                                        </div>
+                                    </div>
+                                `;
+                            }
+
+                            html += `
+                                <div class="chat-bubble-row ${isOwn ? 'own-message' : ''}">
+                                    <div class="chat-bubble-header">
+                                        ${badgeHtml}
+                                        <strong style="color: var(--text-main); font-weight: 700;">${msg.sender_name}</strong>
+                                        <span>${msg.time_formatted}</span>
+                                    </div>
+                                    <div class="chat-bubble-text">
+                                        ${msg.message_text ? `<div>${msg.message_text}</div>` : ''}
+                                        ${imageAttachHtml}
+                                        ${productCardHtml}
+                                    </div>
+                                </div>
+                            `;
+                        });
+
+                        messagesWindow.innerHTML = html;
+                        
+                        if (messages.length > 0) {
+                            const latestId = messages[messages.length - 1].id;
+                            lastLoadedMsgId = latestId;
+                            
+                            // Save current room progress immediately
+                            let currentRoomKey = 'public';
+                            if (activeRoomType === 'private') {
+                                currentRoomKey = isMerchant ? 'customer_' + activeCustomerId : 'private_' + activeStallName;
+                            }
+                            lastReadMsgIds[currentRoomKey] = latestId;
+                            localStorage.setItem(`market_${marketId}_last_read_msgs`, JSON.stringify(lastReadMsgIds));
+                        }
+
+                        if (hasNew) {
+                            setTimeout(() => {
+                                messagesWindow.scrollTop = messagesWindow.scrollHeight;
+                            }, 50);
+                        }
+                    }
+
+                    // 1. Process Unread Badge indicators for Stalls in sidebar
+                    if (data.latest_message_ids) {
+                        document.querySelectorAll('.chat-stall-card-item').forEach(card => {
+                            const rawStall = card.getAttribute('data-stall-raw-name');
+                            if (rawStall) {
+                                const key = 'private_' + rawStall;
+                                const latestId = data.latest_message_ids[key] || 0;
+                                const readId = lastReadMsgIds[key] || 0;
+                                const dot = card.querySelector('.unread-badge-dot');
+                                
+                                if (dot) {
+                                    if (activeStallName !== rawStall && latestId > readId) {
+                                        dot.style.display = 'block';
+                                        card.style.fontWeight = '700';
+                                    } else {
+                                        dot.style.display = 'none';
+                                        card.style.fontWeight = 'normal';
+                                    }
+                                }
+                            }
+                        });
+                    }
+
+                    // 2. Dynamically update active chat list for merchants
+                    if (isMerchant && data.active_chats) {
+                        const listEl = document.getElementById('merchantCustomersList');
+                        if (listEl) {
+                            if (data.active_chats.length === 0) {
+                                listEl.innerHTML = '<div style="font-size: 0.72rem; color: var(--text-muted); text-align: center; padding: 10px 0;">Chưa có khách hàng nhắn riêng</div>';
+                            } else {
+                                let listHtml = '';
+                                data.active_chats.forEach(chat => {
+                                    const isActive = activeCustomerId === chat.id;
+                                    
+                                    // Check unread count for this customer
+                                    const key = 'customer_' + chat.id;
+                                    const latestId = (data.latest_message_ids && data.latest_message_ids[key]) ? data.latest_message_ids[key] : 0;
+                                    const readId = lastReadMsgIds[key] || 0;
+                                    const isUnread = !isActive && latestId > readId;
+
+                                    listHtml += `
+                                        <div class="merchant-active-card chat-room-tab ${isActive ? 'active' : ''}" id="tabCustomer_${chat.id}" onclick="switchChatRoom('private', merchantStallName, ${chat.id}, '${chat.name}')" style="cursor: pointer; position: relative; ${isActive ? 'border-color: var(--primary);' : ''}">
+                                            <span style="font-size: 1.35rem;">👤</span>
+                                            <div style="flex: 1; min-width: 0;">
+                                                <strong style="font-size: 0.82rem; color: var(--text-main); display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; ${isUnread ? 'font-weight: 800;' : ''}">
+                                                    ${chat.name}
+                                                </strong>
+                                                <span style="font-size: 0.72rem; color: var(--text-muted); display: block;">Khách nhắn riêng</span>
+                                            </div>
+                                            ${isUnread ? `<span class="unread-badge-dot" id="badgeCustomer_${chat.id}" style="position: absolute; top: 10px; right: 10px; width: 8px; height: 8px; border-radius: 50%; background: #ef4444;"></span>` : ''}
+                                        </div>
+                                    `;
+                                });
+                                listEl.innerHTML = listHtml;
+                            }
+                        }
+                    }
+
+                    // 3. Calculate and show total unread messages count on the floating bubble trigger badge
+                    if (data.latest_message_ids) {
+                        let totalUnread = 0;
+                        
+                        // Check public room
+                        const publicLatest = data.latest_message_ids['public'] || 0;
+                        const publicRead = lastReadMsgIds['public'] || 0;
+                        if (activeRoomType !== 'public' && publicLatest > publicRead) {
+                            totalUnread += 1;
+                        }
+                        
+                        // Check private channels
+                        for (const key in data.latest_message_ids) {
+                            if (key !== 'public') {
+                                const latest = data.latest_message_ids[key] || 0;
+                                const read = lastReadMsgIds[key] || 0;
+                                
+                                let isCurrentChannel = false;
+                                if (activeRoomType === 'private') {
+                                    if (key.startsWith('private_') && activeStallName && key === 'private_' + activeStallName) {
+                                        isCurrentChannel = true;
+                                    } else if (key.startsWith('customer_') && activeCustomerId && key === 'customer_' + activeCustomerId) {
+                                        isCurrentChannel = true;
+                                    }
+                                }
+                                
+                                if (!isCurrentChannel && latest > read) {
+                                    totalUnread += 1;
+                                }
+                            }
+                        }
+                        
+                        const bubbleBadge = document.getElementById('chatBubbleUnreadBadge');
+                        if (bubbleBadge) {
+                            if (totalUnread > 0) {
+                                bubbleBadge.textContent = totalUnread;
+                                bubbleBadge.style.display = 'flex';
+                                bubbleBadge.style.alignItems = 'center';
+                                bubbleBadge.style.justifyContent = 'center';
+                            } else {
+                                bubbleBadge.style.display = 'none';
+                            }
+                        }
+                    }
+                }
+            })
+            .catch(err => console.error('Error loading chat messages:', err));
+    }
+
+    // Add to cart helper within chat
+    window.addProductToCart = function(productId, btn) {
+        btn.disabled = true;
+        btn.innerHTML = '⏳...';
+        
+        fetch('/cart/add', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                ocop_product_id: productId,
+                quantity: 1
+            })
+        })
+        .then(res => res.json())
+        .then(res => {
+            btn.disabled = false;
+            btn.innerHTML = '🛒 Thêm vào giỏ';
+            if (res.success) {
+                showCartToast('Đã thêm sản phẩm vào giỏ hàng');
+                updateCartBadge(res.count);
+                
+                if (typeof animateFlyToCart === 'function') {
+                    animateFlyToCart(btn, '🍲');
+                }
+            } else {
+                showCartToast(res.message || 'Lỗi thêm vào giỏ hàng', 'error');
+            }
+        })
+        .catch(err => {
+            btn.disabled = false;
+            btn.innerHTML = '🛒 Thêm vào giỏ';
+            console.error(err);
+            showCartToast('Lỗi kết nối mạng', 'error');
+        });
+    };
+
+    // Attach product from Merchant stall dropdown
+    window.attachProduct = function(id, name, price, img) {
+        document.getElementById('chatAttachedProductId').value = id;
+        document.getElementById('chatAttachedName').textContent = name;
+        document.getElementById('chatAttachedPrice').textContent = new Intl.NumberFormat('vi-VN').format(price) + 'đ';
+        if (img) {
+            document.getElementById('chatAttachedImg').src = img;
+        } else {
+            document.getElementById('chatAttachedImg').src = 'https://placehold.co/44x44/00A86B/ffffff?text=OCOP';
+        }
+        document.getElementById('chatProductPreview').style.display = 'block';
+        
+        const dropdown = document.getElementById('merchantProductDropdown');
+        if (dropdown) dropdown.style.display = 'none';
+    };
+
+    // Attach product by clicking on any Merchant Active Card in the sidebar
+    window.attachProductFromStall = function(stallName) {
+        if (typeof allStallsData !== 'undefined') {
+            const stall = allStallsData.find(s => s.name === stallName);
+            if (stall && stall.products && stall.products.length > 0) {
+                const prod = stall.products[0];
+                const imgUrl = prod.image_path ? `/${prod.image_path}` : '';
+                attachProduct(prod.id, prod.name, parseFloat(prod.price), imgUrl);
+                showCartToast(`Đã gắn kèm "${prod.name}" từ ${stallName}!`);
+            } else {
+                showCartToast('Sạp này chưa cập nhật danh sách sản phẩm OCOP', 'error');
+            }
+        }
+    };
+
+    window.removeAttachedProduct = function() {
+        document.getElementById('chatAttachedProductId').value = '';
+        document.getElementById('chatProductPreview').style.display = 'none';
+    };
+
+    window.toggleMerchantProductSelector = function() {
+        const dropdown = document.getElementById('merchantProductDropdown');
+        if (dropdown) {
+            dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+        }
+    };
+
+    // Search bar filtering
+    window.filterChatStalls = function() {
+        const query = document.getElementById('chatStallSearch').value.toLowerCase().trim();
+        
+        document.querySelectorAll('.chat-stall-card-item').forEach(card => {
+            const name = card.getAttribute('data-stall-name');
+            const seller = card.getAttribute('data-seller-name');
+            
+            if (name.includes(query) || seller.includes(query)) {
+                card.style.display = 'flex';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+
+        // Hide category groups with zero visible items
+        document.querySelectorAll('.chat-category-group').forEach(group => {
+            const stalls = group.querySelectorAll('.chat-stall-card-item');
+            let hasVisible = false;
+            stalls.forEach(s => {
+                if (s.style.display !== 'none') hasVisible = true;
+            });
+            
+            if (hasVisible) {
+                group.style.display = 'block';
+            } else {
+                group.style.display = 'none';
+            }
+        });
+    };
+
+    // Image upload handler
+    window.handleChatImageSelect = function(input) {
+        if (input.files && input.files[0]) {
+            const file = input.files[0];
+            if (file.size > 5 * 1024 * 1024) {
+                showCartToast('Ảnh tải lên không được vượt quá 5MB', 'error');
+                input.value = '';
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('chatAttachedImgFile').src = e.target.result;
+                document.getElementById('chatImagePreview').style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    window.removeAttachedImage = function() {
+        document.getElementById('chatImageInputFile').value = '';
+        document.getElementById('chatImagePreview').style.display = 'none';
+    };
+
+    // Quick replies helper
+    window.sendQuickReply = function(text) {
+        const msgInput = document.getElementById('chatMessageInput');
+        if (msgInput) {
+            msgInput.value = text;
+            sendChatMessage();
+        }
+    };
+
+    // Advanced FormData submission
+    window.sendChatMessage = function(e) {
+        if (e) e.preventDefault();
+        
+        const msgInput = document.getElementById('chatMessageInput');
+        const guestNameInput = document.getElementById('chatGuestName');
+        const productIdInput = document.getElementById('chatAttachedProductId');
+        const fileInput = document.getElementById('chatImageInputFile');
+
+        if (!msgInput.value && !productIdInput.value && (!fileInput || !fileInput.files[0])) {
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('message_text', msgInput.value || '');
+        if (productIdInput.value) {
+            formData.append('product_id', productIdInput.value);
+        }
+        if (fileInput && fileInput.files[0]) {
+            formData.append('image', fileInput.files[0]);
+        }
+        if (guestNameInput) {
+            formData.append('sender_name', guestNameInput.value);
+        }
+
+        // Include private chat context
+        if (activeRoomType === 'private') {
+            if (isMerchant) {
+                formData.append('private_user_id', activeCustomerId);
+                formData.append('private_stall_name', merchantStallName);
+            } else {
+                formData.append('private_stall_name', activeStallName);
+            }
+        }
+
+        // Button sending state
+        const sendBtn = document.querySelector('.btn-send-chat');
+        const originalText = sendBtn ? sendBtn.innerHTML : 'Gửi';
+        if (sendBtn) {
+            sendBtn.disabled = true;
+            sendBtn.innerHTML = '⏳ Gửi...';
+        }
+
+        fetch(`/api/market-chat/${marketId}/send`, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>',
+                'Accept': 'application/json'
+            },
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (sendBtn) {
+                sendBtn.disabled = false;
+                sendBtn.innerHTML = originalText;
+            }
+            if (data.success) {
+                msgInput.value = '';
+                removeAttachedProduct();
+                removeAttachedImage();
+                loadChatMessages();
+            } else {
+                alert('Lỗi gửi tin nhắn: ' + (data.message || 'vui lòng thử lại'));
+            }
+        })
+        .catch(err => {
+            if (sendBtn) {
+                sendBtn.disabled = false;
+                sendBtn.innerHTML = originalText;
+            }
+            console.error('Error sending message:', err);
+            alert('Không thể kết nối máy chủ để gửi tin nhắn.');
+        });
+    };
 
     let mainMap;
     let blockPolygons = {};
@@ -1905,38 +3377,56 @@
                 smartphone: "<?php echo e($hasSmartphone ? 'yes' : 'no'); ?>",
                 products: <?php echo json_encode($stallProducts); ?>,
                 lat: "<?php echo e($first->latitude ?? ''); ?>",
-                lng: "<?php echo e($first->longitude ?? ''); ?>"
+                lng: "<?php echo e($first->longitude ?? ''); ?>",
+                stallSlug: <?php echo json_encode(\Illuminate\Support\Str::slug($stallName)); ?>,
+                marketSlug: <?php echo json_encode($eatery->slug); ?>
+
             },
         <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
     ];
+
+    let markerClusterGroup;
 
     function openStallFromMap(idx) {
         const s = allStallsData[idx];
         openStallDetail(s.name, s.seller, s.phone, s.bank, s.category, s.origin, s.smartphone, s.products, s.lat, s.lng);
     }
 
+    function highlightStallCard(stallSlug) {
+        const card = document.getElementById(`stall-card-${stallSlug}`);
+        if (card) {
+            card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            card.classList.remove('highlight-stall-card');
+            void card.offsetWidth; // trigger reflow
+            card.classList.add('highlight-stall-card');
+        }
+    }
+
+    const categoryCounts = {};
     function getStallCoords(category, sellerName) {
-        // Generate deterministic offset based on category and hash of name
+        categoryCounts[category] = (categoryCounts[category] || 0) + 1;
+        const catIdx = categoryCounts[category];
+
         let baseLat = eateryLat;
         let baseLng = eateryLng;
         if (category === 'Ăn uống') {
-            baseLat += 0.000175; baseLng -= 0.000175;
+            baseLat += 0.00045; baseLng -= 0.00045;
         } else if (category === 'Rau củ') {
-            baseLat += 0.000175; baseLng += 0.000175;
+            baseLat += 0.00045; baseLng += 0.00045;
         } else if (category === 'Thực phẩm khô') {
-            baseLat -= 0.000175; baseLng -= 0.000175;
+            baseLat -= 0.00045; baseLng -= 0.00045;
         } else if (category === 'Thịt tươi') {
-            baseLat -= 0.000175; baseLng += 0.000175;
+            baseLat -= 0.00045; baseLng += 0.00045;
         }
         
-        // Small jitter based on name string sum
-        let sum = 0;
-        for (let i = 0; i < sellerName.length; i++) {
-            sum += sellerName.charCodeAt(i);
-        }
-        let latJitter = ((sum % 17) - 8) * 0.000015;
-        let lngJitter = ((sum % 13) - 6) * 0.000015;
-        return [baseLat + latJitter, baseLng + lngJitter];
+        // Spread out stalls in a 2-column grid inside their block with generous spacing
+        const row = Math.floor((catIdx - 1) / 2);
+        const col = (catIdx - 1) % 2;
+
+        const offsetLat = (row - 0.5) * 0.00025;
+        const offsetLng = (col - 0.5) * 0.00025;
+
+        return [baseLat + offsetLat, baseLng + offsetLng];
     }
 
     function initSatelliteMap() {
@@ -1946,78 +3436,95 @@
             maxZoom: 19,
             attribution: '&copy; OpenStreetMap contributors'
         }).addTo(mainMap);
-        
+
+        // Initialize MarkerClusterGroup safely if available
+        if (typeof L.markerClusterGroup === 'function') {
+            markerClusterGroup = L.markerClusterGroup({
+                showCoverageOnHover: false,
+                maxClusterRadius: 45,
+                spiderfyOnMaxZoom: true,
+                iconCreateFunction: function(cluster) {
+                    const count = cluster.getChildCount();
+                    return L.divIcon({
+                        html: `<div style="background: linear-gradient(135deg, #0ea5e9, #06b6d4); color: white; border-radius: 50%; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 1rem; border: 3px solid white; box-shadow: 0 4px 18px rgba(14,165,233,0.45); font-family: 'Be Vietnam Pro', sans-serif;">
+                            ${count}
+                        </div>`,
+                        className: 'custom-cluster-marker',
+                        iconSize: [44, 44],
+                        iconAnchor: [22, 22]
+                    });
+                }
+            });
+            mainMap.addLayer(markerClusterGroup);
+        }
+
+        // Market center pin
         const customIcon = L.divIcon({
-            html: `<div style="background-color: var(--primary); width: 36px; height: 36px; border-radius: 50%; border: 3px solid white; box-shadow: 0 4px 15px rgba(0,0,0,0.15); display: flex; align-items: center; justify-content: center; font-size: 1.35rem;">🏪</div>`,
+            html: `<div style="background: linear-gradient(135deg,#0ea5e9,#06b6d4); width: 44px; height: 44px; border-radius: 50%; border: 3px solid white; box-shadow: 0 4px 20px rgba(14,165,233,0.5); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; animation: pulse 2s infinite;">🏪</div>`,
             className: 'custom-leaflet-marker',
-            iconSize: [36, 36],
-            iconAnchor: [18, 36]
+            iconSize: [44, 44],
+            iconAnchor: [22, 44]
         });
         
         L.marker([eateryLat, eateryLng], { icon: customIcon })
             .addTo(mainMap)
-            .bindPopup(`<strong style="font-family: var(--font-heading); font-size:1rem;"><?php echo e($eatery->name); ?></strong><br>📍 ${eateryLat}, ${eateryLng}<br>🏪 Quy mô: <?php echo e($totalStalls); ?> hộ kinh doanh`)
-            .openPopup();
+            .bindPopup(`<strong style="font-family: var(--font-heading); font-size:1.05rem; color: var(--primary);"><?php echo e($eatery->name); ?></strong><br><span style="font-size:0.8rem; color:#64748B;">📍 Trung tâm Chợ · <?php echo e($totalStalls); ?> hộ kinh doanh</span>`);
 
-        // Draw Block Polygons
+        // Draw Block Polygons with modern smooth fill and clean stroke
         // Block A (Blue)
         const blockACoords = [
-            [eateryLat + 0.00028, eateryLng - 0.00028],
-            [eateryLat + 0.00028, eateryLng - 0.00005],
-            [eateryLat + 0.00005, eateryLng - 0.00005],
-            [eateryLat + 0.00005, eateryLng - 0.00028]
+            [eateryLat + 0.00075, eateryLng - 0.00075],
+            [eateryLat + 0.00075, eateryLng - 0.00010],
+            [eateryLat + 0.00010, eateryLng - 0.00010],
+            [eateryLat + 0.00010, eateryLng - 0.00075]
         ];
         blockPolygons['A'] = L.polygon(blockACoords, {
             color: '#0EA5E9',
             fillColor: '#0EA5E9',
             fillOpacity: 0.12,
-            weight: 2,
-            dashArray: '4'
+            weight: 2
         }).addTo(mainMap).bindPopup("🍲 <strong>Khối A - Khu Ẩm thực</strong>");
 
         // Block B (Green)
         const blockBCoords = [
-            [eateryLat + 0.00028, eateryLng + 0.00005],
-            [eateryLat + 0.00028, eateryLng + 0.00028],
-            [eateryLat + 0.00005, eateryLng + 0.00028],
-            [eateryLat + 0.00005, eateryLng + 0.00005]
+            [eateryLat + 0.00075, eateryLng + 0.00010],
+            [eateryLat + 0.00075, eateryLng + 0.00075],
+            [eateryLat + 0.00010, eateryLng + 0.00075],
+            [eateryLat + 0.00010, eateryLng + 0.00010]
         ];
         blockPolygons['B'] = L.polygon(blockBCoords, {
             color: '#10B981',
             fillColor: '#10B981',
             fillOpacity: 0.12,
-            weight: 2,
-            dashArray: '4'
+            weight: 2
         }).addTo(mainMap).bindPopup("🥦 <strong>Khối B - Khu Rau củ sạch</strong>");
 
         // Block C (Orange)
         const blockCCoords = [
-            [eateryLat - 0.00005, eateryLng - 0.00028],
-            [eateryLat - 0.00005, eateryLng - 0.00005],
-            [eateryLat - 0.00028, eateryLng - 0.00005],
-            [eateryLat - 0.00028, eateryLng - 0.00028]
+            [eateryLat - 0.00010, eateryLng - 0.00075],
+            [eateryLat - 0.00010, eateryLng - 0.00010],
+            [eateryLat - 0.00075, eateryLng - 0.00010],
+            [eateryLat - 0.00075, eateryLng - 0.00075]
         ];
         blockPolygons['C'] = L.polygon(blockCCoords, {
             color: '#F59E0B',
             fillColor: '#F59E0B',
             fillOpacity: 0.12,
-            weight: 2,
-            dashArray: '4'
+            weight: 2
         }).addTo(mainMap).bindPopup("🥜 <strong>Khối C - Đồ khô & Gia vị</strong>");
 
         // Block D (Pink)
         const blockDCoords = [
-            [eateryLat - 0.00005, eateryLng + 0.00005],
-            [eateryLat - 0.00005, eateryLng + 0.00028],
-            [eateryLat - 0.00028, eateryLng + 0.00028],
-            [eateryLat - 0.00028, eateryLng + 0.00005]
+            [eateryLat - 0.00010, eateryLng + 0.00010],
+            [eateryLat - 0.00010, eateryLng + 0.00075],
+            [eateryLat - 0.00075, eateryLng + 0.00075],
+            [eateryLat - 0.00075, eateryLng + 0.00010]
         ];
         blockPolygons['D'] = L.polygon(blockDCoords, {
             color: '#EC4899',
             fillColor: '#EC4899',
             fillOpacity: 0.12,
-            weight: 2,
-            dashArray: '4'
+            weight: 2
         }).addTo(mainMap).bindPopup("🥩 <strong>Khối D - Thực phẩm tươi sống</strong>");
 
         // Draw Stall Markers
@@ -2031,37 +3538,66 @@
             }
             
             let emoji = '🏪';
-            let bgColor = '#64748B';
+            let bgColor = '#0ea5e9';
             if (s.category === 'Ăn uống') { emoji = '🍲'; bgColor = '#0EA5E9'; }
             else if (s.category === 'Rau củ') { emoji = '🥦'; bgColor = '#10B981'; }
             else if (s.category === 'Thực phẩm khô') { emoji = '🥜'; bgColor = '#F59E0B'; }
             else if (s.category === 'Thịt tươi') { emoji = '🥩'; bgColor = '#EC4899'; }
 
+            // Compact 36px circular pin badge (Zero text overlap on map)
             const stallIcon = L.divIcon({
-                html: `<div class="stall-map-marker" style="background: ${bgColor};" title="${s.name}">${emoji}</div>`,
-                className: 'stall-leaflet-marker',
-                iconSize: [28, 28],
-                iconAnchor: [14, 28]
+                html: `
+                    <div style="background: ${bgColor}; width: 36px; height: 36px; border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; font-size: 1.15rem; border: 2.5px solid #ffffff; box-shadow: 0 4px 14px rgba(0,0,0,0.3); transition: transform 0.2s; cursor: pointer;" onmouseover="this.style.transform='scale(1.25)';" onmouseout="this.style.transform='none';">
+                        ${emoji}
+                    </div>
+                `,
+                className: 'custom-stall-circle-pin',
+                iconSize: [36, 36],
+                iconAnchor: [18, 18]
             });
 
             const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${sLat},${sLng}`;
+            const stallUrl = `/cho/${s.marketSlug}/gian-hang/${s.stallSlug}`;
 
-            L.marker([sLat, sLng], { icon: stallIcon })
-                .addTo(mainMap)
-                .bindPopup(`
-                    <div style="font-family: var(--font-heading); padding: 5px; min-width: 170px;">
-                        <strong style="font-size: 0.95rem; color: var(--primary); display:block; margin-bottom: 4px;">${s.name}</strong>
-                        <span style="font-size: 0.8rem; color:#64748B; display:block; margin-bottom: 10px;">👤 Chủ hộ: ${s.seller}<br>📍 Ngành: ${s.category}</span>
-                        <div style="display:flex; flex-direction:column; gap:6px;">
-                            <button onclick="openStallFromMap(${idx})" style="background: rgba(14, 165, 233, 0.08); border: 1px solid rgba(14, 165, 233, 0.2); color: var(--primary); border-radius: 8px; font-weight:700; font-size: 0.72rem; padding: 6px; cursor:pointer; width:100%; display:flex; align-items:center; justify-content:center; gap:4px;" onmouseover="this.style.background='var(--primary)'; this.style.color='#ffffff';" onmouseout="this.style.background='rgba(14, 165, 233, 0.08)'; this.style.color='var(--primary)';">
-                                🔍 Xem Chi Tiết
-                            </button>
-                            <a href="${googleMapsUrl}" target="_blank" style="display:inline-flex; align-items:center; gap:4px; background: #E11D48; color: white; padding: 6px; border-radius: 8px; font-weight:700; font-size: 0.72rem; text-decoration:none; box-shadow: 0 2px 6px rgba(225, 29, 72, 0.15); width: 100%; justify-content: center;">
-                                🗺️ Google Maps chỉ đường
-                            </a>
+            const marker = L.marker([sLat, sLng], { icon: stallIcon });
+            
+            // Hover Tooltip: Text only pops up on hover
+            marker.bindTooltip(`
+                <div style="font-family: 'Be Vietnam Pro', sans-serif; font-size: 0.8rem; padding: 2px 4px;">
+                    <strong style="color: var(--text-main); font-weight:800;">${emoji} ${s.name}</strong><br>
+                    <span style="color:#64748B; font-size: 0.75rem;">👤 Chủ hộ: ${s.seller}</span>
+                </div>
+            `, { direction: 'top', offset: [0, -18] });
+
+            // Click Popup: Full options & 2-way sync button
+            marker.bindPopup(`
+                <div style="font-family: 'Be Vietnam Pro', sans-serif; padding: 6px; min-width: 220px;">
+                    <div style="display:flex; align-items:center; gap:8px; margin-bottom: 8px;">
+                        <span style="font-size: 1.5rem;">${emoji}</span>
+                        <div>
+                            <strong style="font-size: 0.95rem; color: var(--text-main); display:block; line-height: 1.2;">${s.name}</strong>
+                            <span style="font-size: 0.75rem; color:#64748B; font-weight: 600;">👤 Chủ hộ: ${s.seller}</span>
                         </div>
                     </div>
-                `);
+                    <div style="border-top: 1px dashed var(--border-glow); padding-top: 8px; margin-top: 4px; display:flex; flex-direction:column; gap:6px;">
+                        <button onclick="highlightStallCard('${s.stallSlug}')" style="background: rgba(14, 165, 233, 0.08); border: 1px solid rgba(14, 165, 233, 0.2); color: var(--primary); border-radius: 8px; font-weight:800; font-size: 0.78rem; padding: 7px; cursor:pointer; width:100%; display:flex; align-items:center; justify-content:center; gap:5px;" onmouseover="this.style.background='var(--primary)'; this.style.color='#ffffff';" onmouseout="this.style.background='rgba(14, 165, 233, 0.08)'; this.style.color='var(--primary)';">
+                            🎯 Định vị thẻ sạp bên dưới
+                        </button>
+                        <a href="${stallUrl}" style="background: var(--primary-grad); color: white; border-radius: 8px; font-weight:800; font-size: 0.78rem; padding: 8px; text-decoration:none !important; text-align:center; display:block; box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);">
+                            🚀 Vào gian hàng chi tiết ➔
+                        </a>
+                        <a href="${googleMapsUrl}" target="_blank" style="display:flex; align-items:center; justify-content:center; gap:4px; background: rgba(0, 0, 0, 0.03); color: #64748B; padding: 6px; border-radius: 8px; font-weight:700; font-size: 0.72rem; text-decoration:none; border: 1px solid rgba(0,0,0,0.08);">
+                            🗺️ Google Maps chỉ đường
+                        </a>
+                    </div>
+                </div>
+            `);
+
+            if (markerClusterGroup) {
+                markerClusterGroup.addLayer(marker);
+            } else {
+                marker.addTo(mainMap);
+            }
         });
     }
 
@@ -2304,6 +3840,52 @@
             qrImage.style.display = 'none';
         }
 
+        // Fetch Stall Reviews from database
+        const reviewsList = document.getElementById('mdReviewsList');
+        if (reviewsList) {
+            reviewsList.innerHTML = '<div style="text-align: center; color: var(--text-muted); font-size: 0.8rem; padding: 10px 0;"><div style="width: 16px; height: 16px; border: 1.5px solid rgba(0,0,0,0.05); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; display: inline-block; margin-right: 6px; vertical-align: middle;"></div> Đang tải đánh giá...</div>';
+            
+            fetch(`/api/market-stalls/${marketId}/reviews?stall_name=${encodeURIComponent(stallName)}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        if (data.reviews.length === 0) {
+                            reviewsList.innerHTML = '<div style="text-align: center; color: var(--text-muted); font-size: 0.8rem; padding: 15px 0;">Chưa có đánh giá nào cho quầy hàng này. Hãy là người đầu tiên đánh giá!</div>';
+                        } else {
+                            let html = '';
+                            data.reviews.forEach(rev => {
+                                let starStr = '';
+                                for (let i = 0; i < 5; i++) {
+                                    if (i < rev.rating) starStr += '★';
+                                    else starStr += '☆';
+                                }
+                                html += `
+                                    <div style="display: flex; gap: 12px; background: var(--bg-base); padding: 12px; border-radius: 12px; border: 1px solid var(--border-glow);">
+                                        <span style="font-size: 1.5rem;">👤</span>
+                                        <div style="flex: 1; min-width: 0;">
+                                            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 4px;">
+                                                <strong style="font-size: 0.82rem; color: var(--text-main); font-weight: 700;">
+                                                    ${rev.user_name} <span style="color: #F59E0B; margin-left: 6px;">${starStr}</span>
+                                                </strong>
+                                                <span style="font-size: 0.68rem; color: var(--text-muted);">${rev.time_formatted}</span>
+                                            </div>
+                                            <p style="font-size: 0.8rem; color: var(--text-muted); margin: 4px 0 0 0; word-break: break-word;">${rev.comment}</p>
+                                        </div>
+                                    </div>
+                                `;
+                            });
+                            reviewsList.innerHTML = html;
+                        }
+                    } else {
+                        reviewsList.innerHTML = '<div style="text-align: center; color: #ef4444; font-size: 0.8rem; padding: 10px 0;">Không thể tải đánh giá.</div>';
+                    }
+                })
+                .catch(err => {
+                    console.error('Error fetching reviews:', err);
+                    reviewsList.innerHTML = '<div style="text-align: center; color: #ef4444; font-size: 0.8rem; padding: 10px 0;">Lỗi kết nối máy chủ.</div>';
+                });
+        }
+
         modal.style.display = 'flex';
         setTimeout(() => {
             modal.style.opacity = '1';
@@ -2351,29 +3933,90 @@
 
     function submitStallReview(e) {
         e.preventDefault();
-        alert('Cảm ơn bạn đã gửi đánh giá! Bình luận sẽ được kiểm duyệt trước khi hiển thị công khai.');
-        e.target.reset();
-        setReviewRating(0);
+        
+        const textarea = e.target.querySelector('textarea');
+        if (!textarea) return;
+        
+        const comment = textarea.value.trim();
+        if (!comment) return;
+        
+        const rating = selectedRating || 5; 
+        const stallName = document.getElementById('mdStallName').textContent;
+        
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Đang gửi...';
+        }
+
+        fetch(`/api/market-stalls/${marketId}/reviews`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                stall_name: stallName,
+                comment: comment,
+                rating: rating
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Gửi đánh giá';
+            }
+
+            if (data.success) {
+                const reviewsList = document.getElementById('mdReviewsList');
+                if (reviewsList) {
+                    if (reviewsList.querySelector('[style*="padding: 15px 0"]') || reviewsList.querySelector('[style*="padding: 10px 0"]')) {
+                        reviewsList.innerHTML = '';
+                    }
+
+                    let starStr = '';
+                    for (let i = 0; i < 5; i++) {
+                        if (i < data.review.rating) starStr += '★';
+                        else starStr += '☆';
+                    }
+
+                    const newItem = document.createElement('div');
+                    newItem.style.cssText = "display: flex; gap: 12px; background: var(--bg-base); padding: 12px; border-radius: 12px; border: 1px solid var(--border-glow); animation: fadeIn 0.3s ease-out;";
+                    newItem.innerHTML = `
+                        <span style="font-size: 1.5rem;">👤</span>
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 4px;">
+                                <strong style="font-size: 0.82rem; color: var(--text-main); font-weight: 700;">
+                                    ${data.review.user_name} <span style="color: #F59E0B; margin-left: 6px;">${starStr}</span>
+                                </strong>
+                                <span style="font-size: 0.68rem; color: var(--text-muted);">${data.review.time_formatted}</span>
+                            </div>
+                            <p style="font-size: 0.8rem; color: var(--text-muted); margin: 4px 0 0 0; word-break: break-word;">${data.review.comment}</p>
+                        </div>
+                    `;
+                    reviewsList.insertBefore(newItem, reviewsList.firstChild);
+                }
+
+                showCartToast('Đăng đánh giá thành công!');
+                textarea.value = '';
+                setReviewRating(0);
+            } else {
+                alert(data.message || 'Lỗi khi lưu đánh giá.');
+            }
+        })
+        .catch(err => {
+            console.error('Error posting review:', err);
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Gửi đánh giá';
+            }
+            alert('Lỗi kết nối khi gửi đánh giá.');
+        });
     }
 
-    let isPlayingAudio = false;
-    function toggleAudio() {
-        const audio = document.getElementById('heritageAudio');
-        const btn = document.getElementById('audioBtn');
-        const status = document.getElementById('audioStatus');
-        
-        if (isPlayingAudio) {
-            audio.pause();
-            btn.textContent = '▶️';
-            status.textContent = 'Tạm dừng thuyết minh di sản';
-            isPlayingAudio = false;
-        } else {
-            audio.play();
-            btn.textContent = '⏸️';
-            status.textContent = 'Đang phát thuyết minh di sản...';
-            isPlayingAudio = true;
-        }
-    }
+
 
     /* Lightbox Gallery Modal Scripts */
     const allGalleryMedia = <?php echo json_encode($allMedia); ?>;

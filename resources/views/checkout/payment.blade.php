@@ -157,8 +157,12 @@
                     ✅ Xác nhận Đã chuyển khoản (Thành công)
                 </button>
                 
-                <button type="button" onclick="submitPayment(false)" class="btn-secondary" style="width: 100%; padding: 14px; font-size: 0.95rem; font-weight: 700; border-radius: 12px; cursor: pointer; border-color: rgba(239, 68, 68, 0.2); color: #ef4444; background: rgba(239, 68, 68, 0.04); transition: all 0.2s;" onmouseover="this.style.background='rgba(239, 68, 68, 0.08)'" onmouseout="this.style.background='rgba(239, 68, 68, 0.04)'">
-                    ❌ Hủy giao dịch thanh toán
+                <button type="button" onclick="submitPayment(false)" class="btn-global-secondary" style="width: 100%; padding: 12px; font-size: 0.9rem; font-weight: 700; border-radius: 12px; cursor: pointer; border-color: rgba(0,0,0,0.1); color: var(--text-muted); background: transparent; transition: all 0.2s; justify-content: center;">
+                    ⚠️ Báo lỗi thanh toán (Không hủy đơn)
+                </button>
+
+                <button type="button" onclick="cancelOrderEntirely({{ $order->id }})" class="btn-secondary" style="width: 100%; padding: 12px; font-size: 0.9rem; font-weight: 700; border-radius: 12px; cursor: pointer; border-color: rgba(239, 68, 68, 0.2); color: #ef4444; background: rgba(239, 68, 68, 0.04); transition: all 0.2s; display: flex; justify-content: center; align-items: center;" onmouseover="this.style.background='rgba(239, 68, 68, 0.08)'" onmouseout="this.style.background='rgba(239, 68, 68, 0.04)'">
+                    ❌ Hủy đơn hàng này
                 </button>
             </div>
         </form>
@@ -192,7 +196,7 @@
             if (timeRemaining <= 0) {
                 clearInterval(interval);
                 alert('Thời gian thanh toán đã hết hạn. Đơn hàng đã bị hủy.');
-                submitPayment(false);
+                cancelOrderEntirely({{ $order->id }}, false);
             }
 
             timeRemaining--;
@@ -202,6 +206,33 @@
     function submitPayment(success) {
         document.getElementById('simulateSuccessInput').value = success ? '1' : '0';
         document.getElementById('paymentProcessForm').submit();
+    }
+
+    function cancelOrderEntirely(orderId, prompt = true) {
+        if (prompt && !confirm('Bạn có chắc chắn muốn hủy đơn hàng này không?')) {
+            return;
+        }
+        
+        fetch(`/api/orders/${orderId}/cancel`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                if (prompt) alert('Đơn hàng đã được hủy thành công.');
+                window.location.href = '/orders';
+            } else {
+                alert('Không thể hủy đơn: ' + data.message);
+            }
+        })
+        .catch(err => {
+            console.error('Lỗi khi hủy đơn:', err);
+            alert('Có lỗi xảy ra, vui lòng thử lại.');
+        });
     }
 </script>
 @endsection

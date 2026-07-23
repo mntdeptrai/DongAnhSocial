@@ -37,6 +37,12 @@
 
 <?php $__env->startSection('content'); ?>
 <div class="container" style="max-width: 600px; padding: 50px 20px; font-family: 'Be Vietnam Pro', sans-serif;">
+    <?php if(session('error')): ?>
+        <div class="glass-panel" style="background: rgba(239, 68, 68, 0.1); border-color: #ef4444; padding: 14px 20px; border-radius: 12px; color: #ef4444; margin-bottom: 24px; text-align: center; font-size: 0.95rem; font-weight: 600; border: 1.5px solid #ef4444;">
+            ❌ <?php echo e(session('error')); ?>
+
+        </div>
+    <?php endif; ?>
     <div class="glass-panel" style="padding: 35px; border-radius: 24px; border: 1px solid var(--border-glow); background: rgba(255,255,255,0.015); box-shadow: 0 15px 40px rgba(0,0,0,0.15); text-align: center;">
         
         <!-- Payment Header -->
@@ -150,12 +156,25 @@
                     ✅ Xác nhận Đã chuyển khoản (Thành công)
                 </button>
                 
-                <button type="button" onclick="submitPayment(false)" class="btn-secondary" style="width: 100%; padding: 14px; font-size: 0.95rem; font-weight: 700; border-radius: 12px; cursor: pointer; border-color: rgba(239, 68, 68, 0.2); color: #ef4444; background: rgba(239, 68, 68, 0.04); transition: all 0.2s;" onmouseover="this.style.background='rgba(239, 68, 68, 0.08)'" onmouseout="this.style.background='rgba(239, 68, 68, 0.04)'">
-                    ❌ Hủy giao dịch thanh toán
+                <button type="button" onclick="submitPayment(false)" class="btn-global-secondary" style="width: 100%; padding: 12px; font-size: 0.9rem; font-weight: 700; border-radius: 12px; cursor: pointer; border-color: rgba(0,0,0,0.1); color: var(--text-muted); background: transparent; transition: all 0.2s; justify-content: center;">
+                    ⚠️ Báo lỗi thanh toán (Không hủy đơn)
+                </button>
+
+                <button type="button" onclick="cancelOrderEntirely(<?php echo e($order->id); ?>)" class="btn-secondary" style="width: 100%; padding: 12px; font-size: 0.9rem; font-weight: 700; border-radius: 12px; cursor: pointer; border-color: rgba(239, 68, 68, 0.2); color: #ef4444; background: rgba(239, 68, 68, 0.04); transition: all 0.2s; display: flex; justify-content: center; align-items: center;" onmouseover="this.style.background='rgba(239, 68, 68, 0.08)'" onmouseout="this.style.background='rgba(239, 68, 68, 0.04)'">
+                    ❌ Hủy đơn hàng này
                 </button>
             </div>
         </form>
-
+        
+        <div style="margin-top: 20px; display: flex; justify-content: center; gap: 16px;">
+            <a href="/" style="font-size: 0.85rem; color: var(--text-muted); text-decoration: underline;">
+                🏠 Quay lại Trang chủ
+            </a>
+            <span style="color: var(--border-glow);">|</span>
+            <a href="/orders" style="font-size: 0.85rem; color: var(--text-muted); text-decoration: underline;">
+                📦 Danh sách đơn hàng
+            </a>
+        </div>
     </div>
 </div>
 <?php $__env->stopSection(); ?>
@@ -176,7 +195,7 @@
             if (timeRemaining <= 0) {
                 clearInterval(interval);
                 alert('Thời gian thanh toán đã hết hạn. Đơn hàng đã bị hủy.');
-                submitPayment(false);
+                cancelOrderEntirely(<?php echo e($order->id); ?>, false);
             }
 
             timeRemaining--;
@@ -186,6 +205,33 @@
     function submitPayment(success) {
         document.getElementById('simulateSuccessInput').value = success ? '1' : '0';
         document.getElementById('paymentProcessForm').submit();
+    }
+
+    function cancelOrderEntirely(orderId, prompt = true) {
+        if (prompt && !confirm('Bạn có chắc chắn muốn hủy đơn hàng này không?')) {
+            return;
+        }
+        
+        fetch(`/api/orders/${orderId}/cancel`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                if (prompt) alert('Đơn hàng đã được hủy thành công.');
+                window.location.href = '/orders';
+            } else {
+                alert('Không thể hủy đơn: ' + data.message);
+            }
+        })
+        .catch(err => {
+            console.error('Lỗi khi hủy đơn:', err);
+            alert('Có lỗi xảy ra, vui lòng thử lại.');
+        });
     }
 </script>
 <?php $__env->stopSection(); ?>

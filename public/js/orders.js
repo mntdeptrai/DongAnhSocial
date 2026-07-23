@@ -295,7 +295,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 // Financial Breakdown
                 let breakdownHtml = `
                     <div class="financial-row">
-                        <span>Tạm tính (${order.items.length} món)</span>
+                        <span>Tạm tính (${order.items.length} ${order.category_slug === 'dong-anh-market' ? 'sản phẩm' : 'món'})</span>
                         <span>${formatCurrency(order.subtotal)}</span>
                     </div>
                     <div class="financial-row">
@@ -324,13 +324,20 @@ document.addEventListener('DOMContentLoaded', function () {
                 `;
 
                 // Stepper Timeline inside order card
-                const miniProgressHtml = renderCardTimelineProgress(order.status);
+                const miniProgressHtml = renderCardTimelineProgress(order.status, order.category_slug === 'dong-anh-market');
 
                 // Format Datetime
                 const formattedTime = order.created_at_formatted.replace(' ', ' • ');
 
                 // Action Buttons
                 let actionsHtml = '';
+                if (order.payment_method === 'Online' && order.status === 'pending') {
+                    actionsHtml += `
+                        <a href="/checkout/payment/${order.id}" class="btn-premium-action btn-pay-now" style="background: #ff7e29; color: white; border: 1.5px solid #ff7e29; display: inline-flex; align-items: center; justify-content: center; text-decoration: none; font-weight: 700; gap: 4px; box-shadow: 0 4px 10px rgba(255, 126, 41, 0.2); padding: 8px 16px; border-radius: 12px; font-size: 0.8rem;">
+                            💳 Thanh toán QR
+                        </a>
+                    `;
+                }
                 if (order.status === 'pending' || order.status === 'paid') {
                     actionsHtml += `
                         <button class="btn-premium-action btn-cancel" data-id="${order.id}" onclick="cancelOrder(${order.id})">
@@ -393,7 +400,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         <div class="order-card-body">
                             <!-- Left Pane: items (60%) -->
                             <div class="order-items-pane">
-                                <div class="pane-heading">📦 Sản phẩm đặt mua (${totalItemsQty} món)</div>
+                                <div class="pane-heading">📦 Sản phẩm đặt mua (${totalItemsQty} ${order.category_slug === 'dong-anh-market' ? 'sản phẩm' : 'món'})</div>
                                 ${itemsHtml}
                                 
                                 <!-- Progress Stepper -->
@@ -431,7 +438,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         // Stepper for inside order card: Đã xác nhận → Đang chuẩn bị → Đang giao → Hoàn thành
-        function renderCardTimelineProgress(status) {
+        function renderCardTimelineProgress(status, isMarket = false) {
             if (status === 'cancelled') {
                 return `
                     <div style="background: rgba(239, 68, 68, 0.04); border: 1px solid rgba(239, 68, 68, 0.1); border-radius: 10px; padding: 8px 12px; margin-top: 16px; font-size: 0.8rem; color: #EF4444; font-weight: 600; display: flex; align-items: center; gap: 6px;">
@@ -477,7 +484,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     </div>
                     <div class="card-timeline-step ${step3}">
                         <div class="card-timeline-dot"></div>
-                        <span class="card-timeline-label">Đang giao</span>
+                        <span class="card-timeline-label">${isMarket ? 'Chờ lấy hàng' : 'Đang giao'}</span>
                     </div>
                     <div class="card-timeline-step ${step4}">
                         <div class="card-timeline-dot"></div>
@@ -578,7 +585,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         function renderOrderDetail(order) {
-            const stepperHtml = renderHorizontalStepper(order.status);
+            const stepperHtml = renderHorizontalStepper(order.status, order.category_slug === 'dong-anh-market');
 
             // Render Items List
             let itemsHtml = '';
@@ -644,6 +651,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // Action Buttons
             let headerActionsHtml = '';
+            if (order.payment_method === 'Online' && order.status === 'pending') {
+                headerActionsHtml += `
+                    <a href="/checkout/payment/${order.id}" class="btn-premium-action btn-pay-now" style="background: #ff7e29; color: white; border: 1.5px solid #ff7e29; display: inline-flex; align-items: center; justify-content: center; text-decoration: none; font-weight: 700; gap: 4px; box-shadow: 0 4px 10px rgba(255, 126, 41, 0.2); padding: 8px 16px; border-radius: 12px; font-size: 0.8rem;">
+                        💳 Thanh toán QR
+                    </a>
+                `;
+            }
             if (order.status === 'pending' || order.status === 'paid') {
                 headerActionsHtml += `
                     <button class="btn-premium-action btn-cancel" data-id="${order.id}" onclick="cancelOrder(${order.id})">
@@ -701,7 +715,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         <!-- Dishes List -->
                         <div class="details-glass-panel">
                             <h3 class="details-section-title">
-                                🍽️ Chi tiết món ăn đặt mua
+                                ${order.category_slug === 'dong-anh-market' ? '🏪 Chi tiết sản phẩm đặt mua' : '🍽️ Chi tiết món ăn đặt mua'}
                             </h3>
                             <div style="display: flex; flex-direction: column;">
                                 ${itemsHtml}
@@ -753,10 +767,12 @@ document.addEventListener('DOMContentLoaded', function () {
                                         ${order.payment_method} ${paymentBadgeHtml}
                                     </span>
                                 </div>
+                                ${order.category_slug !== 'dong-anh-market' ? `
                                 <div style="border-top: 1px dashed var(--border-light); padding-top: 10px;">
                                     <span style="color: var(--text-muted); font-weight: 700; display: block; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px;">🚚 Đối tác vận chuyển</span>
                                     <span style="color: var(--text-main); font-weight: 600;">🚴‍♀️ Đông Anh Food Express</span>
                                 </div>
+                                ` : ''}
                                 <div style="border-top: 1px dashed var(--border-light); padding-top: 10px;">
                                     <span style="color: var(--text-muted); font-weight: 700; display: block; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px;">Ghi chú của bạn</span>
                                     <span style="color: var(--text-main); font-style: italic;">"${order.notes || 'Không có ghi chú'}"</span>
@@ -778,12 +794,12 @@ document.addEventListener('DOMContentLoaded', function () {
             `;
         }
 
-        function renderHorizontalStepper(status) {
+        function renderHorizontalStepper(status, isMarket = false) {
             const steps = [
                 { key: 'placed', label: 'Đặt đơn', icon: '📝', check: true },
                 { key: 'confirmed', label: 'Xác nhận', icon: '📋', check: false },
                 { key: 'preparing', label: 'Chuẩn bị', icon: '🍳', check: false },
-                { key: 'shipping', label: 'Đang giao', icon: '🚴', check: false },
+                { key: 'shipping', label: isMarket ? 'Chờ lấy hàng' : 'Đang giao', icon: isMarket ? '🏪' : '🚴', check: false },
                 { key: 'completed', label: 'Hoàn thành', icon: '📦', check: false }
             ];
 
@@ -847,10 +863,11 @@ document.addEventListener('DOMContentLoaded', function () {
         function renderVerticalTimeline(order) {
             const status = order.status;
             const time = order.created_at_formatted;
+            const isMarket = order.category_slug === 'dong-anh-market';
 
             const events = [
-                { title: 'Giao hàng thành công', time: 'Đang chờ...', active: false },
-                { title: 'Đơn hàng đang giao', time: 'Đang chờ...', active: false },
+                { title: isMarket ? 'Nhận hàng thành công' : 'Giao hàng thành công', time: 'Đang chờ...', active: false },
+                { title: isMarket ? 'Sẵn sàng chờ khách lấy' : 'Đơn hàng đang giao', time: 'Đang chờ...', active: false },
                 { title: 'Đơn hàng đã được chuẩn bị xong', time: 'Đang chuẩn bị...', active: false },
                 { title: 'Đơn hàng đã được xác nhận', time: 'Đang chờ...', active: false },
                 { title: 'Đặt đơn hàng thành công', time: time, active: true }

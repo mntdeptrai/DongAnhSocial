@@ -1402,10 +1402,14 @@
             renderGroupedCart();
         }
 
-        function toggleSelectGroup(cb, eateryId) {
+        function toggleSelectGroup(cb, groupKey) {
             if (!globalCartResponse || !globalCartResponse.data) return;
             const groupItemIds = globalCartResponse.data
-                .filter(item => String(item.eatery_id) === String(eateryId))
+                .filter(item => {
+                    const eId = item.eatery_id || 0;
+                    const itemKey = item.stall_name ? `${eId}_${item.stall_name}` : String(eId);
+                    return String(itemKey) === String(groupKey);
+                })
                 .map(item => item.id);
 
             if (cb.checked) {
@@ -1461,20 +1465,22 @@
             `;
             list.insertAdjacentHTML('beforeend', selectAllHtml);
 
-            // Group items by eatery_id
+            // Group items by eatery_id and stall_name
             const groups = {};
             globalCartResponse.data.forEach(item => {
                 const eId = item.eatery_id || 0;
-                if (!groups[eId]) {
-                    groups[eId] = { name: item.eatery_name || 'Khác', items: [] };
+                const key = item.stall_name ? `${eId}_${item.stall_name}` : String(eId);
+                if (!groups[key]) {
+                    const name = item.stall_name ? `${item.eatery_name || 'Chợ'} - ${item.stall_name}` : (item.eatery_name || 'Khác');
+                    groups[key] = { name: name, items: [] };
                 }
-                groups[eId].items.push(item);
+                groups[key].items.push(item);
             });
 
             // Render groups with stagger animation
             let groupIndex = 0;
-            Object.keys(groups).forEach(eId => {
-                const group = groups[eId];
+            Object.keys(groups).forEach(key => {
+                const group = groups[key];
                 const groupItemIds = group.items.map(item => item.id);
                 const isGroupAllSelected = groupItemIds.every(id => selectedCartItems.includes(id));
                 const groupSelectedCount = groupItemIds.filter(id => selectedCartItems.includes(id)).length;
@@ -1482,8 +1488,8 @@
 
                 let groupHtml = `
                     <div class="cart-group-block" style="animation-delay: ${delay}s;">
-                        <div class="cart-group-header" onclick="document.getElementById('groupCb_${eId}').click(); event.preventDefault();">
-                            <input type="checkbox" id="groupCb_${eId}" onchange="toggleSelectGroup(this, '${eId}')" ${isGroupAllSelected ? 'checked' : ''} class="cart-checkbox" onclick="event.stopPropagation()">
+                        <div class="cart-group-header" onclick="document.getElementById('groupCb_${key}').click(); event.preventDefault();">
+                            <input type="checkbox" id="groupCb_${key}" onchange="toggleSelectGroup(this, '${key}')" ${isGroupAllSelected ? 'checked' : ''} class="cart-checkbox" onclick="event.stopPropagation()">
                             <span style="flex: 1;">🏪 ${group.name}</span>
                             <span style="background: rgba(0, 168, 107, 0.12); color: var(--primary, #00A86B); font-size: 0.72rem; padding: 2px 8px; border-radius: 20px; font-weight: 700; flex-shrink: 0;">
                                 ${groupSelectedCount}/${group.items.length}

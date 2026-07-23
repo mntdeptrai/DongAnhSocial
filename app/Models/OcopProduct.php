@@ -16,6 +16,7 @@ class OcopProduct extends Model
         'seller_phone',
         'name',
         'price',
+        'unit',
         'description',
         'image_path',
         'star_rating',

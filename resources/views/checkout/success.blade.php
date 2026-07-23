@@ -3,155 +3,336 @@
 @section('title', 'Đặt hàng thành công - Đông Anh Map')
 
 @section('content')
-<div class="container" style="max-width: 700px; padding: 50px 20px; font-family: 'Be Vietnam Pro', sans-serif;">
+<!-- Bootstrap Icons -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+<div class="container" style="max-width: 800px; padding: 40px 20px; font-family: 'Be Vietnam Pro', sans-serif;">
     
     @if(session('success'))
-        <div class="glass-panel" style="background: rgba(46, 204, 113, 0.1); border-color: #2ecc71; padding: 14px 20px; border-radius: 12px; color: #2ecc71; margin-bottom: 24px; text-align: center; font-size: 0.95rem; font-weight: 600;">
+        <div class="glass-panel" style="background: rgba(46, 204, 113, 0.1); border-color: #2ecc71; padding: 14px 20px; border-radius: 16px; color: #2ecc71; margin-bottom: 30px; text-align: center; font-size: 0.95rem; font-weight: 600; border: 1.5px solid rgba(46, 204, 113, 0.25);">
             🎉 {{ session('success') }}
         </div>
     @endif
 
-    <div class="glass-panel" style="padding: 40px; border-radius: 24px; border: 1px solid var(--border-glow); background: rgba(255,255,255,0.015); box-shadow: 0 15px 40px rgba(0,0,0,0.12); display: flex; flex-direction: column; gap: 28px;">
-        
-        <!-- Success Icon Header -->
-        <div style="text-align: center; display: flex; flex-direction: column; align-items: center; gap: 12px;">
-            <div style="width: 70px; height: 70px; border-radius: 50%; background: rgba(46, 204, 113, 0.1); display: flex; align-items: center; justify-content: center; font-size: 2.2rem; color: #2ecc71; animation: pulse-trust 2s infinite;">
-                ✓
-            </div>
-            <h2 style="font-size: 1.6rem; font-weight: 800; color: var(--text-main); margin: 0; font-family: var(--font-heading);">
-                Đặt Hàng Thành Công!
-            </h2>
-            <p style="color: var(--text-muted); font-size: 0.95rem; margin: 0; max-width: 480px; line-height: 1.5;">
-                Cảm ơn bạn đã lựa chọn mua sắm. Đơn hàng của bạn đã được tiếp nhận và đang được chủ cửa hàng chuẩn bị.
-            </p>
+    <!-- Top Success Header -->
+    <div style="text-align: center; display: flex; flex-direction: column; align-items: center; gap: 14px; margin-bottom: 35px;" data-aos="fade-down">
+        <div class="success-checkmark-circle">
+            <i class="bi bi-check2-circle"></i>
         </div>
+        <h2 style="font-size: 1.85rem; font-weight: 900; color: var(--text-main); margin: 0; font-family: var(--font-heading); letter-spacing: -0.5px;">
+            Đặt Hàng Thành Công!
+        </h2>
+        <p style="color: var(--text-muted); font-size: 0.95rem; margin: 0; max-width: 580px; line-height: 1.6;">
+            Hệ thống đã tiếp nhận yêu cầu của bạn. Đơn hàng đã được tách riêng theo từng **Gian hàng/Sạp tiểu thương** để phục vụ việc chuẩn bị và thanh toán chính xác nhất.
+        </p>
+    </div>
 
+    <!-- Orders List Loop -->
+    <div style="display: flex; flex-direction: column; gap: 24px; margin-bottom: 40px;">
         @php
-            $isMarketOrder = ($order->category_slug === 'dong-anh-market');
+            $displayOrders = isset($orders) && $orders->count() > 0 ? $orders : collect([$order]);
         @endphp
 
-        <!-- Pickup code for Market orders -->
-        @if($isMarketOrder)
-            <div style="background: rgba(46, 204, 113, 0.05); border: 2px dashed #2ecc71; border-radius: 16px; padding: 20px; text-align: center;">
-                <span style="font-size: 0.85rem; color: var(--text-muted); display: block; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Mã hẹn lấy đồ (Pickup Code)</span>
-                <strong style="font-size: 2.2rem; color: #2ecc71; font-family: monospace; display: block; margin: 6px 0; letter-spacing: 2px;">
-                    MCP-{{ str_pad($order->id, 5, '0', STR_PAD_LEFT) }}
-                </strong>
-                <p style="font-size: 0.82rem; color: var(--text-muted); margin: 0; line-height: 1.4;">
-                    Vui lòng chụp lại màn hình hoặc lưu mã **MCP-{{ str_pad($order->id, 5, '0', STR_PAD_LEFT) }}** này. Khi qua chợ, hãy xuất trình mã này cho các tiểu thương tương ứng để nhận đồ đã chuẩn bị sẵn!
-                </p>
-            </div>
-        @endif
+        @foreach($displayOrders as $ord)
+            @php
+                $isMarketOrd = ($ord->category_slug === 'dong-anh-market');
+                $eateryName = $ord->eatery 
+                    ? ($ord->stall_name ? $ord->eatery->name . ' - ' . $ord->stall_name : $ord->eatery->name) 
+                    : 'Cửa hàng';
+                $orderCode = 'ORD' . str_pad($ord->id, 6, '0', STR_PAD_LEFT);
+            @endphp
+            
+            <div class="order-success-card" id="order-card-{{ $ord->id }}" data-aos="fade-up" style="background: var(--bg-card); border: 1px solid var(--border-glow); border-radius: 24px; padding: 24px; box-shadow: 0 10px 25px -10px rgba(0,0,0,0.05); transition: all 0.3s; position: relative; overflow: hidden;">
+                <!-- Left Accent Line -->
+                <div style="position: absolute; left: 0; top: 0; bottom: 0; width: 5px; background: {{ $ord->payment_method === 'Online' ? '#0ea5e9' : '#f59e0b' }};"></div>
 
-        <!-- Order Information Receipt -->
-        <div style="border: 1px solid var(--border-glow); border-radius: 18px; padding: 24px; background: rgba(255,255,255,0.01);">
-            <h3 style="font-size: 1.05rem; font-weight: 700; color: var(--text-main); margin-top: 0; margin-bottom: 16px; border-bottom: 1px dashed var(--border-glow); padding-bottom: 10px; font-family: var(--font-heading);">
-                🧾 Thông tin đơn hàng #DA-{{ str_pad($order->id, 6, '0', STR_PAD_LEFT) }}
-            </h3>
- 
-            <div style="display: flex; flex-direction: column; gap: 12px; font-size: 0.9rem;">
-                <div style="display: flex; justify-content: space-between;">
-                    <span style="color: var(--text-muted);">Trạng thái đơn hàng:</span>
-                    <strong style="color: #2ecc71; text-transform: uppercase;">
-                        @if($order->status === 'paid')
-                            Đã thanh toán (Online)
-                        @elseif($order->status === 'pending')
-                            Chờ xác nhận (COD)
-                        @else
-                            {{ $order->status }}
-                        @endif
-                    </strong>
+                <!-- Card Header -->
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px; border-bottom: 1px dashed var(--border-glow); padding-bottom: 14px; margin-bottom: 16px;">
+                    <div>
+                        <div style="font-size: 0.78rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">
+                            Mã đơn: <span style="font-family: monospace; color: var(--text-main); font-size: 0.85rem;">#{{ $orderCode }}</span>
+                        </div>
+                        <h4 style="font-family: var(--font-heading); font-size: 1.15rem; font-weight: 800; color: var(--text-main); margin: 0; display: flex; align-items: center; gap: 6px;">
+                            🏪 {{ $eateryName }}
+                        </h4>
+                    </div>
+                    <!-- Status Badge -->
+                    <span class="status-badge-pill status-{{ $ord->status }}" id="status-badge-{{ $ord->id }}">
+                        {{ $ord->status === 'paid' ? 'Đã thanh toán' : ($ord->status === 'cancelled' ? 'Đã hủy' : 'Chờ xác nhận') }}
+                    </span>
                 </div>
- 
-                <div style="display: flex; justify-content: space-between;">
-                    <span style="color: var(--text-muted);">Phương thức thanh toán:</span>
-                    <strong style="color: var(--text-main);">
-                        @if($isMarketOrder)
-                            {{ $order->payment_method === 'COD' ? 'Tiền mặt khi nhận đồ (COD)' : 'Chuyển khoản VietQR của Tiểu thương' }}
-                        @else
-                            {{ $order->payment_method === 'COD' ? 'Thanh toán khi nhận hàng (COD)' : 'Thanh toán trực tuyến' }}
-                        @endif
-                    </strong>
+
+                <!-- Items list -->
+                <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px;">
+                    @foreach($ord->items as $item)
+                        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem;">
+                            <div style="display: flex; flex-direction: column;">
+                                <strong style="color: var(--text-main); font-weight: 600;">{{ $item->name }}</strong>
+                                <span style="font-size: 0.78rem; color: var(--text-muted);">Số lượng: {{ $item->quantity }} x {{ number_format($item->price) }}đ</span>
+                            </div>
+                            <span style="font-size: 0.9rem; font-weight: 700; color: var(--text-main);">{{ number_format($item->price * $item->quantity) }}đ</span>
+                        </div>
+                    @endforeach
                 </div>
- 
-                <div style="display: flex; justify-content: space-between;">
-                    <span style="color: var(--text-muted);">Thời gian đặt hàng:</span>
-                    <strong style="color: var(--text-main);">{{ $order->created_at->format('d/m/Y H:i') }}</strong>
+
+                <!-- Shipping / Pickup Info -->
+                <div style="background: rgba(0,0,0,0.015); border: 1px solid var(--border-glow); border-radius: 14px; padding: 14px; font-size: 0.82rem; color: var(--text-muted); display: flex; flex-direction: column; gap: 6px; margin-bottom: 20px;">
+                    <div>👤 <strong>Người nhận:</strong> {{ $ord->customer_name }} ({{ $ord->customer_phone }})</div>
+                    <div>📍 <strong>{{ $isMarketOrd ? 'Nơi nhận đồ:' : 'Địa chỉ giao hàng:' }}</strong> {{ $ord->shipping_address }}</div>
+                    <div>💳 <strong>Phương thức:</strong> {{ $ord->payment_method === 'COD' ? 'Tiền mặt khi nhận đồ (COD)' : 'Chuyển khoản VietQR sạp tiểu thương' }}</div>
+                    @if($ord->notes)
+                        <div>💬 <strong>Ghi chú:</strong> <span style="font-style: italic;">"{{ $ord->notes }}"</span></div>
+                    @endif
                 </div>
- 
-                <div style="display: flex; justify-content: space-between; border-top: 1px dashed var(--border-glow); padding-top: 12px; margin-top: 4px;">
-                    <span style="color: var(--text-muted);">Họ tên người nhận:</span>
-                    <strong style="color: var(--text-main);">{{ $order->customer_name }}</strong>
-                </div>
- 
-                <div style="display: flex; justify-content: space-between;">
-                    <span style="color: var(--text-muted);">Số điện thoại:</span>
-                    <strong style="color: var(--text-main);">{{ $order->customer_phone }}</strong>
-                </div>
- 
-                <div style="display: flex; justify-content: space-between;">
-                    <span style="color: var(--text-muted);">{{ $isMarketOrder ? 'Địa điểm lấy đồ:' : 'Địa chỉ giao hàng:' }}</span>
-                    <strong style="color: var(--text-main); text-align: right; max-width: 300px; word-break: break-word;">{{ $order->shipping_address }}</strong>
-                </div>
- 
-                @if($order->notes)
-                    <div style="display: flex; justify-content: space-between;">
-                        <span style="color: var(--text-muted);">Ghi chú của bạn:</span>
-                        <span style="color: var(--text-main); font-style: italic;">"{{ $order->notes }}"</span>
+
+                <!-- Pickup Code for Markets -->
+                @if($isMarketOrd)
+                    <div class="pickup-container-success" id="pickup-container-{{ $ord->id }}" style="margin-bottom: 20px; display: {{ $ord->status === 'cancelled' ? 'none' : 'block' }};">
+                        <div style="background: rgba(46, 204, 113, 0.04); border: 2.2px dashed #2ecc71; border-radius: 16px; padding: 14px; text-align: center;">
+                            <span style="font-size: 0.78rem; color: var(--text-muted); display: block; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Mã hẹn lấy đồ (Pickup Code)</span>
+                            <strong style="font-size: 1.85rem; color: #2ecc71; font-family: monospace; display: block; margin: 4px 0; letter-spacing: 1px;">
+                                MCP-{{ str_pad($ord->id, 5, '0', STR_PAD_LEFT) }}
+                            </strong>
+                            <span style="font-size: 0.75rem; color: var(--text-muted);">Đưa mã này cho chủ sạp khi bạn đến lấy đồ để nhận dạng nhanh đơn hàng.</span>
+                        </div>
                     </div>
                 @endif
-            </div>
-        </div>
 
-        <!-- Items Breakdown List -->
-        <div style="border: 1px solid var(--border-glow); border-radius: 18px; padding: 24px; background: rgba(255,255,255,0.01);">
-            <h3 style="font-size: 1.05rem; font-weight: 700; color: var(--text-main); margin-top: 0; margin-bottom: 16px; border-bottom: 1px dashed var(--border-glow); padding-bottom: 10px; font-family: var(--font-heading);">
-                📦 Danh sách sản phẩm mua
-            </h3>
-
-            <div style="display: flex; flex-direction: column; gap: 14px; margin-bottom: 16px;">
-                @foreach($order->items as $item)
-                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem;">
-                        <div style="display: flex; flex-direction: column;">
-                            <strong style="color: var(--text-main);">{{ $item->name }}</strong>
-                            <span style="font-size: 0.78rem; color: var(--text-muted);">Số lượng: {{ $item->quantity }} x {{ number_format($item->price) }}đ</span>
-                        </div>
-                        <span style="font-size: 0.9rem; font-weight: 700; color: var(--text-main);">{{ number_format($item->price * $item->quantity) }}đ</span>
+                <!-- Footer Summary & Actions -->
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; border-top: 1px solid var(--border-glow); padding-top: 16px;">
+                    <div>
+                        <span style="font-size: 0.85rem; color: var(--text-muted);">Tổng số tiền:</span>
+                        <strong style="color: var(--primary); font-size: 1.25rem; font-weight: 800; font-family: var(--font-heading); display: block; line-height: 1.1;">
+                            {{ number_format($ord->total_amount, 0, ',', '.') }}đ
+                        </strong>
                     </div>
-                @endforeach
+
+                    <!-- Actions -->
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;" class="order-action-buttons" id="actions-{{ $ord->id }}">
+                        @if($ord->status === 'cancelled')
+                            <span style="font-size: 0.85rem; color: #ef4444; font-weight: 700;"><i class="bi bi-x-circle-fill"></i> Đã hủy đơn hàng</span>
+                        @else
+                            @if($ord->payment_method === 'Online' && $ord->status === 'pending')
+                                <a href="{{ route('checkout.payment', $ord->id) }}" class="btn-pay-stall">
+                                    <i class="bi bi-qr-code"></i> Quét QR Thanh toán
+                                </a>
+                            @endif
+                            <button type="button" onclick="cancelSuccessOrder({{ $ord->id }})" class="btn-cancel-stall">
+                                <i class="bi bi-trash3"></i> Hủy đơn
+                            </button>
+                        @endif
+                    </div>
+                </div>
+
             </div>
-
-            <div style="border-top: 1px solid var(--border-glow); padding-top: 14px; display: flex; justify-content: space-between; align-items: center;">
-                <span style="font-size: 0.95rem; font-weight: 700; color: var(--text-main);">Tổng thanh toán thực tế:</span>
-                <strong style="color: var(--primary); font-size: 1.25rem; font-weight: 800; font-family: var(--font-heading);">
-                    {{ number_format($order->total_amount, 0, ',', '.') }}đ
-                </strong>
-            </div>
-        </div>
-
-        <!-- Return Actions -->
-        <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; border-top: 1px solid var(--border-glow); padding-top: 24px;">
-            <a href="/" class="btn-secondary" style="padding: 12px 20px; font-size: 0.88rem; border-radius: 10px; font-weight: 700; text-decoration: none; border: 1.5px solid rgba(0,0,0,0.1); color: var(--text-main); background: transparent;">
-                🏠 Trang chủ
-            </a>
-            <a href="/orders/{{ $order->id }}" class="btn-secondary" style="padding: 12px 20px; font-size: 0.88rem; border-radius: 10px; font-weight: 700; text-decoration: none; border: 1.5px solid var(--primary, #ff7e29); color: var(--primary, #ff7e29); background: transparent;">
-                🔍 Chi tiết đơn hàng
-            </a>
-            <a href="/tim-kiem" class="btn-primary" style="padding: 12px 20px; font-size: 0.88rem; border-radius: 10px; font-weight: 700; text-decoration: none; box-shadow: 0 4px 15px rgba(255, 126, 41, 0.25);">
-                🗺️ Tiếp tục khám phá
-            </a>
-        </div>
-
+        @endforeach
     </div>
+
+    <!-- Global Page Actions -->
+    <div style="display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; border-top: 1px solid var(--border-glow); padding-top: 30px;" data-aos="fade-up">
+        <a href="/" class="btn-global-secondary">
+            <i class="bi bi-house"></i> Quay lại Trang chủ
+        </a>
+        <a href="/orders" class="btn-global-secondary" style="border-color: var(--primary); color: var(--primary);">
+            <i class="bi bi-clock-history"></i> Lịch sử đơn hàng
+        </a>
+        <a href="/tim-kiem" class="btn-global-primary">
+            <i class="bi bi-compass"></i> Tiếp tục khám phá
+        </a>
+    </div>
+
 </div>
+
+<style>
+    /* Styling variables and specific styles for success page */
+    .success-checkmark-circle {
+        width: 76px;
+        height: 76px;
+        border-radius: 50%;
+        background: rgba(46, 204, 113, 0.08);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.8rem;
+        color: #2ecc71;
+        box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.4);
+        animation: pulse-trust-ring 2s infinite ease-in-out;
+    }
+
+    @keyframes pulse-trust-ring {
+        0% { box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.4); }
+        70% { box-shadow: 0 0 0 12px rgba(46, 204, 113, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(46, 204, 113, 0); }
+    }
+
+    /* Status Badges */
+    .status-badge-pill {
+        font-size: 0.72rem;
+        font-weight: 800;
+        padding: 5px 12px;
+        border-radius: 20px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border: 1.5px solid;
+    }
+    .status-pending {
+        background: rgba(245, 158, 11, 0.06);
+        color: #f59e0b;
+        border-color: rgba(245, 158, 11, 0.2);
+    }
+    .status-paid {
+        background: rgba(16, 185, 129, 0.06);
+        color: #10b981;
+        border-color: rgba(16, 185, 129, 0.2);
+    }
+    .status-cancelled {
+        background: rgba(239, 68, 68, 0.06);
+        color: #ef4444;
+        border-color: rgba(239, 68, 68, 0.2);
+    }
+
+    /* Buttons stylings */
+    .btn-pay-stall {
+        background: var(--primary, #ff7e29);
+        border: 1.5px solid var(--primary, #ff7e29);
+        color: #ffffff !important;
+        padding: 8px 16px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        border-radius: 12px;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        text-decoration: none !important;
+        box-shadow: 0 4px 12px rgba(255, 126, 41, 0.18);
+        transition: all 0.2s;
+    }
+    .btn-pay-stall:hover {
+        opacity: 0.9;
+        transform: translateY(-1px);
+    }
+
+    .btn-cancel-stall {
+        background: rgba(239, 68, 68, 0.04);
+        border: 1.5px solid rgba(239, 68, 68, 0.2);
+        color: #ef4444;
+        padding: 8px 16px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        border-radius: 12px;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.2s;
+    }
+    .btn-cancel-stall:hover {
+        background: #ef4444;
+        color: #ffffff;
+        border-color: #ef4444;
+    }
+
+    .btn-global-secondary {
+        border: 1.5px solid var(--border-glow);
+        background: transparent;
+        color: var(--text-main);
+        padding: 12px 24px;
+        font-size: 0.88rem;
+        font-weight: 700;
+        border-radius: 14px;
+        text-decoration: none !important;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.2s;
+    }
+    .btn-global-secondary:hover {
+        background: rgba(0, 0, 0, 0.02);
+        transform: translateY(-1px);
+    }
+
+    .btn-global-primary {
+        background: var(--primary, #ff7e29);
+        color: #ffffff !important;
+        padding: 12px 24px;
+        font-size: 0.88rem;
+        font-weight: 700;
+        border-radius: 14px;
+        text-decoration: none !important;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        box-shadow: 0 4px 15px rgba(255, 126, 41, 0.2);
+        transition: all 0.2s;
+    }
+    .btn-global-primary:hover {
+        opacity: 0.9;
+        transform: translateY(-1px);
+    }
+</style>
 @endsection
 
 @section('scripts')
-<style>
-    @keyframes pulse-trust {
-        0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.4); }
-        70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(46, 204, 113, 0); }
-        100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(46, 204, 113, 0); }
+<script>
+    function cancelSuccessOrder(orderId) {
+        if (!confirm('Bạn có chắc chắn muốn hủy đơn hàng này không?')) {
+            return;
+        }
+
+        const buttonsDiv = document.getElementById(`actions-${orderId}`);
+        const statusBadge = document.getElementById(`status-badge-${orderId}`);
+        const pickupContainer = document.getElementById(`pickup-container-${orderId}`);
+
+        // Disable buttons during request
+        buttonsDiv.querySelectorAll('button, a').forEach(el => {
+            el.style.pointerEvents = 'none';
+            el.style.opacity = '0.5';
+        });
+
+        fetch(`/api/orders/${orderId}/cancel`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                // Update Badge UI
+                statusBadge.className = 'status-badge-pill status-cancelled';
+                statusBadge.innerText = 'ĐÃ HỦY';
+
+                // Hide pickup code if visible
+                if (pickupContainer) {
+                    pickupContainer.style.display = 'none';
+                }
+
+                // Replace buttons with Cancelled label
+                buttonsDiv.innerHTML = `<span style="font-size: 0.85rem; color: #ef4444; font-weight: 700;"><i class="bi bi-x-circle-fill"></i> Đã hủy đơn hàng</span>`;
+                
+                // Add minor nice visual feedback
+                const card = document.getElementById(`order-card-${orderId}`);
+                card.style.opacity = '0.85';
+                card.style.borderColor = 'rgba(239, 68, 68, 0.15)';
+            } else {
+                alert('Không thể hủy đơn: ' + data.message);
+                // Reset state
+                buttonsDiv.querySelectorAll('button, a').forEach(el => {
+                    el.style.pointerEvents = 'auto';
+                    el.style.opacity = '1';
+                });
+            }
+        })
+        .catch(err => {
+            console.error('Error:', err);
+            alert('Có lỗi xảy ra, vui lòng thử lại.');
+            buttonsDiv.querySelectorAll('button, a').forEach(el => {
+                el.style.pointerEvents = 'auto';
+                el.style.opacity = '1';
+            });
+        });
     }
-</style>
+</script>
 @endsection

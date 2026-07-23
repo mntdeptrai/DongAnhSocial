@@ -91,17 +91,21 @@ class CheckoutController extends Controller
         try {
             DB::beginTransaction();
 
-            // Group cart items by eatery_id and category
+            // Group cart items by eatery_id, category, and stall_name
             $groupedItems = $itemsToCheckout->groupBy(function ($item) {
                 $eateryId = $item->product ? $item->product->eatery_id : 0;
                 $slug = $item->dish_id ? 'dong-anh-food-map' : 'dong-anh-market';
-                return $eateryId . '|' . $slug;
+                $stallName = '';
+                if (!$item->dish_id && $item->product && isset($item->product->stall_name)) {
+                    $stallName = $item->product->stall_name;
+                }
+                return $eateryId . '|' . $slug . '|' . $stallName;
             });
 
             $createdOrders = [];
 
             foreach ($groupedItems as $key => $items) {
-                list($eateryId, $categorySlug) = explode('|', $key);
+                list($eateryId, $categorySlug, $stallName) = explode('|', $key);
 
                 $totalAmount = $items->sum('thanh_tien');
 
@@ -110,6 +114,7 @@ class CheckoutController extends Controller
                     'user_id' => $user->id,
                     'eatery_id' => $eateryId,
                     'category_slug' => $categorySlug,
+                    'stall_name' => $stallName ?: null,
                     'customer_name' => $request->input('name'),
                     'customer_phone' => $request->input('phone'),
                     'shipping_address' => $request->input('address'),
@@ -156,14 +161,20 @@ class CheckoutController extends Controller
 
             DB::commit();
 
+            // Prepare IDs string for multiple orders success page
+            $createdIds = collect($createdOrders)->pluck('id')->toArray();
+            $idsString = implode(',', $createdIds);
+
             // If there's only one order and it's online payment, redirect to online payment simulator
             if (count($createdOrders) === 1 && $request->input('payment_method') === 'Online') {
                 return redirect()->route('checkout.payment', $createdOrders[0]->id);
             }
 
             // Otherwise direct to order success page
-            return redirect()->route('checkout.success', ['id' => $createdOrders[0]->id])
-                ->with('success', 'Đặt hàng thành công!');
+            return redirect()->route('checkout.success', [
+                'id' => $createdOrders[0]->id,
+                'ids' => $idsString
+            ])->with('success', 'Đặt hàng thành công!');
 
         } catch (\Throwable $e) {
             DB::rollBack();
@@ -212,10 +223,31 @@ class CheckoutController extends Controller
         return redirect()->route('checkout.success', $order->id)->with('success', 'Thanh toán online thành công!');
     }
 
-    public function success($id)
+    public function success(Request $request, $id)
     {
-        $order = Order::with(['items', 'payment'])->findOrFail($id);
-        return view('checkout.success', compact('order'));
+        $orderIds = [];
+        if ($id) {
+            $orderIds[] = $id;
+        }
+        if ($request->filled('ids')) {
+            $ids = explode(',', $request->input('ids'));
+            $orderIds = array_merge($orderIds, $ids);
+        }
+        
+        $orderIds = array_unique(array_filter($orderIds));
+        
+        $orders = Order::with(['items', 'payment'])
+            ->whereIn('id', $orderIds)
+            ->where('user_id', Auth::user()->id)
+            ->get();
+            
+        if ($orders->isEmpty()) {
+            abort(404, 'Không tìm thấy đơn hàng');
+        }
+        
+        $order = $orders->first();
+        
+        return view('checkout.success', compact('order', 'orders'));
     }
 
     public function ordersList()
@@ -355,7 +387,9 @@ class CheckoutController extends Controller
                 'is_reviewed' => (bool)$order->is_reviewed,
                 'eatery_id' => $order->eatery_id,
                 'category_slug' => $order->category_slug,
-                'eatery_name' => $order->eatery ? $order->eatery->name : 'Cửa hàng',
+                'eatery_name' => $order->eatery 
+                    ? ($order->stall_name ? $order->eatery->name . ' - ' . $order->stall_name : $order->eatery->name) 
+                    : 'Cửa hàng',
             ];
         });
 
@@ -425,7 +459,9 @@ class CheckoutController extends Controller
             'is_reviewed' => (bool)$order->is_reviewed,
             'eatery_id' => $order->eatery_id,
             'category_slug' => $order->category_slug,
-            'eatery_name' => $order->eatery ? $order->eatery->name : 'Cửa hàng',
+            'eatery_name' => $order->eatery 
+                ? ($order->stall_name ? $order->eatery->name . ' - ' . $order->stall_name : $order->eatery->name) 
+                : 'Cửa hàng',
         ];
 
         return response()->json([
