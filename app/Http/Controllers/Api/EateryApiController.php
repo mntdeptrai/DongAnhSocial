@@ -35,6 +35,7 @@ class EateryApiController extends Controller
                 return 'mysql_stay';
             case 'wellness-care':
                 return 'mysql_wellness';
+            case 'traditional-market':
             case 'dong-anh-market':
                 return 'mysql_market';
             case 'smart-education-map':

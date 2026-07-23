@@ -363,21 +363,7 @@ class SocialHubController extends Controller
         ]);
     }
 
-    public function checkUnread()
-    {
-        $userId = Auth::id();
-        if (!$userId) {
-            return response()->json(['has_unread' => false, 'unread_count' => 0]);
-        }
-        $count = Message::where('receiver_id', $userId)
-            ->where('is_read', false)
-            ->count();
 
-        return response()->json([
-            'has_unread' => $count > 0,
-            'unread_count' => $count,
-        ]);
-    }
 
     /**
      * Gửi tin nhắn mới (Broadcasting)

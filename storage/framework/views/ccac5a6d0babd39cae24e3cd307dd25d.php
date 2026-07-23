@@ -1,8 +1,6 @@
-@extends('layouts.app')
+<?php $__env->startSection('title', 'Bản đồ số Đông Anh - Bản đồ Số hóa Dịch vụ & Địa phương'); ?>
 
-@section('title', 'Bản đồ số Đông Anh - Bản đồ Số hóa Dịch vụ & Địa phương')
-
-@section('content')
+<?php $__env->startSection('content'); ?>
 <!-- Motion One Animation Library -->
 <script src="https://cdn.jsdelivr.net/npm/motion@11.11.13/dist/motion.js"></script>
 
@@ -682,15 +680,15 @@
     </div>
 
     <!-- Bubbles particles -->
-    @for ($i = 0; $i < 10; $i++)
-        @php
+    <?php for($i = 0; $i < 10; $i++): ?>
+        <?php
             $left = rand(5, 95);
             $size = rand(8, 24);
             $delay = rand(0, 100) / 10;
             $duration = rand(10, 16);
-        @endphp
-        <div class="bubble-particle" style="left: {{ $left }}%; width: {{ $size }}px; height: {{ $size }}px; bottom: -30px; animation-delay: {{ $delay }}s; animation-duration: {{ $duration }}s;"></div>
-    @endfor
+        ?>
+        <div class="bubble-particle" style="left: <?php echo e($left); ?>%; width: <?php echo e($size); ?>px; height: <?php echo e($size); ?>px; bottom: -30px; animation-delay: <?php echo e($delay); ?>s; animation-duration: <?php echo e($duration); ?>s;"></div>
+    <?php endfor; ?>
 
     <!-- Polaroid Galleries + Decorations -->
     <div class="gallery-container">
@@ -701,7 +699,7 @@
 
         <!-- Polaroid 1: Scooter -->
         <div class="polaroid-card" style="left: 14%; top: 30px;" data-angle="-7">
-            <img src="{{ asset('images/vivudonganh.jpg') }}" alt="Vi vu Đông Anh" class="polaroid-img">
+            <img src="<?php echo e(asset('images/vivudonganh.jpg')); ?>" alt="Vi vu Đông Anh" class="polaroid-img">
             <div class="polaroid-caption">Vi vu Đông Anh</div>
         </div>
 
@@ -719,7 +717,7 @@
 
         <!-- Polaroid 2: Lotus -->
         <div class="polaroid-card" style="left: 28%; top: 15px;" data-angle="4">
-            <img src="{{ asset('images/caydabacho.jpg') }}" alt="Cây đa Bác Hồ" class="polaroid-img">
+            <img src="<?php echo e(asset('images/caydabacho.jpg')); ?>" alt="Cây đa Bác Hồ" class="polaroid-img">
             <div class="polaroid-caption">Cây đa bác hồ</div>
         </div>
 
@@ -744,7 +742,7 @@
 
         <!-- Polaroid 3: Gate -->
         <div class="polaroid-card" style="left: 56%; top: 22px;" data-angle="6">
-            <img src="{{ asset('images/thanhcoloa.webp') }}" alt="Thành Cổ Loa" class="polaroid-img">
+            <img src="<?php echo e(asset('images/thanhcoloa.webp')); ?>" alt="Thành Cổ Loa" class="polaroid-img">
             <div class="polaroid-caption">Thành Cổ Loa</div>
         </div>
 
@@ -762,7 +760,7 @@
 
         <!-- Polaroid 4: Concert -->
         <div class="polaroid-card" style="left: 73%; top: 35px;" data-angle="-5">
-            <img src="{{ asset('images/trungtamvanhoa.webp') }}" alt="Trung tâm văn hóa" class="polaroid-img">
+            <img src="<?php echo e(asset('images/trungtamvanhoa.webp')); ?>" alt="Trung tâm văn hóa" class="polaroid-img">
             <div class="polaroid-caption">Trung tâm văn hóa</div>
         </div>
 
@@ -899,7 +897,7 @@
 <!-- Categories Slider -->
 <div class="container" style="margin-bottom: 24px; max-width: 1400px;">
     <div class="categories-slider">
-        <a href="/" class="category-card glass-panel {{ !$selectedCatSlug ? 'active' : '' }}">
+        <a href="/" class="category-card glass-panel <?php echo e(!$selectedCatSlug ? 'active' : ''); ?>">
             <span class="cat-icon">🗺️</span>
             <span class="cat-name">
                 <span class="cat-title-en">All Places</span>
@@ -913,11 +911,11 @@
                 <span class="cat-title-vi">Cộng đồng Check-in</span>
             </span>
         </a>
-        @foreach($categories as $cat)
-            @if($cat->slug === 'checkin-dong-anh')
-                @continue
-            @endif
-            @php
+        <?php $__currentLoopData = $categories; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $cat): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+            <?php if($cat->slug === 'checkin-dong-anh'): ?>
+                <?php continue; ?>
+            <?php endif; ?>
+            <?php
                 $displayIcon = $cat->icon;
                 $displayNameEn = $cat->name;
                 $displayNameVi = $cat->name;
@@ -954,33 +952,33 @@
                     $displayNameEn = 'Community & Culture Hub';
                     $displayNameVi = 'Thiết chế văn hóa - thể thao';
                 }
-            @endphp
-            @if($cat->slug === 'hanh-trinh-di-san')
+            ?>
+            <?php if($cat->slug === 'hanh-trinh-di-san'): ?>
                 <a href="https://donganh360.vn" target="_blank" rel="noopener noreferrer" class="category-card glass-panel">
-                    <img src="{{ asset('images/den_tho_kinh_duong_vuong_thanh_co_luy_lau_.webp') }}" alt="Hành trình di sản" class="cat-icon-img" style="width: 56px; height: 56px; border-radius: 50%; object-fit: cover;">
+                    <img src="<?php echo e(asset('images/den_tho_kinh_duong_vuong_thanh_co_luy_lau_.webp')); ?>" alt="Hành trình di sản" class="cat-icon-img" style="width: 56px; height: 56px; border-radius: 50%; object-fit: cover;">
                     <span class="cat-name">
-                        <span class="cat-title-en">{{ $displayNameEn }}</span>
-                        <span class="cat-title-vi">{{ $displayNameVi }}</span>
+                        <span class="cat-title-en"><?php echo e($displayNameEn); ?></span>
+                        <span class="cat-title-vi"><?php echo e($displayNameVi); ?></span>
                     </span>
                 </a>
-            @elseif($cat->slug === 'discover-dong-anh-community-culture-hub')
-                <a href="/?cat={{ $cat->slug }}" class="category-card glass-panel {{ $selectedCatSlug === $cat->slug ? 'active' : '' }}">
-                    <img src="{{ asset('images/nha_van_hoa_dong_anh.png') }}" alt="Community & Culture Hub" class="cat-icon-img" style="width: 56px; height: 56px; border-radius: 50%; object-fit: cover;">
+            <?php elseif($cat->slug === 'discover-dong-anh-community-culture-hub'): ?>
+                <a href="/?cat=<?php echo e($cat->slug); ?>" class="category-card glass-panel <?php echo e($selectedCatSlug === $cat->slug ? 'active' : ''); ?>">
+                    <img src="<?php echo e(asset('images/nha_van_hoa_dong_anh.png')); ?>" alt="Community & Culture Hub" class="cat-icon-img" style="width: 56px; height: 56px; border-radius: 50%; object-fit: cover;">
                     <span class="cat-name">
-                        <span class="cat-title-en">{{ $displayNameEn }}</span>
-                        <span class="cat-title-vi">{{ $displayNameVi }}</span>
+                        <span class="cat-title-en"><?php echo e($displayNameEn); ?></span>
+                        <span class="cat-title-vi"><?php echo e($displayNameVi); ?></span>
                     </span>
                 </a>
-            @else
-                <a href="/?cat={{ $cat->slug }}" class="category-card glass-panel {{ $selectedCatSlug === $cat->slug ? 'active' : '' }} {{ $cat->slug === 'dong-anh-market' ? 'specialty-highlight-card' : '' }}">
-                    <span class="cat-icon">{{ $displayIcon }}</span>
+            <?php else: ?>
+                <a href="/?cat=<?php echo e($cat->slug); ?>" class="category-card glass-panel <?php echo e($selectedCatSlug === $cat->slug ? 'active' : ''); ?> <?php echo e($cat->slug === 'dong-anh-market' ? 'specialty-highlight-card' : ''); ?>">
+                    <span class="cat-icon"><?php echo e($displayIcon); ?></span>
                     <span class="cat-name">
-                        <span class="cat-title-en">{{ $displayNameEn }}</span>
-                        <span class="cat-title-vi">{{ $displayNameVi }}</span>
+                        <span class="cat-title-en"><?php echo e($displayNameEn); ?></span>
+                        <span class="cat-title-vi"><?php echo e($displayNameVi); ?></span>
                     </span>
                 </a>
-            @endif
-        @endforeach
+            <?php endif; ?>
+        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
     </div>
 </div>
 
@@ -990,37 +988,37 @@
     <!-- Left column: Scrollable feed of eateries -->
     <div class="split-list">
         <div id="listHeaderContainer">
-            @if($selectedCatSlug === 'dong-anh-market')
+            <?php if($selectedCatSlug === 'dong-anh-market'): ?>
                 <div style="margin-bottom: 20px; border-bottom: 1.5px dashed rgba(212, 175, 55, 0.3); padding-bottom: 16px;">
                     <span class="heritage-badge" style="margin-bottom: 8px; font-size: 0.7rem; font-weight: 800; letter-spacing: 1.5px; border: 1px solid rgba(212, 175, 55, 0.4); background: rgba(212, 175, 55, 0.1); color: #ffb300; padding: 4px 10px; border-radius: 20px; display: inline-block;">🛍️ ĐẶC SẢN OCOP / OCOP SPECIALTIES</span>
                     <h2 style="font-size: 1.6rem; font-family: var(--font-heading); font-weight: 800; margin: 4px 0 6px 0; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
                         <span style="background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Không Gian Đặc Sản Đông Anh <span style="font-size: 1.1rem; color: var(--text-muted); font-weight: 600; display: block; margin-top: 4px;">(Đông Anh OCOP Specialties)</span></span>
                         <span id="resultsCountSpan" style="font-size: 0.85rem; color: var(--text-muted); font-weight: normal;">
-                            ({{ $eateries->count() }} địa điểm / places)
+                            (<?php echo e($eateries->count()); ?> địa điểm / places)
                         </span>
                     </h2>
                     <p style="font-size: 0.88rem; color: var(--text-muted); line-height: 1.5; margin: 0;">
                         Khám phá các sản phẩm OCOP đặc trưng, quà lưu niệm độc đáo, nông sản sạch mang đậm hồn quê Đông Anh. <span style="display: block; font-style: italic; margin-top: 4px; font-size: 0.8rem; opacity: 0.8;">Discover signature OCOP products, unique souvenirs, organic agriculture filled with Đông Anh's cultural soul.</span>
                     </p>
                 </div>
-            @elseif($selectedCatSlug === 'traditional-market')
+            <?php elseif($selectedCatSlug === 'traditional-market'): ?>
                 <div style="margin-bottom: 20px; border-bottom: 1.5px dashed rgba(212, 175, 55, 0.3); padding-bottom: 16px;">
                     <span class="heritage-badge" style="margin-bottom: 8px; font-size: 0.7rem; font-weight: 800; letter-spacing: 1.5px; border: 1px solid rgba(212, 175, 55, 0.4); background: rgba(212, 175, 55, 0.1); color: #ffb300; padding: 4px 10px; border-radius: 20px; display: inline-block;">🏪 CHỢ TRUYỀN THỐNG / TRADITIONAL MARKET</span>
                     <h2 style="font-size: 1.6rem; font-family: var(--font-heading); font-weight: 800; margin: 4px 0 6px 0; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
                         <span style="background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Chợ Truyền Thống Đông Anh <span style="font-size: 1.1rem; color: var(--text-muted); font-weight: 600; display: block; margin-top: 4px;">(Đông Anh Traditional Markets)</span></span>
                         <span id="resultsCountSpan" style="font-size: 0.85rem; color: var(--text-muted); font-weight: normal;">
-                            ({{ $eateries->count() }} địa điểm / places)
+                            (<?php echo e($eateries->count()); ?> địa điểm / places)
                         </span>
                     </h2>
                     <p style="font-size: 0.88rem; color: var(--text-muted); line-height: 1.5; margin: 0;">
                         Khám phá hệ thống các siêu thị, chợ truyền thống nhộn nhịp, các trung tâm mua sắm sầm uất trên địa bàn huyện Đông Anh. <span style="display: block; font-style: italic; margin-top: 4px; font-size: 0.8rem; opacity: 0.8;">Discover busy traditional markets, supermarkets and shopping hubs across Đông Anh district.</span>
                     </p>
                 </div>
-            @else
+            <?php else: ?>
                 <h2 style="font-size: 1.25rem; margin: 6px 0 0 0; font-family: var(--font-heading); font-weight: 700; line-height: 1.4; color: var(--text-main);">
                     <span style="margin-right: 4px;">📍</span> 
-                    @if($selectedCatSlug)
-                        @php
+                    <?php if($selectedCatSlug): ?>
+                        <?php
                             $selectedCat = $categories->where('slug', $selectedCatSlug)->first();
                             $selEn = $selectedCat->name;
                             $selVi = $selectedCat->name;
@@ -1049,66 +1047,69 @@
                                 $selEn = 'Discover Dong Anh Community & Culture Hub';
                                 $selVi = 'Khám phá thiết chế văn hóa - thể thao Đông Anh';
                             }
-                        @endphp
-                        {{ $selVi }} <span style="font-size: 0.9rem; color: var(--text-muted); font-weight: 500; font-style: italic;">({{ $selEn }})</span>
-                    @else
+                        ?>
+                        <?php echo e($selVi); ?> <span style="font-size: 0.9rem; color: var(--text-muted); font-weight: 500; font-style: italic;">(<?php echo e($selEn); ?>)</span>
+                    <?php else: ?>
                         Địa điểm nổi bật <span style="font-size: 0.9rem; color: var(--text-muted); font-weight: 500; font-style: italic;">(Featured Places)</span>
-                    @endif
+                    <?php endif; ?>
                     <span id="resultsCountSpan" style="font-size: 0.8rem; color: var(--text-muted); font-weight: normal; margin-left: 6px; display: inline-block; white-space: nowrap;">
-                        ({{ $eateries->count() }} địa điểm / places)
+                        (<?php echo e($eateries->count()); ?> địa điểm / places)
                     </span>
                 </h2>
-            @endif
+            <?php endif; ?>
         </div>
         
         <div id="eateriesListContainer" style="display: flex; flex-direction: column; gap: 24px; width: 100%;">
-            @if($eateries->count() > 0)
-                @foreach($eateries as $eat)
+            <?php if($eateries->count() > 0): ?>
+                <?php $__currentLoopData = $eateries; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $eat): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                     <div class="eatery-card glass-panel reveal reveal-fade-up hover-lift" 
-                         data-slug="{{ $eat->slug }}"
-                         data-name="{{ $eat->name }}"
-                         data-address="{{ $eat->address }}"
-                         data-desc="{{ $eat->description }}"
-                         data-commune="{{ $eat->commune->name }}"
-                         data-category="{{ $eat->category->slug }}"
-                         onclick="focusOnEatery({{ number_format($eat->latitude, 6, '.', '') }}, {{ number_format($eat->longitude, 6, '.', '') }}, '{{ $eat->slug }}')">
+                         data-slug="<?php echo e($eat->slug); ?>"
+                         data-name="<?php echo e($eat->name); ?>"
+                         data-address="<?php echo e($eat->address); ?>"
+                         data-desc="<?php echo e($eat->description); ?>"
+                         data-commune="<?php echo e($eat->commune->name); ?>"
+                         data-category="<?php echo e($eat->category->slug); ?>"
+                         onclick="focusOnEatery(<?php echo e(number_format($eat->latitude, 6, '.', '')); ?>, <?php echo e(number_format($eat->longitude, 6, '.', '')); ?>, '<?php echo e($eat->slug); ?>')">
                         <div class="eatery-img-wrapper hover-zoom-container">
-                            <img src="{{ $eat->image_path ?: 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=300&q=80' }}" class="eatery-img hover-zoom-img" alt="{{ $eat->name }}">
+                            <img src="<?php echo e($eat->image_path ?: 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=300&q=80'); ?>" class="eatery-img hover-zoom-img" alt="<?php echo e($eat->name); ?>">
                             <div style="position: absolute; top: 8px; left: 8px; max-width: calc(100% - 16px); display: flex; align-items: center; gap: 4px; font-size: 0.68rem; font-weight: 700; color: #ffffff; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(4px); padding: 4px 8px; border-radius: 6px; box-shadow: 0 2px 10px rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1);">
-                                <span>{{ $eat->category->icon }}</span>
-                                <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ $eat->category->name }}</span>
+                                <span><?php echo e($eat->category->icon); ?></span>
+                                <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><?php echo e($eat->category->name); ?></span>
                             </div>
                         </div>
                         <div class="eatery-info">
                             <div class="eatery-header">
-                                <h3 class="eatery-title">{{ $eat->name }}</h3>
+                                <h3 class="eatery-title"><?php echo e($eat->name); ?></h3>
                                 <div class="rating-stars">
-                                    <span>⭐</span> {{ $eat->average_rating }}
+                                    <span>⭐</span> <?php echo e($eat->average_rating); ?>
+
                                 </div>
                             </div>
-                            @if(!empty($eat->description) && $eat->description !== 'null')
-                            <p class="eatery-desc">{{ $eat->description }}</p>
-                            @endif
+                            <?php if(!empty($eat->description) && $eat->description !== 'null'): ?>
+                            <p class="eatery-desc"><?php echo e($eat->description); ?></p>
+                            <?php endif; ?>
                             <div class="eatery-footer">
                                 <div class="eatery-meta-item">
-                                    <span>📍</span> {{ $eat->commune->name }}
+                                    <span>📍</span> <?php echo e($eat->commune->name); ?>
+
                                 </div>
-                                @if(!in_array($eat->category->slug, ['smart-education-map', 'hanh-trinh-di-san', 'discover-dong-anh-community-culture-hub']))
+                                <?php if(!in_array($eat->category->slug, ['smart-education-map', 'hanh-trinh-di-san', 'discover-dong-anh-community-culture-hub'])): ?>
                                 <div class="eatery-meta-item" style="color: var(--primary); font-weight: 600;">
-                                    {{ $eat->price_range }}
+                                    <?php echo e($eat->price_range); ?>
+
                                 </div>
-                                @endif
+                                <?php endif; ?>
                             </div>
                         </div>
                     </div>
-                @endforeach
-            @else
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+            <?php else: ?>
                 <div class="glass-panel" style="padding: 40px; text-align: center; color: var(--text-muted); width: 100%;">
                     <p style="font-size: 1.2rem; margin-bottom: 8px;">😔 Không tìm thấy địa điểm nào phù hợp</p>
                     <p style="font-size: 0.9rem;">Hãy thử lọc danh mục khác hoặc xóa bộ lọc để khám phá lại toàn bộ Đông Anh!</p>
                     <a href="/" class="btn-primary" style="margin-top: 16px; padding: 8px 16px; text-decoration: none; display: inline-block;">Xem tất cả</a>
                 </div>
-            @endif
+            <?php endif; ?>
         </div>
     </div>
     
@@ -1178,12 +1179,12 @@
     </div>
 </div>
 
-@endsection
+<?php $__env->stopSection(); ?>
 
-@section('scripts')
+<?php $__env->startSection('scripts'); ?>
 <script>
     // 1. Khởi tạo dữ liệu JSON của các quán ăn được truyền từ PHP Controller
-    const eateries = @json($eateries);
+    const eateries = <?php echo json_encode($eateries, 15, 512) ?>;
     let map;
     let markers = {};
 
@@ -1571,7 +1572,7 @@
         }
 
         // 7. Tự động cuộn xuống danh sách quán ăn khi người dùng lọc theo Danh mục trên Mobile
-        @if(request()->has('cat'))
+        <?php if(request()->has('cat')): ?>
         setTimeout(() => {
             if (window.innerWidth <= 768) {
                 const splitList = document.querySelector('.split-list');
@@ -1583,7 +1584,7 @@
                 }
             }
         }, 500);
-        @endif
+        <?php endif; ?>
 
     });
 
@@ -1972,4 +1973,6 @@
         setTimeout(() => heart.remove(), 1000);
     }
 </script>
-@endsection
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH D:\DA_DISCOVERY\resources\views/home.blade.php ENDPATH**/ ?>
