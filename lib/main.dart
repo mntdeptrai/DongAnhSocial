@@ -12,6 +12,8 @@ import 'screens/notifications_screen.dart';
 import 'screens/utilities_screen.dart';
 import 'widgets/top_nav_bar.dart';
 import 'widgets/floating_chat_bubble.dart';
+import 'widgets/universal_search_modal.dart';
+import 'widgets/my_cart_modal.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -24,7 +26,8 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final primaryColor = const Color(0xFF0EA5E9);
+    const primaryColor = Color(0xFF0EA5E9);
+    const accentColor = Color(0xFF06B6D4);
 
     return MaterialApp(
       title: 'Đông Anh Discovery',
@@ -34,18 +37,25 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(
           seedColor: primaryColor,
           primary: primaryColor,
+          secondary: accentColor,
           surface: Colors.white,
+          background: const Color(0xFFF0FDFA),
         ),
-        scaffoldBackgroundColor: const Color(0xFFF8FAFC),
-        fontFamily: 'Roboto',
+        scaffoldBackgroundColor: const Color(0xFFF0FDFA),
+        fontFamily: 'Be Vietnam Pro',
         appBarTheme: const AppBarTheme(
           centerTitle: false,
           elevation: 0,
           scrolledUnderElevation: 0.5,
+          backgroundColor: Color(0xFFF0FDFA),
         ),
         cardTheme: CardThemeData(
           elevation: 0,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          color: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+            side: BorderSide(color: primaryColor.withOpacity(0.12), width: 1),
+          ),
         ),
       ),
       home: const AppEntryScreen(),
@@ -216,6 +226,7 @@ class _MainLayoutState extends State<MainLayout> {
   int _currentIndex = 0;
   int _unreadNotifsCount = 0;
   int _unreadMessagesCount = 0;
+  int _cartCount = 0;
   Timer? _pollTimer;
   final GlobalKey<FeedScreenState> _feedScreenKey = GlobalKey<FeedScreenState>();
 
@@ -246,10 +257,16 @@ class _MainLayoutState extends State<MainLayout> {
     try {
       final notifs = await ApiService.getAppNotifications();
       final unreadMsgCount = await ApiService.getUnreadMessagesCount();
+      final cartRes = await ApiService.getCart();
+      int cCount = 0;
+      if (cartRes['success'] == true && cartRes['data'] is List) {
+        cCount = (cartRes['data'] as List).length;
+      }
       if (mounted) {
         setState(() {
           _unreadNotifsCount = notifs.length;
           _unreadMessagesCount = unreadMsgCount;
+          _cartCount = cCount;
         });
       }
     } catch (_) {}
@@ -285,14 +302,11 @@ class _MainLayoutState extends State<MainLayout> {
             _fetchDynamicCounts();
           }
         },
-        onAddPostTap: () {
-          setState(() {
-            _currentIndex = 1;
-          });
-        },
         onSearchTap: () {
-          setState(() {
-            _currentIndex = 2;
+          UniversalSearchModal.show(context, onNavigateToTab: (index) {
+            setState(() {
+              _currentIndex = index;
+            });
           });
         },
         onMessengerTap: () {
@@ -302,11 +316,9 @@ class _MainLayoutState extends State<MainLayout> {
           ).then((_) => _fetchDynamicCounts());
         },
         onCartTap: () {
-          setState(() {
-            _currentIndex = 3;
-          });
+          MyCartModal.show(context, onCartUpdated: _fetchDynamicCounts);
         },
-
+        cartCount: _cartCount,
         unreadMessagesCount: _unreadMessagesCount,
         unreadNotifsCount: _unreadNotifsCount,
       ),

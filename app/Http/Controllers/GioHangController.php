@@ -16,7 +16,7 @@ class GioHangController extends Controller
         if (Auth::check()) {
             return Cart::firstOrCreate(['user_id' => Auth::user()->id]);
         }
-        $sessionId = session()->getId();
+        $sessionId = request()->header('X-Session-ID') ?: session()->getId();
         return Cart::firstOrCreate(['session_id' => $sessionId]);
     }
 
