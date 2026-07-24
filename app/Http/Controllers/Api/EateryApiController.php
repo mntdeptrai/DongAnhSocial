@@ -492,8 +492,7 @@ class EateryApiController extends Controller
         $video->setConnection($conn);
         $video->fill($request->all());
         
-        $role = session('user_role') ?? (auth()->check() ? auth()->user()->role : 'user');
-        $video->status = ($role === 'admin') ? 'approved' : 'pending';
+        $video->status = 'approved';
         $video->user_id = auth()->id();
 
         $video->save();

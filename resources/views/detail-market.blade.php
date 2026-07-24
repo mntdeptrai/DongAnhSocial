@@ -1204,51 +1204,48 @@
             </div>
         </div>
 
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 18px;">
-            {{-- Tin 1: ATTP --}}
-            <div style="background: var(--bg-card); border: 1px solid var(--border-glow); border-left: 5px solid #10B981 !important; border-radius: 18px; padding: 20px; display: flex; gap: 16px; align-items: flex-start; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 6px 20px rgba(0,0,0,0.03);" onmouseover="this.style.transform='translateY(-4px)'; this.style.borderColor='rgba(16,185,129,0.5)'; this.style.boxShadow='0 14px 30px -8px rgba(16,185,129,0.2)';" onmouseout="this.style.transform='none'; this.style.borderColor='var(--border-glow)'; this.style.boxShadow='0 6px 20px rgba(0,0,0,0.03)';">
-                <div style="width: 44px; height: 44px; border-radius: 12px; background: linear-gradient(135deg, #10B981, #059669); color: #ffffff; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; flex-shrink: 0; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35);">
-                    <i class="bi bi-shield-fill-check"></i>
-                </div>
-                <div style="flex: 1;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                        <span style="background: rgba(16, 185, 129, 0.12); color: #059669; font-size: 0.7rem; font-weight: 800; padding: 3px 10px; border-radius: 12px;">🛡️ KIỂM ĐỊNH ATTP</span>
-                        <span style="font-size: 0.7rem; color: var(--text-muted); font-weight: 600;">Mới cập nhật</span>
-                    </div>
-                    <h4 style="font-size: 0.92rem; font-weight: 800; color: var(--text-main); margin: 0 0 6px 0; line-height: 1.35;">100% sạp đạt chuẩn ATTP Tháng 7/2026</h4>
-                    <p style="font-size: 0.78rem; color: var(--text-muted); margin: 0; line-height: 1.45;">Đoàn kiểm tra liên ngành đã nghiệm thu chất lượng nguồn gốc nông sản &amp; vệ sinh quầy hàng.</p>
-                </div>
-            </div>
+        @php
+            $announcements = json_decode($eatery->announcements ?? '[]', true);
+            if (empty($announcements)) {
+                $announcements = [
+                    ['id' => 1, 'tag' => '🛡️ KIỂM ĐỊNH ATTP', 'time' => 'Mới cập nhật', 'title' => '100% sạp đạt chuẩn ATTP Tháng 7/2026', 'content' => 'Đoàn kiểm tra liên ngành đã nghiệm thu chất lượng nguồn gốc nông sản & vệ sinh quầy hàng.', 'color' => '#10B981'],
+                    ['id' => 2, 'tag' => '🧼 VỆ SINH ĐỊNH KỲ', 'time' => '18h00 Chủ Nhật', 'title' => 'Lịch phun khử khuẩn toàn chợ', 'content' => 'BQL tiến hành dọn vệ sinh tổng thể & phun tiêu độc khử khuẩn định kỳ vào cuối tuần.', 'color' => '#0ea5e9'],
+                    ['id' => 3, 'tag' => '🎪 SỰ KIỆN NÔNG SẢN', 'time' => 'Sáng Thứ 7', 'title' => 'Phiên Chợ Nông Sản Sạch Đông Anh', 'content' => 'Quy tụ các hợp tác xã nông sản sạch, rau VietGAP & OCOP giá ưu đãi tại Khối B.', 'color' => '#f59e0b']
+                ];
+            }
+        @endphp
 
-            {{-- Tin 2: Khử khuẩn --}}
-            <div style="background: var(--bg-card); border: 1px solid var(--border-glow); border-left: 5px solid #0ea5e9 !important; border-radius: 18px; padding: 20px; display: flex; gap: 16px; align-items: flex-start; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 6px 20px rgba(0,0,0,0.03);" onmouseover="this.style.transform='translateY(-4px)'; this.style.borderColor='rgba(14,165,233,0.5)'; this.style.boxShadow='0 14px 30px -8px rgba(14,165,233,0.2)';" onmouseout="this.style.transform='none'; this.style.borderColor='var(--border-glow)'; this.style.boxShadow='0 6px 20px rgba(0,0,0,0.03)';">
-                <div style="width: 44px; height: 44px; border-radius: 12px; background: linear-gradient(135deg, #0ea5e9, #0284c7); color: #ffffff; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; flex-shrink: 0; box-shadow: 0 4px 12px rgba(14, 165, 233, 0.35);">
-                    <i class="bi bi-droplet-fill"></i>
-                </div>
-                <div style="flex: 1;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                        <span style="background: rgba(14, 165, 233, 0.12); color: #0284c7; font-size: 0.7rem; font-weight: 800; padding: 3px 10px; border-radius: 12px;">🧼 VỆ SINH ĐỊNH KỲ</span>
-                        <span style="font-size: 0.7rem; color: var(--text-muted); font-weight: 600;">18h00 Chủ Nhật</span>
-                    </div>
-                    <h4 style="font-size: 0.92rem; font-weight: 800; color: var(--text-main); margin: 0 0 6px 0; line-height: 1.35;">Lịch phun khử khuẩn toàn chợ</h4>
-                    <p style="font-size: 0.78rem; color: var(--text-muted); margin: 0; line-height: 1.45;">BQL tiến hành dọn vệ sinh tổng thể &amp; phun tiêu độc khử khuẩn định kỳ vào cuối tuần.</p>
-                </div>
-            </div>
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px;">
+            @foreach($announcements as $ann)
+            @php $itemColor = $ann['color'] ?? '#10B981'; @endphp
+            <div onclick="openAnnouncementDetailModal('{{ addslashes($ann['tag'] ?? '📢 THÔNG BÁO') }}', '{{ addslashes($ann['time'] ?? 'Mới cập nhật') }}', '{{ addslashes($ann['title']) }}', '{{ addslashes($ann['content']) }}', '{{ $itemColor }}')"
+                 style="background: var(--bg-card); border: 1px solid var(--border-glow); border-left: 4px solid {{ $itemColor }}; border-radius: 16px; padding: 18px; display: flex; flex-direction: column; gap: 10px; transition: all 0.25s ease; box-shadow: 0 4px 14px rgba(0,0,0,0.05); cursor: pointer; min-width: 0;"
+                 onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 12px 28px -6px {{ $itemColor }}40';"
+                 onmouseout="this.style.transform='none'; this.style.boxShadow='0 4px 14px rgba(0,0,0,0.05)';">
 
-            {{-- Tin 3: Chợ phiên Nông sản sạch --}}
-            <div style="background: var(--bg-card); border: 1px solid var(--border-glow); border-left: 5px solid #f59e0b !important; border-radius: 18px; padding: 20px; display: flex; gap: 16px; align-items: flex-start; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 6px 20px rgba(0,0,0,0.03);" onmouseover="this.style.transform='translateY(-4px)'; this.style.borderColor='rgba(245,158,11,0.5)'; this.style.boxShadow='0 14px 30px -8px rgba(245,158,11,0.2)';" onmouseout="this.style.transform='none'; this.style.borderColor='var(--border-glow)'; this.style.boxShadow='0 6px 20px rgba(0,0,0,0.03)';">
-                <div style="width: 44px; height: 44px; border-radius: 12px; background: linear-gradient(135deg, #f59e0b, #d97706); color: #ffffff; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; flex-shrink: 0; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.35);">
-                    <i class="bi bi-calendar-event-fill"></i>
-                </div>
-                <div style="flex: 1;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                        <span style="background: rgba(245, 158, 11, 0.12); color: #b45309; font-size: 0.7rem; font-weight: 800; padding: 3px 10px; border-radius: 12px;">🎪 SỰ KIỆN NÔNG SẢN</span>
-                        <span style="font-size: 0.7rem; color: var(--text-muted); font-weight: 600;">Sáng Thứ 7</span>
+                {{-- Header: icon + tag --}}
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="width: 38px; height: 38px; min-width: 38px; border-radius: 10px; background: {{ $itemColor }}; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; box-shadow: 0 3px 8px {{ $itemColor }}55;">
+                        <i class="bi bi-megaphone-fill"></i>
                     </div>
-                    <h4 style="font-size: 0.92rem; font-weight: 800; color: var(--text-main); margin: 0 0 6px 0; line-height: 1.35;">Phiên Chợ Nông Sản Sạch Đông Anh</h4>
-                    <p style="font-size: 0.78rem; color: var(--text-muted); margin: 0; line-height: 1.45;">Quy tụ các hợp tác xã nông sản sạch, rau VietGAP &amp; OCOP giá ưu đãi tại Khối B.</p>
+                    <div style="min-width: 0; flex: 1;">
+                        <span style="display: inline-block; background: {{ $itemColor }}1f; color: {{ $itemColor }}; font-size: 0.68rem; font-weight: 800; padding: 2px 9px; border-radius: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;">{{ $ann['tag'] ?? '📢 THÔNG BÁO' }}</span>
+                        <div style="font-size: 0.68rem; color: var(--text-muted); font-weight: 600; margin-top: 2px;">⏰ {{ $ann['time'] ?? 'Mới cập nhật' }}</div>
+                    </div>
                 </div>
+
+                {{-- Title --}}
+                <h4 style="font-size: 0.9rem; font-weight: 800; color: var(--text-main); margin: 0; line-height: 1.35; word-break: break-word;">{{ $ann['title'] }}</h4>
+
+                {{-- Content preview --}}
+                <p style="font-size: 0.78rem; color: var(--text-muted); margin: 0; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; word-break: break-word;">{{ $ann['content'] }}</p>
+
+                {{-- CTA --}}
+                <span style="font-size: 0.73rem; color: #0284c7; font-weight: 700; display: flex; align-items: center; gap: 4px;">
+                    <i class="bi bi-zoom-in"></i> Nhấn để xem chi tiết...
+                </span>
             </div>
+            @endforeach
         </div>
     </div>
 
@@ -1410,8 +1407,52 @@
                      data-lng="{{ $first->longitude ?? '' }}">
                      
                     <div class="stall-card-gov">
-                        <!-- Card Header -->
-                        <div style="padding: 20px; border-bottom: 1px solid var(--border-glow); display: flex; align-items: center; gap: 16px; background: rgba(14, 165, 233, 0.015);">
+                        @php
+                            $coverImg = asset('images/stalls/food.png');
+                            if ($category === 'Rau củ') {
+                                $coverImg = asset('images/stalls/veggies.png');
+                            } elseif ($category === 'Thực phẩm khô' || str_contains($stallName, 'Hoa quả')) {
+                                $coverImg = asset('images/stalls/fruits.png');
+                            } elseif ($category === 'Thịt tươi') {
+                                $coverImg = asset('images/stalls/meat.png');
+                            }
+
+                            // Ưu tiên hiển thị ảnh do Admin tải lên trong Trang Quản Trị (nếu có)
+                            if (!empty($first->image_path)) {
+                                if (str_starts_with($first->image_path, 'http')) {
+                                    $coverImg = $first->image_path;
+                                } elseif (file_exists(public_path(ltrim($first->image_path, '/')))) {
+                                    $coverImg = asset(ltrim($first->image_path, '/'));
+                                }
+                            }
+                        @endphp
+                        
+                        <!-- AI Cover Header Banner -->
+                        <div style="position: relative; height: 125px; overflow: hidden; border-top-left-radius: 24px; border-top-right-radius: 24px;">
+                            <img src="{{ $coverImg }}" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.6s ease;" class="stall-cover-img" alt="{{ $stallName }}">
+                            <div style="position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(15, 23, 42, 0.15) 0%, rgba(15, 23, 42, 0.8) 100%);"></div>
+                            
+                            <div style="position: absolute; top: 10px; right: 10px; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); color: #ffffff; font-size: 0.7rem; font-weight: 800; padding: 4px 12px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.25); box-shadow: 0 4px 10px rgba(0,0,0,0.25);">
+                                @if($category === 'Ăn uống') 🍲 Khối Ẩm Thực
+                                @elseif($category === 'Rau củ') 🥦 Nông Sản Sạch
+                                @elseif($category === 'Thực phẩm khô') 🥜 Đồ Khô & Gia Vị
+                                @elseif($category === 'Thịt tươi') 🥩 Thực Phẩm Tươi
+                                @else 🛍️ Gian Hàng Số
+                                @endif
+                            </div>
+
+                            <div style="position: absolute; bottom: 10px; left: 16px; right: 16px; display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+                                <h4 style="font-family: var(--font-heading); font-size: 1.1rem; font-weight: 900; margin: 0; color: #ffffff; text-shadow: 0 2px 8px rgba(0,0,0,0.8); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1;">
+                                    {{ $stallName }}
+                                </h4>
+                                <button onclick="showStallOnMap('{{ $stallName }}', '{{ $sellerName }}', '{{ $category }}', '{{ $first->latitude ?? '' }}', '{{ $first->longitude ?? '' }}')" class="btn-map-pin" title="Định vị trên bản đồ số" style="background: rgba(255, 255, 255, 0.25); backdrop-filter: blur(6px); border: 1px solid rgba(255,255,255,0.4); color: #ffffff; border-radius: 8px; font-size: 0.9rem; cursor: pointer; transition: all 0.2s; padding: 4px 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;" onmouseover="this.style.background='#E11D48'; this.style.color='#ffffff';" onmouseout="this.style.background='rgba(255, 255, 255, 0.25)'; this.style.color='#ffffff';">
+                                    📍 Map
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Card Header Info -->
+                        <div style="padding: 14px 20px; border-bottom: 1px solid var(--border-glow); display: flex; align-items: center; gap: 14px; background: rgba(14, 165, 233, 0.015);">
                             @php
                                 $gradients = [
                                     'linear-gradient(135deg, #0EA5E9 0%, #2563EB 100%)',
@@ -1421,19 +1462,12 @@
                                 ];
                                 $grad = $gradients[abs(crc32($sellerName)) % count($gradients)];
                             @endphp
-                            <div class="stall-avatar" style="background: {!! $grad !!}">
+                            <div class="stall-avatar" style="background: {!! $grad !!}; width: 40px; height: 40px; font-size: 1rem;">
                                 {{ mb_substr($sellerName, 0, 1) }}
                             </div>
                             <div style="flex: 1; min-width: 0;">
-                                <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
-                                    <h4 style="font-family: var(--font-heading); font-size: 1.05rem; font-weight: 800; margin: 0; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1;">
-                                        {{ $stallName }}
-                                    </h4>
-                                    <button onclick="showStallOnMap('{{ $stallName }}', '{{ $sellerName }}', '{{ $category }}', '{{ $first->latitude ?? '' }}', '{{ $first->longitude ?? '' }}')" class="btn-map-pin" title="Định vị trên bản đồ số" style="background: rgba(14, 165, 233, 0.06); border: 1px solid var(--border-glow); color: #E11D48; border-radius: 8px; font-size: 0.9rem; cursor: pointer; transition: all 0.2s; padding: 4px 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;" onmouseover="this.style.background='#E11D48'; this.style.color='#ffffff';" onmouseout="this.style.background='rgba(14, 165, 233, 0.06)'; this.style.color='#E11D48';">
-                                        📍
-                                    </button>
-                                </div>
-                                <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">👤 Chủ hộ: {{ $sellerName }}</span>
+                                <span style="font-size: 0.85rem; color: var(--text-main); font-weight: 700; display: block;">👤 Chủ hộ: {{ $sellerName }}</span>
+                                <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 500;">📞 {{ $sellerPhone ?: 'Đã xác minh thông tin' }}</span>
                             </div>
                         </div>
                         
@@ -4159,6 +4193,62 @@
             }, 700);
         }, 900);
     }
+
+    // =========================================================================
+    // MODAL XEM CHI TIẾT BẢNG TIN SỐ BAN QUẢN LÝ CHỢ
+    // =========================================================================
+    function openAnnouncementDetailModal(tag, time, title, content, color) {
+        document.getElementById('modalAnnTag').innerText = tag;
+        document.getElementById('modalAnnTag').style.background = color + '1f';
+        document.getElementById('modalAnnTag').style.color = color;
+
+        document.getElementById('modalAnnTime').innerText = '⏰ ' + time;
+        document.getElementById('modalAnnTitle').innerText = title;
+        document.getElementById('modalAnnContent').innerText = content;
+
+        const iconDiv = document.getElementById('modalAnnIcon');
+        iconDiv.style.background = color;
+
+        document.getElementById('announcementDetailModal').style.display = 'flex';
+    }
+
+    function closeAnnouncementDetailModal() {
+        document.getElementById('announcementDetailModal').style.display = 'none';
+    }
 </script>
+
+<!-- Modal Xem Chi Tiết Bản Tin Số BQL Chợ -->
+<div id="announcementDetailModal" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(8px); z-index: 99999; align-items: center; justify-content: center; padding: 20px;">
+    <div style="background: #ffffff; width: 100%; max-width: 580px; border-radius: 20px; padding: 28px; position: relative; box-shadow: 0 20px 50px rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.2);">
+        <button type="button" onclick="closeAnnouncementDetailModal()" style="position: absolute; top: 18px; right: 18px; background: #f1f5f9; border: 1px solid #cbd5e1; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #475569; font-size: 1.1rem; cursor: pointer; font-weight: 800; z-index: 10;">✕</button>
+
+        <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 18px;">
+            <div id="modalAnnIcon" style="width: 50px; height: 50px; border-radius: 14px; background: #10B981; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0; box-shadow: 0 6px 16px rgba(0,0,0,0.15);">
+                📢
+            </div>
+            <div>
+                <span id="modalAnnTag" style="background: rgba(16, 185, 129, 0.12); color: #059669; font-size: 0.78rem; font-weight: 800; padding: 4px 12px; border-radius: 14px; display: inline-block;">🛡️ KIỂM ĐỊNH ATTP</span>
+                <span id="modalAnnTime" style="font-size: 0.78rem; color: #64748b; font-weight: 700; margin-left: 8px;">⏰ Mới cập nhật</span>
+            </div>
+        </div>
+
+        <h3 id="modalAnnTitle" style="font-size: 1.3rem; font-weight: 900; color: #0f172a; margin-bottom: 14px; line-height: 1.4; font-family: var(--font-heading);">
+            Tiêu đề bản tin
+        </h3>
+
+        <div style="background: #f8fafc; border-left: 4px solid #0284c7; padding: 18px; border-radius: 12px; margin-bottom: 22px; font-size: 0.94rem; color: #334155; line-height: 1.6; white-space: pre-line;" id="modalAnnContent">
+            Nội dung chi tiết bản tin...
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #e2e8f0; padding-top: 16px;">
+            <span style="font-size: 0.8rem; color: #64748b; font-weight: 700; display: flex; align-items: center; gap: 6px;">
+                📢 Bản tin chính thức từ Ban Quản Lý Chợ
+            </span>
+            <button type="button" onclick="closeAnnouncementDetailModal()" style="background: #0284c7; color: #fff; border: none; padding: 9px 24px; border-radius: 10px; font-weight: 800; cursor: pointer; font-size: 0.88rem; box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);">
+                Đóng
+            </button>
+        </div>
+    </div>
+</div>
 @endsection
 @endsection

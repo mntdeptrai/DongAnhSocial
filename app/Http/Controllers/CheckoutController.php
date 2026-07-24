@@ -167,12 +167,12 @@ class CheckoutController extends Controller
 
             // If there's only one order and it's online payment, redirect to online payment simulator
             if (count($createdOrders) === 1 && $request->input('payment_method') === 'Online') {
-                return redirect()->route('checkout.payment', $createdOrders[0]->id);
+                return redirect()->route('checkout.payment', $this->getOrderCode($createdOrders[0]->id));
             }
 
             // Otherwise direct to order success page
             return redirect()->route('checkout.success', [
-                'id' => $createdOrders[0]->id,
+                'code' => $this->getOrderCode($createdOrders[0]->id),
                 'ids' => $idsString
             ])->with('success', 'Đặt hàng thành công!');
 
@@ -183,14 +183,33 @@ class CheckoutController extends Controller
         }
     }
 
-    public function payment($id)
+    private function resolveOrderId($codeOrId)
     {
+        if (is_numeric($codeOrId)) {
+            return (int) $codeOrId;
+        }
+        $clean = ltrim(trim($codeOrId), '#');
+        if (str_starts_with(strtoupper($clean), 'ORD')) {
+            $clean = preg_replace('/[^\d]/', '', $clean);
+        }
+        return (int) $clean;
+    }
+
+    private function getOrderCode($id)
+    {
+        return 'ORD' . str_pad($id, 6, '0', STR_PAD_LEFT);
+    }
+
+    public function payment($code)
+    {
+        $id = $this->resolveOrderId($code);
         $order = Order::with(['items', 'payment'])->findOrFail($id);
         return view('checkout.payment', compact('order'));
     }
 
-    public function processPayment(Request $request, $id)
+    public function processPayment(Request $request, $code)
     {
+        $id = $this->resolveOrderId($code);
         $order = Order::with('payment')->findOrFail($id);
         $success = $request->boolean('simulate_success', true);
 
@@ -220,18 +239,20 @@ class CheckoutController extends Controller
             return back()->with('error', 'Thanh toán thất bại. Vui lòng thử lại.');
         }
 
-        return redirect()->route('checkout.success', $order->id)->with('success', 'Thanh toán online thành công!');
+        return redirect()->route('checkout.success', $this->getOrderCode($order->id))->with('success', 'Thanh toán online thành công!');
     }
 
-    public function success(Request $request, $id)
+    public function success(Request $request, $code)
     {
         $orderIds = [];
-        if ($id) {
-            $orderIds[] = $id;
+        if ($code) {
+            $orderIds[] = $this->resolveOrderId($code);
         }
         if ($request->filled('ids')) {
             $ids = explode(',', $request->input('ids'));
-            $orderIds = array_merge($orderIds, $ids);
+            foreach ($ids as $i) {
+                $orderIds[] = $this->resolveOrderId($i);
+            }
         }
         
         $orderIds = array_unique(array_filter($orderIds));
@@ -260,13 +281,13 @@ class CheckoutController extends Controller
         return view('checkout.orders');
     }
 
-    public function show($id)
+    public function show($code)
     {
         if (!Auth::check()) {
             return redirect()->route('login')->with('error', 'Vui lòng đăng nhập để xem đơn hàng');
         }
 
-        // Just check if it exists for this user, then return the view. The JS will query apiOrdersShow for details.
+        $id = $this->resolveOrderId($code);
         $order = Order::where('user_id', Auth::user()->id)->findOrFail($id);
 
         return view('checkout.show', compact('order'));
@@ -387,9 +408,10 @@ class CheckoutController extends Controller
                 'is_reviewed' => (bool)$order->is_reviewed,
                 'eatery_id' => $order->eatery_id,
                 'category_slug' => $order->category_slug,
+                'stall_name' => $order->stall_name,
                 'eatery_name' => $order->eatery 
                     ? ($order->stall_name ? $order->eatery->name . ' - ' . $order->stall_name : $order->eatery->name) 
-                    : 'Cửa hàng',
+                    : ($order->stall_name ?: 'Cửa hàng'),
             ];
         });
 
@@ -405,11 +427,13 @@ class CheckoutController extends Controller
         ]);
     }
 
-    public function apiOrdersShow(Request $request, $id)
+    public function apiOrdersShow(Request $request, $codeOrId)
     {
         if (!Auth::check()) {
             return response()->json(['success' => false, 'message' => 'Vui lòng đăng nhập'], 401);
         }
+
+        $id = $this->resolveOrderId($codeOrId);
 
         $order = Order::with(['items', 'payment'])
             ->where('user_id', Auth::user()->id)
@@ -439,7 +463,7 @@ class CheckoutController extends Controller
         $formattedOrder = [
             'id' => $order->id,
             'order_code' => 'ORD' . str_pad($order->id, 3, '0', STR_PAD_LEFT),
-            'order_code_full' => '#ORD' . str_pad($order->id, 6, '0', STR_PAD_LEFT),
+            'order_code_full' => 'ORD' . str_pad($order->id, 6, '0', STR_PAD_LEFT),
             'created_at_formatted' => $order->created_at->format('H:i d/m/Y'),
             'status' => $order->status,
             'status_label' => $this->getStatusLabel($order->status),
@@ -459,9 +483,10 @@ class CheckoutController extends Controller
             'is_reviewed' => (bool)$order->is_reviewed,
             'eatery_id' => $order->eatery_id,
             'category_slug' => $order->category_slug,
+            'stall_name' => $order->stall_name,
             'eatery_name' => $order->eatery 
                 ? ($order->stall_name ? $order->eatery->name . ' - ' . $order->stall_name : $order->eatery->name) 
-                : 'Cửa hàng',
+                : ($order->stall_name ?: 'Cửa hàng'),
         ];
 
         return response()->json([
@@ -498,12 +523,13 @@ class CheckoutController extends Controller
         }
     }
 
-    public function cancel(Request $request, $id)
+    public function cancel(Request $request, $codeOrId)
     {
         if (!Auth::check()) {
             return response()->json(['success' => false, 'message' => 'Vui lòng đăng nhập'], 401);
         }
 
+        $id = $this->resolveOrderId($codeOrId);
         $order = Order::where('user_id', Auth::user()->id)->findOrFail($id);
 
         if (!in_array($order->status, ['pending', 'paid'])) {
@@ -539,12 +565,13 @@ class CheckoutController extends Controller
         }
     }
 
-    public function reorder(Request $request, $id)
+    public function reorder(Request $request, $codeOrId)
     {
         if (!Auth::check()) {
             return response()->json(['success' => false, 'message' => 'Vui lòng đăng nhập'], 401);
         }
 
+        $id = $this->resolveOrderId($codeOrId);
         $order = Order::with('items')->where('user_id', Auth::user()->id)->findOrFail($id);
 
         if ($order->items->isEmpty()) {
@@ -594,12 +621,13 @@ class CheckoutController extends Controller
         }
     }
 
-    public function review(Request $request, $id)
+    public function review(Request $request, $codeOrId)
     {
         if (!Auth::check()) {
             return response()->json(['success' => false, 'message' => 'Vui lòng đăng nhập'], 401);
         }
 
+        $id = $this->resolveOrderId($codeOrId);
         $order = Order::where('user_id', Auth::user()->id)->findOrFail($id);
 
         if ($order->status !== 'completed') {

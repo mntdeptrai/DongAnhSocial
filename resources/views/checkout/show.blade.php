@@ -33,7 +33,7 @@
     </div>
 
     <!-- Dynamic Detail Container (Rendered by orders.js) -->
-    <div id="order-detail-container" data-order-id="{{ $order->id }}">
+    <div id="order-detail-container" data-order-id="ORD{{ str_pad($order->id, 6, '0', STR_PAD_LEFT) }}">
         <div style="text-align: center; padding: 80px 40px; color: #64748b;">
             <span style="display: inline-block; animation: spin 1s linear infinite; font-size: 2rem; margin-bottom: 12px;">⏳</span>
             <div style="font-weight: 600;">Đang kết nối tải chi tiết đơn hàng...</div>

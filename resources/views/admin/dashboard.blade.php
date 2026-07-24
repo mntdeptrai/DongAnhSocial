@@ -32,10 +32,15 @@
 <!-- Welcome Header Card -->
 <div class="admin-welcome-banner">
     <div>
-        <h1>Chào mừng tới Kênh Quản trị 🏰</h1>
-        <p>Tìm kiếm địa điểm cơ sở và click nút "Quản lý" để điều khiển thực đơn, tọa độ bản đồ, video review và chứng chỉ an toàn vệ sinh thực phẩm.</p>
+        @if(in_array(session('user_role'), ['manager', 'seller']))
+            <h1>Chào mừng Ban Quản lý Chợ 🏛️</h1>
+            <p>Không gian làm việc điều phối tổng quan thông tin về Chợ, tọa độ bản đồ số, hồ sơ pháp lý cơ sở, chứng chỉ an toàn thực phẩm và các gian hàng.</p>
+        @else
+            <h1>Chào mừng tới Kênh Quản trị 🏰</h1>
+            <p>Tìm kiếm địa điểm cơ sở và click nút "Quản lý" để điều khiển thông tin, tọa độ bản đồ, video review và chứng chỉ an toàn vệ sinh thực phẩm.</p>
+        @endif
     </div>
-    <div style="font-size: 2.5rem; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.12));">⚙️</div>
+    <div style="font-size: 2.5rem; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.12));">🏛️</div>
 </div>
 
 <!-- Stats Grid Widgets -->

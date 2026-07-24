@@ -323,18 +323,24 @@
                                     <div class="user-name">{{ session('user_name') }}</div>
                                     <div class="user-role">
                                         @if(session('user_role') === 'admin')
-                                            🏛️ Quản trị viên
+                                            🏛️ Quản trị viên Tổng
+                                        @elseif(session('user_role') === 'manager')
+                                            🏛️ Ban Quản lý Chợ
                                         @elseif(session('user_role') === 'seller')
-                                            🏪 Chủ cơ sở kinh doanh
+                                            🛍️ Chủ Gian Hàng Số
                                         @else
                                             👤 Thành viên cộng đồng
                                         @endif
                                     </div>
                                 </div>
                                 
-                                @if(session('user_role') === 'admin' || session('user_role') === 'seller')
-                                    <a href="/admin/dashboard" class="dropdown-item">
-                                        <span>📊</span> Trang quản lý
+                                @if(session('user_role') === 'admin' || session('user_role') === 'manager')
+                                    <a href="/admin/dashboard" class="dropdown-item" style="color: #0ea5e9; font-weight: 700; background: rgba(14, 165, 233, 0.06);">
+                                        <span>⚙️</span> Trang Quản Trị Chợ
+                                    </a>
+                                @elseif(session('user_role') === 'seller')
+                                    <a href="/seller/dashboard" class="dropdown-item" style="color: #10b981; font-weight: 700; background: rgba(16, 185, 129, 0.06);">
+                                        <span>🛒</span> Kênh Quản Lý Gian Hàng
                                     </a>
                                 @endif
                                 

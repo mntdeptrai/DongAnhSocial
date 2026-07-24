@@ -6,6 +6,7 @@ use App\Http\Controllers\SearchController;
 use App\Http\Controllers\EateryController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\VendorController;
 use App\Http\Controllers\FoodTourController;
 use App\Http\Controllers\SocialHubController;
 use App\Http\Controllers\MarketStallController;
@@ -105,17 +106,17 @@ Route::post('/cart/clear', [GioHangController::class, 'clear'])->name('cart.clea
 Route::middleware(['auth'])->group(function () {
     Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
     Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
-    Route::get('/checkout/payment/{id}', [CheckoutController::class, 'payment'])->name('checkout.payment');
-    Route::post('/checkout/payment/{id}/process', [CheckoutController::class, 'processPayment'])->name('checkout.process-payment');
-    Route::get('/checkout/success/{id}', [CheckoutController::class, 'success'])->name('checkout.success');
+    Route::get('/checkout/payment/{code}', [CheckoutController::class, 'payment'])->name('checkout.payment');
+    Route::post('/checkout/payment/{code}/process', [CheckoutController::class, 'processPayment'])->name('checkout.process-payment');
+    Route::get('/checkout/success/{code}', [CheckoutController::class, 'success'])->name('checkout.success');
     Route::get('/orders', [CheckoutController::class, 'ordersList'])->name('orders.index');
-    Route::get('/orders/{id}', [CheckoutController::class, 'show'])->name('orders.show');
+    Route::get('/orders/{code}', [CheckoutController::class, 'show'])->name('orders.show');
     
     Route::get('/api/orders', [CheckoutController::class, 'apiOrdersList'])->name('api.orders.index');
-    Route::get('/api/orders/{id}', [CheckoutController::class, 'apiOrdersShow'])->name('api.orders.show');
-    Route::post('/api/orders/{id}/cancel', [CheckoutController::class, 'cancel'])->name('api.orders.cancel');
-    Route::post('/api/orders/{id}/reorder', [CheckoutController::class, 'reorder'])->name('api.orders.reorder');
-    Route::post('/api/orders/{id}/review', [CheckoutController::class, 'review'])->name('api.orders.review');
+    Route::get('/api/orders/{code}', [CheckoutController::class, 'apiOrdersShow'])->name('api.orders.show');
+    Route::post('/api/orders/{code}/cancel', [CheckoutController::class, 'cancel'])->name('api.orders.cancel');
+    Route::post('/api/orders/{code}/reorder', [CheckoutController::class, 'reorder'])->name('api.orders.reorder');
+    Route::post('/api/orders/{code}/review', [CheckoutController::class, 'review'])->name('api.orders.review');
 });
 
 
@@ -129,11 +130,25 @@ Route::get('/auth/forgot-password', [AuthController::class, 'showForgotPassword'
 Route::post('/auth/forgot-password/send-otp', [AuthController::class, 'sendForgotPasswordOtp'])->name('password.send-otp')->middleware('throttle:5,1');
 Route::post('/auth/forgot-password/reset', [AuthController::class, 'resetPassword'])->name('password.update');
 Route::post('/auth/logout', [AuthController::class, 'logout'])->name('logout');
+Route::get('/auth/logout', [AuthController::class, 'logout'])->name('logout.get');
 
 
-// --- ADMIN SIDE ROUTES (Giao diện quản trị viên) ---
-// Bắt buộc đăng nhập (auth) và có vai trò phù hợp trước khi vào bất kỳ trang nào trong khu vực quản trị
-Route::prefix('admin')->middleware(['auth', 'role:admin,seller'])->group(function () {
+// --- STALL VENDOR SIDE ROUTES (Kênh Điều Hành Chủ Gian Hàng Số) ---
+Route::prefix('seller')->middleware(['auth', 'role:seller,admin', 'tenant.auth'])->group(function () {
+    Route::get('/dashboard', [VendorController::class, 'dashboard'])->name('seller.dashboard');
+    Route::get('/products', [VendorController::class, 'products'])->name('seller.products.index');
+    Route::post('/products', [VendorController::class, 'storeProduct'])->name('seller.products.store');
+    Route::put('/products/{id}', [VendorController::class, 'updateProduct'])->name('seller.products.update');
+    Route::delete('/products/{id}', [VendorController::class, 'destroyProduct'])->name('seller.products.destroy');
+    Route::get('/orders', [VendorController::class, 'orders'])->name('seller.orders.index');
+    Route::put('/orders/{id}/status', [VendorController::class, 'updateOrderStatus'])->name('seller.orders.update-status');
+    Route::get('/api/orders', [VendorController::class, 'ordersJson'])->name('seller.orders.json');
+});
+
+
+// --- ADMIN SIDE ROUTES (Giao diện quản trị viên & Ban Quản lý Chợ) ---
+// Bắt buộc đăng nhập (auth), phân quyền (admin, manager) và xác thực Tenant (tenant.auth)
+Route::prefix('admin')->middleware(['auth', 'role:admin,manager', 'tenant.auth'])->group(function () {
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
     Route::get('/eateries/create', [AdminController::class, 'createEatery'])->name('admin.eatery.create');
     Route::post('/eateries', [AdminController::class, 'storeEatery'])->name('admin.eatery.store');
@@ -152,6 +167,10 @@ Route::prefix('admin')->middleware(['auth', 'role:admin,seller'])->group(functio
     Route::post('/cultural-activities', [AdminController::class, 'storeCulturalActivity'])->name('admin.cultural-activity.store');
     Route::put('/cultural-activities/{id}', [AdminController::class, 'updateCulturalActivity'])->name('admin.cultural-activity.update');
     Route::delete('/cultural-activities/{id}', [AdminController::class, 'destroyCulturalActivity'])->name('admin.cultural-activity.destroy');
+
+    // Quản lý Bảng tin số Ban Quản Lý Chợ
+    Route::post('/eateries/{id}/announcements', [AdminController::class, 'storeAnnouncement'])->name('admin.announcements.store');
+    Route::delete('/eateries/{id}/announcements/{announcement_id}', [AdminController::class, 'destroyAnnouncement'])->name('admin.announcements.destroy');
 
     // Quản lý Sản phẩm OCOP (Chợ Đông Anh)
     Route::post('/ocop-products', [AdminController::class, 'storeOcopProduct'])->name('admin.ocop-product.store');

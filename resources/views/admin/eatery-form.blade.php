@@ -1,4 +1,5 @@
-@extends('layouts.admin')
+@php $_eform_layout = session('user_role') === 'manager' ? 'layouts.manager' : 'layouts.admin'; @endphp
+@extends($_eform_layout)
 
 @section('title', ($eatery ? '⚙️ Quản lý: ' . $eatery->name : 'Thêm địa điểm mới'))
 
@@ -44,9 +45,15 @@
             <button type="button" class="admin-sub-tab-btn" onclick="switchSubTab(event, 'tab-ocop-products')">
                 🛍️ Sản phẩm OCOP & Đặc sản ({{ optional($eatery->relationLoaded('ocopProducts') ? $eatery->ocopProducts : collect())->count() }})
             </button>
-        @elseif($eatery->category->slug === 'dong-anh-market')
+        @elseif(in_array($eatery->category->slug, ['traditional-market', 'dong-anh-market']))
+            <button type="button" class="admin-sub-tab-btn" onclick="switchSubTab(event, 'tab-market-stalls')">
+                🏪 2. Danh Sách Gian Hàng Số & Tiểu Thương ({{ optional($eatery->relationLoaded('ocopProducts') ? $eatery->ocopProducts->pluck('stall_name')->unique()->reject(fn($v) => empty($v)) : collect())->count() }})
+            </button>
             <button type="button" class="admin-sub-tab-btn" onclick="switchSubTab(event, 'tab-ocop-products')">
-                🛍️ Sản phẩm OCOP & Đặc sản ({{ optional($eatery->relationLoaded('ocopProducts') ? $eatery->ocopProducts : collect())->count() }})
+                🛍️ 3. Sản phẩm & Đặc sản Chợ ({{ optional($eatery->relationLoaded('ocopProducts') ? $eatery->ocopProducts : collect())->count() }})
+            </button>
+            <button type="button" class="admin-sub-tab-btn" onclick="switchSubTab(event, 'tab-market-announcements')">
+                📢 4. Bảng Tin Số BQL Chợ ({{ count(json_decode($eatery->announcements ?? '[]', true) ?: []) }})
             </button>
         @elseif($eatery->category->slug === 'stay-in-dong-anh')
             <button type="button" class="admin-sub-tab-btn" onclick="switchSubTab(event, 'tab-rooms')">
@@ -430,7 +437,140 @@
     </div>
 </div>
 
-@if($eatery && in_array($eatery->category->slug, ['dong-anh-market', 'dong-anh-food-map', 'hanh-trinh-di-san', 'discover-dong-anh-community-culture-hub']))
+@if($eatery && in_array($eatery->category->slug, ['traditional-market', 'dong-anh-market', 'dong-anh-food-map', 'hanh-trinh-di-san', 'discover-dong-anh-community-culture-hub']))
+
+@if(in_array($eatery->category->slug, ['traditional-market', 'dong-anh-market']))
+<!-- ==========================================================================
+     TAB: MARKET STALLS DIRECTORY (QUẢN LÝ GIAN HÀNG SỐ DÀNH CHO BAN QUẢN LÝ CHỢ)
+     ========================================================================== -->
+<div id="tab-market-stalls" class="admin-tab-section" style="display: none;">
+    <div class="admin-card">
+        <div class="admin-card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+            <h2 class="admin-card-title">
+                <span>🏪</span> Danh Sách Gian Hàng Số & Tiểu Thương Thuộc {{ $eatery->name }}
+            </h2>
+            <button type="button" class="btn-admin btn-admin-primary" onclick="openAddOcopProductModal()">
+                ➕ Đăng Ký Gian Hàng / Mặt Hàng Mới
+            </button>
+        </div>
+
+        <div style="padding: 20px;">
+            <p style="font-size: 0.88rem; color: var(--admin-text-muted); margin-bottom: 20px;">
+                Ban Quản lý Chợ điều phối và theo dõi danh sách các Gian hàng/Sạp hàng cá thể kinh doanh tại <strong>{{ $eatery->name }}</strong>, thông tin tiểu thương và số lượng mặt hàng niêm yết.
+            </p>
+
+            @php
+                $stallsGrouped = optional($eatery->relationLoaded('ocopProducts') ? $eatery->ocopProducts : collect())->groupBy('stall_name');
+            @endphp
+
+            <style>
+                .stall-directory-table-box {
+                    border: 1.5px solid #cbd5e1;
+                    border-radius: 12px;
+                    overflow: hidden;
+                    box-shadow: 0 4px 14px rgba(0,0,0,0.03);
+                    background: #ffffff;
+                    margin-top: 10px;
+                }
+                .stall-directory-table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    text-align: left;
+                }
+                .stall-directory-table th {
+                    background: #f1f5f9;
+                    color: #0f172a;
+                    font-weight: 800;
+                    font-size: 0.85rem;
+                    padding: 14px 16px;
+                    border-bottom: 2px solid #cbd5e1;
+                    border-right: 1px solid #cbd5e1;
+                    text-transform: uppercase;
+                    letter-spacing: 0.4px;
+                }
+                .stall-directory-table th:last-child {
+                    border-right: none;
+                }
+                .stall-directory-table td {
+                    padding: 14px 16px;
+                    border-bottom: 1px solid #e2e8f0;
+                    border-right: 1px solid #e2e8f0;
+                    vertical-align: middle;
+                    font-size: 0.9rem;
+                }
+                .stall-directory-table td:last-child {
+                    border-right: none;
+                }
+                .stall-directory-table tbody tr:nth-child(even) {
+                    background-color: #f8fafc;
+                }
+                .stall-directory-table tbody tr:hover {
+                    background-color: #f0f9ff;
+                }
+            </style>
+
+            <div class="stall-directory-table-box">
+                <table class="stall-directory-table">
+                    <thead>
+                        <tr>
+                            <th style="text-align: center; width: 50px;">STT</th>
+                            <th>Tên Gian Hàng / Sạp</th>
+                            <th>Chủ Gian Hàng / Tiểu Thương</th>
+                            <th>Số Điện Thoại Liên Hệ</th>
+                            <th style="text-align: center;">Mặt Hàng Bày Bán</th>
+                            <th style="text-align: center;">Trạng Thái Gian Hàng</th>
+                            <th style="text-align: center; width: 220px;">Thao Tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($stallsGrouped as $sName => $sItems)
+                        <tr>
+                            <td style="font-weight: 800; color: #64748b; text-align: center;">{{ $loop->iteration }}</td>
+                            <td style="font-weight: 800; color: #0284c7; font-size: 0.95rem;">
+                                🏪 {{ $sName ?: 'Gian hàng vãng lai' }}
+                            </td>
+                            <td style="font-weight: 700; color: #0f172a;">
+                                👤 {{ $sItems->first()->seller_name ?: 'Chưa cập nhật' }}
+                            </td>
+                            <td>
+                                📞 <a href="tel:{{ $sItems->first()->seller_phone }}" style="color: #0284c7; text-decoration: none; font-weight: 700;">{{ $sItems->first()->seller_phone ?: 'N/A' }}</a>
+                            </td>
+                            <td style="text-align: center;">
+                                <span class="admin-badge admin-badge-info" style="font-size: 0.82rem; font-weight: 800; background: #e0f2fe; color: #0284c7; padding: 6px 12px; border-radius: 20px; border: 1px solid rgba(2,132,199,0.2);">
+                                    {{ $sItems->count() }} mặt hàng
+                                </span>
+                            </td>
+                            <td style="text-align: center;">
+                                <span class="admin-badge admin-badge-success" style="background: rgba(16,185,129,0.12); color: #10b981; font-weight: 800; padding: 6px 12px; border-radius: 20px; border: 1px solid rgba(16,185,129,0.25);">
+                                    🟢 Đang hoạt động
+                                </span>
+                            </td>
+                            <td style="text-align: center;">
+                                <div style="display: inline-flex; gap: 6px;">
+                                    <button type="button" class="btn-admin" style="padding: 6px 12px; font-size: 0.78rem; background: #0284c7; color: #ffffff; border-radius: 8px; font-weight: 700; cursor: pointer; border: none; box-shadow: 0 2px 4px rgba(2,132,199,0.2);" onclick="openStallProductsModal('{{ addslashes($sName) }}', '{{ addslashes($sItems->first()->seller_name ?? '') }}', '{{ addslashes($sItems->first()->seller_phone ?? '') }}', {{ json_encode($sItems->values()) }})">
+                                        👁️ Xem {{ $sItems->count() }} mặt hàng
+                                    </button>
+                                    <button type="button" class="btn-admin" style="padding: 6px 10px; font-size: 0.78rem; background: rgba(16,185,129,0.1); color: #10b981; border-radius: 8px; font-weight: 700; cursor: pointer; border: 1px solid rgba(16,185,129,0.3);" onclick="filterTableByStallName('{{ addslashes($sName) }}')">
+                                        🔍 Lọc
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="7" style="text-align: center; color: #64748b; padding: 30px;">
+                                Chưa có dữ liệu gian hàng số nào được khởi tạo tại Chợ này.
+                            </td>
+                        </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
+
 <!-- ==========================================================================
      TAB: OCOP PRODUCTS MANAGER (SẢN PHẨM OCOP)
      ========================================================================== -->
@@ -438,59 +578,63 @@
     <div class="admin-card">
         <div class="admin-card-header" style="display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap;">
             <h2 class="admin-card-title" style="margin-bottom: 0; display: inline-flex; align-items: center; gap: 8px;">
-                <span>🛍️</span> Quản Lý Sản Phẩm OCOP & Đặc Sản Làng Nghề
+                <span>🛍️</span> Tổng Hợp Mặt Hàng Nông Sản & Đặc Sản Đang Bày Bán Tại Chợ
             </h2>
-            <button type="button" class="btn-admin btn-admin-primary" style="padding: 8px 16px; border-radius: 8px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; font-size: 0.85rem;" onclick="openAddOcopProductModal()">
-                ➕ Thêm sản phẩm đặc sản / OCOP mới
-            </button>
+            <span class="admin-badge admin-badge-info" style="font-size: 0.85rem; font-weight: 800; background: #e0f2fe; color: #0284c7; padding: 6px 14px; border-radius: 20px; border: 1px solid rgba(2,132,199,0.25);">
+                👁️ Kênh Giám Sát Ban Quản Lý Chợ
+            </span>
         </div>
 
         <div style="padding: 20px;">
-            <h3 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 16px; color: var(--admin-text-main);">
-                📋 Sản phẩm hiện tại ({{ optional($eatery->relationLoaded('ocopProducts') ? $eatery->ocopProducts : collect())->count() }})
+            <h3 style="font-size: 0.98rem; font-weight: 800; margin-bottom: 16px; color: #0f172a; display: flex; align-items: center; gap: 8px;">
+                <span>📋</span> Danh Sách Tổng Hợp {{ optional($eatery->relationLoaded('ocopProducts') ? $eatery->ocopProducts : collect())->count() }} Mặt Hàng Thuộc Các Gian Hàng Số
             </h3>
 
             @php $eateryOcopProducts = $eatery->relationLoaded('ocopProducts') ? $eatery->ocopProducts : collect(); @endphp
             @if($eateryOcopProducts->count() > 0)
-                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px;">
-                    @foreach($eateryOcopProducts as $product)
-                        <div class="admin-dish-item" style="display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px; border: 1.5px solid var(--admin-border); border-radius: 12px; background-color: #ffffff;">
-                            <div style="display: flex; align-items: center; gap: 14px; flex: 1; min-width: 0;">
-                                <img src="{{ $product->image_path ?: asset('images/ocop-placeholder.png') }}" style="width: 56px; height: 56px; border-radius: 10px; object-fit: cover;">
-                                <div style="flex: 1; min-width: 0;">
-                                    <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
-                                        <h4 style="margin: 0; font-weight: 700; font-size: 0.92rem; color: var(--admin-text-main);">{{ $product->name }}</h4>
-                                        @if($product->star_rating)
-                                            <span class="admin-badge admin-badge-primary" style="font-size: 0.65rem; padding: 2px 6px;">{{ $product->star_rating }}</span>
-                                        @endif
-                                    </div>
-                                    <span style="font-size: 0.76rem; color: var(--admin-text-muted); display: block; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ $product->description ?: 'Chưa có mô tả' }}</span>
-                                    <span style="font-size: 0.85rem; font-weight: 800; color: var(--admin-success); display: block; margin-top: 1px;">
-                                        {{ $product->price ? number_format($product->price, 0, ',', '.') . 'đ' : 'Liên hệ' }}
+                <div class="stall-directory-table-box">
+                    <table class="stall-directory-table">
+                        <thead>
+                            <tr>
+                                <th style="text-align: center; width: 45px;">STT</th>
+                                <th style="text-align: center; width: 65px;">Hình Ảnh</th>
+                                <th style="min-width: 170px;">Tên Mặt Hàng / Đặc Sản</th>
+                                <th style="min-width: 170px;">Gian Hàng / Sạp Sở Hữu</th>
+                                <th style="min-width: 120px;">Giá Bán Niêm Yết</th>
+                                <th>Mô Tả & Nguồn Gốc Sản Phẩm</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($eateryOcopProducts as $idx => $product)
+                            <tr>
+                                <td style="font-weight: 800; color: #64748b; text-align: center;">{{ $idx + 1 }}</td>
+                                <td style="text-align: center;">
+                                    <img src="{{ $product->image_path ?: asset('images/ocop-placeholder.png') }}" style="width: 50px; height: 50px; border-radius: 10px; object-fit: cover; border: 1.5px solid #cbd5e1; box-shadow: 0 2px 6px rgba(0,0,0,0.06);">
+                                </td>
+                                <td>
+                                    <div style="font-weight: 800; color: #0f172a; font-size: 0.95rem; margin-bottom: 2px;">{{ $product->name }}</div>
+                                    @if($product->star_rating)
+                                        <span class="admin-badge admin-badge-warning" style="font-size: 0.72rem; padding: 2px 6px; font-weight: 700; background: rgba(245, 158, 11, 0.12); color: #d97706; border: 1px solid rgba(245, 158, 11, 0.3);">⭐ {{ $product->star_rating }}</span>
+                                    @endif
+                                </td>
+                                <td style="font-weight: 800; color: #0284c7; font-size: 0.9rem;">
+                                    🏪 {{ $product->stall_name ?: 'Gian hàng vãng lai' }}
+                                </td>
+                                <td style="white-space: nowrap;">
+                                    <span style="display: inline-block; background: #e0f2fe; color: #0284c7; font-weight: 800; padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(2,132,199,0.25); font-size: 0.92rem;">
+                                        {{ $product->price ? (is_numeric($product->price) ? number_format($product->price, 0, ',', '.') . 'đ' : $product->price) : 'Liên hệ' }}
                                     </span>
-                                </div>
-                            </div>
-                            
-                            <div style="display: flex; align-items: center; gap: 6px;">
-                                <!-- Edit Button -->
-                                <button type="button" class="btn-admin btn-admin-accent" data-product="{{ json_encode($product) }}" style="padding: 6px 10px; font-size: 0.72rem; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;" onclick="openEditOcopProductModal(this)">
-                                    ✏️ Sửa
-                                </button>
-
-                                <!-- Delete Button -->
-                                <form action="/admin/ocop-products/{{ $product->id }}" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn xóa sản phẩm này?')" style="display: inline; margin: 0;">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="btn-admin btn-admin-danger" style="padding: 6px 10px; font-size: 0.72rem; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;">
-                                        🗑️ Xóa
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
-                    @endforeach
+                                </td>
+                                <td style="font-size: 0.83rem; color: #334155; max-width: 320px; line-height: 1.5;">
+                                    {{ $product->description ?: 'Chưa có mô tả' }}
+                                </td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
                 </div>
             @else
-                <div style="text-align: center; padding: 60px 0; border: 1.5px dashed var(--admin-border); border-radius: 12px; color: var(--admin-text-muted);">
+                <div style="text-align: center; padding: 60px 0; border: 1.5px dashed #cbd5e1; border-radius: 12px; color: #64748b;">
                     <p style="font-size: 0.88rem; margin-bottom: 4px;">Chưa có sản phẩm nào được khai báo.</p>
                     <p style="font-size: 0.78rem;">Nhấn nút "Thêm sản phẩm đặc sản / OCOP mới" ở phía trên để bắt đầu!</p>
                 </div>
@@ -610,9 +754,141 @@
                 </div>
             </form>
         </div>
-
-</div>
+    </div>
 </div>{{-- /tab-ocop-products --}}
+@endif
+
+@if($eatery && in_array($eatery->category->slug, ['traditional-market', 'dong-anh-market']))
+<!-- ==========================================================================
+     TAB: MARKET ANNOUNCEMENTS MANAGER (BẢNG TIN SỐ BAN QUẢN LÝ CHỢ)
+     ========================================================================== -->
+<div id="tab-market-announcements" class="admin-tab-section" style="display: none;">
+    <div class="admin-card">
+        <div class="admin-card-header" style="display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap;">
+            <h2 class="admin-card-title" style="margin-bottom: 0; display: inline-flex; align-items: center; gap: 8px;">
+                <span>📢</span> Bảng Tin Số & Loa Phát Tin Ban Quản Lý Chợ
+            </h2>
+            <span class="admin-badge admin-badge-success" style="font-size: 0.85rem; font-weight: 800; background: rgba(16, 185, 129, 0.12); color: #059669; padding: 6px 14px; border-radius: 20px; border: 1px solid rgba(16, 185, 129, 0.3);">
+                📡 Loa Phát Tin Số Đang Hoạt Động
+            </span>
+        </div>
+
+        <div style="padding: 24px;">
+            <p style="font-size: 0.88rem; color: #64748b; margin-bottom: 20px; line-height: 1.5;">
+                Ban Quản lý Chợ có thể phát các bản tin chỉ đạo, lịch phun khử khuẩn vệ sinh định kỳ, kiểm định An toàn thực phẩm (ATTP) hoặc thông báo sự kiện phiên chợ nông sản. Các bản tin mới phát sẽ <strong>hiển thị ngay tức thì</strong> trên trang chi tiết Chợ của người dân.
+            </p>
+
+            <!-- Form Phát Bản Tin Số Mới -->
+            <div style="background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 14px; padding: 20px; margin-bottom: 28px;">
+                <h3 style="font-size: 1.05rem; font-weight: 800; color: #0284c7; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+                    <span>✨</span> Phát Bản Tin Số Mới Lên Chợ
+                </h3>
+
+                <form action="{{ route('admin.announcements.store', $eatery->id) }}" method="POST">
+                    @csrf
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                        <div class="admin-form-group" style="margin-bottom: 0;">
+                            <label class="admin-form-label">Thẻ Phân Loại / Tag <span style="color: red;">*</span></label>
+                            <input type="text" name="tag" class="admin-form-input" required placeholder="Ví dụ: 🛡️ KIỂM ĐỊNH ATTP hoặc 🧼 VỆ SINH ĐỊNH KỲ" value="🛡️ KIỂM ĐỊNH ATTP">
+                        </div>
+
+                        <div class="admin-form-group" style="margin-bottom: 0;">
+                            <label class="admin-form-label">Thời Gian Phát / Lịch Trình</label>
+                            <input type="text" name="time" class="admin-form-input" placeholder="Ví dụ: Mới cập nhật hoặc 18h00 Chủ Nhật" value="Mới cập nhật">
+                        </div>
+
+                        <div class="admin-form-group" style="margin-bottom: 0;">
+                            <label class="admin-form-label">Màu Sắc Nhận Diện Thẻ</label>
+                            <select name="color" class="admin-form-input" style="font-weight: 700;">
+                                <option value="#10B981" style="color: #10B981;">🟢 Nổi Bật Xanh Lá (ATTP)</option>
+                                <option value="#0ea5e9" style="color: #0ea5e9;">🔵 Thông Báo Xanh Dương (Vệ sinh / Khử khuẩn)</option>
+                                <option value="#f59e0b" style="color: #f59e0b;">🟠 Sự Kiện Cam Nổi (Phiên chợ nông sản)</option>
+                                <option value="#ef4444" style="color: #ef4444;">🔴 Cảnh Báo Khẩn Đỏ</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="admin-form-group" style="margin-bottom: 16px;">
+                        <label class="admin-form-label">Tiêu Đề Bản Tin <span style="color: red;">*</span></label>
+                        <input type="text" name="title" class="admin-form-input" required placeholder="Ví dụ: 100% sạp đạt chuẩn An toàn thực phẩm Tháng 7/2026">
+                    </div>
+
+                    <div class="admin-form-group" style="margin-bottom: 18px;">
+                        <label class="admin-form-label">Nội Dung Chi Tiết Bản Tin <span style="color: red;">*</span></label>
+                        <textarea name="content" class="admin-form-input" rows="3" required placeholder="Nhập nội dung thông báo đầy đủ gửi tới bà con tiểu thương và du khách..."></textarea>
+                    </div>
+
+                    <div style="text-align: right;">
+                        <button type="submit" class="btn-admin" style="background: #0284c7; color: #ffffff; padding: 10px 24px; font-weight: 800; border-radius: 8px; border: none; cursor: pointer; font-size: 0.9rem; box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);">
+                            📢 Phát Bản Tin Số Này Lên Chợ
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Danh Sách Bản Tin Đã Phát -->
+            @php
+                $savedAnnouncements = json_decode($eatery->announcements ?? '[]', true) ?: [];
+            @endphp
+
+            <h3 style="font-size: 1.05rem; font-weight: 800; color: #0f172a; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+                <span>📋</span> Các Bản Tin Đã Phát Trên Bảng Tin BQL Chợ ({{ count($savedAnnouncements) }})
+            </h3>
+
+            @if(count($savedAnnouncements) > 0)
+                <div class="stall-directory-table-box">
+                    <table class="stall-directory-table">
+                        <thead>
+                            <tr>
+                                <th style="text-align: center; width: 45px;">STT</th>
+                                <th style="min-width: 140px;">Phân Loại / Tag</th>
+                                <th style="min-width: 120px;">Thời Gian</th>
+                                <th style="min-width: 200px;">Tiêu Đề Bản Tin</th>
+                                <th>Nội Dung Thông Báo Chi Tiết</th>
+                                <th style="text-align: center; width: 90px;">Thao Tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($savedAnnouncements as $idx => $annItem)
+                            <tr>
+                                <td style="font-weight: 800; color: #64748b; text-align: center;">{{ $idx + 1 }}</td>
+                                <td>
+                                    <span class="admin-badge" style="background: {{ ($annItem['color'] ?? '#10B981') }}1f; color: {{ $annItem['color'] ?? '#10B981' }}; font-weight: 800; padding: 4px 10px; border-radius: 8px; border: 1px solid {{ $annItem['color'] ?? '#10B981' }}44; font-size: 0.78rem;">
+                                        {{ $annItem['tag'] ?? '📢 THÔNG BÁO' }}
+                                    </span>
+                                </td>
+                                <td style="font-size: 0.82rem; font-weight: 700; color: #64748b; white-space: nowrap;">
+                                    ⏰ {{ $annItem['time'] ?? 'Mới cập nhật' }}
+                                </td>
+                                <td>
+                                    <div style="font-weight: 800; color: #0f172a; font-size: 0.92rem;">{{ $annItem['title'] }}</div>
+                                </td>
+                                <td style="font-size: 0.84rem; color: #334155; line-height: 1.45;">
+                                    {{ $annItem['content'] }}
+                                </td>
+                                <td style="text-align: center;">
+                                    <form action="{{ route('admin.announcements.destroy', [$eatery->id, $annItem['id']]) }}" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn xóa bản tin số này?')" style="margin: 0;">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn-admin btn-admin-danger" style="padding: 5px 10px; font-size: 0.76rem; border-radius: 6px; font-weight: 700; cursor: pointer;">
+                                            🗑️ Xóa
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            @else
+                <div style="text-align: center; padding: 40px 0; border: 1.5px dashed #cbd5e1; border-radius: 12px; color: #64748b;">
+                    <p style="font-size: 0.88rem; margin-bottom: 4px;">Chưa có bản tin nào được đăng.</p>
+                    <p style="font-size: 0.78rem;">Hãy sử dụng biểu mẫu phía trên để phát bản tin số đầu tiên!</p>
+                </div>
+            @endif
+        </div>
+    </div>
+</div>
 @endif
 
 @if($eatery && $eatery->category->slug === 'stay-in-dong-anh')
@@ -3396,5 +3672,216 @@ function previewEateryPhotoUrl(url) {
             });
         }
     });
+
+    // =========================================================================
+    // XỬ LÝ XEM MẶT HÀNG THEO TỪNG GIAN HÀNG RIÊNG (MODAL & FILTER)
+    // =========================================================================
+    let currentSelectedStallName = '';
+
+    function openStallProductsModal(stallName, sellerName, sellerPhone, products) {
+        currentSelectedStallName = stallName;
+        document.getElementById('modalStallTitle').innerHTML = '<span>🏪</span> Gian Hàng: ' + stallName;
+        document.getElementById('modalStallOwner').innerText = sellerName || 'Chưa cập nhật';
+        document.getElementById('modalStallPhone').innerText = sellerPhone || 'N/A';
+
+        const tbody = document.getElementById('modalStallProductsBody');
+        tbody.innerHTML = '';
+
+        if (!products || products.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 30px; color: #64748b;">Gian hàng này hiện chưa có mặt hàng nào.</td></tr>';
+        } else {
+            products.forEach((p, idx) => {
+                const tr = document.createElement('tr');
+                const imgPath = p.image_path || (p.image_url || '/images/stalls/food.png');
+                
+                // Định dạng giá bán chuẩn VNĐ (Ví dụ: 20.000đ)
+                let formattedPrice = 'Liên hệ';
+                if (p.price) {
+                    let priceStr = String(p.price).trim();
+                    if (priceStr.endsWith('.00')) {
+                        priceStr = priceStr.substring(0, priceStr.length - 3);
+                    }
+                    let num = parseFloat(priceStr.replace(/[^\d.]/g, ''));
+                    if (!isNaN(num) && num > 0) {
+                        formattedPrice = new Intl.NumberFormat('vi-VN').format(num) + 'đ';
+                    } else {
+                        formattedPrice = priceStr;
+                    }
+                }
+
+                let descText = p.description || 'Chưa có thông tin mô tả';
+                let formattedDesc = descText.replace(/Nguồn gốc:/g, '<strong style="color: #0284c7;">📍 Nguồn gốc:</strong>');
+                formattedDesc = formattedDesc.replace(/Hỗ trợ thanh toán VietQR/g, '<br><span style="color: #10b981; font-weight: 700;">💳 VietQR:</span>');
+                
+                tr.innerHTML = `
+                    <td style="font-weight: 800; color: #64748b; text-align: center;">${idx + 1}</td>
+                    <td style="text-align: center;">
+                        <img src="${imgPath}" style="width: 52px; height: 52px; border-radius: 10px; object-fit: cover; border: 1.5px solid #cbd5e1; box-shadow: 0 2px 6px rgba(0,0,0,0.06);">
+                    </td>
+                    <td>
+                        <div style="font-weight: 800; color: #0f172a; font-size: 0.95rem; margin-bottom: 2px;">${p.name}</div>
+                        <div style="font-size: 0.76rem; color: #64748b; font-weight: 600;">Mã SP: #OG-${p.id}</div>
+                    </td>
+                    <td style="white-space: nowrap;">
+                        <span style="display: inline-block; background: #e0f2fe; color: #0284c7; font-weight: 800; padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(2, 132, 199, 0.25); font-size: 0.95rem;">
+                            ${formattedPrice}
+                        </span>
+                    </td>
+                    <td style="font-size: 0.83rem; color: #334155; max-width: 340px; line-height: 1.5;">
+                        ${formattedDesc}
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        document.getElementById('stallProductsDetailModal').style.display = 'flex';
+    }
+
+    function closeStallProductsModal() {
+        document.getElementById('stallProductsDetailModal').style.display = 'none';
+    }
+
+    function filterTableByStallName(stallName) {
+        const targetStall = stallName || currentSelectedStallName;
+        closeStallProductsModal();
+        
+        // Chuyển sang Tab 3. Sản phẩm & Đặc sản Chợ
+        const ocopTabBtn = document.querySelectorAll("button[onclick*='tab-ocop-products']");
+        if (ocopTabBtn && ocopTabBtn.length > 0) {
+            switchSubTab({ currentTarget: ocopTabBtn[0] }, 'tab-ocop-products');
+        }
+
+        // Lọc các hàng trong bảng tab-ocop-products
+        const rows = document.querySelectorAll('#tab-ocop-products tbody tr');
+        let visibleCount = 0;
+
+        rows.forEach(row => {
+            const text = row.innerText || row.textContent;
+            if (!targetStall || text.includes(targetStall)) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+
+        // Hiển thị thanh thông báo trạng thái lọc
+        let filterBanner = document.getElementById('stallFilterStatusBanner');
+        if (!filterBanner) {
+            filterBanner = document.createElement('div');
+            filterBanner.id = 'stallFilterStatusBanner';
+            filterBanner.style.cssText = 'background: rgba(14,165,233,0.1); border: 1px solid rgba(14,165,233,0.3); padding: 12px 18px; border-radius: 10px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; color: #0284c7; font-weight: 700; font-size: 0.9rem;';
+            const cardHeader = document.querySelector('#tab-ocop-products .admin-card-header');
+            if (cardHeader && cardHeader.parentNode) {
+                cardHeader.parentNode.insertBefore(filterBanner, cardHeader.nextSibling);
+            }
+        }
+
+        if (targetStall) {
+            filterBanner.innerHTML = `
+                <span>🔍 Đang lọc hiển thị mặt hàng của riêng: <strong style="color: #0ea5e9;">${targetStall}</strong> (${visibleCount} sản phẩm)</span>
+                <button type="button" onclick="clearStallFilter()" class="btn-admin" style="padding: 5px 12px; font-size: 0.8rem; background: #ffffff; color: #ef4444; border: 1px solid #fca5a5; font-weight: 700; border-radius: 6px; cursor: pointer;">❌ Xóa bộ lọc (Hiện tất cả)</button>
+            `;
+            filterBanner.style.display = 'flex';
+        } else {
+            filterBanner.style.display = 'none';
+        }
+    }
+
+    function clearStallFilter() {
+        const rows = document.querySelectorAll('#tab-ocop-products tbody tr');
+        rows.forEach(row => row.style.display = '');
+        const filterBanner = document.getElementById('stallFilterStatusBanner');
+        if (filterBanner) filterBanner.style.display = 'none';
+    }
 </script>
+
+<!-- Modal Xem Mặt Hàng Theo Từng Gian Hàng Riêng -->
+<style>
+    .stall-modal-table-box {
+        border: 1.5px solid #cbd5e1;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 14px rgba(0,0,0,0.04);
+        margin-top: 14px;
+        background: #ffffff;
+    }
+    .stall-modal-table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: left;
+    }
+    .stall-modal-table th {
+        background: #f1f5f9;
+        color: #0f172a;
+        font-weight: 800;
+        font-size: 0.85rem;
+        padding: 12px 14px;
+        border-bottom: 2px solid #cbd5e1;
+        border-right: 1px solid #cbd5e1;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+    }
+    .stall-modal-table th:last-child {
+        border-right: none;
+    }
+    .stall-modal-table td {
+        padding: 12px 14px;
+        border-bottom: 1px solid #e2e8f0;
+        border-right: 1px solid #e2e8f0;
+        vertical-align: middle;
+    }
+    .stall-modal-table td:last-child {
+        border-right: none;
+    }
+    .stall-modal-table tbody tr:nth-child(even) {
+        background-color: #f8fafc;
+    }
+    .stall-modal-table tbody tr:hover {
+        background-color: #f0f9ff;
+    }
+</style>
+
+<div id="stallProductsDetailModal" class="admin-reels-overlay" style="display: none;">
+    <div class="admin-card" style="width: 100%; max-width: 950px; padding: 24px; position: relative; border-radius: 16px; background-color: #ffffff; box-shadow: 0 12px 35px rgba(0,0,0,0.3); max-height: 90vh; overflow-y: auto;">
+        <button type="button" style="position: absolute; top: 16px; right: 16px; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; color: #475569; font-size: 1.1rem; cursor: pointer; z-index: 10; font-weight: 800;" onclick="closeStallProductsModal()">✕</button>
+        
+        <div style="margin-bottom: 14px; border-bottom: 2px solid #e2e8f0; padding-bottom: 12px;">
+            <h3 id="modalStallTitle" class="admin-card-title" style="font-size: 1.3rem; color: #0284c7; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; font-weight: 800;">
+                <span>🏪</span> Tên Gian Hàng
+            </h3>
+            <div style="font-size: 0.9rem; color: #64748b; display: flex; gap: 24px; flex-wrap: wrap;">
+                <span>👤 Chủ Gian Hàng / Tiểu Thương: <strong id="modalStallOwner" style="color: #0f172a; font-weight: 800;">...</strong></span>
+                <span>📞 Hotline Liên Hệ: <strong id="modalStallPhone" style="color: #0284c7; font-weight: 800;">...</strong></span>
+            </div>
+        </div>
+
+        <div class="stall-modal-table-box">
+            <table class="stall-modal-table">
+                <thead>
+                    <tr>
+                        <th style="text-align: center; width: 45px;">STT</th>
+                        <th style="text-align: center; width: 70px;">Hình Ảnh</th>
+                        <th style="min-width: 160px;">Tên Mặt Hàng / Đặc Sản</th>
+                        <th style="min-width: 110px;">Giá Bán Niêm Yết</th>
+                        <th>Mô Tả & Nguồn Gốc Sản Phẩm</th>
+                    </tr>
+                </thead>
+                <tbody id="modalStallProductsBody">
+                    <!-- Dynamic JS content -->
+                </tbody>
+            </table>
+        </div>
+
+        <div style="margin-top: 20px; text-align: right; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;">
+            <button type="button" class="btn-admin" style="background: rgba(14,165,233,0.1); color: #0284c7; font-weight: 800; border: 1px solid rgba(14,165,233,0.3); border-radius: 8px; padding: 9px 18px; cursor: pointer; font-size: 0.88rem;" onclick="filterTableByStallName()">
+                🔍 Lọc danh sách trong Tab Sản Phẩm Chợ
+            </button>
+            <button type="button" class="btn-admin" style="background: #e2e8f0; color: #334155; border-radius: 8px; padding: 9px 24px; font-weight: 800; cursor: pointer; font-size: 0.88rem;" onclick="closeStallProductsModal()">
+                Đóng
+            </button>
+        </div>
+    </div>
+</div>
 @endsection
