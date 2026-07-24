@@ -7,16 +7,16 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
 <style>
-    /* ====================== STALL DETAIL PAGE DESIGN SYSTEM (Sky Lagoon Theme) ====================== */
+    /* ====================== STALL DETAIL DYNAMIC DESIGN SYSTEM ====================== */
     :root {
         --stall-primary: var(--primary, #0ea5e9);
-        --stall-primary-grad: linear-gradient(135deg, #0ea5e9, #06b6d4);
+        --stall-primary-grad: linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%);
         --stall-primary-soft: rgba(14, 165, 233, 0.08);
         --stall-gold: #F59E0B;
         --stall-green: #10B981;
         --stall-green-soft: rgba(16, 185, 129, 0.1);
-        --stall-radius: 16px;
-        --stall-radius-sm: 10px;
+        --stall-radius: 20px;
+        --stall-radius-sm: 12px;
     }
 
     body {
@@ -31,6 +31,25 @@
         max-width: 1300px;
         margin: 0 auto;
         padding: 24px 20px 80px;
+        animation: fadeInScale 0.4s ease-out forwards;
+    }
+
+    /* ---- Animations ---- */
+    @keyframes gradientMove {
+        0% { background-position: 0% 50%; }
+        100% { background-position: 200% 50%; }
+    }
+    @keyframes floatAvatar {
+        0%, 100% { transform: translateY(0) scale(1); }
+        50% { transform: translateY(-5px) scale(1.03); }
+    }
+    @keyframes pulseGlow {
+        0%, 100% { box-shadow: 0 8px 24px rgba(14, 165, 233, 0.25); }
+        50% { box-shadow: 0 14px 36px rgba(14, 165, 233, 0.45); }
+    }
+    @keyframes fadeInScale {
+        from { opacity: 0; transform: translateY(12px) scale(0.99); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
     }
 
     /* ---- Breadcrumb ---- */
@@ -38,7 +57,7 @@
         display: flex;
         align-items: center;
         gap: 8px;
-        font-size: 0.82rem;
+        font-size: 0.84rem;
         color: var(--text-muted);
         margin-bottom: 24px;
         flex-wrap: wrap;
@@ -46,59 +65,78 @@
     .stall-breadcrumb a {
         color: var(--primary);
         font-weight: 600;
-        transition: opacity 0.2s;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
     }
-    .stall-breadcrumb a:hover { opacity: 0.75; }
+    .stall-breadcrumb a:hover {
+        color: #0284c7;
+        transform: translateX(1px);
+    }
 
     /* ---- Hero Header ---- */
     .stall-hero {
-        background: var(--bg-card);
+        background: linear-gradient(135deg, rgba(14,165,233,0.06) 0%, rgba(6,182,212,0.02) 50%, rgba(16,185,129,0.04) 100%), var(--bg-card);
         border: 1px solid var(--border-glow);
-        border-radius: 20px;
-        padding: 28px 32px;
-        margin-bottom: 24px;
+        border-radius: 24px;
+        padding: 30px 34px;
+        margin-bottom: 28px;
         display: flex;
-        gap: 24px;
+        gap: 28px;
         align-items: flex-start;
         position: relative;
         overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+        backdrop-filter: blur(16px);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .stall-hero:hover {
+        box-shadow: 0 16px 40px rgba(14, 165, 233, 0.1);
     }
     .stall-hero::before {
         content: '';
         position: absolute;
         top: 0; left: 0; right: 0;
-        height: 4px;
-        background: linear-gradient(90deg, #0ea5e9, #06b6d4, #10b981);
-        border-radius: 20px 20px 0 0;
+        height: 5px;
+        background: linear-gradient(90deg, #0ea5e9, #06b6d4, #10b981, #f59e0b, #0ea5e9);
+        background-size: 200% 100%;
+        animation: gradientMove 6s linear infinite;
+        border-radius: 24px 24px 0 0;
     }
     .stall-avatar {
-        width: 80px;
-        height: 80px;
+        width: 88px;
+        height: 88px;
         border-radius: 50%;
-        background: linear-gradient(135deg, #0ea5e9, #06b6d4);
+        background: linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%);
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 2rem;
+        font-size: 2.2rem;
         flex-shrink: 0;
-        box-shadow: 0 8px 24px rgba(14, 165, 233, 0.25);
+        animation: pulseGlow 4s ease-in-out infinite, floatAvatar 5s ease-in-out infinite;
+        border: 3px solid rgba(255, 255, 255, 0.9);
+        box-shadow: 0 10px 30px rgba(14, 165, 233, 0.3);
     }
     .stall-hero-info { flex: 1; }
     .stall-hero-name {
-        font-size: 1.6rem;
+        font-size: 1.75rem;
         font-weight: 900;
         color: var(--text-main);
         margin: 0 0 6px;
         line-height: 1.2;
+        letter-spacing: -0.3px;
+        background: linear-gradient(135deg, var(--text-main) 30%, var(--primary) 100%);
+        -webkit-background-clip: text;
     }
     .stall-hero-market {
-        font-size: 0.88rem;
+        font-size: 0.9rem;
         color: var(--primary);
         font-weight: 700;
         display: flex;
         align-items: center;
         gap: 6px;
-        margin-bottom: 12px;
+        margin-bottom: 14px;
     }
     .stall-badges {
         display: flex;
@@ -109,17 +147,22 @@
     .stall-badge {
         display: inline-flex;
         align-items: center;
-        gap: 5px;
-        padding: 4px 12px;
+        gap: 6px;
+        padding: 5px 14px;
         border-radius: 20px;
-        font-size: 0.75rem;
+        font-size: 0.78rem;
         font-weight: 700;
         border: 1px solid;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
-    .badge-green { background: var(--stall-green-soft); color: var(--stall-green); border-color: rgba(16,185,129,0.25); }
-    .badge-sky { background: rgba(14, 165, 233, 0.08); color: var(--primary); border-color: rgba(14, 165, 233, 0.25); }
-    .badge-gold { background: rgba(245,158,11,0.1); color: #B45309; border-color: rgba(245,158,11,0.25); }
-    .badge-blue { background: rgba(59,130,246,0.08); color: #2563EB; border-color: rgba(59,130,246,0.2); }
+    .stall-badge:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+    .badge-green { background: var(--stall-green-soft); color: var(--stall-green); border-color: rgba(16,185,129,0.3); }
+    .badge-sky { background: rgba(14, 165, 233, 0.08); color: var(--primary); border-color: rgba(14, 165, 233, 0.3); }
+    .badge-gold { background: rgba(245,158,11,0.12); color: #B45309; border-color: rgba(245,158,11,0.3); }
+    .badge-blue { background: rgba(59,130,246,0.08); color: #2563EB; border-color: rgba(59,130,246,0.25); }
 
     .stall-avg-rating {
         display: flex;
@@ -129,16 +172,17 @@
     }
     .stall-stars-large {
         color: var(--stall-gold);
-        font-size: 1.15rem;
+        font-size: 1.25rem;
         letter-spacing: 1px;
+        filter: drop-shadow(0 2px 4px rgba(245, 158, 11, 0.3));
     }
     .stall-rating-num {
-        font-size: 1.4rem;
+        font-size: 1.45rem;
         font-weight: 900;
         color: var(--text-main);
     }
     .stall-rating-count {
-        font-size: 0.8rem;
+        font-size: 0.82rem;
         color: var(--text-muted);
     }
 
@@ -151,8 +195,8 @@
     }
     @media (max-width: 900px) {
         .stall-main-grid { grid-template-columns: 1fr; }
-        .stall-hero { flex-direction: column; }
-        .stall-hero-name { font-size: 1.3rem; }
+        .stall-hero { flex-direction: column; padding: 22px; }
+        .stall-hero-name { font-size: 1.4rem; }
     }
 
     /* ---- Panels ---- */
@@ -161,66 +205,82 @@
         border: 1px solid var(--border-glow);
         border-radius: var(--stall-radius);
         overflow: hidden;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.03);
+        transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease;
+    }
+    .stall-panel:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 16px 36px rgba(14, 165, 233, 0.08), 0 4px 12px rgba(0, 0, 0, 0.03);
+        border-color: rgba(14, 165, 233, 0.3);
     }
     .stall-panel-header {
-        padding: 16px 20px;
+        padding: 18px 22px;
         border-bottom: 1px solid var(--border-glow);
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 12px;
+        background: linear-gradient(90deg, rgba(14, 165, 233, 0.03) 0%, transparent 100%);
     }
     .stall-panel-header h3 {
-        font-size: 0.95rem;
+        font-size: 0.98rem;
         font-weight: 800;
         margin: 0;
         color: var(--text-main);
+        letter-spacing: -0.2px;
     }
     .panel-icon {
-        width: 34px;
-        height: 34px;
-        border-radius: 10px;
+        width: 36px;
+        height: 36px;
+        border-radius: 12px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 1rem;
+        font-size: 1.1rem;
         flex-shrink: 0;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
     }
-    .panel-body { padding: 20px; }
+    .panel-body { padding: 22px; }
 
     /* ---- Info rows ---- */
     .info-row {
         display: flex;
         align-items: flex-start;
-        gap: 12px;
-        padding: 10px 0;
+        gap: 14px;
+        padding: 12px 14px;
+        margin: 0 -14px;
+        border-radius: 12px;
         border-bottom: 1px solid var(--border-glow);
         font-size: 0.88rem;
+        transition: background 0.2s ease, transform 0.2s ease;
     }
     .info-row:last-child { border-bottom: none; }
+    .info-row:hover {
+        background: rgba(14, 165, 233, 0.04);
+        transform: translateX(3px);
+    }
     .info-icon {
-        width: 30px;
-        height: 30px;
-        border-radius: 8px;
-        background: rgba(14, 165, 233, 0.08);
+        width: 34px;
+        height: 34px;
+        border-radius: 10px;
+        background: rgba(14, 165, 233, 0.09);
         display: flex;
         align-items: center;
         justify-content: center;
         color: var(--primary);
-        font-size: 0.85rem;
+        font-size: 0.95rem;
         flex-shrink: 0;
-        margin-top: 1px;
     }
     .info-label {
         font-size: 0.72rem;
-        font-weight: 700;
+        font-weight: 800;
         color: var(--text-muted);
         text-transform: uppercase;
-        letter-spacing: 0.4px;
+        letter-spacing: 0.5px;
         display: block;
         margin-bottom: 2px;
     }
     .info-value {
-        font-size: 0.9rem;
+        font-size: 0.92rem;
         font-weight: 600;
         color: var(--text-main);
     }
@@ -230,48 +290,119 @@
         display: flex;
         align-items: center;
         gap: 16px;
-        padding: 14px 16px;
+        padding: 16px 18px;
         margin: 0 -16px;
-        border-radius: 14px;
-        transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+        border-radius: 16px;
+        transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
         border-bottom: 1px solid var(--border-glow);
         position: relative;
     }
     .product-card:last-child { border-bottom: none; }
     .product-card:hover {
-        background: rgba(14, 165, 233, 0.04);
-        box-shadow: 0 4px 18px rgba(14, 165, 233, 0.08);
+        background: linear-gradient(90deg, rgba(14, 165, 233, 0.06) 0%, rgba(6, 182, 212, 0.02) 100%);
+        box-shadow: 0 6px 20px rgba(14, 165, 233, 0.1);
+        transform: scale(1.01);
         border-bottom-color: transparent;
     }
+    #stallProductsContainer::-webkit-scrollbar {
+        width: 6px;
+    }
+    #stallProductsContainer::-webkit-scrollbar-track {
+        background: rgba(0, 0, 0, 0.03);
+        border-radius: 10px;
+    }
+    #stallProductsContainer::-webkit-scrollbar-thumb {
+        background: rgba(14, 165, 233, 0.3);
+        border-radius: 10px;
+    }
+    #stallProductsContainer::-webkit-scrollbar-thumb:hover {
+        background: var(--primary);
+    }
+
+    /* ---- Category Filter Tabs ---- */
+    .category-tabs-bar {
+        display: flex;
+        gap: 8px;
+        overflow-x: auto;
+        padding: 12px 18px;
+        border-bottom: 1px solid var(--border-glow);
+        background: rgba(14, 165, 233, 0.02);
+        scrollbar-width: none;
+    }
+    .category-tabs-bar::-webkit-scrollbar { display: none; }
+    .cat-tab-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 14px;
+        border-radius: 20px;
+        border: 1px solid var(--border-glow);
+        background: var(--bg-card);
+        color: var(--text-muted);
+        font-size: 0.8rem;
+        font-weight: 700;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .cat-tab-btn:hover {
+        border-color: var(--primary);
+        color: var(--primary);
+        transform: translateY(-1px);
+    }
+    .cat-tab-btn.active {
+        background: linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%);
+        color: #fff;
+        border-color: transparent;
+        box-shadow: 0 4px 14px rgba(14, 165, 233, 0.3);
+    }
+    .cat-count-badge {
+        font-size: 0.7rem;
+        padding: 2px 7px;
+        border-radius: 12px;
+        background: rgba(0, 0, 0, 0.06);
+    }
+    .cat-tab-btn.active .cat-count-badge {
+        background: rgba(255, 255, 255, 0.25);
+        color: #fff;
+    }
     .product-img {
-        width: 68px;
-        height: 68px;
-        border-radius: 14px;
+        width: 72px;
+        height: 72px;
+        border-radius: 16px;
         object-fit: cover;
         flex-shrink: 0;
-        box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        box-shadow: 0 4px 14px rgba(0,0,0,0.12);
+        transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .product-card:hover .product-img {
+        transform: scale(1.08) rotate(1deg);
     }
     .product-img-placeholder {
-        width: 68px;
-        height: 68px;
-        border-radius: 14px;
+        width: 72px;
+        height: 72px;
+        border-radius: 16px;
         background: linear-gradient(135deg, #0ea5e9, #06b6d4);
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 1.6rem;
+        font-size: 1.75rem;
         flex-shrink: 0;
-        box-shadow: 0 4px 12px rgba(14, 165, 233, 0.25);
+        box-shadow: 0 6px 16px rgba(14, 165, 233, 0.3);
+        transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .product-card:hover .product-img-placeholder {
+        transform: scale(1.08);
     }
     .product-name {
         font-weight: 800;
-        font-size: 0.93rem;
+        font-size: 0.96rem;
         color: var(--text-main);
         margin-bottom: 4px;
         line-height: 1.3;
     }
     .product-origin {
-        font-size: 0.73rem;
+        font-size: 0.74rem;
         color: var(--text-muted);
         display: flex;
         align-items: center;
@@ -280,44 +411,45 @@
     .product-price-chip {
         display: inline-flex;
         align-items: baseline;
-        gap: 2px;
-        background: rgba(14, 165, 233, 0.08);
-        border: 1px solid rgba(14, 165, 233, 0.2);
-        border-radius: 8px;
-        padding: 3px 10px;
+        gap: 3px;
+        background: linear-gradient(135deg, rgba(14, 165, 233, 0.1) 0%, rgba(16, 185, 129, 0.1) 100%);
+        border: 1px solid rgba(14, 165, 233, 0.25);
+        border-radius: 10px;
+        padding: 4px 12px;
         margin-top: 6px;
     }
     .product-price-num {
         font-weight: 900;
-        font-size: 0.95rem;
+        font-size: 0.98rem;
         color: var(--primary);
     }
     .product-price-unit {
-        font-size: 0.68rem;
+        font-size: 0.7rem;
         color: var(--text-muted);
     }
     .btn-order {
         display: inline-flex;
         align-items: center;
         gap: 6px;
-        padding: 8px 16px;
+        padding: 9px 18px;
         background: linear-gradient(135deg, #0ea5e9, #06b6d4);
         color: #fff;
         border: none;
-        border-radius: 10px;
+        border-radius: 12px;
         font-weight: 700;
-        font-size: 0.8rem;
+        font-size: 0.82rem;
         cursor: pointer;
-        transition: all 0.2s;
+        transition: all 0.25s ease;
         white-space: nowrap;
-        box-shadow: 0 3px 10px rgba(14, 165, 233, 0.28);
+        box-shadow: 0 4px 14px rgba(14, 165, 233, 0.3);
         flex-shrink: 0;
     }
     .btn-order:hover {
-        transform: translateY(-2px) scale(1.04);
-        box-shadow: 0 6px 18px rgba(14, 165, 233, 0.4);
+        transform: translateY(-2px) scale(1.05);
+        box-shadow: 0 8px 22px rgba(14, 165, 233, 0.45);
+        background: linear-gradient(135deg, #0284c7, #0891b2);
     }
-    .btn-order:active { transform: scale(0.96); }
+    .btn-order:active { transform: scale(0.95); }
     .btn-order:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 
     /* ---- Leaflet Map Panel ---- */
@@ -330,34 +462,49 @@
         display: flex;
         align-items: center;
         gap: 8px;
-        padding: 12px 20px;
+        padding: 14px 22px;
         background: rgba(14, 165, 233, 0.08);
         color: var(--primary);
         font-weight: 700;
-        font-size: 0.85rem;
-        transition: all 0.2s;
+        font-size: 0.88rem;
+        transition: all 0.25s ease;
         cursor: pointer;
         border: none;
         width: 100%;
         text-align: left;
     }
-    .map-direction-btn:hover { background: rgba(14, 165, 233, 0.15); }
+    .map-direction-btn:hover {
+        background: rgba(14, 165, 233, 0.16);
+        color: #0284c7;
+    }
+    .map-direction-btn i.bi-box-arrow-up-right {
+        transition: transform 0.25s ease;
+    }
+    .map-direction-btn:hover i.bi-box-arrow-up-right {
+        transform: translate(3px, -3px);
+    }
 
     /* ---- QR Code Panel ---- */
     .qr-panel-body {
-        padding: 20px;
+        padding: 22px;
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 12px;
+        gap: 14px;
     }
     .qr-box {
         background: #fff;
-        border-radius: 14px;
-        padding: 16px;
-        border: 2px solid rgba(14, 165, 233, 0.15);
+        border-radius: 18px;
+        padding: 18px;
+        border: 2px solid rgba(14, 165, 233, 0.2);
+        box-shadow: 0 8px 24px rgba(14, 165, 233, 0.12);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
-    .qr-box img { width: 150px; height: 150px; display: block; }
+    .qr-box:hover {
+        transform: scale(1.03);
+        box-shadow: 0 12px 32px rgba(14, 165, 233, 0.2);
+    }
+    .qr-box img { width: 160px; height: 160px; display: block; }
 
     /* ---- Action Buttons ---- */
     .stall-action-btns {
@@ -369,42 +516,44 @@
         display: inline-flex;
         align-items: center;
         gap: 8px;
-        padding: 12px 22px;
-        background: linear-gradient(135deg, #0ea5e9, #06b6d4);
+        padding: 13px 24px;
+        background: linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%);
         color: #fff;
-        border-radius: 12px;
+        border-radius: 14px;
         font-weight: 700;
-        font-size: 0.88rem;
+        font-size: 0.9rem;
         border: none;
         cursor: pointer;
-        transition: all 0.2s;
+        transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
         text-decoration: none !important;
-        box-shadow: 0 4px 14px rgba(14, 165, 233, 0.25);
+        box-shadow: 0 6px 18px rgba(14, 165, 233, 0.3);
     }
     .btn-stall-primary:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 20px rgba(14, 165, 233, 0.35);
+        transform: translateY(-3px) scale(1.02);
+        box-shadow: 0 10px 25px rgba(14, 165, 233, 0.45);
         color: #fff !important;
     }
     .btn-stall-secondary {
         display: inline-flex;
         align-items: center;
         gap: 8px;
-        padding: 12px 22px;
+        padding: 13px 24px;
         background: var(--bg-card);
         color: var(--text-main);
-        border-radius: 12px;
+        border-radius: 14px;
         font-weight: 700;
-        font-size: 0.88rem;
+        font-size: 0.9rem;
         border: 1px solid var(--border-glow);
         cursor: pointer;
-        transition: all 0.2s;
+        transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
         text-decoration: none !important;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.03);
     }
     .btn-stall-secondary:hover {
         border-color: var(--primary);
         color: var(--primary) !important;
-        transform: translateY(-2px);
+        transform: translateY(-3px) scale(1.02);
+        box-shadow: 0 8px 20px rgba(14, 165, 233, 0.15);
     }
 
     /* ---- Reviews Section ---- */
@@ -413,18 +562,22 @@
         border: 1px solid var(--border-glow);
         border-radius: var(--stall-radius);
         overflow: hidden;
-        margin-bottom: 24px;
+        margin-bottom: 28px;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.03);
     }
     .review-form-area {
-        padding: 24px;
-        background: rgba(14, 165, 233, 0.04);
+        padding: 28px;
+        background: linear-gradient(180deg, rgba(14, 165, 233, 0.05) 0%, transparent 100%);
         border-bottom: 1px solid var(--border-glow);
     }
     .review-form-title {
-        font-size: 0.95rem;
+        font-size: 1rem;
         font-weight: 800;
         color: var(--text-main);
-        margin-bottom: 14px;
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
     }
     .star-input-row {
         display: flex;
@@ -432,40 +585,51 @@
         margin-bottom: 14px;
     }
     .star-btn {
-        font-size: 1.6rem;
+        font-size: 1.75rem;
         cursor: pointer;
         color: #D1D5DB;
-        transition: all 0.15s;
+        transition: all 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
         border: none;
         background: none;
         padding: 0;
         line-height: 1;
     }
-    .star-btn.active, .star-btn:hover { color: var(--stall-gold); transform: scale(1.15); }
+    .star-btn.active, .star-btn:hover {
+        color: var(--stall-gold);
+        transform: scale(1.25);
+        filter: drop-shadow(0 0 6px rgba(245,158,11,0.5));
+    }
     .review-textarea {
         width: 100%;
-        border-radius: 12px;
-        border: 1px solid var(--border-glow);
+        border-radius: 14px;
+        border: 1.5px solid var(--border-glow);
         background: var(--bg-base);
         color: var(--text-main);
-        padding: 12px 16px;
+        padding: 14px 18px;
         font-family: 'Be Vietnam Pro', sans-serif;
-        font-size: 0.88rem;
+        font-size: 0.9rem;
         resize: none;
         outline: none;
-        transition: border-color 0.2s;
+        transition: border-color 0.25s ease, box-shadow 0.25s ease;
         box-sizing: border-box;
     }
-    .review-textarea:focus { border-color: var(--primary); }
+    .review-textarea:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.15);
+    }
 
     .review-list { padding: 8px 0; }
     .review-item {
-        padding: 18px 24px;
+        padding: 20px 28px;
         border-bottom: 1px solid var(--border-glow);
-        transition: background 0.2s;
+        border-left: 3px solid transparent;
+        transition: all 0.25s ease;
     }
     .review-item:last-child { border-bottom: none; }
-    .review-item:hover { background: rgba(14, 165, 233, 0.02); }
+    .review-item:hover {
+        background: rgba(14, 165, 233, 0.02);
+        border-left-color: var(--primary);
+    }
     .review-top {
         display: flex;
         align-items: center;
@@ -473,8 +637,8 @@
         margin-bottom: 8px;
     }
     .reviewer-avatar {
-        width: 38px;
-        height: 38px;
+        width: 40px;
+        height: 40px;
         border-radius: 50%;
         background: linear-gradient(135deg, #0ea5e9, #06b6d4);
         display: flex;
@@ -482,53 +646,68 @@
         justify-content: center;
         color: #fff;
         font-weight: 800;
-        font-size: 0.9rem;
+        font-size: 0.95rem;
         flex-shrink: 0;
+        box-shadow: 0 4px 12px rgba(14, 165, 233, 0.25);
     }
     .reviewer-name {
         font-weight: 700;
-        font-size: 0.9rem;
+        font-size: 0.92rem;
         color: var(--text-main);
     }
     .reviewer-time {
-        font-size: 0.72rem;
+        font-size: 0.74rem;
         color: var(--text-muted);
         margin-top: 2px;
     }
     .reviewer-stars {
         margin-left: auto;
         color: var(--stall-gold);
-        font-size: 0.85rem;
+        font-size: 0.9rem;
         letter-spacing: 1px;
     }
     .review-comment {
-        font-size: 0.88rem;
+        font-size: 0.9rem;
         color: var(--text-main);
-        line-height: 1.6;
-        padding-left: 50px;
+        line-height: 1.65;
+        padding-left: 52px;
     }
 
     .no-reviews-state {
         text-align: center;
-        padding: 40px 24px;
+        padding: 44px 24px;
         color: var(--text-muted);
     }
-    .no-reviews-state .icon { font-size: 3rem; margin-bottom: 12px; }
-    .no-reviews-state p { font-size: 0.88rem; font-weight: 500; }
+    .no-reviews-state .icon { font-size: 3.2rem; margin-bottom: 12px; }
+    .no-reviews-state p { font-size: 0.9rem; font-weight: 600; }
 
     /* ---- Flash success ---- */
     .flash-success {
         background: var(--stall-green-soft);
         border: 1px solid rgba(16,185,129,0.3);
         color: var(--stall-green);
-        border-radius: 12px;
-        padding: 12px 18px;
-        font-weight: 600;
-        font-size: 0.9rem;
+        border-radius: 14px;
+        padding: 14px 20px;
+        font-weight: 700;
+        font-size: 0.92rem;
         display: flex;
         align-items: center;
         gap: 10px;
-        margin-bottom: 16px;
+        margin-bottom: 20px;
+        transition: opacity 0.5s ease, transform 0.5s ease, max-height 0.5s ease, margin 0.5s ease, padding 0.5s ease;
+        max-height: 100px;
+        opacity: 1;
+        overflow: hidden;
+        box-shadow: 0 4px 16px rgba(16, 185, 129, 0.15);
+    }
+    .flash-success.fade-out {
+        opacity: 0;
+        transform: translateY(-10px);
+        max-height: 0;
+        margin-bottom: 0;
+        padding-top: 0;
+        padding-bottom: 0;
+        border-width: 0;
     }
 </style>
 
@@ -545,7 +724,7 @@
 
     
     <?php if(session('review_success')): ?>
-        <div class="flash-success">
+        <div class="flash-success" id="flashSuccessAlert">
             <i class="bi bi-check-circle-fill"></i>
             <?php echo e(session('review_success')); ?>
 
@@ -711,15 +890,78 @@
             </div>
 
             
+            <?php
+                $categoriesMap = [
+                    'food'   => ['name' => '🍜 Món ăn & Đồ uống', 'keywords' => ['bún', 'phở', 'xôi', 'bánh', 'cơm', 'cháo', 'miến', 'nước', 'chè', 'trà', 'sữa', 'cà phê']],
+                    'veggie' => ['name' => '🥦 Rau củ & Trái cây', 'keywords' => ['rau', 'củ', 'quả', 'nấm', 'cam', 'táo', 'chuối', 'dưa', 'cà', 'hành', 'tỏi', 'ớt']],
+                    'meat'   => ['name' => '🥩 Thịt & Hải sản', 'keywords' => ['thịt', 'giò', 'chả', 'cá', 'tôm', 'mực', 'gà', 'vịt', 'bò', 'heo', 'lợn', 'trứng']],
+                    'dry'    => ['name' => '🌾 Món khô & Gia vị', 'keywords' => ['gạo', 'đỗ', 'hạt', 'khô', 'mắm', 'muối', 'đường', 'tiêu', 'dầu', 'mì', 'tương']],
+                ];
+
+                $categoryCounts = ['all' => $stallProducts->count()];
+                $prodCatAssoc = [];
+
+                foreach ($stallProducts as $prod) {
+                    $pNameLower = mb_strtolower($prod->name);
+                    $foundCat = 'other';
+                    foreach ($categoriesMap as $catKey => $catInfo) {
+                        foreach ($catInfo['keywords'] as $kw) {
+                            if (str_contains($pNameLower, $kw)) {
+                                $foundCat = $catKey;
+                                break 2;
+                            }
+                        }
+                    }
+                    $prodCatAssoc[$prod->id] = $foundCat;
+                    $categoryCounts[$foundCat] = ($categoryCounts[$foundCat] ?? 0) + 1;
+                }
+
+                $activeCategoryCount = count(array_filter($categoryCounts, fn($cnt, $k) => $k !== 'all' && $cnt > 0, ARRAY_FILTER_USE_BOTH));
+            ?>
+
             <div class="stall-panel">
-                <div class="stall-panel-header">
+                <div class="stall-panel-header" style="flex-wrap: wrap; gap: 10px;">
                     <div class="panel-icon" style="background: rgba(14, 165, 233, 0.08); color: var(--primary);">
                         <i class="bi bi-basket2-fill"></i>
                     </div>
-                    <h3>Sản phẩm niêm yết (<?php echo e($stallProducts->count()); ?>)</h3>
-                    <span style="margin-left: auto; font-size: 0.72rem; color: var(--text-muted); font-weight: 600;">Giá niêm yết</span>
+                    <h3>Sản phẩm niêm yết (<span id="productCountBadge"><?php echo e($stallProducts->count()); ?></span>)</h3>
+                    
+                    <?php if($stallProducts->count() > 3): ?>
+                        <div style="margin-left: auto; width: 100%; max-width: 220px; position: relative;">
+                            <input type="text" id="productSearchInput" placeholder="Tìm sản phẩm..." onkeyup="filterStallProducts()"
+                                   style="width: 100%; padding: 6px 14px 6px 30px; border-radius: 20px; border: 1px solid var(--border-glow); background: var(--bg-base); color: var(--text-main); font-size: 0.8rem; outline: none; box-sizing: border-box;">
+                            <i class="bi bi-search" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 0.75rem;"></i>
+                        </div>
+                    <?php else: ?>
+                        <span style="margin-left: auto; font-size: 0.72rem; color: var(--text-muted); font-weight: 600;">Giá niêm yết</span>
+                    <?php endif; ?>
                 </div>
-                <div class="panel-body">
+
+                
+                <?php if($stallProducts->count() > 0): ?>
+                    <div class="category-tabs-bar">
+                        <button type="button" class="cat-tab-btn active" data-cat="all" onclick="selectProductCategory('all', this)">
+                            <span>Tất cả</span>
+                            <span class="cat-count-badge"><?php echo e($stallProducts->count()); ?></span>
+                        </button>
+                        <?php $__currentLoopData = $categoriesMap; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $catKey => $catInfo): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <?php if(!empty($categoryCounts[$catKey])): ?>
+                                <button type="button" class="cat-tab-btn" data-cat="<?php echo e($catKey); ?>" onclick="selectProductCategory('<?php echo e($catKey); ?>', this)">
+                                    <span><?php echo e($catInfo['name']); ?></span>
+                                    <span class="cat-count-badge"><?php echo e($categoryCounts[$catKey]); ?></span>
+                                </button>
+                            <?php endif; ?>
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                        <?php if(!empty($categoryCounts['other'])): ?>
+                            <button type="button" class="cat-tab-btn" data-cat="other" onclick="selectProductCategory('other', this)">
+                                <span>📦 Khác</span>
+                                <span class="cat-count-badge"><?php echo e($categoryCounts['other']); ?></span>
+                            </button>
+                        <?php endif; ?>
+                    </div>
+                <?php endif; ?>
+
+                <div class="panel-body" id="stallProductsContainer" style="<?php echo e($stallProducts->count() > 5 ? 'max-height: 520px; overflow-y: auto; padding-right: 14px;' : ''); ?>">
                     <?php $__empty_1 = true; $__currentLoopData = $stallProducts; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $product): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
                         <?php
                             $prodOrigin = 'Tự sản xuất';
@@ -730,8 +972,9 @@
                             if (str_contains($product->name, 'Bún') || str_contains($product->name, 'Phở')) $prodEmoji = '🍜';
                             elseif (str_contains($product->name, 'Rau')) $prodEmoji = '🥦';
                             elseif (str_contains($product->name, 'Thịt') || str_contains($product->name, 'Giò')) $prodEmoji = '🥩';
+                            $pCat = $prodCatAssoc[$product->id] ?? 'other';
                         ?>
-                        <div class="product-card">
+                        <div class="product-card" data-name="<?php echo e(mb_strtolower($product->name)); ?>" data-category="<?php echo e($pCat); ?>">
                             
                             <?php if($product->image_path): ?>
                                 <img src="<?php echo e(asset($product->image_path)); ?>" alt="<?php echo e($product->name); ?>" class="product-img">
@@ -769,6 +1012,10 @@
                             <p style="font-size: 0.9rem; font-weight: 600;">Chưa có sản phẩm được niêm yết.</p>
                         </div>
                     <?php endif; ?>
+                    <div id="noProductMatch" style="display: none; text-align: center; padding: 28px 0; color: var(--text-muted);">
+                        <div style="font-size: 2rem; margin-bottom: 6px;">🔍</div>
+                        <p style="font-size: 0.85rem; font-weight: 600;">Không tìm thấy sản phẩm phù hợp.</p>
+                    </div>
                 </div>
             </div>
 
@@ -841,7 +1088,7 @@
                 <i class="bi bi-star-fill" style="color: var(--stall-gold);"></i>
                 Viết đánh giá cho gian hàng
             </div>
-            <form method="POST" action="<?php echo e(route('market.stall.review.store', ['marketSlug' => $marketSlug, 'stallSlug' => $stallSlug])); ?>">
+            <form method="POST" action="<?php echo e(route('market.stall.review.store', ['marketSlug' => $marketSlug, 'stallSlug' => $stallSlug])); ?>" enctype="multipart/form-data">
                 <?php echo csrf_field(); ?>
 
                 
@@ -855,7 +1102,12 @@
                     <input type="hidden" name="rating" id="ratingInput" value="5">
                 </div>
 
-                <?php if(!Auth::check()): ?>
+                <?php if(Auth::check()): ?>
+                    <div style="margin-bottom: 12px; font-size: 0.85rem; color: var(--text-muted); display: flex; align-items: center; gap: 8px; background: rgba(14, 165, 233, 0.05); padding: 8px 14px; border-radius: 10px; border: 1px solid rgba(14, 165, 233, 0.15);">
+                        <i class="bi bi-person-check-fill" style="color: var(--primary); font-size: 1.1rem;"></i>
+                        <span>Đang đánh giá với tài khoản: <strong style="color: var(--text-main);"><?php echo e(Auth::user()->name); ?></strong></span>
+                    </div>
+                <?php else: ?>
                     <div style="margin-bottom: 12px;">
                         <input type="text" name="user_name" placeholder="Tên của bạn (tùy chọn)"
                                style="width: 100%; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--border-glow); background: var(--bg-base); color: var(--text-main); font-family: 'Be Vietnam Pro', sans-serif; font-size: 0.88rem; outline: none; box-sizing: border-box;"
@@ -876,6 +1128,16 @@ $message = $__bag->first($__errorArgs[0]); ?>
 if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
 unset($__errorArgs, $__bag); ?>
+
+                
+                <div style="margin-top: 12px;">
+                    <label for="stallReviewMedia" style="display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 10px; border: 1px dashed var(--border-glow); background: var(--bg-base); color: var(--text-muted); font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease;">
+                        <i class="bi bi-camera-fill" style="color: var(--primary); font-size: 1rem;"></i>
+                        <span>Thêm ảnh / video (tùy chọn)</span>
+                    </label>
+                    <input type="file" name="media[]" id="stallReviewMedia" accept="image/*,video/*" multiple style="display: none;" onchange="previewStallReviewMedia(this)">
+                    <div id="stallMediaPreview" style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px;"></div>
+                </div>
 
                 <div style="display: flex; justify-content: flex-end; margin-top: 14px;">
                     <button type="submit" class="btn-stall-primary">
@@ -924,6 +1186,34 @@ unset($__errorArgs, $__bag); ?>
                         </div>
                     </div>
                     <div class="review-comment"><?php echo e($rev->comment); ?></div>
+                    <?php if($rev->media && $rev->media->count() > 0): ?>
+                        <?php
+                            $galleryItems = $rev->media->map(function($m) {
+                                return [
+                                    'url'  => asset($m->file_path),
+                                    'type' => $m->file_type ?? 'image'
+                                ];
+                            })->values()->toArray();
+                        ?>
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px;">
+                            <?php $__currentLoopData = $rev->media; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $mIndex => $mediaItem): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                <?php if($mediaItem->file_type === 'image'): ?>
+                                    <div style="position: relative; width: 90px; height: 90px; border-radius: 10px; overflow: hidden; border: 1px solid var(--border-glow); cursor: pointer; transition: transform 0.2s ease;"
+                                         onmouseover="this.style.transform='scale(1.05)'"
+                                         onmouseout="this.style.transform='none'"
+                                         onclick="openReviewGallery(<?php echo e(json_encode($galleryItems)); ?>, <?php echo e($mIndex); ?>)">
+                                        <img src="<?php echo e(asset($mediaItem->file_path)); ?>" alt="Review Image" style="width: 100%; height: 100%; object-fit: cover;">
+                                    </div>
+                                <?php else: ?>
+                                    <div style="position: relative; width: 140px; height: 90px; border-radius: 10px; overflow: hidden; border: 1px solid var(--border-glow); cursor: pointer;"
+                                         onclick="openReviewGallery(<?php echo e(json_encode($galleryItems)); ?>, <?php echo e($mIndex); ?>)">
+                                        <video src="<?php echo e(asset($mediaItem->file_path)); ?>" style="width: 100%; height: 100%; object-fit: cover; pointer-events: none;"></video>
+                                        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 1.2rem; text-shadow: 0 0 8px #000;">▶</div>
+                                    </div>
+                                <?php endif; ?>
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                        </div>
+                    <?php endif; ?>
                 </div>
             <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                 <div class="no-reviews-state">
@@ -945,9 +1235,248 @@ unset($__errorArgs, $__bag); ?>
 </div>
 
 
+<div id="reviewGalleryModal" onclick="closeReviewGallery()" style="display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.93); backdrop-filter: blur(10px); z-index: 999999; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s ease;">
+    <!-- Close button -->
+    <button type="button" onclick="closeReviewGallery()" style="position: absolute; top: 20px; right: 24px; background: rgba(255,255,255,0.15); border: none; color: #fff; width: 44px; height: 44px; border-radius: 50%; font-size: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 1000001; transition: background 0.2s;" onmouseover="this.style.background='rgba(239,68,68,0.8)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'">
+        &times;
+    </button>
+
+    <!-- Counter badge -->
+    <div id="galleryCounter" style="position: absolute; top: 24px; left: 24px; color: #fff; background: rgba(255,255,255,0.15); padding: 6px 16px; border-radius: 20px; font-weight: 700; font-size: 0.88rem; z-index: 1000001; letter-spacing: 0.5px;">
+        1 / 1
+    </div>
+
+    <!-- Prev button -->
+    <button type="button" id="galleryPrevBtn" onclick="event.stopPropagation(); navigateReviewGallery(-1);" style="position: absolute; left: 20px; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.15); border: none; color: #fff; width: 50px; height: 50px; border-radius: 50%; font-size: 22px; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 1000001; transition: background 0.2s;" onmouseover="this.style.background='var(--primary)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'">
+        <i class="bi bi-chevron-left"></i>
+    </button>
+
+    <!-- Media display container -->
+    <div style="max-width: 90vw; max-height: 85vh; display: flex; align-items: center; justify-content: center; position: relative;" onclick="event.stopPropagation()">
+        <img id="galleryImg" src="" alt="Zoomed Review Image" style="max-width: 90vw; max-height: 85vh; border-radius: 14px; object-fit: contain; box-shadow: 0 10px 40px rgba(0,0,0,0.8); display: none;">
+        <video id="galleryVid" src="" controls style="max-width: 90vw; max-height: 85vh; border-radius: 14px; box-shadow: 0 10px 40px rgba(0,0,0,0.8); display: none;"></video>
+    </div>
+
+    <!-- Next button -->
+    <button type="button" id="galleryNextBtn" onclick="event.stopPropagation(); navigateReviewGallery(1);" style="position: absolute; right: 20px; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.15); border: none; color: #fff; width: 50px; height: 50px; border-radius: 50%; font-size: 22px; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 1000001; transition: background 0.2s;" onmouseover="this.style.background='var(--primary)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'">
+        <i class="bi bi-chevron-right"></i>
+    </button>
+</div>
+
+
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV/XN/WPaU=" crossorigin=""></script>
 <script>
+let currentSelectedCategory = 'all';
+
+function selectProductCategory(catKey, btnEl) {
+    currentSelectedCategory = catKey;
+    document.querySelectorAll('.cat-tab-btn').forEach(btn => btn.classList.remove('active'));
+    if (btnEl) btnEl.classList.add('active');
+    filterStallProducts();
+}
+
+function filterStallProducts() {
+    const input = document.getElementById('productSearchInput');
+    const filter = input ? input.value.toLowerCase().trim() : '';
+    const cards = document.querySelectorAll('#stallProductsContainer .product-card');
+    const noMatch = document.getElementById('noProductMatch');
+    let visibleCount = 0;
+
+    cards.forEach(card => {
+        const name = card.getAttribute('data-name') || '';
+        const cat = card.getAttribute('data-category') || 'other';
+
+        const matchSearch = name.includes(filter);
+        const matchCategory = (currentSelectedCategory === 'all' || cat === currentSelectedCategory);
+
+        if (matchSearch && matchCategory) {
+            card.style.display = 'flex';
+            visibleCount++;
+        } else {
+            card.style.display = 'none';
+        }
+    });
+
+    if (noMatch) {
+        noMatch.style.display = visibleCount === 0 ? 'block' : 'none';
+    }
+}
+window.selectProductCategory = selectProductCategory;
+window.filterStallProducts = filterStallProducts;
+let currentGalleryItems = [];
+let currentGalleryIndex = 0;
+
+function openReviewGallery(items, index) {
+    if (!items || items.length === 0) return;
+    currentGalleryItems = items;
+    currentGalleryIndex = index;
+    
+    const modal = document.getElementById('reviewGalleryModal');
+    if (!modal) return;
+    
+    updateGalleryView();
+    
+    modal.style.display = 'flex';
+    setTimeout(() => { modal.style.opacity = '1'; }, 10);
+    document.body.style.overflow = 'hidden';
+}
+
+function updateGalleryView() {
+    const item = currentGalleryItems[currentGalleryIndex];
+    const imgEl = document.getElementById('galleryImg');
+    const vidEl = document.getElementById('galleryVid');
+    const counterEl = document.getElementById('galleryCounter');
+    const prevBtn = document.getElementById('galleryPrevBtn');
+    const nextBtn = document.getElementById('galleryNextBtn');
+
+    if (!item) return;
+
+    if (item.type === 'video') {
+        imgEl.style.display = 'none';
+        vidEl.style.display = 'block';
+        vidEl.src = item.url;
+    } else {
+        vidEl.pause();
+        vidEl.style.display = 'none';
+        imgEl.style.display = 'block';
+        imgEl.src = item.url;
+    }
+
+    if (counterEl) {
+        counterEl.innerText = (currentGalleryIndex + 1) + ' / ' + currentGalleryItems.length;
+    }
+
+    if (currentGalleryItems.length <= 1) {
+        if (prevBtn) prevBtn.style.display = 'none';
+        if (nextBtn) nextBtn.style.display = 'none';
+    } else {
+        if (prevBtn) prevBtn.style.display = 'flex';
+        if (nextBtn) nextBtn.style.display = 'flex';
+    }
+}
+
+function navigateReviewGallery(direction) {
+    if (currentGalleryItems.length <= 1) return;
+    currentGalleryIndex = (currentGalleryIndex + direction + currentGalleryItems.length) % currentGalleryItems.length;
+    updateGalleryView();
+}
+
+function closeReviewGallery() {
+    const modal = document.getElementById('reviewGalleryModal');
+    const vidEl = document.getElementById('galleryVid');
+    if (!modal) return;
+    
+    if (vidEl) vidEl.pause();
+    
+    modal.style.opacity = '0';
+    setTimeout(() => {
+        modal.style.display = 'none';
+        document.body.style.overflow = '';
+    }, 300);
+}
+
+document.addEventListener('keydown', function(e) {
+    const modal = document.getElementById('reviewGalleryModal');
+    if (modal && modal.style.display === 'flex') {
+        if (e.key === 'Escape') {
+            closeReviewGallery();
+        } else if (e.key === 'ArrowLeft') {
+            navigateReviewGallery(-1);
+        } else if (e.key === 'ArrowRight') {
+            navigateReviewGallery(1);
+        }
+    }
+});
+
+window.openReviewGallery = openReviewGallery;
+window.closeReviewGallery = closeReviewGallery;
+window.navigateReviewGallery = navigateReviewGallery;
+
+let selectedReviewFiles = [];
+
+function previewStallReviewMedia(input) {
+    if (input.files && input.files.length > 0) {
+        const newFiles = Array.from(input.files);
+        selectedReviewFiles = selectedReviewFiles.concat(newFiles);
+        updateFileInputAndPreview();
+    }
+}
+
+function removeStallReviewMedia(index) {
+    selectedReviewFiles.splice(index, 1);
+    updateFileInputAndPreview();
+}
+
+function updateFileInputAndPreview() {
+    const input = document.getElementById('stallReviewMedia');
+    const preview = document.getElementById('stallMediaPreview');
+    if (!preview) return;
+
+    // Sync HTML input files list using DataTransfer
+    if (input && window.DataTransfer) {
+        const dt = new DataTransfer();
+        selectedReviewFiles.forEach(file => dt.items.add(file));
+        input.files = dt.files;
+    }
+
+    preview.innerHTML = '';
+    selectedReviewFiles.forEach((file, index) => {
+        const wrapper = document.createElement('div');
+        wrapper.style.cssText = 'position: relative; width: 80px; height: 80px; border-radius: 10px; overflow: hidden; border: 1.5px solid var(--border-glow); background: #000; box-shadow: 0 4px 10px rgba(0,0,0,0.15);';
+        
+        if (file.type.startsWith('image/')) {
+            const img = document.createElement('img');
+            img.src = URL.createObjectURL(file);
+            img.style.cssText = 'width: 100%; height: 100%; object-fit: cover;';
+            wrapper.appendChild(img);
+        } else if (file.type.startsWith('video/')) {
+            const vid = document.createElement('video');
+            vid.src = URL.createObjectURL(file);
+            vid.style.cssText = 'width: 100%; height: 100%; object-fit: cover;';
+            wrapper.appendChild(vid);
+            
+            const playIcon = document.createElement('div');
+            playIcon.innerHTML = '▶';
+            playIcon.style.cssText = 'position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 1.1rem; pointer-events: none; text-shadow: 0 0 6px #000;';
+            wrapper.appendChild(playIcon);
+        }
+
+        // Delete "X" button at top-right
+        const removeBtn = document.createElement('button');
+        removeBtn.type = 'button';
+        removeBtn.innerHTML = '&times;';
+        removeBtn.title = 'Xóa tệp này';
+        removeBtn.style.cssText = 'position: absolute; top: 3px; right: 3px; width: 22px; height: 22px; border-radius: 50%; background: rgba(239, 68, 68, 0.95); color: #fff; border: 1.5px solid #fff; font-size: 15px; font-weight: bold; line-height: 1; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.4); z-index: 10; transition: transform 0.15s ease, background 0.15s ease;';
+        removeBtn.onmouseover = function() { this.style.transform = 'scale(1.15)'; this.style.background = '#dc2626'; };
+        removeBtn.onmouseout = function() { this.style.transform = 'scale(1)'; this.style.background = 'rgba(239, 68, 68, 0.95)'; };
+        removeBtn.onclick = function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            removeStallReviewMedia(index);
+        };
+        wrapper.appendChild(removeBtn);
+
+        preview.appendChild(wrapper);
+    });
+}
+
+window.previewStallReviewMedia = previewStallReviewMedia;
+window.removeStallReviewMedia = removeStallReviewMedia;
+
 document.addEventListener('DOMContentLoaded', function() {
+    // ---- Auto-hide Flash Message ----
+    const flashAlert = document.getElementById('flashSuccessAlert');
+    if (flashAlert) {
+        setTimeout(function() {
+            flashAlert.classList.add('fade-out');
+            setTimeout(function() {
+                if (flashAlert.parentNode) {
+                    flashAlert.parentNode.removeChild(flashAlert);
+                }
+            }, 500);
+        }, 3500);
+    }
+
     // ---- Star picker ----
     const stars  = document.querySelectorAll('.star-btn');
     let selected = 5;

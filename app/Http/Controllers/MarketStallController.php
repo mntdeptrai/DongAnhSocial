@@ -108,6 +108,7 @@ class MarketStallController extends Controller
         // 4. Load reviews
         $connection = $this->resolveConnection($eatery->id);
         $reviews    = Review::on($connection)
+            ->with('media')
             ->where('eatery_id', $eatery->id)
             ->where('stall_name', $stallName)
             ->latest()
@@ -162,6 +163,7 @@ class MarketStallController extends Controller
             'rating'    => 'required|integer|min:1|max:5',
             'comment'   => 'required|string|min:5|max:500',
             'user_name' => 'nullable|string|max:50',
+            'media.*'   => 'nullable|file|mimes:jpeg,png,jpg,gif,webp,mp4,mov,avi|max:20480',
         ]);
 
         $connection = $this->resolveConnection($eatery->id);
@@ -189,6 +191,24 @@ class MarketStallController extends Controller
             'comment'    => strip_tags($request->input('comment')),
         ]);
         $review->save();
+
+        // Process media uploads
+        if ($request->hasFile('media')) {
+            foreach ($request->file('media') as $file) {
+                if ($file && $file->isValid()) {
+                    $path = $file->store('reviews', 'public');
+                    $type = str_starts_with($file->getMimeType(), 'video/') ? 'video' : 'image';
+                    $reviewMedia = new \App\Models\ReviewMedia();
+                    $reviewMedia->setConnection($connection);
+                    $reviewMedia->fill([
+                        'review_id' => $review->id,
+                        'file_path' => '/storage/' . $path,
+                        'file_type' => $type,
+                    ]);
+                    $reviewMedia->save();
+                }
+            }
+        }
 
         return back()->with('review_success', 'Cảm ơn bạn đã đánh giá gian hàng!');
     }

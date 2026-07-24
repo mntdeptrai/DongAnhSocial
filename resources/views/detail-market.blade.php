@@ -86,9 +86,12 @@
         }
     }
     
-    $qrPercentage = $totalStalls > 0 ? round(($stallsWithQr / $totalStalls) * 100) : 88;
-    $bankPercentage = $totalStalls > 0 ? round(($stallsWithBank / $totalStalls) * 100) : 88;
-    $phonePercentage = $totalStalls > 0 ? round(($stallsWithSmartphone / $totalStalls) * 100) : 88;
+    $qrPercentage       = $totalStalls > 0 ? round(($stallsWithQr / $totalStalls) * 100) : 0;
+    $bankPercentage     = $totalStalls > 0 ? round(($stallsWithBank / $totalStalls) * 100) : 0;
+    $phonePercentage    = $totalStalls > 0 ? round(($stallsWithSmartphone / $totalStalls) * 100) : 0;
+    // Cashless rate = % stalls that have any digital payment (QR or bank link)
+    $stallsWithCashless = max($stallsWithQr, $stallsWithBank);
+    $cashlessPercentage = $totalStalls > 0 ? round(($stallsWithCashless / $totalStalls) * 100) : 0;
 
     // Build media gallery list
     $allMedia = [];
@@ -1644,7 +1647,7 @@
         <!-- 4. Cashless Payment rate -->
         <div class="metric-card-premium theme-emerald" data-aos="fade-up" data-aos-delay="200">
             <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
-                <span class="db-card-metric">95%</span>
+                <span class="db-card-metric">{{ $cashlessPercentage }}%</span>
                 <div class="metric-icon-box grad-emerald">
                     <i class="bi bi-currency-exchange"></i>
                 </div>
@@ -1654,10 +1657,10 @@
             <div class="metric-progress-wrapper">
                 <div style="display: flex; justify-content: space-between; font-size: 0.72rem; font-weight: 700; color: var(--text-muted); margin-bottom: 4px;">
                     <span>Thanh toán số</span>
-                    <span style="color: #10B981;">95%</span>
+                    <span style="color: #10B981;">{{ $cashlessPercentage }}%</span>
                 </div>
                 <div style="height: 6px; background: rgba(0,0,0,0.05); border-radius: 10px; overflow: hidden;">
-                    <div style="height: 100%; width: 95%; background: linear-gradient(90deg, #10B981, #059669); border-radius: 10px;"></div>
+                    <div style="height: 100%; width: {{ $cashlessPercentage }}%; background: linear-gradient(90deg, #10B981, #059669); border-radius: 10px;"></div>
                 </div>
             </div>
         </div>
@@ -1797,22 +1800,44 @@
                 <i class="bi bi-cpu" style="color: var(--primary);"></i> Bản đồ Chuyển đổi số Chợ 4.0
             </h3>
             <div class="bottom-info-list">
+                @php
+                    $checkIcon = '<span style="color: #10B981; font-size: 1.1rem;"><i class="bi bi-check-circle-fill"></i></span>';
+                    $crossIcon = '<span style="color: #EF4444; font-size: 1.1rem;"><i class="bi bi-x-circle-fill"></i></span>';
+                    $warnIcon  = '<span style="color: #F59E0B; font-size: 1.1rem;"><i class="bi bi-dash-circle-fill"></i></span>';
+                @endphp
+
+                {{-- Thanh toán số: check if > 0% --}}
                 <div style="display: flex; align-items: center; gap: 8px;">
-                    <span style="color: #10B981; font-size: 1.1rem;"><i class="bi bi-check-circle-fill"></i></span>
-                    <span style="font-size: 0.88rem; font-weight: 600; color: var(--text-main);">Thanh toán số (95%)</span>
+                    {!! $cashlessPercentage > 0 ? $checkIcon : $crossIcon !!}
+                    <span style="font-size: 0.88rem; font-weight: 600; color: {{ $cashlessPercentage > 0 ? 'var(--text-main)' : 'var(--text-muted)' }};">
+                        Thanh toán số ({{ $cashlessPercentage }}%)
+                    </span>
                 </div>
+
+                {{-- Liên kết mã QR --}}
                 <div style="display: flex; align-items: center; gap: 8px;">
-                    <span style="color: #10B981; font-size: 1.1rem;"><i class="bi bi-check-circle-fill"></i></span>
-                    <span style="font-size: 0.88rem; font-weight: 600; color: var(--text-main);">Liên kết mã QR (88%)</span>
+                    {!! $qrPercentage > 0 ? $checkIcon : $crossIcon !!}
+                    <span style="font-size: 0.88rem; font-weight: 600; color: {{ $qrPercentage > 0 ? 'var(--text-main)' : 'var(--text-muted)' }};">
+                        Liên kết mã QR ({{ $qrPercentage }}%)
+                    </span>
                 </div>
+
+                {{-- Smartphone --}}
                 <div style="display: flex; align-items: center; gap: 8px;">
-                    <span style="color: #10B981; font-size: 1.1rem;"><i class="bi bi-check-circle-fill"></i></span>
-                    <span style="font-size: 0.88rem; font-weight: 600; color: var(--text-main);">Sử dụng Smartphone</span>
+                    {!! $phonePercentage > 0 ? $checkIcon : $crossIcon !!}
+                    <span style="font-size: 0.88rem; font-weight: 600; color: {{ $phonePercentage > 0 ? 'var(--text-main)' : 'var(--text-muted)' }};">
+                        Sử dụng Smartphone ({{ $phonePercentage }}%)
+                    </span>
                 </div>
+
+                {{-- Liên kết Ngân hàng --}}
                 <div style="display: flex; align-items: center; gap: 8px;">
-                    <span style="color: #10B981; font-size: 1.1rem;"><i class="bi bi-check-circle-fill"></i></span>
-                    <span style="font-size: 0.88rem; font-weight: 600; color: var(--text-main);">Liên kết Ngân hàng số</span>
+                    {!! $bankPercentage > 0 ? $checkIcon : $crossIcon !!}
+                    <span style="font-size: 0.88rem; font-weight: 600; color: {{ $bankPercentage > 0 ? 'var(--text-main)' : 'var(--text-muted)' }};">
+                        Liên kết Ngân hàng số ({{ $bankPercentage }}%)
+                    </span>
                 </div>
+
                 <div style="display: flex; align-items: center; gap: 8px;">
                     <span style="color: #EF4444; font-size: 1.1rem;"><i class="bi bi-x-circle-fill"></i></span>
                     <span style="font-size: 0.88rem; font-weight: 600; color: var(--text-muted);">Camera giám sát AI</span>
