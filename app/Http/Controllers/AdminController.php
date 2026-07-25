@@ -139,7 +139,11 @@ class AdminController extends Controller
             $videos = $videos->whereIn('eatery_id', $sellerEateryIds)->values();
         }
 
-        return view('admin.dashboard', compact('stats', 'eateries', 'videos', 'marketStats'));
+        if ($role === 'manager') {
+            return view('admin.dashboard-manager', compact('stats', 'eateries', 'videos', 'marketStats'));
+        }
+
+        return view('admin.dashboard-admin', compact('stats', 'eateries', 'videos'));
     }
 
     /**
