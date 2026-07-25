@@ -637,7 +637,7 @@
                                 </td>
                                 <td style="text-align: center; white-space: nowrap;">
                                     <div style="display: inline-flex; gap: 6px;">
-                                        <button type="button" class="btn-admin" style="padding: 6px 12px; font-size: 0.78rem; background: #0284c7; color: #ffffff; border-radius: 8px; font-weight: 700; cursor: pointer; border: none;" onclick="openEditOcopProductModal({{ $product->id }})">
+                                        <button type="button" class="btn-admin" style="padding: 6px 12px; font-size: 0.78rem; background: #0284c7; color: #ffffff; border-radius: 8px; font-weight: 700; cursor: pointer; border: none;" data-product="{{ json_encode($product) }}" onclick="openEditOcopProductModal(this)">
                                             ✏️ Sửa
                                         </button>
                                         <form action="/admin/ocop-products/{{ $product->id }}" method="POST" style="display: inline;" onsubmit="return confirm('Bạn có chắc chắn muốn xóa sản phẩm OCOP này khỏi chợ?');">
@@ -664,7 +664,7 @@
     </div>
 
     <!-- Modal thêm sản phẩm OCOP mới -->
-    <div id="addOcopProductModal" class="admin-reels-overlay" style="display: none;">
+    <div id="addOcopProductModal" class="admin-reels-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.65); backdrop-filter: blur(4px); z-index: 99999; align-items: center; justify-content: center;">
         <div class="admin-card" style="width: 100%; max-width: 700px; padding: 24px; position: relative; border-radius: 16px; background-color: #ffffff; box-shadow: 0 10px 25px rgba(0,0,0,0.15); max-height: 90vh; overflow-y: auto;">
             <button type="button" style="position: absolute; top: 16px; right: 16px; background: transparent; border: none; color: var(--admin-text-muted); font-size: 1.25rem; cursor: pointer; z-index: 10;" onclick="closeAddOcopProductModal()">✕</button>
             
@@ -778,7 +778,7 @@
     </div>
 
     <!-- Modal sửa sản phẩm OCOP -->
-    <div id="editOcopProductModal" class="admin-reels-overlay" style="display: none;">
+    <div id="editOcopProductModal" class="admin-reels-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.65); backdrop-filter: blur(4px); z-index: 99999; align-items: center; justify-content: center;">
         <div class="admin-card" style="width: 100%; max-width: 700px; padding: 24px; position: relative; border-radius: 16px; background-color: #ffffff; box-shadow: 0 10px 25px rgba(0,0,0,0.15); max-height: 90vh; overflow-y: auto;">
             <button type="button" style="position: absolute; top: 16px; right: 16px; background: transparent; border: none; color: var(--admin-text-muted); font-size: 1.25rem; cursor: pointer; z-index: 10;" onclick="closeEditOcopProductModal()">✕</button>
             
@@ -3941,12 +3941,25 @@ function previewEateryPhotoUrl(url) {
         if (modal) modal.style.display = 'none';
     }
 
-    function openEditOcopProductModal(productOrId) {
-        let product = (typeof productOrId === 'object' && productOrId !== null)
-            ? productOrId
-            : (window.ocopProductsMap ? window.ocopProductsMap[productOrId] : null);
+    function openEditOcopProductModal(btnOrId) {
+        let product = null;
+        if (btnOrId && typeof btnOrId === 'object' && typeof btnOrId.getAttribute === 'function') {
+            const raw = btnOrId.getAttribute('data-product');
+            if (raw) {
+                try { product = JSON.parse(raw); } catch (e) { console.error(e); }
+            }
+        }
+        if (!product && typeof btnOrId === 'object' && btnOrId !== null) {
+            product = btnOrId;
+        }
+        if (!product && window.ocopProductsMap && window.ocopProductsMap[btnOrId]) {
+            product = window.ocopProductsMap[btnOrId];
+        }
 
-        if (!product) return;
+        if (!product) {
+            alert('Không tìm thấy dữ liệu sản phẩm!');
+            return;
+        }
 
         const form = document.getElementById('editOcopProductForm');
         if (!form) return;
