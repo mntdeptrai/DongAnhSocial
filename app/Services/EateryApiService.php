@@ -371,6 +371,93 @@ class EateryApiService
     }
 
     /**
+     * Get all OCOP Products directly from database with eatery relationship.
+     */
+    public static function getOcopProducts(array $filters = [])
+    {
+        $conn = 'mysql_market';
+        $default = config('database.default');
+        if (config("database.connections.{$default}.driver") === 'sqlite') {
+            $conn = $default;
+        }
+
+        $products = collect();
+
+        try {
+            // 1. Lấy sản phẩm từ bảng ocop_products kết nối eatery
+            $dbProducts = OcopProduct::on($conn)->with(['eatery.commune', 'eatery.category'])->get();
+            foreach ($dbProducts as $p) {
+                if ($p->eatery) {
+                    if (isset($filters['commune_id']) && $filters['commune_id']) {
+                        if ($p->eatery->commune_id != $filters['commune_id']) continue;
+                    }
+                    if (isset($filters['q']) && $filters['q']) {
+                        $q = strtolower($filters['q']);
+                        $text = strtolower(($p->name ?? '') . ' ' . ($p->seller_name ?? '') . ' ' . ($p->description ?? ''));
+                        if (!str_contains($text, $q)) continue;
+                    }
+                    $products->push($p);
+                }
+            }
+        } catch (\Exception $e) {
+            Log::warning("Lỗi khi truy vấn ocop_products: " . $e->getMessage());
+        }
+
+        // 2. Tách sản phẩm từ các cơ sở chưa tạo dòng trong ocop_products
+        try {
+            $eateryQuery = Eatery::on($conn)->with(['category', 'commune', 'ocopProducts'])->active();
+            if (isset($filters['commune_id']) && $filters['commune_id']) {
+                $eateryQuery->where('commune_id', $filters['commune_id']);
+            }
+            $eateries = $eateryQuery->get();
+
+            foreach ($eateries as $eat) {
+                if (!$eat->ocopProducts || $eat->ocopProducts->count() === 0) {
+                    if (preg_match('/tên\s+sản\s+phẩm\s+OCOP:\s*([^;]+)/ui', $eat->description, $matches)) {
+                        $rawNames = array_filter(array_map('trim', explode(',', $matches[1])));
+                        $cleanDesc = preg_replace('/tên\s+sản\s+phẩm\s+OCOP:\s*[^;]+;?\s*/ui', '', $eat->description);
+                        $cleanDesc = preg_replace('/^[^;]+;\s*địa chỉ[^;]+;\s*/ui', '', $cleanDesc);
+                        if (empty(trim($cleanDesc))) $cleanDesc = $eat->description;
+
+                        foreach ($rawNames as $idx => $pName) {
+                            $synth = new OcopProduct();
+                            $synth->id = 'synth_' . $eat->id . '_' . $idx;
+                            $synth->name = $pName;
+                            $synth->seller_name = $eat->name;
+                            $synth->seller_phone = $eat->phone;
+                            $synth->price = null;
+                            $synth->star_rating = 'Đặc sản OCOP';
+                            $synth->description = $cleanDesc;
+                            $synth->image_path = $eat->image_path;
+                            $synth->eatery_id = $eat->id;
+                            $synth->setRelation('eatery', $eat);
+                            $products->push($synth);
+                        }
+                    } else {
+                        $cleanName = preg_replace('/^(HKD|HTX|Hộ kinh doanh|Cơ sở|Công ty)\s+/ui', '', $eat->name);
+                        $synth = new OcopProduct();
+                        $synth->id = 'synth_' . $eat->id;
+                        $synth->name = 'Sản phẩm OCOP - ' . $cleanName;
+                        $synth->seller_name = $eat->name;
+                        $synth->seller_phone = $eat->phone;
+                        $synth->price = null;
+                        $synth->star_rating = 'Đặc sản OCOP';
+                        $synth->description = $eat->description;
+                        $synth->image_path = $eat->image_path;
+                        $synth->eatery_id = $eat->id;
+                        $synth->setRelation('eatery', $eat);
+                        $products->push($synth);
+                    }
+                }
+            }
+        } catch (\Exception $e) {
+            Log::warning("Lỗi khi tạo synthetic OCOP products: " . $e->getMessage());
+        }
+
+        return $products;
+    }
+
+    /**
      * Get eatery detail by slug across all databases.
      */
     public static function getEateryBySlug($slug)

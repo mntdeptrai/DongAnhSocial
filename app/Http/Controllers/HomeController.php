@@ -31,6 +31,13 @@ class HomeController extends Controller
         $eateries = EateryApiService::getEateries($selectedCatSlug, [
             'commune_id' => $selectedComId
         ]);
+
+        $ocopProducts = collect();
+        if ($selectedCatSlug === 'dong-anh-market') {
+            $ocopProducts = EateryApiService::getOcopProducts([
+                'commune_id' => $selectedComId
+            ]);
+        }
         
         $featuredEateries = EateryApiService::getEateries(null, [
             'is_featured' => true
@@ -41,6 +48,7 @@ class HomeController extends Controller
         if ($request->has('ajax')) {
             return response()->json([
                 'eateries' => $eateries,
+                'ocopProducts' => $ocopProducts,
                 'selectedCatSlug' => $selectedCatSlug
             ]);
         }
@@ -49,6 +57,7 @@ class HomeController extends Controller
             'categories', 
             'communes', 
             'eateries', 
+            'ocopProducts',
             'featuredEateries', 
             'specialties', 
             'selectedCatSlug', 

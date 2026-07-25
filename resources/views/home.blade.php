@@ -996,7 +996,7 @@
                     <h2 style="font-size: 1.6rem; font-family: var(--font-heading); font-weight: 800; margin: 4px 0 6px 0; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
                         <span style="background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Không Gian Nông Sản Số Đông Anh <span style="font-size: 1.1rem; color: var(--text-muted); font-weight: 600; display: block; margin-top: 4px;">(Nông Sản Số & Local Specialties)</span></span>
                         <span id="resultsCountSpan" style="font-size: 0.85rem; color: var(--text-muted); font-weight: normal;">
-                            ({{ $eateries->count() }} địa điểm / places)
+                            ({{ (isset($ocopProducts) && $ocopProducts->count() > 0) ? $ocopProducts->count() . ' sản phẩm OCOP' : $eateries->count() . ' địa điểm / places' }})
                         </span>
                     </h2>
                     <p style="font-size: 0.88rem; color: var(--text-muted); line-height: 1.5; margin: 0;">
