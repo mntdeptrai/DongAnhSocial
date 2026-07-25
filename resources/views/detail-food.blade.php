@@ -310,13 +310,14 @@
         
         <!-- Action Buttons -->
         <div class="detail-header-actions">
-            <button class="btn-secondary" style="border-radius: 30px; padding: 8px 16px; font-size: 0.9rem; border-color: var(--border-glow); display: flex; align-items: center; gap: 6px; background: var(--bg-card); color: var(--text-main); font-weight: 600;" onmouseover="this.style.background='var(--bg-btn-secondary)'" onmouseout="this.style.background='var(--bg-card)'">
+            <button onclick="shareLocationPage('{{ addslashes($eatery->name) }}')" class="btn-secondary" style="border-radius: 30px; padding: 8px 18px; font-size: 0.9rem; border-color: var(--border-glow); display: flex; align-items: center; gap: 6px; background: var(--bg-card); color: var(--text-main); font-weight: 600; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
                 <span style="font-size: 1.1rem;">📤</span> Chia sẻ
             </button>
-            <button class="btn-secondary" style="border-radius: 30px; padding: 8px 16px; font-size: 0.9rem; border-color: var(--border-glow); display: flex; align-items: center; gap: 6px; background: var(--bg-card); color: var(--text-main); font-weight: 600;" onmouseover="this.style.background='var(--bg-btn-secondary)'" onmouseout="this.style.background='var(--bg-card)'">
-                <span style="font-size: 1.1rem;">❤️</span> Lưu lại
+            <button id="btnSaveLocFood" onclick="toggleSaveLocation(this, '{{ $eatery->slug }}', '{{ addslashes($eatery->name) }}')" class="btn-secondary" style="border-radius: 30px; padding: 8px 18px; font-size: 0.9rem; border-color: var(--border-glow); display: flex; align-items: center; gap: 6px; background: var(--bg-card); color: var(--text-main); font-weight: 600; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
+                <span class="save-icon" style="font-size: 1.1rem;">❤️</span> <span class="save-text">Lưu lại</span>
             </button>
         </div>
+        <script>document.addEventListener('DOMContentLoaded', () => initSaveButtonState(document.getElementById('btnSaveLocFood'), '{{ $eatery->slug }}'));</script>
     </div>
 </div>
 

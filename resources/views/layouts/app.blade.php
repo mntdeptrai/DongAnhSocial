@@ -1822,6 +1822,88 @@
             .catch(err => console.error(err));
         }
 
+        // 📤 Global Share Function
+        function shareLocationPage(name) {
+            const shareTitle = name ? name + ' — DongAnh Discovery' : document.title;
+            const shareText = 'Khám phá ' + (name || 'địa điểm') + ' trên Bản đồ số Đông Anh!';
+            const shareUrl = window.location.href;
+
+            if (navigator.share) {
+                navigator.share({
+                    title: shareTitle,
+                    text: shareText,
+                    url: shareUrl
+                }).catch(() => {});
+            } else {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(shareUrl).then(() => {
+                        showCartToast('Đã sao chép liên kết chia sẻ địa điểm!', 'success');
+                    }).catch(() => fallbackCopyShareLink());
+                } else {
+                    fallbackCopyShareLink();
+                }
+            }
+        }
+
+        function fallbackCopyShareLink() {
+            const dummy = document.createElement('input');
+            document.body.appendChild(dummy);
+            dummy.value = window.location.href;
+            dummy.select();
+            document.execCommand('copy');
+            document.body.removeChild(dummy);
+            showCartToast('Đã sao chép liên kết chia sẻ địa điểm!', 'success');
+        }
+
+        // ❤️ Global Save / Favorite Location Function
+        function toggleSaveLocation(btn, slug, name) {
+            let saved = JSON.parse(localStorage.getItem('saved_locations') || '[]');
+            const index = saved.findIndex(item => item.slug === slug);
+            
+            let isSaved = false;
+            if (index > -1) {
+                saved.splice(index, 1);
+                isSaved = false;
+            } else {
+                saved.push({ slug: slug, name: name, url: window.location.href, savedAt: new Date().toISOString() });
+                isSaved = true;
+            }
+            
+            localStorage.setItem('saved_locations', JSON.stringify(saved));
+            updateSaveButtonUI(btn, isSaved);
+
+            showCartToast(isSaved ? 'Đã lưu địa điểm vào danh sách yêu thích!' : 'Đã bỏ lưu địa điểm!', isSaved ? 'success' : 'warning');
+        }
+
+        function updateSaveButtonUI(btn, isSaved) {
+            if (!btn) return;
+            const iconSpan = btn.querySelector('.save-icon');
+            const textSpan = btn.querySelector('.save-text');
+
+            if (isSaved) {
+                btn.classList.add('saved');
+                btn.style.background = 'rgba(239, 68, 68, 0.12)';
+                btn.style.color = '#ef4444';
+                btn.style.borderColor = 'rgba(239, 68, 68, 0.4)';
+                if (iconSpan) iconSpan.textContent = '💖';
+                if (textSpan) textSpan.textContent = 'Đã lưu';
+            } else {
+                btn.classList.remove('saved');
+                btn.style.background = 'var(--bg-card, #ffffff)';
+                btn.style.color = 'var(--text-main, #0f172a)';
+                btn.style.borderColor = 'var(--border-glow, #e2e8f0)';
+                if (iconSpan) iconSpan.textContent = '❤️';
+                if (textSpan) textSpan.textContent = 'Lưu lại';
+            }
+        }
+
+        function initSaveButtonState(btn, slug) {
+            if (!btn || !slug) return;
+            const saved = JSON.parse(localStorage.getItem('saved_locations') || '[]');
+            const isSaved = saved.some(item => item.slug === slug);
+            updateSaveButtonUI(btn, isSaved);
+        }
+
         // Initialize cart counts on boot
         document.addEventListener('DOMContentLoaded', () => {
             fetch('/cart')
