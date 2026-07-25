@@ -521,7 +521,7 @@
                     <td>
                         <div style="display: flex; align-items: center; gap: 12px;">
                             <div class="adm-eatery-thumb">
-                                <img src="{{ $e->image_url ?: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=100' }}" alt="{{ $e->name }}">
+                                <img src="{{ $e->image_path ?: 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=100&q=80' }}" alt="{{ $e->name }}">
                             </div>
                             <div>
                                 <div style="font-weight: 800; color: #0f172a; font-size: 0.92rem;">{{ $e->name }}</div>
