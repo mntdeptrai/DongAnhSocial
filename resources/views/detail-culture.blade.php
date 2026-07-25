@@ -285,6 +285,9 @@
                 <span class="tag-badge-accent" style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.85rem; color: #b91c1c; background: rgba(185, 28, 28, 0.1); border: 1px solid rgba(185, 28, 28, 0.3); backdrop-filter: blur(8px); font-weight: 800; border-radius: 30px; padding: 6px 14px;">
                     ⛩️ Hành Trình Di Sản & Thiết Chế Văn Hóa - Thể Thao
                 </span>
+                <a href="https://donganh360.vn" target="_blank" rel="noopener noreferrer" class="tag-badge-accent" style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.85rem; color: #ffffff; background: linear-gradient(135deg, #d97706 0%, #b45309 100%); border-radius: 30px; padding: 6px 14px; text-decoration: none; font-weight: 800; box-shadow: 0 4px 15px rgba(217, 119, 6, 0.4);">
+                    🔮 Trải nghiệm Virtual 360° VR
+                </a>
                 @if($eatery->foodSafetyCertificate)
                     <a href="#trust-hub-section" onclick="scrollToTrustHub(event)" class="tag-badge-accent" style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.85rem; color: #ffffff; background: #2ecc71; border: 1px solid #27ae60; border-radius: 30px; padding: 6px 14px; cursor: pointer; text-decoration: none; font-weight: 800; box-shadow: 0 4px 15px rgba(46, 204, 113, 0.4); transition: all 0.3s; animation: pulse-shield 2.5s infinite;" onmouseover="this.style.background='#27ae60'; this.style.transform='scale(1.05)';" onmouseout="this.style.background='#2ecc71'; this.style.transform='none';">
                         🛡️ <span style="color: #ffffff;">Xác minh An Toàn</span>

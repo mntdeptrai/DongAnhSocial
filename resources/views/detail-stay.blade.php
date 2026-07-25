@@ -285,6 +285,9 @@
                 <span class="tag-badge-accent" style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.85rem; color: #2563eb; background: rgba(37, 99, 235, 0.1); border: 1px solid rgba(37, 99, 235, 0.3); backdrop-filter: blur(8px); font-weight: 800; border-radius: 30px; padding: 6px 14px;">
                     🛌 Stay in Đông Anh - Khách Sạn & Homestay Nghỉ Dưỡng
                 </span>
+                <span class="tag-badge-accent" style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.85rem; color: #059669; background: rgba(5, 150, 105, 0.1); border: 1px solid rgba(5, 150, 105, 0.3); font-weight: 700; border-radius: 30px; padding: 6px 14px;">
+                    🍳 Miễn phí bữa sáng & Wifi
+                </span>
                 @if($eatery->foodSafetyCertificate)
                     <a href="#trust-hub-section" onclick="scrollToTrustHub(event)" class="tag-badge-accent" style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.85rem; color: #ffffff; background: #2ecc71; border: 1px solid #27ae60; border-radius: 30px; padding: 6px 14px; cursor: pointer; text-decoration: none; font-weight: 800; box-shadow: 0 4px 15px rgba(46, 204, 113, 0.4); transition: all 0.3s; animation: pulse-shield 2.5s infinite;" onmouseover="this.style.background='#27ae60'; this.style.transform='scale(1.05)';" onmouseout="this.style.background='#2ecc71'; this.style.transform='none';">
                         🛡️ <span style="color: #ffffff;">Xác minh An Toàn</span>
