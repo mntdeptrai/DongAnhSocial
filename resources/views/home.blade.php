@@ -153,7 +153,7 @@
 
 /* Logo typography & 3D styling with green/cyan gradient */
 .logo-title {
-    font-family: 'Outfit', sans-serif;
+    font-family: var(--font-heading);
     font-size: 3.8rem;
     font-weight: 900;
     line-height: 0.85;
@@ -175,7 +175,7 @@
 }
 
 .slogan-text {
-    font-family: 'Outfit', sans-serif;
+    font-family: var(--font-heading);
     font-size: 1.5rem;
     font-weight: 800;
     line-height: 1.1;
@@ -440,19 +440,19 @@
 }
 
 .quick-title {
-    font-family: 'Outfit', sans-serif;
+    font-family: var(--font-heading);
     font-size: 0.72rem;
-    font-weight: 500;
-    opacity: 0.85;
-    letter-spacing: 0.5px;
-    line-height: 1;
+    font-weight: 600;
+    opacity: 0.9;
+    letter-spacing: 0.3px;
+    line-height: 1.1;
 }
 
 .quick-subtitle {
-    font-family: 'Outfit', sans-serif;
+    font-family: var(--font-heading);
     font-size: 0.82rem;
     font-weight: 800;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.3px;
     line-height: 1.2;
 }
 
@@ -513,7 +513,7 @@
     font-size: 0.95rem;
     outline: none;
     font-weight: 600;
-    font-family: 'Outfit', sans-serif;
+    font-family: var(--font-body);
 }
 .custom-search-input::placeholder {
     color: #64748b;
@@ -533,7 +533,7 @@
     border-radius: 50px;
     padding: 10px 22px;
     font-weight: 800;
-    font-family: 'Outfit', sans-serif;
+    font-family: var(--font-heading);
     font-size: 0.88rem;
     cursor: pointer;
     box-shadow: 0 4px 10px rgba(255, 179, 0, 0.25);
