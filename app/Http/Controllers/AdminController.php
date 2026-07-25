@@ -574,8 +574,8 @@ class AdminController extends Controller
             'seller_phone' => 'nullable|string|max:20',
             'price' => 'nullable|numeric|min:0',
             'description' => 'nullable|string',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'image_url' => 'nullable|url',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
+            'image_url' => 'nullable|string',
             'star_rating' => 'nullable|string',
             'heritage_year' => 'nullable|string|max:100',
             'story' => 'nullable|string',
@@ -586,7 +586,18 @@ class AdminController extends Controller
             'timeline_raw' => 'nullable|string',
         ]);
 
-        $product = \App\Models\OcopProduct::on('mysql_market')->find($id);
+        $connections = ['mysql_market', 'mysql', 'mysql_stay', 'mysql_wellness', 'mysql_education', 'mysql_culture'];
+        $product = null;
+        $activeConn = 'mysql_market';
+        foreach ($connections as $conn) {
+            $p = \App\Models\OcopProduct::on($conn)->find($id);
+            if ($p) {
+                $product = $p;
+                $activeConn = $conn;
+                break;
+            }
+        }
+
         if (!$product) abort(404, 'Sản phẩm OCOP không tồn tại!');
 
         if (session('user_role') === 'seller') {
@@ -597,8 +608,12 @@ class AdminController extends Controller
             }
         }
 
+        if (!$request->filled('eatery_id')) {
+            $request->merge(['eatery_id' => $product->eatery_id]);
+        }
+
         $dto = \App\Domain\OcopProduct\OcopProductData::fromRequest($request);
-        $ocopProductService->update($id, $dto, 'mysql_market');
+        $ocopProductService->update($id, $dto, $activeConn);
 
         return redirect()->back()->with('success', 'Cập nhật sản phẩm OCOP thành công!');
     }

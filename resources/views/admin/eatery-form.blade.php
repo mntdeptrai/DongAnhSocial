@@ -791,6 +791,7 @@
             <form id="editOcopProductForm" action="" method="POST" enctype="multipart/form-data">
                 @csrf
                 @method('PUT')
+                <input type="hidden" id="edit_ocop_eatery_id" name="eatery_id" value="{{ $eatery->id ?? '' }}">
                 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
                     <div class="admin-form-group" style="margin-bottom: 0;">
@@ -3818,6 +3819,8 @@ function previewEateryPhotoUrl(url) {
             const defaultPhone = @json($eatery->phone ?? '');
 
             form.action = `/admin/ocop-products/${product.id}`;
+            const eateryIdElem = document.getElementById('edit_ocop_eatery_id');
+            if (eateryIdElem) eateryIdElem.value = product.eatery_id || @json($eatery->id ?? '');
             document.getElementById('edit_ocop_name').value = product.name || '';
             document.getElementById('edit_ocop_price').value = product.price || '';
             document.getElementById('edit_ocop_stall_name').value = product.stall_name || defaultName;
