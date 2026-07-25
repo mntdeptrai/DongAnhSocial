@@ -370,4 +370,104 @@ html {
 .shooting-star:nth-child(4) { top: 20px; right: 25%; animation-delay: 1.2s; animation-duration: 7.2s; }
 .shooting-star:nth-child(5) { top: -10px; right: 50%; animation-delay: 4.8s; animation-duration: 6s; }
 
+/* ==========================================================================
+   PRO MAX VIP ANIMATIONS & MICRO-INTERACTIONS
+   ========================================================================== */
+
+/* 1. Pro Max Animated Gradient Text Sweep */
+.promax-text-glow {
+    background: linear-gradient(135deg, #0ea5e9 0%, #3b82f6 25%, #059669 50%, #d97706 75%, #ff4f18 100%);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: promaxGradientSweep 6s ease infinite alternate;
+}
+
+@keyframes promaxGradientSweep {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 100% 50%; }
+}
+
+/* 2. Pro Max Shimmer Glow Border */
+.promax-glow-card {
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.4s var(--ease-premium), box-shadow 0.4s var(--ease-premium), border-color 0.4s var(--ease-premium);
+}
+.promax-glow-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: conic-gradient(from 0deg, transparent 0deg, rgba(14, 165, 233, 0.15) 120deg, transparent 180deg, rgba(217, 119, 6, 0.15) 300deg, transparent 360deg);
+    animation: promaxRotateGlow 8s linear infinite;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+}
+.promax-glow-card:hover::before {
+    opacity: 1;
+}
+@keyframes promaxRotateGlow {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* 3. Pro Max Floating Ambient Orb */
+.promax-float-orb {
+    animation: promaxOrbFloat 14s ease-in-out infinite alternate;
+    will-change: transform;
+}
+@keyframes promaxOrbFloat {
+    0% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(30px, -40px) scale(1.15); }
+    66% { transform: translate(-20px, 20px) scale(0.9); }
+    100% { transform: translate(0, 0) scale(1); }
+}
+
+/* 4. Pro Max Card Hover Lift & Magnetic Elastic Scale */
+.promax-card-hover {
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.35s ease;
+    will-change: transform;
+}
+.promax-card-hover:hover {
+    transform: translateY(-6px) scale(1.015);
+    box-shadow: 0 20px 40px -15px rgba(14, 165, 233, 0.25), 0 0 20px rgba(14, 165, 233, 0.1);
+    border-color: rgba(14, 165, 233, 0.4) !important;
+}
+
+/* 5. Pro Max Pulse Aura Ring */
+.promax-pulse-aura {
+    position: relative;
+}
+.promax-pulse-aura::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: inherit;
+    border: 2px solid rgba(14, 165, 233, 0.4);
+    animation: promaxPulseRing 2.4s cubic-bezier(0.25, 0, 0, 1) infinite;
+    pointer-events: none;
+}
+@keyframes promaxPulseRing {
+    0% { transform: scale(1); opacity: 0.8; }
+    100% { transform: scale(1.25); opacity: 0; }
+}
+
+/* 6. Pro Max Stagger Entrance Cascade */
+.promax-stagger-item {
+    opacity: 0;
+    transform: translateY(24px) scale(0.97);
+    animation: promaxStaggerIn 0.5s var(--ease-premium) forwards;
+}
+@keyframes promaxStaggerIn {
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+
 
