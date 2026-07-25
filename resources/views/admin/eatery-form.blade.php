@@ -637,7 +637,7 @@
                                 </td>
                                 <td style="text-align: center; white-space: nowrap;">
                                     <div style="display: inline-flex; gap: 6px;">
-                                        <button type="button" class="btn-admin" style="padding: 6px 12px; font-size: 0.78rem; background: #0284c7; color: #ffffff; border-radius: 8px; font-weight: 700; cursor: pointer; border: none;" data-product="{{ base64_encode(json_encode($product)) }}" onclick="openEditOcopProductModal(this)">
+                                        <button type="button" class="btn-admin" style="padding: 6px 12px; font-size: 0.78rem; background: #0284c7; color: #ffffff; border-radius: 8px; font-weight: 700; cursor: pointer; border: none;" data-product="{{ rawurlencode(json_encode($product)) }}" onclick="openEditOcopProductModal(this)">
                                             ✏️ Sửa
                                         </button>
                                         <form action="/admin/ocop-products/{{ $product->id }}" method="POST" style="display: inline;" onsubmit="return confirm('Bạn có chắc chắn muốn xóa sản phẩm OCOP này khỏi chợ?');">
@@ -3943,69 +3943,80 @@ function previewEateryPhotoUrl(url) {
 
     function openEditOcopProductModal(btnOrId) {
         let product = null;
-        if (btnOrId && typeof btnOrId === 'object' && typeof btnOrId.getAttribute === 'function') {
-            const raw = btnOrId.getAttribute('data-product');
-            if (raw) {
-                try {
-                    product = JSON.parse(atob(raw));
-                } catch (e) {
-                    try { product = JSON.parse(raw); } catch (e2) { console.error(e2); }
+        try {
+            if (btnOrId && typeof btnOrId === 'object' && typeof btnOrId.getAttribute === 'function') {
+                const raw = btnOrId.getAttribute('data-product');
+                if (raw) {
+                    try {
+                        product = JSON.parse(decodeURIComponent(raw));
+                    } catch (e) {
+                        try {
+                            product = JSON.parse(atob(raw));
+                        } catch (e2) {
+                            try { product = JSON.parse(raw); } catch (e3) { console.error(e3); }
+                        }
+                    }
                 }
             }
+            if (!product && typeof btnOrId === 'object' && btnOrId !== null && btnOrId.name) {
+                product = btnOrId;
+            }
+            if (!product && window.ocopProductsMap && window.ocopProductsMap[btnOrId]) {
+                product = window.ocopProductsMap[btnOrId];
+            }
+
+            if (!product) {
+                alert('Không tìm thấy dữ liệu sản phẩm!');
+                return;
+            }
+
+            const form = document.getElementById('editOcopProductForm');
+            if (!form) return;
+
+            const defaultName = @json($eatery->name ?? '');
+            const defaultPhone = @json($eatery->phone ?? '');
+
+            form.action = `/admin/ocop-products/${product.id}`;
+            document.getElementById('edit_ocop_name').value = product.name || '';
+            document.getElementById('edit_ocop_price').value = product.price || '';
+            document.getElementById('edit_ocop_stall_name').value = product.stall_name || defaultName;
+            document.getElementById('edit_ocop_seller_name').value = product.seller_name || defaultName;
+            document.getElementById('edit_ocop_seller_phone').value = product.seller_phone || defaultPhone;
+            document.getElementById('edit_ocop_star_rating').value = product.star_rating || '';
+            document.getElementById('edit_ocop_image_url').value = product.image_url || product.image_path || '';
+            document.getElementById('edit_ocop_description').value = product.description || '';
+            document.getElementById('edit_ocop_heritage_year').value = product.heritage_year || '';
+            document.getElementById('edit_ocop_story').value = product.story || '';
+            document.getElementById('edit_ocop_artisans').value = product.artisans || '';
+            document.getElementById('edit_ocop_fun_fact').value = product.fun_fact || '';
+            document.getElementById('edit_ocop_audio_narrative').value = product.audio_narrative || '';
+
+            // Ingredients array to raw
+            let ingStr = '';
+            if (Array.isArray(product.ingredients)) {
+                ingStr = product.ingredients.join('\n');
+            } else if (typeof product.ingredients === 'string') {
+                ingStr = product.ingredients;
+            }
+            document.getElementById('edit_ocop_ingredients_raw').value = ingStr;
+
+            // Timeline array to raw
+            let timeStr = '';
+            if (Array.isArray(product.timeline)) {
+                timeStr = product.timeline.map(t => typeof t === 'object' ? `${t.year || ''} | ${t.event || ''}` : t).join('\n');
+            } else if (typeof product.timeline === 'string') {
+                timeStr = product.timeline;
+            }
+            document.getElementById('edit_ocop_timeline_raw').value = timeStr;
+
+            const modal = document.getElementById('editOcopProductModal');
+            if (modal) {
+                modal.style.display = 'flex';
+            }
+        } catch (err) {
+            console.error('Modal error:', err);
+            alert('Lỗi hiển thị modal: ' + err.message);
         }
-        if (!product && typeof btnOrId === 'object' && btnOrId !== null) {
-            product = btnOrId;
-        }
-        if (!product && window.ocopProductsMap && window.ocopProductsMap[btnOrId]) {
-            product = window.ocopProductsMap[btnOrId];
-        }
-
-        if (!product) {
-            alert('Không tìm thấy dữ liệu sản phẩm!');
-            return;
-        }
-
-        const form = document.getElementById('editOcopProductForm');
-        if (!form) return;
-
-        const defaultName = "{{ addslashes($eatery->name ?? '') }}";
-        const defaultPhone = "{{ addslashes($eatery->phone ?? '') }}";
-
-        form.action = `/admin/ocop-products/${product.id}`;
-        document.getElementById('edit_ocop_name').value = product.name || '';
-        document.getElementById('edit_ocop_price').value = product.price || '';
-        document.getElementById('edit_ocop_stall_name').value = product.stall_name || defaultName;
-        document.getElementById('edit_ocop_seller_name').value = product.seller_name || defaultName;
-        document.getElementById('edit_ocop_seller_phone').value = product.seller_phone || defaultPhone;
-        document.getElementById('edit_ocop_star_rating').value = product.star_rating || '';
-        document.getElementById('edit_ocop_image_url').value = product.image_url || product.image_path || '';
-        document.getElementById('edit_ocop_description').value = product.description || '';
-        document.getElementById('edit_ocop_heritage_year').value = product.heritage_year || '';
-        document.getElementById('edit_ocop_story').value = product.story || '';
-        document.getElementById('edit_ocop_artisans').value = product.artisans || '';
-        document.getElementById('edit_ocop_fun_fact').value = product.fun_fact || '';
-        document.getElementById('edit_ocop_audio_narrative').value = product.audio_narrative || '';
-
-        // Ingredients array to raw
-        let ingStr = '';
-        if (Array.isArray(product.ingredients)) {
-            ingStr = product.ingredients.join('\n');
-        } else if (typeof product.ingredients === 'string') {
-            ingStr = product.ingredients;
-        }
-        document.getElementById('edit_ocop_ingredients_raw').value = ingStr;
-
-        // Timeline array to raw
-        let timeStr = '';
-        if (Array.isArray(product.timeline)) {
-            timeStr = product.timeline.map(t => typeof t === 'object' ? `${t.year || ''} | ${t.event || ''}` : t).join('\n');
-        } else if (typeof product.timeline === 'string') {
-            timeStr = product.timeline;
-        }
-        document.getElementById('edit_ocop_timeline_raw').value = timeStr;
-
-        const modal = document.getElementById('editOcopProductModal');
-        if (modal) modal.style.display = 'flex';
     }
 
     function closeEditOcopProductModal() {
