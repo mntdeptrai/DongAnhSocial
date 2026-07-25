@@ -764,65 +764,14 @@
 
             <!-- Dynamic Category Details Section -->
             @php
-                $categorySlug = $eatery->category->slug;
-                $items = collect();
+                $items = $eatery->dishes;
                 $title = 'Thực đơn & Món ăn đặc trưng';
-                $icon = '📖';
-                $emptyText = 'Chưa cập nhật thực đơn chi tiết cho địa điểm này.';
+                $icon = '🍲';
+                $emptyText = 'Chưa cập nhật thực đơn chi tiết cho nhà hàng này.';
                 $btnText = 'Xem toàn bộ thực đơn';
-                $modalTitle = 'Danh sách Thực đơn & Món ăn đặc trưng';
+                $modalTitle = 'Thực đơn & Món ăn đặc trưng - ' . $eatery->name;
                 $itemUnit = 'món';
                 $placeholderSearch = 'Tìm món ăn ngon theo tên hoặc mô tả...';
-
-                if ($categorySlug === 'smart-education-map') {
-                    $items = $eatery->educationPrograms;
-                    $title = 'Chương trình đào tạo & Khóa học';
-                    $icon = '📚';
-                    $emptyText = 'Chưa cập nhật chương trình đào tạo cho trường này.';
-                    $btnText = 'Xem toàn bộ chương trình';
-                    $modalTitle = 'Chương trình đào tạo - ' . $eatery->name;
-                    $itemUnit = 'chương trình';
-                    $placeholderSearch = 'Tìm kiếm khóa học, chương trình...';
-                } elseif ($categorySlug === 'wellness-care') {
-                    $items = $eatery->wellnessServices;
-                    $title = 'Dịch vụ Y tế & Chăm sóc sức khỏe';
-                    $icon = '🏥';
-                    $emptyText = 'Chưa cập nhật dịch vụ y tế cho cơ sở này.';
-                    $btnText = 'Xem toàn bộ dịch vụ';
-                    $modalTitle = 'Dịch vụ Y tế & Chăm sóc - ' . $eatery->name;
-                    $itemUnit = 'dịch vụ';
-                    $placeholderSearch = 'Tìm dịch vụ chăm sóc, khám chữa bệnh...';
-                } elseif ($categorySlug === 'stay-in-dong-anh') {
-                    $items = $eatery->rooms;
-                    $title = 'Loại phòng & Giá phòng nghỉ';
-                    $icon = '🏨';
-                    $emptyText = 'Chưa cập nhật loại phòng cho khách sạn này.';
-                    $btnText = 'Xem tất cả loại phòng';
-                    $modalTitle = 'Loại phòng & Phòng nghỉ - ' . $eatery->name;
-                    $itemUnit = 'phòng';
-                    $placeholderSearch = 'Tìm loại phòng, giường...';
-                } elseif ($categorySlug === 'dong-anh-market') {
-                    $items = $eatery->ocopProducts;
-                    $title = 'Sản phẩm OCOP & Đặc sản Chợ';
-                    $icon = '🛍️';
-                    $emptyText = 'Chưa cập nhật sản phẩm đặc sản nào.';
-                    $btnText = 'Xem tất cả sản phẩm';
-                    $modalTitle = 'Sản phẩm OCOP & Đặc sản - ' . $eatery->name;
-                    $itemUnit = 'sản phẩm';
-                    $placeholderSearch = 'Tìm sản phẩm OCOP, đặc sản...';
-                } elseif (in_array($categorySlug, ['hanh-trinh-di-san', 'discover-dong-anh-community-culture-hub'])) {
-                    $items = $eatery->culturalActivities;
-                    $title = 'Góc trải nghiệm thực tế & Hoạt động văn hóa';
-                    $icon = '🏛️';
-                    $emptyText = 'Chưa cập nhật góc trải nghiệm thực tế hay hoạt động văn hóa nào.';
-                    $btnText = 'Xem tất cả hoạt động';
-                    $modalTitle = 'Góc trải nghiệm & Hoạt động văn hóa - ' . $eatery->name;
-                    $itemUnit = 'hoạt động';
-                    $placeholderSearch = 'Tìm hoạt động trải nghiệm, vé, dịch vụ dâng hương...';
-                } else {
-                    $items = $eatery->dishes;
-                    $modalTitle = 'Thực Đơn Chi Tiết - ' . $eatery->name;
-                }
             @endphp
 
             <div class="detail-section glass-panel" style="padding: 28px;">
