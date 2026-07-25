@@ -865,12 +865,7 @@ nav[role="navigation"] > div > span > span:only-child {
     cursor: not-allowed;
     pointer-events: none;
 }
-/* Hide the "Showing X to Y of Z results" on desktop inside nested div */
+/* Hide the simple Previous/Next pagination — keep only numbered pagination */
 nav[role="navigation"] > div:first-child {
-    display: none;
-}
-@media (min-width: 768px) {
-    nav[role="navigation"] > div:first-child {
-        display: block;
-    }
+    display: none !important;
 }
