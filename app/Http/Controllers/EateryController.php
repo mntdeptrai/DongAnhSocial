@@ -115,8 +115,28 @@ class EateryController extends Controller
                   json_encode($schemaData, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT) . PHP_EOL . 
                   '</script>';
         
-        if ($eatery->category->slug === 'traditional-market') {
+        $categorySlug = $eatery->category->slug;
+
+        if ($categorySlug === 'traditional-market') {
             return view('detail-market', compact('eatery', 'jsonLd', 'checkinPhotos', 'checkinReviews'));
+        }
+        if ($categorySlug === 'dong-anh-market') {
+            return view('detail-ocop', compact('eatery', 'jsonLd', 'checkinPhotos', 'checkinReviews'));
+        }
+        if ($categorySlug === 'stay-in-dong-anh') {
+            return view('detail-stay', compact('eatery', 'jsonLd', 'checkinPhotos', 'checkinReviews'));
+        }
+        if ($categorySlug === 'wellness-care') {
+            return view('detail-wellness', compact('eatery', 'jsonLd', 'checkinPhotos', 'checkinReviews'));
+        }
+        if ($categorySlug === 'smart-education-map') {
+            return view('detail-education', compact('eatery', 'jsonLd', 'checkinPhotos', 'checkinReviews'));
+        }
+        if ($categorySlug === 'discover-dong-anh-community-culture-hub' || $categorySlug === 'hanh-trinh-di-san') {
+            return view('detail-culture', compact('eatery', 'jsonLd', 'checkinPhotos', 'checkinReviews'));
+        }
+        if ($categorySlug === 'dong-anh-food-map') {
+            return view('detail-food', compact('eatery', 'jsonLd', 'checkinPhotos', 'checkinReviews'));
         }
         
         return view('detail', compact('eatery', 'jsonLd', 'checkinPhotos', 'checkinReviews'));
