@@ -3300,12 +3300,7 @@ function previewEateryPhotoUrl(url) {
         document.getElementById('addOcopProductModal').style.display = 'none';
     };
 
-    // Sửa Sản phẩm OCOP Modal Logic
-    window.openEditOcopProductModal = function(btnOrId) {
-        if (typeof openEditOcopProductModal === 'function') {
-            return openEditOcopProductModal(btnOrId);
-        }
-    };
+
 
 
     window.closeEditOcopProductModal = function() {
