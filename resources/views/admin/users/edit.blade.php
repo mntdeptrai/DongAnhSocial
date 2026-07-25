@@ -8,7 +8,7 @@
     <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
         <div>
             <h1 style="font-size: 1.45rem;">👥 Chỉnh Sửa Tài Khoản</h1>
-            <p>Thay đổi thông tin và quyền hạn của thành viên #{{ $user->id }}</p>
+            <p>Thay đổi thông tin và quyền hạn của thành viên {{ $user->name }}</p>
         </div>
         <a href="/admin/users" class="btn-admin btn-admin-accent" style="padding: 8px 18px; border-radius: 8px; font-weight: 700; text-decoration: none;">
             ⬅ Quay lại

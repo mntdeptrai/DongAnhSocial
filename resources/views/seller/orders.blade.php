@@ -84,7 +84,7 @@
                     }
                 @endphp
                 <tr style="cursor: pointer;" onclick="toggleOrderDetail('detail-{{ $ord->id }}')" title="Nhấn để xem chi tiết sản phẩm">
-                    <td style="font-weight: 800; color: var(--slr-primary);">#{{ $ord->id }}</td>
+                    <td style="font-weight: 800; color: var(--slr-primary);">#ORD-{{ str_pad($ord->id, 5, '0', STR_PAD_LEFT) }}</td>
                     <td style="font-size: 0.78rem; color: var(--slr-text-muted); line-height: 1.5;">
                         {{ \Carbon\Carbon::parse($ord->created_at)->format('d/m/Y') }}<br>
                         <strong>{{ \Carbon\Carbon::parse($ord->created_at)->format('H:i') }}</strong>
@@ -119,7 +119,7 @@
                         @if($isPending)
                             <div style="display: flex; gap: 6px; justify-content: center;">
                                 <form action="{{ route('seller.orders.update-status', $ord->id) }}" method="POST"
-                                      onsubmit="return confirm('Xác nhận đơn hàng #{{ $ord->id }}?')">
+                                      onsubmit="return confirm('Xác nhận đơn hàng #ORD-{{ str_pad($ord->id, 5, '0', STR_PAD_LEFT) }}?')">
                                     @csrf
                                     @method('PUT')
                                     <input type="hidden" name="status" value="confirmed">
@@ -130,7 +130,7 @@
                                     </button>
                                 </form>
                                 <form action="{{ route('seller.orders.update-status', $ord->id) }}" method="POST"
-                                      onsubmit="return confirm('Từ chối đơn hàng #{{ $ord->id }}?')">
+                                      onsubmit="return confirm('Từ chối đơn hàng #ORD-{{ str_pad($ord->id, 5, '0', STR_PAD_LEFT) }}?')">
                                     @csrf
                                     @method('PUT')
                                     <input type="hidden" name="status" value="cancelled">
@@ -163,7 +163,7 @@
                                 <!-- Cột trái: Chi tiết sản phẩm -->
                                 <div>
                                     <div style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slr-primary); margin-bottom: 10px;">
-                                        🧾 Sản Phẩm Trong Đơn #{{ $ord->id }}
+                                        🧾 Sản Phẩm Trong Đơn #ORD-{{ str_pad($ord->id, 5, '0', STR_PAD_LEFT) }}
                                     </div>
 
                                     @if(isset($ord->items) && $ord->items->isNotEmpty())

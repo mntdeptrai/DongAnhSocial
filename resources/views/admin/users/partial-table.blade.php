@@ -22,7 +22,6 @@
                         </td>
                         <td>
                             <strong style="color: var(--admin-text-main); font-size: 0.9rem; display: block;">{{ $user->name }}</strong>
-                            <span style="font-size: 0.72rem; color: var(--admin-text-muted);">ID: #{{ $user->id }}</span>
                             @if($user->role === 'seller')
                                 @php $ownedEateries = $user->getOwnedEateries(); @endphp
                                 @if(count($ownedEateries) > 0)

@@ -505,7 +505,6 @@
         <table class="adm-premium-table">
             <thead>
                 <tr>
-                    <th>ID</th>
                     <th>Tên Cơ Sở / Địa Điểm</th>
                     <th>Danh Mục</th>
                     <th>Xã / Thị Trấn</th>
@@ -517,7 +516,6 @@
             <tbody>
                 @foreach($eateries as $e)
                 <tr>
-                    <td><span style="font-weight: 900; color: #0ea5e9;">#{{ $e->id }}</span></td>
                     <td>
                         <div style="display: flex; align-items: center; gap: 12px;">
                             <div class="adm-eatery-thumb">
