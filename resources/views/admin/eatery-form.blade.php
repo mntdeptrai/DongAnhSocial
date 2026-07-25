@@ -661,10 +661,12 @@
                 </div>
             @endif
         </div>
-    </div>
 
-    <!-- Modal thêm sản phẩm OCOP mới -->
-    <div id="addOcopProductModal" class="admin-reels-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.65); backdrop-filter: blur(4px); z-index: 99999; align-items: center; justify-content: center;">
+    </div>
+</div>{{-- /tab-ocop-products --}}
+
+<!-- Modal thêm sản phẩm OCOP mới (MOVED OUTSIDE TAB) -->
+<div id="addOcopProductModal" class="admin-reels-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.65); backdrop-filter: blur(4px); z-index: 99999; align-items: center; justify-content: center;">
         <div class="admin-card" style="width: 100%; max-width: 700px; padding: 24px; position: relative; border-radius: 16px; background-color: #ffffff; box-shadow: 0 10px 25px rgba(0,0,0,0.15); max-height: 90vh; overflow-y: auto;">
             <button type="button" style="position: absolute; top: 16px; right: 16px; background: transparent; border: none; color: var(--admin-text-muted); font-size: 1.25rem; cursor: pointer; z-index: 10;" onclick="closeAddOcopProductModal()">✕</button>
             
@@ -890,7 +892,7 @@
             </form>
         </div>
     </div>
-</div>{{-- /tab-ocop-products --}}
+</div>
 @endif
 
 @if($eatery && in_array($eatery->category->slug, ['traditional-market', 'dong-anh-market']))
@@ -2441,101 +2443,6 @@ function previewEateryPhotoUrl(url) {
     </div>
 </div>
 
-<!-- ==========================================================================
-     MODAL CHỈNH SỬA SẢN PHẨM OCOP
-     ========================================================================== -->
-<div id="editOcopProductModal" class="admin-reels-overlay" style="display: none;">
-    <div class="admin-card" style="width: 100%; max-width: 600px; padding: 24px; position: relative; border-radius: 16px; background-color: #ffffff; box-shadow: 0 10px 25px rgba(0,0,0,0.15);">
-        <button type="button" style="position: absolute; top: 16px; right: 16px; background: transparent; border: none; color: var(--admin-text-muted); font-size: 1.25rem; cursor: pointer; z-index: 10;" onclick="closeEditOcopProductModal()">✕</button>
-        
-        <h3 class="admin-card-title" style="margin-bottom: 18px; font-size: 1.1rem; border-bottom: 1px solid var(--admin-border); padding-bottom: 10px;">
-            <span>✏️</span> Cập Nhật Sản Phẩm OCOP / Đặc Sản
-        </h3>
-        
-        <form id="editOcopProductForm" method="POST" enctype="multipart/form-data">
-            @csrf
-            @method('PUT')
-            
-            <div class="admin-form-group">
-                <label class="admin-form-label">Tên sản phẩm <span style="color: var(--admin-danger);">*</span></label>
-                <input type="text" id="editOcopProductNameInput" name="name" required class="admin-form-input">
-            </div>
-
-            <div class="admin-form-group">
-                <label class="admin-form-label">Giá bán (VNĐ)</label>
-                <input type="number" id="editOcopProductPriceInput" name="price" class="admin-form-input">
-            </div>
-
-            <div class="admin-form-group">
-                <label class="admin-form-label">Đạt chuẩn OCOP mấy sao?</label>
-                <select id="editOcopProductStarInput" name="star_rating" class="admin-form-input">
-                    <option value="">Không có/Chưa xếp hạng</option>
-                    <option value="3 sao">⭐ 3 sao</option>
-                    <option value="4 sao">⭐⭐ 4 sao</option>
-                    <option value="5 sao">⭐⭐⭐ 5 sao</option>
-                </select>
-            </div>
-
-            <div class="admin-form-group">
-                <label class="admin-form-label">Mô tả chi tiết</label>
-                <textarea id="editOcopProductDescInput" name="description" rows="3" class="admin-form-input"></textarea>
-            </div>
-
-            <!-- Collapsible Heritage Fields for Editing OCOP Product -->
-            <div style="border: 1.5px solid rgba(212, 175, 55, 0.35); background: rgba(212, 175, 55, 0.02); border-radius: 8px; margin-top: 15px; margin-bottom: 15px; overflow: hidden;">
-                <div onclick="toggleOcopHeritageEditFields()" style="background-color: rgba(212, 175, 55, 0.08); padding: 10px 14px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem; font-weight: 800; color: #ffb300; border-bottom: 1px solid rgba(212, 175, 55, 0.15);">
-                    <span style="display: flex; align-items: center; gap: 6px;">🌾 Hồ Sơ Di Sản & Chứng Nhận OCOP (Làng nghề / Đặc sản)</span>
-                    <span id="ocopHeritageEditIcon" style="transition: transform 0.3s ease; transform: rotate(180deg);">▲</span>
-                </div>
-                <div id="ocopHeritageEditFields" style="padding: 14px; display: flex; background-color: #ffffff; flex-direction: column; gap: 12px;">
-                    <div class="admin-form-group" style="margin-bottom: 10px;">
-                        <label class="admin-form-label" style="font-size: 0.78rem;">Năm công nhận / Lịch sử di sản (Heritage Year)</label>
-                        <input type="text" id="editOcopProductHeritageYearInput" name="heritage_year" class="admin-form-input" style="font-size: 0.82rem; padding: 6px 10px;" placeholder="Ví dụ: Từ thời Hùng Vương / Năm 2018">
-                    </div>
-                    <div class="admin-form-group" style="margin-bottom: 10px;">
-                        <label class="admin-form-label" style="font-size: 0.78rem;">Lịch sử hình thành & Câu chuyện (Story)</label>
-                        <textarea id="editOcopProductStoryInput" name="story" class="admin-form-input" rows="3" style="font-size: 0.82rem; padding: 6px 10px; resize: vertical;" placeholder="Nhập câu chuyện truyền thuyết, lịch sử lâu đời..."></textarea>
-                    </div>
-                    <div class="admin-form-group" style="margin-bottom: 10px;">
-                        <label class="admin-form-label" style="font-size: 0.78rem;">Nghệ nhân truyền nghề / Người giữ lửa (Artisans)</label>
-                        <textarea id="editOcopProductArtisansInput" name="artisans" class="admin-form-input" rows="2" style="font-size: 0.82rem; padding: 6px 10px; resize: vertical;" placeholder="Nhập tên nghệ nhân tiêu biểu, những chia sẻ..."></textarea>
-                    </div>
-                    <div class="admin-form-group" style="margin-bottom: 10px;">
-                        <label class="admin-form-label" style="font-size: 0.78rem;">Sự thật thú vị / Bạn có biết? (Fun Fact)</label>
-                        <textarea id="editOcopProductFunFactInput" name="fun_fact" class="admin-form-input" rows="2" style="font-size: 0.82rem; padding: 6px 10px; resize: vertical;" placeholder="Ví dụ: Quy trình làm thủ công 100%, không hóa chất..."></textarea>
-                    </div>
-                    <div class="admin-form-group" style="margin-bottom: 10px;">
-                        <label class="admin-form-label" style="font-size: 0.78rem;">Nội dung thuyết minh (TTS Audio Narrative)</label>
-                        <textarea id="editOcopProductAudioNarrativeInput" name="audio_narrative" class="admin-form-input" rows="2" style="font-size: 0.82rem; padding: 6px 10px; resize: vertical;" placeholder="Nội dung giới thiệu chi tiết bằng giọng nói để AI phát âm..."></textarea>
-                    </div>
-                    <div class="admin-form-group" style="margin-bottom: 10px;">
-                        <label class="admin-form-label" style="font-size: 0.78rem;">Thành phần & Bí quyết (Mỗi dòng một nguyên liệu)</label>
-                        <textarea id="editOcopProductIngredientsInput" name="ingredients_raw" class="admin-form-input" rows="3" style="font-size: 0.82rem; padding: 6px 10px; resize: vertical;" placeholder="Bột gạo tẻ ngon xay ướt&#10;Thịt heo băm nhuyễn"></textarea>
-                    </div>
-                    <div class="admin-form-group" style="margin-bottom: 0;">
-                        <label class="admin-form-label" style="font-size: 0.78rem;">Hành trình di sản / Dòng lịch sử (Định dạng: Năm | Sự kiện, mỗi dòng một mục)</label>
-                        <textarea id="editOcopProductTimelineInput" name="timeline_raw" class="admin-form-input" rows="3" style="font-size: 0.82rem; padding: 6px 10px; resize: vertical;" placeholder="Thời An Dương Vương | Lương thực cho quân lính&#10;Năm 2021 | Đạt chứng nhận OCOP 3 sao"></textarea>
-                    </div>
-                </div>
-            </div>
-
-            <div class="admin-form-group" style="margin-bottom: 12px;">
-                <label class="admin-form-label">Chọn File Ảnh mới</label>
-                <input type="file" name="image" accept="image/*" class="admin-form-input" style="padding: 6px 12px;">
-            </div>
-
-            <div class="admin-form-group">
-                <label class="admin-form-label">Hoặc dán URL ảnh mới</label>
-                <input type="url" id="editOcopProductImageUrlInput" name="image_url" class="admin-form-input">
-            </div>
-
-            <div style="display: flex; gap: 8px; justify-content: flex-end;">
-                <button type="button" class="btn-admin btn-admin-secondary" style="padding: 10px 20px; font-size: 0.82rem; border-radius: 8px;" onclick="closeEditOcopProductModal()">Hủy bỏ</button>
-                <button type="submit" class="btn-admin btn-admin-primary" style="padding: 10px 24px; font-size: 0.82rem; border-radius: 8px;">💾 Lưu Thay Đổi</button>
-            </div>
-        </form>
-    </div>
-</div>
 
 <!-- ==========================================================================
      MODAL CHỈNH SỬA PHÒNG NGHỈ
