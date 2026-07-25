@@ -589,12 +589,12 @@ class AdminController extends Controller
         $product = \App\Models\OcopProduct::on('mysql_market')->find($id);
         if (!$product) abort(404, 'Sản phẩm OCOP không tồn tại!');
 
-        $eateries = EateryApiService::getEateries();
-        $eatery = $eateries->firstWhere('id', $product->eatery_id);
-        if (!$eatery) abort(404, 'Cơ sở liên kết không tồn tại!');
-
-        if (session('user_role') === 'seller' && $eatery->user_id !== session('user_id')) {
-            abort(403, 'Bạn không có quyền chỉnh sửa sản phẩm của cơ sở này!');
+        if (session('user_role') === 'seller') {
+            $eateries = EateryApiService::getEateries();
+            $eatery = $eateries->firstWhere('id', $product->eatery_id);
+            if (!$eatery || $eatery->user_id !== session('user_id')) {
+                abort(403, 'Bạn không có quyền chỉnh sửa sản phẩm của cơ sở này!');
+            }
         }
 
         $dto = \App\Domain\OcopProduct\OcopProductData::fromRequest($request);
@@ -610,12 +610,12 @@ class AdminController extends Controller
         $product = \App\Models\OcopProduct::on('mysql_market')->find($id);
         if (!$product) abort(404, 'Sản phẩm OCOP không tồn tại!');
 
-        $eateries = EateryApiService::getEateries();
-        $eatery = $eateries->firstWhere('id', $product->eatery_id);
-        if (!$eatery) abort(404, 'Cơ sở liên kết không tồn tại!');
-
-        if (session('user_role') === 'seller' && $eatery->user_id !== session('user_id')) {
-            abort(403, 'Bạn không có quyền xóa sản phẩm của cơ sở này!');
+        if (session('user_role') === 'seller') {
+            $eateries = EateryApiService::getEateries();
+            $eatery = $eateries->firstWhere('id', $product->eatery_id);
+            if (!$eatery || $eatery->user_id !== session('user_id')) {
+                abort(403, 'Bạn không có quyền xóa sản phẩm của cơ sở này!');
+            }
         }
 
         $ocopProductService->delete($id);
