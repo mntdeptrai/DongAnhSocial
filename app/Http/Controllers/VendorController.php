@@ -76,22 +76,27 @@ class VendorController extends Controller
         
         $productsCount = $context['products']->count();
         
-        // Lấy danh sách đơn hàng liên quan đến gian hàng này trong bảng orders (nếu có)
         $ordersCount = 0;
+        $totalRevenue = 0;
         $recentOrders = collect();
         if (\Illuminate\Support\Facades\Schema::hasTable('orders')) {
-            $recentOrders = DB::table('orders')
-                ->where('stall_name', $context['stallName'])
-                ->orWhere('eatery_id', $context['eateryId'])
-                ->latest()
-                ->take(5)
-                ->get();
-            $ordersCount = $recentOrders->count();
+            $orderQuery = DB::table('orders')
+                ->where(function($q) use ($context) {
+                    $q->where('stall_name', $context['stallName']);
+                    if (!empty($context['sellerPhone'])) {
+                        $q->orWhere('seller_phone', $context['sellerPhone']);
+                    }
+                });
+
+            $recentOrders = (clone $orderQuery)->latest()->take(10)->get();
+            $ordersCount = (clone $orderQuery)->count();
+            $totalRevenue = (clone $orderQuery)->where('status', '!=', 'cancelled')->sum('total_price');
         }
 
         return view('seller.dashboard', array_merge($context, [
             'productsCount' => $productsCount,
             'ordersCount' => $ordersCount,
+            'totalRevenue' => $totalRevenue,
             'recentOrders' => $recentOrders
         ]));
     }
@@ -118,9 +123,7 @@ class VendorController extends Controller
         if (is_numeric($rawPrice)) {
             return (float) $rawPrice;
         }
-        // Xử lý chuỗi dạng "20.000đ/kg", "30,000đ" → 20000
-        $cleaned = preg_replace('/[^\d,.]/', '', $rawPrice); // giữ lại số, dấu , và .
-        // Loại bỏ dấu phân cách hàng nghìn (dấu chấm hoặc dấu phẩy không ở cuối)
+        $cleaned = preg_replace('/[^\d,.]/', '', $rawPrice);
         $cleaned = str_replace(['.', ','], '', $cleaned);
         return (float) $cleaned ?: 0;
     }
@@ -195,7 +198,6 @@ class VendorController extends Controller
             $imagePath = '/uploads/products/' . $filename;
         }
 
-        // Luôn lưu price dạng số (DECIMAL) — parse chuỗi format nếu cần
         $numericPrice = $this->parsePriceToDecimal($request->price);
 
         $updateData = [
@@ -238,22 +240,22 @@ class VendorController extends Controller
 
         $orders = collect();
         if (\Illuminate\Support\Facades\Schema::hasTable('orders')) {
-            // Chỉ lấy đơn hàng của đú ng gian hàng này (theo stall_name)
-            // và thuộc luồng chợ truyền thống (category_slug = 'dong-anh-market')
             $orders = DB::table('orders')
-                ->where('stall_name', $context['stallName'])
-                ->where('category_slug', 'dong-anh-market')
+                ->where(function($q) use ($context) {
+                    $q->where('stall_name', $context['stallName']);
+                    if (!empty($context['sellerPhone'])) {
+                        $q->orWhere('seller_phone', $context['sellerPhone']);
+                    }
+                })
                 ->latest()
                 ->paginate(20);
 
-            // Eager-load order_items cho từng đơn
             $orderIds = $orders->pluck('id');
             $allItems = DB::table('order_items')
                 ->whereIn('order_id', $orderIds)
                 ->get()
                 ->groupBy('order_id');
 
-            // Gắn items vào từng order
             $orders->each(function ($ord) use ($allItems) {
                 $ord->items = $allItems->get($ord->id, collect());
             });
@@ -292,8 +294,12 @@ class VendorController extends Controller
         $rawOrders = collect();
         if (\Illuminate\Support\Facades\Schema::hasTable('orders')) {
             $rawOrders = DB::table('orders')
-                ->where('stall_name', $context['stallName'])
-                ->where('category_slug', 'dong-anh-market')
+                ->where(function($q) use ($context) {
+                    $q->where('stall_name', $context['stallName']);
+                    if (!empty($context['sellerPhone'])) {
+                        $q->orWhere('seller_phone', $context['sellerPhone']);
+                    }
+                })
                 ->latest()
                 ->limit(50)
                 ->get();
