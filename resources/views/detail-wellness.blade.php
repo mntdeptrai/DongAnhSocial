@@ -269,13 +269,21 @@
 @php
     $categorySlug = $eatery->category->slug;
 @endphp
+<style>
+    :root {
+        --category-accent: #0d9488;
+        --category-accent-dark: #0f766e;
+        --category-glow: rgba(13, 148, 136, 0.15);
+    }
+</style>
+
 <!-- Detail Header Info -->
 <div class="container" style="padding-top: 40px; margin-bottom: 24px;">
     <div class="detail-header-wrapper">
         <div class="detail-header-left">
             <div class="detail-header-badges">
-                <span class="tag-badge-accent" style="display: inline-block; font-size: 0.85rem; color: var(--text-main); background: var(--bg-card); border-color: var(--border-glow); backdrop-filter: blur(8px); font-weight: 600;">
-                    {{ $eatery->category->icon }} {{ $eatery->category->name }}
+                <span class="tag-badge-accent" style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.85rem; color: #0d9488; background: rgba(13, 148, 136, 0.1); border: 1px solid rgba(13, 148, 136, 0.3); backdrop-filter: blur(8px); font-weight: 800; border-radius: 30px; padding: 6px 14px;">
+                    🩺 Wellness & Care - Y Tế, Bệnh Viện & Spa Thư Giãn
                 </span>
                 @if($eatery->foodSafetyCertificate)
                     <a href="#trust-hub-section" onclick="scrollToTrustHub(event)" class="tag-badge-accent" style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.85rem; color: #ffffff; background: #2ecc71; border: 1px solid #27ae60; border-radius: 30px; padding: 6px 14px; cursor: pointer; text-decoration: none; font-weight: 800; box-shadow: 0 4px 15px rgba(46, 204, 113, 0.4); transition: all 0.3s; animation: pulse-shield 2.5s infinite;" onmouseover="this.style.background='#27ae60'; this.style.transform='scale(1.05)';" onmouseout="this.style.background='#2ecc71'; this.style.transform='none';">
