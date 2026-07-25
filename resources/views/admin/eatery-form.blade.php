@@ -892,7 +892,6 @@
             </form>
         </div>
     </div>
-</div>
 @endif
 
 @if($eatery && in_array($eatery->category->slug, ['traditional-market', 'dong-anh-market']))
