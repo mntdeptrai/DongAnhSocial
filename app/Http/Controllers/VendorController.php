@@ -265,12 +265,16 @@ class VendorController extends Controller
     }
 
     /**
-     * Cập nhật trạng thái đơn hàng (Đang xử lý -> Đã xác nhận -> Đang giao -> Hoàn tất)
+     * Cập nhật trạng thái đơn hàng cho Tiểu Thương (Chỉ được chọn: Chấp nhận -> confirmed, Hủy/Từ chối -> cancelled)
      */
     public function updateOrderStatus(Request $request, $id)
     {
         $this->verifyVendor();
-        $request->validate(['status' => 'required|string']);
+        $request->validate([
+            'status' => 'required|string|in:confirmed,cancelled'
+        ], [
+            'status.in' => 'Tiểu thương chỉ có thể cập nhật 2 trạng thái đơn hàng: Chấp nhận (confirmed) hoặc Hủy (cancelled)!'
+        ]);
 
         if (\Illuminate\Support\Facades\Schema::hasTable('orders')) {
             DB::table('orders')->where('id', $id)->update([
@@ -279,7 +283,8 @@ class VendorController extends Controller
             ]);
         }
 
-        return redirect()->back()->with('success', 'Đã cập nhật trạng thái đơn hàng thành công!');
+        $msg = $request->status === 'confirmed' ? '🎉 Đã chấp nhận đơn hàng thành công!' : '❌ Đã từ chối / hủy đơn hàng thành công!';
+        return redirect()->back()->with('success', $msg);
     }
 
     /**
