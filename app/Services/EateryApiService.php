@@ -372,6 +372,7 @@ class EateryApiService
 
     /**
      * Get all OCOP Products directly from database with eatery relationship.
+     * Strictly filtered for 'dong-anh-market' (OCOP) and excludes 'traditional-market' (Chợ truyền thống).
      */
     public static function getOcopProducts(array $filters = [])
     {
@@ -384,10 +385,16 @@ class EateryApiService
         $products = collect();
 
         try {
-            // 1. Lấy sản phẩm từ bảng ocop_products kết nối eatery
-            $dbProducts = OcopProduct::on($conn)->with(['eatery.commune', 'eatery.category'])->get();
+            // 1. Lấy sản phẩm từ bảng ocop_products thuộc danh mục 'dong-anh-market' (Loại bỏ 'traditional-market')
+            $dbProducts = OcopProduct::on($conn)
+                ->whereHas('eatery.category', function($q) {
+                    $q->where('slug', 'dong-anh-market');
+                })
+                ->with(['eatery.commune', 'eatery.category'])
+                ->get();
+
             foreach ($dbProducts as $p) {
-                if ($p->eatery) {
+                if ($p->eatery && $p->eatery->category && $p->eatery->category->slug === 'dong-anh-market') {
                     if (isset($filters['commune_id']) && $filters['commune_id']) {
                         if ($p->eatery->commune_id != $filters['commune_id']) continue;
                     }
@@ -403,15 +410,25 @@ class EateryApiService
             Log::warning("Lỗi khi truy vấn ocop_products: " . $e->getMessage());
         }
 
-        // 2. Tách sản phẩm từ các cơ sở chưa tạo dòng trong ocop_products
+        // 2. Tách sản phẩm từ các cơ sở thuộc 'dong-anh-market' chưa tạo dòng trong ocop_products (KHÔNG lấy 'traditional-market')
         try {
-            $eateryQuery = Eatery::on($conn)->with(['category', 'commune', 'ocopProducts'])->active();
+            $eateryQuery = Eatery::on($conn)
+                ->whereHas('category', function($q) {
+                    $q->where('slug', 'dong-anh-market');
+                })
+                ->with(['category', 'commune', 'ocopProducts'])
+                ->active();
+
             if (isset($filters['commune_id']) && $filters['commune_id']) {
                 $eateryQuery->where('commune_id', $filters['commune_id']);
             }
             $eateries = $eateryQuery->get();
 
             foreach ($eateries as $eat) {
+                if (!$eat->category || $eat->category->slug !== 'dong-anh-market') {
+                    continue;
+                }
+
                 if (!$eat->ocopProducts || $eat->ocopProducts->count() === 0) {
                     if (preg_match('/tên\s+sản\s+phẩm\s+OCOP:\s*([^;]+)/ui', $eat->description, $matches)) {
                         $rawNames = array_filter(array_map('trim', explode(',', $matches[1])));
