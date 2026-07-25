@@ -793,3 +793,84 @@ textarea.admin-form-input {
         font-size: 0.8rem !important;
     }
 }
+
+/* ==========================================================================
+   PREMIUM PAGINATION SYSTEM — Fix SVG sizing & beautiful pill-style buttons
+   ========================================================================== */
+nav[role="navigation"] {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    margin-top: 20px;
+}
+nav[role="navigation"] > div {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+nav[role="navigation"] p {
+    font-size: 0.82rem;
+    color: var(--admin-text-muted);
+    font-weight: 600;
+}
+/* Fix Laravel SVG arrow icons being massive */
+nav[role="navigation"] svg {
+    width: 18px !important;
+    height: 18px !important;
+    display: inline-block;
+    vertical-align: middle;
+    flex-shrink: 0;
+}
+/* Pagination link & span buttons */
+nav[role="navigation"] a,
+nav[role="navigation"] span[aria-current="page"] span,
+nav[role="navigation"] span:not([aria-current]) > span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 38px;
+    height: 38px;
+    padding: 0 10px;
+    border-radius: 10px;
+    font-size: 0.84rem;
+    font-weight: 700;
+    text-decoration: none;
+    transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    border: 1.5px solid var(--admin-border);
+    background: var(--admin-bg-card);
+    color: var(--admin-text-main);
+}
+nav[role="navigation"] a:hover {
+    background: var(--admin-primary);
+    color: #ffffff;
+    border-color: var(--admin-primary);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(79, 70, 229, 0.3);
+}
+/* Active / current page */
+nav[role="navigation"] span[aria-current="page"] span {
+    background: linear-gradient(135deg, var(--admin-primary), #6366f1);
+    color: #ffffff;
+    border-color: transparent;
+    box-shadow: 0 4px 14px rgba(79, 70, 229, 0.35);
+    font-weight: 800;
+}
+/* Disabled prev/next */
+nav[role="navigation"] span[aria-disabled="true"] span,
+nav[role="navigation"] > div > span > span:only-child {
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+/* Hide the "Showing X to Y of Z results" on desktop inside nested div */
+nav[role="navigation"] > div:first-child {
+    display: none;
+}
+@media (min-width: 768px) {
+    nav[role="navigation"] > div:first-child {
+        display: block;
+    }
+}
