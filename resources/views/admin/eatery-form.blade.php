@@ -580,9 +580,14 @@
             <h2 class="admin-card-title" style="margin-bottom: 0; display: inline-flex; align-items: center; gap: 8px;">
                 <span>🛍️</span> Tổng Hợp Mặt Hàng Nông Sản & Đặc Sản Đang Bày Bán Tại Chợ
             </h2>
-            <span class="admin-badge admin-badge-info" style="font-size: 0.85rem; font-weight: 800; background: #e0f2fe; color: #0284c7; padding: 6px 14px; border-radius: 20px; border: 1px solid rgba(2,132,199,0.25);">
-                👁️ Kênh Giám Sát Ban Quản Lý Chợ
-            </span>
+            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                <button type="button" class="btn-admin btn-admin-primary" onclick="openAddOcopProductModal()">
+                    ➕ Đăng Ký Sản Phẩm Đặc Sản / OCOP Mới
+                </button>
+                <span class="admin-badge admin-badge-info" style="font-size: 0.85rem; font-weight: 800; background: #e0f2fe; color: #0284c7; padding: 6px 14px; border-radius: 20px; border: 1px solid rgba(2,132,199,0.25);">
+                    👁️ Kênh Giám Sát Ban Quản Lý Chợ
+                </span>
+            </div>
         </div>
 
         <div style="padding: 20px;">
@@ -602,6 +607,7 @@
                                 <th style="min-width: 170px;">Gian Hàng / Sạp Sở Hữu</th>
                                 <th style="min-width: 120px;">Giá Bán Niêm Yết</th>
                                 <th>Mô Tả & Nguồn Gốc Sản Phẩm</th>
+                                <th style="text-align: center; width: 140px;">Thao Tác</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -627,6 +633,20 @@
                                 </td>
                                 <td style="font-size: 0.83rem; color: #334155; max-width: 320px; line-height: 1.5;">
                                     {{ $product->description ?: 'Chưa có mô tả' }}
+                                </td>
+                                <td style="text-align: center; white-space: nowrap;">
+                                    <div style="display: inline-flex; gap: 6px;">
+                                        <button type="button" class="btn-admin" style="padding: 6px 12px; font-size: 0.78rem; background: #0284c7; color: #ffffff; border-radius: 8px; font-weight: 700; cursor: pointer; border: none;" onclick='openEditOcopProductModal(@json($product))'>
+                                            ✏️ Sửa
+                                        </button>
+                                        <form action="/admin/ocop-products/{{ $product->id }}" method="POST" style="display: inline;" onsubmit="return confirm('Bạn có chắc chắn muốn xóa sản phẩm OCOP này khỏi chợ?');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn-admin" style="padding: 6px 10px; font-size: 0.78rem; background: #ef4444; color: #ffffff; border-radius: 8px; font-weight: 700; cursor: pointer; border: none;">
+                                                🗑️ Xóa
+                                            </button>
+                                        </form>
+                                    </div>
                                 </td>
                             </tr>
                             @endforeach
@@ -751,6 +771,120 @@
                 <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 15px;">
                     <button type="button" class="btn-admin btn-admin-secondary" style="padding: 10px 20px; font-size: 0.82rem; border-radius: 8px;" onclick="closeAddOcopProductModal()">Hủy bỏ</button>
                     <button type="submit" class="btn-admin btn-admin-primary" style="padding: 10px 24px; font-size: 0.82rem; border-radius: 8px;">🚀 Đăng ký sản phẩm</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal sửa sản phẩm OCOP -->
+    <div id="editOcopProductModal" class="admin-reels-overlay" style="display: none;">
+        <div class="admin-card" style="width: 100%; max-width: 700px; padding: 24px; position: relative; border-radius: 16px; background-color: #ffffff; box-shadow: 0 10px 25px rgba(0,0,0,0.15); max-height: 90vh; overflow-y: auto;">
+            <button type="button" style="position: absolute; top: 16px; right: 16px; background: transparent; border: none; color: var(--admin-text-muted); font-size: 1.25rem; cursor: pointer; z-index: 10;" onclick="closeEditOcopProductModal()">✕</button>
+            
+            <h3 class="admin-card-title" style="margin-bottom: 18px; font-size: 1.15rem; border-bottom: 1px solid var(--admin-border); padding-bottom: 10px; color: var(--admin-primary); display: flex; align-items: center; gap: 6px;">
+                <span>✏️</span> Chỉnh Sửa Sản Phẩm OCOP / Đặc Sản
+            </h3>
+            
+            <form id="editOcopProductForm" action="" method="POST" enctype="multipart/form-data">
+                @csrf
+                @method('PUT')
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                    <div class="admin-form-group" style="margin-bottom: 0;">
+                        <label class="admin-form-label">Tên sản phẩm/đặc sản <span style="color: var(--admin-danger);">*</span></label>
+                        <input type="text" id="edit_ocop_name" name="name" class="admin-form-input" required>
+                    </div>
+
+                    <div class="admin-form-group" style="margin-bottom: 0;">
+                        <label class="admin-form-label">Giá bán (VNĐ)</label>
+                        <input type="number" id="edit_ocop_price" name="price" class="admin-form-input">
+                    </div>
+                </div>
+
+                <!-- Thông tin Gian hàng & Người bán -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 16px; background: rgba(14,165,233,0.03); padding: 14px; border-radius: 10px; border: 1px dashed rgba(14,165,233,0.2);">
+                    <div class="admin-form-group" style="margin-bottom: 0;">
+                        <label class="admin-form-label" style="font-weight: 700;">🏪 Tên Gian Hàng/Số Sạp</label>
+                        <input type="text" id="edit_ocop_stall_name" name="stall_name" class="admin-form-input">
+                    </div>
+                    <div class="admin-form-group" style="margin-bottom: 0;">
+                        <label class="admin-form-label" style="font-weight: 700;">👤 Tên Người Bán/Chủ Sạp</label>
+                        <input type="text" id="edit_ocop_seller_name" name="seller_name" class="admin-form-input">
+                    </div>
+                    <div class="admin-form-group" style="margin-bottom: 0;">
+                        <label class="admin-form-label" style="font-weight: 700;">📞 SĐT Liên Hệ Người Bán</label>
+                        <input type="text" id="edit_ocop_seller_phone" name="seller_phone" class="admin-form-input">
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                    <div class="admin-form-group" style="margin-bottom: 0;">
+                        <label class="admin-form-label">Đạt chuẩn OCOP mấy sao?</label>
+                        <select id="edit_ocop_star_rating" name="star_rating" class="admin-form-input">
+                            <option value="">Không có/Chưa xếp hạng</option>
+                            <option value="3 sao">⭐ 3 sao</option>
+                            <option value="4 sao">⭐⭐ 4 sao</option>
+                            <option value="5 sao">⭐⭐⭐ 5 sao</option>
+                        </select>
+                    </div>
+
+                    <div class="admin-form-group" style="margin-bottom: 0;">
+                        <label class="admin-form-label">Ảnh sản phẩm mới (Thay thế)</label>
+                        <input type="file" name="image" class="admin-form-input" accept="image/*" style="padding: 5px 12px; font-size: 0.8rem;">
+                    </div>
+                </div>
+
+                <div class="admin-form-group" style="margin-bottom: 16px;">
+                    <label class="admin-form-label">Hoặc URL ảnh sản phẩm</label>
+                    <input type="url" id="edit_ocop_image_url" name="image_url" class="admin-form-input">
+                </div>
+
+                <div class="admin-form-group" style="margin-bottom: 16px;">
+                    <label class="admin-form-label">Mô tả chi tiết</label>
+                    <textarea id="edit_ocop_description" name="description" class="admin-form-input" rows="2" style="resize: vertical;"></textarea>
+                </div>
+
+                <!-- Collapsible Heritage Fields for OCOP Product -->
+                <div style="border: 1.5px solid rgba(212, 175, 55, 0.35); background: rgba(212, 175, 55, 0.02); border-radius: 8px; margin-top: 15px; margin-bottom: 15px; overflow: hidden;">
+                    <div onclick="toggleOcopHeritageEditFields()" style="background-color: rgba(212, 175, 55, 0.08); padding: 10px 14px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem; font-weight: 800; color: #ffb300; border-bottom: 1px solid rgba(212, 175, 55, 0.15);">
+                        <span style="display: flex; align-items: center; gap: 6px;">🌾 Hồ Sơ Di Sản & Chứng Nhận OCOP (Làng nghề / Đặc sản)</span>
+                        <span id="ocopHeritageEditIcon" style="transition: transform 0.3s ease;">▼</span>
+                    </div>
+                    <div id="ocopHeritageEditFields" style="padding: 14px; display: flex; background-color: #ffffff; flex-direction: column; gap: 12px; display: none;">
+                        <div class="admin-form-group" style="margin-bottom: 10px;">
+                            <label class="admin-form-label" style="font-size: 0.78rem;">Năm công nhận / Lịch sử di sản (Heritage Year)</label>
+                            <input type="text" id="edit_ocop_heritage_year" name="heritage_year" class="admin-form-input" style="font-size: 0.82rem; padding: 6px 10px;">
+                        </div>
+                        <div class="admin-form-group" style="margin-bottom: 10px;">
+                            <label class="admin-form-label" style="font-size: 0.78rem;">Lịch sử hình thành & Câu chuyện (Story)</label>
+                            <textarea id="edit_ocop_story" name="story" class="admin-form-input" rows="3" style="font-size: 0.82rem; padding: 6px 10px; resize: vertical;"></textarea>
+                        </div>
+                        <div class="admin-form-group" style="margin-bottom: 10px;">
+                            <label class="admin-form-label" style="font-size: 0.78rem;">Nghệ nhân truyền nghề / Người giữ lửa (Artisans)</label>
+                            <textarea id="edit_ocop_artisans" name="artisans" class="admin-form-input" rows="2" style="font-size: 0.82rem; padding: 6px 10px; resize: vertical;"></textarea>
+                        </div>
+                        <div class="admin-form-group" style="margin-bottom: 10px;">
+                            <label class="admin-form-label" style="font-size: 0.78rem;">Sự thật thú vị / Bạn có biết? (Fun Fact)</label>
+                            <textarea id="edit_ocop_fun_fact" name="fun_fact" class="admin-form-input" rows="2" style="font-size: 0.82rem; padding: 6px 10px; resize: vertical;"></textarea>
+                        </div>
+                        <div class="admin-form-group" style="margin-bottom: 10px;">
+                            <label class="admin-form-label" style="font-size: 0.78rem;">Nội dung thuyết minh (TTS Audio Narrative)</label>
+                            <textarea id="edit_ocop_audio_narrative" name="audio_narrative" class="admin-form-input" rows="2" style="font-size: 0.82rem; padding: 6px 10px; resize: vertical;"></textarea>
+                        </div>
+                        <div class="admin-form-group" style="margin-bottom: 10px;">
+                            <label class="admin-form-label" style="font-size: 0.78rem;">Thành phần & Bí quyết (Mỗi dòng một nguyên liệu)</label>
+                            <textarea id="edit_ocop_ingredients_raw" name="ingredients_raw" class="admin-form-input" rows="3" style="font-size: 0.82rem; padding: 6px 10px; resize: vertical;"></textarea>
+                        </div>
+                        <div class="admin-form-group" style="margin-bottom: 0;">
+                            <label class="admin-form-label" style="font-size: 0.78rem;">Hành trình di sản / Dòng lịch sử (Định dạng: Năm | Sự kiện, mỗi dòng một mục)</label>
+                            <textarea id="edit_ocop_timeline_raw" name="timeline_raw" class="admin-form-input" rows="3" style="font-size: 0.82rem; padding: 6px 10px; resize: vertical;"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 15px;">
+                    <button type="button" class="btn-admin btn-admin-secondary" style="padding: 10px 20px; font-size: 0.82rem; border-radius: 8px;" onclick="closeEditOcopProductModal()">Hủy bỏ</button>
+                    <button type="submit" class="btn-admin btn-admin-primary" style="padding: 10px 24px; font-size: 0.82rem; border-radius: 8px;">💾 Lập tức lưu thay đổi</button>
                 </div>
             </form>
         </div>
@@ -3794,6 +3928,86 @@ function previewEateryPhotoUrl(url) {
         rows.forEach(row => row.style.display = '');
         const filterBanner = document.getElementById('stallFilterStatusBanner');
         if (filterBanner) filterBanner.style.display = 'none';
+    }
+
+    function openAddOcopProductModal() {
+        const modal = document.getElementById('addOcopProductModal');
+        if (modal) modal.style.display = 'flex';
+    }
+
+    function closeAddOcopProductModal() {
+        const modal = document.getElementById('addOcopProductModal');
+        if (modal) modal.style.display = 'none';
+    }
+
+    function openEditOcopProductModal(product) {
+        const form = document.getElementById('editOcopProductForm');
+        if (!form) return;
+
+        form.action = `/admin/ocop-products/${product.id}`;
+        document.getElementById('edit_ocop_name').value = product.name || '';
+        document.getElementById('edit_ocop_price').value = product.price || '';
+        document.getElementById('edit_ocop_stall_name').value = product.stall_name || '';
+        document.getElementById('edit_ocop_seller_name').value = product.seller_name || '';
+        document.getElementById('edit_ocop_seller_phone').value = product.seller_phone || '';
+        document.getElementById('edit_ocop_star_rating').value = product.star_rating || '';
+        document.getElementById('edit_ocop_image_url').value = product.image_url || product.image_path || '';
+        document.getElementById('edit_ocop_description').value = product.description || '';
+        document.getElementById('edit_ocop_heritage_year').value = product.heritage_year || '';
+        document.getElementById('edit_ocop_story').value = product.story || '';
+        document.getElementById('edit_ocop_artisans').value = product.artisans || '';
+        document.getElementById('edit_ocop_fun_fact').value = product.fun_fact || '';
+        document.getElementById('edit_ocop_audio_narrative').value = product.audio_narrative || '';
+
+        // Ingredients array to raw
+        let ingStr = '';
+        if (Array.isArray(product.ingredients)) {
+            ingStr = product.ingredients.join('\n');
+        } else if (typeof product.ingredients === 'string') {
+            ingStr = product.ingredients;
+        }
+        document.getElementById('edit_ocop_ingredients_raw').value = ingStr;
+
+        // Timeline array to raw
+        let timeStr = '';
+        if (Array.isArray(product.timeline)) {
+            timeStr = product.timeline.map(t => typeof t === 'object' ? `${t.year || ''} | ${t.event || ''}` : t).join('\n');
+        } else if (typeof product.timeline === 'string') {
+            timeStr = product.timeline;
+        }
+        document.getElementById('edit_ocop_timeline_raw').value = timeStr;
+
+        const modal = document.getElementById('editOcopProductModal');
+        if (modal) modal.style.display = 'flex';
+    }
+
+    function closeEditOcopProductModal() {
+        const modal = document.getElementById('editOcopProductModal');
+        if (modal) modal.style.display = 'none';
+    }
+
+    function toggleOcopHeritageAddFields() {
+        const fields = document.getElementById('ocopHeritageAddFields');
+        const icon = document.getElementById('ocopHeritageAddIcon');
+        if (fields.style.display === 'none') {
+            fields.style.display = 'flex';
+            if (icon) icon.style.transform = 'rotate(180deg)';
+        } else {
+            fields.style.display = 'none';
+            if (icon) icon.style.transform = 'rotate(0deg)';
+        }
+    }
+
+    function toggleOcopHeritageEditFields() {
+        const fields = document.getElementById('ocopHeritageEditFields');
+        const icon = document.getElementById('ocopHeritageEditIcon');
+        if (fields.style.display === 'none') {
+            fields.style.display = 'flex';
+            if (icon) icon.style.transform = 'rotate(180deg)';
+        } else {
+            fields.style.display = 'none';
+            if (icon) icon.style.transform = 'rotate(0deg)';
+        }
     }
 </script>
 

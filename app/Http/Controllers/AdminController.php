@@ -1710,4 +1710,188 @@ class AdminController extends Controller
 
         return redirect()->back()->with('success', 'Đã xóa bản tin số thành công!');
     }
+
+    /**
+     * Thêm sản phẩm OCOP / Đặc sản mới cho Chợ (Admin)
+     */
+    public function storeOcopProduct(Request $request)
+    {
+        $this->verifyAdmin();
+
+        $request->validate([
+            'eatery_id' => 'required',
+            'name' => 'required|string|max:150',
+            'price' => 'nullable',
+            'stall_name' => 'nullable|string|max:150',
+            'seller_name' => 'nullable|string|max:100',
+            'seller_phone' => 'nullable|string|max:30',
+            'star_rating' => 'nullable|string|max:20',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
+            'image_url' => 'nullable|url',
+            'description' => 'nullable|string',
+            'heritage_year' => 'nullable|string|max:100',
+            'story' => 'nullable|string',
+            'artisans' => 'nullable|string',
+            'fun_fact' => 'nullable|string',
+            'audio_narrative' => 'nullable|string',
+            'ingredients_raw' => 'nullable|string',
+            'timeline_raw' => 'nullable|string',
+        ]);
+
+        $imagePath = $request->image_url;
+        if ($request->hasFile('image')) {
+            $file = $request->file('image');
+            $filename = time() . '_' . Str::slug($request->name) . '.' . $file->getClientOriginalExtension();
+            $file->move(public_path('uploads/products'), $filename);
+            $imagePath = '/uploads/products/' . $filename;
+        }
+
+        $ingredients = null;
+        if ($request->filled('ingredients_raw')) {
+            $lines = array_filter(array_map('trim', explode("\n", $request->ingredients_raw)));
+            if (!empty($lines)) {
+                $ingredients = array_values($lines);
+            }
+        }
+
+        $timeline = null;
+        if ($request->filled('timeline_raw')) {
+            $lines = array_filter(array_map('trim', explode("\n", $request->timeline_raw)));
+            $parsed = [];
+            foreach ($lines as $line) {
+                $parts = explode('|', $line, 2);
+                if (count($parts) === 2) {
+                    $parsed[] = ['year' => trim($parts[0]), 'event' => trim($parts[1])];
+                } else {
+                    $parsed[] = ['year' => '', 'event' => trim($line)];
+                }
+            }
+            if (!empty($parsed)) {
+                $timeline = $parsed;
+            }
+        }
+
+        \App\Models\OcopProduct::on('mysql_market')->create([
+            'eatery_id' => $request->eatery_id,
+            'stall_name' => $request->stall_name,
+            'seller_name' => $request->seller_name,
+            'seller_phone' => $request->seller_phone,
+            'name' => $request->name,
+            'price' => $request->price ? (float)$request->price : null,
+            'star_rating' => $request->star_rating,
+            'image_path' => $imagePath,
+            'description' => $request->description,
+            'heritage_year' => $request->heritage_year,
+            'story' => $request->story,
+            'artisans' => $request->artisans,
+            'fun_fact' => $request->fun_fact,
+            'audio_narrative' => $request->audio_narrative,
+            'ingredients' => $ingredients,
+            'timeline' => $timeline,
+        ]);
+
+        return redirect()->back()->with('success', '🎉 Đã thêm sản phẩm OCOP / Đặc sản mới thành công!');
+    }
+
+    /**
+     * Cập nhật sản phẩm OCOP / Đặc sản (Admin)
+     */
+    public function updateOcopProduct(Request $request, $id)
+    {
+        $this->verifyAdmin();
+
+        $product = \App\Models\OcopProduct::on('mysql_market')->find($id);
+        if (!$product) {
+            return redirect()->back()->with('error', 'Sản phẩm OCOP không tồn tại!');
+        }
+
+        $request->validate([
+            'name' => 'required|string|max:150',
+            'price' => 'nullable',
+            'stall_name' => 'nullable|string|max:150',
+            'seller_name' => 'nullable|string|max:100',
+            'seller_phone' => 'nullable|string|max:30',
+            'star_rating' => 'nullable|string|max:20',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
+            'image_url' => 'nullable|url',
+            'description' => 'nullable|string',
+            'heritage_year' => 'nullable|string|max:100',
+            'story' => 'nullable|string',
+            'artisans' => 'nullable|string',
+            'fun_fact' => 'nullable|string',
+            'audio_narrative' => 'nullable|string',
+            'ingredients_raw' => 'nullable|string',
+            'timeline_raw' => 'nullable|string',
+        ]);
+
+        $imagePath = $product->image_path;
+        if ($request->hasFile('image')) {
+            $file = $request->file('image');
+            $filename = time() . '_' . Str::slug($request->name) . '.' . $file->getClientOriginalExtension();
+            $file->move(public_path('uploads/products'), $filename);
+            $imagePath = '/uploads/products/' . $filename;
+        } elseif ($request->filled('image_url')) {
+            $imagePath = $request->image_url;
+        }
+
+        $ingredients = null;
+        if ($request->filled('ingredients_raw')) {
+            $lines = array_filter(array_map('trim', explode("\n", $request->ingredients_raw)));
+            if (!empty($lines)) {
+                $ingredients = array_values($lines);
+            }
+        }
+
+        $timeline = null;
+        if ($request->filled('timeline_raw')) {
+            $lines = array_filter(array_map('trim', explode("\n", $request->timeline_raw)));
+            $parsed = [];
+            foreach ($lines as $line) {
+                $parts = explode('|', $line, 2);
+                if (count($parts) === 2) {
+                    $parsed[] = ['year' => trim($parts[0]), 'event' => trim($parts[1])];
+                } else {
+                    $parsed[] = ['year' => '', 'event' => trim($line)];
+                }
+            }
+            if (!empty($parsed)) {
+                $timeline = $parsed;
+            }
+        }
+
+        $product->update([
+            'name' => $request->name,
+            'price' => $request->price ? (float)$request->price : null,
+            'stall_name' => $request->stall_name,
+            'seller_name' => $request->seller_name,
+            'seller_phone' => $request->seller_phone,
+            'star_rating' => $request->star_rating,
+            'image_path' => $imagePath,
+            'description' => $request->description,
+            'heritage_year' => $request->heritage_year,
+            'story' => $request->story,
+            'artisans' => $request->artisans,
+            'fun_fact' => $request->fun_fact,
+            'audio_narrative' => $request->audio_narrative,
+            'ingredients' => $ingredients,
+            'timeline' => $timeline,
+        ]);
+
+        return redirect()->back()->with('success', '🎉 Đã cập nhật sản phẩm OCOP thành công!');
+    }
+
+    /**
+     * Xóa sản phẩm OCOP (Admin)
+     */
+    public function destroyOcopProduct($id)
+    {
+        $this->verifyAdmin();
+
+        $product = \App\Models\OcopProduct::on('mysql_market')->find($id);
+        if ($product) {
+            $product->delete();
+        }
+
+        return redirect()->back()->with('success', 'Đã xóa sản phẩm OCOP khỏi danh sách!');
+    }
 }
