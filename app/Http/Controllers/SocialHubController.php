@@ -363,6 +363,8 @@ class SocialHubController extends Controller
         ]);
     }
 
+
+
     /**
      * Gửi tin nhắn mới (Broadcasting)
      */

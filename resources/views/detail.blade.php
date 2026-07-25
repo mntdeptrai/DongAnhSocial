@@ -1568,7 +1568,7 @@
             <div style="margin-top: 40px; margin-bottom: 20px; padding: 0 10px; display: flex; align-items: flex-start; gap: 12px; background: rgba(32, 178, 170, 0.03); border: 1px dashed rgba(32, 178, 170, 0.2); padding: 16px; border-radius: 12px;">
                 <span style="font-size: 1.5rem; filter: drop-shadow(0 0 5px rgba(32, 178, 170, 0.5));">🛡️</span>
                 <span style="font-size: 0.9rem; line-height: 1.6; color: var(--text-muted); font-style: italic;">
-                    Nhằm đảm bảo sức khỏe cộng đồng và bảo tồn tinh hoa ẩm thực địa phương, nhà hàng tự nguyện công khai toàn bộ hồ sơ nguồn gốc thực phẩm dưới sự giám sát chặt chẽ của các cơ quan chức năng huyện Đông Anh.
+                    Nhằm đảm bảo sức khỏe cộng đồng và bảo tồn tinh hoa ẩm thực địa phương, nhà hàng tự nguyện công khai toàn bộ hồ sơ nguồn gốc thực phẩm dưới sự giám sát chặt chẽ của các cơ quan chức năng xã Đông Anh.
                 </span>
             </div>
 
@@ -1596,7 +1596,7 @@
                         <div>
                             <h4 style="font-size: 1.05rem; color: var(--accent); font-weight: 700; margin-bottom: 4px; text-transform: uppercase;">Cơ sở Đủ Điều Kiện An Toàn Thực Phẩm</h4>
                             <p style="font-size: 0.88rem; line-height: 1.6; color: var(--text-main); margin: 0;">
-                                Nhà hàng đã công khai toàn bộ hồ sơ pháp lý, hợp đồng cung cấp thực phẩm sạch và nhật ký kiểm tra hàng ngày trên hệ thống dữ liệu số của huyện Đông Anh.
+                                Nhà hàng đã công khai toàn bộ hồ sơ pháp lý, hợp đồng cung cấp thực phẩm sạch và nhật ký kiểm tra hàng ngày trên hệ thống dữ liệu số của xã Đông Anh.
                             </p>
                         </div>
                     </div>
@@ -1686,10 +1686,10 @@
                                                     <span style="background: rgba(39, 174, 96, 0.15); color: #27ae60; border: 1px solid #2ecc71; font-size: 0.6rem; padding: 1px 6px; border-radius: 4px; font-weight: 800;">ĐÃ ĐỐI CHIẾU CƠ SỞ DỮ LIỆU</span>
                                                 </div>
                                                 <p style="margin: 0; font-size: 0.8rem; color: var(--text-main); line-height: 1.4;">
-                                                    Hệ thống xác thực liên kết trực tiếp với Phòng Y tế Huyện Đông Anh. Chứng thực 100% tài liệu thật, còn hiệu lực và được phê duyệt chính thức bởi UBND Huyện Đông Anh.
+                                                    Hệ thống xác thực liên kết trực tiếp với Phòng Y tế Xã Đông Anh. Chứng thực 100% tài liệu thật, còn hiệu lực và được phê duyệt chính thức bởi UBND Xã Đông Anh.
                                                 </p>
                                             </div>
-                                            <div style="flex-shrink: 0; background: #ffffff; padding: 8px; border-radius: 12px; border: 1px solid rgba(39, 174, 96, 0.2); box-shadow: 0 4px 10px rgba(0,0,0,0.08); text-align: center; cursor: pointer;" onclick="openTrustLightbox('https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=https://donganh.hanoi.gov.vn/phong-ban-y-te-xac-minh-id-{{ $eatery->foodSafetyCertificate->id }}', 'Mã QR Xác Thực Công Hành của UBND Huyện Đông Anh')">
+                                            <div style="flex-shrink: 0; background: #ffffff; padding: 8px; border-radius: 12px; border: 1px solid rgba(39, 174, 96, 0.2); box-shadow: 0 4px 10px rgba(0,0,0,0.08); text-align: center; cursor: pointer;" onclick="openTrustLightbox('https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=https://donganh.hanoi.gov.vn/phong-ban-y-te-xac-minh-id-{{ $eatery->foodSafetyCertificate->id }}', 'Mã QR Xác Thực Công Hành của UBND Xã Đông Anh')">
                                                 <img src="https://api.qrserver.com/v1/create-qr-code/?size=60x60&data=https://donganh.hanoi.gov.vn/phong-ban-y-te-xac-minh-id-{{ $eatery->foodSafetyCertificate->id }}" style="width: 60px; height: 60px; display: block; mix-blend-mode: multiply;">
                                                 <span style="display: block; font-size: 0.55rem; color: var(--text-muted); margin-top: 4px; font-weight: 700;">QUÉT THẨM ĐỊNH</span>
                                             </div>
@@ -2038,7 +2038,7 @@
         </div>
         
         <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0; margin-bottom: 16px; line-height: 1.5;">
-            Mọi thông tin phản hồi của bạn về <strong id="feedbackEateryName" style="color: var(--accent);"></strong> đều được mã hóa ẩn danh hoàn toàn để đảm bảo an toàn riêng tư, đồng thời gửi trực tiếp tới Ban Quản Lý huyện Đông Anh.
+            Mọi thông tin phản hồi của bạn về <strong id="feedbackEateryName" style="color: var(--accent);"></strong> đều được mã hóa ẩn danh hoàn toàn để đảm bảo an toàn riêng tư, đồng thời gửi trực tiếp tới Ban Quản Lý xã Đông Anh.
         </p>
         
         <!-- Cảnh báo nếu ở xa quán -->

@@ -17,8 +17,10 @@ class AuthController extends Controller
     {
         if (Auth::check() || session()->has('user_id')) {
             $role = session('user_role') ?: (Auth::user() ? Auth::user()->role : 'user');
-            if ($role === 'admin' || $role === 'seller') {
+            if (in_array($role, ['admin', 'manager'])) {
                 return redirect('/admin/dashboard');
+            } elseif ($role === 'seller') {
+                return redirect('/seller/dashboard');
             }
             return redirect('/');
         }
@@ -54,8 +56,10 @@ class AuthController extends Controller
                 'user_role' => $user->role,
             ]);
 
-            if ($user->role === 'admin' || $user->role === 'seller') {
+            if (in_array($user->role, ['admin', 'manager'])) {
                 return redirect()->intended('/admin/dashboard');
+            } elseif ($user->role === 'seller') {
+                return redirect()->intended('/seller/dashboard');
             }
             return redirect()->intended('/');
         }

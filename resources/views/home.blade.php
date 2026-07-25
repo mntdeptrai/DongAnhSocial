@@ -937,6 +937,10 @@
                     $displayIcon = '🌾';
                     $displayNameEn = 'Nông sản số';
                     $displayNameVi = 'OCOP – quà tặng – đặc sản';
+                } elseif ($cat->slug === 'traditional-market') {
+                    $displayIcon = '🏪';
+                    $displayNameEn = 'Traditional Market';
+                    $displayNameVi = 'Chợ truyền thống';
                 } elseif ($cat->slug === 'smart-education-map') {
                     $displayIcon = '🎓';
                     $displayNameEn = 'Smart Education Map';
@@ -988,6 +992,7 @@
         <div id="listHeaderContainer">
             @if($selectedCatSlug === 'dong-anh-market')
                 <div style="margin-bottom: 20px; border-bottom: 1.5px dashed rgba(212, 175, 55, 0.3); padding-bottom: 16px;">
+<<<<<<< HEAD
                     <span class="heritage-badge" style="margin-bottom: 8px; font-size: 0.7rem; font-weight: 800; letter-spacing: 1.5px; border: 1px solid rgba(212, 175, 55, 0.4); background: rgba(212, 175, 55, 0.1); color: #ffb300; padding: 4px 10px; border-radius: 20px; display: inline-block;">🌾 NÔNG SẢN SỐ & ĐẶC SẢN OCOP / DIGITAL AGRICULTURAL & OCOP SPECIALTIES</span>
                     <h2 style="font-size: 1.6rem; font-family: var(--font-heading); font-weight: 800; margin: 4px 0 6px 0; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
                         <span style="background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Không Gian Nông Sản Số Đông Anh <span style="font-size: 1.1rem; color: var(--text-muted); font-weight: 600; display: block; margin-top: 4px;">(Nông Sản Số & Local Specialties)</span></span>
@@ -996,8 +1001,42 @@
                         </span>
                     </h2>
                     <p style="font-size: 0.88rem; color: var(--text-muted); line-height: 1.5; margin: 0;">
-                        Khám phá các sản phẩm OCOP đặc trưng, quà lưu niệm độc đáo, nông sản sạch cùng hệ thống các siêu thị, chợ truyền thống nhộn nhịp mang đậm hồn quê Đông Anh. <span style="display: block; font-style: italic; margin-top: 4px; font-size: 0.8rem; opacity: 0.8;">Discover signature OCOP products, unique souvenirs, organic agriculture, local supermarkets and lively traditional markets filled with Đông Anh's cultural soul.</span>
+                        Khám phá các sản phẩm OCOP đặc trưng, quà lưu niệm độc đáo, nông sản sạch mang đậm hồn quê Đông Anh. <span style="display: block; font-style: italic; margin-top: 4px; font-size: 0.8rem; opacity: 0.8;">Discover signature OCOP products, unique souvenirs, organic agriculture filled with Đông Anh's cultural soul.</span>
                     </p>
+                </div>
+            @elseif($selectedCatSlug === 'traditional-market')
+                <div class="traditional-market-hero-box">
+                    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                        <span class="market-badge-chip">
+                            <span>🏪</span> CHỢ SỐ
+                        </span>
+                        <span id="resultsCountSpan" style="font-size: 0.85rem; font-weight: 700; color: #0284c7; background: rgba(14, 165, 233, 0.1); padding: 4px 12px; border-radius: 20px;">
+                            📍 {{ $eateries->count() }} Chợ Quê & Trung Tâm Thương Mại
+                        </span>
+                    </div>
+                    
+                    <h2 class="market-hero-title">
+                        Hệ Thống Chợ Số Đông Anh
+                    </h2>
+                    
+                    <p style="font-size: 0.92rem; color: #475569; line-height: 1.6; margin: 0;">
+                        Khám phá nét đẹp văn hóa Chợ Quê Đông Anh kết hợp công nghệ Chuyển Đổi Số. Tra cứu sơ đồ gian hàng, bảng giá nông sản sạch, thanh toán quét mã VietQR không dùng tiền mặt và giao hàng tận nơi.
+                    </p>
+
+                    <div class="market-stats-pills">
+                        <div class="market-stat-pill">
+                            <span class="icon">✨</span> 100% Gian hàng chuẩn hóa
+                        </div>
+                        <div class="market-stat-pill">
+                            <span class="icon">📲</span> Thanh toán VietQR / Chuyển khoản
+                        </div>
+                        <div class="market-stat-pill">
+                            <span class="icon">🌱</span> Nông sản ATTP
+                        </div>
+                        <div class="market-stat-pill">
+                            <span class="icon">🗺️</span> Sơ đồ gian hàng 2D
+                        </div>
+                    </div>
                 </div>
             @else
                 <h2 style="font-size: 1.25rem; margin: 6px 0 0 0; font-family: var(--font-heading); font-weight: 700; line-height: 1.4; color: var(--text-main);">
@@ -1019,6 +1058,9 @@
                             } elseif ($selectedCatSlug === 'dong-anh-market') {
                                 $selEn = 'Nông sản số';
                                 $selVi = 'OCOP – quà tặng – đặc sản';
+                            } elseif ($selectedCatSlug === 'traditional-market') {
+                                $selEn = 'Traditional Market';
+                                $selVi = 'Chợ truyền thống';
                             } elseif ($selectedCatSlug === 'smart-education-map') {
                                 $selEn = 'Smart Education Map';
                                 $selVi = 'Trường học';
@@ -1051,6 +1093,7 @@
                         $cardImage = $eat->image_path ?: 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=300&q=80';
                         $badgeText = $eat->category->name;
                         $badgeIcon = $eat->category->icon;
+                        $isMarket = ($eat->category->slug === 'traditional-market');
 
                         if ($eat->category->slug === 'dong-anh-market') {
                             $badgeIcon = '🌾';
@@ -1077,7 +1120,7 @@
                             }
                         }
                     @endphp
-                    <div class="eatery-card glass-panel reveal reveal-fade-up hover-lift" 
+                    <div class="eatery-card glass-panel reveal reveal-fade-up hover-lift {{ $isMarket ? 'market-card-highlight' : '' }}" 
                          data-slug="{{ $eat->slug }}"
                          data-name="{{ $eat->name }}"
                          data-address="{{ $eat->address }}"
@@ -1087,10 +1130,16 @@
                          onclick="focusOnEatery({{ number_format($eat->latitude, 6, '.', '') }}, {{ number_format($eat->longitude, 6, '.', '') }}, '{{ $eat->slug }}')">
                         <div class="eatery-img-wrapper hover-zoom-container">
                             <img src="{{ $cardImage }}" class="eatery-img hover-zoom-img" alt="{{ $cardTitle }}">
-                            <div style="position: absolute; top: 8px; left: 8px; max-width: calc(100% - 16px); display: flex; align-items: center; gap: 4px; font-size: 0.68rem; font-weight: 700; color: #ffffff; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(4px); padding: 4px 8px; border-radius: 6px; box-shadow: 0 2px 10px rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1);">
-                                <span>{{ $badgeIcon }}</span>
-                                <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ $badgeText }}</span>
-                            </div>
+                            @if($isMarket)
+                                <div class="market-card-tag">
+                                    <span>🏪</span> Chợ Số
+                                </div>
+                            @else
+                                <div style="position: absolute; top: 8px; left: 8px; max-width: calc(100% - 16px); display: flex; align-items: center; gap: 4px; font-size: 0.68rem; font-weight: 700; color: #ffffff; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(4px); padding: 4px 8px; border-radius: 6px; box-shadow: 0 2px 10px rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1);">
+                                    <span>{{ $badgeIcon }}</span>
+                                    <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ $badgeText }}</span>
+                                </div>
+                            @endif
                         </div>
                         <div class="eatery-info">
                             <div class="eatery-header">
@@ -1117,6 +1166,11 @@
                                 </div>
                                 @endif
                             </div>
+                            @if($isMarket)
+                                <a href="{{ route('eatery.show', $eat->slug) }}" class="market-explore-btn" onclick="event.stopPropagation();">
+                                    <span>🛒 Xem Gian Hàng Số & Sơ Đồ Chợ</span> ➔
+                                </a>
+                            @endif
                         </div>
                     </div>
                 @endforeach
@@ -1303,7 +1357,7 @@
     }
 
     document.addEventListener("DOMContentLoaded", function() {
-        // 2. Thiết lập bản đồ Leaflet tâm vị trí Đông Anh (huyện lỵ)
+        // 2. Thiết lập bản đồ Leaflet tâm vị trí Đông Anh (xã Đông Anh)
         map = L.map('map', {
             zoomControl: false, // Chúng ta sẽ tùy chỉnh vị trí nút zoom
             zoomSnap: 0.5,       // Bước zoom 0.5 giúp phản hồi nhanh nhạy

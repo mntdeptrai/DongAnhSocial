@@ -26,7 +26,7 @@ class EateryController extends Controller
             $schemaType = 'Hotel';
         } elseif ($categorySlug === 'wellness-care') {
             $schemaType = 'HealthAndBeautyBusiness';
-        } elseif ($categorySlug === 'dong-anh-market') {
+        } elseif ($categorySlug === 'dong-anh-market' || $categorySlug === 'traditional-market') {
             $schemaType = 'ShoppingCenter';
         } elseif ($categorySlug === 'smart-education-map') {
             $schemaType = 'School';
@@ -114,6 +114,10 @@ class EateryController extends Controller
         $jsonLd = '<script type="application/ld+json">' . PHP_EOL . 
                   json_encode($schemaData, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT) . PHP_EOL . 
                   '</script>';
+        
+        if ($eatery->category->slug === 'traditional-market') {
+            return view('detail-market', compact('eatery', 'jsonLd', 'checkinPhotos', 'checkinReviews'));
+        }
         
         return view('detail', compact('eatery', 'jsonLd', 'checkinPhotos', 'checkinReviews'));
     }

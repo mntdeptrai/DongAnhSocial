@@ -323,18 +323,24 @@
                                     <div class="user-name">{{ session('user_name') }}</div>
                                     <div class="user-role">
                                         @if(session('user_role') === 'admin')
-                                            🏛️ Quản trị viên
+                                            🏛️ Quản trị viên Tổng
+                                        @elseif(session('user_role') === 'manager')
+                                            🏛️ Ban Quản lý Chợ
                                         @elseif(session('user_role') === 'seller')
-                                            🏪 Chủ cơ sở kinh doanh
+                                            🛍️ Chủ Gian Hàng Số
                                         @else
                                             👤 Thành viên cộng đồng
                                         @endif
                                     </div>
                                 </div>
                                 
-                                @if(session('user_role') === 'admin' || session('user_role') === 'seller')
-                                    <a href="/admin/dashboard" class="dropdown-item">
-                                        <span>📊</span> Trang quản lý
+                                @if(session('user_role') === 'admin' || session('user_role') === 'manager')
+                                    <a href="/admin/dashboard" class="dropdown-item" style="color: #0ea5e9; font-weight: 700; background: rgba(14, 165, 233, 0.06);">
+                                        <span>⚙️</span> Trang Quản Trị Chợ
+                                    </a>
+                                @elseif(session('user_role') === 'seller')
+                                    <a href="/seller/dashboard" class="dropdown-item" style="color: #10b981; font-weight: 700; background: rgba(16, 185, 129, 0.06);">
+                                        <span>🛒</span> Kênh Quản Lý Gian Hàng
                                     </a>
                                 @endif
                                 
@@ -381,7 +387,7 @@
                 <div>
                     <h3 class="logo" style="margin-bottom: 16px; font-size: 1.3rem;">🗺️ Dong Anh Map</h3>
                     <p style="font-size: 0.85rem; line-height: 1.6; max-width: 480px;">
-                        Bản đồ số Đông Anh là giải pháp công nghệ số hóa toàn bộ trường học, bệnh viện, cơ sở y tế, khách sạn, nhà nghỉ, nhà hàng, quán cafe và quảng bá các sản phẩm OCOP đặc sản truyền thống của huyện Đông Anh, Hà Nội. Hỗ trợ chuyển đổi số và nâng tầm văn hóa du lịch địa phương.
+                        Bản đồ số Đông Anh là giải pháp công nghệ số hóa toàn bộ trường học, bệnh viện, cơ sở y tế, khách sạn, nhà nghỉ, nhà hàng, quán cafe và quảng bá các sản phẩm OCOP đặc sản truyền thống của xã Đông Anh, Hà Nội. Hỗ trợ chuyển đổi số và nâng tầm văn hóa du lịch địa phương.
                     </p>
                 </div>
                 <div>
@@ -531,7 +537,7 @@
                         🌾 Giới thiệu về Đông Anh
                     </h4>
                     <p style="font-size: 0.9rem; margin: 0;">
-                        Đông Anh là vùng đất địa linh nhân kiệt có bề dày lịch sử và truyền thống văn hóa lâu đời, gắn liền với di tích Cổ Loa thành. Hiện nay, Đông Anh đang chuyển mình mạnh mẽ trong tiến trình đô thị hóa và chuyển đổi số. Bản đồ số Đông Anh ra đời nhằm cung cấp giải pháp số hóa toàn diện các hạ tầng dịch vụ: trường học, y tế, lưu trú, ẩm thực địa phương và các sản phẩm OCOP đặc trưng của huyện, hỗ trợ nâng cao đời sống dân cư và thúc đẩy phát triển du lịch bền vững.
+                        Đông Anh là vùng đất địa linh nhân kiệt có bề dày lịch sử và truyền thống văn hóa lâu đời, gắn liền với di tích Cổ Loa thành. Hiện nay, Đông Anh đang chuyển mình mạnh mẽ trong tiến trình đô thị hóa và chuyển đổi số. Bản đồ số Đông Anh ra đời nhằm cung cấp giải pháp số hóa toàn diện các hạ tầng dịch vụ: trường học, y tế, lưu trú, ẩm thực địa phương và các sản phẩm OCOP đặc trưng của xã, hỗ trợ nâng cao đời sống dân cư và thúc đẩy phát triển du lịch bền vững.
                     </p>
                 </div>
                 
@@ -1402,10 +1408,14 @@
             renderGroupedCart();
         }
 
-        function toggleSelectGroup(cb, eateryId) {
+        function toggleSelectGroup(cb, groupKey) {
             if (!globalCartResponse || !globalCartResponse.data) return;
             const groupItemIds = globalCartResponse.data
-                .filter(item => String(item.eatery_id) === String(eateryId))
+                .filter(item => {
+                    const eId = item.eatery_id || 0;
+                    const itemKey = item.stall_name ? `${eId}_${item.stall_name}` : String(eId);
+                    return String(itemKey) === String(groupKey);
+                })
                 .map(item => item.id);
 
             if (cb.checked) {
@@ -1461,20 +1471,22 @@
             `;
             list.insertAdjacentHTML('beforeend', selectAllHtml);
 
-            // Group items by eatery_id
+            // Group items by eatery_id and stall_name
             const groups = {};
             globalCartResponse.data.forEach(item => {
                 const eId = item.eatery_id || 0;
-                if (!groups[eId]) {
-                    groups[eId] = { name: item.eatery_name || 'Khác', items: [] };
+                const key = item.stall_name ? `${eId}_${item.stall_name}` : String(eId);
+                if (!groups[key]) {
+                    const name = item.stall_name ? `${item.eatery_name || 'Chợ'} - ${item.stall_name}` : (item.eatery_name || 'Khác');
+                    groups[key] = { name: name, items: [] };
                 }
-                groups[eId].items.push(item);
+                groups[key].items.push(item);
             });
 
             // Render groups with stagger animation
             let groupIndex = 0;
-            Object.keys(groups).forEach(eId => {
-                const group = groups[eId];
+            Object.keys(groups).forEach(key => {
+                const group = groups[key];
                 const groupItemIds = group.items.map(item => item.id);
                 const isGroupAllSelected = groupItemIds.every(id => selectedCartItems.includes(id));
                 const groupSelectedCount = groupItemIds.filter(id => selectedCartItems.includes(id)).length;
@@ -1482,8 +1494,8 @@
 
                 let groupHtml = `
                     <div class="cart-group-block" style="animation-delay: ${delay}s;">
-                        <div class="cart-group-header" onclick="document.getElementById('groupCb_${eId}').click(); event.preventDefault();">
-                            <input type="checkbox" id="groupCb_${eId}" onchange="toggleSelectGroup(this, '${eId}')" ${isGroupAllSelected ? 'checked' : ''} class="cart-checkbox" onclick="event.stopPropagation()">
+                        <div class="cart-group-header" onclick="document.getElementById('groupCb_${key}').click(); event.preventDefault();">
+                            <input type="checkbox" id="groupCb_${key}" onchange="toggleSelectGroup(this, '${key}')" ${isGroupAllSelected ? 'checked' : ''} class="cart-checkbox" onclick="event.stopPropagation()">
                             <span style="flex: 1;">🏪 ${group.name}</span>
                             <span style="background: rgba(0, 168, 107, 0.12); color: var(--primary, #00A86B); font-size: 0.72rem; padding: 2px 8px; border-radius: 20px; font-weight: 700; flex-shrink: 0;">
                                 ${groupSelectedCount}/${group.items.length}

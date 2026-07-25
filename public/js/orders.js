@@ -138,6 +138,24 @@ document.addEventListener('DOMContentLoaded', function () {
         // Initial load
         loadOrdersList();
 
+        // Real-time polling 10s cho danh sách đơn hàng phía Khách hàng
+        setInterval(function() {
+            let url = `/api/orders?status=${currentStatusFilter}`;
+            if (searchInput && searchInput.value) url += `&search=${encodeURIComponent(searchInput.value)}`;
+            if (startDateInput && startDateInput.value) url += `&start_date=${startDateInput.value}`;
+            if (endDateInput && endDateInput.value) url += `&end_date=${endDateInput.value}`;
+
+            fetch(url, { headers: { 'Accept': 'application/json' } })
+            .then(res => res.json())
+            .then(resData => {
+                if (resData.success && resData.data) {
+                    if (resData.stats && statsDashboard) renderStatsDashboard(resData.stats);
+                    if (resData.data.length > 0) renderOrdersList(resData.data);
+                }
+            })
+            .catch(() => {});
+        }, 10000);
+
         function loadOrdersList() {
             // Render premium Apple-style Skeleton Loaders during fetch
             renderSkeletons();
@@ -295,7 +313,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 // Financial Breakdown
                 let breakdownHtml = `
                     <div class="financial-row">
-                        <span>Tạm tính (${order.items.length} món)</span>
+                        <span>Tạm tính (${order.items.length} ${order.category_slug === 'dong-anh-market' ? 'sản phẩm' : 'món'})</span>
                         <span>${formatCurrency(order.subtotal)}</span>
                     </div>
                     <div class="financial-row">
@@ -324,13 +342,20 @@ document.addEventListener('DOMContentLoaded', function () {
                 `;
 
                 // Stepper Timeline inside order card
-                const miniProgressHtml = renderCardTimelineProgress(order.status);
+                const miniProgressHtml = renderCardTimelineProgress(order.status, order.category_slug === 'dong-anh-market');
 
                 // Format Datetime
                 const formattedTime = order.created_at_formatted.replace(' ', ' • ');
 
                 // Action Buttons
                 let actionsHtml = '';
+                if (order.payment_method === 'Online' && order.status === 'pending') {
+                    actionsHtml += `
+                        <a href="/checkout/payment/${order.id}" class="btn-premium-action btn-pay-now" style="background: #ff7e29; color: white; border: 1.5px solid #ff7e29; display: inline-flex; align-items: center; justify-content: center; text-decoration: none; font-weight: 700; gap: 4px; box-shadow: 0 4px 10px rgba(255, 126, 41, 0.2); padding: 8px 16px; border-radius: 12px; font-size: 0.8rem;">
+                            💳 Thanh toán QR
+                        </a>
+                    `;
+                }
                 if (order.status === 'pending' || order.status === 'paid') {
                     actionsHtml += `
                         <button class="btn-premium-action btn-cancel" data-id="${order.id}" onclick="cancelOrder(${order.id})">
@@ -367,7 +392,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 // Add explicit detailed view action button
                 actionsHtml += `
-                    <a href="/orders/${order.id}" class="btn-premium-action btn-detail">
+                    <a href="/orders/${order.order_code_full.replace('#', '')}" class="btn-premium-action btn-detail">
                         Xem chi tiết ➔
                     </a>
                 `;
@@ -393,7 +418,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         <div class="order-card-body">
                             <!-- Left Pane: items (60%) -->
                             <div class="order-items-pane">
-                                <div class="pane-heading">📦 Sản phẩm đặt mua (${totalItemsQty} món)</div>
+                                <div class="pane-heading">📦 Sản phẩm đặt mua (${totalItemsQty} ${order.category_slug === 'dong-anh-market' ? 'sản phẩm' : 'món'})</div>
                                 ${itemsHtml}
                                 
                                 <!-- Progress Stepper -->
@@ -431,7 +456,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         // Stepper for inside order card: Đã xác nhận → Đang chuẩn bị → Đang giao → Hoàn thành
-        function renderCardTimelineProgress(status) {
+        function renderCardTimelineProgress(status, isMarket = false) {
             if (status === 'cancelled') {
                 return `
                     <div style="background: rgba(239, 68, 68, 0.04); border: 1px solid rgba(239, 68, 68, 0.1); border-radius: 10px; padding: 8px 12px; margin-top: 16px; font-size: 0.8rem; color: #EF4444; font-weight: 600; display: flex; align-items: center; gap: 6px;">
@@ -446,6 +471,10 @@ document.addEventListener('DOMContentLoaded', function () {
             if (status === 'pending') {
                 step1 = 'active';
                 barWidth = '0%';
+            } else if (status === 'confirmed') {
+                step1 = 'completed';
+                step2 = 'active';
+                barWidth = '33.3%';
             } else if (status === 'paid' || status === 'processing') {
                 step1 = 'completed';
                 step2 = 'active';
@@ -477,7 +506,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     </div>
                     <div class="card-timeline-step ${step3}">
                         <div class="card-timeline-dot"></div>
-                        <span class="card-timeline-label">Đang giao</span>
+                        <span class="card-timeline-label">${isMarket ? 'Chờ lấy hàng' : 'Đang giao'}</span>
                     </div>
                     <div class="card-timeline-step ${step4}">
                         <div class="card-timeline-dot"></div>
@@ -535,8 +564,28 @@ document.addEventListener('DOMContentLoaded', function () {
     const detailContainer = document.getElementById('order-detail-container');
     if (detailContainer) {
         const orderId = detailContainer.getAttribute('data-order-id');
+        let lastOrderStatus = null;
+
         if (orderId) {
             loadOrderDetail(orderId);
+            // Real-time polling 5 giây để cập nhật trạng thái đơn ngay khi Seller thao tác
+            setInterval(() => pollOrderDetailSilent(orderId), 5000);
+        }
+
+        function pollOrderDetailSilent(id) {
+            fetch(`/api/orders/${id}`, {
+                headers: { 'Accept': 'application/json' }
+            })
+            .then(res => res.json())
+            .then(resData => {
+                if (resData.success && resData.data) {
+                    if (lastOrderStatus !== resData.data.status) {
+                        lastOrderStatus = resData.data.status;
+                        renderOrderDetail(resData.data);
+                    }
+                }
+            })
+            .catch(() => {});
         }
 
         function loadOrderDetail(id) {
@@ -553,6 +602,7 @@ document.addEventListener('DOMContentLoaded', function () {
             .then(res => res.json())
             .then(resData => {
                 if (resData.success && resData.data) {
+                    lastOrderStatus = resData.data.status;
                     renderOrderDetail(resData.data);
                 } else {
                     detailContainer.innerHTML = `
@@ -578,22 +628,28 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         function renderOrderDetail(order) {
-            const stepperHtml = renderHorizontalStepper(order.status);
+            const stepperHtml = renderHorizontalStepper(order.status, order.category_slug === 'dong-anh-market');
 
             // Render Items List
             let itemsHtml = '';
             order.items.forEach(item => {
                 const itemImg = item.image ? item.image : 'https://placehold.co/80x80/ffe3d1/d97706?text=🍔';
+                const stallBadgeHtml = order.stall_name 
+                    ? `<div style="font-size: 0.75rem; color: #d97706; font-weight: 700; margin-top: 3px; display: inline-flex; align-items: center; gap: 4px; background: #fef3c7; padding: 2px 8px; border-radius: 6px; border: 1px solid #fde68a;">
+                        🏪 Gian hàng: ${order.stall_name}
+                      </div>`
+                    : '';
                 itemsHtml += `
                     <div style="display: flex; gap: 16px; align-items: center; padding: 14px 0; border-bottom: 1px solid var(--border-light);">
                         <img src="${itemImg}" alt="${item.name}" style="width: 54px; height: 54px; border-radius: 12px; object-fit: cover; border: 1px solid rgba(0,0,0,0.05); flex-shrink: 0;">
                         <div style="flex: 1; min-width: 0;">
-                            <div style="font-weight: 700; color: var(--text-main); font-size: 0.95rem; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                            <div style="font-weight: 700; color: var(--text-main); font-size: 0.95rem; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                                 ${item.name}
                             </div>
                             <div style="font-size: 0.8rem; color: var(--text-muted);">
                                 ${formatCurrency(item.price)} x ${item.quantity}
                             </div>
+                            ${stallBadgeHtml}
                         </div>
                         <div style="font-weight: 700; color: var(--text-main); font-size: 0.95rem; text-align: right; flex-shrink: 0;">
                             ${formatCurrency(item.price * item.quantity)}
@@ -644,6 +700,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // Action Buttons
             let headerActionsHtml = '';
+            if (order.payment_method === 'Online' && order.status === 'pending') {
+                headerActionsHtml += `
+                    <a href="/checkout/payment/${order.id}" class="btn-premium-action btn-pay-now" style="background: #ff7e29; color: white; border: 1.5px solid #ff7e29; display: inline-flex; align-items: center; justify-content: center; text-decoration: none; font-weight: 700; gap: 4px; box-shadow: 0 4px 10px rgba(255, 126, 41, 0.2); padding: 8px 16px; border-radius: 12px; font-size: 0.8rem;">
+                        💳 Thanh toán QR
+                    </a>
+                `;
+            }
             if (order.status === 'pending' || order.status === 'paid') {
                 headerActionsHtml += `
                     <button class="btn-premium-action btn-cancel" data-id="${order.id}" onclick="cancelOrder(${order.id})">
@@ -701,7 +764,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         <!-- Dishes List -->
                         <div class="details-glass-panel">
                             <h3 class="details-section-title">
-                                🍽️ Chi tiết món ăn đặt mua
+                                ${order.category_slug === 'dong-anh-market' ? '🏪 Chi tiết sản phẩm đặt mua' : '🍽️ Chi tiết món ăn đặt mua'}
                             </h3>
                             <div style="display: flex; flex-direction: column;">
                                 ${itemsHtml}
@@ -735,6 +798,12 @@ document.addEventListener('DOMContentLoaded', function () {
                                     <span style="color: var(--text-muted); font-weight: 700; display: block; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px;">Ngày đặt</span>
                                     <span style="color: var(--text-main); font-weight: 600;">${order.created_at_formatted}</span>
                                 </div>
+                                ${order.stall_name ? `
+                                <div style="border-top: 1px dashed var(--border-light); padding-top: 10px;">
+                                    <span style="color: var(--text-muted); font-weight: 700; display: block; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px;">🏪 Gian hàng số</span>
+                                    <strong style="color: #d97706; font-size: 0.95rem; font-weight: 800;">${order.stall_name}</strong>
+                                </div>
+                                ` : ''}
                                 <div style="border-top: 1px dashed var(--border-light); padding-top: 10px;">
                                     <span style="color: var(--text-muted); font-weight: 700; display: block; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px;">Người nhận</span>
                                     <strong style="color: var(--text-main); font-size: 0.92rem;">${order.customer_name}</strong>
@@ -753,10 +822,12 @@ document.addEventListener('DOMContentLoaded', function () {
                                         ${order.payment_method} ${paymentBadgeHtml}
                                     </span>
                                 </div>
+                                ${order.category_slug !== 'dong-anh-market' ? `
                                 <div style="border-top: 1px dashed var(--border-light); padding-top: 10px;">
                                     <span style="color: var(--text-muted); font-weight: 700; display: block; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px;">🚚 Đối tác vận chuyển</span>
                                     <span style="color: var(--text-main); font-weight: 600;">🚴‍♀️ Đông Anh Food Express</span>
                                 </div>
+                                ` : ''}
                                 <div style="border-top: 1px dashed var(--border-light); padding-top: 10px;">
                                     <span style="color: var(--text-muted); font-weight: 700; display: block; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px;">Ghi chú của bạn</span>
                                     <span style="color: var(--text-main); font-style: italic;">"${order.notes || 'Không có ghi chú'}"</span>
@@ -778,17 +849,20 @@ document.addEventListener('DOMContentLoaded', function () {
             `;
         }
 
-        function renderHorizontalStepper(status) {
+        function renderHorizontalStepper(status, isMarket = false) {
             const steps = [
                 { key: 'placed', label: 'Đặt đơn', icon: '📝', check: true },
                 { key: 'confirmed', label: 'Xác nhận', icon: '📋', check: false },
                 { key: 'preparing', label: 'Chuẩn bị', icon: '🍳', check: false },
-                { key: 'shipping', label: 'Đang giao', icon: '🚴', check: false },
+                { key: 'shipping', label: isMarket ? 'Chờ lấy hàng' : 'Đang giao', icon: isMarket ? '🏪' : '🚴', check: false },
                 { key: 'completed', label: 'Hoàn thành', icon: '📦', check: false }
             ];
 
             if (status === 'pending') {
                 steps[0].check = true;
+            } else if (status === 'confirmed') {
+                steps[0].check = true;
+                steps[1].check = true;
             } else if (status === 'paid' || status === 'processing') {
                 steps[0].check = true;
                 steps[1].check = true;
@@ -847,10 +921,11 @@ document.addEventListener('DOMContentLoaded', function () {
         function renderVerticalTimeline(order) {
             const status = order.status;
             const time = order.created_at_formatted;
+            const isMarket = order.category_slug === 'dong-anh-market';
 
             const events = [
-                { title: 'Giao hàng thành công', time: 'Đang chờ...', active: false },
-                { title: 'Đơn hàng đang giao', time: 'Đang chờ...', active: false },
+                { title: isMarket ? 'Nhận hàng thành công' : 'Giao hàng thành công', time: 'Đang chờ...', active: false },
+                { title: isMarket ? 'Sẵn sàng chờ khách lấy' : 'Đơn hàng đang giao', time: 'Đang chờ...', active: false },
                 { title: 'Đơn hàng đã được chuẩn bị xong', time: 'Đang chuẩn bị...', active: false },
                 { title: 'Đơn hàng đã được xác nhận', time: 'Đang chờ...', active: false },
                 { title: 'Đặt đơn hàng thành công', time: time, active: true }
@@ -875,6 +950,9 @@ document.addEventListener('DOMContentLoaded', function () {
             } else if (status === 'paid' || status === 'processing') {
                 events[2].active = true;
                 events[2].time = time;
+                events[3].active = true;
+                events[3].time = time;
+            } else if (status === 'confirmed') {
                 events[3].active = true;
                 events[3].time = time;
             } else if (status === 'cancelled') {

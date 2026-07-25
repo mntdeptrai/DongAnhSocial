@@ -549,3 +549,170 @@
     align-items: center;
     margin-top: 4px;
 }
+
+/* ==========================================================================
+   GRAND TRADITIONAL MARKET UI ENHANCEMENTS (GIAO DIỆN CHỢ TRUYỀN THỐNG ĐẲNG CẤP)
+   ========================================================================== */
+
+/* Hero Banner cho Chợ Truyền Thống */
+.traditional-market-hero-box {
+    background: linear-gradient(135deg, rgba(14, 165, 233, 0.08) 0%, rgba(6, 182, 212, 0.12) 50%, rgba(16, 185, 129, 0.06) 100%);
+    border: 1.5px solid rgba(14, 165, 233, 0.25);
+    border-radius: 24px;
+    padding: 24px 28px;
+    margin-bottom: 24px;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    box-shadow: 0 12px 35px -10px rgba(14, 165, 233, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    position: relative;
+    overflow: hidden;
+    transition: all 0.35s var(--ease-spring);
+}
+
+.traditional-market-hero-box::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -20%;
+    width: 250px;
+    height: 250px;
+    background: radial-gradient(circle, rgba(14, 165, 233, 0.2) 0%, rgba(255, 255, 255, 0) 70%);
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.market-badge-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: #0284c7;
+    background: rgba(14, 165, 233, 0.12);
+    border: 1px solid rgba(14, 165, 233, 0.3);
+    padding: 6px 14px;
+    border-radius: 50px;
+    box-shadow: 0 4px 12px rgba(14, 165, 233, 0.12);
+}
+
+.market-hero-title {
+    font-family: var(--font-heading);
+    font-size: 1.75rem;
+    font-weight: 800;
+    line-height: 1.3;
+    margin: 10px 0 6px 0;
+    background: linear-gradient(135deg, #0284c7 0%, #0d9488 50%, #059669 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.market-stats-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 14px;
+}
+
+.market-stat-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(14, 165, 233, 0.2);
+    border-radius: 12px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #0f172a;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.market-stat-pill span.icon {
+    font-size: 1rem;
+}
+
+/* Enhanced Card địa điểm Chợ Truyền Thống */
+.eatery-card.market-card-highlight {
+    border: 1.5px solid rgba(14, 165, 233, 0.22) !important;
+    background: rgba(255, 255, 255, 0.92) !important;
+    border-radius: 20px !important;
+    box-shadow: 0 10px 30px -8px rgba(14, 165, 233, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
+    transition: all 0.35s cubic-bezier(0.32, 0.72, 0, 1) !important;
+    position: relative;
+    overflow: hidden;
+}
+
+.eatery-card.market-card-highlight:hover {
+    transform: translateY(-6px) scale(1.01) !important;
+    border-color: rgba(14, 165, 233, 0.5) !important;
+    box-shadow: 0 20px 40px -10px rgba(14, 165, 233, 0.25), 0 0 20px rgba(14, 165, 233, 0.15) !important;
+}
+
+.market-card-tag {
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    z-index: 5;
+    background: rgba(14, 165, 233, 0.85);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    color: #ffffff;
+    font-size: 0.62rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    letter-spacing: 0.2px;
+    white-space: nowrap;
+}
+
+.market-explore-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+    margin-top: 12px;
+    padding: 10px 16px;
+    background: linear-gradient(135deg, #0ea5e9, #0284c7);
+    color: #ffffff !important;
+    font-weight: 700;
+    font-size: 0.85rem;
+    border-radius: 12px;
+    border: none;
+    box-shadow: 0 4px 14px rgba(14, 165, 233, 0.3);
+    transition: all 0.25s ease;
+    cursor: pointer;
+    text-decoration: none !important;
+}
+
+.market-explore-btn:hover {
+    background: linear-gradient(135deg, #0284c7, #0369a1);
+    box-shadow: 0 6px 20px rgba(14, 165, 233, 0.45);
+    transform: translateY(-2px);
+}
+
+/* Radar pulse animation for leaflet market pin */
+@keyframes marketRadarPulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(14, 165, 233, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 15px rgba(14, 165, 233, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(14, 165, 233, 0);
+    }
+}
+
+.custom-market-pin {
+    animation: marketRadarPulse 2s infinite;
+    border-radius: 50%;
+}

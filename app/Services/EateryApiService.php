@@ -50,6 +50,7 @@ class EateryApiService
                 return 'mysql_stay';
             case 'wellness-care':
                 return 'mysql_wellness';
+            case 'traditional-market':
             case 'dong-anh-market':
                 return 'mysql_market';
             case 'smart-education-map':
@@ -277,8 +278,8 @@ class EateryApiService
             return self::fetchEateriesFromCategory($categorySlug, $filters);
         }
 
-        // Aggregate eateries across all 7 databases (including heritage journey)
-        $categories = ['dong-anh-food-map', 'hanh-trinh-di-san', 'stay-in-dong-anh', 'wellness-care', 'dong-anh-market', 'smart-education-map', 'discover-dong-anh-community-culture-hub'];
+        // Aggregate eateries across all 8 databases (including heritage journey)
+        $categories = ['dong-anh-food-map', 'hanh-trinh-di-san', 'stay-in-dong-anh', 'wellness-care', 'dong-anh-market', 'traditional-market', 'smart-education-map', 'discover-dong-anh-community-culture-hub'];
         $allEateries = collect();
         foreach ($categories as $cat) {
             try {
@@ -374,7 +375,7 @@ class EateryApiService
      */
     public static function getEateryBySlug($slug)
     {
-        $categories = ['dong-anh-food-map', 'hanh-trinh-di-san', 'stay-in-dong-anh', 'wellness-care', 'dong-anh-market', 'smart-education-map', 'discover-dong-anh-community-culture-hub'];
+        $categories = ['dong-anh-food-map', 'hanh-trinh-di-san', 'stay-in-dong-anh', 'wellness-care', 'dong-anh-market', 'traditional-market', 'smart-education-map', 'discover-dong-anh-community-culture-hub'];
         foreach ($categories as $cat) {
             try {
                 $eatery = self::fetchEateryBySlug($cat, $slug);
@@ -421,7 +422,7 @@ class EateryApiService
             $categoryRelations[] = 'rooms';
         } elseif ($categorySlug === 'wellness-care') {
             $categoryRelations[] = 'wellnessServices';
-        } elseif (in_array($categorySlug, ['dong-anh-market', 'dong-anh-food-map', 'hanh-trinh-di-san', 'discover-dong-anh-community-culture-hub'])) {
+        } elseif (in_array($categorySlug, ['dong-anh-market', 'traditional-market', 'dong-anh-food-map', 'hanh-trinh-di-san', 'discover-dong-anh-community-culture-hub'])) {
             $categoryRelations[] = 'ocopProducts';
         } elseif ($categorySlug === 'smart-education-map') {
             $categoryRelations[] = 'educationPrograms';

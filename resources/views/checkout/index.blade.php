@@ -3,6 +3,9 @@
 @section('title', 'Thanh toán đơn hàng - Đông Anh Map')
 
 @section('content')
+@php
+    $hasMarketItems = collect($cartItems)->contains('category_slug', 'dong-anh-market');
+@endphp
 <div class="container" style="padding: 40px 20px; font-family: 'Be Vietnam Pro', sans-serif;">
     <div style="margin-bottom: 30px;">
         <h2 style="font-size: 2rem; font-weight: 800; color: var(--text-main); margin-bottom: 8px; font-family: var(--font-heading);">
@@ -44,10 +47,35 @@
                         <input type="tel" name="phone" required class="form-input" placeholder="Nhập số điện thoại nhận hàng..." value="{{ old('phone', Auth::user()->phone ?? '') }}" style="width: 100%; padding: 12px 16px; border-radius: 10px; border: 1.5px solid var(--border-glow); background: rgba(255,255,255,0.02); color: var(--text-main); outline: none;">
                     </div>
 
-                    <div>
-                        <label style="display: block; font-size: 0.88rem; font-weight: 600; color: var(--text-main); margin-bottom: 6px;">Địa chỉ giao hàng <span style="color:#ef4444;">*</span></label>
-                        <textarea name="address" required rows="3" class="form-input" placeholder="Số nhà, tên đường, xã/thị trấn, Đông Anh, Hà Nội..." style="width: 100%; padding: 12px 16px; border-radius: 10px; border: 1.5px solid var(--border-glow); background: rgba(255,255,255,0.02); color: var(--text-main); outline: none; resize: vertical;">{{ old('address') }}</textarea>
-                    </div>
+                    @if($hasMarketItems)
+                        <!-- Market Pickup Fields -->
+                        <div>
+                            <label style="display: block; font-size: 0.88rem; font-weight: 600; color: var(--text-main); margin-bottom: 6px;">Giờ hẹn qua lấy đồ <span style="color:#ef4444;">*</span></label>
+                            <select id="pickupTimeSelect" required style="width: 100%; padding: 12px 16px; border-radius: 10px; border: 1.5px solid var(--border-glow); background: rgba(255,255,255,0.02); color: var(--text-main); outline: none;">
+                                <option value="06:30 - 07:30 (Chợ sớm)">06:30 - 07:30 (Ăn sáng / Chợ sớm)</option>
+                                <option value="07:30 - 08:30" selected>07:30 - 08:30</option>
+                                <option value="08:30 - 09:30">08:30 - 09:30</option>
+                                <option value="09:30 - 10:30">09:30 - 10:30</option>
+                                <option value="11:00 - 12:30 (Bữa trưa)">11:00 - 12:30 (Bữa trưa)</option>
+                                <option value="16:00 - 17:30">16:00 - 17:30</option>
+                                <option value="17:30 - 19:00 (Bữa tối)">17:30 - 19:00 (Bữa tối)</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label style="display: block; font-size: 0.88rem; font-weight: 600; color: var(--text-main); margin-bottom: 6px;">Thông tin phương tiện / Biển số xe (Tùy chọn)</label>
+                            <input type="text" id="pickupVehicleInput" class="form-input" placeholder="Ví dụ: Xe SH đỏ 29-X1 123.45 (tiểu thương mang ra cổng chợ)..." style="width: 100%; padding: 12px 16px; border-radius: 10px; border: 1.5px solid var(--border-glow); background: rgba(255,255,255,0.02); color: var(--text-main); outline: none;">
+                        </div>
+
+                        <!-- Hidden address input to satisfy backend validation -->
+                        <input type="hidden" name="address" id="hiddenAddressInput" value="">
+                    @else
+                        <!-- Original Shipping Address Field -->
+                        <div>
+                            <label style="display: block; font-size: 0.88rem; font-weight: 600; color: var(--text-main); margin-bottom: 6px;">Địa chỉ giao hàng <span style="color:#ef4444;">*</span></label>
+                            <textarea name="address" required rows="3" class="form-input" placeholder="Số nhà, tên đường, xã/thị trấn, Đông Anh, Hà Nội..." style="width: 100%; padding: 12px 16px; border-radius: 10px; border: 1.5px solid var(--border-glow); background: rgba(255,255,255,0.02); color: var(--text-main); outline: none; resize: vertical;">{{ old('address') }}</textarea>
+                        </div>
+                    @endif
 
                     <div>
                         <label style="display: block; font-size: 0.88rem; font-weight: 600; color: var(--text-main); margin-bottom: 6px;">Ghi chú đơn hàng (Tùy chọn)</label>
@@ -59,14 +87,25 @@
                     💳 Phương thức thanh toán
                 </h3>
 
-                <div style="display: grid; grid-template-columns: 1fr; gap: 16px; margin-bottom: 30px;">
+
+                <div style="display: flex; flex-direction: column; gap: 14px; margin-bottom: 30px;">
                     <label style="position: relative; border: 2px solid var(--primary); border-radius: 14px; padding: 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; background: rgba(255, 126, 41, 0.03);" class="payment-method-card active">
                         <input type="radio" name="payment_method" value="COD" checked style="accent-color: var(--primary);" onchange="updatePaymentCardStyles(this)">
                         <div>
                             <strong style="display: block; font-size: 0.9rem; color: var(--text-main);">Thanh toán khi nhận hàng (COD)</strong>
-                            <span style="font-size: 0.78rem; color: var(--text-muted);">Trả tiền mặt khi Shipper giao tới</span>
+                            <span style="font-size: 0.72rem; color: var(--text-muted);">Trả tiền mặt khi nhận đồ</span>
                         </div>
                     </label>
+
+                    @if($hasMarketItems)
+                    <label style="position: relative; border: 1.5px solid var(--border-glow); border-radius: 14px; padding: 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: all 0.2s;" class="payment-method-card">
+                        <input type="radio" name="payment_method" value="Online" style="accent-color: var(--primary);" onchange="updatePaymentCardStyles(this)">
+                        <div>
+                            <strong style="display: block; font-size: 0.9rem; color: var(--text-main);">Chuyển khoản VietQR của Tiểu thương (Khuyên dùng)</strong>
+                            <span style="font-size: 0.72rem; color: var(--text-muted);">Quét mã QR chuyển khoản trực tiếp cho từng chủ quầy</span>
+                        </div>
+                    </label>
+                    @endif
                 </div>
 
                 <button type="submit" class="btn-primary" style="width: 100%; padding: 16px; font-size: 1.05rem; font-weight: 800; border-radius: 12px; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; box-shadow: 0 8px 24px rgba(255,126,41,0.25);">
@@ -167,6 +206,23 @@
         const checkedRadio = document.querySelector('input[name="payment_method"]:checked');
         if (checkedRadio) {
             updatePaymentCardStyles(checkedRadio);
+        }
+    });
+    document.addEventListener('DOMContentLoaded', () => {
+        const checkoutForm = document.getElementById('checkoutForm');
+        const hiddenAddress = document.getElementById('hiddenAddressInput');
+        
+        if (checkoutForm && hiddenAddress) {
+            checkoutForm.addEventListener('submit', function(e) {
+                const time = document.getElementById('pickupTimeSelect').value;
+                const vehicle = document.getElementById('pickupVehicleInput').value.trim();
+                let addr = `Tự lấy tại Chợ Mạch Tràng (Hẹn: ${time}`;
+                if (vehicle) {
+                    addr += `, Xe: ${vehicle}`;
+                }
+                addr += `)`;
+                hiddenAddress.value = addr;
+            });
         }
     });
 </script>

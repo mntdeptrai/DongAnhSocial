@@ -20,19 +20,19 @@ class AdminController extends Controller
     private function verifyAdmin()
     {
         $role = session('user_role');
-        if ($role !== 'admin' && $role !== 'seller') {
+        if (!in_array($role, ['admin', 'seller', 'manager'])) {
             abort(403, 'Bạn không có quyền truy cập trang quản lý này!');
         }
     }
 
     /**
-     * Hiển thị Dashboard Admin / Seller
+     * Hiển thị Dashboard Admin / Ban Quản lý Chợ (Manager)
      */
     public function dashboard()
     {
         $this->verifyAdmin();
 
-        $isSeller = session('user_role') === 'seller';
+        $isSeller = in_array(session('user_role'), ['seller', 'manager']);
         $sellerId = session('user_id');
 
         $allEateries = EateryApiService::getEateries();
@@ -99,11 +99,11 @@ class AdminController extends Controller
         $this->verifyAdmin();
 
         $role = session('user_role');
-        if ($role === 'seller') {
+        if (in_array($role, ['seller', 'manager'])) {
             $allEateries = EateryApiService::getEateries();
             $hasEatery = $allEateries->where('user_id', session('user_id'))->isNotEmpty();
             if ($hasEatery) {
-                return redirect('/admin/dashboard')->with('error', 'Mỗi Chủ quán chỉ được đăng ký duy nhất 1 địa điểm kinh doanh!');
+                return redirect('/admin/dashboard')->with('error', 'Mỗi Ban Quản Lý Chợ chỉ được điều hành duy nhất 1 địa điểm Chợ!');
             }
         }
 
@@ -122,11 +122,11 @@ class AdminController extends Controller
         $this->verifyAdmin();
 
         $role = session('user_role');
-        if ($role === 'seller') {
+        if (in_array($role, ['seller', 'manager'])) {
             $allEateries = EateryApiService::getEateries();
             $hasEatery = $allEateries->where('user_id', session('user_id'))->isNotEmpty();
             if ($hasEatery) {
-                return redirect('/admin/dashboard')->with('error', 'Mỗi Chủ quán chỉ được đăng ký duy nhất 1 địa điểm kinh doanh!');
+                return redirect('/admin/dashboard')->with('error', 'Mỗi Ban Quản Lý Chợ chỉ được điều hành duy nhất 1 địa điểm Chợ!');
             }
         }
 
@@ -180,9 +180,9 @@ class AdminController extends Controller
             abort(404, 'Địa điểm không tồn tại!');
         }
 
-        // Ngăn chặn Seller chỉnh sửa quán ăn của người khác
-        if (session('user_role') === 'seller' && $eatery->user_id !== session('user_id')) {
-            abort(403, 'Bạn không có quyền sửa đổi cơ sở này!');
+        // Ngăn chặn Ban Quản lý Chợ (Manager) chỉnh sửa Chợ của đơn vị khác
+        if (in_array(session('user_role'), ['seller', 'manager']) && $eatery->user_id !== session('user_id')) {
+            abort(403, 'Bạn không có quyền sửa đổi cơ sở này! Bạn chỉ có quyền điều hành Ban Quản lý Chợ được phân công.');
         }
 
         $categories = EateryApiService::getCategories();
@@ -192,7 +192,7 @@ class AdminController extends Controller
     }
 
     /**
-     * Cập nhật thông tin quán
+     * Cập nhật thông tin quán / chợ
      */
     public function updateEatery(Request $request, $slug, \App\Services\EateryService $eateryService)
     {
@@ -204,9 +204,9 @@ class AdminController extends Controller
             abort(404, 'Địa điểm không tồn tại!');
         }
 
-        // Ngăn chặn Seller cập nhật quán ăn của người khác
-        if (session('user_role') === 'seller' && $eatery->user_id !== session('user_id')) {
-            abort(403, 'Bạn không có quyền sửa đổi cơ sở này!');
+        // Ngăn chặn Ban Quản lý Chợ (Manager) cập nhật Chợ của đơn vị khác
+        if (in_array(session('user_role'), ['seller', 'manager']) && $eatery->user_id !== session('user_id')) {
+            abort(403, 'Bạn không có quyền sửa đổi cơ sở này! Bạn chỉ có quyền điều hành Ban Quản lý Chợ được phân công.');
         }
 
         $request->validate([
@@ -893,14 +893,12 @@ class AdminController extends Controller
             abort(403, 'Bạn không thể đăng video review cho cơ sở không thuộc sở hữu của bạn!');
         }
 
-        $status = ($role === 'admin') ? 'approved' : 'pending';
+        $status = 'approved';
 
         $dto = \App\Domain\ReviewVideo\ReviewVideoData::fromRequest($request);
         $videoService->create($dto, $status);
 
-        $message = ($status === 'approved') 
-            ? '🎉 Đăng video review thành công và đã được công khai trên bản đồ!' 
-            : '🎉 Đăng video thành công! Video đang chờ Ban quản trị phê duyệt trước khi công khai.';
+        $message = '🎉 Đăng video review thành công và đã được công khai hiển thị trên bản đồ!';
         
         return redirect()->back()->with('success', $message);
     }
@@ -951,14 +949,12 @@ class AdminController extends Controller
             abort(403, 'Bạn không thể liên kết video với cơ sở không thuộc sở hữu của bạn!');
         }
 
-        $status = ($role === 'admin') ? $video->status : 'pending';
+        $status = 'approved';
 
         $dto = \App\Domain\ReviewVideo\ReviewVideoData::fromRequest($request);
         $videoService->update($id, $dto, $video->video_url, $video->video_type, $status);
 
-        $message = ($status === 'approved') 
-            ? '🎉 Cập nhật video review thành công!' 
-            : '🎉 Cập nhật video thành công! Video đã chuyển sang trạng thái chờ kiểm duyệt lại.';
+        $message = '🎉 Cập nhật video review thành công và đã được công khai trên bản đồ!';
 
         return redirect()->back()->with('success', $message);
     }
@@ -1625,5 +1621,93 @@ class AdminController extends Controller
         $service->delete($id);
 
         return redirect()->back()->with('success', 'Xóa hoạt động văn hóa thành công!');
+    }
+
+    /**
+     * Đăng bản tin số mới cho Ban Quản Lý Chợ
+     */
+    public function storeAnnouncement(Request $request, $id)
+    {
+        $this->verifyAdmin();
+        $request->validate([
+            'tag' => 'required|string|max:100',
+            'title' => 'required|string|max:200',
+            'content' => 'required|string|max:500',
+            'time' => 'nullable|string|max:50',
+            'color' => 'nullable|string|max:30',
+        ]);
+
+        $eatery = null;
+        $connName = null;
+        $connections = ['mysql', 'mysql_stay', 'mysql_wellness', 'mysql_market', 'mysql_education', 'mysql_culture'];
+        foreach ($connections as $conn) {
+            $e = \Illuminate\Support\Facades\DB::connection($conn)->table('eateries')->where('id', $id)->first();
+            if ($e) {
+                $eatery = $e;
+                $connName = $conn;
+                break;
+            }
+        }
+
+        if (!$eatery) abort(404, 'Chợ / Cơ sở không tồn tại!');
+
+        if (in_array(session('user_role'), ['seller', 'manager']) && $eatery->user_id !== session('user_id')) {
+            abort(403, 'Bạn không có quyền đăng bản tin số cho Chợ này!');
+        }
+
+        $existing = json_decode($eatery->announcements ?? '[]', true) ?: [];
+        $newId = count($existing) > 0 ? (max(array_column($existing, 'id') ?: [0]) + 1) : 1;
+
+        $item = [
+            'id' => $newId,
+            'tag' => $request->tag,
+            'title' => $request->title,
+            'content' => $request->content,
+            'time' => $request->time ?: 'Mới cập nhật',
+            'color' => $request->color ?: '#10B981',
+            'created_at' => now()->format('H:i d/m/Y')
+        ];
+
+        array_unshift($existing, $item);
+
+        \Illuminate\Support\Facades\DB::connection($connName)->table('eateries')->where('id', $id)->update([
+            'announcements' => json_encode($existing, JSON_UNESCAPED_UNICODE)
+        ]);
+
+        return redirect()->back()->with('success', '🎉 Đã phát bản tin số mới thành công trên Loa Chợ Số & Bảng Tin BQL Chợ!');
+    }
+
+    /**
+     * Xóa bản tin số của Ban Quản Lý Chợ
+     */
+    public function destroyAnnouncement($eateryId, $announcementId)
+    {
+        $this->verifyAdmin();
+        $eatery = null;
+        $connName = null;
+        $connections = ['mysql', 'mysql_stay', 'mysql_wellness', 'mysql_market', 'mysql_education', 'mysql_culture'];
+        foreach ($connections as $conn) {
+            $e = \Illuminate\Support\Facades\DB::connection($conn)->table('eateries')->where('id', $eateryId)->first();
+            if ($e) {
+                $eatery = $e;
+                $connName = $conn;
+                break;
+            }
+        }
+
+        if (!$eatery) abort(404, 'Chợ / Cơ sở không tồn tại!');
+
+        if (in_array(session('user_role'), ['seller', 'manager']) && $eatery->user_id !== session('user_id')) {
+            abort(403, 'Bạn không có quyền xóa bản tin này!');
+        }
+
+        $existing = json_decode($eatery->announcements ?? '[]', true) ?: [];
+        $filtered = array_values(array_filter($existing, fn($item) => (int)($item['id'] ?? 0) !== (int)$announcementId));
+
+        \Illuminate\Support\Facades\DB::connection($connName)->table('eateries')->where('id', $eateryId)->update([
+            'announcements' => json_encode($filtered, JSON_UNESCAPED_UNICODE)
+        ]);
+
+        return redirect()->back()->with('success', 'Đã xóa bản tin số thành công!');
     }
 }

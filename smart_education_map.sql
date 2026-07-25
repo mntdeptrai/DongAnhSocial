@@ -70,7 +70,7 @@ INSERT INTO `categories` (`id`, `name`, `slug`, `icon`, `description`, `created_
 (2, 'Stay in Đông Anh', 'stay-in-dong-anh', '🏨', 'Nhà nghỉ, khách sạn, biệt thự, homestay và các khu nghỉ dưỡng tiện nghi tại Đông Anh.', '2026-06-01 03:58:06', '2026-06-01 03:58:06'),
 (3, 'Wellness & Care', 'wellness-care', '🏥', 'Hệ thống cơ sở y tế, phòng khám, chăm sóc sức khỏe và spa thư giãn hàng đầu Đông Anh.', '2026-06-01 03:58:06', '2026-06-01 03:58:06'),
 (4, 'Đông Anh Market', 'dong-anh-market', '🛍️', 'Nơi hội tụ các sản phẩm OCOP, đặc sản địa phương, chợ truyền thống và trung tâm mua sắm sầm uất.', '2026-06-01 03:58:06', '2026-06-01 03:58:06'),
-(5, 'Smart Education Map', 'smart-education-map', '🏫', 'Hệ thống trường học và cơ sở giáo dục chất lượng cao trên địa bàn huyện Đông Anh.', '2026-06-01 03:58:06', '2026-06-01 03:58:06'),
+(5, 'Smart Education Map', 'smart-education-map', '🏫', 'Hệ thống trường học và cơ sở giáo dục chất lượng cao trên địa bàn xã Đông Anh.', '2026-06-01 03:58:06', '2026-06-01 03:58:06'),
 (6, 'Hành trình di sản', 'hanh-trinh-di-san', '🏛️', 'Kết nối hành trình khám phá di tích lịch sử và văn hóa thông qua nền tảng Donganh360.vn.', '2026-06-01 03:58:06', '2026-06-01 03:58:06'),
 (7, 'Discover Dong Anh Community & Culture Hub', 'discover-dong-anh-community-culture-hub', '🏛️', 'Khám phá hệ thống thiết chế văn hóa - thể thao Đông Anh: Nhà văn hóa, nhà thi đấu, trung tâm triển lãm, nhà văn hóa thôn và tổ dân phố.', '2026-06-01 03:58:06', '2026-06-01 03:58:06');
 

@@ -56,6 +56,7 @@ class GioHangController extends Controller
                 'total'       => (int)$item->thanh_tien,
                 'eatery_id'   => $eatery ? $eatery->id : 0,
                 'eatery_name' => $eatery ? $eatery->name : 'Khác',
+                'stall_name'  => ($product && isset($product->stall_name)) ? $product->stall_name : null,
             ];
         })->values();
 

@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost
--- Generation Time: Jul 16, 2026 at 12:21 PM
+-- Generation Time: Jul 23, 2026 at 10:03 AM
 -- Server version: 10.11.10-MariaDB-log
 -- PHP Version: 8.3.30
 
@@ -69,10 +69,11 @@ INSERT INTO `categories` (`id`, `name`, `slug`, `icon`, `description`, `created_
 (1, 'ĐÔNG ANH FOOD MAP', 'dong-anh-food-map', '🍲', 'Bản đồ ẩm thực Đông Anh - Bún phở, lẩu nướng, quán cafe,...', '2026-06-01 03:58:03', '2026-06-01 03:58:03'),
 (2, 'Stay in Đông Anh', 'stay-in-dong-anh', '🏨', 'Nhà nghỉ, khách sạn, biệt thự, homestay và các khu nghỉ dưỡng tiện nghi tại Đông Anh.', '2026-06-01 03:58:03', '2026-06-01 03:58:03'),
 (3, 'Wellness & Care', 'wellness-care', '🏥', 'Hệ thống cơ sở y tế, phòng khám, chăm sóc sức khỏe và spa thư giãn hàng đầu Đông Anh.', '2026-06-01 03:58:03', '2026-06-01 03:58:03'),
-(4, 'Đông Anh Market', 'dong-anh-market', '🛍️', 'Nơi hội tụ các sản phẩm OCOP, đặc sản địa phương, chợ truyền thống và trung tâm mua sắm sầm uất.', '2026-06-01 03:58:03', '2026-06-01 03:58:03'),
-(5, 'Smart Education Map', 'smart-education-map', '🏫', 'Hệ thống trường học và cơ sở giáo dục chất lượng cao trên địa bàn huyện Đông Anh.', '2026-06-01 03:58:03', '2026-06-01 03:58:03'),
+(4, 'Đặc sản OCOP', 'dong-anh-market', '🛍️', 'Nơi hội tụ các sản phẩm OCOP, quà lưu niệm độc đáo, đặc sản địa phương mang đậm hồn quê Đông Anh.', '2026-06-01 03:58:03', '2026-06-01 03:58:03'),
+(5, 'Smart Education Map', 'smart-education-map', '🏫', 'Hệ thống trường học và cơ sở giáo dục chất lượng cao trên địa bàn xã Đông Anh.', '2026-06-01 03:58:03', '2026-06-01 03:58:03'),
 (6, 'Hành trình di sản', 'hanh-trinh-di-san', '🏛️', 'Kết nối hành trình khám phá di tích lịch sử và văn hóa thông qua nền tảng Donganh360.vn.', '2026-06-01 03:58:03', '2026-06-01 03:58:03'),
-(7, 'Discover Dong Anh Community & Culture Hub', 'discover-dong-anh-community-culture-hub', '🏛️', 'Khám phá hệ thống thiết chế văn hóa - thể thao Đông Anh: Nhà văn hóa, nhà thi đấu, trung tâm triển lãm, nhà văn hóa thôn và tổ dân phố.', '2026-06-01 03:58:03', '2026-06-01 03:58:03');
+(7, 'Discover Dong Anh Community & Culture Hub', 'discover-dong-anh-community-culture-hub', '🏛️', 'Khám phá hệ thống thiết chế văn hóa - thể thao Đông Anh: Nhà văn hóa, nhà thi đấu, trung tâm triển lãm, nhà văn hóa thôn và tổ dân phố.', '2026-06-01 03:58:03', '2026-06-01 03:58:03'),
+(8, 'Chợ truyền thống', 'traditional-market', '🏪', 'Khám phá các chợ truyền thống nhộn nhịp mang đậm hồn quê Đông Anh.', '2026-06-01 03:58:03', '2026-06-01 03:58:03');
 
 -- --------------------------------------------------------
 
@@ -291,23 +292,23 @@ CREATE TABLE `eateries` (
 --
 
 INSERT INTO `eateries` (`id`, `user_id`, `name`, `slug`, `category_id`, `commune_id`, `description`, `address`, `phone`, `opening_hours`, `latitude`, `longitude`, `price_range`, `image_path`, `is_featured`, `rating`, `status`, `created_at`, `updated_at`) VALUES
-(1, NULL, 'Chợ Tó', 'cho-to-pa3MD', 4, 61, NULL, '4VP4+V46, Đông Anh, Hà Nội, Việt Nam', NULL, NULL, 21.138354, 105.85725, '30.000đ - 100.000đ', 'https://media.xadonganh.com/eateries/1780287931_mywq2Yvo.png', 0, 5.00, 'active', '2026-06-01 04:24:43', '2026-06-01 07:44:12'),
-(2, NULL, 'Chợ Trung Tâm Đông Anh', 'cho-trung-tam-dong-anh-P2ft0', 4, 57, NULL, '4VP4+V46, Đông Anh, Hà Nội, Việt Nam', NULL, NULL, 21.137701, 105.845718, '30.000đ - 100.000đ', 'https://media.xadonganh.com/eateries/1780288137_UXjj2A68.png', 0, 5.00, 'active', '2026-06-01 04:28:59', '2026-06-05 08:25:35'),
-(3, NULL, 'Chợ Sa (Cổ Loa)', 'cho-sa-co-loa-mf0hh', 4, 72, 'Chợ Sa trước thuộc thôn Chợ, nhưng nay đã tách ra lập thành một đơn vị hành chính độc lập trực thuộc xã Cổ Loa. Tuy là một đơn vị hành chính mới được hình thành song cái tên chợ Sa đã có từ lâu đời và vốn rất quen thuộc với cư dân  nơi đây.\r\n\r\nTên chợ Sa được dân gian giải thích vì đây là nơi đặt sa bàn kinh thành của vua An Dương Vương. Chợ Sa nằm trên bãi Sa của sông Thiếp (Hoàng Giang) bên tả ngạn, phía nam, bên ngoài thành ngoại Cổ Loa. Chợ họp ngay trên khu đất cao mỗi tháng 6 phiên vào các ngày 1, 6, 11, 16, 21 and 26 âm lịch. Đây tương truyền là điểm buôn bán của đô thị Cổ Loa ngày trước.\r\n\r\n Câu ca dao về các phiên chợ liền kề trong vùng:\r\n\r\n“Chợ Dâu là câu chợ Tó\r\n\r\nChợ Tó bó chợ Dọc\r\n\r\nChợ Dọc cọc chợ Sa\r\n\r\nChợ Sa là xà chợ Cói\r\n\r\nChợ Cói là bói chợ Dâu”.\r\n\r\nNhư vậy, có thể nói rằng vùng đất Cổ Loa xưa từ khi được chọn làm quốc đô, đến nay đã trở thành tụ điểm dân cư tập trung đông đúc. Các hoạt động kinh tế được đẩy mạnh hơn, một số nghề thủ công, đặc biệt là nghề đúc đồng vươn lên đỉnh cao của nghề đúc thời cổ. Cổ Loa xưa nổi bật lên là đô thị quan trọng thời cổ đại tuy yếu tố “thị”  chưa rõ ràng song được thể hiện ở một hệ thống chợ tiêu biểu là Chợ Sa. Dần dần yếu tố thị ngày càng phát triển hình thành nên cả một khu phố chợ Sa như ngày nay.', '4V5H+V3 Đông Anh, Hà Nội, Việt Nam', NULL, NULL, 21.109657, 105.877639, '30.000đ - 100.000đ', 'https://media.xadonganh.com/eateries/1780300693_Vg4Wau60.jpeg', 0, 5.00, 'active', '2026-06-01 07:58:15', '2026-06-01 07:59:52'),
-(4, NULL, 'Chợ Mai Lâm', 'cho-mai-lam-Fg3D9', 4, 15, NULL, '3WQ2+H6J, Đông Anh, Hà Nội, Việt Nam', NULL, NULL, 21.088971, 105.900505, '30.000đ - 100.000đ', 'https://media.xadonganh.com/eateries/1780301331_M3Ijvbtr.jpg', 0, 5.00, 'active', '2026-06-01 08:08:51', '2026-06-01 08:08:51'),
-(5, NULL, 'Chợ Dục Nội', 'cho-duc-noi-pIEle', 4, 7, NULL, '4VQG+G6 Đông Anh, Hà Nội, Việt Nam', NULL, NULL, 21.138754, 105.875604, '30.000đ - 100.000đ', 'https://media.xadonganh.com/eateries/1780301489_jZdGGxdd.png', 0, 5.00, 'active', '2026-06-01 08:11:31', '2026-06-01 08:11:31'),
-(6, NULL, 'Chợ Dục Tú	3', 'cho-duc-tu-3-TD0C7', 4, 32, NULL, '4V8W+V69, Unnamed Road, Đông Anh, Hà Nội, Việt Nam', NULL, NULL, 21.117158, 105.895619, '30.000đ - 100.000đ', 'https://media.xadonganh.com/eateries/1780301601_joTT7VRd.png', 0, 5.00, 'active', '2026-06-01 08:13:24', '2026-06-01 08:13:24'),
-(7, NULL, 'Chợ văn hoá Du lịch Cổ Loa', 'cho-van-hoa-du-lich-co-loa-3Tkmb', 4, 49, NULL, '4V6C+VH, Đông Anh, Hà Nội, Việt Nam', NULL, NULL, 21.112188, 105.871437, '30.000đ - 100.000đ', 'https://media.xadonganh.com/eateries/1780301782_REOzXNar.png', 0, 5.00, 'active', '2026-06-01 08:16:24', '2026-06-01 08:16:24'),
-(8, NULL, 'Chợ Du Nội', 'cho-du-noi-kItF3', 4, 15, NULL, '3VRV+7X9, Du Nội, Đông Anh, Hà Nội, Việt Nam', NULL, NULL, 21.090664, 105.89497, '30.000đ - 100.000đ', 'https://media.xadonganh.com/eateries/1780302003_72HMN6r3.png', 0, 5.00, 'active', '2026-06-01 08:20:06', '2026-06-01 08:20:06'),
-(9, NULL, 'Chợ Mai Hiên', 'cho-mai-hien-etlwa', 4, 17, NULL, '3VPQ+JCW, Mai Hiên, Đông Anh, Hà Nội, Việt Nam', NULL, NULL, 21.086616, 105.888751, '30.000đ - 100.000đ', 'https://media.xadonganh.com/eateries/1780302105_7UHJjEYA.png', 0, 5.00, 'active', '2026-06-01 08:21:47', '2026-06-01 08:21:47'),
-(10, NULL, 'Chợ Lực Canh', 'cho-luc-canh-bU73w', 4, 3, NULL, 'Lực Canh , Đông Anh, Hà Nội', NULL, NULL, 21.093673, 105.850313, '30.000đ - 100.000đ', 'https://media.xadonganh.com/eateries/1780302505_yK6ILuDh.png', 0, 5.00, 'active', '2026-06-01 08:28:27', '2026-06-01 08:28:27'),
-(11, NULL, 'Chợ Xuân Canh', 'cho-xuan-canh-d8ZrN', 4, 4, NULL, '3VW2+FC9, Đông Anh, Hà Nội, Việt Nam', NULL, NULL, 21.096157, 105.851096, '30.000đ - 100.000đ', 'https://media.xadonganh.com/eateries/1780302611_ShFQdlxK.png', 0, 5.00, 'active', '2026-06-01 08:30:13', '2026-06-01 08:30:13'),
-(12, NULL, 'Chợ Nhồi Dưới', 'cho-nhoi-duoi-rQBih', 4, 21, NULL, 'Đông Anh, Hà Nội, Việt Nam', NULL, NULL, 21.117566, 105.870562, '30.000đ - 100.000đ', 'https://media.xadonganh.com/eateries/1780302727_alzO2Ff2.png', 0, 5.00, 'active', '2026-06-01 08:32:09', '2026-06-01 08:32:09'),
-(13, NULL, 'Chợ Lý Nhân', 'cho-ly-nhan-tgo5z', 4, 9, NULL, 'Lý Nhân, Đông Anh, Hà Nội, Việt Nam', NULL, NULL, 21.106588, 105.886567, '30.000đ - 100.000đ', 'https://media.xadonganh.com/eateries/1780303997_yrbu9E5Z.png', 0, 5.00, 'active', '2026-06-01 08:53:18', '2026-06-01 08:53:18'),
-(14, NULL, 'Chợ Dày Da', 'cho-day-da-tifcw', 4, 54, NULL, '4VR8+FF3, Đông Anh, Hà Nội, Việt Nam', NULL, NULL, 21.14115, 105.866177, '30.000đ - 100.000đ', 'https://media.xadonganh.com/eateries/1780304125_eR6yLod0.png', 0, 5.00, 'active', '2026-06-01 08:55:26', '2026-06-01 08:55:26'),
-(15, NULL, 'Chợ Đông Trù', 'cho-dong-tru-YT5K4', 4, 1, NULL, '3VGG+RJ4, Đông Trù, Đông Anh, Hà Nội, Việt Nam', NULL, NULL, 21.077005, 105.876592, '30.000đ - 100.000đ', 'https://media.xadonganh.com/eateries/1780304221_EyQwimeV.png', 0, 5.00, 'active', '2026-06-01 08:57:02', '2026-06-01 08:57:02'),
-(16, NULL, 'Chợ Mạch Tràng', 'cho-mach-trang-oefHf', 4, 6, NULL, '4V48+XPM, Cổ Loa, Đông Anh, Hà Nội, Việt Nam', NULL, NULL, 21.107475, 105.866782, '30.000đ - 100.000đ', 'https://media.xadonganh.com/eateries/1780304292_4x03RlDT.png', 0, 5.00, 'active', '2026-06-01 08:58:13', '2026-06-01 08:58:13'),
-(17, NULL, 'Siêu Thị Lan Chi Đông Anh', 'sieu-thi-lan-chi-dong-anh-t0bez', 4, 64, NULL, 'KhốI 2A QL3, Đông Anh, Hà Nội, Việt Nam', '0916603888', NULL, 21.147096, 105.846628, '30.000đ - 100.000đ', 'https://media.xadonganh.com/eateries/1780304373_s0wSKT2J.png', 0, 5.00, 'active', '2026-06-01 08:59:34', '2026-06-01 08:59:34'),
+(1, NULL, 'Chợ Tó', 'cho-to-pa3MD', 8, 61, NULL, '4VP4+V46, Đông Anh, Hà Nội, Việt Nam', NULL, NULL, 21.138354, 105.85725, '30.000đ - 100.000đ', 'https://media.xadonganh.com/eateries/1780287931_mywq2Yvo.png', 0, 5.00, 'active', '2026-06-01 04:24:43', '2026-06-01 07:44:12'),
+(2, NULL, 'Chợ Trung Tâm Đông Anh', 'cho-trung-tam-dong-anh-P2ft0', 8, 57, NULL, '4VP4+V46, Đông Anh, Hà Nội, Việt Nam', NULL, NULL, 21.137701, 105.845718, '30.000đ - 100.000đ', 'https://media.xadonganh.com/eateries/1780288137_UXjj2A68.png', 0, 5.00, 'active', '2026-06-01 04:28:59', '2026-06-05 08:25:35'),
+(3, NULL, 'Chợ Sa (Cổ Loa)', 'cho-sa-co-loa-mf0hh', 8, 72, 'Chợ Sa trước thuộc thôn Chợ, nhưng nay đã tách ra lập thành một đơn vị hành chính độc lập trực thuộc xã Cổ Loa. Tuy là một đơn vị hành chính mới được hình thành song cái tên chợ Sa đã có từ lâu đời và vốn rất quen thuộc với cư dân  nơi đây.\r\n\r\nTên chợ Sa được dân gian giải thích vì đây là nơi đặt sa bàn kinh thành của vua An Dương Vương. Chợ Sa nằm trên bãi Sa của sông Thiếp (Hoàng Giang) bên tả ngạn, phía nam, bên ngoài thành ngoại Cổ Loa. Chợ họp ngay trên khu đất cao mỗi tháng 6 phiên vào các ngày 1, 6, 11, 16, 21 and 26 âm lịch. Đây tương truyền là điểm buôn bán của đô thị Cổ Loa ngày trước.\r\n\r\n Câu ca dao về các phiên chợ liền kề trong vùng:\r\n\r\n“Chợ Dâu là câu chợ Tó\r\n\r\nChợ Tó bó chợ Dọc\r\n\r\nChợ Dọc cọc chợ Sa\r\n\r\nChợ Sa là xà chợ Cói\r\n\r\nChợ Cói là bói chợ Dâu”.\r\n\r\nNhư vậy, có thể nói rằng vùng đất Cổ Loa xưa từ khi được chọn làm quốc đô, đến nay đã trở thành tụ điểm dân cư tập trung đông đúc. Các hoạt động kinh tế được đẩy mạnh hơn, một số nghề thủ công, đặc biệt là nghề đúc đồng vươn lên đỉnh cao của nghề đúc thời cổ. Cổ Loa xưa nổi bật lên là đô thị quan trọng thời cổ đại tuy yếu tố “thị”  chưa rõ ràng song được thể hiện ở một hệ thống chợ tiêu biểu là Chợ Sa. Dần dần yếu tố thị ngày càng phát triển hình thành nên cả một khu phố chợ Sa như ngày nay.', '4V5H+V3 Đông Anh, Hà Nội, Việt Nam', NULL, NULL, 21.109657, 105.877639, '30.000đ - 100.000đ', 'https://media.xadonganh.com/eateries/1780300693_Vg4Wau60.jpeg', 0, 5.00, 'active', '2026-06-01 07:58:15', '2026-06-01 07:59:52'),
+(4, NULL, 'Chợ Mai Lâm', 'cho-mai-lam-Fg3D9', 8, 15, NULL, '3WQ2+H6J, Đông Anh, Hà Nội, Việt Nam', NULL, NULL, 21.088971, 105.900505, '30.000đ - 100.000đ', 'https://media.xadonganh.com/eateries/1780301331_M3Ijvbtr.jpg', 0, 5.00, 'active', '2026-06-01 08:08:51', '2026-06-01 08:08:51'),
+(5, NULL, 'Chợ Dục Nội', 'cho-duc-noi-pIEle', 8, 7, NULL, '4VQG+G6 Đông Anh, Hà Nội, Việt Nam', NULL, NULL, 21.138754, 105.875604, '30.000đ - 100.000đ', 'https://media.xadonganh.com/eateries/1780301489_jZdGGxdd.png', 0, 5.00, 'active', '2026-06-01 08:11:31', '2026-06-01 08:11:31'),
+(6, NULL, 'Chợ Dục Tú	3', 'cho-duc-tu-3-TD0C7', 8, 32, NULL, '4V8W+V69, Unnamed Road, Đông Anh, Hà Nội, Việt Nam', NULL, NULL, 21.117158, 105.895619, '30.000đ - 100.000đ', 'https://media.xadonganh.com/eateries/1780301601_joTT7VRd.png', 0, 5.00, 'active', '2026-06-01 08:13:24', '2026-06-01 08:13:24'),
+(7, NULL, 'Chợ văn hoá Du lịch Cổ Loa', 'cho-van-hoa-du-lich-co-loa-3Tkmb', 8, 49, NULL, '4V6C+VH, Đông Anh, Hà Nội, Việt Nam', NULL, NULL, 21.112188, 105.871437, '30.000đ - 100.000đ', 'https://media.xadonganh.com/eateries/1780301782_REOzXNar.png', 0, 5.00, 'active', '2026-06-01 08:16:24', '2026-06-01 08:16:24'),
+(8, NULL, 'Chợ Du Nội', 'cho-du-noi-kItF3', 8, 15, NULL, '3VRV+7X9, Du Nội, Đông Anh, Hà Nội, Việt Nam', NULL, NULL, 21.090664, 105.89497, '30.000đ - 100.000đ', 'https://media.xadonganh.com/eateries/1780302003_72HMN6r3.png', 0, 5.00, 'active', '2026-06-01 08:20:06', '2026-06-01 08:20:06'),
+(9, NULL, 'Chợ Mai Hiên', 'cho-mai-hien-etlwa', 8, 17, NULL, '3VPQ+JCW, Mai Hiên, Đông Anh, Hà Nội, Việt Nam', NULL, NULL, 21.086616, 105.888751, '30.000đ - 100.000đ', 'https://media.xadonganh.com/eateries/1780302105_7UHJjEYA.png', 0, 5.00, 'active', '2026-06-01 08:21:47', '2026-06-01 08:21:47'),
+(10, NULL, 'Chợ Lực Canh', 'cho-luc-canh-bU73w', 8, 3, NULL, 'Lực Canh , Đông Anh, Hà Nội', NULL, NULL, 21.093673, 105.850313, '30.000đ - 100.000đ', 'https://media.xadonganh.com/eateries/1780302505_yK6ILuDh.png', 0, 5.00, 'active', '2026-06-01 08:28:27', '2026-06-01 08:28:27'),
+(11, NULL, 'Chợ Xuân Canh', 'cho-xuan-canh-d8ZrN', 8, 4, NULL, '3VW2+FC9, Đông Anh, Hà Nội, Việt Nam', NULL, NULL, 21.096157, 105.851096, '30.000đ - 100.000đ', 'https://media.xadonganh.com/eateries/1780302611_ShFQdlxK.png', 0, 5.00, 'active', '2026-06-01 08:30:13', '2026-06-01 08:30:13'),
+(12, NULL, 'Chợ Nhồi Dưới', 'cho-nhoi-duoi-rQBih', 8, 21, NULL, 'Đông Anh, Hà Nội, Việt Nam', NULL, NULL, 21.117566, 105.870562, '30.000đ - 100.000đ', 'https://media.xadonganh.com/eateries/1780302727_alzO2Ff2.png', 0, 5.00, 'active', '2026-06-01 08:32:09', '2026-06-01 08:32:09'),
+(13, NULL, 'Chợ Lý Nhân', 'cho-ly-nhan-tgo5z', 8, 9, NULL, 'Lý Nhân, Đông Anh, Hà Nội, Việt Nam', NULL, NULL, 21.106588, 105.886567, '30.000đ - 100.000đ', 'https://media.xadonganh.com/eateries/1780303997_yrbu9E5Z.png', 0, 5.00, 'active', '2026-06-01 08:53:18', '2026-06-01 08:53:18'),
+(14, NULL, 'Chợ Dày Da', 'cho-day-da-tifcw', 8, 54, NULL, '4VR8+FF3, Đông Anh, Hà Nội, Việt Nam', NULL, NULL, 21.14115, 105.866177, '30.000đ - 100.000đ', 'https://media.xadonganh.com/eateries/1780304125_eR6yLod0.png', 0, 5.00, 'active', '2026-06-01 08:55:26', '2026-06-01 08:55:26'),
+(15, NULL, 'Chợ Đông Trù', 'cho-dong-tru-YT5K4', 8, 1, NULL, '3VGG+RJ4, Đông Trù, Đông Anh, Hà Nội, Việt Nam', NULL, NULL, 21.077005, 105.876592, '30.000đ - 100.000đ', 'https://media.xadonganh.com/eateries/1780304221_EyQwimeV.png', 0, 5.00, 'active', '2026-06-01 08:57:02', '2026-06-01 08:57:02'),
+(16, NULL, 'Chợ Mạch Tràng', 'cho-mach-trang-oefHf', 8, 6, NULL, '4V48+XPM, Cổ Loa, Đông Anh, Hà Nội, Việt Nam', NULL, NULL, 21.107475, 105.866782, '30.000đ - 100.000đ', 'https://media.xadonganh.com/eateries/1780304292_4x03RlDT.png', 0, 5.00, 'active', '2026-06-01 08:58:13', '2026-06-01 08:58:13'),
+(17, NULL, 'Siêu Thị Lan Chi Đông Anh', 'sieu-thi-lan-chi-dong-anh-t0bez', 8, 64, NULL, 'KhốI 2A QL3, Đông Anh, Hà Nội, Việt Nam', '0916603888', NULL, 21.147096, 105.846628, '30.000đ - 100.000đ', 'https://media.xadonganh.com/eateries/1780304373_s0wSKT2J.png', 0, 5.00, 'active', '2026-06-01 08:59:34', '2026-06-01 08:59:34'),
 (19, NULL, 'HTX nông nghiệp dược liệu công nghệ cao KOVI', 'htx-nong-nghiep-duoc-lieu-cong-nghe-cao-kovi-QBWB4', 4, 8, 'HTX nông nghiệp dược liệu công nghệ cao KOVI; địa chỉ Thôn Lộc Hà, xã Đông Anh; tên sản phẩm OCOP: Đông trùng hạ thảo tươi, Đông trùng hạ thảo khô, Đông trùng hạ thảo ký chủ nhộng tằm theo QĐ số 2008/QĐ/UBND ngày 07/04/2023.', '3VVM+38H, Lộc Hà, Đông Anh, Hà Nội, Việt Nam', NULL, NULL, 21.092694, 105.883345, '30.000 - 100.000', 'https://media.xadonganh.com/eateries/1781776354_GHX1lRWO.png', 1, 5.00, 'active', '2026-06-18 09:52:36', '2026-06-18 09:52:36'),
 (20, NULL, 'HKD Trần Văn Tân', 'hkd-tran-van-tan-v2rPM', 4, 33, 'HKD Trần Văn Tân; địa chỉ Thôn Thạc Quả, xã Đông Anh; tên sản phẩm OCOP: Tượng phật Đại Thế Chí Bồ Tát, Song ngưu sinh tài theo QĐ số 2008/QĐ/UBND ngày 07/04/2023.', 'Thôn Thạc Quả, xã Đông Anh', NULL, NULL, 21.124558, 105.906103, '30.000 - 100.000', NULL, 1, 5.00, 'active', '2026-06-19 03:48:39', '2026-06-19 03:48:59'),
 (21, NULL, 'Công ty TNHH Hoàng Chiến Thắng', 'cong-ty-tnhh-hoang-chien-thang-IV8Bf', 4, 11, 'Công ty TNHH Hoàng Chiến Thắng; địa chỉ Thôn Đông Ngàn, xã Đông Anh; tên sản phẩm OCOP: Bánh gạo lứt, Bánh vừng vòng theo QĐ số 2008/QĐ/UBND ngày 07/04/2023', 'Số 29,xóm mít, Đông Ngàn, Đông Anh, Hà Nội, Việt Nam', NULL, NULL, 21.069422, 105.867833, '30.000 - 100.000', NULL, 1, 5.00, 'active', '2026-06-19 03:52:08', '2026-06-19 03:52:08'),
@@ -562,27 +563,29 @@ INSERT INTO `ocop_products` (`id`, `eatery_id`, `name`, `price`, `description`, 
 (2, 19, 'Đông trùng hạ thảo tươi', NULL, NULL, NULL, NULL, '2026-06-18 09:53:35', '2026-06-18 10:23:58', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
 (3, 19, 'Đông trùng hạ thảo khô', NULL, NULL, NULL, NULL, '2026-06-18 09:54:16', '2026-06-18 10:23:53', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
 (4, 19, 'Đông trùng hạ thảo ký chủ nhộng tằm', NULL, NULL, NULL, NULL, '2026-06-18 10:23:48', '2026-06-18 10:23:48', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(5, 20, 'Tượng phật Đại Thế Chí Bồ Tát', NULL, NULL, NULL, NULL, '2026-06-19 03:49:26', '2026-06-19 03:49:26', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(6, 20, 'Song ngưu sinh tài', NULL, NULL, NULL, NULL, '2026-06-19 03:49:40', '2026-06-19 03:49:40', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(7, 21, 'Bánh gạo lứt', NULL, NULL, NULL, NULL, '2026-06-19 03:52:32', '2026-06-19 03:52:32', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(8, 21, 'Bánh vừng vòng', NULL, NULL, NULL, NULL, '2026-06-19 03:52:43', '2026-06-19 03:52:43', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(9, 22, 'Tương Việt Hùng', NULL, NULL, NULL, NULL, '2026-06-19 03:56:45', '2026-06-19 03:56:45', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(10, 23, 'Bánh xốp vừng', NULL, NULL, NULL, NULL, '2026-06-19 03:58:55', '2026-06-19 03:58:55', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(11, 23, 'Bánh sampa', NULL, NULL, NULL, NULL, '2026-06-19 03:59:04', '2026-06-19 03:59:04', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(12, 23, 'Bánh trứng nhện', NULL, NULL, NULL, NULL, '2026-06-19 03:59:15', '2026-06-19 03:59:15', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(13, 24, 'Rượu gạo nếp Long Tửu', NULL, NULL, NULL, NULL, '2026-06-19 04:01:53', '2026-06-19 04:01:53', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(14, 24, 'Rượu dâu Long tửu', NULL, NULL, NULL, NULL, '2026-06-19 04:02:04', '2026-06-19 04:02:04', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(15, 25, 'hành lá', NULL, NULL, NULL, NULL, '2026-06-19 04:07:33', '2026-06-19 04:07:33', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(16, 25, 'khoai tây', NULL, NULL, NULL, NULL, '2026-06-19 04:07:45', '2026-06-19 04:07:45', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(17, 21, 'Bánh Vòng Dừa', NULL, NULL, NULL, NULL, '2026-06-19 04:13:08', '2026-06-19 04:13:08', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(18, 24, 'Rượu mơ Long Tửu', NULL, NULL, NULL, NULL, '2026-06-19 04:13:32', '2026-06-19 04:13:32', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(19, 24, 'Rượu Bạch cúc Long Tửu', NULL, NULL, NULL, NULL, '2026-06-19 04:13:44', '2026-06-19 04:13:44', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(20, 21, 'Bánh vừng Cookies', NULL, NULL, NULL, NULL, '2026-06-19 04:14:51', '2026-06-19 04:14:51', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(21, 21, 'Bánh gạo thơm', NULL, NULL, NULL, NULL, '2026-06-19 04:15:01', '2026-06-19 04:15:01', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(22, 25, 'Bí đỏ', NULL, NULL, NULL, NULL, '2026-06-19 04:15:48', '2026-06-19 04:15:48', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(23, 25, 'Lạc nhân', NULL, NULL, NULL, NULL, '2026-06-19 04:15:58', '2026-06-19 04:16:05', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(5, 20, 'Tượng phật Đại Thế Chí Bồ Tát', NULL, NULL, NULL, '4 sao', '2026-06-19 03:49:26', '2026-07-21 04:21:28', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(6, 20, 'Song ngưu sinh tài', NULL, NULL, NULL, '4 sao', '2026-06-19 03:49:40', '2026-07-21 04:21:32', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(7, 21, 'Bánh gạo lứt', NULL, NULL, NULL, '4 sao', '2026-06-19 03:52:32', '2026-07-21 04:19:17', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(8, 21, 'Bánh vừng vòng', NULL, NULL, NULL, '3 sao', '2026-06-19 03:52:43', '2026-07-21 04:19:38', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(9, 22, 'Tương Việt Hùng', NULL, NULL, 'https://media.xadonganh.com/ocop/1784607252_WLu4ciXg.png', '3 sao', '2026-06-19 03:56:45', '2026-07-21 04:14:13', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(10, 23, 'Bánh xốp vừng', NULL, NULL, NULL, '3 sao', '2026-06-19 03:58:55', '2026-07-21 04:18:32', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(11, 23, 'Bánh sampa', NULL, NULL, NULL, '3 sao', '2026-06-19 03:59:04', '2026-07-21 04:18:36', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(12, 23, 'Bánh trứng nhện', NULL, NULL, NULL, '3 sao', '2026-06-19 03:59:15', '2026-07-21 04:18:40', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(13, 24, 'Rượu gạo nếp Long Tửu', NULL, NULL, NULL, '3 sao', '2026-06-19 04:01:53', '2026-07-21 04:17:27', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(14, 24, 'Rượu dâu Long tửu', NULL, NULL, NULL, '3 sao', '2026-06-19 04:02:04', '2026-07-21 04:17:30', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(15, 25, 'hành lá', NULL, NULL, NULL, '3 sao', '2026-06-19 04:07:33', '2026-07-21 04:16:28', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(16, 25, 'khoai tây', NULL, NULL, NULL, '3 sao', '2026-06-19 04:07:45', '2026-07-21 04:16:33', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(17, 21, 'Bánh Vòng Dừa', NULL, NULL, NULL, '3 sao', '2026-06-19 04:13:08', '2026-07-21 04:20:48', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(18, 24, 'Rượu mơ Long Tửu', NULL, NULL, NULL, '3 sao', '2026-06-19 04:13:32', '2026-07-21 04:17:34', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(19, 24, 'Rượu Bạch cúc Long Tửu', NULL, NULL, NULL, '3 sao', '2026-06-19 04:13:44', '2026-07-21 04:17:39', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(20, 21, 'Bánh vừng Cookies', NULL, NULL, NULL, '3 sao', '2026-06-19 04:14:51', '2026-07-21 04:20:15', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(21, 21, 'Bánh gạo thơm', NULL, NULL, NULL, '3 sao', '2026-06-19 04:15:01', '2026-07-21 04:20:56', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(22, 25, 'Bí đỏ', NULL, NULL, NULL, '3 sao', '2026-06-19 04:15:48', '2026-07-21 04:16:43', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(23, 25, 'Lạc nhân', NULL, NULL, NULL, '3 sao', '2026-06-19 04:15:58', '2026-07-21 04:16:39', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
 (24, 26, 'Giò lụa', NULL, NULL, NULL, NULL, '2026-06-19 04:18:17', '2026-06-19 04:18:17', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(25, 26, 'Chả lụa', NULL, NULL, NULL, NULL, '2026-06-19 04:18:27', '2026-06-19 04:18:27', NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+(25, 26, 'Chả lụa', 50000.00, NULL, NULL, NULL, '2026-06-19 04:18:27', '2026-07-21 03:58:32', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(26, 20, 'Kim ngưu sinh tài', NULL, NULL, NULL, '4 sao', '2026-07-21 04:34:28', '2026-07-21 04:34:28', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(27, 20, 'Cá chép hoá rồng', NULL, NULL, NULL, '4 sao', '2026-07-21 04:34:38', '2026-07-21 04:34:38', NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -724,8 +727,8 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `name`, `email`, `email_verified_at`, `password`, `role`, `avatar`, `phone`, `status`, `remember_token`, `created_at`, `updated_at`) VALUES
-(1, 'Nguyễn Văn Admin', 'admin@foodmap.vn', NULL, '$2y$12$vONlT9t5npaVaNQtmW1hmOR//o7N0arUZEFVmBhDGBrBvVur9s1Wi', 'admin', '👨💼', '0901234567', 'active', NULL, '2026-06-01 03:58:03', '2026-06-01 03:58:03'),
-(2, 'Trần Thị Bích', 'seller@foodmap.vn', NULL, '$2y$12$ocp4aq.Rb4pBeInAiNPEHuF8inYREg7.tAk5poQifxHFABlME2cVO', 'seller', '👨🍳', '0912345678', 'active', NULL, '2026-06-01 03:58:03', '2026-06-01 03:58:03'),
+(1, 'Nguyễn Văn Admin', 'admin@foodmap.vn', NULL, '$2y$12$vONlT9t5npaVaNQtmW1hmOR//o7N0arUZEFVmBhDGBrBvVur9s1Wi', 'admin', '👨‍💼', '0901234567', 'active', NULL, '2026-06-01 03:58:03', '2026-06-01 03:58:03'),
+(2, 'Trần Thị Bích', 'seller@foodmap.vn', NULL, '$2y$12$ocp4aq.Rb4pBeInAiNPEHuF8inYREg7.tAk5poQifxHFABlME2cVO', 'seller', '👨‍🍳', '0912345678', 'active', NULL, '2026-06-01 03:58:03', '2026-06-01 03:58:03'),
 (3, 'Thực Thần Đông Anh', 'user@foodmap.vn', NULL, '$2y$12$.MpwCkj6A4IiqvRlKLvPJuyKAqge7Cgoy6NOgsTrNEnA83RtDhay6', 'user', '🧑', '0987654321', 'active', NULL, '2026-06-01 03:58:03', '2026-06-01 03:58:03'),
 (4, 'Thành viên Đông Anh', 'member@foodmap.vn', NULL, '$2y$12$y7hhX7LchfAD1Kx/CH9ud.Wv4DjLSJ6Z/LhTWBNms4q.LsaptpM8K', 'user', '👧', '0977665544', 'active', NULL, '2026-06-01 03:58:03', '2026-06-01 03:58:03');
 
@@ -1080,7 +1083,7 @@ ALTER TABLE `migrations`
 -- AUTO_INCREMENT for table `ocop_products`
 --
 ALTER TABLE `ocop_products`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=26;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
 
 --
 -- AUTO_INCREMENT for table `password_otps`

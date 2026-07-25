@@ -31,7 +31,7 @@ class CulturalActivitySeeder extends Seeder
                 'name' => 'Khu di tích Cổ Loa',
                 'category_id' => $cat->id,
                 'commune_id' => $commune ? $commune->id : 1,
-                'address' => 'Xã Cổ Loa, Huyện Đông Anh, Hà Nội',
+                'address' => 'Xã Cổ Loa, Xã Đông Anh, Hà Nội',
                 'phone' => '02438833333',
                 'opening_hours' => '07:30 - 17:00',
                 'latitude' => 21.1158,

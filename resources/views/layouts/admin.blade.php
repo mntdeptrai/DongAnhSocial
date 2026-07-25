@@ -78,53 +78,38 @@
              ========================================================================== -->
         <aside class="admin-sidebar-nav">
             <a href="/admin/dashboard" class="admin-sidebar-logo">
-                <span>🏰</span> DongAnh Discovery
+                <span>🏰</span>
+                <div>
+                    <div style="font-size: 0.95rem; font-weight: 800;">DongAnh Discovery</div>
+                    <div style="font-size: 0.68rem; font-weight: 500; color: rgba(255,255,255,0.45); margin-top: 1px;">Quản Trị Hệ Thống</div>
+                </div>
             </a>
-            
-            <div class="admin-sidebar-section-title">Tổng quan hệ thống</div>
+
+            <div class="admin-sidebar-section-title">Tổng Quan</div>
             <a href="/admin/dashboard" class="admin-menu-item {{ request()->is('admin/dashboard') && !isset($eatery) ? 'active' : '' }}">
                 <span>📊</span> Dashboard Thống Kê
             </a>
-            
-            @php
-                $sellerEatery = null;
-                if (session('user_role') === 'seller') {
-                    $sellerEatery = \App\Services\EateryApiService::getEateries()
-                        ->firstWhere('user_id', session('user_id'));
-                }
-            @endphp
 
             @if(isset($eatery) && $eatery)
-            <div class="admin-sidebar-section-title">Đang điều phối</div>
+            <div class="admin-sidebar-section-title">Đang Điều Phối</div>
             <a href="/admin/eateries/{{ $eatery->slug }}/edit" class="admin-menu-item active">
-                <span>⚙️</span> {{ Str::limit($eatery->name, 18, '...') }}
-            </a>
-            @elseif($sellerEatery)
-            <div class="admin-sidebar-section-title">Quán của tôi</div>
-            <a href="/admin/eateries/{{ $sellerEatery->slug }}/edit" class="admin-menu-item {{ request()->is('admin/eateries/' . $sellerEatery->slug . '/edit') ? 'active' : '' }}">
-                <span>⚙️</span> {{ Str::limit($sellerEatery->name, 18, '...') }}
+                <span>🏛️</span> {{ Str::limit($eatery->name, 18, '...') }}
             </a>
             @endif
 
-            @if(session('user_role') === 'admin')
-            <div class="admin-sidebar-section-title">Quản trị hệ thống</div>
+            <div class="admin-sidebar-section-title">Quản Trị Hệ Thống</div>
             <a href="/admin/users" class="admin-menu-item {{ request()->is('admin/users*') ? 'active' : '' }}">
-                <span>👥</span> Quản lý User
+                <span>👥</span> Quản Lý Tài Khoản
             </a>
-            @endif
-
-            <div class="admin-sidebar-section-title">Quản lý cơ sở</div>
-            @if(session('user_role') === 'admin' || (session('user_role') === 'seller' && \App\Models\Eatery::where('user_id', session('user_id'))->count() === 0))
             <a href="/admin/eateries/create" class="admin-menu-item {{ request()->is('admin/eateries/create') ? 'active' : '' }}">
-                <span>➕</span> Đăng ký địa điểm
+                <span>➕</span> Đăng Ký Địa Điểm
             </a>
-            @endif
-            
+
             <div class="admin-sidebar-divider"></div>
-            
-            <div class="admin-sidebar-section-title">Cổng thông tin</div>
+
+            <div class="admin-sidebar-section-title">Cổng Thông Tin</div>
             <a href="/" class="admin-menu-item" target="_blank">
-                <span>🗺️</span> Bản đồ Khách hàng
+                <span>🗺️</span> Bản Đồ Số Đông Anh
             </a>
         </aside>
 
@@ -161,15 +146,24 @@
                             </div>
                             <div class="admin-user-info-text" style="text-align: left;">
                                 <span class="admin-user-name">{{ session('user_name') }}</span>
-                                <span class="admin-user-role">{{ session('user_role') === 'admin' ? 'Administrator' : 'Chủ cửa hàng' }}</span>
+                                <span class="admin-user-role">
+                                    @if(session('user_role') === 'admin')
+                                        Administrator
+                                    @elseif(session('user_role') === 'manager')
+                                        Ban Quản lý Chợ
+                                    @elseif(session('user_role') === 'seller')
+                                        Chủ Gian Hàng Số
+                                    @else
+                                        Thành viên
+                                    @endif
+                                </span>
                             </div>
                             
-                            <form action="/auth/logout" method="POST" style="margin-left: 12px;">
-                                @csrf
-                                <button type="submit" class="btn-admin btn-admin-danger" style="padding: 6px 12px; font-size: 0.72rem; border-radius: 8px;">
-                                    Đăng xuất
-                                </button>
-                            </form>
+                            <a href="/auth/logout"
+                               onclick="return confirm('Bạn có chắc muốn đăng xuất?')"
+                               style="margin-left: 12px; display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; font-size: 0.72rem; border-radius: 8px; background: #fef2f2; color: #ef4444; border: 1.5px solid rgba(239,68,68,0.15); font-weight: 700; text-decoration: none; transition: all 0.2s;" onmouseover="this.style.background='#fee2e2'" onmouseout="this.style.background='#fef2f2'">
+                               🚪 Đăng xuất
+                            </a>
                         </div>
                     @endif
                 </div>
