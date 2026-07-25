@@ -1752,20 +1752,25 @@
                     window.renderEateryMarkers(data.eateries);
                 }
                 
+                const isOcopCategory = (slug === 'dong-anh-market');
+                const ocopProductsList = (data.ocopProducts && data.ocopProducts.length > 0) ? data.ocopProducts : [];
+
                 // Cập nhật tiêu đề header của danh sách
                 if (headerContainer) {
-                    if (slug === 'dong-anh-market') {
+                    if (isOcopCategory) {
+                        const countVal = ocopProductsList.length > 0 ? ocopProductsList.length : data.eateries.length;
+                        const countText = ocopProductsList.length > 0 ? `${countVal} sản phẩm OCOP` : `${countVal} địa điểm`;
                         headerContainer.innerHTML = `
                             <div style="margin-bottom: 20px; border-bottom: 1.5px dashed rgba(212, 175, 55, 0.3); padding-bottom: 16px;">
-                                <span class="heritage-badge" style="margin-bottom: 8px; font-size: 0.7rem; font-weight: 800; letter-spacing: 1.5px; border: 1px solid rgba(212, 175, 55, 0.4); background: rgba(212, 175, 55, 0.1); color: #ffb300; padding: 4px 10px; border-radius: 20px; display: inline-block;">🛍️ CHỢ TRUYỀN THỐNG & ĐẶC SẢN OCOP</span>
+                                <span class="heritage-badge" style="margin-bottom: 8px; font-size: 0.7rem; font-weight: 800; letter-spacing: 1.5px; border: 1px solid rgba(212, 175, 55, 0.4); background: rgba(212, 175, 55, 0.1); color: #ffb300; padding: 4px 10px; border-radius: 20px; display: inline-block;">🌾 NÔNG SẢN SỐ & ĐẶC SẢN OCOP</span>
                                 <h2 style="font-size: 1.6rem; font-family: var(--font-heading); font-weight: 800; margin: 4px 0 6px 0; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
-                                    <span style="background: linear-gradient(135deg, #d97706 0%, #b45309 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Không Gian Chợ & Đặc Sản Đông Anh</span>
+                                    <span style="background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Không Gian Sản Phẩm OCOP Đông Anh</span>
                                     <span id="resultsCountSpan" style="font-size: 0.85rem; color: var(--text-muted); font-weight: normal;">
-                                        (${data.eateries.length} địa điểm)
+                                        (${countText})
                                     </span>
                                 </h2>
                                 <p style="font-size: 0.88rem; color: var(--text-muted); line-height: 1.5; margin: 0;">
-                                    Khám phá các sản phẩm OCOP đặc trưng, quà lưu niệm độc đáo, nông sản sạch cùng hệ thống các siêu thị, chợ truyền thống nhộn nhịp mang đậm hồn quê Đông Anh.
+                                    Khám phá các sản phẩm OCOP đặc trưng, quà lưu niệm độc đáo, nông sản sạch mang đậm hồn quê Đông Anh.
                                 </p>
                             </div>
                         `;
@@ -1790,8 +1795,63 @@
                     }
                 }
                 
-                // Re-render danh sách quán ăn
-                if (data.eateries.length > 0) {
+                // Re-render danh sách
+                if (isOcopCategory && ocopProductsList.length > 0) {
+                    let cardsHtml = '';
+                    ocopProductsList.forEach(p => {
+                        const eat = p.eatery || {};
+                        const pName = p.name || 'Sản phẩm OCOP';
+                        const sellerName = p.seller_name || eat.name || 'Đông Anh';
+                        const imgUrl = p.image_path ? p.image_path : (eat.image_path ? eat.image_path : 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=300&q=80');
+                        const stars = p.star_rating ? (p.star_rating.includes('sao') ? p.star_rating : p.star_rating + ' sao') : 'Đặc sản OCOP';
+                        const formattedPrice = p.price ? (isFinite(p.price) ? Number(p.price).toLocaleString('vi-VN') + 'đ' : p.price) : (eat.price_range || 'Liên hệ');
+                        const communeName = eat.commune ? (eat.commune.name || eat.commune) : 'Đông Anh';
+                        const slug = eat.slug || '';
+                        const lat = eat.latitude || 21.1352;
+                        const lng = eat.longitude || 105.8458;
+
+                        cardsHtml += `
+                            <div class="eatery-card glass-panel revealed hover-lift" 
+                                 data-slug="${slug}"
+                                 data-name="${pName}"
+                                 data-address="${eat.address || ''}"
+                                 data-desc="${p.description || eat.description || ''}"
+                                 data-commune="${communeName}"
+                                 data-category="dong-anh-market"
+                                 style="animation: fadeIn 0.4s ease forwards;"
+                                 onclick="focusOnEatery(${lat}, ${lng}, '${slug}')">
+                                <div class="eatery-img-wrapper hover-zoom-container">
+                                    <img src="${imgUrl}" class="eatery-img hover-zoom-img" alt="${pName}">
+                                    <div style="position: absolute; top: 8px; left: 8px; max-width: calc(100% - 16px); display: flex; align-items: center; gap: 4px; font-size: 0.68rem; font-weight: 700; color: #ffffff; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(4px); padding: 4px 8px; border-radius: 6px; box-shadow: 0 2px 10px rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1);">
+                                        <span>🌾</span>
+                                        <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">⭐ ${stars}</span>
+                                    </div>
+                                </div>
+                                <div class="eatery-info">
+                                    <div class="eatery-header">
+                                        <h3 class="eatery-title">${pName}</h3>
+                                        <div class="rating-stars">
+                                            <span>⭐</span> ${stars}
+                                        </div>
+                                    </div>
+                                    <div style="font-size: 0.75rem; font-weight: 700; color: var(--primary); margin-top: -2px; margin-bottom: 6px;">
+                                        🏛️ Chủ thể sản xuất: ${sellerName}
+                                    </div>
+                                    ${p.description || eat.description ? `<p class="eatery-desc">${p.description || eat.description}</p>` : ''}
+                                    <div class="eatery-footer">
+                                        <div class="eatery-meta-item">
+                                            <span>📍</span> ${communeName}
+                                        </div>
+                                        <div class="eatery-meta-item" style="color: var(--primary); font-weight: 600;">
+                                            ${formattedPrice}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    eateriesContainer.innerHTML = cardsHtml;
+                } else if (data.eateries.length > 0) {
                     let cardsHtml = '';
                     data.eateries.forEach(eat => {
                         const imgUrl = eat.image_path ? eat.image_path : 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=300&q=80';
