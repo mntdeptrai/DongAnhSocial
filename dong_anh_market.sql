@@ -585,10 +585,7 @@ INSERT INTO `ocop_products` (`id`, `eatery_id`, `name`, `price`, `description`, 
 (24, 26, 'Giò lụa', NULL, NULL, NULL, NULL, '2026-06-19 04:18:17', '2026-06-19 04:18:17', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
 (25, 26, 'Chả lụa', 50000.00, NULL, NULL, NULL, '2026-06-19 04:18:27', '2026-07-21 03:58:32', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
 (26, 20, 'Kim ngưu sinh tài', NULL, NULL, NULL, '4 sao', '2026-07-21 04:34:28', '2026-07-21 04:34:28', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(27, 20, 'Cá chép hoá rồng', NULL, NULL, NULL, '4 sao', '2026-07-21 04:34:38', '2026-07-21 04:34:38', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(28, 25, 'Gạo nếp cái hoa vàng', NULL, NULL, NULL, '4 sao', '2026-07-21 04:35:00', '2026-07-21 04:35:00', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(29, 23, 'Bánh nhện vừng', NULL, NULL, NULL, '3 sao', '2026-07-21 04:35:10', '2026-07-21 04:35:10', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(30, 23, 'Bánh Sampa giòn', NULL, NULL, NULL, '3 sao', '2026-07-21 04:35:20', '2026-07-21 04:35:20', NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+(27, 20, 'Cá chép hoá rồng', NULL, NULL, NULL, '4 sao', '2026-07-21 04:34:38', '2026-07-21 04:34:38', NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 

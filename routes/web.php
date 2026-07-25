@@ -230,8 +230,8 @@ Route::prefix('admin')->middleware(['auth', 'role:admin,manager', 'tenant.auth']
     Route::post('/eatery-photos', [AdminController::class, 'storeEateryPhoto'])->name('admin.eatery-photo.store');
     Route::delete('/eatery-photos/{id}', [AdminController::class, 'destroyEateryPhoto'])->name('admin.eatery-photo.destroy');
 
-    // Quản lý tài khoản User (Chỉ dành cho Admin tối cao)
-    Route::middleware(['role:admin'])->group(function () {
+    // Quản lý tài khoản User (Dành cho Admin và Manager quản lý tiểu thương)
+    Route::middleware(['role:admin,manager'])->group(function () {
         Route::get('/users', [AdminController::class, 'indexUsers'])->name('admin.users.index');
         Route::get('/users/create', [AdminController::class, 'createUser'])->name('admin.users.create');
         Route::post('/users', [AdminController::class, 'storeUser'])->name('admin.users.store');

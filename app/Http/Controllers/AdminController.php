@@ -32,11 +32,62 @@ class AdminController extends Controller
     {
         $this->verifyAdmin();
 
-        $isSeller = in_array(session('user_role'), ['seller', 'manager']);
+        $role = session('user_role');
+        $isSeller = in_array($role, ['seller', 'manager']);
         $sellerId = session('user_id');
 
         $allEateries = EateryApiService::getEateries();
         $sellerEateries = $isSeller ? $allEateries->where('user_id', $sellerId) : $allEateries;
+
+        // Nếu là Manager: Chỉ lọc các địa điểm chợ truyền thống thuộc quản lý của họ
+        if ($role === 'manager') {
+            $sellerEateries = $sellerEateries->filter(function($e) {
+                return $e->category && $e->category->slug === 'traditional-market';
+            });
+        }
+
+        $marketStats = null;
+        if ($role === 'manager') {
+            $managedMarket = $sellerEateries->first();
+            $marketId = $managedMarket ? $managedMarket->id : null;
+
+            $stallsCount = 0;
+            $totalOrdersCount = 0;
+            $totalRevenue = 0;
+            $stallBreakdown = collect();
+
+            if ($marketId) {
+                $prods = \Illuminate\Support\Facades\DB::connection('mysql_market')
+                    ->table('ocop_products')
+                    ->where('eatery_id', $marketId)
+                    ->get();
+                $stallsCount = $prods->pluck('stall_name')->filter()->unique()->count();
+
+                if (\Illuminate\Support\Facades\Schema::hasTable('orders')) {
+                    $orders = \Illuminate\Support\Facades\DB::table('orders')
+                        ->where('eatery_id', $marketId)
+                        ->get();
+                    $totalOrdersCount = $orders->count();
+                    $totalRevenue = $orders->sum('total_price');
+
+                    $stallBreakdown = $orders->groupBy('stall_name')->map(function($group, $stallName) {
+                        return [
+                            'stall_name' => $stallName ?: 'Gian hàng chung',
+                            'orders_count' => $group->count(),
+                            'revenue' => $group->sum('total_price')
+                        ];
+                    })->values();
+                }
+            }
+
+            $marketStats = [
+                'managed_market' => $managedMarket,
+                'stalls_count' => $stallsCount,
+                'total_orders' => $totalOrdersCount,
+                'total_revenue' => $totalRevenue,
+                'stall_breakdown' => $stallBreakdown
+            ];
+        }
 
         $stats = [
             'total_eateries' => $sellerEateries->count(),
@@ -81,14 +132,14 @@ class AdminController extends Controller
         );
         $eateries->withQueryString();
 
-        // Lấy danh sách Video Reviews (Admin xem hết, Seller xem các cơ sở của họ)
+        // Lấy danh sách Video Reviews (Admin xem hết, Seller/Manager xem các cơ sở của họ)
         $videos = EateryApiService::getVideos();
         if ($isSeller) {
             $sellerEateryIds = $sellerEateries->pluck('id')->toArray();
             $videos = $videos->whereIn('eatery_id', $sellerEateryIds)->values();
         }
 
-        return view('admin.dashboard', compact('stats', 'eateries', 'videos'));
+        return view('admin.dashboard', compact('stats', 'eateries', 'videos', 'marketStats'));
     }
 
     /**
@@ -521,11 +572,15 @@ class AdminController extends Controller
     }
 
     /**
-     * OCOP Products CRUD
+     * OCOP Products CRUD (Chỉ dành cho Admin hoặc Seller chủ thể OCOP, Manager Chợ không có quyền)
      */
     public function storeOcopProduct(Request $request, \App\Services\OcopProductService $ocopProductService)
     {
         $this->verifyAdmin();
+
+        if (session('user_role') === 'manager') {
+            abort(403, 'Ban Quản Lý Chợ không có quyền quản lý hay chỉnh sửa các mặt hàng OCOP!');
+        }
 
         $request->validate([
             'eatery_id' => 'required',
@@ -566,6 +621,10 @@ class AdminController extends Controller
     public function updateOcopProduct(Request $request, $id, \App\Services\OcopProductService $ocopProductService)
     {
         $this->verifyAdmin();
+
+        if (session('user_role') === 'manager') {
+            abort(403, 'Ban Quản Lý Chợ không có quyền quản lý hay chỉnh sửa các mặt hàng OCOP!');
+        }
 
         $request->validate([
             'name' => 'required|string|max:100',
@@ -621,6 +680,10 @@ class AdminController extends Controller
     public function destroyOcopProduct($id, \App\Services\OcopProductService $ocopProductService)
     {
         $this->verifyAdmin();
+
+        if (session('user_role') === 'manager') {
+            abort(403, 'Ban Quản Lý Chợ không có quyền quản lý hay chỉnh sửa các mặt hàng OCOP!');
+        }
 
         $product = \App\Models\OcopProduct::on('mysql_market')->find($id);
         if (!$product) abort(404, 'Sản phẩm OCOP không tồn tại!');
@@ -1298,16 +1361,34 @@ class AdminController extends Controller
     }
 
     /**
-     * Danh sách tài khoản User
+     * Danh sách tài khoản User / Tiểu thương Chợ
      */
     public function indexUsers(Request $request)
     {
         $this->verifyAdmin();
-        if (session('user_role') !== 'admin') {
+        $role = session('user_role');
+        if (!in_array($role, ['admin', 'manager'])) {
             abort(403, 'Bạn không có quyền quản lý tài khoản người dùng!');
         }
 
         $query = User::query();
+
+        if ($role === 'manager') {
+            // Manager chỉ xem & quản lý tiểu thương (seller) thuộc chợ truyền thống của mình
+            $managerUserId = session('user_id');
+            $managerEatery = EateryApiService::getEateries('traditional-market')->firstWhere('user_id', $managerUserId);
+            $eateryId = $managerEatery ? $managerEatery->id : 0;
+
+            $sellerPhones = \Illuminate\Support\Facades\DB::connection('mysql_market')
+                ->table('ocop_products')
+                ->where('eatery_id', $eateryId)
+                ->whereNotNull('seller_phone')
+                ->pluck('seller_phone')
+                ->filter()
+                ->unique();
+
+            $query->where('role', 'seller')->whereIn('phone', $sellerPhones);
+        }
 
         if ($request->has('search') && $request->search != '') {
             $search = $request->search;
@@ -1322,10 +1403,10 @@ class AdminController extends Controller
             $query->where('status', $request->status);
         }
 
-        $totalUsers = User::count();
-        $adminCount = User::where('role', 'admin')->count();
-        $sellerCount = User::where('role', 'seller')->count();
-        $userCount = User::where('role', 'user')->count();
+        $totalUsers = (clone $query)->count();
+        $adminCount = $role === 'admin' ? User::where('role', 'admin')->count() : 0;
+        $sellerCount = (clone $query)->where('role', 'seller')->count();
+        $userCount = $role === 'admin' ? User::where('role', 'user')->count() : 0;
 
         $users = $query->orderBy('created_at', 'desc')->paginate(10)->withQueryString();
 
@@ -1339,25 +1420,32 @@ class AdminController extends Controller
     public function createUser()
     {
         $this->verifyAdmin();
-        if (session('user_role') !== 'admin') {
+        $role = session('user_role');
+        if (!in_array($role, ['admin', 'manager'])) {
             abort(403, 'Bạn không có quyền thêm người dùng mới!');
         }
         $eateries = EateryApiService::getEateries();
+        if ($role === 'manager') {
+            $eateries = $eateries->where('user_id', session('user_id'));
+        }
         return view('admin.users.create', compact('eateries'));
     }
 
     public function storeUser(Request $request)
     {
         $this->verifyAdmin();
-        if (session('user_role') !== 'admin') {
+        $role = session('user_role');
+        if (!in_array($role, ['admin', 'manager'])) {
             abort(403, 'Bạn không có quyền thêm người dùng mới!');
         }
+
+        $allowedRoles = $role === 'admin' ? 'admin,manager,seller,user' : 'seller';
 
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:6',
-            'role' => 'required|string|in:admin,seller,user',
+            'role' => 'required|string|in:' . $allowedRoles,
             'phone' => 'nullable|string|max:15',
             'avatar' => 'nullable|string|max:10',
             'eatery_id' => 'nullable|integer',
@@ -1382,29 +1470,42 @@ class AdminController extends Controller
             }
         }
 
-        return redirect('/admin/users')->with('success', 'Thêm mới tài khoản người dùng thành công!');
+        return redirect('/admin/users')->with('success', 'Thêm mới tài khoản người dùng/tiểu thương thành công!');
     }
 
     public function showUser($id)
     {
         $this->verifyAdmin();
-        if (session('user_role') !== 'admin') {
+        $role = session('user_role');
+        if (!in_array($role, ['admin', 'manager'])) {
             abort(403, 'Bạn không có quyền xem thông tin chi tiết người dùng!');
         }
 
         $user = User::findOrFail($id);
+        if ($role === 'manager' && $user->role !== 'seller') {
+            abort(403, 'Ban Quản Lý Chợ chỉ được quyền quản lý tiểu thương trong chợ của mình!');
+        }
+
         return view('admin.users.show', compact('user'));
     }
 
     public function editUser($id)
     {
         $this->verifyAdmin();
-        if (session('user_role') !== 'admin') {
+        $role = session('user_role');
+        if (!in_array($role, ['admin', 'manager'])) {
             abort(403, 'Bạn không có quyền chỉnh sửa tài khoản người dùng!');
         }
 
         $user = User::findOrFail($id);
+        if ($role === 'manager' && $user->role !== 'seller') {
+            abort(403, 'Ban Quản Lý Chợ chỉ được quyền quản lý tiểu thương trong chợ của mình!');
+        }
+
         $eateries = EateryApiService::getEateries();
+        if ($role === 'manager') {
+            $eateries = $eateries->where('user_id', session('user_id'));
+        }
         
         $currentEatery = $eateries->firstWhere('user_id', $user->id);
         $currentEateryId = $currentEatery ? $currentEatery->id : null;
@@ -1415,16 +1516,22 @@ class AdminController extends Controller
     public function updateUser(Request $request, $id)
     {
         $this->verifyAdmin();
-        if (session('user_role') !== 'admin') {
+        $role = session('user_role');
+        if (!in_array($role, ['admin', 'manager'])) {
             abort(403, 'Bạn không có quyền cập nhật tài khoản người dùng!');
         }
 
         $user = User::findOrFail($id);
+        if ($role === 'manager' && $user->role !== 'seller') {
+            abort(403, 'Ban Quản Lý Chợ chỉ được quyền quản lý tiểu thương trong chợ của mình!');
+        }
+
+        $allowedRoles = $role === 'admin' ? 'admin,manager,seller,user' : 'seller';
 
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,' . $id,
-            'role' => 'required|string|in:admin,seller,user',
+            'role' => 'required|string|in:' . $allowedRoles,
             'phone' => 'nullable|string|max:15',
             'avatar' => 'nullable|string|max:10',
             'status' => 'required|string|in:active,disabled',
@@ -1473,11 +1580,16 @@ class AdminController extends Controller
     public function destroyUser($id)
     {
         $this->verifyAdmin();
-        if (session('user_role') !== 'admin') {
+        $role = session('user_role');
+        if (!in_array($role, ['admin', 'manager'])) {
             abort(403, 'Bạn không có quyền xóa tài khoản người dùng!');
         }
 
         $user = User::findOrFail($id);
+
+        if ($role === 'manager' && $user->role !== 'seller') {
+            abort(403, 'Ban Quản Lý Chợ chỉ được quyền quản lý tiểu thương trong chợ của mình!');
+        }
         
         if ($user->id === session('user_id')) {
             return redirect()->back()->with('error', 'Bạn không được phép tự xóa tài khoản của chính mình!');
@@ -1491,11 +1603,16 @@ class AdminController extends Controller
     public function toggleUserStatus($id)
     {
         $this->verifyAdmin();
-        if (session('user_role') !== 'admin') {
+        $role = session('user_role');
+        if (!in_array($role, ['admin', 'manager'])) {
             abort(403, 'Bạn không có quyền thay đổi trạng thái tài khoản!');
         }
 
         $user = User::findOrFail($id);
+
+        if ($role === 'manager' && $user->role !== 'seller') {
+            abort(403, 'Ban Quản Lý Chợ chỉ được quyền quản lý tiểu thương trong chợ của mình!');
+        }
 
         if ($user->id === session('user_id')) {
             return redirect()->back()->with('error', 'Bạn không thể tự vô hiệu hóa tài khoản của chính mình!');

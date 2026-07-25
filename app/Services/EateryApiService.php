@@ -385,34 +385,33 @@ class EateryApiService
         $products = collect();
 
         try {
-            // 1. Lấy tất cả sản phẩm từ bảng ocop_products (Loại trừ sản phẩm thuộc chợ truyền thống)
+            // 1. Lấy sản phẩm từ bảng ocop_products thuộc danh mục 'dong-anh-market' (Loại bỏ 'traditional-market')
             $dbProducts = OcopProduct::on($conn)
+                ->whereHas('eatery.category', function($q) {
+                    $q->where('slug', 'dong-anh-market');
+                })
                 ->with(['eatery.commune', 'eatery.category'])
                 ->get();
 
             foreach ($dbProducts as $p) {
-                // Loại bỏ nếu là chợ truyền thống
-                if ($p->eatery && $p->eatery->category && $p->eatery->category->slug === 'traditional-market') {
-                    continue;
+                if ($p->eatery && $p->eatery->category && $p->eatery->category->slug === 'dong-anh-market') {
+                    if (isset($filters['commune_id']) && $filters['commune_id']) {
+                        if ($p->eatery->commune_id != $filters['commune_id']) continue;
+                    }
+                    if (isset($filters['q']) && $filters['q']) {
+                        $q = strtolower($filters['q']);
+                        $text = strtolower(($p->name ?? '') . ' ' . ($p->seller_name ?? '') . ' ' . ($p->description ?? ''));
+                        if (!str_contains($text, $q)) continue;
+                    }
+                    $products->push($p);
                 }
-                if (isset($filters['commune_id']) && $filters['commune_id']) {
-                    if ($p->eatery && $p->eatery->commune_id != $filters['commune_id']) continue;
-                }
-                if (isset($filters['q']) && $filters['q']) {
-                    $q = strtolower($filters['q']);
-                    $text = strtolower(($p->name ?? '') . ' ' . ($p->seller_name ?? '') . ' ' . ($p->description ?? ''));
-                    if (!str_contains($text, $q)) continue;
-                }
-                $products->push($p);
             }
         } catch (\Exception $e) {
             Log::warning("Lỗi khi truy vấn ocop_products: " . $e->getMessage());
         }
 
-        // 2. Trích xuất thêm các sản phẩm OCOP từ mô tả của các chủ thể thuộc 'dong-anh-market' nếu chưa có trong danh sách
+        // 2. Tách sản phẩm từ các cơ sở thuộc 'dong-anh-market' chưa tạo dòng trong ocop_products (KHÔNG lấy 'traditional-market')
         try {
-            $existingNames = $products->pluck('name')->map(fn($n) => mb_strtolower(trim($n)))->toArray();
-
             $eateryQuery = Eatery::on($conn)
                 ->whereHas('category', function($q) {
                     $q->where('slug', 'dong-anh-market');
@@ -426,15 +425,18 @@ class EateryApiService
             $eateries = $eateryQuery->get();
 
             foreach ($eateries as $eat) {
-                if (preg_match('/tên\s+sản\s+phẩm\s+OCOP:\s*([^;]+)/ui', $eat->description, $matches)) {
-                    $rawNames = array_filter(array_map('trim', explode(',', $matches[1])));
-                    $cleanDesc = preg_replace('/tên\s+sản\s+phẩm\s+OCOP:\s*[^;]+;?\s*/ui', '', $eat->description);
-                    $cleanDesc = preg_replace('/^[^;]+;\s*địa chỉ[^;]+;\s*/ui', '', $cleanDesc);
-                    if (empty(trim($cleanDesc))) $cleanDesc = $eat->description;
+                if (!$eat->category || $eat->category->slug !== 'dong-anh-market') {
+                    continue;
+                }
 
-                    foreach ($rawNames as $idx => $pName) {
-                        $normalized = mb_strtolower(trim($pName));
-                        if (!in_array($normalized, $existingNames)) {
+                if (!$eat->ocopProducts || $eat->ocopProducts->count() === 0) {
+                    if (preg_match('/tên\s+sản\s+phẩm\s+OCOP:\s*([^;]+)/ui', $eat->description, $matches)) {
+                        $rawNames = array_filter(array_map('trim', explode(',', $matches[1])));
+                        $cleanDesc = preg_replace('/tên\s+sản\s+phẩm\s+OCOP:\s*[^;]+;?\s*/ui', '', $eat->description);
+                        $cleanDesc = preg_replace('/^[^;]+;\s*địa chỉ[^;]+;\s*/ui', '', $cleanDesc);
+                        if (empty(trim($cleanDesc))) $cleanDesc = $eat->description;
+
+                        foreach ($rawNames as $idx => $pName) {
                             $synth = new OcopProduct();
                             $synth->id = 'synth_' . $eat->id . '_' . $idx;
                             $synth->name = $pName;
@@ -447,8 +449,21 @@ class EateryApiService
                             $synth->eatery_id = $eat->id;
                             $synth->setRelation('eatery', $eat);
                             $products->push($synth);
-                            $existingNames[] = $normalized;
                         }
+                    } else {
+                        $cleanName = preg_replace('/^(HKD|HTX|Hộ kinh doanh|Cơ sở|Công ty)\s+/ui', '', $eat->name);
+                        $synth = new OcopProduct();
+                        $synth->id = 'synth_' . $eat->id;
+                        $synth->name = 'Sản phẩm OCOP - ' . $cleanName;
+                        $synth->seller_name = $eat->name;
+                        $synth->seller_phone = $eat->phone;
+                        $synth->price = null;
+                        $synth->star_rating = 'Đặc sản OCOP';
+                        $synth->description = $eat->description;
+                        $synth->image_path = $eat->image_path;
+                        $synth->eatery_id = $eat->id;
+                        $synth->setRelation('eatery', $eat);
+                        $products->push($synth);
                     }
                 }
             }
