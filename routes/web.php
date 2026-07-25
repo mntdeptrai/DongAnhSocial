@@ -170,13 +170,18 @@ Route::prefix('admin')->middleware(['auth', 'role:admin,seller'])->group(functio
     Route::delete('/videos/{id}', [AdminController::class, 'destroyVideo'])->name('admin.video.destroy');
 
     // Fallback GET routes chống lỗi 405 Method Not Allowed khi truy cập trực tiếp bằng phương thức GET
-    Route::get('/dishes', fn() => redirect()->route('admin.dashboard'));
-    Route::get('/cultural-activities', fn() => redirect()->route('admin.dashboard'));
-    Route::get('/ocop-products', fn() => redirect()->route('admin.dashboard'));
-    Route::get('/rooms', fn() => redirect()->route('admin.dashboard'));
-    Route::get('/wellness-services', fn() => redirect()->route('admin.dashboard'));
-    Route::get('/education-programs', fn() => redirect()->route('admin.dashboard'));
-    Route::get('/videos', fn() => redirect()->route('admin.dashboard'));
+    Route::get('/dishes/{id?}', fn() => redirect()->back());
+    Route::get('/cultural-activities/{id?}', fn() => redirect()->back());
+    Route::get('/ocop-products/{id?}', fn() => redirect()->back());
+    Route::get('/rooms/{id?}', fn() => redirect()->back());
+    Route::get('/wellness-services/{id?}', fn() => redirect()->back());
+    Route::get('/education-programs/{id?}', fn() => redirect()->back());
+    Route::get('/videos/{id?}', fn() => redirect()->back());
+    Route::get('/trust/logs/{id?}', fn() => redirect()->back());
+    Route::get('/trust/contracts/{id?}', fn() => redirect()->back());
+    Route::get('/trust/invoices/{id?}', fn() => redirect()->back());
+    Route::get('/reviews/{id?}', fn() => redirect()->back());
+    Route::get('/eatery-photos/{id?}', fn() => redirect()->back());
     Route::post('/videos/{id}/approve', [AdminController::class, 'approveVideo'])->name('admin.video.approve');
     Route::post('/videos/{id}/reject', [AdminController::class, 'rejectVideo'])->name('admin.video.reject');
 

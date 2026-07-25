@@ -136,8 +136,8 @@
                                             $displayNameEn = 'Wellness & Care';
                                             $displayNameVi = 'Y tế – chăm sóc sức khỏe – spa';
                                         } elseif ($cat->slug === 'dong-anh-market') {
-                                            $displayIcon = '🛍️';
-                                            $displayNameEn = 'Đông Anh Market';
+                                            $displayIcon = '🌾';
+                                            $displayNameEn = 'Nông sản số';
                                             $displayNameVi = 'OCOP – quà tặng – đặc sản';
                                         } elseif ($cat->slug === 'smart-education-map') {
                                             $displayIcon = '🎓';
@@ -543,9 +543,9 @@
                     <div class="admin-form-group" style="margin-bottom: 0;">
                         <label class="admin-form-label">Đạt chuẩn OCOP mấy sao?</label>
                         <select name="star_rating" class="admin-form-input">
-                            <option value="">Không có/Chưa xếp hạng</option>
+                            <option value="" selected>Không có/Chưa xếp hạng</option>
                             <option value="3 sao">⭐ 3 sao</option>
-                            <option value="4 sao" selected>⭐⭐ 4 sao</option>
+                            <option value="4 sao">⭐⭐ 4 sao</option>
                             <option value="5 sao">⭐⭐⭐ 5 sao</option>
                         </select>
                     </div>

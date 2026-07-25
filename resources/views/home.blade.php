@@ -934,8 +934,8 @@
                     $displayNameEn = 'Wellness & Care';
                     $displayNameVi = 'Y tế – chăm sóc sức khỏe – spa';
                 } elseif ($cat->slug === 'dong-anh-market') {
-                    $displayIcon = '🛍️';
-                    $displayNameEn = 'Đông Anh Market';
+                    $displayIcon = '🌾';
+                    $displayNameEn = 'Nông sản số';
                     $displayNameVi = 'OCOP – quà tặng – đặc sản';
                 } elseif ($cat->slug === 'smart-education-map') {
                     $displayIcon = '🎓';
@@ -988,9 +988,9 @@
         <div id="listHeaderContainer">
             @if($selectedCatSlug === 'dong-anh-market')
                 <div style="margin-bottom: 20px; border-bottom: 1.5px dashed rgba(212, 175, 55, 0.3); padding-bottom: 16px;">
-                    <span class="heritage-badge" style="margin-bottom: 8px; font-size: 0.7rem; font-weight: 800; letter-spacing: 1.5px; border: 1px solid rgba(212, 175, 55, 0.4); background: rgba(212, 175, 55, 0.1); color: #ffb300; padding: 4px 10px; border-radius: 20px; display: inline-block;">🛍️ CHỢ TRUYỀN THỐNG & ĐẶC SẢN OCOP / TRADITIONAL MARKET & OCOP SPECIALTIES</span>
+                    <span class="heritage-badge" style="margin-bottom: 8px; font-size: 0.7rem; font-weight: 800; letter-spacing: 1.5px; border: 1px solid rgba(212, 175, 55, 0.4); background: rgba(212, 175, 55, 0.1); color: #ffb300; padding: 4px 10px; border-radius: 20px; display: inline-block;">🌾 NÔNG SẢN SỐ & ĐẶC SẢN OCOP / DIGITAL AGRICULTURAL & OCOP SPECIALTIES</span>
                     <h2 style="font-size: 1.6rem; font-family: var(--font-heading); font-weight: 800; margin: 4px 0 6px 0; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
-                        <span style="background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Không Gian Chợ & Đặc Sản Đông Anh <span style="font-size: 1.1rem; color: var(--text-muted); font-weight: 600; display: block; margin-top: 4px;">(Đông Anh Market & Local Specialties)</span></span>
+                        <span style="background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Không Gian Nông Sản Số Đông Anh <span style="font-size: 1.1rem; color: var(--text-muted); font-weight: 600; display: block; margin-top: 4px;">(Nông Sản Số & Local Specialties)</span></span>
                         <span id="resultsCountSpan" style="font-size: 0.85rem; color: var(--text-muted); font-weight: normal;">
                             ({{ $eateries->count() }} địa điểm / places)
                         </span>
@@ -1017,7 +1017,7 @@
                                 $selEn = 'Wellness & Care';
                                 $selVi = 'Y tế – chăm sóc sức khỏe – spa';
                             } elseif ($selectedCatSlug === 'dong-anh-market') {
-                                $selEn = 'Đông Anh Market';
+                                $selEn = 'Nông sản số';
                                 $selVi = 'OCOP – quà tặng – đặc sản';
                             } elseif ($selectedCatSlug === 'smart-education-map') {
                                 $selEn = 'Smart Education Map';
@@ -1044,6 +1044,39 @@
         <div id="eateriesListContainer" style="display: flex; flex-direction: column; gap: 24px; width: 100%;">
             @if($eateries->count() > 0)
                 @foreach($eateries as $eat)
+                    @php
+                        $cardTitle = $eat->name;
+                        $cardSellerSubtitle = null;
+                        $cardDesc = $eat->description;
+                        $cardImage = $eat->image_path ?: 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=300&q=80';
+                        $badgeText = $eat->category->name;
+                        $badgeIcon = $eat->category->icon;
+
+                        if ($eat->category->slug === 'dong-anh-market') {
+                            $badgeIcon = '🌾';
+                            $badgeText = 'Đặc sản OCOP';
+                            
+                            // Nếu có sản phẩm OCOP trong DB
+                            if ($eat->ocopProducts && $eat->ocopProducts->count() > 0) {
+                                $firstProduct = $eat->ocopProducts->first();
+                                $cardTitle = $firstProduct->name;
+                                $cardSellerSubtitle = 'Chủ thể: ' . $eat->name;
+                                if (!empty($firstProduct->image_path)) {
+                                    $cardImage = $firstProduct->image_path;
+                                }
+                                if (!empty($firstProduct->description)) {
+                                    $cardDesc = $firstProduct->description;
+                                }
+                            } elseif (preg_match('/tên sản phẩm OCOP:\s*([^;]+)/ui', $eat->description, $matches)) {
+                                // Tách tên sản phẩm OCOP từ chuỗi mô tả
+                                $cardTitle = trim($matches[1]);
+                                $cardSellerSubtitle = 'Chủ thể sản xuất: ' . $eat->name;
+                                $cardDesc = preg_replace('/^[^;]+;\s*/u', '', $eat->description);
+                            } else {
+                                $cardSellerSubtitle = 'Chủ thể: ' . $eat->name;
+                            }
+                        }
+                    @endphp
                     <div class="eatery-card glass-panel reveal reveal-fade-up hover-lift" 
                          data-slug="{{ $eat->slug }}"
                          data-name="{{ $eat->name }}"
@@ -1053,21 +1086,26 @@
                          data-category="{{ $eat->category->slug }}"
                          onclick="focusOnEatery({{ number_format($eat->latitude, 6, '.', '') }}, {{ number_format($eat->longitude, 6, '.', '') }}, '{{ $eat->slug }}')">
                         <div class="eatery-img-wrapper hover-zoom-container">
-                            <img src="{{ $eat->image_path ?: 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=300&q=80' }}" class="eatery-img hover-zoom-img" alt="{{ $eat->name }}">
+                            <img src="{{ $cardImage }}" class="eatery-img hover-zoom-img" alt="{{ $cardTitle }}">
                             <div style="position: absolute; top: 8px; left: 8px; max-width: calc(100% - 16px); display: flex; align-items: center; gap: 4px; font-size: 0.68rem; font-weight: 700; color: #ffffff; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(4px); padding: 4px 8px; border-radius: 6px; box-shadow: 0 2px 10px rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1);">
-                                <span>{{ $eat->category->icon }}</span>
-                                <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ $eat->category->name }}</span>
+                                <span>{{ $badgeIcon }}</span>
+                                <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ $badgeText }}</span>
                             </div>
                         </div>
                         <div class="eatery-info">
                             <div class="eatery-header">
-                                <h3 class="eatery-title">{{ $eat->name }}</h3>
+                                <h3 class="eatery-title">{{ $cardTitle }}</h3>
                                 <div class="rating-stars">
                                     <span>⭐</span> {{ $eat->average_rating }}
                                 </div>
                             </div>
-                            @if(!empty($eat->description) && $eat->description !== 'null')
-                            <p class="eatery-desc">{{ $eat->description }}</p>
+                            @if($cardSellerSubtitle)
+                            <div style="font-size: 0.75rem; font-weight: 700; color: var(--primary); margin-top: -2px; margin-bottom: 6px;">
+                                🏛️ {{ $cardSellerSubtitle }}
+                            </div>
+                            @endif
+                            @if(!empty($cardDesc) && $cardDesc !== 'null')
+                            <p class="eatery-desc">{{ $cardDesc }}</p>
                             @endif
                             <div class="eatery-footer">
                                 <div class="eatery-meta-item">
@@ -1121,7 +1159,7 @@
             </div>
             
             <div class="reels-overlay-info" style="z-index: 10; bottom: 20px; left: 16px; right: 80px;">
-                <h3 class="reels-eatery-name" id="reelsEateryName" style="font-size: 1.05rem; font-weight: 700; text-shadow: 0 2px 4px rgba(0,0,0,0.95); margin: 0; font-family: var(--font-heading); color: #ffffff;">Bún Mạch Tràng Cổ Loa</h3>
+                <h3 class="reels-eatery-name" id="reelsEateryName" style="font-size: 1.05rem; font-weight: 700; text-shadow: 0 2px 4px rgba(0,0,0,0.95); margin: 0; font-family: var(--font-heading); color: #ffffff;"></h3>
                 <p class="reels-desc" id="reelsVideoDesc" style="display: none !important;"></p>
                 <span class="reels-signature-tag" style="display: none !important;"></span>
             </div>

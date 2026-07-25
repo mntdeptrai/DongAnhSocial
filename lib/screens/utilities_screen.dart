@@ -952,7 +952,7 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '🏪 CHỢ SỐ & NÔNG SẢN OCOP ĐÔNG ANH',
+                        '🌾 NÔNG SẢN SỐ & OCOP ĐÔNG ANH',
                         style: TextStyle(color: Color(0xFFFFB800), fontWeight: FontWeight.w900, fontSize: 13),
                       ),
                       SizedBox(height: 2),
@@ -974,7 +974,7 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  '🏬 Chợ & Gian Hàng OCOP Nổi Bật',
+                  '🌾 Nông Sản Số & Gian Hàng OCOP Nổi Bật',
                   style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: Color(0xFF0077B6)),
                 ),
                 Text(

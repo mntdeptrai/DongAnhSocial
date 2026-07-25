@@ -410,7 +410,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
       case 'stay-in-dong-anh':
         return 'KHÁCH SẠN & LƯU TRÚ';
       case 'dong-anh-market':
-        return 'CHỢ TRUYỀN THỐNG & SIÊU THỊ';
+        return 'NÔNG SẢN SỐ & ĐẶC SẢN OCOP';
       case 'dong-anh-food-map':
         return 'ĐỊA ĐIỂM ẨM THỰC';
       case 'discover-dong-anh-community-culture-hub':

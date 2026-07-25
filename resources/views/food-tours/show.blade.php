@@ -2150,7 +2150,7 @@
         
         <div style="text-align: center; margin-bottom: 16px;">
             <span id="modalStopIcon" style="font-size: 2.2rem; display: block; margin-bottom: 6px;">🍜</span>
-            <h3 id="modalStopName" style="font-size: 1.25rem; font-weight: 900; color: #0f172a; margin: 0 0 6px 0;">Tên chặng dừng</h3>
+            <h3 id="modalStopName" style="font-size: 1.25rem; font-weight: 900; color: #0f172a; margin: 0 0 6px 0;"></h3>
             <p style="font-size: 0.8rem; color: #64748b; margin: 0;">Lưu giữ kỷ niệm & chia sẻ đánh giá của bạn</p>
         </div>
         
@@ -2273,7 +2273,7 @@
             
             <div style="border-top: 1px dashed rgba(226, 232, 240, 0.8); margin-top: 10px; padding-top: 8px; text-align: center;">
                 <span style="font-size: 0.6rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.3px;">Thời gian lưu trữ: </span>
-                <strong style="font-size: 0.75rem; color: var(--primary); margin-left: 2px;" id="completionDateText">Ngày hoàn thành</strong>
+                <strong style="font-size: 0.75rem; color: var(--primary); margin-left: 2px;" id="completionDateText"></strong>
             </div>
         </div>
         

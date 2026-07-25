@@ -106,7 +106,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> with Sing
   void _showAddProductModal() {
     final nameCtrl = TextEditingController();
     final priceCtrl = TextEditingController();
-    final stallCtrl = TextEditingController(text: 'Sạp A12 - Chợ Đông Anh');
+    final stallCtrl = TextEditingController();
 
     showModalBottomSheet(
       context: context,

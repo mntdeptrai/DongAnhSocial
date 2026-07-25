@@ -108,7 +108,7 @@
                             $displayNameEn = 'Wellness & Care';
                             $displayNameVi = 'Y tế – chăm sóc sức khỏe – spa';
                         } elseif ($cat->slug === 'dong-anh-market') {
-                            $displayNameEn = 'Đông Anh Market';
+                            $displayNameEn = 'Nông sản số';
                             $displayNameVi = 'OCOP – quà tặng – đặc sản';
                         } elseif ($cat->slug === 'smart-education-map') {
                             $displayNameEn = 'Smart Education Map';
