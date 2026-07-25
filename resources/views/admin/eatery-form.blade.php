@@ -596,6 +596,7 @@
             </h3>
 
             @php $eateryOcopProducts = $eatery->relationLoaded('ocopProducts') ? $eatery->ocopProducts : collect(); @endphp
+            <script>window.ocopProductsMap = window.ocopProductsMap || {}; Object.assign(window.ocopProductsMap, @json($eateryOcopProducts->keyBy('id')));</script>
             @if($eateryOcopProducts->count() > 0)
                 <div class="stall-directory-table-box">
                     <table class="stall-directory-table">
@@ -636,7 +637,7 @@
                                 </td>
                                 <td style="text-align: center; white-space: nowrap;">
                                     <div style="display: inline-flex; gap: 6px;">
-                                        <button type="button" class="btn-admin" style="padding: 6px 12px; font-size: 0.78rem; background: #0284c7; color: #ffffff; border-radius: 8px; font-weight: 700; cursor: pointer; border: none;" onclick='openEditOcopProductModal(@json($product))'>
+                                        <button type="button" class="btn-admin" style="padding: 6px 12px; font-size: 0.78rem; background: #0284c7; color: #ffffff; border-radius: 8px; font-weight: 700; cursor: pointer; border: none;" onclick="openEditOcopProductModal({{ $product->id }})">
                                             ✏️ Sửa
                                         </button>
                                         <form action="/admin/ocop-products/{{ $product->id }}" method="POST" style="display: inline;" onsubmit="return confirm('Bạn có chắc chắn muốn xóa sản phẩm OCOP này khỏi chợ?');">
@@ -3940,7 +3941,13 @@ function previewEateryPhotoUrl(url) {
         if (modal) modal.style.display = 'none';
     }
 
-    function openEditOcopProductModal(product) {
+    function openEditOcopProductModal(productOrId) {
+        let product = (typeof productOrId === 'object' && productOrId !== null)
+            ? productOrId
+            : (window.ocopProductsMap ? window.ocopProductsMap[productOrId] : null);
+
+        if (!product) return;
+
         const form = document.getElementById('editOcopProductForm');
         if (!form) return;
 
