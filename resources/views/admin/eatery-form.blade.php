@@ -637,7 +637,7 @@
                                 </td>
                                 <td style="text-align: center; white-space: nowrap;">
                                     <div style="display: inline-flex; gap: 6px;">
-                                        <button type="button" class="btn-admin" style="padding: 6px 12px; font-size: 0.78rem; background: #0284c7; color: #ffffff; border-radius: 8px; font-weight: 700; cursor: pointer; border: none;" data-product="{{ json_encode($product) }}" onclick="openEditOcopProductModal(this)">
+                                        <button type="button" class="btn-admin" style="padding: 6px 12px; font-size: 0.78rem; background: #0284c7; color: #ffffff; border-radius: 8px; font-weight: 700; cursor: pointer; border: none;" data-product="{{ base64_encode(json_encode($product)) }}" onclick="openEditOcopProductModal(this)">
                                             ✏️ Sửa
                                         </button>
                                         <form action="/admin/ocop-products/{{ $product->id }}" method="POST" style="display: inline;" onsubmit="return confirm('Bạn có chắc chắn muốn xóa sản phẩm OCOP này khỏi chợ?');">
@@ -688,19 +688,19 @@
                     </div>
                 </div>
 
-                <!-- Thông tin Gian hàng & Người bán -->
+                <!-- Thông tin Gian hàng & Người bán (Tự động điền theo Hộ kinh doanh/Cơ sở) -->
                 <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 16px; background: rgba(14,165,233,0.03); padding: 14px; border-radius: 10px; border: 1px dashed rgba(14,165,233,0.2);">
                     <div class="admin-form-group" style="margin-bottom: 0;">
-                        <label class="admin-form-label" style="font-weight: 700;">🏪 Tên Gian Hàng/Số Sạp</label>
-                        <input type="text" name="stall_name" class="admin-form-input" placeholder="Ví dụ: Gian Hàng A12">
+                        <label class="admin-form-label" style="font-weight: 700;">🏪 Tên Gian Hàng/Cơ Sở</label>
+                        <input type="text" name="stall_name" class="admin-form-input" value="{{ $eatery->name }}" placeholder="Ví dụ: {{ $eatery->name }}">
                     </div>
                     <div class="admin-form-group" style="margin-bottom: 0;">
-                        <label class="admin-form-label" style="font-weight: 700;">👤 Tên Người Bán/Chủ Sạp</label>
-                        <input type="text" name="seller_name" class="admin-form-input" placeholder="Ví dụ: Cô Nguyễn Thị Hương">
+                        <label class="admin-form-label" style="font-weight: 700;">👤 Người Bán/Chủ Cơ Sở</label>
+                        <input type="text" name="seller_name" class="admin-form-input" value="{{ $eatery->name }}" placeholder="Ví dụ: {{ $eatery->name }}">
                     </div>
                     <div class="admin-form-group" style="margin-bottom: 0;">
-                        <label class="admin-form-label" style="font-weight: 700;">📞 SĐT Liên Hệ Người Bán</label>
-                        <input type="text" name="seller_phone" class="admin-form-input" placeholder="Ví dụ: 0988xxxxxx">
+                        <label class="admin-form-label" style="font-weight: 700;">📞 Hotline Liên Hệ</label>
+                        <input type="text" name="seller_phone" class="admin-form-input" value="{{ $eatery->phone }}" placeholder="Ví dụ: {{ $eatery->phone ?: '0988xxxxxx' }}">
                     </div>
                 </div>
 
@@ -3946,7 +3946,11 @@ function previewEateryPhotoUrl(url) {
         if (btnOrId && typeof btnOrId === 'object' && typeof btnOrId.getAttribute === 'function') {
             const raw = btnOrId.getAttribute('data-product');
             if (raw) {
-                try { product = JSON.parse(raw); } catch (e) { console.error(e); }
+                try {
+                    product = JSON.parse(atob(raw));
+                } catch (e) {
+                    try { product = JSON.parse(raw); } catch (e2) { console.error(e2); }
+                }
             }
         }
         if (!product && typeof btnOrId === 'object' && btnOrId !== null) {
@@ -3964,12 +3968,15 @@ function previewEateryPhotoUrl(url) {
         const form = document.getElementById('editOcopProductForm');
         if (!form) return;
 
+        const defaultName = "{{ addslashes($eatery->name ?? '') }}";
+        const defaultPhone = "{{ addslashes($eatery->phone ?? '') }}";
+
         form.action = `/admin/ocop-products/${product.id}`;
         document.getElementById('edit_ocop_name').value = product.name || '';
         document.getElementById('edit_ocop_price').value = product.price || '';
-        document.getElementById('edit_ocop_stall_name').value = product.stall_name || '';
-        document.getElementById('edit_ocop_seller_name').value = product.seller_name || '';
-        document.getElementById('edit_ocop_seller_phone').value = product.seller_phone || '';
+        document.getElementById('edit_ocop_stall_name').value = product.stall_name || defaultName;
+        document.getElementById('edit_ocop_seller_name').value = product.seller_name || defaultName;
+        document.getElementById('edit_ocop_seller_phone').value = product.seller_phone || defaultPhone;
         document.getElementById('edit_ocop_star_rating').value = product.star_rating || '';
         document.getElementById('edit_ocop_image_url').value = product.image_url || product.image_path || '';
         document.getElementById('edit_ocop_description').value = product.description || '';
