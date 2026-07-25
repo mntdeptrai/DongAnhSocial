@@ -1086,92 +1086,128 @@
             @if($eateries->count() > 0)
                 @foreach($eateries as $eat)
                     @php
-                        $cardTitle = $eat->name;
-                        $cardSellerSubtitle = null;
-                        $cardDesc = $eat->description;
-                        $cardImage = $eat->image_path ?: 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=300&q=80';
-                        $badgeText = $eat->category->name;
-                        $badgeIcon = $eat->category->icon;
                         $isMarket = ($eat->category->slug === 'traditional-market');
+                        $displayCards = [];
 
                         if ($eat->category->slug === 'dong-anh-market') {
-                            $badgeIcon = '🌾';
-                            $badgeText = 'Đặc sản OCOP';
-                            
-                            // Nếu có sản phẩm OCOP trong DB
+                            // 1. Kiểm tra nếu có sản phẩm OCOP trong DB
                             if ($eat->ocopProducts && $eat->ocopProducts->count() > 0) {
-                                $firstProduct = $eat->ocopProducts->first();
-                                $cardTitle = $firstProduct->name;
-                                $cardSellerSubtitle = 'Chủ thể: ' . $eat->name;
-                                if (!empty($firstProduct->image_path)) {
-                                    $cardImage = $firstProduct->image_path;
+                                foreach ($eat->ocopProducts as $p) {
+                                    $displayCards[] = [
+                                        'title' => $p->name,
+                                        'subtitle' => 'Chủ thể sản xuất: ' . ($p->seller_name ?: $eat->name),
+                                        'desc' => $p->description ?: $eat->description,
+                                        'image' => $p->image_path ?: ($eat->image_path ?: 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=300&q=80'),
+                                        'stars' => $p->star_rating ? (str_contains($p->star_rating, 'sao') ? $p->star_rating : $p->star_rating . ' sao') : ($eat->average_rating ?: '5.0'),
+                                        'price' => $p->price ? (is_numeric($p->price) ? number_format($p->price, 0, ',', '.') . 'đ' : $p->price) : $eat->price_range,
+                                        'badgeText' => $p->star_rating ? '⭐ ' . $p->star_rating : 'Đặc sản OCOP',
+                                        'badgeIcon' => '🌾',
+                                    ];
                                 }
-                                if (!empty($firstProduct->description)) {
-                                    $cardDesc = $firstProduct->description;
+                            } 
+                            // 2. Tách tên sản phẩm từ mô tả có định dạng "tên sản phẩm OCOP: sản phẩm 1, sản phẩm 2..."
+                            elseif (preg_match('/tên\s+sản\s+phẩm\s+OCOP:\s*([^;]+)/ui', $eat->description, $matches)) {
+                                $rawProducts = array_filter(array_map('trim', explode(',', $matches[1])));
+                                $cleanDesc = preg_replace('/tên\s+sản\s+phẩm\s+OCOP:\s*[^;]+;?\s*/ui', '', $eat->description);
+                                $cleanDesc = preg_replace('/^[^;]+;\s*địa chỉ[^;]+;\s*/ui', '', $cleanDesc);
+                                if (empty(trim($cleanDesc))) $cleanDesc = $eat->description;
+
+                                foreach ($rawProducts as $pName) {
+                                    $displayCards[] = [
+                                        'title' => $pName,
+                                        'subtitle' => 'Chủ thể sản xuất: ' . $eat->name,
+                                        'desc' => $cleanDesc,
+                                        'image' => $eat->image_path ?: 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=300&q=80',
+                                        'stars' => $eat->average_rating ?: '5.0',
+                                        'price' => $eat->price_range,
+                                        'badgeText' => 'Đặc sản OCOP',
+                                        'badgeIcon' => '🌾',
+                                    ];
                                 }
-                            } elseif (preg_match('/tên sản phẩm OCOP:\s*([^;]+)/ui', $eat->description, $matches)) {
-                                // Tách tên sản phẩm OCOP từ chuỗi mô tả
-                                $cardTitle = trim($matches[1]);
-                                $cardSellerSubtitle = 'Chủ thể sản xuất: ' . $eat->name;
-                                $cardDesc = preg_replace('/^[^;]+;\s*/u', '', $eat->description);
-                            } else {
-                                $cardSellerSubtitle = 'Chủ thể: ' . $eat->name;
+                            } 
+                            // 3. Fallback: Loại bỏ chữ HKD/HTX tiền tố để tạo tên sản phẩm
+                            else {
+                                $cleanName = preg_replace('/^(HKD|HTX|Hộ kinh doanh|Cơ sở|Công ty)\s+/ui', '', $eat->name);
+                                $displayCards[] = [
+                                    'title' => 'Sản phẩm OCOP - ' . $cleanName,
+                                    'subtitle' => 'Chủ thể sản xuất: ' . $eat->name,
+                                    'desc' => $eat->description,
+                                    'image' => $eat->image_path ?: 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=300&q=80',
+                                    'stars' => $eat->average_rating ?: '5.0',
+                                    'price' => $eat->price_range,
+                                    'badgeText' => 'Đặc sản OCOP',
+                                    'badgeIcon' => '🌾',
+                                ];
                             }
+                        } else {
+                            $displayCards[] = [
+                                'title' => $eat->name,
+                                'subtitle' => null,
+                                'desc' => $eat->description,
+                                'image' => $eat->image_path ?: 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=300&q=80',
+                                'stars' => $eat->average_rating ?: '5.0',
+                                'price' => $eat->price_range,
+                                'badgeText' => $eat->category->name,
+                                'badgeIcon' => $eat->category->icon,
+                            ];
                         }
                     @endphp
-                    <div class="eatery-card glass-panel reveal reveal-fade-up hover-lift {{ $isMarket ? 'market-card-highlight' : '' }}" 
-                         data-slug="{{ $eat->slug }}"
-                         data-name="{{ $eat->name }}"
-                         data-address="{{ $eat->address }}"
-                         data-desc="{{ $eat->description }}"
-                         data-commune="{{ $eat->commune->name }}"
-                         data-category="{{ $eat->category->slug }}"
-                         onclick="focusOnEatery({{ number_format($eat->latitude, 6, '.', '') }}, {{ number_format($eat->longitude, 6, '.', '') }}, '{{ $eat->slug }}')">
-                        <div class="eatery-img-wrapper hover-zoom-container">
-                            <img src="{{ $cardImage }}" class="eatery-img hover-zoom-img" alt="{{ $cardTitle }}">
-                            @if($isMarket)
-                                <div class="market-card-tag">
-                                    <span>🏪</span> Chợ Số
-                                </div>
-                            @else
-                                <div style="position: absolute; top: 8px; left: 8px; max-width: calc(100% - 16px); display: flex; align-items: center; gap: 4px; font-size: 0.68rem; font-weight: 700; color: #ffffff; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(4px); padding: 4px 8px; border-radius: 6px; box-shadow: 0 2px 10px rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1);">
-                                    <span>{{ $badgeIcon }}</span>
-                                    <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ $badgeText }}</span>
-                                </div>
-                            @endif
-                        </div>
-                        <div class="eatery-info">
-                            <div class="eatery-header">
-                                <h3 class="eatery-title">{{ $cardTitle }}</h3>
-                                <div class="rating-stars">
-                                    <span>⭐</span> {{ $eat->average_rating }}
-                                </div>
-                            </div>
-                            @if($cardSellerSubtitle)
-                            <div style="font-size: 0.75rem; font-weight: 700; color: var(--primary); margin-top: -2px; margin-bottom: 6px;">
-                                🏛️ {{ $cardSellerSubtitle }}
-                            </div>
-                            @endif
-                            @if(!empty($cardDesc) && $cardDesc !== 'null')
-                            <p class="eatery-desc">{{ $cardDesc }}</p>
-                            @endif
-                            <div class="eatery-footer">
-                                <div class="eatery-meta-item">
-                                    <span>📍</span> {{ $eat->commune->name }}
-                                </div>
-                                @if(!in_array($eat->category->slug, ['smart-education-map', 'hanh-trinh-di-san', 'discover-dong-anh-community-culture-hub']))
-                                <div class="eatery-meta-item" style="color: var(--primary); font-weight: 600;">
-                                    {{ $eat->price_range }}
-                                </div>
+
+                    @foreach($displayCards as $card)
+                        <div class="eatery-card glass-panel reveal reveal-fade-up hover-lift {{ $isMarket ? 'market-card-highlight' : '' }}" 
+                             data-slug="{{ $eat->slug }}"
+                             data-name="{{ $card['title'] }}"
+                             data-address="{{ $eat->address }}"
+                             data-desc="{{ $card['desc'] }}"
+                             data-commune="{{ $eat->commune->name }}"
+                             data-category="{{ $eat->category->slug }}"
+                             onclick="focusOnEatery({{ number_format($eat->latitude, 6, '.', '') }}, {{ number_format($eat->longitude, 6, '.', '') }}, '{{ $eat->slug }}')">
+                            <div class="eatery-img-wrapper hover-zoom-container">
+                                <img src="{{ $card['image'] }}" class="eatery-img hover-zoom-img" alt="{{ $card['title'] }}">
+                                @if($isMarket)
+                                    <div class="market-card-tag">
+                                        <span>🏪</span> Chợ Số
+                                    </div>
+                                @else
+                                    <div style="position: absolute; top: 8px; left: 8px; max-width: calc(100% - 16px); display: flex; align-items: center; gap: 4px; font-size: 0.68rem; font-weight: 700; color: #ffffff; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(4px); padding: 4px 8px; border-radius: 6px; box-shadow: 0 2px 10px rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1);">
+                                        <span>{{ $card['badgeIcon'] }}</span>
+                                        <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ $card['badgeText'] }}</span>
+                                    </div>
                                 @endif
                             </div>
-                            @if($isMarket)
-                                <a href="{{ route('eatery.show', $eat->slug) }}" class="market-explore-btn" onclick="event.stopPropagation();">
-                                    <span>🛒 Xem Gian Hàng Số & Sơ Đồ Chợ</span> ➔
-                                </a>
-                            @endif
+                            <div class="eatery-info">
+                                <div class="eatery-header">
+                                    <h3 class="eatery-title">{{ $card['title'] }}</h3>
+                                    <div class="rating-stars">
+                                        <span>⭐</span> {{ $card['stars'] }}
+                                    </div>
+                                </div>
+                                @if($card['subtitle'])
+                                <div style="font-size: 0.75rem; font-weight: 700; color: var(--primary); margin-top: -2px; margin-bottom: 6px;">
+                                    🏛️ {{ $card['subtitle'] }}
+                                </div>
+                                @endif
+                                @if(!empty($card['desc']) && $card['desc'] !== 'null')
+                                <p class="eatery-desc">{{ $card['desc'] }}</p>
+                                @endif
+                                <div class="eatery-footer">
+                                    <div class="eatery-meta-item">
+                                        <span>📍</span> {{ $eat->commune->name }}
+                                    </div>
+                                    @if(!in_array($eat->category->slug, ['smart-education-map', 'hanh-trinh-di-san', 'discover-dong-anh-community-culture-hub']))
+                                    <div class="eatery-meta-item" style="color: var(--primary); font-weight: 600;">
+                                        {{ $card['price'] }}
+                                    </div>
+                                    @endif
+                                </div>
+                                @if($isMarket)
+                                    <a href="{{ route('eatery.show', $eat->slug) }}" class="market-explore-btn" onclick="event.stopPropagation();">
+                                        <span>🛒 Xem Gian Hàng Số & Sơ Đồ Chợ</span> ➔
+                                    </a>
+                                @endif
+                            </div>
                         </div>
-                    </div>
+                    @endforeach
                 @endforeach
             @else
                 <div class="glass-panel" style="padding: 40px; text-align: center; color: var(--text-muted); width: 100%;">
