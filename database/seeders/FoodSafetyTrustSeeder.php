@@ -78,7 +78,7 @@ class FoodSafetyTrustSeeder extends Seeder
             for ($i = 0; $i < 7; $i++) {
                 $logDate = Carbon::now()->subDays($i);
                 if ($i === 2) {
-                    $checker = 'Đoàn liên ngành VSATTP UBND Huyện Đông Anh (Thanh tra Y tế)';
+                    $checker = 'Đoàn liên ngành VSATTP UBND Xã Đông Anh (Thanh tra Y tế)';
                     $origin = 'Gạo tẻ đạt chuẩn từ HTX Nông nghiệp Hữu cơ Dịch vụ Cổ Loa, Thịt heo hữu cơ từ Cơ sở Liêm Hiệp (Có đóng dấu thú y)';
                     $storage = 'Kho gạo khô ráo đạt chuẩn 25°C. Thịt heo bảo quản tủ lạnh chuyên dụng ở nhiệt độ chuẩn 3.8°C. Đạt tiêu chuẩn vệ sinh phòng bếp.';
                 } elseif ($i === 5) {
@@ -114,7 +114,7 @@ class FoodSafetyTrustSeeder extends Seeder
             FoodSafetyCertificate::create([
                 'eatery_id' => $chaoSeLienHa->id,
                 'certificate_number' => '89/2025/ATTP-DA',
-                'issued_by' => 'Ủy ban nhân dân huyện Đông Anh - Phòng Y tế cấp quận huyện',
+                'issued_by' => 'Ủy ban nhân dân xã Đông Anh - Trạm Y tế xã',
                 'issued_at' => Carbon::parse('2025-01-20'),
                 'expired_at' => Carbon::parse('2028-01-20'),
                 'image_path' => 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80',
@@ -146,7 +146,7 @@ class FoodSafetyTrustSeeder extends Seeder
             for ($i = 0; $i < 7; $i++) {
                 $logDate = Carbon::now()->subDays($i);
                 if ($i === 3) {
-                    $checker = 'Đoàn liên ngành VSATTP UBND Huyện Đông Anh (Thanh tra Y tế)';
+                    $checker = 'Đoàn liên ngành VSATTP UBND Xã Đông Anh (Thanh tra Y tế)';
                     $origin = 'Xương ống heo sạch và thịt nạc vai xay từ cơ sở HTX Liêm Hiệp, Gạo nếp xay Đại Vĩ có đầy đủ hóa đơn mua hàng';
                     $storage = 'Nồi ninh nước dùng đạt chuẩn inox 304 vệ sinh sạch sẽ. Bột lọc gạo nếp được ép ráo nước mát lành ở nhiệt độ 22°C.';
                 } else {

@@ -32,11 +32,11 @@ class WellnessAndEducationSeeder extends Seeder
                 'latitude' => 21.1355,
                 'longitude' => 105.8445,
                 'price_range' => 'Bảo hiểm & Dịch vụ',
-                'description' => 'Bệnh viện đa khoa hạng I tuyến huyện, cung cấp dịch vụ khám chữa bệnh chất lượng cao, trang thiết bị hiện đại và đội ngũ y bác sĩ tận tâm phục vụ nhân dân Đông Anh.',
+                'description' => 'Bệnh viện đa khoa hạng I tuyến xã, cung cấp dịch vụ khám chữa bệnh chất lượng cao, trang thiết bị hiện đại và đội ngũ y bác sĩ tận tâm phục vụ nhân dân Đông Anh.',
                 'image_path' => 'https://images.unsplash.com/photo-1587351021759-3e566b6af7cc?auto=format&fit=crop&w=800&q=80',
             ],
             [
-                'name' => 'Trung tâm Y tế Huyện Đông Anh',
+                'name' => 'Trung tâm Y tế Xã Đông Anh',
                 'address' => 'Tổ 2, Thị trấn Đông Anh, Đông Anh, Hà Nội',
                 'commune_slug' => 'to-dan-pho-so-6',
                 'phone' => '02438832263',
@@ -251,7 +251,7 @@ class WellnessAndEducationSeeder extends Seeder
                 $programs = [
                     [
                         'name' => 'Hệ THCS Chất lượng cao trọng điểm',
-                        'description' => 'Mô hình lớp chất lượng cao mũi nhọn của huyện, cơ sở vật chất hiện đại, học 2 buổi/ngày định hướng thi vào các trường THPT chuyên.',
+                        'description' => 'Mô hình lớp chất lượng cao mũi nhọn của xã, cơ sở vật chất hiện đại, học 2 buổi/ngày định hướng thi vào các trường THPT chuyên.',
                         'image_path' => 'https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=800&q=80',
                         'duration' => '4 năm',
                         'tuition_fee' => '1.200.000đ / tháng',

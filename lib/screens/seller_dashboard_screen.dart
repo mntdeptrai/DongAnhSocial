@@ -297,7 +297,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> with Sing
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'Biểu mẫu kê khai Dữ liệu số Tiểu thương & Ban quản lý chợ Huyện Đông Anh',
+                    'Biểu mẫu kê khai Dữ liệu số Tiểu thương & Ban quản lý chợ Xã Đông Anh',
                     style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.blue[900]),
                   ),
                 ),

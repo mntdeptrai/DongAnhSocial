@@ -1320,7 +1320,7 @@
     }
 
     document.addEventListener("DOMContentLoaded", function() {
-        // 2. Thiết lập bản đồ Leaflet tâm vị trí Đông Anh (huyện lỵ)
+        // 2. Thiết lập bản đồ Leaflet tâm vị trí Đông Anh (xã Đông Anh)
         map = L.map('map', {
             zoomControl: false, // Chúng ta sẽ tùy chỉnh vị trí nút zoom
             zoomSnap: 0.5,       // Bước zoom 0.5 giúp phản hồi nhanh nhạy

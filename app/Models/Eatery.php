@@ -115,7 +115,7 @@ class Eatery extends Model
                 'timeline' => [
                     ['year' => 'Đầu thế kỷ 20', 'event' => 'Món cháo dân dã xuất hiện trong các buổi chợ quê Liên Hà để phục vụ người dân lao động.'],
                     ['year' => 'Kháng chiến chống Pháp', 'event' => 'Là món ăn tiếp tế ấm lòng quân dân du kích địa phương.'],
-                    ['year' => 'Năm 2021', 'event' => 'Được chứng nhận OCOP 3 sao và đưa vào danh sách ẩm thực truyền thống cần được bảo tồn của huyện Đông Anh.'],
+                    ['year' => 'Năm 2021', 'event' => 'Được chứng nhận OCOP 3 sao và đưa vào danh sách ẩm thực truyền thống cần được bảo tồn của xã Đông Anh.'],
                     ['year' => 'Hiện tại', 'event' => 'Chính thức số hóa trên nền tảng Bản đồ di sản Khám phá Đông Anh để gìn giữ muôn đời sau.']
                 ]
             ],

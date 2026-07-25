@@ -15,7 +15,7 @@ class SocialHubSeeder extends Seeder
     public function run(): void
     {
         // 1. Cập nhật tọa độ GPS và thời gian hoạt động cho các user mẫu ở Đông Anh
-        // Tọa độ UBND huyện Đông Anh làm gốc: 21.1345, 105.8425
+        // Tọa độ UBND xã Đông Anh làm gốc: 21.1345, 105.8425
         $coords = [
             'admin@foodmap.vn'  => ['lat' => 21.1350, 'lon' => 105.8430], // cách ~0.1km
             'seller@foodmap.vn' => ['lat' => 21.1420, 'lon' => 105.8450], // cách ~1.0km

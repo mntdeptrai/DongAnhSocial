@@ -44,7 +44,7 @@ class CategorySeeder extends Seeder
                 'name'        => 'Smart Education Map',
                 'slug'        => 'smart-education-map',
                 'icon'        => '🏫',
-                'description' => 'Hệ thống trường học và cơ sở giáo dục chất lượng cao trên địa bàn huyện Đông Anh.',
+                'description' => 'Hệ thống trường học và cơ sở giáo dục chất lượng cao trên địa bàn xã Đông Anh.',
             ],
             [
                 'name'        => 'Hành trình di sản',
