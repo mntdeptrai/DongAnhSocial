@@ -3301,72 +3301,12 @@ function previewEateryPhotoUrl(url) {
     };
 
     // Sửa Sản phẩm OCOP Modal Logic
-    window.openEditOcopProductModal = function(btn) {
-        const product = JSON.parse(btn.getAttribute('data-product'));
-        const form = document.getElementById('editOcopProductForm');
-        form.setAttribute('action', '/admin/ocop-products/' + product.id);
-        
-        document.getElementById('editOcopProductNameInput').value = product.name || '';
-        document.getElementById('editOcopProductPriceInput').value = product.price ? parseInt(product.price) : '';
-        document.getElementById('editOcopProductDescInput').value = product.description !== 'null' && product.description !== null ? product.description : '';
-        document.getElementById('editOcopProductImageUrlInput').value = product.image_path && product.image_path.startsWith('http') ? product.image_path : '';
-        document.getElementById('editOcopProductStarInput').value = product.star_rating || '';
-        
-        // Populate heritage fields:
-        document.getElementById('editOcopProductHeritageYearInput').value = product.heritage_year || '';
-        document.getElementById('editOcopProductStoryInput').value = product.story || '';
-        document.getElementById('editOcopProductArtisansInput').value = product.artisans || '';
-        document.getElementById('editOcopProductFunFactInput').value = product.fun_fact || '';
-        document.getElementById('editOcopProductAudioNarrativeInput').value = product.audio_narrative || '';
-        
-        // Ingredients:
-        let ingredientsRaw = '';
-        if (Array.isArray(product.ingredients)) {
-            ingredientsRaw = product.ingredients.join('\n');
-        } else if (typeof product.ingredients === 'string') {
-            try {
-                const parsed = JSON.parse(product.ingredients);
-                if (Array.isArray(parsed)) {
-                    ingredientsRaw = parsed.join('\n');
-                }
-            } catch(e) {
-                ingredientsRaw = product.ingredients;
-            }
+    window.openEditOcopProductModal = function(btnOrId) {
+        if (typeof openEditOcopProductModal === 'function') {
+            return openEditOcopProductModal(btnOrId);
         }
-        document.getElementById('editOcopProductIngredientsInput').value = ingredientsRaw;
-
-        // Timeline:
-        let timelineRaw = '';
-        if (Array.isArray(product.timeline)) {
-            timelineRaw = product.timeline.map(t => `${t.year || ''} | ${t.event || ''}`).join('\n');
-        } else if (typeof product.timeline === 'string') {
-            try {
-                const parsed = JSON.parse(product.timeline);
-                if (Array.isArray(parsed)) {
-                    timelineRaw = parsed.map(t => `${t.year || ''} | ${t.event || ''}`).join('\n');
-                }
-            } catch(e) {
-                timelineRaw = product.timeline;
-            }
-        }
-        document.getElementById('editOcopProductTimelineInput').value = timelineRaw;
-        
-        // Auto-expand heritage fields if any field contains data
-        const fields = document.getElementById('ocopHeritageEditFields');
-        const icon = document.getElementById('ocopHeritageEditIcon');
-        const hasData = product.heritage_year || product.story || product.artisans || product.fun_fact || product.audio_narrative || ingredientsRaw || timelineRaw;
-        if (hasData) {
-            fields.style.display = 'flex';
-            icon.innerText = '▲';
-            icon.style.transform = 'rotate(180deg)';
-        } else {
-            fields.style.display = 'none';
-            icon.innerText = '▼';
-            icon.style.transform = 'none';
-        }
-
-        document.getElementById('editOcopProductModal').style.display = 'flex';
     };
+
 
     window.closeEditOcopProductModal = function() {
         document.getElementById('editOcopProductModal').style.display = 'none';
@@ -3915,6 +3855,20 @@ function previewEateryPhotoUrl(url) {
             }
             document.getElementById('edit_ocop_timeline_raw').value = timeStr;
 
+            // Auto-expand heritage fields if any field contains data
+            const fields = document.getElementById('ocopHeritageEditFields');
+            const icon = document.getElementById('ocopHeritageEditIcon');
+            if (fields) {
+                const hasData = product.heritage_year || product.story || product.artisans || product.fun_fact || product.audio_narrative || ingStr || timeStr;
+                if (hasData) {
+                    fields.style.display = 'flex';
+                    if (icon) { icon.innerText = '▲'; icon.style.transform = 'rotate(180deg)'; }
+                } else {
+                    fields.style.display = 'none';
+                    if (icon) { icon.innerText = '▼'; icon.style.transform = 'none'; }
+                }
+            }
+
             const modal = document.getElementById('editOcopProductModal');
             if (modal) {
                 modal.style.display = 'flex';
@@ -3924,6 +3878,8 @@ function previewEateryPhotoUrl(url) {
             alert('Lỗi hiển thị modal: ' + err.message);
         }
     }
+    window.openEditOcopProductModal = openEditOcopProductModal;
+
 
     function closeEditOcopProductModal() {
         const modal = document.getElementById('editOcopProductModal');
