@@ -316,7 +316,15 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> with Sing
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text('Đơn hàng #${order['code'] ?? orderId}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                              Expanded(
+                                child: Text(
+                                  'Đơn hàng #${order['code'] ?? orderId}',
+                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                                 decoration: BoxDecoration(
@@ -397,7 +405,15 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> with Sing
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('Danh Sách Sản Phẩm / Món Ăn (${_myProducts.length})', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+            Expanded(
+              child: Text(
+                'Danh Sách Sản Phẩm / Món Ăn (${_myProducts.length})',
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const SizedBox(width: 8),
             ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
                 backgroundColor: emeraldColor,

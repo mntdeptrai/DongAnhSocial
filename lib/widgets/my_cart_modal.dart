@@ -455,7 +455,7 @@ class _MyCartModalState extends State<MyCartModal> {
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
-                                    const Text('Tạm tính:', style: TextStyle(color: Color(0xFF64748B), fontSize: 13)),
+                                    const Expanded(child: Text('Tạm tính:', style: TextStyle(color: Color(0xFF64748B), fontSize: 13))),
                                     Text('${subtotal.toInt()}đ', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                                   ],
                                 ),
@@ -463,7 +463,7 @@ class _MyCartModalState extends State<MyCartModal> {
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
-                                    const Text('Phí giao hàng:', style: TextStyle(color: Color(0xFF64748B), fontSize: 13)),
+                                    const Expanded(child: Text('Phí giao hàng:', style: TextStyle(color: Color(0xFF64748B), fontSize: 13))),
                                     Text(shippingFee == 0 ? 'MIỄN PHÍ' : '${shippingFee.toInt()}đ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: shippingFee == 0 ? const Color(0xFF059669) : const Color(0xFF0F172A))),
                                   ],
                                 ),
@@ -471,7 +471,7 @@ class _MyCartModalState extends State<MyCartModal> {
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
-                                    const Text('TỔNG THANH TOÁN:', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: Color(0xFF0F172A))),
+                                    const Expanded(child: Text('TỔNG THANH TOÁN:', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: Color(0xFF0F172A)))),
                                     Text('${finalTotal.toInt()}đ', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 17, color: Color(0xFFEE4D2D))),
                                   ],
                                 ),

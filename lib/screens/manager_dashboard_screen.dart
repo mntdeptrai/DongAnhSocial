@@ -129,7 +129,7 @@ class _ManagerDashboardScreenState extends State<ManagerDashboardScreen> with Si
           children: [
             Icon(Icons.warning_amber_rounded, color: Color(0xFFE11D48)),
             SizedBox(width: 8),
-            Text('Gửi Cảnh báo ATTP'),
+            Expanded(child: Text('Gửi Cảnh báo ATTP')),
           ],
         ),
         content: const Text(

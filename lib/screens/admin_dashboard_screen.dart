@@ -786,50 +786,65 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
               return Card(
                 margin: const EdgeInsets.only(bottom: 12),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                child: ListTile(
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                  leading: CircleAvatar(
-                    backgroundColor: crimsonColor.withValues(alpha: 0.1),
-                    child: Text(
-                      (user['name'] ?? 'U').toString().substring(0, 1).toUpperCase(),
-                      style: TextStyle(color: crimsonColor, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                  title: Text(user['name'] ?? 'Người dùng', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  child: Row(
                     children: [
-                      Text(user['email'] ?? '', style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: _getRoleColor(currentRole).withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              currentRole.toUpperCase(),
-                              style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: _getRoleColor(currentRole)),
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF10B981).withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: const Text('HOẠT ĐỘNG', style: TextStyle(fontSize: 9, color: Color(0xFF10B981), fontWeight: FontWeight.bold)),
-                          ),
-                        ],
+                      CircleAvatar(
+                        backgroundColor: crimsonColor.withValues(alpha: 0.1),
+                        child: Text(
+                          (user['name'] ?? 'U').toString().substring(0, 1).toUpperCase(),
+                          style: TextStyle(color: crimsonColor, fontWeight: FontWeight.bold),
+                        ),
                       ),
-                    ],
-                  ),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              user['name'] ?? 'Người dùng',
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              user['email'] ?? '',
+                              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 4),
+                            Wrap(
+                              spacing: 4,
+                              runSpacing: 4,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: _getRoleColor(currentRole).withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
+                                    currentRole.toUpperCase(),
+                                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: _getRoleColor(currentRole)),
+                                  ),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF10B981).withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: const Text('HOẠT ĐỘNG', style: TextStyle(fontSize: 9, color: Color(0xFF10B981), fontWeight: FontWeight.bold)),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 6),
                       PopupMenuButton<String>(
                         initialValue: currentRole,
                         onSelected: (newRole) => _changeUserRole(index, newRole),
@@ -846,6 +861,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: const Row(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
                               Text('Đổi Role', style: TextStyle(color: Color(0xFFDC2626), fontSize: 11, fontWeight: FontWeight.bold)),
                               Icon(Icons.arrow_drop_down, color: Color(0xFFDC2626), size: 16),
@@ -854,6 +870,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
                         ),
                       ),
                       IconButton(
+                        constraints: const BoxConstraints(),
+                        padding: const EdgeInsets.all(4),
                         icon: const Icon(Icons.delete_outline_rounded, color: Colors.red, size: 20),
                         tooltip: 'Xóa user',
                         onPressed: () => _deleteUser(index),
