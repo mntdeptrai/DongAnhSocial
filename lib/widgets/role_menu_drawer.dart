@@ -188,9 +188,20 @@ class RoleMenuDrawer extends StatelessWidget {
                     },
                   ),
                   _buildDrawerShortcut(
+                    icon: Icons.add_location_alt_rounded,
+                    title: '📸 Góc Trải Nghiệm Thực Tế',
+                    subtitle: 'Lưu giữ & chia sẻ bài check-in của bạn',
+                    color: const Color(0xFF0284C7),
+                    onTap: () {
+                      Navigator.pop(context);
+                      onRoleChanged?.call('user');
+                      onNavigateTab?.call(1); // Real Experience Tab
+                    },
+                  ),
+                  _buildDrawerShortcut(
                     icon: Icons.photo_camera_rounded,
-                    title: 'Check-in Locket Cổ Loa',
-                    subtitle: 'Bảng tin chia sẻ khoảnh khắc ẩm thực',
+                    title: 'Bảng Tin Check-in Locket',
+                    subtitle: 'Khám phá khoảnh khắc ẩm thực cộng đồng',
                     color: const Color(0xFFF59E0B),
                     onTap: () {
                       Navigator.pop(context);

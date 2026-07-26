@@ -41,11 +41,11 @@ class _MyCheckinsScreenState extends State<MyCheckinsScreen> {
           TextSpan(
             children: [
               TextSpan(
-                text: 'DongAnh',
+                text: 'Góc Trải Nghiệm ',
                 style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18),
               ),
               TextSpan(
-                text: ' Check-ins',
+                text: 'Thực Tế',
                 style: TextStyle(color: Color(0xFFFFB800), fontWeight: FontWeight.w900, fontSize: 18),
               ),
             ],
