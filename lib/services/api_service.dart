@@ -699,4 +699,42 @@ class ApiService {
     } catch (_) {}
     return {'success': false};
   }
+
+  /// GET /seller/orders — Lấy danh sách đơn hàng thực tế của gian hàng
+  static Future<List<dynamic>> getSellerOrders() async {
+    try {
+      final response = await http.get(Uri.parse('$baseUrl/seller/orders'), headers: _getHeaders());
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data is List) return data;
+        if (data['data'] is List) return data['data'];
+      }
+    } catch (_) {}
+    return [];
+  }
+
+  /// GET /manager/stalls — Lấy danh sách gian hàng cho cán bộ quản lý chợ
+  static Future<List<dynamic>> getManagerStalls() async {
+    try {
+      final response = await http.get(Uri.parse('$baseUrl/categories'), headers: _getHeaders());
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data is List) return data;
+      }
+    } catch (_) {}
+    return [];
+  }
+
+  /// GET /admin/users — Lấy danh sách người dùng cho Quản trị viên
+  static Future<List<dynamic>> getAdminUsers() async {
+    try {
+      final response = await http.get(Uri.parse('$baseUrl/admin/users'), headers: _getHeaders());
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data is List) return data;
+        if (data['users'] is List) return data['users'];
+      }
+    } catch (_) {}
+    return [];
+  }
 }

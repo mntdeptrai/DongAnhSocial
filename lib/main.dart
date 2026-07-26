@@ -12,6 +12,10 @@ import 'screens/profile_screen.dart';
 import 'screens/my_checkins_screen.dart';
 import 'screens/notifications_screen.dart';
 import 'screens/utilities_screen.dart';
+import 'screens/seller_dashboard_screen.dart';
+import 'screens/manager_dashboard_screen.dart';
+import 'screens/admin_dashboard_screen.dart';
+import 'widgets/role_switch_banner.dart';
 import 'widgets/top_nav_bar.dart';
 import 'widgets/floating_chat_bubble.dart';
 import 'widgets/universal_search_modal.dart';
@@ -271,6 +275,7 @@ class _MainLayoutState extends State<MainLayout> with WidgetsBindingObserver {
   int _unreadNotifsCount = 0;
   int _unreadMessagesCount = 0;
   int _cartCount = 0;
+  String _activeRole = 'user'; // Active Role: 'user', 'seller', 'manager', 'admin'
   Timer? _pollTimer;
   final GlobalKey<FeedScreenState> _feedScreenKey = GlobalKey<FeedScreenState>();
 
@@ -281,6 +286,10 @@ class _MainLayoutState extends State<MainLayout> with WidgetsBindingObserver {
     // Giới hạn dung lượng bộ nhớ đệm ảnh ở mức 30MB để tránh tràn RAM
     PaintingBinding.instance.imageCache.maximumSizeBytes = 30 * 1024 * 1024;
     PaintingBinding.instance.imageCache.maximumSize = 100;
+
+    // Set initial active role from user model
+    final userRole = ApiService.currentUser?['role'] ?? 'user';
+    _activeRole = userRole;
 
     _fetchDynamicCounts();
     _startTimer();
@@ -349,6 +358,21 @@ class _MainLayoutState extends State<MainLayout> with WidgetsBindingObserver {
     } catch (_) {}
   }
 
+  Widget _buildActiveRoleContent(List<Widget> screens) {
+    if (_activeRole == 'seller') {
+      return const SellerDashboardScreen();
+    } else if (_activeRole == 'manager') {
+      return const ManagerDashboardScreen();
+    } else if (_activeRole == 'admin') {
+      return const AdminDashboardScreen();
+    }
+
+    return KeyedSubtree(
+      key: ValueKey<int>(_currentIndex),
+      child: screens[_currentIndex],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final List<Widget> screens = [
@@ -369,6 +393,7 @@ class _MainLayoutState extends State<MainLayout> with WidgetsBindingObserver {
         onTabSelected: (index) {
           setState(() {
             _currentIndex = index;
+            _activeRole = 'user'; // Switch back to consumer view when clicking bottom tabs
           });
           if (index == 0) {
             _feedScreenKey.currentState?.resumeCamera();
@@ -383,6 +408,7 @@ class _MainLayoutState extends State<MainLayout> with WidgetsBindingObserver {
           UniversalSearchModal.show(context, onNavigateToTab: (index) {
             setState(() {
               _currentIndex = index;
+              _activeRole = 'user';
             });
           });
         },
@@ -399,33 +425,45 @@ class _MainLayoutState extends State<MainLayout> with WidgetsBindingObserver {
         unreadMessagesCount: _unreadMessagesCount,
         unreadNotifsCount: _unreadNotifsCount,
       ),
-      body: Stack(
+      body: Column(
         children: [
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 300),
-            switchInCurve: Curves.easeOut,
-            switchOutCurve: Curves.easeIn,
-            transitionBuilder: (child, animation) {
-              return FadeTransition(
-                opacity: animation,
-                child: ScaleTransition(
-                  scale: Tween<double>(begin: 0.98, end: 1.0).animate(animation),
-                  child: child,
-                ),
-              );
+          // Banner chuyển đổi Chế độ Role (nếu người dùng có nhiều quyền)
+          RoleSwitchBanner(
+            activeRole: _activeRole,
+            onRoleChanged: (newRole) {
+              setState(() {
+                _activeRole = newRole;
+              });
             },
-            child: KeyedSubtree(
-              key: ValueKey<int>(_currentIndex),
-              child: screens[_currentIndex],
-            ),
           ),
-          DraggableFloatingChatBubble(
-            onOpenChatTab: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const ChatScreen()),
-              );
-            },
+          Expanded(
+            child: Stack(
+              children: [
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 300),
+                  switchInCurve: Curves.easeOut,
+                  switchOutCurve: Curves.easeIn,
+                  transitionBuilder: (child, animation) {
+                    return FadeTransition(
+                      opacity: animation,
+                      child: ScaleTransition(
+                        scale: Tween<double>(begin: 0.98, end: 1.0).animate(animation),
+                        child: child,
+                      ),
+                    );
+                  },
+                  child: _buildActiveRoleContent(screens),
+                ),
+                DraggableFloatingChatBubble(
+                  onOpenChatTab: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const ChatScreen()),
+                    );
+                  },
+                ),
+              ],
+            ),
           ),
         ],
       ),

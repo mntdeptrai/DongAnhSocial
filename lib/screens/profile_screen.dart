@@ -32,26 +32,19 @@ class ProfileScreen extends StatelessWidget {
               ],
             ),
             const Divider(height: 20),
-            ListTile(
-              leading: const CircleAvatar(backgroundColor: Color(0xFFE0F2FE), child: Icon(Icons.store, color: Color(0xFF00A8EE))),
-              title: const Text('HTX nông nghiệp dược liệu KOVI', style: TextStyle(fontWeight: FontWeight.bold)),
-              subtitle: const Text('Thôn Lộc Hà, Đông Anh • ⭐ 5.0'),
-              trailing: const Icon(Icons.arrow_forward_ios, size: 14),
-              onTap: () => Navigator.pop(ctx),
-            ),
-            ListTile(
-              leading: const CircleAvatar(backgroundColor: Color(0xFFE0F2FE), child: Icon(Icons.restaurant, color: Color(0xFF00A8EE))),
-              title: const Text('Bún chả Cổ Loa', style: TextStyle(fontWeight: FontWeight.bold)),
-              subtitle: const Text('Cổ Loa, Đông Anh • ⭐ 4.8'),
-              trailing: const Icon(Icons.arrow_forward_ios, size: 14),
-              onTap: () => Navigator.pop(ctx),
-            ),
-            ListTile(
-              leading: const CircleAvatar(backgroundColor: Color(0xFFE0F2FE), child: Icon(Icons.storefront, color: Color(0xFF00A8EE))),
-              title: const Text('HKD Thảo Loan - Đặc sản OCOP', style: TextStyle(fontWeight: FontWeight.bold)),
-              subtitle: const Text('Xã Xuân Canh, Đông Anh • ⭐ 4.9'),
-              trailing: const Icon(Icons.arrow_forward_ios, size: 14),
-              onTap: () => Navigator.pop(ctx),
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 24),
+              child: Center(
+                child: Column(
+                  children: [
+                    Icon(Icons.bookmark_outline, size: 48, color: Colors.grey),
+                    SizedBox(height: 8),
+                    Text('Chưa có địa điểm đã lưu', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                    SizedBox(height: 4),
+                    Text('Các địa điểm yêu thích của bạn sẽ hiển thị tại đây.', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                  ],
+                ),
+              ),
             ),
           ],
         ),
