@@ -283,7 +283,6 @@ class _MainLayoutState extends State<MainLayout> with WidgetsBindingObserver {
   int _unreadMessagesCount = 0;
   int _cartCount = 0;
   String _activeRole = 'user'; // Active Role: 'user', 'seller', 'manager', 'admin'
-  Timer? _pollTimer;
   final GlobalKey<FeedScreenState> _feedScreenKey = GlobalKey<FeedScreenState>();
 
   @override
@@ -298,7 +297,14 @@ class _MainLayoutState extends State<MainLayout> with WidgetsBindingObserver {
     _activeRole = 'user';
 
     _fetchDynamicCounts();
-    _startTimer();
+
+    // Lắng nghe sự kiện Push Notification từ FCM (Event-Driven - Không dùng Short Polling)
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      debugPrint('🔔 Nhận FCM Push Notification: ${message.notification?.title}');
+      if (mounted) {
+        _fetchDynamicCounts();
+      }
+    });
 
     NotificationHelper.initialize((data) {
       if (data['target'] == 'chat' && mounted) {
@@ -310,38 +316,23 @@ class _MainLayoutState extends State<MainLayout> with WidgetsBindingObserver {
     });
   }
 
-  void _startTimer() {
-    _pollTimer?.cancel();
-    _pollTimer = Timer.periodic(const Duration(seconds: 10), (_) {
-      _fetchDynamicCounts();
-    });
-  }
-
-  void _stopTimer() {
-    _pollTimer?.cancel();
-    _pollTimer = null;
-  }
-
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.inactive ||
         state == AppLifecycleState.hidden) {
-      // Tạm dừng timer và giải phóng RAM ảnh khi chạy ngầm
-      _stopTimer();
+      // Giải phóng RAM bộ nhớ tạm khi ứng dụng chạy ngầm
       PaintingBinding.instance.imageCache.clear();
       PaintingBinding.instance.imageCache.clearLiveImages();
     } else if (state == AppLifecycleState.resumed) {
-      // Làm mới dữ liệu và khởi động lại timer khi mở lại ứng dụng
+      // Làm mới dữ liệu 1 lần duy nhất khi người dùng mở lại ứng dụng
       _fetchDynamicCounts();
-      _startTimer();
     }
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    _stopTimer();
     super.dispose();
   }
 
