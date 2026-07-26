@@ -179,7 +179,7 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
   Future<void> _fetchFoodData() async {
     setState(() => _isLoadingFood = true);
     try {
-      final res = await ApiService.getEateries('dong-anh-food-map');
+      final res = await ApiService.getAllEateries();
       if (mounted) {
         setState(() {
           _foodEateries = (res is List && res.isNotEmpty) ? res : _defaultSpecialties;
@@ -283,7 +283,9 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
         return matchesSearch && ratingVal >= 4.5;
       }
       if (_selectedFilter == '🏆 OCOP') {
-        return matchesSearch && (catStr.toUpperCase().contains('OCOP') || item['is_ocop'] == true || item['is_ocop'] == 1 || item['is_ocop'] == '1');
+        final isMarket = cat.contains('chợ') || cat.contains('market') || item['category_slug'] == 'dong-anh-market';
+        final hasOcopBadge = catStr.toUpperCase().contains('OCOP') || item['is_ocop'] == true || item['is_ocop'] == 1 || item['is_ocop'] == '1' || item['ocop_star'] != null;
+        return matchesSearch && (isMarket || hasOcopBadge);
       }
       if (_selectedFilter == '🛵 Giao nhanh') {
         return matchesSearch && (item['has_delivery'] == true || item['has_delivery'] == 1 || item['has_delivery'] == '1');
