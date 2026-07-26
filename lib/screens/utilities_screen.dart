@@ -321,8 +321,14 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Icon(Icons.restaurant_menu_rounded, size: 16),
-                              SizedBox(width: 6),
-                              Text('ẨM THỰC TINH TÚY'),
+                              SizedBox(width: 4),
+                              Flexible(
+                                child: Text(
+                                  'ẨM THỰC TINH TÚY',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -331,8 +337,14 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Icon(Icons.storefront_rounded, size: 16),
-                              SizedBox(width: 6),
-                              Text('CHỢ SỐ & OCOP'),
+                              SizedBox(width: 4),
+                              Flexible(
+                                child: Text(
+                                  'CHỢ SỐ & OCOP',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
                             ],
                           ),
                         ),
