@@ -1035,19 +1035,50 @@ YÊU CẦU TRẢ VỀ CHỈ LÀ CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU, KHÔNG C
                 'is_ai_generated' => true,
             ]);
             
+            $allEateries = \App\Models\Eatery::all();
+            $validEateryIds = $allEateries->pluck('id')->toArray();
+            $usedEateryIds = [];
+
             foreach ($aiData['stops'] as $index => $stop) {
+                $rawId = $stop['eatery_id'] ?? null;
+                $selectedId = null;
+
+                if ($rawId && is_numeric($rawId) && in_array((int)$rawId, $validEateryIds) && !in_array((int)$rawId, $usedEateryIds)) {
+                    $selectedId = (int)$rawId;
+                }
+
+                if (!$selectedId && is_string($rawId)) {
+                    $found = $allEateries->first(function($e) use ($rawId) {
+                        return \Illuminate\Support\Str::contains(mb_strtolower($e->name), mb_strtolower($rawId));
+                    });
+                    if ($found && !in_array($found->id, $usedEateryIds)) {
+                        $selectedId = $found->id;
+                    }
+                }
+
+                if (!$selectedId) {
+                    $unused = array_diff($validEateryIds, $usedEateryIds);
+                    if (!empty($unused)) {
+                        $selectedId = reset($unused);
+                    } else {
+                        $selectedId = $validEateryIds[0] ?? 1;
+                    }
+                }
+
+                $usedEateryIds[] = $selectedId;
+
                 FoodTourStop::create([
-                    'food_tour_id' => $tour->id,
-                    'eatery_id' => $stop['eatery_id'],
-                    'stop_order' => $index + 1,
-                    'stop_story' => $stop['recommendation'] ?? ("Điểm đến thứ " . ($index + 1) . " trong hành trình " . $aiData['tour_name'] . "."),
+                    'food_tour_id'   => $tour->id,
+                    'eatery_id'      => $selectedId,
+                    'stop_order'     => $index + 1,
+                    'stop_story'     => $stop['recommendation'] ?? ("Điểm đến thứ " . ($index + 1) . " trong hành trình " . $aiData['tour_name'] . "."),
                     'estimated_time' => '45 phút'
                 ]);
             }
             
             return response()->json(['success' => true, 'slug' => $slug]);
             
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return response()->json(['success' => false, 'message' => 'Lỗi kết nối AI: ' . $e->getMessage()], 500);
         }
     }

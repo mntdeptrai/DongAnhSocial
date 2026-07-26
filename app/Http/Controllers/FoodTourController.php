@@ -208,18 +208,46 @@ YÊU CẦU TRẢ VỀ CHỈ LÀ CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU, KHÔNG C
                 'is_ai_generated' => true,      // Đánh dấu đây là AI Tour
             ]);
             
-            $existingEateryIds = \App\Models\Eatery::pluck('id')->toArray();
-            $defaultEateryId = !empty($existingEateryIds) ? $existingEateryIds[0] : 1;
+            $allEateries = \App\Models\Eatery::all();
+            $validEateryIds = $allEateries->pluck('id')->toArray();
+            $usedEateryIds = [];
 
             foreach ($aiData['stops'] as $index => $stop) {
-                $rawEateryId = isset($stop['eatery_id']) ? (int)$stop['eatery_id'] : $defaultEateryId;
-                $eateryId = in_array($rawEateryId, $existingEateryIds) ? $rawEateryId : $defaultEateryId;
+                $rawId = $stop['eatery_id'] ?? null;
+                $selectedId = null;
+
+                // 1. Kiểm tra ID có hợp lệ và chưa được dùng trong tour này
+                if ($rawId && is_numeric($rawId) && in_array((int)$rawId, $validEateryIds) && !in_array((int)$rawId, $usedEateryIds)) {
+                    $selectedId = (int)$rawId;
+                }
+
+                // 2. Kiểm tra nếu AI trả về chuỗi tên địa điểm
+                if (!$selectedId && is_string($rawId)) {
+                    $found = $allEateries->first(function($e) use ($rawId) {
+                        return \Illuminate\Support\Str::contains(mb_strtolower($e->name), mb_strtolower($rawId));
+                    });
+                    if ($found && !in_array($found->id, $usedEateryIds)) {
+                        $selectedId = $found->id;
+                    }
+                }
+
+                // 3. Fallback: Tự động chọn địa điểm chưa sử dụng trong DB
+                if (!$selectedId) {
+                    $unused = array_diff($validEateryIds, $usedEateryIds);
+                    if (!empty($unused)) {
+                        $selectedId = reset($unused);
+                    } else {
+                        $selectedId = $validEateryIds[0] ?? 1;
+                    }
+                }
+
+                $usedEateryIds[] = $selectedId;
 
                 FoodTourStop::create([
-                    'food_tour_id' => $tour->id,
-                    'eatery_id' => $eateryId,
-                    'stop_order' => $index + 1,
-                    'stop_story' => $stop['recommendation'] ?? ("Điểm đến thứ " . ($index + 1) . " trong hành trình " . $aiData['tour_name'] . "."),
+                    'food_tour_id'   => $tour->id,
+                    'eatery_id'      => $selectedId,
+                    'stop_order'     => $index + 1,
+                    'stop_story'     => $stop['recommendation'] ?? ("Điểm đến thứ " . ($index + 1) . " trong hành trình " . $aiData['tour_name'] . "."),
                     'estimated_time' => '45 phút'
                 ]);
             }
