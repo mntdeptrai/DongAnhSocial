@@ -18,7 +18,6 @@ import 'screens/manager_dashboard_screen.dart';
 import 'screens/admin_dashboard_screen.dart';
 import 'widgets/role_menu_drawer.dart';
 import 'widgets/top_nav_bar.dart';
-import 'widgets/floating_chat_bubble.dart';
 import 'widgets/universal_search_modal.dart';
 import 'widgets/my_cart_modal.dart';
 
@@ -459,14 +458,6 @@ class _MainLayoutState extends State<MainLayout> with WidgetsBindingObserver {
               );
             },
             child: _buildActiveRoleContent(screens),
-          ),
-          DraggableFloatingChatBubble(
-            onOpenChatTab: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const ChatScreen()),
-              );
-            },
           ),
         ],
       ),
