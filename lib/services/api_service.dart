@@ -71,7 +71,11 @@ class ApiService {
         }),
       );
 
-      final data = jsonDecode(response.body);
+      Map<String, dynamic> data = {};
+      try {
+        data = jsonDecode(response.body);
+      } catch (_) {}
+
       if (response.statusCode == 200 && data['success'] == true) {
         _token = data['token'];
         currentUser = data['user'];
@@ -90,9 +94,9 @@ class ApiService {
 
         return {'success': true};
       }
-      return {'success': false, 'message': data['message'] ?? 'Đăng nhập thất bại'};
+      return {'success': false, 'message': data['message'] ?? 'Đăng nhập không thành công (Mã ${response.statusCode})'};
     } catch (e) {
-      return {'success': false, 'message': 'Lỗi kết nối mạng'};
+      return {'success': false, 'message': 'Không thể kết nối máy chủ: $e'};
     }
   }
 
