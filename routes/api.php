@@ -67,6 +67,8 @@ Route::prefix('v1')->group(function () {
     Route::get('/seller/profile', [EateryApiController::class, 'getSellerProfile']);
     Route::post('/seller/profile', [EateryApiController::class, 'updateSellerProfile']);
     Route::get('/seller/orders', [EateryApiController::class, 'getSellerOrders']);
+    Route::get('/seller/dashboard-data', [EateryApiController::class, 'getSellerDashboardData']);
+    Route::get('/manager/dashboard-data', [EateryApiController::class, 'getManagerDashboardData']);
 
     // Videos Reels đặc sản (xem công khai)
     Route::get('/videos', [EateryApiController::class, 'getVideos']);

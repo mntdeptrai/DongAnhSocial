@@ -27,7 +27,7 @@ class RoleMenuDrawer extends StatelessWidget {
     final List<Map<String, dynamic>> availableRoles = [
       {
         'id': 'user',
-        'label': 'Chế độ Người Tiêu Dùng (Khám phá)',
+        'label': 'Giao Diện Người Tiêu Dùng (Khám phá)',
         'description': 'Bản đồ ẩm thực, Chợ số OCOP & Check-in',
         'icon': Icons.explore_rounded,
         'color': const Color(0xFF0EA5E9),
@@ -37,8 +37,8 @@ class RoleMenuDrawer extends StatelessWidget {
     if (userRole == 'seller' || userRole == 'admin') {
       availableRoles.add({
         'id': 'seller',
-        'label': 'Chế độ Chủ Gian Hàng (Seller Portal)',
-        'description': 'Quản lý đơn hàng, thực đơn & tiêu chuẩn ATTP',
+        'label': 'Kênh Quản Lý Cửa Hàng / Gian Hàng',
+        'description': 'Quản lý món ăn & đơn hàng thuộc sở hữu gian hàng',
         'icon': Icons.storefront_rounded,
         'color': const Color(0xFF059669),
       });
@@ -47,8 +47,8 @@ class RoleMenuDrawer extends StatelessWidget {
     if (userRole == 'manager' || userRole == 'admin') {
       availableRoles.add({
         'id': 'manager',
-        'label': 'Chế độ Ban Quản Lý Chợ (Manager)',
-        'description': 'Giám sát chợ, duyệt gian hàng & cảnh báo ATTP',
+        'label': 'Ban Quản Lý Chợ & An Toàn Thực Phẩm',
+        'description': 'Giám sát chợ, duyệt gian hàng & thống kê báo cáo',
         'icon': Icons.admin_panel_settings_rounded,
         'color': const Color(0xFF4F46E5),
       });
@@ -57,8 +57,8 @@ class RoleMenuDrawer extends StatelessWidget {
     if (userRole == 'admin') {
       availableRoles.add({
         'id': 'admin',
-        'label': 'Chế độ Quản Trị Viên (System Admin)',
-        'description': 'Phân quyền người dùng & quản trị toàn hệ thống',
+        'label': 'Trung Tâm Quản Trị Hệ Thống Admin',
+        'description': 'Quản trị CSDL toàn huyện & phân quyền tài khoản',
         'icon': Icons.shield_rounded,
         'color': const Color(0xFFDC2626),
       });

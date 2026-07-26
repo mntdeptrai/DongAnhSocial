@@ -765,4 +765,26 @@ class ApiService {
     } catch (_) {}
     return false;
   }
+
+  /// GET /seller/dashboard-data — Lấy dữ liệu gian hàng thuộc sở hữu của chủ tiệm
+  static Future<Map<String, dynamic>> getSellerDashboardData() async {
+    try {
+      final response = await http.get(Uri.parse('$baseUrl/seller/dashboard-data'), headers: _getHeaders());
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      }
+    } catch (_) {}
+    return {'success': false};
+  }
+
+  /// GET /manager/dashboard-data — Lấy dữ liệu giám sát chợ của Ban Quản Lý
+  static Future<Map<String, dynamic>> getManagerDashboardData() async {
+    try {
+      final response = await http.get(Uri.parse('$baseUrl/manager/dashboard-data'), headers: _getHeaders());
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      }
+    } catch (_) {}
+    return {'success': false};
+  }
 }

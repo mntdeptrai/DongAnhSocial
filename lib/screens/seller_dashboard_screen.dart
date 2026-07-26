@@ -51,24 +51,30 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> with Sing
   Future<void> _fetchSellerData() async {
     setState(() => _isLoading = true);
     try {
+      final dashRes = await ApiService.getSellerDashboardData();
       final profileRes = await ApiService.getSellerProfile();
-      final productsRes = await ApiService.getMarketProducts();
-      final ordersRes = await ApiService.getSellerOrders();
 
       if (mounted) {
-        final data = profileRes['data'] ?? profileRes;
-        _merchantNameController.text = data['merchant_name'] ?? '';
-        _businessItemsController.text = data['business_items'] ?? '';
-        _priceListedController.text = data['price_listed'] ?? '';
-        _productOriginController.text = data['product_origin'] ?? '';
-        _bankAccountController.text = data['bank_account'] ?? '';
-        _bankNameController.text = data['bank_name'] ?? '';
-        _phoneController.text = data['phone'] ?? '';
-        _hasSmartphone = data['has_smartphone'] ?? false;
-        _hasAttpCertificate = data['has_attp_certificate'] ?? false;
+        if (dashRes['success'] == true && dashRes['eatery'] != null) {
+          _merchantNameController.text = dashRes['eatery']['name'] ?? '';
+          _phoneController.text = dashRes['eatery']['phone'] ?? '';
+        } else {
+          final data = profileRes['data'] ?? profileRes;
+          _merchantNameController.text = data['merchant_name'] ?? '';
+          _phoneController.text = data['phone'] ?? '';
+        }
 
-        _myProducts = productsRes;
-        _receivedOrders = ordersRes;
+        if (dashRes['dishes'] is List && (dashRes['dishes'] as List).isNotEmpty) {
+          _myProducts = List<dynamic>.from(dashRes['dishes']);
+        } else {
+          _myProducts = await ApiService.getMarketProducts();
+        }
+
+        if (dashRes['orders'] is List && (dashRes['orders'] as List).isNotEmpty) {
+          _receivedOrders = List<dynamic>.from(dashRes['orders']);
+        } else {
+          _receivedOrders = await ApiService.getSellerOrders();
+        }
       }
     } catch (e) {
       debugPrint('SellerDashboard fetch error: $e');

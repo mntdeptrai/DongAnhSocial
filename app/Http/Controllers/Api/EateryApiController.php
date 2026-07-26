@@ -1762,4 +1762,81 @@ YÊU CẦU TRẢ VỀ CHỈ LÀ CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU, KHÔNG C
 
         return response()->json($orders, 200, [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     }
+
+    /**
+     * API Truy vấn Dữ liệu Gian Hàng thuộc sở hữu của User (Seller Portal Data)
+     */
+    public function getSellerDashboardData(Request $request)
+    {
+        $user = Auth::user() ?: auth('sanctum')->user();
+        $userId = $user ? $user->id : 0;
+
+        // Truy vấn cửa hàng/gian hàng thuộc sở hữu của tài khoản người dùng này
+        $myEatery = Eatery::where('user_id', $userId)->first();
+        if (!$myEatery && $user && !empty($user->phone)) {
+            $myEatery = Eatery::where('phone', $user->phone)->first();
+        }
+
+        $eateryId = $myEatery ? $myEatery->id : 0;
+
+        // Lấy danh sách món ăn thuộc sở hữu của gian hàng này
+        $dishes = $myEatery ? Dish::where('eatery_id', $eateryId)->get() : collect();
+
+        // Lấy danh sách đơn hàng đặt cho gian hàng này
+        $orders = DB::table('orders')
+            ->where('eatery_id', $eateryId)
+            ->latest()
+            ->get();
+
+        $totalRevenue = $orders->where('status', 'completed')->sum('total_amount');
+        $todayOrdersCount = $orders->where('created_at', '>=', now()->startOfDay())->count();
+        $pendingOrdersCount = $orders->where('status', 'pending')->count();
+
+        return response()->json([
+            'success' => true,
+            'eatery' => $myEatery ? [
+                'id' => $myEatery->id,
+                'name' => $myEatery->name,
+                'address' => $myEatery->address,
+                'phone' => $myEatery->phone,
+                'image_path' => $myEatery->image_path,
+                'rating' => $myEatery->rating,
+            ] : null,
+            'dishes' => $dishes,
+            'orders' => $orders,
+            'stats' => [
+                'total_revenue' => (int)$totalRevenue,
+                'today_orders' => $todayOrdersCount,
+                'pending_orders' => $pendingOrdersCount,
+                'dishes_count' => $dishes->count(),
+            ]
+        ], 200, [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    }
+
+    /**
+     * API Truy vấn Dữ liệu Quản lý Chợ (Manager Portal Data)
+     */
+    public function getManagerDashboardData(Request $request)
+    {
+        $stalls = Eatery::on('mysql_market')
+            ->select('id', 'name', 'address', 'phone', 'rating', 'status', 'user_id', 'created_at')
+            ->latest()
+            ->get();
+
+        $totalStalls = $stalls->count();
+        $activeStalls = $stalls->where('status', 'active')->count();
+        $pendingApprovals = $stalls->where('status', 'pending')->count();
+
+        return response()->json([
+            'success' => true,
+            'market_name' => 'Chợ Trung Tâm Đông Anh',
+            'stalls' => $stalls,
+            'stats' => [
+                'total_stalls' => $totalStalls,
+                'active_stalls' => $activeStalls,
+                'pending_approvals' => $pendingApprovals,
+                'attp_inspected' => (int)($totalStalls * 0.9),
+            ]
+        ], 200, [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    }
 }
