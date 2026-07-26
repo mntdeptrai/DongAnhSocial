@@ -79,10 +79,9 @@ class BackgroundPollingService : Service() {
     }
 
     private fun startPollingLoop() {
-        if (isPollingActive) return
-        isPollingActive = true
-
-        val runnable = object : Runnable {
+        // FCM Push Notification đã quản lý thông báo đẩy thời gian thực 100%
+        return
+    }
             override fun run() {
                 val token = getStoredAuthToken()
                 if (token != null) {

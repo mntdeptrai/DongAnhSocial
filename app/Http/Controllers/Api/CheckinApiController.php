@@ -406,4 +406,138 @@ class CheckinApiController extends Controller
             'message' => 'Đã cập nhật quyền thành công'
         ]);
     }
+
+    /**
+     * Lấy toàn bộ dữ liệu quản trị tổng quan cho Admin Dashboard Mobile App
+     */
+    public function getAdminDashboardData(Request $request)
+    {
+        $users = User::select('id', 'name', 'email', 'role', 'status', 'created_at')
+            ->orderBy('id', 'desc')
+            ->limit(100)
+            ->get();
+
+        $eateries = \App\Models\Eatery::with(['category', 'commune'])
+            ->orderBy('id', 'desc')
+            ->limit(100)
+            ->get()
+            ->map(function($e) {
+                return [
+                    'id'            => $e->id,
+                    'name'          => $e->name,
+                    'slug'          => $e->slug,
+                    'address'       => $e->address,
+                    'is_featured'   => (bool)$e->is_featured,
+                    'category_name' => $e->category?->name ?? 'Chưa phân loại',
+                    'category_slug' => $e->category?->slug ?? 'dong-anh-food-map',
+                    'commune_name'  => $e->commune?->name ?? 'Đông Anh',
+                    'image_path'    => $e->image_path ?? $e->image,
+                    'rating'        => (float)($e->rating ?? 4.5),
+                    'reviews_count' => (int)($e->reviews_count ?? 0),
+                ];
+            });
+
+        $categories = \App\Models\Category::select('id', 'name', 'slug', 'description', 'icon')
+            ->orderBy('id', 'asc')
+            ->get();
+
+        $reviews = \App\Models\Review::orderBy('id', 'desc')
+            ->limit(50)
+            ->get()
+            ->map(function($r) {
+                return [
+                    'id'         => $r->id,
+                    'user_name'  => $r->user_name ?? 'Một khách hàng',
+                    'rating'     => (int)$r->rating,
+                    'comment'    => $r->comment,
+                    'eatery_id'  => $r->eatery_id,
+                    'created_at' => $r->created_at ? $r->created_at->diffForHumans() : 'Vừa xong',
+                ];
+            });
+
+        $stats = [
+            'total_users'      => User::count(),
+            'total_eateries'   => \App\Models\Eatery::count(),
+            'total_categories' => \App\Models\Category::count(),
+            'total_reviews'    => \App\Models\Review::count(),
+            'total_sellers'    => User::where('role', 'seller')->count(),
+            'total_managers'   => User::where('role', 'manager')->count(),
+        ];
+
+        return response()->json([
+            'success'    => true,
+            'stats'      => $stats,
+            'users'      => $users,
+            'eateries'   => $eateries,
+            'categories' => $categories,
+            'reviews'    => $reviews,
+        ]);
+    }
+
+    /**
+     * Bật / Tắt trạng thái Địa điểm Nổi bật (Featured)
+     */
+    public function toggleEateryFeatured(Request $request, $id)
+    {
+        $eatery = \App\Models\Eatery::find($id);
+        if (!$eatery) {
+            return response()->json(['success' => false, 'message' => 'Địa điểm không tồn tại'], 404);
+        }
+
+        $eatery->is_featured = !$eatery->is_featured;
+        $eatery->save();
+
+        return response()->json([
+            'success'     => true,
+            'is_featured' => (bool)$eatery->is_featured,
+            'message'     => 'Cập nhật trạng thái nổi bật thành công',
+        ]);
+    }
+
+    /**
+     * Xóa địa điểm từ Admin Mobile App
+     */
+    public function deleteEatery(Request $request, $id)
+    {
+        $eatery = \App\Models\Eatery::find($id);
+        if ($eatery) {
+            $eatery->delete();
+        }
+        return response()->json(['success' => true, 'message' => 'Đã xóa địa điểm']);
+    }
+
+    /**
+     * Xóa đánh giá vi phạm từ Admin Mobile App
+     */
+    public function deleteReview(Request $request, $id)
+    {
+        $review = \App\Models\Review::find($id);
+        if ($review) {
+            $review->delete();
+        }
+        return response()->json(['success' => true, 'message' => 'Đã xóa đánh giá']);
+    }
+
+    /**
+     * Thêm danh mục mới từ Admin Mobile App
+     */
+    public function storeCategory(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+        ]);
+
+        $category = \App\Models\Category::create([
+            'name'        => $request->name,
+            'slug'        => \Illuminate\Support\Str::slug($request->name),
+            'description' => $request->description ?? 'Danh mục mới',
+            'icon'        => $request->icon ?? '📍',
+        ]);
+
+        return response()->json([
+            'success'  => true,
+            'category' => $category,
+            'message'  => 'Tạo danh mục mới thành công',
+        ]);
+    }
 }

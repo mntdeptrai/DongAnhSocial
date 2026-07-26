@@ -70,9 +70,6 @@ class MainActivity : FlutterActivity() {
         // Create default Notification Channel
         createNotificationChannel()
 
-        // Start native Android BackgroundPollingService (runs independently even when app is killed/closed)
-        startBackgroundService()
-
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL).setMethodCallHandler { call, result ->
             when (call.method) {
                 "getInitialNotification" -> {

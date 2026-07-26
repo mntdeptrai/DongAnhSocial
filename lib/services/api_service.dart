@@ -788,6 +788,61 @@ class ApiService {
     return false;
   }
 
+  /// GET /admin/dashboard — Lấy dữ liệu quản trị tổng quan đầy đủ
+  static Future<Map<String, dynamic>> getAdminDashboardData() async {
+    try {
+      final response = await http.get(Uri.parse('$baseUrl/admin/dashboard'), headers: _getHeaders());
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      }
+    } catch (_) {}
+    return {'success': false};
+  }
+
+  /// POST /admin/eateries/{id}/toggle-featured — Bật/Tắt nổi bật
+  static Future<bool> toggleEateryFeatured(int id) async {
+    try {
+      final response = await http.post(Uri.parse('$baseUrl/admin/eateries/$id/toggle-featured'), headers: _getHeaders());
+      return response.statusCode == 200;
+    } catch (_) {}
+    return false;
+  }
+
+  /// DELETE /admin/eateries/{id} — Xóa địa điểm
+  static Future<bool> deleteEatery(int id) async {
+    try {
+      final response = await http.delete(Uri.parse('$baseUrl/admin/eateries/$id'), headers: _getHeaders());
+      return response.statusCode == 200;
+    } catch (_) {}
+    return false;
+  }
+
+  /// DELETE /admin/reviews/{id} — Xóa đánh giá
+  static Future<bool> deleteReview(int id) async {
+    try {
+      final response = await http.delete(Uri.parse('$baseUrl/admin/reviews/$id'), headers: _getHeaders());
+      return response.statusCode == 200;
+    } catch (_) {}
+    return false;
+  }
+
+  /// POST /admin/categories — Tạo danh mục mới
+  static Future<bool> createCategory(String name, String description, String icon) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/admin/categories'),
+        headers: _getHeaders(),
+        body: jsonEncode({
+          'name': name,
+          'description': description,
+          'icon': icon,
+        }),
+      );
+      return response.statusCode == 200;
+    } catch (_) {}
+    return false;
+  }
+
   /// GET /seller/dashboard-data — Lấy dữ liệu gian hàng thuộc sở hữu của chủ tiệm
   static Future<Map<String, dynamic>> getSellerDashboardData() async {
     try {

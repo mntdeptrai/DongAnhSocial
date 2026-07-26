@@ -266,12 +266,28 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
 
     final displayFood = _foodEateries.where((item) {
       final name = (item['name'] ?? '').toString().toLowerCase();
-      final cat = (item['category'] ?? '').toString().toLowerCase();
+      
+      String catStr = '';
+      if (item['category'] is Map) {
+        catStr = (item['category']['name'] ?? item['category']['slug'] ?? '').toString();
+      } else {
+        catStr = (item['category'] ?? '').toString();
+      }
+      final cat = catStr.toLowerCase();
       final q = _searchQuery.toLowerCase();
       final matchesSearch = name.contains(q) || cat.contains(q);
 
-      if (_selectedFilter == '⭐ Nổi bật') return matchesSearch && (item['rating'] ?? 0) >= 4.8;
-      if (_selectedFilter == '🏆 OCOP') return matchesSearch && (item['category'] ?? '').contains('OCOP');
+      if (_selectedFilter == '⭐ Nổi bật') {
+        final r = item['rating'];
+        final ratingVal = r is num ? r.toDouble() : (double.tryParse(r?.toString() ?? '') ?? 0.0);
+        return matchesSearch && ratingVal >= 4.5;
+      }
+      if (_selectedFilter == '🏆 OCOP') {
+        return matchesSearch && (catStr.toUpperCase().contains('OCOP') || item['is_ocop'] == true || item['is_ocop'] == 1 || item['is_ocop'] == '1');
+      }
+      if (_selectedFilter == '🛵 Giao nhanh') {
+        return matchesSearch && (item['has_delivery'] == true || item['has_delivery'] == 1 || item['has_delivery'] == '1');
+      }
       return matchesSearch;
     }).toList();
 
@@ -289,7 +305,7 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
           children: [
             // Top Modern Search & Tab Bar Navigation
             Container(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+              padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
               decoration: BoxDecoration(
                 color: Colors.white,
                 boxShadow: [
@@ -300,14 +316,16 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
                 children: [
                   // Tab Buttons (Ẩm thực Tinh túy vs Chợ số & OCOP)
                   Container(
-                    height: 48,
-                    padding: const EdgeInsets.all(4),
+                    height: 46,
+                    padding: const EdgeInsets.all(3),
                     decoration: BoxDecoration(
                       color: const Color(0xFFF1F5F9),
                       borderRadius: BorderRadius.circular(24),
                     ),
                     child: TabBar(
                       controller: _tabController,
+                      indicatorSize: TabBarIndicatorSize.tab,
+                      dividerColor: Colors.transparent,
                       indicator: BoxDecoration(
                         gradient: const LinearGradient(colors: [primaryColor, accentColor]),
                         borderRadius: BorderRadius.circular(20),
@@ -317,39 +335,38 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
                       ),
                       labelColor: Colors.white,
                       unselectedLabelColor: Colors.grey.shade700,
-                      labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                      unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                      labelPadding: const EdgeInsets.symmetric(horizontal: 4),
                       tabs: const [
                         Tab(
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.restaurant_menu_rounded, size: 16),
-                              SizedBox(width: 4),
-                              Flexible(
-                                child: Text(
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.restaurant_menu_rounded, size: 15),
+                                SizedBox(width: 3),
+                                Text(
                                   'ẨM THỰC TINH TÚY',
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
                         Tab(
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.storefront_rounded, size: 16),
-                              SizedBox(width: 4),
-                              Flexible(
-                                child: Text(
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.storefront_rounded, size: 15),
+                                SizedBox(width: 3),
+                                Text(
                                   'CHỢ SỐ & OCOP',
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
                       ],
