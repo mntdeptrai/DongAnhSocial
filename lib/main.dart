@@ -118,7 +118,7 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class NotificationHelper {
+class NativeNotificationService {
   static const _channel = MethodChannel('com.example.mobile/notifications');
   static Function(Map<String, dynamic>)? _onNotificationTapped;
 

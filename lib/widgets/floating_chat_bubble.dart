@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import '../services/notification_helper.dart';
 import '../screens/chat_screen.dart';
 import '../main.dart';
 
@@ -102,13 +103,17 @@ class _DraggableFloatingChatBubbleState extends State<DraggableFloatingChatBubbl
   Future<void> _initChatHeadData() async {
     if (!ApiService.isAuthenticated) return;
     try {
+      final bool canDraw = await NativeNotificationService.canDrawOverlays();
       final friends = await ApiService.getFriends();
-      if (mounted && friends.isNotEmpty) {
+      if (mounted) {
         setState(() {
-          _friendsList = friends;
-          if (_openChatHeads.isEmpty) {
-            _openChatHeads = [friends.first];
-            _activeFriend = friends.first;
+          _isActivated = canDraw;
+          if (friends.isNotEmpty) {
+            _friendsList = friends;
+            if (_openChatHeads.isEmpty) {
+              _openChatHeads = [friends.first];
+              _activeFriend = friends.first;
+            }
           }
         });
       }
@@ -161,7 +166,7 @@ class _DraggableFloatingChatBubbleState extends State<DraggableFloatingChatBubbl
             });
 
             // Trigger System Status Bar Notification Banner
-            NotificationHelper.showNotification(
+            NativeNotificationService.showNotification(
               title: _activeFriend?['name'] ?? 'Đông Anh Social',
               body: lastMsg['message'] ?? 'Bạn nhận được tin nhắn mới',
             );

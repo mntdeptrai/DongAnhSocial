@@ -454,8 +454,16 @@ class ProfileScreen extends StatelessWidget {
                       _showNotificationsModal(context);
                     }),
                     const Divider(height: 1),
-                    _optionTile(Icons.bubble_chart_outlined, 'Bong bóng chat nổi ngoài màn hình (System Overlay)', () {
-                      NotificationHelper.requestOverlayPermission();
+                    _optionTile(Icons.bubble_chart_outlined, 'Bong bóng chat nổi ngoài màn hình (System Overlay)', () async {
+                      final hasPerm = await NotificationHelper.checkAndRequestOverlayPermission(context);
+                      if (context.mounted && !hasPerm) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Vui lòng bật quyền "Hiển thị trên các ứng dụng khác" để sử dụng bong bóng chat nổi.'),
+                            backgroundColor: Colors.orange,
+                          ),
+                        );
+                      }
                     }),
                     const Divider(height: 1),
                     _optionTile(Icons.favorite_border, 'Địa điểm đã lưu', () {
