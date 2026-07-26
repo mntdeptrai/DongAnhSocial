@@ -518,7 +518,15 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('Danh Sách Quán Ăn Nổi Bật (${eateries.length})', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+            Expanded(
+              child: Text(
+                'Danh Sách Quán Ăn Nổi Bật (${eateries.length})',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+              ),
+            ),
+            const SizedBox(width: 8),
             const Text('Đông Anh, Hà Nội', style: TextStyle(fontSize: 12, color: Color(0xFF0EA5E9), fontWeight: FontWeight.w600)),
           ],
         ),
