@@ -85,58 +85,68 @@ class RoleMenuDrawer extends StatelessWidget {
               ),
             ),
 
-            // Scrollable Menu List based strictly on assigned account role
+            // Scrollable Menu List
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                 children: [
-                  Text(
-                    _getRoleSectionTitle(userRole),
-                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF64748B), letterSpacing: 0.8),
-                  ),
-                  const SizedBox(height: 12),
-
-                  // Role-specific navigation options
-                  if (userRole == 'admin') ...[
-                    _buildDrawerShortcut(
-                      icon: Icons.shield_rounded,
-                      title: 'Trung Tâm Quản Trị Admin',
-                      subtitle: 'Phân quyền người dùng & Thống kê CSDL',
-                      color: const Color(0xFFDC2626),
-                      onTap: () {
-                        Navigator.pop(context);
-                        onRoleChanged?.call('admin');
-                      },
+                  // Dedicated Management Portal Action Card for Privilege Roles
+                  if (userRole == 'seller') ...[
+                    const Text(
+                      'TRUNG TÂM DÀNH CHO CHỦ GIAN HÀNG',
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF64748B), letterSpacing: 0.8),
                     ),
-                  ] else if (userRole == 'manager') ...[
-                    _buildDrawerShortcut(
-                      icon: Icons.admin_panel_settings_rounded,
-                      title: 'Ban Quản Lý Chợ & ATTP',
-                      subtitle: 'Giám sát chợ, duyệt gian hàng & báo cáo',
-                      color: const Color(0xFF4F46E5),
-                      onTap: () {
-                        Navigator.pop(context);
-                        onRoleChanged?.call('manager');
-                      },
-                    ),
-                  ] else if (userRole == 'seller') ...[
-                    _buildDrawerShortcut(
+                    const SizedBox(height: 10),
+                    _buildPortalCard(
                       icon: Icons.storefront_rounded,
-                      title: 'Kênh Điều Hành Gian Hàng',
-                      subtitle: 'Quản lý thực đơn & Đơn hàng cửa hàng',
+                      title: 'Kênh Điều Hành Cửa Hàng',
+                      subtitle: 'Quản lý món ăn, thực đơn & đơn hàng cửa hàng',
                       color: const Color(0xFF059669),
                       onTap: () {
                         Navigator.pop(context);
                         onRoleChanged?.call('seller');
                       },
                     ),
+                    const Divider(height: 24),
+                  ] else if (userRole == 'manager') ...[
+                    const Text(
+                      'TRUNG TÂM BAN QUẢN LÝ CHỢ',
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF64748B), letterSpacing: 0.8),
+                    ),
+                    const SizedBox(height: 10),
+                    _buildPortalCard(
+                      icon: Icons.admin_panel_settings_rounded,
+                      title: 'Ban Quản Lý Chợ & ATTP',
+                      subtitle: 'Giám sát gian hàng, kiểm tra ATTP & duyệt hồ sơ',
+                      color: const Color(0xFF4F46E5),
+                      onTap: () {
+                        Navigator.pop(context);
+                        onRoleChanged?.call('manager');
+                      },
+                    ),
+                    const Divider(height: 24),
+                  ] else if (userRole == 'admin') ...[
+                    const Text(
+                      'TRUNG TÂM QUẢN TRỊ HỆ THỐNG',
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF64748B), letterSpacing: 0.8),
+                    ),
+                    const SizedBox(height: 10),
+                    _buildPortalCard(
+                      icon: Icons.shield_rounded,
+                      title: 'Trung Tâm Quản Trị Admin',
+                      subtitle: 'Quản lý tài khoản, phân quyền & CSDL toàn huyện',
+                      color: const Color(0xFFDC2626),
+                      onTap: () {
+                        Navigator.pop(context);
+                        onRoleChanged?.call('admin');
+                      },
+                    ),
+                    const Divider(height: 24),
                   ],
 
-                  if (userRole != 'user') const Divider(height: 24),
-
-                  // Standard Consumer Services
+                  // Standard Consumer Services Section
                   const Text(
-                    'DỊCH VỤ & KHÁM PHÁ CÔNG KHAI',
+                    'DỊCH VỤ & LỐI TẮC NGƯỜI DÙNG',
                     style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF64748B), letterSpacing: 0.8),
                   ),
                   const SizedBox(height: 10),
@@ -216,17 +226,38 @@ class RoleMenuDrawer extends StatelessWidget {
     );
   }
 
-  String _getRoleSectionTitle(String role) {
-    switch (role) {
-      case 'admin':
-        return 'CHỨC NĂNG QUẢN TRỊ VIÊN';
-      case 'manager':
-        return 'CHỨC NĂNG BAN QUẢN LÝ CHỢ';
-      case 'seller':
-        return 'CHỨC NĂNG CHỦ GIAN HÀNG';
-      default:
-        return 'TÍNH NĂNG NGƯỜI DÙNG';
-    }
+  Widget _buildPortalCard({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color, width: 1.5),
+      ),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        leading: CircleAvatar(
+          backgroundColor: color,
+          radius: 22,
+          child: Icon(icon, color: Colors.white, size: 22),
+        ),
+        title: Text(
+          title,
+          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: color),
+        ),
+        subtitle: Text(
+          subtitle,
+          style: TextStyle(fontSize: 11, color: Colors.grey.shade700),
+        ),
+        trailing: Icon(Icons.arrow_forward_ios_rounded, size: 16, color: color),
+        onTap: onTap,
+      ),
+    );
   }
 
   Widget _buildDrawerShortcut({

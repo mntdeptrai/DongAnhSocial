@@ -289,9 +289,8 @@ class _MainLayoutState extends State<MainLayout> with WidgetsBindingObserver {
     PaintingBinding.instance.imageCache.maximumSizeBytes = 30 * 1024 * 1024;
     PaintingBinding.instance.imageCache.maximumSize = 100;
 
-    // Thiết lập giao diện duy nhất chuẩn theo phân quyền tài khoản đã được cấp
-    final userRole = ApiService.currentUser?['role'] ?? 'user';
-    _activeRole = userRole;
+    // Tất cả mọi tài khoản (Admin, Seller, Manager, User) khi đăng nhập đều vào Giao diện Người dùng bình thường trước
+    _activeRole = 'user';
 
     _fetchDynamicCounts();
     _startTimer();
