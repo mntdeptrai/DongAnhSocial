@@ -3,14 +3,14 @@ import '../services/api_service.dart';
 
 class RoleMenuDrawer extends StatelessWidget {
   final String activeRole;
-  final Function(String newRole) onRoleChanged;
+  final Function(String newRole)? onRoleChanged;
   final Function(int tabIndex)? onNavigateTab;
   final VoidCallback? onLogout;
 
   const RoleMenuDrawer({
     super.key,
     required this.activeRole,
-    required this.onRoleChanged,
+    this.onRoleChanged,
     this.onNavigateTab,
     this.onLogout,
   });
@@ -22,47 +22,6 @@ class RoleMenuDrawer extends StatelessWidget {
     final userName = user?['name'] ?? 'Khách vãng lai';
     final userEmail = user?['email'] ?? 'Chưa đăng nhập';
     final userAvatar = user?['avatar'] ?? 'https://i.pravatar.cc/150?img=12';
-
-    // Build available roles based on strict user permissions (Khóa phân quyền chuẩn Web)
-    final List<Map<String, dynamic>> availableRoles = [
-      {
-        'id': 'user',
-        'label': 'Giao Diện Người Tiêu Dùng (Khám phá)',
-        'description': 'Bản đồ ẩm thực, Chợ số OCOP & Check-in',
-        'icon': Icons.explore_rounded,
-        'color': const Color(0xFF0EA5E9),
-      },
-    ];
-
-    if (userRole == 'seller' || userRole == 'admin') {
-      availableRoles.add({
-        'id': 'seller',
-        'label': 'Kênh Quản Lý Cửa Hàng / Gian Hàng',
-        'description': 'Quản lý món ăn & đơn hàng thuộc sở hữu gian hàng',
-        'icon': Icons.storefront_rounded,
-        'color': const Color(0xFF059669),
-      });
-    }
-
-    if (userRole == 'manager' || userRole == 'admin') {
-      availableRoles.add({
-        'id': 'manager',
-        'label': 'Ban Quản Lý Chợ & An Toàn Thực Phẩm',
-        'description': 'Giám sát chợ, duyệt gian hàng & thống kê báo cáo',
-        'icon': Icons.admin_panel_settings_rounded,
-        'color': const Color(0xFF4F46E5),
-      });
-    }
-
-    if (userRole == 'admin') {
-      availableRoles.add({
-        'id': 'admin',
-        'label': 'Trung Tâm Quản Trị Hệ Thống Admin',
-        'description': 'Quản trị CSDL toàn huyện & phân quyền tài khoản',
-        'icon': Icons.shield_rounded,
-        'color': const Color(0xFFDC2626),
-      });
-    }
 
     return Drawer(
       backgroundColor: Colors.white,
@@ -115,7 +74,7 @@ class RoleMenuDrawer extends StatelessWidget {
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
-                            'Quyền Hạn: ${userRole.toUpperCase()}',
+                            'QUYỀN HẠN: ${userRole.toUpperCase()}',
                             style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
                           ),
                         ),
@@ -126,65 +85,58 @@ class RoleMenuDrawer extends StatelessWidget {
               ),
             ),
 
-            // Scrollable Menu List
+            // Scrollable Menu List based strictly on assigned account role
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                 children: [
-                  if (availableRoles.length > 1) ...[
-                    const Text(
-                      'CHUYỂN ĐỔI CHẾ ĐỘ VAI TRÒ',
-                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF64748B), letterSpacing: 0.8),
+                  Text(
+                    _getRoleSectionTitle(userRole),
+                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF64748B), letterSpacing: 0.8),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Role-specific navigation options
+                  if (userRole == 'admin') ...[
+                    _buildDrawerShortcut(
+                      icon: Icons.shield_rounded,
+                      title: 'Trung Tâm Quản Trị Admin',
+                      subtitle: 'Phân quyền người dùng & Thống kê CSDL',
+                      color: const Color(0xFFDC2626),
+                      onTap: () {
+                        Navigator.pop(context);
+                        onRoleChanged?.call('admin');
+                      },
                     ),
-                    const SizedBox(height: 10),
-
-                    // Role Cards List according to permissions
-                    ...availableRoles.map((r) {
-                      final isSelected = activeRole == r['id'];
-                      final Color color = r['color'];
-
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 10),
-                        decoration: BoxDecoration(
-                          color: isSelected ? color.withValues(alpha: 0.08) : Colors.grey.shade50,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: isSelected ? color : Colors.grey.shade200,
-                            width: isSelected ? 2 : 1,
-                          ),
-                        ),
-                        child: ListTile(
-                          leading: CircleAvatar(
-                            backgroundColor: isSelected ? color : Colors.grey.shade200,
-                            child: Icon(r['icon'], color: isSelected ? Colors.white : Colors.grey.shade700, size: 20),
-                          ),
-                          title: Text(
-                            r['label'],
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold,
-                              color: isSelected ? color : const Color(0xFF0F172A),
-                            ),
-                          ),
-                          subtitle: Text(
-                            r['description'],
-                            style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
-                          ),
-                          trailing: isSelected ? Icon(Icons.check_circle_rounded, color: color, size: 20) : null,
-                          onTap: () {
-                            Navigator.pop(context); // Close Drawer
-                            onRoleChanged(r['id']);
-                          },
-                        ),
-                      );
-                    }),
-
-                    const Divider(height: 24),
+                  ] else if (userRole == 'manager') ...[
+                    _buildDrawerShortcut(
+                      icon: Icons.admin_panel_settings_rounded,
+                      title: 'Ban Quản Lý Chợ & ATTP',
+                      subtitle: 'Giám sát chợ, duyệt gian hàng & báo cáo',
+                      color: const Color(0xFF4F46E5),
+                      onTap: () {
+                        Navigator.pop(context);
+                        onRoleChanged?.call('manager');
+                      },
+                    ),
+                  ] else if (userRole == 'seller') ...[
+                    _buildDrawerShortcut(
+                      icon: Icons.storefront_rounded,
+                      title: 'Kênh Điều Hành Gian Hàng',
+                      subtitle: 'Quản lý thực đơn & Đơn hàng cửa hàng',
+                      color: const Color(0xFF059669),
+                      onTap: () {
+                        Navigator.pop(context);
+                        onRoleChanged?.call('seller');
+                      },
+                    ),
                   ],
 
-                  // Quick Shortcuts Section Header
+                  if (userRole != 'user') const Divider(height: 24),
+
+                  // Standard Consumer Services
                   const Text(
-                    'DỊCH VỤ & LỐI TẮC',
+                    'DỊCH VỤ & KHÁM PHÁ CÔNG KHAI',
                     style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF64748B), letterSpacing: 0.8),
                   ),
                   const SizedBox(height: 10),
@@ -192,36 +144,44 @@ class RoleMenuDrawer extends StatelessWidget {
                   _buildDrawerShortcut(
                     icon: Icons.map_rounded,
                     title: 'Bản Đồ Ẩm Thực & Di Sản Cổ Loa',
+                    subtitle: 'Khám phá địa điểm & quán ăn Đông Anh',
                     color: const Color(0xFF0EA5E9),
                     onTap: () {
                       Navigator.pop(context);
+                      onRoleChanged?.call('user');
                       onNavigateTab?.call(2); // Map Tab
                     },
                   ),
                   _buildDrawerShortcut(
-                    icon: Icons.storefront_rounded,
+                    icon: Icons.shopping_bag_rounded,
                     title: 'Chợ Số & Nông Sản OCOP',
+                    subtitle: 'Mua sắm đặc sản Đông Anh online',
                     color: const Color(0xFF059669),
                     onTap: () {
                       Navigator.pop(context);
+                      onRoleChanged?.call('user');
                       onNavigateTab?.call(3); // Market Tab
                     },
                   ),
                   _buildDrawerShortcut(
                     icon: Icons.photo_camera_rounded,
                     title: 'Check-in Locket Cổ Loa',
+                    subtitle: 'Bảng tin chia sẻ khoảnh khắc ẩm thực',
                     color: const Color(0xFFF59E0B),
                     onTap: () {
                       Navigator.pop(context);
+                      onRoleChanged?.call('user');
                       onNavigateTab?.call(0); // Feed Tab
                     },
                   ),
                   _buildDrawerShortcut(
                     icon: Icons.notifications_active_rounded,
                     title: 'Thông Báo Hệ Thống',
+                    subtitle: 'Cập nhật tin tức & đơn hàng',
                     color: const Color(0xFF6366F1),
                     onTap: () {
                       Navigator.pop(context);
+                      onRoleChanged?.call('user');
                       onNavigateTab?.call(4); // Notifs Tab
                     },
                   ),
@@ -256,21 +216,52 @@ class RoleMenuDrawer extends StatelessWidget {
     );
   }
 
+  String _getRoleSectionTitle(String role) {
+    switch (role) {
+      case 'admin':
+        return 'CHỨC NĂNG QUẢN TRỊ VIÊN';
+      case 'manager':
+        return 'CHỨC NĂNG BAN QUẢN LÝ CHỢ';
+      case 'seller':
+        return 'CHỨC NĂNG CHỦ GIAN HÀNG';
+      default:
+        return 'TÍNH NĂNG NGƯỜI DÙNG';
+    }
+  }
+
   Widget _buildDrawerShortcut({
     required IconData icon,
     required String title,
+    String? subtitle,
     required Color color,
     required VoidCallback onTap,
   }) {
-    return ListTile(
-      dense: true,
-      leading: Icon(icon, color: color, size: 22),
-      title: Text(
-        title,
-        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF334155)),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.grey.shade200),
       ),
-      trailing: const Icon(Icons.chevron_right_rounded, size: 18, color: Colors.grey),
-      onTap: onTap,
+      child: ListTile(
+        dense: true,
+        leading: CircleAvatar(
+          backgroundColor: color.withValues(alpha: 0.12),
+          child: Icon(icon, color: color, size: 20),
+        ),
+        title: Text(
+          title,
+          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+        ),
+        subtitle: subtitle != null
+            ? Text(
+                subtitle,
+                style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+              )
+            : null,
+        trailing: const Icon(Icons.chevron_right_rounded, size: 18, color: Colors.grey),
+        onTap: onTap,
+      ),
     );
   }
 }
