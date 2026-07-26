@@ -17,5 +17,8 @@ class CommentObserver
 
         // Broadcast real-time đến tất cả client
         broadcast(new NewCommentPosted($comment));
+
+        // Gửi thông báo tổng hợp kiểu Facebook & FCM push notification tới chủ bài viết
+        \App\Services\NotificationService::notifyComment($comment);
     }
 }

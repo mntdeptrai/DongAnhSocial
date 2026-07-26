@@ -30,6 +30,7 @@ Route::get('/api/eateries/search', [HomeController::class, 'searchEateries'])->n
 Route::get('/api/eateries/nearby', [HomeController::class, 'nearbyEateries'])->name('api.eateries.nearby');
 Route::get('/api/checkins/latest', [HomeController::class, 'latestCheckins'])->name('api.checkins.latest');
 Route::post('/api/checkins/{id}/react', [HomeController::class, 'reactToCheckin'])->name('api.checkins.react');
+Route::get('/api/user-notifications', [HomeController::class, 'getWebNotifications'])->name('api.user.notifications');
 
 // URL Thân thiện chuẩn SEO Google cho địa điểm ẩm thực & đặc sản
 Route::get('/dia-diem/{slug}', [EateryController::class, 'show'])->name('eatery.show');

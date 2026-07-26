@@ -357,6 +357,9 @@ class CheckinApiController extends Controller
 
         event(new CheckinReacted((int) $id, $request->type, $request->emoji, $counts, $total));
 
+        // Gửi thông báo tổng hợp kiểu Facebook & FCM push notification tới chủ bài viết
+        \App\Services\NotificationService::notifyReaction((int) $id, $request->type, $request->emoji, $userId);
+
         return response()->json([
             'success' => true,
             'message' => 'Thả cảm xúc thành công.',

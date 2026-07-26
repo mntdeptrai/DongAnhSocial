@@ -1,0 +1,388 @@
+<?php
+
+namespace App\Services;
+
+use App\Models\Checkin;
+use App\Models\FoodTourDiary;
+use App\Models\CheckinReaction;
+use App\Models\Comment;
+use App\Models\Review;
+use App\Models\User;
+use App\Models\Eatery;
+use App\Models\Friendship;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+use Carbon\Carbon;
+
+class NotificationService
+{
+    /**
+     * Lấy danh sách thông báo đã tổng hợp (Aggregated Notifications) theo dạng Facebook
+     */
+    public static function getNotificationsForUser(int $userId): array
+    {
+        $notifications = [];
+
+        try {
+            $user = User::find($userId);
+            if (!$user) return [];
+
+            // 1. Tải ID các bài viết checkin & nhật ký của user
+            $myCheckinIds = Checkin::where('user_id', $userId)->pluck('id')->toArray();
+            $myDiaryIds = FoodTourDiary::where('user_id', $userId)->pluck('id')->toArray();
+
+            // ========================================================
+            // A. THÔNG BÁO THẢ CẢM XÚC (Reactions) — TỔNG HỢP KIỂU FACEBOOK
+            // ========================================================
+            if (!empty($myCheckinIds) || !empty($myDiaryIds)) {
+                $reactionsQuery = CheckinReaction::where(function($q) use ($myCheckinIds, $myDiaryIds) {
+                    if (!empty($myCheckinIds)) {
+                        $q->orWhere(function($sub) use ($myCheckinIds) {
+                            $sub->where('reactionable_type', 'checkin')->whereIn('reactionable_id', $myCheckinIds);
+                        });
+                    }
+                    if (!empty($myDiaryIds)) {
+                        $q->orWhere(function($sub) use ($myDiaryIds) {
+                            $sub->where('reactionable_type', 'diary')->whereIn('reactionable_id', $myDiaryIds);
+                        });
+                    }
+                })
+                ->where(function($q) use ($userId) {
+                    $q->whereNull('user_id')->orWhere('user_id', '!=', $userId);
+                })
+                ->orderBy('created_at', 'desc')
+                ->get()
+                ->groupBy(function($r) {
+                    return $r->reactionable_type . '_' . $r->reactionable_id;
+                });
+
+                foreach ($reactionsQuery as $key => $group) {
+                    $first = $group->first();
+                    $totalReactors = $group->pluck('user_id')->filter()->unique()->count();
+                    if ($totalReactors === 0) {
+                        $totalReactors = $group->count();
+                    }
+
+                    $latestUser = $first->user ? $first->user->name : 'Một thành viên';
+                    $othersCount = max(0, $totalReactors - 1);
+                    $emoji = $first->emoji ?? '❤️';
+                    $postTypeLabel = $first->reactionable_type === 'checkin' ? 'check-in' : 'hành trình';
+
+                    if ($othersCount > 0) {
+                        $body = "{$latestUser} và {$othersCount} người khác đã thả cảm xúc bài viết {$postTypeLabel} của bạn.";
+                    } else {
+                        $body = "{$latestUser} đã thả {$emoji} bài viết {$postTypeLabel} của bạn.";
+                    }
+
+                    $notifications[] = [
+                        'id'        => 'react_' . $key . '_' . strtotime($first->created_at),
+                        'title'     => '❤️ Cảm xúc mới bài ' . $postTypeLabel,
+                        'body'      => $body,
+                        'time'      => Carbon::parse($first->created_at)->diffForHumans(),
+                        'time_ts'   => strtotime($first->created_at),
+                        'type'      => 'reaction',
+                        'icon'      => 'favorite',
+                        'is_read'   => false,
+                        'post_type' => $first->reactionable_type,
+                        'post_id'   => $first->reactionable_id,
+                    ];
+                }
+            }
+
+            // ========================================================
+            // B. THÔNG BÁO BÌNH LUẬN (Comments) — TỔNG HỢP KIỂU FACEBOOK
+            // ========================================================
+            if (!empty($myCheckinIds) || !empty($myDiaryIds)) {
+                $commentsQuery = Comment::where(function($q) use ($myCheckinIds, $myDiaryIds) {
+                    if (!empty($myCheckinIds)) {
+                        $q->orWhere(function($sub) use ($myCheckinIds) {
+                            $sub->where('commentable_type', 'App\\Models\\Checkin')->whereIn('commentable_id', $myCheckinIds);
+                        });
+                    }
+                    if (!empty($myDiaryIds)) {
+                        $q->orWhere(function($sub) use ($myDiaryIds) {
+                            $sub->where('commentable_type', 'App\\Models\\FoodTourDiary')->whereIn('commentable_id', $myDiaryIds);
+                        });
+                    }
+                })
+                ->where(function($q) use ($userId) {
+                    $q->whereNull('user_id')->orWhere('user_id', '!=', $userId);
+                })
+                ->orderBy('created_at', 'desc')
+                ->get()
+                ->groupBy(function($c) {
+                    return $c->commentable_type . '_' . $c->commentable_id;
+                });
+
+                foreach ($commentsQuery as $key => $group) {
+                    $first = $group->first();
+                    $totalCommenters = $group->pluck('user_id')->filter()->unique()->count();
+                    if ($totalCommenters === 0) {
+                        $totalCommenters = $group->count();
+                    }
+
+                    $latestUser = $first->display_name;
+                    $othersCount = max(0, $totalCommenters - 1);
+                    $postTypeLabel = str_contains($first->commentable_type, 'Checkin') ? 'check-in' : 'hành trình';
+
+                    if ($othersCount > 0) {
+                        $body = "{$latestUser} và {$othersCount} người khác đã bình luận về bài viết {$postTypeLabel} của bạn.";
+                    } else {
+                        $snippet = Str::limit($first->content ?? '', 45);
+                        $body = "{$latestUser} đã bình luận bài viết {$postTypeLabel} của bạn: \"{$snippet}\"";
+                    }
+
+                    $notifications[] = [
+                        'id'        => 'comment_' . $key . '_' . strtotime($first->created_at),
+                        'title'     => '💬 Bình luận mới bài ' . $postTypeLabel,
+                        'body'      => $body,
+                        'time'      => Carbon::parse($first->created_at)->diffForHumans(),
+                        'time_ts'   => strtotime($first->created_at),
+                        'type'      => 'comment',
+                        'icon'      => 'comment',
+                        'is_read'   => false,
+                        'post_type' => str_contains($first->commentable_type, 'Checkin') ? 'checkin' : 'diary',
+                        'post_id'   => $first->commentable_id,
+                    ];
+                }
+            }
+
+            // ========================================================
+            // C. THÔNG BÁO ĐÁNH GIÁ SẢN PHẨM / GIAN HÀNG (Reviews Aggregated)
+            // ========================================================
+            $myEateryIds = Eatery::where('user_id', $userId)->pluck('id')->toArray();
+            if (!empty($myEateryIds)) {
+                $reviewsQuery = Review::whereIn('eatery_id', $myEateryIds)
+                    ->orderBy('created_at', 'desc')
+                    ->get()
+                    ->groupBy('eatery_id');
+
+                foreach ($reviewsQuery as $eateryId => $group) {
+                    $first = $group->first();
+                    $totalReviewers = $group->count();
+                    $latestUser = $first->user_name ?? 'Một khách hàng';
+                    $othersCount = max(0, $totalReviewers - 1);
+
+                    if ($othersCount > 0) {
+                        $body = "{$latestUser} và {$othersCount} người khác đã gửi đánh giá về sản phẩm/gian hàng của bạn.";
+                    } else {
+                        $body = "{$latestUser} đã gửi đánh giá {$first->rating}⭐ về gian hàng/sản phẩm của bạn.";
+                    }
+
+                    $notifications[] = [
+                        'id'        => 'review_' . $eateryId . '_' . strtotime($first->created_at),
+                        'title'     => '⭐ Đánh giá mới cho gian hàng của bạn',
+                        'body'      => $body,
+                        'time'      => Carbon::parse($first->created_at)->diffForHumans(),
+                        'time_ts'   => strtotime($first->created_at),
+                        'type'      => 'review',
+                        'icon'      => 'star',
+                        'is_read'   => false,
+                    ];
+                }
+            }
+
+            // ========================================================
+            // D. THÔNG BÁO ĐƠN HÀNG CỬA HÀNG (Seller Orders)
+            // ========================================================
+            if (!empty($myEateryIds)) {
+                $sellerOrders = DB::table('orders')
+                    ->whereIn('eatery_id', $myEateryIds)
+                    ->latest()
+                    ->take(3)
+                    ->get();
+
+                foreach ($sellerOrders as $ord) {
+                    $notifications[] = [
+                        'id'      => 'seller_ord_' . $ord->id,
+                        'title'   => '🛒 Đơn hàng mới cho cửa hàng!',
+                        'body'    => 'Khách hàng vừa đặt đơn #' . ($ord->code ?? $ord->id) . ' với giá trị ' . number_format($ord->total_amount ?? $ord->total ?? 150000) . 'đ.',
+                        'time'    => isset($ord->created_at) ? Carbon::parse($ord->created_at)->diffForHumans() : 'Vừa xong',
+                        'time_ts' => isset($ord->created_at) ? strtotime($ord->created_at) : time(),
+                        'type'    => 'seller_order',
+                        'icon'    => 'storefront',
+                        'is_read' => false,
+                    ];
+                }
+            }
+
+            // ========================================================
+            // E. THÔNG BÁO ĐƠN HÀNG CÁ NHÂN (Buyer Orders)
+            // ========================================================
+            $myOrders = DB::table('orders')
+                ->where('user_id', $userId)
+                ->latest()
+                ->take(3)
+                ->get();
+
+            foreach ($myOrders as $ord) {
+                $statusText = match ($ord->status ?? 'pending') {
+                    'completed'  => 'giao thành công 🎉',
+                    'shipping'   => 'đang trên đường vận chuyển 🚚',
+                    'processing' => 'đang được người bán chuẩn bị 📦',
+                    default      => 'đã được xác nhận thành công ⏳',
+                };
+
+                $notifications[] = [
+                    'id'      => 'my_ord_' . $ord->id,
+                    'title'   => '📦 Đơn hàng #' . ($ord->code ?? $ord->id) . ' của bạn',
+                    'body'    => 'Đơn hàng mua đặc sản OCOP của bạn ' . $statusText,
+                    'time'    => isset($ord->created_at) ? Carbon::parse($ord->created_at)->diffForHumans() : 'Vừa xong',
+                    'time_ts' => isset($ord->created_at) ? strtotime($ord->created_at) : time(),
+                    'type'    => 'my_order',
+                    'icon'    => 'local_shipping',
+                    'is_read' => false,
+                ];
+            }
+
+            // ========================================================
+            // F. THÔNG BÁO LỜI MỜI KẾT BẠN (Friend Requests)
+            // ========================================================
+            $friendRequests = DB::table('friendships')
+                ->where('friend_id', $userId)
+                ->where('status', 'pending')
+                ->latest()
+                ->take(3)
+                ->get();
+
+            foreach ($friendRequests as $fr) {
+                $sender = User::find($fr->user_id);
+                if ($sender) {
+                    $notifications[] = [
+                        'id'      => 'fr_' . $fr->id,
+                        'title'   => '👥 Lời mời kết bạn mới',
+                        'body'    => $sender->name . ' đã gửi cho bạn một lời mời kết bạn mới.',
+                        'time'    => isset($fr->created_at) ? Carbon::parse($fr->created_at)->diffForHumans() : 'Vừa xong',
+                        'time_ts' => isset($fr->created_at) ? strtotime($fr->created_at) : time(),
+                        'type'    => 'friend',
+                        'icon'    => 'person_add',
+                        'is_read' => false,
+                    ];
+                }
+            }
+
+            // Sắp xếp lại theo mốc thời gian mới nhất xếp trên cùng
+            usort($notifications, function($a, $b) {
+                return ($b['time_ts'] ?? 0) <=> ($a['time_ts'] ?? 0);
+            });
+
+        } catch (\Throwable $e) {
+            \Log::error('Error generating notifications: ' . $e->getMessage());
+        }
+
+        return $notifications;
+    }
+
+    /**
+     * Bắn FCM Push Notification khi có lượt Thả Cảm Xúc mới
+     */
+    public static function notifyReaction(int $postId, string $type, string $emoji, ?int $reactorUserId): void
+    {
+        try {
+            $post = null;
+            if ($type === 'checkin') {
+                $post = Checkin::find($postId);
+            } else if ($type === 'diary') {
+                $post = FoodTourDiary::find($postId);
+            }
+
+            if (!$post || !$post->user_id) return;
+            if ($reactorUserId && (int)$reactorUserId === (int)$post->user_id) return; // Không tự thông báo mình
+
+            $author = User::find($post->user_id);
+            if (!$author) return;
+
+            // Tính tổng người thả cảm xúc bài này
+            $allReactors = CheckinReaction::where('reactionable_type', $type)
+                ->where('reactionable_id', $postId)
+                ->where(function($q) use ($post) {
+                    $q->whereNull('user_id')->orWhere('user_id', '!=', $post->user_id);
+                })
+                ->latest()
+                ->get();
+
+            $totalReactors = $allReactors->pluck('user_id')->filter()->unique()->count();
+            if ($totalReactors === 0) $totalReactors = $allReactors->count();
+
+            $first = $allReactors->first();
+            $latestName = $first && $first->user ? $first->user->name : 'Một thành viên';
+            $othersCount = max(0, $totalReactors - 1);
+            $postTypeLabel = $type === 'checkin' ? 'check-in' : 'hành trình';
+
+            if ($othersCount > 0) {
+                $title = "❤️ Cảm xúc mới bài {$postTypeLabel}";
+                $body  = "{$latestName} và {$othersCount} người khác đã thả cảm xúc bài viết {$postTypeLabel} của bạn.";
+            } else {
+                $title = "❤️ Cảm xúc mới bài {$postTypeLabel}";
+                $body  = "{$latestName} đã thả {$emoji} bài viết {$postTypeLabel} của bạn.";
+            }
+
+            if (!empty($author->fcm_token)) {
+                FcmService::sendNotification($author->fcm_token, $title, $body, [
+                    'type' => 'reaction',
+                    'post_id' => (string)$postId,
+                ]);
+            }
+        } catch (\Throwable $e) {
+            \Log::error('notifyReaction Exception: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Bắn FCM Push Notification khi có Bình Luận mới
+     */
+    public static function notifyComment(Comment $comment): void
+    {
+        try {
+            $post = null;
+            $type = 'checkin';
+            if (str_contains($comment->commentable_type, 'Checkin')) {
+                $post = Checkin::find($comment->commentable_id);
+                $type = 'checkin';
+            } else if (str_contains($comment->commentable_type, 'FoodTourDiary')) {
+                $post = FoodTourDiary::find($comment->commentable_id);
+                $type = 'diary';
+            }
+
+            if (!$post || !$post->user_id) return;
+            if ($comment->user_id && (int)$comment->user_id === (int)$post->user_id) return; // Không tự thông báo mình
+
+            $author = User::find($post->user_id);
+            if (!$author) return;
+
+            // Tính tổng người đã bình luận bài này
+            $allComments = Comment::where('commentable_type', $comment->commentable_type)
+                ->where('commentable_id', $comment->commentable_id)
+                ->where(function($q) use ($post) {
+                    $q->whereNull('user_id')->orWhere('user_id', '!=', $post->user_id);
+                })
+                ->latest()
+                ->get();
+
+            $totalCommenters = $allComments->pluck('user_id')->filter()->unique()->count();
+            if ($totalCommenters === 0) $totalCommenters = $allComments->count();
+
+            $latestName = $comment->display_name;
+            $othersCount = max(0, $totalCommenters - 1);
+            $postTypeLabel = $type === 'checkin' ? 'check-in' : 'hành trình';
+
+            if ($othersCount > 0) {
+                $title = "💬 Bình luận mới bài {$postTypeLabel}";
+                $body  = "{$latestName} và {$othersCount} người khác đã bình luận về bài viết {$postTypeLabel} của bạn.";
+            } else {
+                $snippet = Str::limit($comment->content ?? '', 45);
+                $title = "💬 Bình luận mới bài {$postTypeLabel}";
+                $body  = "{$latestName} đã bình luận bài viết {$postTypeLabel} của bạn: \"{$snippet}\"";
+            }
+
+            if (!empty($author->fcm_token)) {
+                FcmService::sendNotification($author->fcm_token, $title, $body, [
+                    'type' => 'comment',
+                    'post_id' => (string)$comment->commentable_id,
+                ]);
+            }
+        } catch (\Throwable $e) {
+            \Log::error('notifyComment Exception: ' . $e->getMessage());
+        }
+    }
+}

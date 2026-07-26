@@ -162,20 +162,33 @@
                             </svg>
                         </a>
 
-                        <!-- Nút Thông báo (Pure Notifications Dropdown) -->
+                        <!-- Nút Thông báo (Pure Notifications Dropdown with Facebook Aggregations) -->
                         <div class="notif-dropdown" x-data="{ 
                             open: false, 
-                            friendRequestsCount: {{ $pendingCount }}
+                            items: [],
+                            loading: false,
+                            fetchNotifications() {
+                                if (this.items.length === 0) {
+                                    this.loading = true;
+                                    fetch('/api/user-notifications')
+                                        .then(res => res.json())
+                                        .then(data => {
+                                            this.items = data;
+                                            this.loading = false;
+                                        })
+                                        .catch(() => { this.loading = false; });
+                                }
+                            }
                         }" @click.outside="open = false" style="position: relative; display: flex; align-items: center;">
                             
-                            <button @click="open = !open" class="header-action-btn" title="Thông báo" style="outline: none; border: none; background: rgba(0, 0, 0, 0.05); cursor: pointer; position: relative;">
+                            <button @click="open = !open; if(open) fetchNotifications();" class="header-action-btn" title="Thông báo" style="outline: none; border: none; background: rgba(0, 0, 0, 0.05); cursor: pointer; position: relative;">
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
                                     <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
                                 </svg>
-                                @if($pendingCount > 0)
-                                    <span class="badge" style="position: absolute; top: -2px; right: -2px;">{{ $pendingCount }}</span>
-                                @endif
+                                <template x-if="items.length > 0">
+                                    <span class="badge" style="position: absolute; top: -2px; right: -2px;" x-text="items.length"></span>
+                                </template>
                             </button>
 
                             <!-- Dropdown Menu -->
@@ -191,31 +204,43 @@
                                 
                                 <div style="padding: 16px 18px; border-bottom: 1px solid rgba(0,0,0,0.06); display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.015);">
                                     <h4 style="margin: 0; font-size: 1.05rem; font-weight: 800; color: var(--text-main, #1e293b); font-family: var(--font-heading);">Thông báo</h4>
-                                    @if($pendingCount > 0)
-                                        <span style="font-size: 0.78rem; color: #ea580c; font-weight: 700; background: rgba(234,88,12,0.1); padding: 3px 8px; border-radius: 12px;">{{ $pendingCount }} mới</span>
-                                    @endif
+                                    <template x-if="items.length > 0">
+                                        <span style="font-size: 0.78rem; color: #ea580c; font-weight: 700; background: rgba(234,88,12,0.1); padding: 3px 8px; border-radius: 12px;" x-text="items.length + ' mới'"></span>
+                                    </template>
                                 </div>
 
                                 <div style="max-height: 380px; overflow-y: auto; display: flex; flex-direction: column; padding: 8px 0; -webkit-overflow-scrolling: touch;">
-                                    @if($pendingCount > 0)
-                                        <a href="/social" style="display: flex; align-items: center; gap: 12px; padding: 14px 18px; text-decoration: none; background: rgba(14, 165, 233, 0.06); border-bottom: 1px solid rgba(0,0,0,0.04);">
-                                            <div style="width: 38px; height: 38px; border-radius: 50%; background: #0ea5e9; color: white; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0;">👥</div>
-                                            <div style="flex: 1;">
-                                                <div style="font-size: 0.88rem; font-weight: 800; color: #0284c7;">Lời mời kết bạn</div>
-                                                <div style="font-size: 0.78rem; color: #64748b;">Bạn có {{ $pendingCount }} lời mời kết bạn mới đang chờ</div>
-                                            </div>
-                                        </a>
-                                    @else
-                                        <!-- Empty state -->
+                                    <div x-show="loading" style="padding: 30px; text-align: center; color: var(--text-muted, #64748b); font-size: 0.88rem;">
+                                        <span style="display: inline-block; animation: spin 1s linear infinite; margin-right: 6px;">⏳</span> Đang tải...
+                                    </div>
+
+                                    <template x-if="!loading && items.length > 0">
+                                        <div style="display: flex; flex-direction: column;">
+                                            <template x-for="item in items" :key="item.id">
+                                                <a :href="item.type === 'reaction' || item.type === 'comment' ? '/checkin' : (item.type === 'friend' ? '/social' : '/orders')" style="display: flex; align-items: flex-start; gap: 12px; padding: 12px 18px; text-decoration: none; color: inherit; border-bottom: 1px solid rgba(0,0,0,0.03); transition: background 0.15s;" onmouseover="this.style.background='rgba(0,0,0,0.02)'" onmouseout="this.style.background='transparent'">
+                                                    <div style="width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0; background: rgba(14,165,233,0.1);">
+                                                        <span x-text="item.type === 'reaction' ? '❤️' : (item.type === 'comment' ? '💬' : (item.type === 'friend' ? '👥' : '📦'))"></span>
+                                                    </div>
+                                                    <div style="flex: 1; display: flex; flex-direction: column; gap: 2px;">
+                                                        <span style="font-size: 0.84rem; font-weight: 800; color: var(--text-main, #0f172a);" x-text="item.title"></span>
+                                                        <span style="font-size: 0.8rem; color: var(--text-muted, #475569); line-height: 1.35;" x-text="item.body"></span>
+                                                        <span style="font-size: 0.72rem; color: #94a3b8; margin-top: 2px;" x-text="item.time"></span>
+                                                    </div>
+                                                </a>
+                                            </template>
+                                        </div>
+                                    </template>
+
+                                    <template x-if="!loading && items.length === 0">
                                         <div style="padding: 40px 20px; text-align: center; color: var(--text-muted, #64748b); font-size: 0.88rem; display: flex; flex-direction: column; align-items: center; gap: 8px;">
                                             <span style="font-size: 2rem;">🔔</span>
                                             <span>Hiện chưa có thông báo mới nào.</span>
                                         </div>
-                                    @endif
+                                    </template>
                                 </div>
 
                                 <div style="border-top: 1px solid rgba(0,0,0,0.06); text-align: center; background: rgba(0,0,0,0.015);">
-                                    <a href="/social" style="display: block; padding: 12px; font-size: 0.82rem; color: var(--text-main, #1e293b); text-decoration: none; font-weight: 700;">
+                                    <a href="/checkin" style="display: block; padding: 12px; font-size: 0.82rem; color: var(--text-main, #1e293b); text-decoration: none; font-weight: 700;">
                                         Xem tất cả thông báo ➔
                                     </a>
                                 </div>

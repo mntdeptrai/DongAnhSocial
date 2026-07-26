@@ -1571,141 +1571,37 @@ YÊU CẦU TRẢ VỀ CHỈ LÀ CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU, KHÔNG C
         $notifications = [];
         $user = Auth::guard('sanctum')->user() ?? Auth::user();
 
-
         try {
             if ($user) {
-                $userId = $user->id;
-
-                // 1. Thông báo Đơn Hàng Mới của Cửa Hàng Tôi (Dành cho Chủ hộ kinh doanh / Gian hàng)
-                try {
-                    $myEateryIds = \App\Models\Eatery::where('user_id', $userId)->pluck('id')->toArray();
-                    if (!empty($myEateryIds)) {
-                        $sellerOrders = \DB::table('orders')
-                            ->whereIn('eatery_id', $myEateryIds)
-                            ->latest()
-                            ->take(3)
-                            ->get();
-
-                        foreach ($sellerOrders as $ord) {
-                            $notifications[] = [
-                                'id' => 'seller_ord_' . $ord->id,
-                                'title' => '🛒 Đơn hàng mới cho cửa hàng của bạn!',
-                                'body' => 'Khách hàng vừa đặt đơn #' . ($ord->code ?? $ord->id) . ' với giá trị ' . number_format($ord->total_amount ?? $ord->total ?? 150000) . 'đ.',
-                                'time' => isset($ord->created_at) ? \Carbon\Carbon::parse($ord->created_at)->diffForHumans() : 'Vừa xong',
-                                'type' => 'seller_order',
-                                'icon' => 'storefront',
-                                'is_read' => false,
-                            ];
-                        }
-                    }
-                } catch (\Exception $e) {}
-
-                // 2. Thông báo Cập Nhật Trạng Thái Đơn Hàng Cá Nhân Tôi (Dành cho Người mua)
-                try {
-                    $myOrders = \DB::table('orders')
-                        ->where('user_id', $userId)
-                        ->latest()
-                        ->take(3)
-                        ->get();
-
-                    foreach ($myOrders as $ord) {
-                        $statusText = match ($ord->status ?? 'pending') {
-                            'completed' => 'giao thành công 🎉',
-                            'shipping' => 'đang trên đường vận chuyển 🚚',
-                            'processing' => 'đang được người bán chuẩn bị 📦',
-                            default => 'đã được xác nhận thành công ⏳',
-                        };
-
-                        $notifications[] = [
-                            'id' => 'my_ord_' . $ord->id,
-                            'title' => '📦 Đơn hàng #' . ($ord->code ?? $ord->id) . ' của bạn',
-                            'body' => 'Đơn hàng mua đặc sản OCOP của bạn ' . $statusText,
-                            'time' => isset($ord->created_at) ? \Carbon\Carbon::parse($ord->created_at)->diffForHumans() : 'Vừa xong',
-                            'type' => 'my_order',
-                            'icon' => 'local_shipping',
-                            'is_read' => false,
-                        ];
-                    }
-                } catch (\Exception $e) {}
-
-                // 3. Thông báo Bình Luận & Tương Tác trên Bài Check-in của Tôi
-                try {
-                    $myCheckinIds = Checkin::where('user_id', $userId)->pluck('id')->toArray();
-                    if (!empty($myCheckinIds)) {
-                        $commentsOnMyPosts = \DB::table('comments')
-                            ->whereIn('commentable_id', $myCheckinIds)
-                            ->where('user_id', '!=', $userId)
-                            ->latest()
-                            ->take(3)
-                            ->get();
-
-                        foreach ($commentsOnMyPosts as $cmt) {
-                            $commenter = \App\Models\User::find($cmt->user_id);
-                            $commenterName = $commenter ? $commenter->name : 'Một thành viên';
-                            $notifications[] = [
-                                'id' => 'cmt_' . $cmt->id,
-                                'title' => '💬 Bình luận mới bài check-in của bạn',
-                                'body' => $commenterName . ' vừa bình luận: "' . \Str::limit($cmt->content ?? '', 50) . '"',
-                                'time' => isset($cmt->created_at) ? \Carbon\Carbon::parse($cmt->created_at)->diffForHumans() : 'Vừa xong',
-                                'type' => 'comment',
-                                'icon' => 'comment',
-                                'is_read' => false,
-                            ];
-                        }
-                    }
-                } catch (\Exception $e) {}
-
-                // 4. Lời Mới Kết Bạn & Tương Tác Bạn Bè Mới
-                try {
-                    $friendRequests = \DB::table('friendships')
-                        ->where('friend_id', $userId)
-                        ->where('status', 'pending')
-                        ->latest()
-                        ->take(2)
-                        ->get();
-
-                    foreach ($friendRequests as $fr) {
-                        $sender = \App\Models\User::find($fr->user_id);
-                        if ($sender) {
-                            $notifications[] = [
-                                'id' => 'fr_' . $fr->id,
-                                'title' => '👥 Lời mời kết bạn mới',
-                                'body' => $sender->name . ' đã gửi cho bạn một lời mời kết bạn mới.',
-                                'time' => isset($fr->created_at) ? \Carbon\Carbon::parse($fr->created_at)->diffForHumans() : 'Vừa xong',
-                                'type' => 'friend',
-                                'icon' => 'person_add',
-                                'is_read' => false,
-                            ];
-                        }
-                    }
-                } catch (\Exception $e) {}
+                $notifications = \App\Services\NotificationService::getNotificationsForUser($user->id);
             }
 
-            // 5. Nếu chưa có thông báo riêng, hiển thị thông báo Chào mừng cá nhân
             if (empty($notifications)) {
                 if ($user) {
                     $notifications[] = [
-                        'id' => 'user_welcome',
-                        'title' => '👋 Chào mừng ' . $user->name . '!',
-                        'body' => 'Tất cả thông báo đơn hàng cá nhân, bình luận bài viết và kết bạn mới của bạn sẽ hiển thị tại đây.',
-                        'time' => 'Hôm nay',
-                        'type' => 'system',
-                        'icon' => 'notifications_active',
-                        'is_read' => false,
+                        'id'        => 'user_welcome',
+                        'title'     => '👋 Chào mừng ' . $user->name . '!',
+                        'body'      => 'Tất cả thông báo đơn hàng cá nhân, tương tác cảm xúc, bình luận bài viết và kết bạn mới sẽ hiển thị tại đây.',
+                        'time'      => 'Hôm nay',
+                        'type'      => 'system',
+                        'icon'      => 'notifications_active',
+                        'is_read'   => false,
                     ];
                 } else {
                     $notifications[] = [
-                        'id' => 'guest_welcome',
-                        'title' => '🔔 Thông báo Đông Anh Discovery',
-                        'body' => 'Vui lòng đăng nhập để nhận thông báo đơn hàng cá nhân, trạng thái cửa hàng và lời mời kết bạn.',
-                        'time' => 'Hôm nay',
-                        'type' => 'system',
-                        'icon' => 'notifications_active',
-                        'is_read' => false,
+                        'id'        => 'guest_welcome',
+                        'title'     => '🔔 Thông báo Đông Anh Social',
+                        'body'      => 'Vui lòng đăng nhập để nhận thông báo đơn hàng cá nhân, tương tác bài viết và lời mời kết bạn.',
+                        'time'      => 'Hôm nay',
+                        'type'      => 'system',
+                        'icon'      => 'notifications_active',
+                        'is_read'   => false,
                     ];
                 }
             }
-        } catch (\Exception $e) {}
+        } catch (\Exception $e) {
+            \Log::error('getAppNotifications Exception: ' . $e->getMessage());
+        }
 
         return response()->json($notifications, 200, [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     }

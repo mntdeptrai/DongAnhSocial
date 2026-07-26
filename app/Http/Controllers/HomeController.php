@@ -349,6 +349,20 @@ class HomeController extends Controller
     }
 
     /**
+     * Lấy danh sách thông báo tổng hợp chuẩn Facebook cho Web Header
+     */
+    public function getWebNotifications(Request $request)
+    {
+        $userId = session('user_id') ?? auth()->id();
+        if (!$userId) {
+            return response()->json([]);
+        }
+
+        $notifications = \App\Services\NotificationService::getNotificationsForUser($userId);
+        return response()->json($notifications);
+    }
+
+    /**
      * API phát event thả emoji (Reactions) qua WebSocket
      */
     public function reactToCheckin(Request $request, $id)
