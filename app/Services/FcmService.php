@@ -32,8 +32,15 @@ class FcmService
                 $serviceAccountPath = $secondaryPath;
             }
 
-            if ($serviceAccountPath && file_exists($serviceAccountPath)) {
+            $serviceAccount = null;
+            $envJson = env('FCM_SERVICE_ACCOUNT_JSON');
+            if (!empty($envJson)) {
+                $serviceAccount = is_array($envJson) ? $envJson : json_decode($envJson, true);
+            } else if ($serviceAccountPath && file_exists($serviceAccountPath)) {
                 $serviceAccount = json_decode(file_get_contents($serviceAccountPath), true);
+            }
+
+            if (!empty($serviceAccount) && is_array($serviceAccount)) {
                 $projectId = $serviceAccount['project_id'] ?? null;
 
                 if ($projectId) {
