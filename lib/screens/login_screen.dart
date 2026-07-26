@@ -164,7 +164,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             const Text(
                               'Bản đồ Ẩm thực • Chợ số OCOP • Check-in Cổ Loa',
                               textAlign: TextAlign.center,
-                              style: TextStyle(fontSize: 12, color: Colors.white90, fontWeight: FontWeight.w500),
+                              style: TextStyle(fontSize: 12, color: Colors.white70, fontWeight: FontWeight.w500),
                             ),
                           ],
                         ),
@@ -176,8 +176,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
                           _buildFeatureBadge('🍜 Ẩm Thực', Colors.orange),
-                          _buildFeatureBadge('🏆 OCOP 5★', Colors.emerald),
-                          _buildFeatureBadge('📸 Check-in', Colors.sky),
+                          _buildFeatureBadge('🏆 OCOP 5★', Colors.green),
+                          _buildFeatureBadge('📸 Check-in', Colors.lightBlue),
                         ],
                       ),
                       const SizedBox(height: 24),
