@@ -205,8 +205,8 @@ class _AppEntryScreenState extends State<AppEntryScreen> {
   void initState() {
     super.initState();
     _checkLoginStatus();
-    NotificationHelper.requestPermission();
-    NotificationHelper.requestOverlayPermission();
+    NativeNotificationService.requestPermission();
+    NativeNotificationService.requestOverlayPermission();
   }
 
   void _checkLoginStatus() {
@@ -214,7 +214,7 @@ class _AppEntryScreenState extends State<AppEntryScreen> {
       _isLoggedIn = ApiService.isAuthenticated;
       if (_isLoggedIn) {
         _isSkipped = false;
-        NotificationHelper.setAuthToken(ApiService.token);
+        NativeNotificationService.setAuthToken(ApiService.token);
       }
     });
   }
@@ -224,7 +224,7 @@ class _AppEntryScreenState extends State<AppEntryScreen> {
       _isLoggedIn = true;
       _isSkipped = false;
     });
-    NotificationHelper.setAuthToken(ApiService.token);
+    NativeNotificationService.setAuthToken(ApiService.token);
   }
 
   void _onSkip() {
@@ -306,7 +306,7 @@ class _MainLayoutState extends State<MainLayout> with WidgetsBindingObserver {
       }
     });
 
-    NotificationHelper.initialize((data) {
+    NativeNotificationService.initialize((data) {
       if (data['target'] == 'chat' && mounted) {
         Navigator.push(
           context,
