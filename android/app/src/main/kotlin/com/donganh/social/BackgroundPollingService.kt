@@ -1,4 +1,4 @@
-package com.example.mobile
+package com.donganh.social
 
 import android.app.Notification
 import android.app.NotificationChannel
@@ -40,7 +40,6 @@ class BackgroundPollingService : Service() {
 
         startPollingLoop()
 
-        // START_STICKY tells Android OS to keep running / restart service if killed
         return START_STICKY
     }
 

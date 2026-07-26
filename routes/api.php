@@ -38,6 +38,9 @@ Route::prefix('v1')->group(function () {
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('/auth/token/revoke', [\App\Http\Controllers\Api\CheckinApiController::class, 'revokeToken']);
         
+        // FCM Token update
+        Route::post('/user/fcm-token', [\App\Http\Controllers\SocialHubController::class, 'updateFcmToken']);
+
         // Chat routes for mobile
         Route::get('/friends', [\App\Http\Controllers\SocialHubController::class, 'getFriends']);
         Route::get('/messages/{friendId}', [\App\Http\Controllers\SocialHubController::class, 'getMessages']);

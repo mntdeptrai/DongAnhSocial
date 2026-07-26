@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 class ApiService {
   static const String baseUrl = 'https://donganhdiscovery.xadonganh.com/api/v1';
@@ -67,11 +68,35 @@ class ApiService {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('auth_token', _token!);
         await prefs.setString('current_user', jsonEncode(currentUser));
+
+        // Tự động đẩy FCM Token lên server ngay khi đăng nhập thành công
+        try {
+          final fcmToken = await FirebaseMessaging.instance.getToken();
+          if (fcmToken != null) {
+            updateFcmToken(fcmToken);
+          }
+        } catch (_) {}
+
         return {'success': true};
       }
       return {'success': false, 'message': data['message'] ?? 'Đăng nhập thất bại'};
     } catch (e) {
       return {'success': false, 'message': 'Lỗi kết nối mạng'};
+    }
+  }
+
+  /// POST /user/fcm-token — Cập nhật FCM Token của thiết bị lên server
+  static Future<bool> updateFcmToken(String fcmToken) async {
+    if (!isAuthenticated) return false;
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/user/fcm-token'),
+        headers: _getHeaders(),
+        body: jsonEncode({'fcm_token': fcmToken}),
+      );
+      return response.statusCode == 200;
+    } catch (_) {
+      return false;
     }
   }
 

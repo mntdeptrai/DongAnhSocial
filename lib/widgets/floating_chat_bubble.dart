@@ -18,7 +18,7 @@ class DraggableFloatingChatBubble extends StatefulWidget {
   State<DraggableFloatingChatBubble> createState() => _DraggableFloatingChatBubbleState();
 }
 
-class _DraggableFloatingChatBubbleState extends State<DraggableFloatingChatBubble> with SingleTickerProviderStateMixin {
+class _DraggableFloatingChatBubbleState extends State<DraggableFloatingChatBubble> with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   // Last dragged position (preserved across expands/collapses)
   Offset _position = const Offset(300, 480);
   bool _isExpanded = false;
@@ -47,6 +47,8 @@ class _DraggableFloatingChatBubbleState extends State<DraggableFloatingChatBubbl
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+
     _pulseController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1800),
@@ -57,16 +59,41 @@ class _DraggableFloatingChatBubbleState extends State<DraggableFloatingChatBubbl
     );
 
     _initChatHeadData();
+    _startPolling();
+  }
 
-    // Poll for new messages every 5 seconds
+  void _startPolling() {
+    _pollingTimer?.cancel();
     _pollingTimer = Timer.periodic(const Duration(seconds: 5), (_) {
       _pollRecentChatData();
     });
   }
 
+  void _stopPolling() {
+    _pollingTimer?.cancel();
+    _pollingTimer = null;
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.hidden) {
+      _stopPolling();
+      _pulseController.stop();
+    } else if (state == AppLifecycleState.resumed) {
+      if (!_pulseController.isAnimating) {
+        _pulseController.repeat(reverse: true);
+      }
+      _pollRecentChatData();
+      _startPolling();
+    }
+  }
+
   @override
   void dispose() {
-    _pollingTimer?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
+    _stopPolling();
     _previewTimer?.cancel();
     _pulseController.dispose();
     super.dispose();

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "146239845618",
+    "project_id": "donganh-social",
+    "storage_bucket": "donganh-social.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:146239845618:android:6fd495884b80ff73650c6b",
+        "android_client_info": {
+          "package_name": "com.donganh.social"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBbFZXK4ud9gymK1oCUra8A2tCeLn2T-hQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

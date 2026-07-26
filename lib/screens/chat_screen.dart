@@ -9,7 +9,7 @@ class ChatScreen extends StatefulWidget {
   State<ChatScreen> createState() => _ChatScreenState();
 }
 
-class _ChatScreenState extends State<ChatScreen> {
+class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   List<dynamic> _friends = [];
   bool _isLoading = false;
 
@@ -18,16 +18,39 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _loadFriends();
-    // Tự động cập nhật trạng thái bạn bè mỗi 10 giây
+    _startTimer();
+  }
+
+  void _startTimer() {
+    _friendsTimer?.cancel();
     _friendsTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
       _silentRefreshFriends();
     });
   }
 
+  void _stopTimer() {
+    _friendsTimer?.cancel();
+    _friendsTimer = null;
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.hidden) {
+      _stopTimer();
+    } else if (state == AppLifecycleState.resumed) {
+      _silentRefreshFriends();
+      _startTimer();
+    }
+  }
+
   @override
   void dispose() {
-    _friendsTimer?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
+    _stopTimer();
     super.dispose();
   }
 
@@ -208,7 +231,7 @@ class ChatDetailScreen extends StatefulWidget {
   State<ChatDetailScreen> createState() => _ChatDetailScreenState();
 }
 
-class _ChatDetailScreenState extends State<ChatDetailScreen> with SingleTickerProviderStateMixin {
+class _ChatDetailScreenState extends State<ChatDetailScreen> with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   final _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   List<dynamic> _messages = [];
@@ -221,6 +244,8 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> with SingleTickerPr
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+
     _sendAnimController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 150),
@@ -230,14 +255,37 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> with SingleTickerPr
     );
 
     _loadMessages();
+    _startTimer();
+  }
+
+  void _startTimer() {
+    _pollingTimer?.cancel();
     _pollingTimer = Timer.periodic(const Duration(seconds: 4), (timer) {
       _silentRefreshMessages();
     });
   }
 
+  void _stopTimer() {
+    _pollingTimer?.cancel();
+    _pollingTimer = null;
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.hidden) {
+      _stopTimer();
+    } else if (state == AppLifecycleState.resumed) {
+      _silentRefreshMessages();
+      _startTimer();
+    }
+  }
+
   @override
   void dispose() {
-    _pollingTimer?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
+    _stopTimer();
     _sendAnimController.dispose();
     _messageController.dispose();
     _scrollController.dispose();

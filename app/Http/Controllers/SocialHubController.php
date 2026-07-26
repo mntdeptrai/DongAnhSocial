@@ -385,6 +385,28 @@ class SocialHubController extends Controller
             // Tải quan hệ foodTour mới tạo
             $message->loadMissing('foodTour');
 
+            // Gửi FCM Push Notification cho người nhận nếu có fcm_token
+            try {
+                $receiver = User::find($message->receiver_id);
+                if ($receiver && !empty($receiver->fcm_token)) {
+                    $senderName = Auth::user()->name ?? 'Bạn bè';
+                    $msgBody = $message->message ?? ($message->media_path ? '[Hình ảnh]' : 'Đã gửi một tin nhắn');
+                    \App\Services\FcmService::sendNotification(
+                        $receiver->fcm_token,
+                        $senderName,
+                        "💬 " . $msgBody,
+                        [
+                            'target' => 'chat',
+                            'sender_id' => (int)Auth::id(),
+                            'sender_name' => $senderName,
+                            'message_id' => (int)$message->id,
+                        ]
+                    );
+                }
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning('FCM Notification error on sendMessage: ' . $e->getMessage());
+            }
+
             return response()->json([
                 'status' => 'success',
                 'message' => [
@@ -614,5 +636,22 @@ class SocialHubController extends Controller
         $sortedChats = $recentChats->sortByDesc('latest_message_timestamp')->values();
 
         return response()->json($sortedChats, 200, [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    }
+
+    /**
+     * Cập nhật FCM Token của thiết bị người dùng
+     */
+    public function updateFcmToken(Request $request)
+    {
+        $request->validate(['fcm_token' => 'required|string']);
+        $user = Auth::user();
+        if ($user) {
+            $user->update(['fcm_token' => $request->fcm_token]);
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Cập nhật FCM Token thành công'
+            ]);
+        }
+        return response()->json(['status' => 'error', 'message' => 'Unauthenticated'], 401);
     }
 }

@@ -596,6 +596,7 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             function sendHeartbeat() {
+                if (document.hidden) return; // Không gửi request heartbeat khi tab đang ở background
                 fetch('/user/heartbeat', {
                     method: 'POST',
                     headers: {
@@ -973,6 +974,7 @@
                 startPolling() {
                     if (this._pollingTimer) return;
                     this._pollingTimer = setInterval(() => {
+                        if (document.hidden) return; // Tạm dừng polling khi tab trình duyệt bị ẩn
                         this.openChats.forEach(chat => {
                             if (!chat.is_minimized) {
                                 fetch('/social/messages/' + chat.id)

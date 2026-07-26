@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'services/api_service.dart';
 import 'screens/login_screen.dart';
 import 'screens/map_screen.dart';
@@ -15,9 +17,51 @@ import 'widgets/floating_chat_bubble.dart';
 import 'widgets/universal_search_modal.dart';
 import 'widgets/my_cart_modal.dart';
 
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp();
+  debugPrint('🔥 FCM Background Message: ${message.messageId} - ${message.notification?.title}');
+}
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await ApiService.init();
+
+  try {
+    await Firebase.initializeApp();
+    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
+    final messaging = FirebaseMessaging.instance;
+    await messaging.requestPermission(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+
+    final fcmToken = await messaging.getToken();
+    if (fcmToken != null) {
+      debugPrint('🔥 Firebase FCM Token: $fcmToken');
+      if (ApiService.isAuthenticated) {
+        ApiService.updateFcmToken(fcmToken);
+      }
+    }
+
+    // Token refresh listener
+    messaging.onTokenRefresh.listen((newToken) {
+      debugPrint('🔥 FCM Token Refreshed: $newToken');
+      if (ApiService.isAuthenticated) {
+        ApiService.updateFcmToken(newToken);
+      }
+    });
+
+    // Foreground notification listener
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      debugPrint('🔥 FCM Foreground Message: ${message.notification?.title} - ${message.notification?.body}');
+    });
+  } catch (e) {
+    debugPrint('⚠️ Firebase initialization error: $e');
+  }
+
   runApp(const MyApp());
 }
 
@@ -222,7 +266,7 @@ class MainLayout extends StatefulWidget {
   State<MainLayout> createState() => _MainLayoutState();
 }
 
-class _MainLayoutState extends State<MainLayout> {
+class _MainLayoutState extends State<MainLayout> with WidgetsBindingObserver {
   int _currentIndex = 0;
   int _unreadNotifsCount = 0;
   int _unreadMessagesCount = 0;
@@ -233,10 +277,14 @@ class _MainLayoutState extends State<MainLayout> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    // Giới hạn dung lượng bộ nhớ đệm ảnh ở mức 30MB để tránh tràn RAM
+    PaintingBinding.instance.imageCache.maximumSizeBytes = 30 * 1024 * 1024;
+    PaintingBinding.instance.imageCache.maximumSize = 100;
+
     _fetchDynamicCounts();
-    _pollTimer = Timer.periodic(const Duration(seconds: 10), (_) {
-      _fetchDynamicCounts();
-    });
+    _startTimer();
+
     NotificationHelper.initialize((data) {
       if (data['target'] == 'chat' && mounted) {
         Navigator.push(
@@ -247,9 +295,38 @@ class _MainLayoutState extends State<MainLayout> {
     });
   }
 
+  void _startTimer() {
+    _pollTimer?.cancel();
+    _pollTimer = Timer.periodic(const Duration(seconds: 10), (_) {
+      _fetchDynamicCounts();
+    });
+  }
+
+  void _stopTimer() {
+    _pollTimer?.cancel();
+    _pollTimer = null;
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.hidden) {
+      // Tạm dừng timer và giải phóng RAM ảnh khi chạy ngầm
+      _stopTimer();
+      PaintingBinding.instance.imageCache.clear();
+      PaintingBinding.instance.imageCache.clearLiveImages();
+    } else if (state == AppLifecycleState.resumed) {
+      // Làm mới dữ liệu và khởi động lại timer khi mở lại ứng dụng
+      _fetchDynamicCounts();
+      _startTimer();
+    }
+  }
+
   @override
   void dispose() {
-    _pollTimer?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
+    _stopTimer();
     super.dispose();
   }
 

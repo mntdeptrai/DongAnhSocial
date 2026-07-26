@@ -226,7 +226,7 @@ class _LoginCheckinModalState extends State<_LoginCheckinModal> {
   }
 }
 
-class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
+class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin, WidgetsBindingObserver {
   final MapController _mapController = MapController();
   final LatLng _center = const LatLng(21.1352, 105.8458); // Đông Anh Center
   final TextEditingController _searchController = TextEditingController();
@@ -245,6 +245,8 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+
     _pulseController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 2),
@@ -258,7 +260,21 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.hidden) {
+      _pulseController.stop();
+    } else if (state == AppLifecycleState.resumed) {
+      if (!_pulseController.isAnimating) {
+        _pulseController.repeat(reverse: true);
+      }
+    }
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _pulseController.dispose();
     _searchController.dispose();
     _sheetController.dispose();

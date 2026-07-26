@@ -1,4 +1,4 @@
-package com.example.mobile
+package com.donganh.social
 
 import android.Manifest
 import android.app.NotificationChannel
@@ -231,7 +231,6 @@ class MainActivity : FlutterActivity() {
                                 }
                             }
                         } else if (code == 404) {
-                            // Production server hasn't deployed /unread-check yet -> fallback to /friends & /messages
                             Log.d("NativePolling", "Endpoint 404, running fallback polling on /friends...")
                             performFallbackPolling()
                         }
@@ -241,7 +240,6 @@ class MainActivity : FlutterActivity() {
                     }
                 }.start()
 
-                // Repeat every 5 seconds regardless of Flutter UI state
                 handler.postDelayed(this, 5000)
             }
         }
@@ -321,7 +319,6 @@ class MainActivity : FlutterActivity() {
             putExtra("sender_id", senderId)
             putExtra("sender_name", title)
         }
-        // Content tap intent (immutable is fine)
         val contentPendingIntent = PendingIntent.getActivity(
             this,
             (System.currentTimeMillis() % 10000).toInt(),
@@ -331,7 +328,6 @@ class MainActivity : FlutterActivity() {
 
         val icon = IconCompat.createWithResource(this, R.mipmap.ic_launcher)
 
-        // Android 11+ / Samsung One UI requires Person & MessagingStyle for Bubbles & Heads-Up
         val person = Person.Builder()
             .setName(title)
             .setIcon(icon)
@@ -340,11 +336,10 @@ class MainActivity : FlutterActivity() {
         val messagingStyle = NotificationCompat.MessagingStyle(person)
             .addMessage(body, System.currentTimeMillis(), person)
 
-        // Android System Bubble Metadata — requires FLAG_MUTABLE
         val bubbleMetadata = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             val bubblePendingIntent = PendingIntent.getActivity(
                 this,
-                1, // different requestCode from content intent
+                1,
                 intent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
             )
