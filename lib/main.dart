@@ -409,43 +409,45 @@ class _MainLayoutState extends State<MainLayout> with WidgetsBindingObserver {
         },
         onLogout: widget.onLogout,
       ),
-      appBar: TopNavBar(
-        currentIndex: _currentIndex,
-        onTabSelected: (index) {
-          setState(() {
-            _currentIndex = index;
-            _activeRole = 'user'; // Switch back to consumer view when clicking bottom tabs
-          });
-          if (index == 0) {
-            _feedScreenKey.currentState?.resumeCamera();
-          } else {
-            _feedScreenKey.currentState?.pauseCamera();
-          }
-          if (index == 4) {
-            _fetchDynamicCounts();
-          }
-        },
-        onSearchTap: () {
-          UniversalSearchModal.show(context, onNavigateToTab: (index) {
-            setState(() {
-              _currentIndex = index;
-              _activeRole = 'user';
-            });
-          });
-        },
-        onMessengerTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const ChatScreen()),
-          ).then((_) => _fetchDynamicCounts());
-        },
-        onCartTap: () {
-          MyCartModal.show(context, onCartUpdated: _fetchDynamicCounts);
-        },
-        cartCount: _cartCount,
-        unreadMessagesCount: _unreadMessagesCount,
-        unreadNotifsCount: _unreadNotifsCount,
-      ),
+      appBar: _activeRole == 'user'
+          ? TopNavBar(
+              currentIndex: _currentIndex,
+              onTabSelected: (index) {
+                setState(() {
+                  _currentIndex = index;
+                  _activeRole = 'user'; // Switch back to consumer view when clicking bottom tabs
+                });
+                if (index == 0) {
+                  _feedScreenKey.currentState?.resumeCamera();
+                } else {
+                  _feedScreenKey.currentState?.pauseCamera();
+                }
+                if (index == 4) {
+                  _fetchDynamicCounts();
+                }
+              },
+              onSearchTap: () {
+                UniversalSearchModal.show(context, onNavigateToTab: (index) {
+                  setState(() {
+                    _currentIndex = index;
+                    _activeRole = 'user';
+                  });
+                });
+              },
+              onMessengerTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const ChatScreen()),
+                ).then((_) => _fetchDynamicCounts());
+              },
+              onCartTap: () {
+                MyCartModal.show(context, onCartUpdated: _fetchDynamicCounts);
+              },
+              cartCount: _cartCount,
+              unreadMessagesCount: _unreadMessagesCount,
+              unreadNotifsCount: _unreadNotifsCount,
+            )
+          : null,
       body: Stack(
         children: [
           AnimatedSwitcher(

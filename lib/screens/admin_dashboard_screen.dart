@@ -57,11 +57,23 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       appBar: AppBar(
         backgroundColor: darkObsidian,
         elevation: 0,
+        leading: Builder(
+          builder: (ctx) => IconButton(
+            icon: const Icon(Icons.menu_rounded, color: Colors.white),
+            onPressed: () => Scaffold.of(ctx).openDrawer(),
+          ),
+        ),
         title: const Row(
           children: [
-            Icon(Icons.shield_rounded, color: crimsonColor),
+            Icon(Icons.shield_rounded, color: crimsonColor, size: 20),
             SizedBox(width: 8),
-            Text('Trung tâm Quản trị System Admin', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+            Expanded(
+              child: Text(
+                'Trung tâm Quản trị Admin',
+                style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
           ],
         ),
       ),

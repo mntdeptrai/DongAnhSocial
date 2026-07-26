@@ -225,13 +225,20 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> with Sing
                             children: [
                               Row(
                                 children: [
+                                  Builder(
+                                    builder: (ctx) => IconButton(
+                                      icon: const Icon(Icons.menu_rounded, color: Colors.white, size: 24),
+                                      onPressed: () => Scaffold.of(ctx).openDrawer(),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
                                   Container(
                                     padding: const EdgeInsets.all(10),
                                     decoration: BoxDecoration(
                                       color: Colors.white.withValues(alpha: 0.15),
                                       shape: BoxShape.circle,
                                     ),
-                                    child: const Icon(Icons.storefront_rounded, color: Colors.white, size: 26),
+                                    child: const Icon(Icons.storefront_rounded, color: Colors.white, size: 22),
                                   ),
                                   const SizedBox(width: 12),
                                   Column(
