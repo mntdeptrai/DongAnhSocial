@@ -37,17 +37,19 @@ class _MyCheckinsScreenState extends State<MyCheckinsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Row(
-          children: [
-            const Text(
-              'DongAnh',
-              style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18),
-            ),
-            const Text(
-              ' Check-ins',
-              style: TextStyle(color: Color(0xFFFFB800), fontWeight: FontWeight.w900, fontSize: 18),
-            ),
-          ],
+        title: const Text.rich(
+          TextSpan(
+            children: [
+              TextSpan(
+                text: 'DongAnh',
+                style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18),
+              ),
+              TextSpan(
+                text: ' Check-ins',
+                style: TextStyle(color: Color(0xFFFFB800), fontWeight: FontWeight.w900, fontSize: 18),
+              ),
+            ],
+          ),
         ),
         flexibleSpace: Container(
           decoration: const BoxDecoration(

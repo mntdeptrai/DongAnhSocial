@@ -172,8 +172,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       const SizedBox(height: 28),
 
                       // Feature Tags Row
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      Wrap(
+                        alignment: WrapAlignment.center,
+                        spacing: 8,
+                        runSpacing: 8,
                         children: [
                           _buildFeatureBadge('🍜 Ẩm Thực', Colors.orange),
                           _buildFeatureBadge('🏆 OCOP 5★', Colors.green),

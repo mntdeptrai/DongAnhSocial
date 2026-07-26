@@ -161,12 +161,21 @@ class ProfileScreen extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Row(
-                          children: [
-                            Icon(Icons.notifications_active, color: Color(0xFFFFB800), size: 24),
-                            SizedBox(width: 8),
-                            Text('Thông báo hệ thống & Đơn hàng', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0077B6))),
-                          ],
+                        Expanded(
+                          child: Row(
+                            children: const [
+                              Icon(Icons.notifications_active, color: Color(0xFFFFB800), size: 24),
+                              SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Thông báo hệ thống & Đơn hàng',
+                                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0077B6)),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                         IconButton(
                           icon: const Icon(Icons.close, color: Colors.grey),
