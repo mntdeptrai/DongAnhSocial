@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -84,27 +85,32 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         useMaterial3: true,
         splashFactory: InkRipple.splashFactory,
+        pageTransitionsTheme: const PageTransitionsTheme(
+          builders: {
+            TargetPlatform.android: CupertinoPageTransitionsBuilder(),
+            TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+          },
+        ),
         colorScheme: ColorScheme.fromSeed(
           seedColor: primaryColor,
           primary: primaryColor,
           secondary: accentColor,
           surface: Colors.white,
-          background: const Color(0xFFF0FDFA),
         ),
-        scaffoldBackgroundColor: const Color(0xFFF0FDFA),
+        scaffoldBackgroundColor: const Color(0xFFF8FAFC),
         fontFamily: 'Be Vietnam Pro',
         appBarTheme: const AppBarTheme(
           centerTitle: false,
           elevation: 0,
           scrolledUnderElevation: 0.5,
-          backgroundColor: Color(0xFFF0FDFA),
+          backgroundColor: Color(0xFFF8FAFC),
         ),
         cardTheme: CardThemeData(
           elevation: 0,
           color: Colors.white,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-            side: BorderSide(color: primaryColor.withOpacity(0.12), width: 1),
+            borderRadius: BorderRadius.circular(22),
+            side: const BorderSide(color: Color(0x1F0EA5E9), width: 1),
           ),
         ),
       ),

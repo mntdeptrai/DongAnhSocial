@@ -590,6 +590,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin, Wi
                       height: imageHeight,
                       width: double.infinity,
                       fit: BoxFit.cover,
+                      filterQuality: FilterQuality.medium,
                       errorBuilder: (_, __, ___) => Container(
                         height: imageHeight,
                         color: const Color(0xFF1E293B),

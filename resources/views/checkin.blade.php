@@ -425,13 +425,18 @@
             .checkin-post-card {
                 position: relative;
                 overflow: visible !important;
+                transform: translate3d(0, 0, 0);
+                will-change: transform;
+                transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1);
             }
             .emoji-floater {
                 position: absolute;
                 pointer-events: none;
                 z-index: 100;
                 font-size: 2rem;
-                animation: floatUpAndFade 1.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+                transform: translate3d(0, 0, 0);
+                will-change: transform, opacity;
+                animation: floatUpAndFade 1.5s cubic-bezier(0.16, 1, 0.3, 1) both;
             }
 
             @keyframes floatUpAndFade {

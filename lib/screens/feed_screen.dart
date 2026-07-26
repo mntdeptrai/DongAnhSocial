@@ -1011,20 +1011,23 @@ class FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            // Background Image
-            Image.network(
-              (item['image_path'] != null && item['image_path'].toString().isNotEmpty)
-                  ? (item['image_path'].toString().startsWith('http')
-                      ? item['image_path'].toString()
-                      : 'https://donganhdiscovery.xadonganh.com/' + (item['image_path'].toString().startsWith('/') ? item['image_path'].toString().substring(1) : item['image_path'].toString()))
-                  : 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=800&q=80',
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Color(0xFF334155), Color(0xFF0F172A)],
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
+            // Background Image (Memory & Painting Optimized with RepaintBoundary)
+            RepaintBoundary(
+              child: Image.network(
+                (item['image_path'] != null && item['image_path'].toString().isNotEmpty)
+                    ? (item['image_path'].toString().startsWith('http')
+                        ? item['image_path'].toString()
+                        : 'https://donganhdiscovery.xadonganh.com/' + (item['image_path'].toString().startsWith('/') ? item['image_path'].toString().substring(1) : item['image_path'].toString()))
+                    : 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=800&q=80',
+                fit: BoxFit.cover,
+                filterQuality: FilterQuality.medium,
+                errorBuilder: (_, __, ___) => Container(
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [Color(0xFF334155), Color(0xFF0F172A)],
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                    ),
                   ),
                 ),
               ),
