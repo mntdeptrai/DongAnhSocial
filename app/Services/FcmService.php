@@ -18,10 +18,21 @@ class FcmService
         }
 
         try {
-            // Check for Service Account JSON file first (Firebase V1 API recommended by Google)
-            $serviceAccountPath = env('FCM_CREDENTIALS_PATH', storage_path('app/firebase-service-account.json'));
+            // Auto detect Service Account JSON file in storage/app/ or storage/app/private/
+            $customPath = env('FCM_CREDENTIALS_PATH');
+            $primaryPath = storage_path('app/private/firebase-service-account.json');
+            $secondaryPath = storage_path('app/firebase-service-account.json');
 
-            if (file_exists($serviceAccountPath)) {
+            $serviceAccountPath = null;
+            if ($customPath && file_exists($customPath)) {
+                $serviceAccountPath = $customPath;
+            } else if (file_exists($primaryPath)) {
+                $serviceAccountPath = $primaryPath;
+            } else if (file_exists($secondaryPath)) {
+                $serviceAccountPath = $secondaryPath;
+            }
+
+            if ($serviceAccountPath && file_exists($serviceAccountPath)) {
                 $serviceAccount = json_decode(file_get_contents($serviceAccountPath), true);
                 $projectId = $serviceAccount['project_id'] ?? null;
 
