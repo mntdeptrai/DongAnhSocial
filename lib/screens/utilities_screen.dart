@@ -533,7 +533,9 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
             context,
             MaterialPageRoute(
               builder: (_) => EateryDetailScreen(
-                categorySlug: item['category_slug'] ?? 'dong-anh-food-map',
+                categorySlug: (item['category'] is Map)
+                    ? (item['category']['slug']?.toString() ?? 'dong-anh-food-map')
+                    : (item['category_slug']?.toString() ?? 'dong-anh-food-map'),
                 eaterySlug: item['slug'] ?? 'eatery-${item['id']}',
                 initialData: item,
               ),

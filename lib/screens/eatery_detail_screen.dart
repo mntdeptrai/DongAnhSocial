@@ -366,7 +366,9 @@ class _EateryDetailScreenState extends State<EateryDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final eatery = _eatery;
-    final catSlug = eatery?['category']?['slug']?.toString() ?? widget.categorySlug;
+    final catSlug = (eatery?['category'] is Map)
+        ? (eatery!['category']['slug']?.toString() ?? widget.categorySlug)
+        : (eatery?['category_slug']?.toString() ?? widget.categorySlug);
     final catColor = _getCategoryColor(catSlug);
     final catIcon = _getCategoryIcon(catSlug);
 
@@ -469,7 +471,9 @@ class _EateryDetailScreenState extends State<EateryDetailScreen> {
                                         const SizedBox(width: 4),
                                         Expanded(
                                           child: Text(
-                                            eatery['category']?['name'] ?? 'Địa điểm',
+                                            (eatery['category'] is Map)
+                                                ? (eatery['category']['name']?.toString() ?? 'Địa điểm')
+                                                : (eatery['category'] is String ? eatery['category'] : (eatery['category_name']?.toString() ?? 'Địa điểm')),
                                             style: const TextStyle(
                                               color: Colors.white,
                                               fontWeight: FontWeight.bold,
