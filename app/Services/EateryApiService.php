@@ -323,33 +323,23 @@ class EateryApiService
     }
 
     /**
-     * Get all cultural activities across mysql and mysql_culture connections.
+     * Get all cultural activities from unified database.
      */
     public static function getAllCulturalActivities()
     {
         $activities = collect();
-        $default = config('database.default');
-        if (config("database.connections.{$default}.driver") === 'sqlite') {
-            $conns = [$default];
-        } else {
-            $conns = ['mysql', 'mysql_culture'];
-        }
-        foreach ($conns as $conn) {
-            try {
-                $connActivities = \App\Models\CulturalActivity::on($conn)->with('eatery')->get();
-                foreach ($connActivities as $activity) {
-                    if ($activity->eatery) {
-                        $activity->eatery->category_slug = ($conn === 'mysql_culture') 
-                            ? 'discover-dong-anh-community-culture-hub' 
-                            : 'hanh-trinh-di-san';
-                        $activities->push($activity);
-                    }
+        try {
+            $connActivities = \App\Models\CulturalActivity::with(['eatery.category'])->get();
+            foreach ($connActivities as $activity) {
+                if ($activity->eatery) {
+                    $activity->eatery->category_slug = $activity->eatery->category->slug ?? 'hanh-trinh-di-san';
+                    $activities->push($activity);
                 }
-            } catch (\Exception $e) {
-                \Illuminate\Support\Facades\Log::warning("Lỗi khi lấy danh sách cultural activities trên [{$conn}]: " . $e->getMessage());
             }
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::warning("Lỗi khi lấy danh sách cultural activities: " . $e->getMessage());
         }
-        return $activities;
+        return $activities->unique('id')->values();
     }
 
     /**
