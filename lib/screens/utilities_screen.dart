@@ -583,7 +583,9 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
-                          item['category'] ?? 'Ẩm thực',
+                          item['category'] is Map
+                              ? (item['category']['name'] ?? 'Ẩm thực')
+                              : (item['category']?.toString() ?? 'Ẩm thực'),
                           style: const TextStyle(color: Color(0xFF0EA5E9), fontSize: 11, fontWeight: FontWeight.bold),
                         ),
                       ),
