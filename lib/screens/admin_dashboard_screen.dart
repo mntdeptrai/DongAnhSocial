@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
-  const AdminDashboardScreen({super.key});
+  final VoidCallback? onBack;
+
+  const AdminDashboardScreen({super.key, this.onBack});
 
   @override
   State<AdminDashboardScreen> createState() => _AdminDashboardScreenState();
@@ -56,6 +58,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     }
   }
 
+  void _handleBack() {
+    if (Navigator.canPop(context)) {
+      Navigator.pop(context);
+    } else if (widget.onBack != null) {
+      widget.onBack!();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     const crimsonColor = Color(0xFFDC2626);
@@ -66,11 +76,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       appBar: AppBar(
         backgroundColor: darkObsidian,
         elevation: 0,
-        leading: Builder(
-          builder: (ctx) => IconButton(
-            icon: const Icon(Icons.menu_rounded, color: Colors.white),
-            onPressed: () => Scaffold.of(ctx).openDrawer(),
-          ),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+          tooltip: 'Quay lại',
+          onPressed: _handleBack,
         ),
         title: const Row(
           children: [
@@ -85,6 +94,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             ),
           ],
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.home_rounded, color: Colors.white),
+            tooltip: 'Quay về trang người dùng',
+            onPressed: _handleBack,
+          ),
+        ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator(color: crimsonColor))

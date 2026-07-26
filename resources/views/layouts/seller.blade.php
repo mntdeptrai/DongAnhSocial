@@ -127,9 +127,13 @@
                                 <span class="slr-user-name">{{ session('user_name') }}</span>
                                 <span class="slr-user-role">Chủ Gian Hàng Số</span>
                             </div>
+                            <a href="/"
+                               style="margin-left: 8px; display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; font-size: 0.72rem; border-radius: 8px; background: #ecfdf5; color: #059669; border: 1.5px solid rgba(5,150,105,0.2); font-weight: 700; text-decoration: none; transition: all 0.2s;" onmouseover="this.style.background='#d1fae5'" onmouseout="this.style.background='#ecfdf5'">
+                               🏠 Về Trang Chủ
+                            </a>
                             <a href="/auth/logout"
                                onclick="return confirm('Bạn có chắc muốn đăng xuất?')"
-                               style="margin-left: 12px; display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; font-size: 0.72rem; border-radius: 8px; background: #fef2f2; color: #ef4444; border: 1.5px solid rgba(239,68,68,0.15); font-weight: 700; text-decoration: none; transition: all 0.2s;" onmouseover="this.style.background='#fee2e2'" onmouseout="this.style.background='#fef2f2'">
+                               style="margin-left: 8px; display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; font-size: 0.72rem; border-radius: 8px; background: #fef2f2; color: #ef4444; border: 1.5px solid rgba(239,68,68,0.15); font-weight: 700; text-decoration: none; transition: all 0.2s;" onmouseover="this.style.background='#fee2e2'" onmouseout="this.style.background='#fef2f2'">
                                🚪 Đăng xuất
                             </a>
                         </div>

@@ -364,11 +364,11 @@ class _MainLayoutState extends State<MainLayout> with WidgetsBindingObserver {
 
     // Khóa bảo mật theo phân quyền thực tế (Strict Role Guard)
     if (_activeRole == 'seller' && (userRole == 'seller' || userRole == 'admin')) {
-      return const SellerDashboardScreen();
+      return SellerDashboardScreen(onBack: () => setState(() => _activeRole = 'user'));
     } else if (_activeRole == 'manager' && (userRole == 'manager' || userRole == 'admin')) {
-      return const ManagerDashboardScreen();
+      return ManagerDashboardScreen(onBack: () => setState(() => _activeRole = 'user'));
     } else if (_activeRole == 'admin' && userRole == 'admin') {
-      return const AdminDashboardScreen();
+      return AdminDashboardScreen(onBack: () => setState(() => _activeRole = 'user'));
     }
 
     // Mặc định trả về giao diện Người dùng Consumer nếu không đủ quyền hạn

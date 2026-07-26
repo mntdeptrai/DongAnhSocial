@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 
 class ManagerDashboardScreen extends StatefulWidget {
-  const ManagerDashboardScreen({super.key});
+  final VoidCallback? onBack;
+
+  const ManagerDashboardScreen({super.key, this.onBack});
 
   @override
   State<ManagerDashboardScreen> createState() => _ManagerDashboardScreenState();
@@ -14,6 +16,14 @@ class _ManagerDashboardScreenState extends State<ManagerDashboardScreen> with Si
 
   List<dynamic> _pendingApprovals = [];
   List<dynamic> _stalls = [];
+
+  void _handleBack() {
+    if (Navigator.canPop(context)) {
+      Navigator.pop(context);
+    } else if (widget.onBack != null) {
+      widget.onBack!();
+    }
+  }
 
   @override
   void initState() {
@@ -115,11 +125,10 @@ class _ManagerDashboardScreenState extends State<ManagerDashboardScreen> with Si
                             children: [
                               Row(
                                 children: [
-                                  Builder(
-                                    builder: (ctx) => IconButton(
-                                      icon: const Icon(Icons.menu_rounded, color: Colors.white, size: 24),
-                                      onPressed: () => Scaffold.of(ctx).openDrawer(),
-                                    ),
+                                  IconButton(
+                                    icon: const Icon(Icons.arrow_back_rounded, color: Colors.white, size: 24),
+                                    tooltip: 'Quay lại',
+                                    onPressed: _handleBack,
                                   ),
                                   const SizedBox(width: 4),
                                   Container(
@@ -146,10 +155,19 @@ class _ManagerDashboardScreenState extends State<ManagerDashboardScreen> with Si
                                   ),
                                 ],
                               ),
-                              IconButton(
-                                onPressed: _sendAttpAlert,
-                                icon: const Icon(Icons.campaign_rounded, color: Colors.amberAccent, size: 26),
-                                tooltip: 'Cảnh báo ATTP',
+                              Row(
+                                children: [
+                                  IconButton(
+                                    onPressed: _sendAttpAlert,
+                                    icon: const Icon(Icons.campaign_rounded, color: Colors.amberAccent, size: 24),
+                                    tooltip: 'Cảnh báo ATTP',
+                                  ),
+                                  IconButton(
+                                    onPressed: _handleBack,
+                                    icon: const Icon(Icons.home_rounded, color: Colors.white, size: 24),
+                                    tooltip: 'Quay về trang người dùng',
+                                  ),
+                                ],
                               ),
                             ],
                           ),

@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 
 class SellerDashboardScreen extends StatefulWidget {
-  const SellerDashboardScreen({super.key});
+  final VoidCallback? onBack;
+
+  const SellerDashboardScreen({super.key, this.onBack});
 
   @override
   State<SellerDashboardScreen> createState() => _SellerDashboardScreenState();
@@ -11,6 +13,14 @@ class SellerDashboardScreen extends StatefulWidget {
 class _SellerDashboardScreenState extends State<SellerDashboardScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   bool _isLoading = true;
+
+  void _handleBack() {
+    if (Navigator.canPop(context)) {
+      Navigator.pop(context);
+    } else if (widget.onBack != null) {
+      widget.onBack!();
+    }
+  }
 
   // 9 registration fields according to market regulation form
   final _merchantNameController = TextEditingController();
@@ -231,11 +241,10 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> with Sing
                             children: [
                               Row(
                                 children: [
-                                  Builder(
-                                    builder: (ctx) => IconButton(
-                                      icon: const Icon(Icons.menu_rounded, color: Colors.white, size: 24),
-                                      onPressed: () => Scaffold.of(ctx).openDrawer(),
-                                    ),
+                                  IconButton(
+                                    icon: const Icon(Icons.arrow_back_rounded, color: Colors.white, size: 24),
+                                    tooltip: 'Quay lại',
+                                    onPressed: _handleBack,
                                   ),
                                   const SizedBox(width: 4),
                                   Container(
@@ -264,20 +273,30 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> with Sing
                                   ),
                                 ],
                               ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF10B981).withValues(alpha: 0.2),
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: const Color(0xFF34D399)),
-                                ),
-                                child: const Row(
-                                  children: [
-                                    CircleAvatar(radius: 4, backgroundColor: Color(0xFF34D399)),
-                                    SizedBox(width: 6),
-                                    Text('Đang Bán', style: TextStyle(color: Color(0xFF34D399), fontSize: 11, fontWeight: FontWeight.bold)),
-                                  ],
-                                ),
+                              Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF10B981).withValues(alpha: 0.2),
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(color: const Color(0xFF34D399)),
+                                    ),
+                                    child: const Row(
+                                      children: [
+                                        CircleAvatar(radius: 4, backgroundColor: Color(0xFF34D399)),
+                                        SizedBox(width: 6),
+                                        Text('Đang Bán', style: TextStyle(color: Color(0xFF34D399), fontSize: 11, fontWeight: FontWeight.bold)),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  IconButton(
+                                    onPressed: _handleBack,
+                                    icon: const Icon(Icons.home_rounded, color: Colors.white, size: 22),
+                                    tooltip: 'Quay về trang người dùng',
+                                  ),
+                                ],
                               ),
                             ],
                           ),
