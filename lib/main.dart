@@ -342,7 +342,7 @@ class _MainLayoutState extends State<MainLayout> with WidgetsBindingObserver {
       final unreadMsgCount = await ApiService.getUnreadMessagesCount();
       final cartRes = await ApiService.getCart();
       int cCount = 0;
-      if (cartRes['success'] == true && cartRes['data'] is List) {
+      if (cartRes is Map && cartRes['success'] == true && cartRes['data'] is List) {
         cCount = (cartRes['data'] as List).length;
       }
       if (mounted) {

@@ -49,7 +49,7 @@ class _MyCartModalState extends State<MyCartModal> {
       final res = await ApiService.getCart();
       if (mounted) {
         setState(() {
-          if (res['success'] == true && res['data'] is List) {
+          if (res is Map && res['success'] == true && res['data'] is List) {
             _cartItems = List<dynamic>.from(res['data']);
           } else {
             _cartItems = [];

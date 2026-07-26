@@ -182,7 +182,10 @@ class ApiService {
         headers: _getHeaders(),
       );
       if (response.statusCode == 200) {
-        return jsonDecode(response.body);
+        final data = jsonDecode(response.body);
+        if (data is Map<String, dynamic>) return data;
+        if (data is Map) return Map<String, dynamic>.from(data);
+        if (data is List) return {'success': true, 'data': data, 'count': data.length};
       }
     } catch (_) {}
     return {'success': false, 'data': [], 'count': 0, 'total': 0};
