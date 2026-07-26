@@ -1741,4 +1741,25 @@ YÊU CẦU TRẢ VỀ CHỈ LÀ CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU, KHÔNG C
             'data' => $request->all()
         ], 200, [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     }
+
+    /**
+     * API Lấy Danh sách Đơn hàng của Chủ Gian Hàng (Seller / Manager)
+     */
+    public function getSellerOrders(Request $request)
+    {
+        $user = Auth::user() ?: auth('sanctum')->user();
+        $userId = $user ? $user->id : 0;
+
+        $myEateryIds = Eatery::where('user_id', $userId)->pluck('id')->toArray();
+
+        $orders = DB::table('orders')
+            ->when(!empty($myEateryIds), function ($q) use ($myEateryIds) {
+                return $q->whereIn('eatery_id', $myEateryIds);
+            })
+            ->latest()
+            ->limit(20)
+            ->get();
+
+        return response()->json($orders, 200, [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    }
 }
