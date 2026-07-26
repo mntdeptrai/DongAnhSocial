@@ -4,7 +4,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 
 class ApiService {
-  static const String baseUrl = 'https://donganhdiscovery.xadonganh.com/api/v1';
+  static String defaultBaseUrl = 'https://donganhdiscovery.xadonganh.com/api/v1';
+  static String baseUrl = 'https://donganhdiscovery.xadonganh.com/api/v1';
   static String? _token;
   static String? _sessionId;
   static Map<String, dynamic>? currentUser;
@@ -13,9 +14,13 @@ class ApiService {
   // INITIALIZATION & AUTH HELPERS
   // =========================================================================
 
-  /// Khởi tạo service: load token và user từ SharedPreferences
+  /// Khởi tạo service: load token, custom API URL và user từ SharedPreferences
   static Future<void> init() async {
     final prefs = await SharedPreferences.getInstance();
+    final customUrl = prefs.getString('custom_api_base_url');
+    if (customUrl != null && customUrl.isNotEmpty) {
+      baseUrl = customUrl;
+    }
     _token = prefs.getString('auth_token');
     _sessionId = prefs.getString('cart_session_id');
     if (_sessionId == null || _sessionId!.isEmpty) {
@@ -26,6 +31,12 @@ class ApiService {
     if (userJson != null) {
       currentUser = jsonDecode(userJson);
     }
+  }
+
+  static Future<void> setBaseUrl(String url) async {
+    baseUrl = url;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('custom_api_base_url', url);
   }
 
   static bool get isAuthenticated => _token != null;
