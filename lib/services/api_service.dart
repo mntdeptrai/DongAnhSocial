@@ -843,6 +843,93 @@ class ApiService {
     return false;
   }
 
+  /// POST /admin/users — Tạo tài khoản mới từ Admin
+  static Future<Map<String, dynamic>> storeUser({
+    required String name,
+    required String email,
+    required String password,
+    required String role,
+    String? phone,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/admin/users'),
+        headers: _getHeaders(),
+        body: jsonEncode({
+          'name': name,
+          'email': email,
+          'password': password,
+          'role': role,
+          'phone': phone,
+        }),
+      );
+      return jsonDecode(response.body);
+    } catch (e) {
+      return {'success': false, 'message': 'Lỗi kết nối máy chủ: $e'};
+    }
+  }
+
+  /// DELETE /admin/users/{id} — Xóa tài khoản người dùng
+  static Future<bool> deleteUser(int id) async {
+    try {
+      final response = await http.delete(Uri.parse('$baseUrl/admin/users/$id'), headers: _getHeaders());
+      return response.statusCode == 200;
+    } catch (_) {}
+    return false;
+  }
+
+  /// POST /admin/eateries — Đăng ký cơ sở / địa điểm mới đầy đủ
+  static Future<Map<String, dynamic>> storeEatery({
+    required String name,
+    required dynamic categoryId,
+    required dynamic communeId,
+    required String address,
+    String? phone,
+    String? openingHours,
+    String? priceRange,
+    double? latitude,
+    double? longitude,
+    bool isFeatured = false,
+    String? imageUrl,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/admin/eateries'),
+        headers: _getHeaders(),
+        body: jsonEncode({
+          'name': name,
+          'category_id': categoryId,
+          'commune_id': communeId,
+          'address': address,
+          'phone': phone,
+          'opening_hours': openingHours,
+          'price_range': priceRange,
+          'latitude': latitude,
+          'longitude': longitude,
+          'is_featured': isFeatured,
+          'image_url': imageUrl,
+        }),
+      );
+      return jsonDecode(response.body);
+    } catch (e) {
+      return {'success': false, 'message': 'Lỗi kết nối máy chủ: $e'};
+    }
+  }
+
+  /// PUT /admin/eateries/{id} — Cập nhật cơ sở / địa điểm
+  static Future<Map<String, dynamic>> updateEatery(int id, Map<String, dynamic> data) async {
+    try {
+      final response = await http.put(
+        Uri.parse('$baseUrl/admin/eateries/$id'),
+        headers: _getHeaders(),
+        body: jsonEncode(data),
+      );
+      return jsonDecode(response.body);
+    } catch (e) {
+      return {'success': false, 'message': 'Lỗi kết nối máy chủ: $e'};
+    }
+  }
+
   /// GET /seller/dashboard-data — Lấy dữ liệu gian hàng thuộc sở hữu của chủ tiệm
   static Future<Map<String, dynamic>> getSellerDashboardData() async {
     try {

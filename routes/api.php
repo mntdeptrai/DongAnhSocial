@@ -52,12 +52,18 @@ Route::prefix('v1')->group(function () {
         // Checkin history for mobile
         Route::get('/checkins/my', [\App\Http\Controllers\Api\CheckinApiController::class, 'getMyCheckins']);
 
-        // Admin Management APIs (Đầy đủ như Web Admin)
+        // Admin Management APIs (Đầy đủ 100% chức năng như Web Admin)
         Route::get('/admin/users', [\App\Http\Controllers\Api\CheckinApiController::class, 'getAdminUsers']);
+        Route::post('/admin/users', [\App\Http\Controllers\Api\CheckinApiController::class, 'storeUser']);
+        Route::delete('/admin/users/{id}', [\App\Http\Controllers\Api\CheckinApiController::class, 'deleteUser']);
         Route::post('/admin/users/{id}/role', [\App\Http\Controllers\Api\CheckinApiController::class, 'updateUserRole']);
+
         Route::get('/admin/dashboard', [\App\Http\Controllers\Api\CheckinApiController::class, 'getAdminDashboardData']);
+        Route::post('/admin/eateries', [\App\Http\Controllers\Api\CheckinApiController::class, 'storeEatery']);
+        Route::put('/admin/eateries/{id}', [\App\Http\Controllers\Api\CheckinApiController::class, 'updateEatery']);
         Route::post('/admin/eateries/{id}/toggle-featured', [\App\Http\Controllers\Api\CheckinApiController::class, 'toggleEateryFeatured']);
         Route::delete('/admin/eateries/{id}', [\App\Http\Controllers\Api\CheckinApiController::class, 'deleteEatery']);
+
         Route::delete('/admin/reviews/{id}', [\App\Http\Controllers\Api\CheckinApiController::class, 'deleteReview']);
         Route::post('/admin/categories', [\App\Http\Controllers\Api\CheckinApiController::class, 'storeCategory']);
     });

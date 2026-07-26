@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import 'map_screen.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   final VoidCallback? onBack;
@@ -22,6 +23,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
 
   String _userSearchQuery = '';
   String _eaterySearchQuery = '';
+  String _selectedCategoryFilter = 'Tất cả';
 
   @override
   void initState() {
@@ -51,7 +53,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
           });
         }
       } else {
-        // Fallback user fetch
         final users = await ApiService.getAdminUsers();
         if (mounted) {
           setState(() {
@@ -66,6 +67,104 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
         setState(() => _isLoading = false);
       }
     }
+  }
+
+  // =========================================================================
+  // ACTIONS: USERS
+  // =========================================================================
+
+  void _showAddUserDialog() {
+    final nameCtrl = TextEditingController();
+    final emailCtrl = TextEditingController();
+    final passCtrl = TextEditingController();
+    final phoneCtrl = TextEditingController();
+    String selectedRole = 'user';
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Row(
+            children: [
+              Icon(Icons.person_add_alt_1_rounded, color: Color(0xFFDC2626)),
+              SizedBox(width: 8),
+              Text('➕ Thêm User Mới', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: nameCtrl,
+                  decoration: const InputDecoration(labelText: 'Họ và Tên *', hintText: 'Ví dụ: Nguyễn Văn A'),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: emailCtrl,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: const InputDecoration(labelText: 'Email *', hintText: 'user@donganh.vn'),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: passCtrl,
+                  obscureText: true,
+                  decoration: const InputDecoration(labelText: 'Mật khẩu *', hintText: 'Tối thiểu 6 ký tự'),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: phoneCtrl,
+                  keyboardType: TextInputType.phone,
+                  decoration: const InputDecoration(labelText: 'Số điện thoại', hintText: '0987654321'),
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  initialValue: selectedRole,
+                  decoration: const InputDecoration(labelText: 'Phân quyền (Role)'),
+                  items: const [
+                    DropdownMenuItem(value: 'user', child: Text('👤 Customer (Người dùng)')),
+                    DropdownMenuItem(value: 'seller', child: Text('🛍️ Seller (Chủ gian hàng)')),
+                    DropdownMenuItem(value: 'manager', child: Text('🏛️ Manager (Ban QL Chợ)')),
+                    DropdownMenuItem(value: 'admin', child: Text('🛡️ Administrator')),
+                  ],
+                  onChanged: (val) {
+                    if (val != null) setDialogState(() => selectedRole = val);
+                  },
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Hủy')),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFDC2626)),
+              onPressed: () async {
+                if (nameCtrl.text.trim().isNotEmpty && emailCtrl.text.trim().isNotEmpty && passCtrl.text.trim().isNotEmpty) {
+                  final name = nameCtrl.text.trim();
+                  final email = emailCtrl.text.trim();
+                  final pass = passCtrl.text.trim();
+                  final phone = phoneCtrl.text.trim();
+                  Navigator.pop(ctx);
+                  final res = await ApiService.storeUser(name: name, email: email, password: pass, role: selectedRole, phone: phone);
+                  if (res['success'] == true) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('🎉 ${res['message']}'), backgroundColor: const Color(0xFF10B981)),
+                    );
+                    _loadAdminData();
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('⚠️ ${res['message']}'), backgroundColor: Colors.red),
+                    );
+                  }
+                }
+              },
+              child: const Text('Thêm User Mới', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   void _changeUserRole(int index, String newRole) async {
@@ -84,10 +183,188 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('🎉 Đã cập nhật quyền ${newRole.toUpperCase()} cho ${user['name'] ?? 'người dùng'}!'),
-          backgroundColor: const Color(0xFFDC2626),
+          backgroundColor: const Color(0xFF10B981),
         ),
       );
     }
+  }
+
+  void _deleteUser(int index) async {
+    final user = _usersList[index];
+    final int userId = user['id'] is int ? user['id'] : (int.tryParse(user['id']?.toString() ?? '0') ?? 0);
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Xóa tài khoản'),
+        content: Text('Bạn có chắc muốn xóa người dùng "${user['name']}" khỏi hệ thống?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Hủy')),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Xóa ngay', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true && userId > 0) {
+      setState(() => _usersList.removeAt(index));
+      await ApiService.deleteUser(userId);
+    }
+  }
+
+  // =========================================================================
+  // ACTIONS: EATERIES (BẢN ĐỒ SỐ)
+  // =========================================================================
+
+  void _showAddEateryDialog() {
+    final nameCtrl = TextEditingController();
+    final addressCtrl = TextEditingController();
+    final phoneCtrl = TextEditingController();
+    final hoursCtrl = TextEditingController(text: '06:00 - 22:00');
+    final priceCtrl = TextEditingController(text: '30.000đ - 100.000đ');
+    final latCtrl = TextEditingController(text: '21.117158');
+    final lngCtrl = TextEditingController(text: '105.895619');
+    final imageCtrl = TextEditingController();
+    bool isFeatured = false;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Row(
+            children: [
+              Icon(Icons.add_location_alt_rounded, color: Color(0xFFDC2626)),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  '📍 Đăng Ký Địa Điểm Mới',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: nameCtrl,
+                  decoration: const InputDecoration(labelText: 'Tên cơ sở / Quán ăn / Khách sạn *', hintText: 'Ví dụ: Bún chả Hùng Thái Cổ Loa'),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: addressCtrl,
+                  decoration: const InputDecoration(labelText: 'Địa chỉ chi tiết *', hintText: 'Thôn Mạch Tràng, Cổ Loa, Đông Anh'),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: phoneCtrl,
+                        keyboardType: TextInputType.phone,
+                        decoration: const InputDecoration(labelText: 'SĐT liên hệ', hintText: '0987654321'),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: TextField(
+                        controller: hoursCtrl,
+                        decoration: const InputDecoration(labelText: 'Giờ mở cửa', hintText: '06:00 - 22:00'),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: latCtrl,
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        decoration: const InputDecoration(labelText: 'Vĩ độ (Lat)', hintText: '21.117158'),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: TextField(
+                        controller: lngCtrl,
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        decoration: const InputDecoration(labelText: 'Kinh độ (Lng)', hintText: '105.895619'),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: priceCtrl,
+                  decoration: const InputDecoration(labelText: 'Mức giá tham khảo', hintText: '30.000đ - 80.000đ'),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: imageCtrl,
+                  decoration: const InputDecoration(labelText: 'URL Ảnh đại diện cơ sở', hintText: 'https://...'),
+                ),
+                const SizedBox(height: 8),
+                CheckboxListTile(
+                  title: const Text('⭐ Đánh dấu địa điểm Nổi bật', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                  value: isFeatured,
+                  contentPadding: EdgeInsets.zero,
+                  activeColor: const Color(0xFFDC2626),
+                  onChanged: (val) => setDialogState(() => isFeatured = val ?? false),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Hủy')),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFDC2626)),
+              onPressed: () async {
+                if (nameCtrl.text.trim().isNotEmpty && addressCtrl.text.trim().isNotEmpty) {
+                  final name = nameCtrl.text.trim();
+                  final address = addressCtrl.text.trim();
+                  final phone = phoneCtrl.text.trim();
+                  final hours = hoursCtrl.text.trim();
+                  final price = priceCtrl.text.trim();
+                  final lat = double.tryParse(latCtrl.text.trim()) ?? 21.117158;
+                  final lng = double.tryParse(lngCtrl.text.trim()) ?? 105.895619;
+                  final imgUrl = imageCtrl.text.trim();
+
+                  Navigator.pop(ctx);
+                  final res = await ApiService.storeEatery(
+                    name: name,
+                    categoryId: 1,
+                    communeId: 1,
+                    address: address,
+                    phone: phone,
+                    openingHours: hours,
+                    priceRange: price,
+                    latitude: lat,
+                    longitude: lng,
+                    isFeatured: isFeatured,
+                    imageUrl: imgUrl.isNotEmpty ? imgUrl : null,
+                  );
+
+                  if (res['success'] == true) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('🎉 ${res['message']}'), backgroundColor: const Color(0xFF10B981)),
+                    );
+                    _loadAdminData();
+                  }
+                }
+              },
+              child: const Text('Đăng Ký Địa Điểm', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   void _toggleFeatured(int index) async {
@@ -148,7 +425,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
   void _showAddCategoryDialog() {
     final nameCtrl = TextEditingController();
     final descCtrl = TextEditingController();
-    String selectedIcon = '📍';
 
     showDialog(
       context: context,
@@ -177,7 +453,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
                 final name = nameCtrl.text.trim();
                 final desc = descCtrl.text.trim();
                 Navigator.pop(ctx);
-                final success = await ApiService.createCategory(name, desc, selectedIcon);
+                final success = await ApiService.createCategory(name, desc, '📍');
                 if (success) {
                   _loadAdminData();
                 }
@@ -219,8 +495,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
             SizedBox(width: 8),
             Expanded(
               child: Text(
-                'Trung tâm Quản trị Admin',
-                style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                'Kênh Điều Hành Tối Cao System Admin',
+                style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
@@ -248,7 +524,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
           tabs: const [
             Tab(icon: Icon(Icons.dashboard_rounded, size: 18), text: 'Tổng quan'),
             Tab(icon: Icon(Icons.people_alt_rounded, size: 18), text: 'Tài khoản'),
-            Tab(icon: Icon(Icons.storefront_rounded, size: 18), text: 'Địa điểm'),
+            Tab(icon: Icon(Icons.storefront_rounded, size: 18), text: 'Cơ sở Bản đồ'),
             Tab(icon: Icon(Icons.category_rounded, size: 18), text: 'Danh mục'),
           ],
         ),
@@ -268,13 +544,47 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
   }
 
   // =========================================================================
-  // TAB 1: 📊 TỔNG QUAN HỆ THỐNG
+  // TAB 1: 📊 TỔNG QUAN HỆ THỐNG (CHẤT LƯỢNG WEB ADMIN)
   // =========================================================================
   Widget _buildOverviewTab() {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        // Header Banner
+        // Top Action Shortcuts matching Web Screenshots 1 & 2
+        Row(
+          children: [
+            Expanded(
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFDC2626),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                ),
+                onPressed: _showAddEateryDialog,
+                icon: const Icon(Icons.add_location_alt_rounded, color: Colors.white, size: 18),
+                label: const Text('➕ Đăng Ký Cơ Sở Mới', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF0284C7),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                ),
+                onPressed: () {
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const MapScreen()));
+                },
+                icon: const Icon(Icons.map_rounded, color: Colors.white, size: 18),
+                label: const Text('🗺️ Xem Bản Đồ Số', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+
+        // KPI Header Banner
         Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
@@ -293,7 +603,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
             children: [
               const Row(
                 children: [
-                  Icon(Icons.analytics_rounded, color: Color(0xFFDC2626), size: 24),
+                  Icon(Icons.analytics_rounded, color: Color(0xFFDC2626), size: 22),
                   SizedBox(width: 8),
                   Text(
                     'THỐNG KÊ HỆ THỐNG TOÀN HUYỆN ĐÔNG ANH',
@@ -301,14 +611,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 14),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
                   _buildStatTile('${_stats['total_users'] ?? _usersList.length}', 'Tài khoản', Icons.person_rounded),
-                  _buildStatTile('${_stats['total_eateries'] ?? _eateriesList.length}', 'Địa điểm', Icons.map_rounded),
+                  _buildStatTile('${_stats['total_eateries'] ?? _eateriesList.length}', 'Bản đồ Live', Icons.map_rounded),
                   _buildStatTile('${_stats['total_reviews'] ?? _reviewsList.length}', 'Đánh giá', Icons.star_rounded),
-                  _buildStatTile('${_stats['total_sellers'] ?? 0}', 'Chủ quán', Icons.storefront_rounded),
+                  _buildStatTile('${_stats['total_sellers'] ?? 0}', 'Chủ tiệm', Icons.storefront_rounded),
                 ],
               ),
             ],
@@ -316,7 +626,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
         ),
         const SizedBox(height: 20),
 
-        const Text('Quản Lý Nhanh', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+        const Text('Quản Lý Nhanh Hệ Thống', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
         const SizedBox(height: 12),
 
         Row(
@@ -328,7 +638,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: _buildQuickActionCard('Quản lý Địa điểm', '${_eateriesList.length} quán ăn', Icons.storefront_outlined, Colors.orange, () {
+              child: _buildQuickActionCard('Cơ sở Bản đồ', '${_eateriesList.length} địa điểm', Icons.storefront_outlined, Colors.orange, () {
                 _tabController.animateTo(2);
               }),
             ),
@@ -398,7 +708,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
   }
 
   // =========================================================================
-  // TAB 2: 👥 QUẢN LÝ TÀI KHOẢN & PHÂN QUYỀN
+  // TAB 2: 👥 QUẢN LÝ TÀI KHOẢN NGƯỜI DÙNG (MATCHING WEB SCREENSHOT 2)
   // =========================================================================
   Widget _buildUsersTab(Color crimsonColor) {
     final filteredUsers = _usersList.where((u) {
@@ -408,23 +718,63 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
       return name.contains(q) || email.contains(q);
     }).toList();
 
+    final totalUsers = _usersList.length;
+    final adminUsers = _usersList.where((u) => u['role'] == 'admin').length;
+    final sellerUsers = _usersList.where((u) => u['role'] == 'seller' || u['role'] == 'manager').length;
+    final customerUsers = _usersList.where((u) => u['role'] == 'user' || u['role'] == null).length;
+
     return Column(
       children: [
-        // User Search Bar
-        Padding(
-          padding: const EdgeInsets.all(16),
-          child: TextField(
-            onChanged: (v) => setState(() => _userSearchQuery = v),
-            decoration: InputDecoration(
-              hintText: 'Tìm tài khoản theo tên hoặc email...',
-              prefixIcon: const Icon(Icons.search_rounded, color: Colors.grey),
-              filled: true,
-              fillColor: Colors.white,
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
-              contentPadding: const EdgeInsets.symmetric(vertical: 12),
-            ),
+        // Top Stat Badges matching Web Screenshot 2
+        Container(
+          padding: const EdgeInsets.all(12),
+          color: Colors.white,
+          child: Row(
+            children: [
+              Expanded(child: _buildUserBadge('TỔNG USER', '$totalUsers', Colors.blue)),
+              const SizedBox(width: 6),
+              Expanded(child: _buildUserBadge('ADMIN', '$adminUsers', Colors.purple)),
+              const SizedBox(width: 6),
+              Expanded(child: _buildUserBadge('SELLER', '$sellerUsers', Colors.green)),
+              const SizedBox(width: 6),
+              Expanded(child: _buildUserBadge('CUSTOMER', '$customerUsers', Colors.orange)),
+            ],
           ),
         ),
+
+        // User Header Action Bar & Search Input
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+          child: Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  onChanged: (v) => setState(() => _userSearchQuery = v),
+                  decoration: InputDecoration(
+                    hintText: 'Tìm kiếm theo Tên, Email, SĐT...',
+                    prefixIcon: const Icon(Icons.search_rounded, color: Colors.grey, size: 20),
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+                    contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF4F46E5),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                ),
+                onPressed: _showAddUserDialog,
+                icon: const Icon(Icons.person_add_rounded, color: Colors.white, size: 16),
+                label: const Text('+ Thêm mới', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+              ),
+            ],
+          ),
+        ),
+
         Expanded(
           child: ListView.builder(
             padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -437,7 +787,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
                 margin: const EdgeInsets.only(bottom: 12),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 child: ListTile(
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                   leading: CircleAvatar(
                     backgroundColor: crimsonColor.withValues(alpha: 0.1),
                     child: Text(
@@ -451,42 +801,64 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
                     children: [
                       Text(user['email'] ?? '', style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
                       const SizedBox(height: 4),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: _getRoleColor(currentRole).withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          'Role: ${currentRole.toUpperCase()}',
-                          style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: _getRoleColor(currentRole)),
-                        ),
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: _getRoleColor(currentRole).withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              currentRole.toUpperCase(),
+                              style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: _getRoleColor(currentRole)),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF10B981).withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: const Text('HOẠT ĐỘNG', style: TextStyle(fontSize: 9, color: Color(0xFF10B981), fontWeight: FontWeight.bold)),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                  trailing: PopupMenuButton<String>(
-                    initialValue: currentRole,
-                    onSelected: (newRole) => _changeUserRole(index, newRole),
-                    itemBuilder: (ctx) => const [
-                      PopupMenuItem(value: 'user', child: Text('👤 Member (User)')),
-                      PopupMenuItem(value: 'seller', child: Text('🛍️ Seller (Chủ gian hàng)')),
-                      PopupMenuItem(value: 'manager', child: Text('🏛️ Manager (BQL Chợ)')),
-                      PopupMenuItem(value: 'admin', child: Text('🛡️ Admin (Quản trị hệ thống)')),
-                    ],
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: crimsonColor.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text('Đổi Role', style: TextStyle(color: Color(0xFFDC2626), fontSize: 12, fontWeight: FontWeight.bold)),
-                          Icon(Icons.arrow_drop_down, color: Color(0xFFDC2626), size: 18),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      PopupMenuButton<String>(
+                        initialValue: currentRole,
+                        onSelected: (newRole) => _changeUserRole(index, newRole),
+                        itemBuilder: (ctx) => const [
+                          PopupMenuItem(value: 'user', child: Text('👤 Member (User)')),
+                          PopupMenuItem(value: 'seller', child: Text('🛍️ Seller (Chủ gian hàng)')),
+                          PopupMenuItem(value: 'manager', child: Text('🏛️ Manager (BQL Chợ)')),
+                          PopupMenuItem(value: 'admin', child: Text('🛡️ Admin (Quản trị hệ thống)')),
                         ],
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: crimsonColor.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Row(
+                            children: [
+                              Text('Đổi Role', style: TextStyle(color: Color(0xFFDC2626), fontSize: 11, fontWeight: FontWeight.bold)),
+                              Icon(Icons.arrow_drop_down, color: Color(0xFFDC2626), size: 16),
+                            ],
+                          ),
+                        ),
                       ),
-                    ),
+                      IconButton(
+                        icon: const Icon(Icons.delete_outline_rounded, color: Colors.red, size: 20),
+                        tooltip: 'Xóa user',
+                        onPressed: () => _deleteUser(index),
+                      ),
+                    ],
                   ),
                 ),
               );
@@ -494,6 +866,24 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildUserBadge(String label, String count, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
+      ),
+      child: Column(
+        children: [
+          Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: color)),
+          const SizedBox(height: 2),
+          Text(count, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: color)),
+        ],
+      ),
     );
   }
 
@@ -511,34 +901,61 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
   }
 
   // =========================================================================
-  // TAB 3: 🏬 QUẢN LÝ ĐỊA ĐIỂM & GIAN HÀNG
+  // TAB 3: 🏬 QUẢN LÝ DANH SÁCH CƠ SỞ BẢN ĐỒ SỐ (MATCHING WEB SCREENSHOT 1)
   // =========================================================================
   Widget _buildEateriesTab(Color crimsonColor) {
     final filteredEateries = _eateriesList.where((e) {
       final name = (e['name'] ?? '').toString().toLowerCase();
+      final cat = (e['category_name'] ?? '').toString().toLowerCase();
       final q = _eaterySearchQuery.toLowerCase();
-      return name.contains(q);
+      final matchesSearch = name.contains(q) || cat.contains(q);
+      if (_selectedCategoryFilter == 'Tất cả') return matchesSearch;
+      return matchesSearch && (e['category_name'] == _selectedCategoryFilter);
     }).toList();
 
     return Column(
       children: [
-        Padding(
-          padding: const EdgeInsets.all(16),
-          child: TextField(
-            onChanged: (v) => setState(() => _eaterySearchQuery = v),
-            decoration: InputDecoration(
-              hintText: 'Tìm địa điểm, quán ăn...',
-              prefixIcon: const Icon(Icons.search_rounded, color: Colors.grey),
-              filled: true,
-              fillColor: Colors.white,
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
-              contentPadding: const EdgeInsets.symmetric(vertical: 12),
-            ),
+        // Action Bar & Filter Header
+        Container(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+          color: Colors.white,
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      onChanged: (v) => setState(() => _eaterySearchQuery = v),
+                      decoration: InputDecoration(
+                        hintText: 'Tìm theo tên, địa chỉ, SĐT...',
+                        prefixIcon: const Icon(Icons.search_rounded, color: Colors.grey, size: 20),
+                        filled: true,
+                        fillColor: const Color(0xFFF1F5F9),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+                        contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: crimsonColor,
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    ),
+                    onPressed: _showAddEateryDialog,
+                    icon: const Icon(Icons.add_business_rounded, color: Colors.white, size: 16),
+                    label: const Text('+ Thêm Mới', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
+
         Expanded(
           child: ListView.builder(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             itemCount: filteredEateries.length,
             itemBuilder: (context, index) {
               final eatery = filteredEateries[index];
@@ -553,7 +970,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
                     width: 50,
                     height: 50,
                     decoration: BoxDecoration(color: Colors.grey.shade200, borderRadius: BorderRadius.circular(12)),
-                    child: const Icon(Icons.restaurant, color: Colors.grey),
+                    child: const Icon(Icons.storefront_rounded, color: Color(0xFF0284C7)),
                   ),
                   title: Text(eatery['name'] ?? 'Địa điểm', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                   subtitle: Column(
@@ -568,12 +985,18 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
                             decoration: BoxDecoration(color: Colors.blue.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)),
                             child: Text(eatery['category_name'] ?? 'Địa điểm', style: const TextStyle(fontSize: 10, color: Colors.blue, fontWeight: FontWeight.bold)),
                           ),
+                          const SizedBox(width: 4),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(color: const Color(0xFF10B981).withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)),
+                            child: const Text('Hoạt động', style: TextStyle(fontSize: 9, color: Color(0xFF10B981), fontWeight: FontWeight.bold)),
+                          ),
                           if (isFeatured) ...[
                             const SizedBox(width: 4),
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                               decoration: BoxDecoration(color: Colors.orange.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)),
-                              child: const Text('⭐ Nổi bật', style: TextStyle(fontSize: 10, color: Colors.orange, fontWeight: FontWeight.bold)),
+                              child: const Text('⭐ Nổi bật', style: TextStyle(fontSize: 9, color: Colors.orange, fontWeight: FontWeight.bold)),
                             ),
                           ]
                         ],

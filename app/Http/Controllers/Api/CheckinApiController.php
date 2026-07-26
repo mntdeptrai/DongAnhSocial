@@ -540,4 +540,111 @@ class CheckinApiController extends Controller
             'message'  => 'Tạo danh mục mới thành công',
         ]);
     }
+
+    /**
+     * Thêm User mới từ Admin Mobile App
+     */
+    public function storeUser(Request $request)
+    {
+        $request->validate([
+            'name'     => 'required|string|max:255',
+            'email'    => 'required|email|unique:users,email',
+            'password' => 'required|string|min:6',
+            'role'     => 'required|string|in:user,seller,manager,admin',
+        ]);
+
+        $user = User::create([
+            'name'     => $request->name,
+            'email'    => $request->email,
+            'password' => \Hash::make($request->password),
+            'role'     => $request->role,
+            'phone'    => $request->phone ?? null,
+            'status'   => 'active',
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'user'    => $user,
+            'message' => 'Tạo tài khoản mới thành công!',
+        ]);
+    }
+
+    /**
+     * Xóa User từ Admin Mobile App
+     */
+    public function deleteUser(Request $request, $id)
+    {
+        $user = User::find($id);
+        if ($user) {
+            $user->delete();
+        }
+        return response()->json(['success' => true, 'message' => 'Đã xóa tài khoản']);
+    }
+
+    /**
+     * Đăng ký Cơ sở / Địa điểm mới từ Admin Mobile App (Full Fields)
+     */
+    public function storeEatery(Request $request)
+    {
+        $request->validate([
+            'name'        => 'required|string|max:255',
+            'category_id' => 'required',
+            'commune_id'  => 'required',
+            'address'     => 'required|string|max:255',
+        ]);
+
+        $category = \App\Models\Category::find($request->category_id) ?? \App\Models\Category::first();
+        $commune  = \App\Models\Commune::find($request->commune_id) ?? \App\Models\Commune::first();
+
+        $eatery = \App\Models\Eatery::create([
+            'name'          => $request->name,
+            'slug'          => \Illuminate\Support\Str::slug($request->name) . '-' . time(),
+            'category_id'   => $category ? $category->id : 1,
+            'commune_id'    => $commune ? $commune->id : 1,
+            'address'       => $request->address,
+            'phone'         => $request->phone ?? null,
+            'opening_hours' => $request->opening_hours ?? '06:00 - 22:00',
+            'price_range'   => $request->price_range ?? '30.000đ - 100.000đ',
+            'latitude'      => $request->latitude ?? 21.117158,
+            'longitude'     => $request->longitude ?? 105.895619,
+            'is_featured'   => $request->boolean('is_featured', false),
+            'image_path'    => $request->image_url ?? 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=800&q=80',
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'eatery'  => $eatery,
+            'message' => 'Đăng ký cơ sở bản đồ số mới thành công!',
+        ]);
+    }
+
+    /**
+     * Cập nhật thông tin Cơ sở / Địa điểm từ Admin Mobile App
+     */
+    public function updateEatery(Request $request, $id)
+    {
+        $eatery = \App\Models\Eatery::find($id);
+        if (!$eatery) {
+            return response()->json(['success' => false, 'message' => 'Không tìm thấy địa điểm'], 404);
+        }
+
+        if ($request->has('name')) $eatery->name = $request->name;
+        if ($request->has('address')) $eatery->address = $request->address;
+        if ($request->has('phone')) $eatery->phone = $request->phone;
+        if ($request->has('opening_hours')) $eatery->opening_hours = $request->opening_hours;
+        if ($request->has('price_range')) $eatery->price_range = $request->price_range;
+        if ($request->has('latitude')) $eatery->latitude = $request->latitude;
+        if ($request->has('longitude')) $eatery->longitude = $request->longitude;
+        if ($request->has('is_featured')) $eatery->is_featured = $request->boolean('is_featured');
+        if ($request->has('category_id')) $eatery->category_id = $request->category_id;
+        if ($request->has('commune_id')) $eatery->commune_id = $request->commune_id;
+
+        $eatery->save();
+
+        return response()->json([
+            'success' => true,
+            'eatery'  => $eatery,
+            'message' => 'Cập nhật địa điểm thành công!',
+        ]);
+    }
 }
