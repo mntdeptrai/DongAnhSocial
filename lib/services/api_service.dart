@@ -752,4 +752,17 @@ class ApiService {
     } catch (_) {}
     return [];
   }
+
+  /// POST /admin/users/{id}/role — Cập nhật phân quyền người dùng
+  static Future<bool> updateUserRole(int userId, String role) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/admin/users/$userId/role'),
+        headers: _getHeaders(),
+        body: jsonEncode({'role': role}),
+      );
+      return response.statusCode == 200;
+    } catch (_) {}
+    return false;
+  }
 }

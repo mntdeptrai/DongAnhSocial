@@ -51,6 +51,10 @@ Route::prefix('v1')->group(function () {
         
         // Checkin history for mobile
         Route::get('/checkins/my', [\App\Http\Controllers\Api\CheckinApiController::class, 'getMyCheckins']);
+
+        // Admin Management APIs
+        Route::get('/admin/users', [\App\Http\Controllers\Api\CheckinApiController::class, 'getAdminUsers']);
+        Route::post('/admin/users/{id}/role', [\App\Http\Controllers\Api\CheckinApiController::class, 'updateUserRole']);
     });
 
     // -----------------------------------------------------------------------

@@ -34,17 +34,26 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     }
   }
 
-  void _changeUserRole(int index, String newRole) {
+  void _changeUserRole(int index, String newRole) async {
+    final user = _usersList[index];
+    final int userId = user['id'] is int ? user['id'] : (int.tryParse(user['id']?.toString() ?? '0') ?? 0);
+
     setState(() {
       _usersList[index]['role'] = newRole;
     });
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Đã cập nhật quyền cho ${_usersList[index]['name'] ?? 'người dùng'}!'),
-        backgroundColor: const Color(0xFFDC2626),
-      ),
-    );
+    if (userId > 0) {
+      await ApiService.updateUserRole(userId, newRole);
+    }
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('🎉 Đã cập nhật quyền ${newRole.toUpperCase()} cho ${user['name'] ?? 'người dùng'}!'),
+          backgroundColor: const Color(0xFFDC2626),
+        ),
+      );
+    }
   }
 
   @override

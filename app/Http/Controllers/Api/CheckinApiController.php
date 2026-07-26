@@ -315,4 +315,43 @@ class CheckinApiController extends Controller
             'message' => 'Thả cảm xúc thành công.'
         ]);
     }
+
+    /**
+     * Lấy danh sách người dùng cho Admin Dashboard
+     */
+    public function getAdminUsers(Request $request)
+    {
+        $users = User::select('id', 'name', 'email', 'role', 'status', 'created_at')
+            ->orderBy('id', 'desc')
+            ->limit(50)
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'users'   => $users
+        ]);
+    }
+
+    /**
+     * Cập nhật phân quyền người dùng từ Admin
+     */
+    public function updateUserRole(Request $request, $id)
+    {
+        $request->validate([
+            'role' => 'required|string|in:user,seller,manager,admin',
+        ]);
+
+        $user = User::find($id);
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'Người dùng không tồn tại'], 404);
+        }
+
+        $user->role = $request->role;
+        $user->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Đã cập nhật quyền thành công'
+        ]);
+    }
 }
