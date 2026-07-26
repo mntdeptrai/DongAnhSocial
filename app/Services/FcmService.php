@@ -119,7 +119,8 @@ class FcmService
             ]));
 
             $signatureInput = $header . '.' . $payload;
-            openssl_sign($signatureInput, $signature, $serviceAccount['private_key'], 'SHA256');
+            $privateKey = str_replace('\n', "\n", $serviceAccount['private_key']);
+            openssl_sign($signatureInput, $signature, $privateKey, 'SHA256');
             $jwt = $signatureInput . '.' . base64_encode($signature);
 
             $response = Http::asForm()->post('https://oauth2.googleapis.com/token', [
