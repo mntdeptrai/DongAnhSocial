@@ -1735,4 +1735,94 @@ YÊU CẦU TRẢ VỀ CHỈ LÀ CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU, KHÔNG C
             ]
         ], 200, [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     }
+
+    /**
+     * Seller: Thêm món ăn / Sản phẩm OCOP / Đặc sản mới cho gian hàng
+     */
+    public function storeDish(Request $request)
+    {
+        $request->validate([
+            'name'  => 'required|string|max:255',
+            'price' => 'required',
+        ]);
+
+        $user = Auth::user() ?: auth('sanctum')->user();
+        $myEatery = $user ? Eatery::where('user_id', $user->id)->first() : null;
+        $eateryId = $myEatery ? $myEatery->id : 1;
+
+        $dish = Dish::create([
+            'eatery_id'   => $eateryId,
+            'name'        => $request->name,
+            'price'       => $request->price,
+            'description' => $request->description ?? 'Món ngon đặc sản',
+            'image_path'  => $request->image_url ?? 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80',
+            'is_available'=> true,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'dish'    => $dish,
+            'message' => 'Thêm sản phẩm mới thành công!',
+        ]);
+    }
+
+    /**
+     * Seller: Xóa món ăn / sản phẩm
+     */
+    public function deleteDish(Request $request, $id)
+    {
+        $dish = Dish::find($id);
+        if ($dish) {
+            $dish->delete();
+        }
+        return response()->json(['success' => true, 'message' => 'Đã xóa sản phẩm']);
+    }
+
+    /**
+     * Seller: Cập nhật trạng thái đơn hàng (Xác nhận, Giao hàng, Hoàn thành, Hủy)
+     */
+    public function updateOrderStatus(Request $request, $id)
+    {
+        $status = $request->input('status', 'confirmed');
+        DB::table('orders')->where('id', $id)->update(['status' => $status, 'updated_at' => now()]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Đã cập nhật trạng thái đơn hàng thành ' . strtoupper($status),
+        ]);
+    }
+
+    /**
+     * Manager: Đăng Bảng tin thông báo BQL Chợ
+     */
+    public function storeManagerBulletin(Request $request)
+    {
+        $request->validate([
+            'title'   => 'required|string|max:255',
+            'content' => 'required|string',
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Đã phát thông báo BQL Chợ tới toàn bộ tiểu thương thành công!',
+        ]);
+    }
+
+    /**
+     * Manager: Duyệt / Đình chỉ gian hàng chợ
+     */
+    public function updateStallStatus(Request $request, $id)
+    {
+        $status = $request->input('status', 'active');
+        $eatery = Eatery::on('mysql_market')->find($id) ?? Eatery::find($id);
+        if ($eatery) {
+            $eatery->status = $status;
+            $eatery->save();
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Đã cập nhật trạng thái gian hàng!',
+        ]);
+    }
 }

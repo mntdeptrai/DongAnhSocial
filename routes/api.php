@@ -79,7 +79,13 @@ Route::prefix('v1')->group(function () {
     Route::post('/seller/profile', [EateryApiController::class, 'updateSellerProfile']);
     Route::get('/seller/orders', [EateryApiController::class, 'getSellerOrders']);
     Route::get('/seller/dashboard-data', [EateryApiController::class, 'getSellerDashboardData']);
+    Route::post('/seller/dishes', [EateryApiController::class, 'storeDish']);
+    Route::delete('/seller/dishes/{id}', [EateryApiController::class, 'deleteDish']);
+    Route::post('/seller/orders/{id}/status', [EateryApiController::class, 'updateOrderStatus']);
+
     Route::get('/manager/dashboard-data', [EateryApiController::class, 'getManagerDashboardData']);
+    Route::post('/manager/bulletins', [EateryApiController::class, 'storeManagerBulletin']);
+    Route::post('/manager/stalls/{id}/status', [EateryApiController::class, 'updateStallStatus']);
 
     // Videos Reels đặc sản (xem công khai)
     Route::get('/videos', [EateryApiController::class, 'getVideos']);

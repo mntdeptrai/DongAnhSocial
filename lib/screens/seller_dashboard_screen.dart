@@ -14,15 +14,10 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> with Sing
   late TabController _tabController;
   bool _isLoading = true;
 
-  void _handleBack() {
-    if (Navigator.canPop(context)) {
-      Navigator.pop(context);
-    } else if (widget.onBack != null) {
-      widget.onBack!();
-    }
-  }
+  Map<String, dynamic> _sellerStats = {};
+  List<dynamic> _myProducts = [];
+  List<dynamic> _receivedOrders = [];
 
-  // 9 registration fields according to market regulation form
   final _merchantNameController = TextEditingController();
   final _businessItemsController = TextEditingController();
   final _priceListedController = TextEditingController();
@@ -33,10 +28,6 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> with Sing
 
   bool _hasSmartphone = true;
   bool _hasAttpCertificate = true;
-
-  // Real API Data lists
-  List<dynamic> _myProducts = [];
-  List<dynamic> _receivedOrders = [];
 
   @override
   void initState() {
@@ -65,24 +56,23 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> with Sing
       final profileRes = await ApiService.getSellerProfile();
 
       if (mounted) {
-        if (dashRes['success'] == true && dashRes['eatery'] != null) {
-          _merchantNameController.text = dashRes['eatery']['name'] ?? '';
-          _phoneController.text = dashRes['eatery']['phone'] ?? '';
+        if (dashRes['success'] == true) {
+          _sellerStats = dashRes['stats'] ?? {};
+          if (dashRes['eatery'] != null) {
+            _merchantNameController.text = dashRes['eatery']['name'] ?? '';
+            _phoneController.text = dashRes['eatery']['phone'] ?? '';
+          }
+          if (dashRes['dishes'] is List) {
+            _myProducts = List<dynamic>.from(dashRes['dishes']);
+          }
+          if (dashRes['orders'] is List) {
+            _receivedOrders = List<dynamic>.from(dashRes['orders']);
+          }
         } else {
           final data = profileRes['data'] ?? profileRes;
           _merchantNameController.text = data['merchant_name'] ?? '';
           _phoneController.text = data['phone'] ?? '';
-        }
-
-        if (dashRes['dishes'] is List && (dashRes['dishes'] as List).isNotEmpty) {
-          _myProducts = List<dynamic>.from(dashRes['dishes']);
-        } else {
           _myProducts = await ApiService.getMarketProducts();
-        }
-
-        if (dashRes['orders'] is List && (dashRes['orders'] as List).isNotEmpty) {
-          _receivedOrders = List<dynamic>.from(dashRes['orders']);
-        } else {
           _receivedOrders = await ApiService.getSellerOrders();
         }
       }
@@ -92,6 +82,96 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> with Sing
       if (mounted) {
         setState(() => _isLoading = false);
       }
+    }
+  }
+
+  void _showAddProductDialog() {
+    final nameCtrl = TextEditingController();
+    final priceCtrl = TextEditingController();
+    final descCtrl = TextEditingController();
+    final imageCtrl = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Row(
+          children: [
+            Icon(Icons.add_shopping_cart_rounded, color: Color(0xFF10B981)),
+            SizedBox(width: 8),
+            Text('➕ Thêm Sản Phẩm / Món Ăn', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameCtrl,
+                decoration: const InputDecoration(labelText: 'Tên món ăn / Sản phẩm *', hintText: 'Ví dụ: Bún chả nướng than hoa'),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: priceCtrl,
+                decoration: const InputDecoration(labelText: 'Giá bán (Đồng) *', hintText: '40.000đ'),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: descCtrl,
+                decoration: const InputDecoration(labelText: 'Mô tả sản phẩm', hintText: 'Kèm rau sống & nước chấm chua ngọt'),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: imageCtrl,
+                decoration: const InputDecoration(labelText: 'URL Ảnh sản phẩm', hintText: 'https://...'),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Hủy')),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF10B981)),
+            onPressed: () async {
+              if (nameCtrl.text.trim().isNotEmpty && priceCtrl.text.trim().isNotEmpty) {
+                final name = nameCtrl.text.trim();
+                final price = priceCtrl.text.trim();
+                final desc = descCtrl.text.trim();
+                final imgUrl = imageCtrl.text.trim();
+                Navigator.pop(ctx);
+                final res = await ApiService.storeDish(name: name, price: price, description: desc, imageUrl: imgUrl.isNotEmpty ? imgUrl : null);
+                if (res['success'] == true) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('🎉 ${res['message']}'), backgroundColor: const Color(0xFF10B981)),
+                  );
+                  _fetchSellerData();
+                }
+              }
+            },
+            child: const Text('Thêm Sản Phẩm', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _updateOrderStatus(int orderId, String newStatus) async {
+    final success = await ApiService.updateSellerOrderStatus(orderId, newStatus);
+    if (success && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('🎉 Đã cập nhật đơn hàng thành $newStatus!'), backgroundColor: const Color(0xFF10B981)),
+      );
+      _fetchSellerData();
+    }
+  }
+
+  void _deleteDish(int index) async {
+    final dish = _myProducts[index];
+    final int id = dish['id'] is int ? dish['id'] : (int.tryParse(dish['id']?.toString() ?? '0') ?? 0);
+
+    setState(() => _myProducts.removeAt(index));
+    if (id > 0) {
+      await ApiService.deleteDish(id);
     }
   }
 
@@ -107,460 +187,296 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> with Sing
       'has_smartphone': _hasSmartphone,
       'has_attp_certificate': _hasAttpCertificate,
     };
-    await ApiService.updateSellerProfile(body);
+
+    final result = await ApiService.updateSellerProfile(body);
     if (mounted) {
+      final msg = result['message'] ?? (result['success'] == true ? 'Đã lưu hồ sơ gian hàng thành công!' : 'Lỗi cập nhật');
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('🎉 Đã cập nhật hồ sơ gian hàng chợ thành công!'),
-          backgroundColor: Color(0xFF059669),
-        ),
+        SnackBar(content: Text(msg), backgroundColor: const Color(0xFF10B981)),
       );
     }
   }
 
-  void _showAddProductModal() {
-    final nameCtrl = TextEditingController();
-    final priceCtrl = TextEditingController();
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) {
-        return Padding(
-          padding: EdgeInsets.only(
-            top: 20,
-            left: 20,
-            right: 20,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    '➕ Thêm Sản Phẩm OCOP Mới',
-                    style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ],
-              ),
-              const Divider(),
-              const SizedBox(height: 8),
-              TextField(
-                controller: nameCtrl,
-                decoration: const InputDecoration(
-                  labelText: 'Tên sản phẩm / Món ăn',
-                  border: OutlineInputBorder(),
-                  isDense: true,
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: priceCtrl,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Giá niêm yết (VNĐ)',
-                  border: OutlineInputBorder(),
-                  isDense: true,
-                ),
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () {
-                  if (nameCtrl.text.isNotEmpty) {
-                    setState(() {
-                      _myProducts.insert(0, {
-                        'name': nameCtrl.text.trim(),
-                        'price': priceCtrl.text.trim(),
-                        'stall_name': _merchantNameController.text,
-                        'in_stock': true,
-                      });
-                    });
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Đã thêm sản phẩm thành công!'),
-                        backgroundColor: Color(0xFF059669),
-                      ),
-                    );
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF059669),
-                  foregroundColor: Colors.white,
-                  minimumSize: const Size(double.infinity, 44),
-                ),
-                child: const Text('Thêm Sản Phẩm', style: TextStyle(fontWeight: FontWeight.bold)),
-              ),
-            ],
-          ),
-        );
-      },
-    );
+  void _handleBack() {
+    if (Navigator.canPop(context)) {
+      Navigator.pop(context);
+    } else if (widget.onBack != null) {
+      widget.onBack!();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    const emeraldPrimary = Color(0xFF059669);
-    const slateNavy = Color(0xFF0F172A);
+    const emeraldColor = Color(0xFF10B981);
+    const darkObsidian = Color(0xFF064E3B);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: const Color(0xFFF0FDF4),
+      appBar: AppBar(
+        backgroundColor: darkObsidian,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+          tooltip: 'Quay lại',
+          onPressed: _handleBack,
+        ),
+        title: const Row(
+          children: [
+            Icon(Icons.storefront_rounded, color: emeraldColor, size: 22),
+            SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Kênh Điều Hành Chủ Gian Hàng (Seller Portal)',
+                style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh_rounded, color: Colors.white),
+            tooltip: 'Làm mới',
+            onPressed: _fetchSellerData,
+          ),
+        ],
+        bottom: TabBar(
+          controller: _tabController,
+          indicatorColor: emeraldColor,
+          indicatorWeight: 3,
+          labelColor: Colors.white,
+          unselectedLabelColor: Colors.white70,
+          labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+          tabs: const [
+            Tab(icon: Icon(Icons.receipt_long_rounded, size: 18), text: 'Đơn hàng'),
+            Tab(icon: Icon(Icons.restaurant_menu_rounded, size: 18), text: 'Thực đơn'),
+            Tab(icon: Icon(Icons.store_rounded, size: 18), text: 'Hồ sơ tiệm'),
+          ],
+        ),
+      ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: emeraldPrimary))
-          : CustomScrollView(
-              slivers: [
-                // Merchant Header Banner
-                SliverToBoxAdapter(
-                  child: Container(
-                    padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [slateNavy, Color(0xFF065F46)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.vertical(bottom: Radius.circular(28)),
-                    ),
-                    child: SafeArea(
-                      bottom: false,
+          ? const Center(child: CircularProgressIndicator(color: emeraldColor))
+          : TabBarView(
+              controller: _tabController,
+              children: [
+                _buildOrdersTab(emeraldColor),
+                _buildMenuTab(emeraldColor),
+                _buildProfileTab(emeraldColor),
+              ],
+            ),
+    );
+  }
+
+  // TAB 1: ĐƠN HÀNG & DOANH SỐ
+  Widget _buildOrdersTab(Color emeraldColor) {
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        // KPI Tiles
+        Row(
+          children: [
+            Expanded(child: _buildKpiCard('DOANH THU', '${_sellerStats['total_revenue'] ?? 0} đ', Icons.payments_rounded, Colors.green)),
+            const SizedBox(width: 8),
+            Expanded(child: _buildKpiCard('ĐƠN HÔM NAY', '${_sellerStats['today_orders'] ?? _receivedOrders.length}', Icons.shopping_bag_rounded, Colors.blue)),
+            const SizedBox(width: 8),
+            Expanded(child: _buildKpiCard('ĐƠN CHỜ DỰT', '${_sellerStats['pending_orders'] ?? 0}', Icons.hourglass_top_rounded, Colors.orange)),
+          ],
+        ),
+        const SizedBox(height: 20),
+
+        const Text('Danh Sách Đơn Hàng Đã Nhận', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+        const SizedBox(height: 10),
+
+        _receivedOrders.isEmpty
+            ? Container(
+                padding: const EdgeInsets.all(32),
+                alignment: Alignment.center,
+                child: Column(
+                  children: [
+                    Icon(Icons.inbox_rounded, size: 48, color: Colors.grey.shade400),
+                    const SizedBox(height: 8),
+                    Text('Chưa có đơn hàng nào phát sinh', style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
+                  ],
+                ),
+              )
+            : Column(
+                children: _receivedOrders.asMap().entries.map((entry) {
+                  final order = entry.value;
+                  final orderId = order['id'] is int ? order['id'] : (int.tryParse(order['id']?.toString() ?? '0') ?? 0);
+                  final status = (order['status'] ?? 'pending').toString();
+
+                  return Card(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    child: Padding(
+                      padding: const EdgeInsets.all(14),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Row(
-                                children: [
-                                  IconButton(
-                                    icon: const Icon(Icons.arrow_back_rounded, color: Colors.white, size: 24),
-                                    tooltip: 'Quay lại',
-                                    onPressed: _handleBack,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Container(
-                                    padding: const EdgeInsets.all(10),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white.withValues(alpha: 0.15),
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: const Icon(Icons.storefront_rounded, color: Colors.white, size: 22),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      const Text(
-                                        'Chủ Gian Hàng OCOP',
-                                        style: TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w500),
-                                      ),
-                                      Text(
-                                        _merchantNameController.text.isNotEmpty
-                                            ? _merchantNameController.text
-                                            : 'Gian Hàng Chợ Số',
-                                        style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                              Row(
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFF10B981).withValues(alpha: 0.2),
-                                      borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(color: const Color(0xFF34D399)),
-                                    ),
-                                    child: const Row(
-                                      children: [
-                                        CircleAvatar(radius: 4, backgroundColor: Color(0xFF34D399)),
-                                        SizedBox(width: 6),
-                                        Text('Đang Bán', style: TextStyle(color: Color(0xFF34D399), fontSize: 11, fontWeight: FontWeight.bold)),
-                                      ],
-                                    ),
-                                  ),
-                                  const SizedBox(width: 6),
-                                  IconButton(
-                                    onPressed: _handleBack,
-                                    icon: const Icon(Icons.home_rounded, color: Colors.white, size: 22),
-                                    tooltip: 'Quay về trang người dùng',
-                                  ),
-                                ],
+                              Text('Đơn hàng #${order['code'] ?? orderId}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: _getStatusColor(status).withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(status.toUpperCase(), style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: _getStatusColor(status))),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 20),
-
-                          // Revenue Metric Cards
+                          const SizedBox(height: 6),
+                          Text('Khách: ${order['customer_name'] ?? 'Khách mua tại quầy'} - SĐT: ${order['phone'] ?? order['customer_phone'] ?? '---'}', style: TextStyle(fontSize: 12, color: Colors.grey.shade700)),
+                          const SizedBox(height: 4),
+                          Text('Tổng tiền: ${order['total_amount'] ?? order['total_price'] ?? '50.000'} đ', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.red, fontSize: 13)),
+                          const Divider(height: 16),
                           Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
                             children: [
-                              Expanded(
-                                child: _buildMerchantMetric(
-                                  label: 'Doanh Thu',
-                                  value: 'API Live',
-                                  subtext: 'Thời gian thực',
-                                  icon: Icons.account_balance_wallet_rounded,
-                                  color: const Color(0xFF34D399),
-                                ),
+                              OutlinedButton(
+                                onPressed: () => _updateOrderStatus(orderId, 'confirmed'),
+                                child: const Text('Xác Nhận', style: TextStyle(fontSize: 11)),
                               ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: _buildMerchantMetric(
-                                  label: 'Đơn Hàng',
-                                  value: '${_receivedOrders.length}',
-                                  subtext: 'Đã nhận',
-                                  icon: Icons.shopping_bag_rounded,
-                                  color: const Color(0xFF38BDF8),
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: _buildMerchantMetric(
-                                  label: 'Sản Phẩm',
-                                  value: '${_myProducts.length}',
-                                  subtext: 'Niêm yết',
-                                  icon: Icons.inventory_2_rounded,
-                                  color: const Color(0xFFFBBF24),
-                                ),
+                              const SizedBox(width: 6),
+                              ElevatedButton(
+                                style: ElevatedButton.styleFrom(backgroundColor: emeraldColor),
+                                onPressed: () => _updateOrderStatus(orderId, 'completed'),
+                                child: const Text('Hoàn Thành', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
                               ),
                             ],
                           ),
                         ],
                       ),
                     ),
-                  ),
-                ),
-
-                // Tab Bar
-                SliverToBoxAdapter(
-                  child: Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 4)),
-                      ],
-                    ),
-                    child: TabBar(
-                      controller: _tabController,
-                      indicatorColor: emeraldPrimary,
-                      labelColor: emeraldPrimary,
-                      unselectedLabelColor: Colors.grey.shade600,
-                      indicatorSize: TabBarIndicatorSize.label,
-                      labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                      tabs: const [
-                        Tab(text: 'Đơn Hàng API'),
-                        Tab(text: 'Sản Phẩm API'),
-                        Tab(text: 'Hồ Sơ Gian Hàng'),
-                      ],
-                    ),
-                  ),
-                ),
-
-                // Tab Views
-                SliverFillRemaining(
-                  hasScrollBody: true,
-                  child: TabBarView(
-                    controller: _tabController,
-                    children: [
-                      _buildOrdersTab(),
-                      _buildProductsTab(),
-                      _buildProfileRegTab(),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-    );
-  }
-
-  Widget _buildMerchantMetric({
-    required String label,
-    required String value,
-    required String subtext,
-    required IconData icon,
-    required Color color,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(label, style: const TextStyle(color: Colors.white70, fontSize: 11)),
-              Icon(icon, color: color, size: 16),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Text(value, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 2),
-          Text(subtext, style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.w500)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildOrdersTab() {
-    if (_receivedOrders.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.shopping_bag_outlined, size: 64, color: Colors.grey.shade400),
-            const SizedBox(height: 12),
-            const Text('Chưa có đơn hàng nào từ hệ thống API', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-            const SizedBox(height: 4),
-            Text('Các đơn hàng từ khách mua sắm sẽ tự động xuất hiện tại đây.', style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
-          ],
-        ),
-      );
-    }
-
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      itemCount: _receivedOrders.length,
-      itemBuilder: (context, index) {
-        final order = _receivedOrders[index];
-
-        return Card(
-          margin: const EdgeInsets.only(bottom: 12),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          child: ListTile(
-            contentPadding: const EdgeInsets.all(16),
-            title: Text('Đơn hàng #${order['id'] ?? order['code']}', style: const TextStyle(fontWeight: FontWeight.bold)),
-            subtitle: Text('Khách: ${order['customer_name'] ?? order['user_name'] ?? 'Khách mua'}\nTổng: ${order['total_amount'] ?? order['total']}'),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildProductsTab() {
-    if (_myProducts.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.inventory_2_outlined, size: 64, color: Colors.grey.shade400),
-            const SizedBox(height: 12),
-            const Text('Chưa có sản phẩm OCOP nào từ API', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-            const SizedBox(height: 12),
-            ElevatedButton.icon(
-              onPressed: _showAddProductModal,
-              icon: const Icon(Icons.add),
-              label: const Text('Thêm Sản Phẩm Mới'),
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF059669), foregroundColor: Colors.white),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('Tổng số sản phẩm (${_myProducts.length})', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-              ElevatedButton.icon(
-                onPressed: _showAddProductModal,
-                icon: const Icon(Icons.add, size: 16),
-                label: const Text('Thêm Món'),
-                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF059669), foregroundColor: Colors.white),
+                  );
+                }).toList(),
               ),
-            ],
-          ),
-        ),
-        Expanded(
-          child: ListView.builder(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: _myProducts.length,
-            itemBuilder: (context, index) {
-              final p = _myProducts[index];
-
-              return Card(
-                margin: const EdgeInsets.only(bottom: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                child: ListTile(
-                  contentPadding: const EdgeInsets.all(12),
-                  leading: const CircleAvatar(
-                    backgroundColor: Color(0xFFECFDF5),
-                    child: Icon(Icons.shopping_bag_rounded, color: Color(0xFF059669)),
-                  ),
-                  title: Text(p['name'] ?? 'Sản phẩm OCOP', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                  subtitle: Text('Giá niêm yết: ${p['price'] ?? 'Liên hệ'}'),
-                ),
-              );
-            },
-          ),
-        ),
       ],
     );
   }
 
-  Widget _buildProfileRegTab() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+  Color _getStatusColor(String status) {
+    switch (status) {
+      case 'completed':
+        return Colors.green;
+      case 'confirmed':
+        return Colors.blue;
+      case 'shipping':
+        return Colors.purple;
+      default:
+        return Colors.orange;
+    }
+  }
+
+  Widget _buildKpiCard(String label, String val, IconData icon, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
+      ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Hồ sơ Đăng ký 9 Hạng mục Chợ số:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-          const SizedBox(height: 12),
-          TextField(controller: _merchantNameController, decoration: const InputDecoration(labelText: 'Tên gian hàng / HKD', border: OutlineInputBorder())),
-          const SizedBox(height: 10),
-          TextField(controller: _businessItemsController, decoration: const InputDecoration(labelText: 'Mặt hàng kinh doanh', border: OutlineInputBorder())),
-          const SizedBox(height: 10),
-          TextField(controller: _bankAccountController, decoration: const InputDecoration(labelText: 'Số tài khoản ngân hàng', border: OutlineInputBorder())),
-          const SizedBox(height: 10),
-          TextField(controller: _bankNameController, decoration: const InputDecoration(labelText: 'Tên ngân hàng chi nhánh', border: OutlineInputBorder())),
-          const SizedBox(height: 10),
-          TextField(controller: _phoneController, decoration: const InputDecoration(labelText: 'Số điện thoại liên hệ', border: OutlineInputBorder())),
-          const SizedBox(height: 14),
-          SwitchListTile(
-            title: const Text('Có smartphone nhận đơn hàng online'),
-            value: _hasSmartphone,
-            activeTrackColor: const Color(0xFF059669),
-            onChanged: (val) => setState(() => _hasSmartphone = val),
-          ),
-          SwitchListTile(
-            title: const Text('Đã có chứng nhận An toàn thực phẩm (ATTP)'),
-            value: _hasAttpCertificate,
-            activeTrackColor: const Color(0xFF059669),
-            onChanged: (val) => setState(() => _hasAttpCertificate = val),
-          ),
-          const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: _saveProfile,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF059669),
-              foregroundColor: Colors.white,
-              minimumSize: const Size(double.infinity, 48),
-            ),
-            child: const Text('Lưu Hồ Sơ Gian Hàng', style: TextStyle(fontWeight: FontWeight.bold)),
-          ),
+          Icon(icon, color: color, size: 20),
+          const SizedBox(height: 4),
+          Text(val, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: color)),
+          Text(label, style: TextStyle(fontSize: 9, color: Colors.grey.shade600, fontWeight: FontWeight.bold)),
         ],
       ),
+    );
+  }
+
+  // TAB 2: QUẢN LÝ THỰC ĐƠN / SẢN PHẨM
+  Widget _buildMenuTab(Color emeraldColor) {
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text('Danh Sách Sản Phẩm / Món Ăn (${_myProducts.length})', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: emeraldColor,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              onPressed: _showAddProductDialog,
+              icon: const Icon(Icons.add, size: 16, color: Colors.white),
+              label: const Text('Thêm Món Mới', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+
+        ..._myProducts.asMap().entries.map((entry) {
+          final idx = entry.key;
+          final prod = entry.value;
+
+          return Card(
+            margin: const EdgeInsets.only(bottom: 12),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            child: ListTile(
+              leading: Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(color: Colors.grey.shade200, borderRadius: BorderRadius.circular(12)),
+                child: const Icon(Icons.fastfood_rounded, color: Color(0xFF10B981)),
+              ),
+              title: Text(prod['name'] ?? 'Món ăn', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+              subtitle: Text('${prod['price'] ?? '35.000'} đ', style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 12)),
+              trailing: IconButton(
+                icon: const Icon(Icons.delete_outline_rounded, color: Colors.red),
+                onPressed: () => _deleteDish(idx),
+              ),
+            ),
+          );
+        }).toList(),
+      ],
+    );
+  }
+
+  // TAB 3: HỒ SƠ GIAN HÀNG & QUY ĐỊNH CHỢ
+  Widget _buildProfileTab(Color emeraldColor) {
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        Card(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('📝 Hồ Sơ Gian Hàng & Quy Định Chợ', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+                const SizedBox(height: 12),
+                TextField(controller: _merchantNameController, decoration: const InputDecoration(labelText: 'Tên tiểu thương / Gian hàng')),
+                const SizedBox(height: 8),
+                TextField(controller: _phoneController, decoration: const InputDecoration(labelText: 'Số điện thoại')),
+                const SizedBox(height: 8),
+                TextField(controller: _businessItemsController, decoration: const InputDecoration(labelText: 'Mặt hàng kinh doanh chính')),
+                const SizedBox(height: 8),
+                TextField(controller: _bankNameController, decoration: const InputDecoration(labelText: 'Ngân hàng nhận thanh toán')),
+                const SizedBox(height: 8),
+                TextField(controller: _bankAccountController, decoration: const InputDecoration(labelText: 'Số tài khoản ngân hàng')),
+                const SizedBox(height: 16),
+                ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: emeraldColor,
+                    minimumSize: const Size.fromHeight(48),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  ),
+                  onPressed: _saveProfile,
+                  icon: const Icon(Icons.save_rounded, color: Colors.white),
+                  label: const Text('Lưu Hồ Sơ Gian Hàng', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

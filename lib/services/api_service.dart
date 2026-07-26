@@ -941,6 +941,47 @@ class ApiService {
     return {'success': false};
   }
 
+  /// POST /seller/dishes — Thêm sản phẩm / món ăn mới cho gian hàng
+  static Future<Map<String, dynamic>> storeDish({required String name, required String price, String? description, String? imageUrl}) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/seller/dishes'),
+        headers: _getHeaders(),
+        body: jsonEncode({
+          'name': name,
+          'price': price,
+          'description': description,
+          'image_url': imageUrl,
+        }),
+      );
+      return jsonDecode(response.body);
+    } catch (e) {
+      return {'success': false, 'message': 'Lỗi kết nối: $e'};
+    }
+  }
+
+  /// DELETE /seller/dishes/{id} — Xóa món ăn sản phẩm
+  static Future<bool> deleteDish(int id) async {
+    try {
+      final response = await http.delete(Uri.parse('$baseUrl/seller/dishes/$id'), headers: _getHeaders());
+      return response.statusCode == 200;
+    } catch (_) {}
+    return false;
+  }
+
+  /// POST /seller/orders/{id}/status — Cập nhật trạng thái đơn hàng của Seller
+  static Future<bool> updateSellerOrderStatus(int orderId, String status) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/seller/orders/$orderId/status'),
+        headers: _getHeaders(),
+        body: jsonEncode({'status': status}),
+      );
+      return response.statusCode == 200;
+    } catch (_) {}
+    return false;
+  }
+
   /// GET /manager/dashboard-data — Lấy dữ liệu giám sát chợ của Ban Quản Lý
   static Future<Map<String, dynamic>> getManagerDashboardData() async {
     try {
@@ -950,6 +991,32 @@ class ApiService {
       }
     } catch (_) {}
     return {'success': false};
+  }
+
+  /// POST /manager/bulletins — Đăng bảng tin BQL Chợ
+  static Future<bool> storeManagerBulletin(String title, String content) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/manager/bulletins'),
+        headers: _getHeaders(),
+        body: jsonEncode({'title': title, 'content': content}),
+      );
+      return response.statusCode == 200;
+    } catch (_) {}
+    return false;
+  }
+
+  /// POST /manager/stalls/{id}/status — Duyệt / Đình chỉ gian hàng chợ
+  static Future<bool> updateStallStatus(int id, String status) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/manager/stalls/$id/status'),
+        headers: _getHeaders(),
+        body: jsonEncode({'status': status}),
+      );
+      return response.statusCode == 200;
+    } catch (_) {}
+    return false;
   }
 
   // =========================================================================
