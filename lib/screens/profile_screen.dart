@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import 'my_checkins_screen.dart';
+import 'my_orders_screen.dart';
 import 'seller_dashboard_screen.dart';
 import '../services/notification_helper.dart';
 
@@ -415,6 +416,28 @@ class ProfileScreen extends StatelessWidget {
                           Navigator.push(
                             context,
                             MaterialPageRoute(builder: (context) => const SellerDashboardScreen()),
+                          );
+                        },
+                      ),
+                    ),
+                    const Divider(height: 1),
+                    Material(
+                      color: const Color(0xFFEA580C).withOpacity(0.06),
+                      child: ListTile(
+                        leading: const CircleAvatar(
+                          backgroundColor: Color(0xFFEA580C),
+                          child: Icon(Icons.shopping_bag_rounded, color: Colors.white, size: 20),
+                        ),
+                        title: const Text(
+                          '📦 Lịch sử đơn hàng của tôi',
+                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFFEA580C)),
+                        ),
+                        subtitle: const Text('Theo dõi trạng thái, đơn đã nhận, hủy đơn & hoàn hàng', style: TextStyle(fontSize: 11)),
+                        trailing: const Icon(Icons.arrow_forward_ios, size: 14, color: Color(0xFFEA580C)),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const MyOrdersScreen()),
                           );
                         },
                       ),

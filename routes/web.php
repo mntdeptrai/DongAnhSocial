@@ -115,6 +115,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/api/orders', [CheckoutController::class, 'apiOrdersList'])->name('api.orders.index');
     Route::get('/api/orders/{code}', [CheckoutController::class, 'apiOrdersShow'])->name('api.orders.show');
     Route::post('/api/orders/{code}/cancel', [CheckoutController::class, 'cancel'])->name('api.orders.cancel');
+    Route::post('/api/orders/{code}/confirm-received', [CheckoutController::class, 'confirmReceived'])->name('api.orders.confirm-received');
+    Route::post('/api/orders/{code}/return', [CheckoutController::class, 'returnOrder'])->name('api.orders.return');
     Route::post('/api/orders/{code}/reorder', [CheckoutController::class, 'reorder'])->name('api.orders.reorder');
     Route::post('/api/orders/{code}/review', [CheckoutController::class, 'review'])->name('api.orders.review');
 });

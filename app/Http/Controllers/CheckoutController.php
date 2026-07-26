@@ -352,10 +352,14 @@ class CheckoutController extends Controller
         // 3. Filter by status
         if ($request->filled('status') && $request->input('status') !== 'all') {
             $status = $request->input('status');
-            if ($status === 'processing') {
+            if ($status === 'paid') {
+                $query->where('status', 'paid');
+            } elseif ($status === 'processing') {
                 $query->whereIn('status', ['paid', 'processing']);
             } elseif ($status === 'shipping') {
                 $query->whereIn('status', ['shipping', 'delivering']);
+            } elseif ($status === 'returned') {
+                $query->whereIn('status', ['returned', 'return_requested']);
             } else {
                 $query->where('status', $status);
             }
@@ -499,12 +503,14 @@ class CheckoutController extends Controller
     {
         switch ($status) {
             case 'pending': return 'Chờ xác nhận';
-            case 'paid':
+            case 'paid': return 'Đã thanh toán';
             case 'processing': return 'Đang chuẩn bị';
             case 'shipping':
             case 'delivering': return 'Đang giao';
-            case 'completed': return 'Đã hoàn thành';
+            case 'completed': return 'Đã nhận / Hoàn thành';
             case 'cancelled': return 'Đã hủy';
+            case 'returned': return 'Đã hoàn hàng';
+            case 'return_requested': return 'Yêu cầu hoàn hàng';
             default: return $status;
         }
     }
@@ -513,13 +519,108 @@ class CheckoutController extends Controller
     {
         switch ($status) {
             case 'pending': return 'status-pending';
-            case 'paid':
+            case 'paid': return 'status-paid';
             case 'processing': return 'status-processing';
             case 'shipping':
             case 'delivering': return 'status-shipping';
             case 'completed': return 'status-completed';
             case 'cancelled': return 'status-cancelled';
+            case 'returned':
+            case 'return_requested': return 'status-returned';
             default: return 'status-default';
+        }
+    }
+
+    public function confirmReceived(Request $request, $codeOrId)
+    {
+        if (!Auth::check()) {
+            return response()->json(['success' => false, 'message' => 'Vui lòng đăng nhập'], 401);
+        }
+
+        $id = $this->resolveOrderId($codeOrId);
+        $order = Order::where('user_id', Auth::user()->id)->findOrFail($id);
+
+        if ($order->status === 'completed') {
+            return response()->json([
+                'success' => true,
+                'message' => 'Đơn hàng này đã được xác nhận hoàn thành trước đó.'
+            ]);
+        }
+
+        if (in_array($order->status, ['cancelled', 'returned'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Đơn hàng đã bị hủy hoặc hoàn trả, không thể xác nhận nhận hàng.'
+            ], 422);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $order->status = 'completed';
+            $order->save();
+
+            // Automatic COD payment success transition upon receipt
+            if ($order->payment && $order->payment->status !== 'success') {
+                $order->payment->status = 'success';
+                $order->payment->paid_at = now();
+                $order->payment->save();
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Cảm ơn bạn! Đã xác nhận nhận được hàng thành công.',
+                'order_id' => $order->id,
+                'order_code' => 'ORD' . str_pad($order->id, 3, '0', STR_PAD_LEFT)
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Lỗi hệ thống: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function returnOrder(Request $request, $codeOrId)
+    {
+        if (!Auth::check()) {
+            return response()->json(['success' => false, 'message' => 'Vui lòng đăng nhập'], 401);
+        }
+
+        $id = $this->resolveOrderId($codeOrId);
+        $order = Order::where('user_id', Auth::user()->id)->findOrFail($id);
+
+        if (!in_array($order->status, ['completed', 'shipping', 'delivering'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Chỉ có thể yêu cầu hoàn hàng cho đơn hàng đã nhận hoặc đang giao.'
+            ], 422);
+        }
+
+        $reason = trim($request->input('reason', 'Khách hàng yêu cầu trả hàng / hoàn tiền'));
+
+        try {
+            DB::beginTransaction();
+
+            $order->status = 'returned';
+            $order->notes = trim(($order->notes ? $order->notes . ' | ' : '') . '📌 [Lý do hoàn hàng: ' . $reason . ']');
+            $order->save();
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Đã gửi yêu cầu hoàn hàng / trả hàng thành công. Cửa hàng sẽ liên hệ phản hồi quý khách!'
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Lỗi hệ thống: ' . $e->getMessage()
+            ], 500);
         }
     }
 
@@ -539,10 +640,15 @@ class CheckoutController extends Controller
             ], 422);
         }
 
+        $reason = trim($request->input('reason', 'Khách hàng hủy đơn'));
+
         try {
             DB::beginTransaction();
 
             $order->status = 'cancelled';
+            if ($reason) {
+                $order->notes = trim(($order->notes ? $order->notes . ' | ' : '') . '🚫 [Lý do hủy: ' . $reason . ']');
+            }
             $order->save();
 
             if ($order->payment) {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import '../screens/my_orders_screen.dart';
 
 class RoleMenuDrawer extends StatelessWidget {
   final String activeRole;
@@ -171,6 +172,19 @@ class RoleMenuDrawer extends StatelessWidget {
                       Navigator.pop(context);
                       onRoleChanged?.call('user');
                       onNavigateTab?.call(3); // Market Tab
+                    },
+                  ),
+                  _buildDrawerShortcut(
+                    icon: Icons.receipt_long_rounded,
+                    title: '📦 Lịch Sử & Quản Lý Đơn Hàng',
+                    subtitle: 'Trạng thái, đơn đã nhận, hủy đơn & hoàn hàng',
+                    color: const Color(0xFFEA580C),
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const MyOrdersScreen()),
+                      );
                     },
                   ),
                   _buildDrawerShortcut(

@@ -129,6 +129,28 @@
                 </div>
             </div>
 
+            <!-- Orders Shortcut Card -->
+            <div class="glass-panel" style="background: var(--bg-card); padding: 24px; border: 1.5px solid rgba(234, 88, 12, 0.25); border-radius: 16px; box-shadow: var(--shadow-overlay); margin-bottom: 0;">
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span style="font-size: 1.8rem;">📦</span>
+                        <div>
+                            <h3 style="font-size: 1.15rem; font-family: var(--font-heading); font-weight: 800; margin: 0; color: #ea580c;">
+                                Lịch sử đơn hàng của tôi
+                            </h3>
+                            <p style="font-size: 0.82rem; color: var(--text-muted); margin: 2px 0 0 0;">
+                                Theo dõi trạng thái giao hàng, xác nhận nhận hàng, hủy đơn hoặc yêu cầu hoàn hàng
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 12px; margin-top: 14px;">
+                    <a href="/orders" class="btn-primary" style="display: inline-flex; align-items: center; gap: 6px; padding: 10px 20px; border-radius: 10px; font-size: 0.88rem; font-weight: 700; text-decoration: none; background: linear-gradient(135deg, #ea580c 0%, #f97316 100%); color: white; border: none; box-shadow: 0 4px 12px rgba(234, 88, 12, 0.25);">
+                        <span>🛒</span> Xem tất cả đơn hàng ➔
+                    </a>
+                </div>
+            </div>
+
             <!-- Left Side: Profile CRUD Form -->
             <div class="glass-panel" style="background: var(--bg-card); padding: 30px; border: 1px solid var(--border-glow); border-radius: 16px; box-shadow: var(--shadow-overlay);">
 

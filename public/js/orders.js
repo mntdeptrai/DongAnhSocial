@@ -24,8 +24,71 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // Dynamic global actions
+    window.confirmOrderReceived = function (orderId) {
+        if (!confirm('Bạn xác nhận đã nhận được đầy đủ hàng từ đơn này?')) return;
+        
+        fetch(`/api/orders/${orderId}/confirm-received`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': getCsrfToken(),
+                'Accept': 'application/json'
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                showNotification(data.message || 'Đã xác nhận nhận hàng thành công!', 'success');
+                if (document.getElementById('orders-list-container')) {
+                    loadOrdersList();
+                } else if (document.getElementById('order-detail-container')) {
+                    loadOrderDetail(orderId);
+                }
+            } else {
+                showNotification(data.message || 'Không thể xác nhận nhận hàng.', 'error');
+            }
+        })
+        .catch(err => {
+            console.error('Error confirming received:', err);
+            showNotification('Có lỗi xảy ra khi xác nhận nhận hàng.', 'error');
+        });
+    };
+
+    window.returnOrder = function (orderId) {
+        const reason = prompt('Vui lòng nhập lý do bạn muốn yêu cầu Hoàn hàng / Trả hàng:');
+        if (reason === null) return;
+        
+        fetch(`/api/orders/${orderId}/return`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': getCsrfToken(),
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({ reason: reason || 'Khách hàng yêu cầu trả hàng' })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                showNotification(data.message || 'Đã gửi yêu cầu hoàn hàng thành công!', 'success');
+                if (document.getElementById('orders-list-container')) {
+                    loadOrdersList();
+                } else if (document.getElementById('order-detail-container')) {
+                    loadOrderDetail(orderId);
+                }
+            } else {
+                showNotification(data.message || 'Không thể gửi yêu cầu hoàn hàng.', 'error');
+            }
+        })
+        .catch(err => {
+            console.error('Error returning order:', err);
+            showNotification('Có lỗi xảy ra khi gửi yêu cầu hoàn hàng.', 'error');
+        });
+    };
+
     window.cancelOrder = function (orderId) {
-        if (!confirm('Bạn có chắc chắn muốn hủy đơn hàng này?')) return;
+        const reason = prompt('Nhập lý do hủy đơn hàng (hoặc để trống):');
+        if (reason === null) return;
         
         const btn = document.querySelector(`.btn-cancel[data-id="${orderId}"]`);
         if (btn) btn.disabled = true;
@@ -36,7 +99,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 'Content-Type': 'application/json',
                 'X-CSRF-TOKEN': getCsrfToken(),
                 'Accept': 'application/json'
-            }
+            },
+            body: JSON.stringify({ reason: reason })
         })
         .then(res => res.json())
         .then(data => {
@@ -356,10 +420,27 @@ document.addEventListener('DOMContentLoaded', function () {
                         </a>
                     `;
                 }
+
+                if (order.status === 'shipping' || order.status === 'delivering' || order.status === 'processing' || order.status === 'paid') {
+                    actionsHtml += `
+                        <button class="btn-premium-action btn-confirm-received" onclick="confirmOrderReceived(${order.id})" style="background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1.5px solid rgba(16, 185, 129, 0.3); font-weight: 700;">
+                            ✅ Đã nhận được hàng
+                        </button>
+                    `;
+                }
+
                 if (order.status === 'pending' || order.status === 'paid') {
                     actionsHtml += `
                         <button class="btn-premium-action btn-cancel" data-id="${order.id}" onclick="cancelOrder(${order.id})">
                             ❌ Hủy đơn
+                        </button>
+                    `;
+                }
+
+                if (order.status === 'completed' || order.status === 'shipping' || order.status === 'delivering') {
+                    actionsHtml += `
+                        <button class="btn-premium-action btn-return" onclick="returnOrder(${order.id})" style="background: rgba(234, 88, 12, 0.08); color: #ea580c; border: 1.5px solid rgba(234, 88, 12, 0.3); font-weight: 700;">
+                            ↩️ Yêu cầu hoàn hàng
                         </button>
                     `;
                 }
@@ -382,7 +463,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     }
                 }
 
-                if (order.status === 'completed' || order.status === 'cancelled') {
+                if (order.status === 'completed' || order.status === 'cancelled' || order.status === 'returned') {
                     actionsHtml += `
                         <button class="btn-premium-action btn-reorder" data-id="${order.id}" onclick="reorderItems(${order.id})">
                             🔄 Đặt lại món

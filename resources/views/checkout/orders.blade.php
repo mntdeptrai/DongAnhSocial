@@ -84,6 +84,9 @@
         <button class="pill-tab" data-status="pending">
             📋 Chờ xác nhận
         </button>
+        <button class="pill-tab" data-status="paid">
+            💳 Đã thanh toán
+        </button>
         <button class="pill-tab" data-status="processing">
             🍳 Đang chuẩn bị
         </button>
@@ -91,10 +94,13 @@
             🚴 Đang giao
         </button>
         <button class="pill-tab" data-status="completed">
-            📦 Hoàn thành <span class="pill-count" id="pill-count-completed" style="display: none;">0</span>
+            ✅ Đã nhận <span class="pill-count" id="pill-count-completed" style="display: none;">0</span>
         </button>
         <button class="pill-tab" data-status="cancelled">
             🚫 Đã hủy
+        </button>
+        <button class="pill-tab" data-status="returned">
+            🔄 Hoàn hàng
         </button>
     </div>
 

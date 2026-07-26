@@ -787,4 +787,83 @@ class ApiService {
     } catch (_) {}
     return {'success': false};
   }
+
+  // =========================================================================
+  // CUSTOMER ORDERS API MANAGEMENT
+  // =========================================================================
+
+  /// GET /api/orders — Lấy danh sách đơn hàng khách hàng đã đặt
+  static Future<Map<String, dynamic>> getOrders({String status = 'all', String search = ''}) async {
+    try {
+      final webUrl = baseUrl.replaceAll('/api/v1', '');
+      final queryParams = <String, String>{};
+      if (status != 'all') queryParams['status'] = status;
+      if (search.isNotEmpty) queryParams['search'] = search;
+
+      final uri = Uri.parse('$webUrl/api/orders').replace(queryParameters: queryParams.isNotEmpty ? queryParams : null);
+      final response = await http.get(uri, headers: _getHeaders());
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      }
+    } catch (_) {}
+    return {'success': false, 'data': []};
+  }
+
+  /// POST /api/orders/{code}/confirm-received — Xác nhận đã nhận được hàng
+  static Future<Map<String, dynamic>> confirmOrderReceived(dynamic codeOrId) async {
+    try {
+      final webUrl = baseUrl.replaceAll('/api/v1', '');
+      final response = await http.post(
+        Uri.parse('$webUrl/api/orders/$codeOrId/confirm-received'),
+        headers: _getHeaders(),
+      );
+      return jsonDecode(response.body);
+    } catch (e) {
+      return {'success': false, 'message': 'Lỗi kết nối máy chủ: $e'};
+    }
+  }
+
+  /// POST /api/orders/{code}/cancel — Hủy đơn hàng kèm lý do
+  static Future<Map<String, dynamic>> cancelOrder(dynamic codeOrId, String reason) async {
+    try {
+      final webUrl = baseUrl.replaceAll('/api/v1', '');
+      final response = await http.post(
+        Uri.parse('$webUrl/api/orders/$codeOrId/cancel'),
+        headers: _getHeaders(),
+        body: jsonEncode({'reason': reason}),
+      );
+      return jsonDecode(response.body);
+    } catch (e) {
+      return {'success': false, 'message': 'Lỗi kết nối máy chủ: $e'};
+    }
+  }
+
+  /// POST /api/orders/{code}/return — Yêu cầu hoàn hàng / trả hàng
+  static Future<Map<String, dynamic>> returnOrder(dynamic codeOrId, String reason) async {
+    try {
+      final webUrl = baseUrl.replaceAll('/api/v1', '');
+      final response = await http.post(
+        Uri.parse('$webUrl/api/orders/$codeOrId/return'),
+        headers: _getHeaders(),
+        body: jsonEncode({'reason': reason}),
+      );
+      return jsonDecode(response.body);
+    } catch (e) {
+      return {'success': false, 'message': 'Lỗi kết nối máy chủ: $e'};
+    }
+  }
+
+  /// POST /api/orders/{code}/reorder — Đặt lại các món trong đơn
+  static Future<Map<String, dynamic>> reorderItems(dynamic codeOrId) async {
+    try {
+      final webUrl = baseUrl.replaceAll('/api/v1', '');
+      final response = await http.post(
+        Uri.parse('$webUrl/api/orders/$codeOrId/reorder'),
+        headers: _getHeaders(),
+      );
+      return jsonDecode(response.body);
+    } catch (e) {
+      return {'success': false, 'message': 'Lỗi kết nối máy chủ: $e'};
+    }
+  }
 }
