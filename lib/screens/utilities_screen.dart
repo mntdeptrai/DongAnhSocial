@@ -283,9 +283,14 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
         return matchesSearch && ratingVal >= 4.5;
       }
       if (_selectedFilter == '🏆 OCOP') {
-        final isMarket = cat.contains('chợ') || cat.contains('market') || item['category_slug'] == 'dong-anh-market';
-        final hasOcopBadge = catStr.toUpperCase().contains('OCOP') || item['is_ocop'] == true || item['is_ocop'] == 1 || item['is_ocop'] == '1' || item['ocop_star'] != null;
-        return matchesSearch && (isMarket || hasOcopBadge);
+        final hasOcopBadge = catStr.toUpperCase().contains('OCOP') ||
+                             item['is_ocop'] == true ||
+                             item['is_ocop'] == 1 ||
+                             item['is_ocop'] == '1' ||
+                             item['ocop_star'] != null ||
+                             (item['name'] ?? '').toString().toUpperCase().contains('OCOP') ||
+                             (item['description'] ?? '').toString().toUpperCase().contains('OCOP');
+        return matchesSearch && hasOcopBadge;
       }
       if (_selectedFilter == '🛵 Giao nhanh') {
         return matchesSearch && (item['has_delivery'] == true || item['has_delivery'] == 1 || item['has_delivery'] == '1');
