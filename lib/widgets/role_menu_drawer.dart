@@ -23,7 +23,7 @@ class RoleMenuDrawer extends StatelessWidget {
     final userEmail = user?['email'] ?? 'Chưa đăng nhập';
     final userAvatar = user?['avatar'] ?? 'https://i.pravatar.cc/150?img=12';
 
-    // Build available roles based on user permissions
+    // Build available roles based on strict user permissions (Khóa phân quyền chuẩn Web)
     final List<Map<String, dynamic>> availableRoles = [
       {
         'id': 'user',
@@ -34,7 +34,7 @@ class RoleMenuDrawer extends StatelessWidget {
       },
     ];
 
-    if (userRole == 'seller' || userRole == 'admin' || userRole == 'manager') {
+    if (userRole == 'seller' || userRole == 'admin') {
       availableRoles.add({
         'id': 'seller',
         'label': 'Chế độ Chủ Gian Hàng (Seller Portal)',
@@ -131,55 +131,56 @@ class RoleMenuDrawer extends StatelessWidget {
               child: ListView(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                 children: [
-                  // Role Switcher Section Header
-                  const Text(
-                    'CHUYỂN ĐỔI CHẾ ĐỘ VAI TRÒ',
-                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF64748B), letterSpacing: 0.8),
-                  ),
-                  const SizedBox(height: 10),
+                  if (availableRoles.length > 1) ...[
+                    const Text(
+                      'CHUYỂN ĐỔI CHẾ ĐỘ VAI TRÒ',
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF64748B), letterSpacing: 0.8),
+                    ),
+                    const SizedBox(height: 10),
 
-                  // Role Cards List according to permissions
-                  ...availableRoles.map((r) {
-                    final isSelected = activeRole == r['id'];
-                    final Color color = r['color'];
+                    // Role Cards List according to permissions
+                    ...availableRoles.map((r) {
+                      final isSelected = activeRole == r['id'];
+                      final Color color = r['color'];
 
-                    return Container(
-                      margin: const EdgeInsets.only(bottom: 10),
-                      decoration: BoxDecoration(
-                        color: isSelected ? color.withValues(alpha: 0.08) : Colors.grey.shade50,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: isSelected ? color : Colors.grey.shade200,
-                          width: isSelected ? 2 : 1,
-                        ),
-                      ),
-                      child: ListTile(
-                        leading: CircleAvatar(
-                          backgroundColor: isSelected ? color : Colors.grey.shade200,
-                          child: Icon(r['icon'], color: isSelected ? Colors.white : Colors.grey.shade700, size: 20),
-                        ),
-                        title: Text(
-                          r['label'],
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                            color: isSelected ? color : const Color(0xFF0F172A),
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 10),
+                        decoration: BoxDecoration(
+                          color: isSelected ? color.withValues(alpha: 0.08) : Colors.grey.shade50,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: isSelected ? color : Colors.grey.shade200,
+                            width: isSelected ? 2 : 1,
                           ),
                         ),
-                        subtitle: Text(
-                          r['description'],
-                          style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                        child: ListTile(
+                          leading: CircleAvatar(
+                            backgroundColor: isSelected ? color : Colors.grey.shade200,
+                            child: Icon(r['icon'], color: isSelected ? Colors.white : Colors.grey.shade700, size: 20),
+                          ),
+                          title: Text(
+                            r['label'],
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              color: isSelected ? color : const Color(0xFF0F172A),
+                            ),
+                          ),
+                          subtitle: Text(
+                            r['description'],
+                            style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                          ),
+                          trailing: isSelected ? Icon(Icons.check_circle_rounded, color: color, size: 20) : null,
+                          onTap: () {
+                            Navigator.pop(context); // Close Drawer
+                            onRoleChanged(r['id']);
+                          },
                         ),
-                        trailing: isSelected ? Icon(Icons.check_circle_rounded, color: color, size: 20) : null,
-                        onTap: () {
-                          Navigator.pop(context); // Close Drawer
-                          onRoleChanged(r['id']);
-                        },
-                      ),
-                    );
-                  }).toList(),
+                      );
+                    }),
 
-                  const Divider(height: 24),
+                    const Divider(height: 24),
+                  ],
 
                   // Quick Shortcuts Section Header
                   const Text(

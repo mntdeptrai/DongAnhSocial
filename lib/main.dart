@@ -361,14 +361,18 @@ class _MainLayoutState extends State<MainLayout> with WidgetsBindingObserver {
   }
 
   Widget _buildActiveRoleContent(List<Widget> screens) {
-    if (_activeRole == 'seller') {
+    final userRole = ApiService.currentUser?['role'] ?? 'user';
+
+    // Khóa bảo mật theo phân quyền thực tế (Strict Role Guard)
+    if (_activeRole == 'seller' && (userRole == 'seller' || userRole == 'admin')) {
       return const SellerDashboardScreen();
-    } else if (_activeRole == 'manager') {
+    } else if (_activeRole == 'manager' && (userRole == 'manager' || userRole == 'admin')) {
       return const ManagerDashboardScreen();
-    } else if (_activeRole == 'admin') {
+    } else if (_activeRole == 'admin' && userRole == 'admin') {
       return const AdminDashboardScreen();
     }
 
+    // Mặc định trả về giao diện Người dùng Consumer nếu không đủ quyền hạn
     return KeyedSubtree(
       key: ValueKey<int>(_currentIndex),
       child: screens[_currentIndex],
