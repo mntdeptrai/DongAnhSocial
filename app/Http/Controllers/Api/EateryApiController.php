@@ -1767,35 +1767,7 @@ YÊU CẦU TRẢ VỀ CHỈ LÀ CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU, KHÔNG C
         ], 200, [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     }
 
-    /**
-     * Seller: Thêm món ăn / Sản phẩm OCOP / Đặc sản mới cho gian hàng
-     */
-    public function storeDish(Request $request)
-    {
-        $request->validate([
-            'name'  => 'required|string|max:255',
-            'price' => 'required',
-        ]);
 
-        $user = Auth::user() ?: auth('sanctum')->user();
-        $myEatery = $user ? Eatery::where('user_id', $user->id)->first() : null;
-        $eateryId = $myEatery ? $myEatery->id : 1;
-
-        $dish = Dish::create([
-            'eatery_id'   => $eateryId,
-            'name'        => $request->name,
-            'price'       => $request->price,
-            'description' => $request->description ?? 'Món ngon đặc sản',
-            'image_path'  => $request->image_url ?? 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80',
-            'is_available'=> true,
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'dish'    => $dish,
-            'message' => 'Thêm sản phẩm mới thành công!',
-        ]);
-    }
 
     /**
      * Seller: Xóa món ăn / sản phẩm
