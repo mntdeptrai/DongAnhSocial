@@ -79,60 +79,8 @@ class BackgroundPollingService : Service() {
     }
 
     private fun startPollingLoop() {
-        // FCM Push Notification đã quản lý thông báo đẩy thời gian thực 100%
+        // FCM Push Notification đã quản lý 100% thông báo đẩy thời gian thực
         return
-    }
-            override fun run() {
-                val token = getStoredAuthToken()
-                if (token != null) {
-                    Thread {
-                        try {
-                            val url = URL("https://donganhdiscovery.xadonganh.com/api/v1/social/unread-check")
-                            val conn = url.openConnection() as HttpURLConnection
-                            conn.requestMethod = "GET"
-                            conn.connectTimeout = 5000
-                            conn.readTimeout = 5000
-                            conn.setRequestProperty("Authorization", "Bearer $token")
-                            conn.setRequestProperty("Accept", "application/json")
-
-                            val code = conn.responseCode
-                            Log.d("BackgroundService", "Polling HTTP code: $code")
-
-                            if (code == 200) {
-                                val body = conn.inputStream.bufferedReader().use { it.readText() }
-                                Log.d("BackgroundService", "Response body: $body")
-
-                                val json = JSONObject(body)
-                                if (json.optBoolean("has_unread", false)) {
-                                    val msgId = json.optLong("message_id", 0L)
-                                    if (msgId != lastNotifiedMsgId) {
-                                        lastNotifiedMsgId = msgId
-                                        val senderName = json.optString("sender_name", "Bạn bè")
-                                        val senderId = json.optInt("sender_id", 0)
-                                        val lastMessage = json.optString("last_message", "Tin nhắn mới")
-
-                                        Log.d("BackgroundService", "Triggering notification for msgId: $msgId from $senderName")
-                                        handler.post {
-                                            sendSystemNotification(senderName, "💬 $lastMessage", senderId)
-                                        }
-                                    }
-                                }
-                            } else if (code == 404) {
-                                performFallbackPolling(token)
-                            }
-                            conn.disconnect()
-                        } catch (e: Exception) {
-                            Log.e("BackgroundService", "Polling error: ${e.message}")
-                        }
-                    }.start()
-                } else {
-                    Log.d("BackgroundService", "Waiting for auth token...")
-                }
-
-                handler.postDelayed(this, 5000)
-            }
-        }
-        handler.post(runnable)
     }
 
     private fun performFallbackPolling(token: String) {
