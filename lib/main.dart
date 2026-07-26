@@ -16,7 +16,6 @@ import 'screens/utilities_screen.dart';
 import 'screens/seller_dashboard_screen.dart';
 import 'screens/manager_dashboard_screen.dart';
 import 'screens/admin_dashboard_screen.dart';
-import 'widgets/role_switch_banner.dart';
 import 'widgets/role_menu_drawer.dart';
 import 'widgets/top_nav_bar.dart';
 import 'widgets/floating_chat_bubble.dart';

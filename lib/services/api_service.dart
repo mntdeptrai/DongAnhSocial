@@ -1,7 +1,13 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+
+/// Top-level function dùng cho Flutter Isolate compute()
+dynamic _parseJsonIsolate(String jsonStr) {
+  return jsonDecode(jsonStr);
+}
 
 class ApiService {
   static String defaultBaseUrl = 'https://donganhdiscovery.xadonganh.com/api/v1';
@@ -9,6 +15,14 @@ class ApiService {
   static String? _token;
   static String? _sessionId;
   static Map<String, dynamic>? currentUser;
+
+  /// Giải mã JSON thông minh: Sử dụng Isolate (Multi-threading) nếu dữ liệu > 4KB để giải phóng UI Thread
+  static Future<dynamic> _parseResponseBody(String body) async {
+    if (body.length > 4096) {
+      return compute(_parseJsonIsolate, body);
+    }
+    return jsonDecode(body);
+  }
 
   // =========================================================================
   // INITIALIZATION & AUTH HELPERS
@@ -307,7 +321,7 @@ class ApiService {
       final uri = Uri.parse('$baseUrl/$categorySlug/eateries').replace(queryParameters: params.isNotEmpty ? params : null);
       final response = await http.get(uri, headers: _getHeaders());
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
+        final data = await _parseResponseBody(response.body);
         if (data is List) return data;
         if (data is Map && data.containsKey('eateries')) return data['eateries'];
       }
