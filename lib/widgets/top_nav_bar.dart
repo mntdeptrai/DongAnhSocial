@@ -57,7 +57,7 @@ class TopNavBar extends StatelessWidget implements PreferredSizeWidget {
                 children: [
                   // Menu drawer button with light double bezel
                   InkWell(
-                    onTap: onMenuTap,
+                    onTap: onMenuTap ?? () => Scaffold.of(context).openDrawer(),
                     borderRadius: BorderRadius.circular(12),
                     child: Container(
                       padding: const EdgeInsets.all(8.0),

@@ -16,6 +16,7 @@ import 'screens/seller_dashboard_screen.dart';
 import 'screens/manager_dashboard_screen.dart';
 import 'screens/admin_dashboard_screen.dart';
 import 'widgets/role_switch_banner.dart';
+import 'widgets/role_menu_drawer.dart';
 import 'widgets/top_nav_bar.dart';
 import 'widgets/floating_chat_bubble.dart';
 import 'widgets/universal_search_modal.dart';
@@ -389,6 +390,21 @@ class _MainLayoutState extends State<MainLayout> with WidgetsBindingObserver {
     ];
 
     return Scaffold(
+      drawer: RoleMenuDrawer(
+        activeRole: _activeRole,
+        onRoleChanged: (newRole) {
+          setState(() {
+            _activeRole = newRole;
+          });
+        },
+        onNavigateTab: (tabIndex) {
+          setState(() {
+            _currentIndex = tabIndex;
+            _activeRole = 'user';
+          });
+        },
+        onLogout: widget.onLogout,
+      ),
       appBar: TopNavBar(
         currentIndex: _currentIndex,
         onTabSelected: (index) {
@@ -426,45 +442,30 @@ class _MainLayoutState extends State<MainLayout> with WidgetsBindingObserver {
         unreadMessagesCount: _unreadMessagesCount,
         unreadNotifsCount: _unreadNotifsCount,
       ),
-      body: Column(
+      body: Stack(
         children: [
-          // Banner chuyển đổi Chế độ Role (nếu người dùng có nhiều quyền)
-          RoleSwitchBanner(
-            activeRole: _activeRole,
-            onRoleChanged: (newRole) {
-              setState(() {
-                _activeRole = newRole;
-              });
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 300),
+            switchInCurve: Curves.easeOut,
+            switchOutCurve: Curves.easeIn,
+            transitionBuilder: (child, animation) {
+              return FadeTransition(
+                opacity: animation,
+                child: ScaleTransition(
+                  scale: Tween<double>(begin: 0.98, end: 1.0).animate(animation),
+                  child: child,
+                ),
+              );
             },
+            child: _buildActiveRoleContent(screens),
           ),
-          Expanded(
-            child: Stack(
-              children: [
-                AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 300),
-                  switchInCurve: Curves.easeOut,
-                  switchOutCurve: Curves.easeIn,
-                  transitionBuilder: (child, animation) {
-                    return FadeTransition(
-                      opacity: animation,
-                      child: ScaleTransition(
-                        scale: Tween<double>(begin: 0.98, end: 1.0).animate(animation),
-                        child: child,
-                      ),
-                    );
-                  },
-                  child: _buildActiveRoleContent(screens),
-                ),
-                DraggableFloatingChatBubble(
-                  onOpenChatTab: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const ChatScreen()),
-                    );
-                  },
-                ),
-              ],
-            ),
+          DraggableFloatingChatBubble(
+            onOpenChatTab: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const ChatScreen()),
+              );
+            },
           ),
         ],
       ),
