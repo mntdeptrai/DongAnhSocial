@@ -1229,7 +1229,7 @@ class AdminController extends Controller
             abort(403, 'Bạn không có quyền quản lý hóa đơn của cơ sở này!');
         }
 
-        $imagePath = $request->image_url ?: 'https://images.unsplash.com/photo-1554415707-6e8cfc93fe23?auto=format&fit=crop&w=800&q=80';
+        $imagePath = $request->image_url ?: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=800&q=80';
 
         $trustHubService->storeInvoice([
             'eatery_id' => $request->eatery_id,

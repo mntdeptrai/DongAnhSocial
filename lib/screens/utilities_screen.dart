@@ -567,7 +567,11 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
                 ClipRRect(
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
                   child: Image.network(
-                    item['image'] ?? 'https://picsum.photos/600/300',
+                    (item['image_path'] != null && item['image_path'].toString().isNotEmpty)
+                        ? item['image_path']
+                        : ((item['image'] != null && item['image'].toString().isNotEmpty)
+                            ? item['image']
+                            : 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=800&q=80'),
                     height: 160,
                     width: double.infinity,
                     fit: BoxFit.cover,
