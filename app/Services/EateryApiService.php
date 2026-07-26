@@ -45,30 +45,12 @@ class EateryApiService
             return $default;
         }
 
-        switch ($categorySlug) {
-            case 'stay-in-dong-anh':
-                return 'mysql_stay';
-            case 'wellness-care':
-                return 'mysql_wellness';
-            case 'traditional-market':
-            case 'dong-anh-market':
-                return 'mysql_market';
-            case 'smart-education-map':
-                return 'mysql_education';
-            case 'discover-dong-anh-community-culture-hub':
-                return 'mysql_culture';
-            default:
-                return 'mysql';
-        }
+        return 'mysql';
     }
 
     private static function getSearchConnections()
     {
-        $default = config('database.default');
-        if (config("database.connections.{$default}.driver") === 'sqlite') {
-            return [$default];
-        }
-        return ['mysql', 'mysql_stay', 'mysql_wellness', 'mysql_market', 'mysql_education', 'mysql_culture'];
+        return ['mysql'];
     }
 
     private static function findEateryAndConnection($eateryId)
