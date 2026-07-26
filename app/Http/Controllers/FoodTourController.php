@@ -208,10 +208,16 @@ YÊU CẦU TRẢ VỀ CHỈ LÀ CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU, KHÔNG C
                 'is_ai_generated' => true,      // Đánh dấu đây là AI Tour
             ]);
             
+            $existingEateryIds = \App\Models\Eatery::pluck('id')->toArray();
+            $defaultEateryId = !empty($existingEateryIds) ? $existingEateryIds[0] : 1;
+
             foreach ($aiData['stops'] as $index => $stop) {
+                $rawEateryId = isset($stop['eatery_id']) ? (int)$stop['eatery_id'] : $defaultEateryId;
+                $eateryId = in_array($rawEateryId, $existingEateryIds) ? $rawEateryId : $defaultEateryId;
+
                 FoodTourStop::create([
                     'food_tour_id' => $tour->id,
-                    'eatery_id' => $stop['eatery_id'],
+                    'eatery_id' => $eateryId,
                     'stop_order' => $index + 1,
                     'stop_story' => $stop['recommendation'] ?? ("Điểm đến thứ " . ($index + 1) . " trong hành trình " . $aiData['tour_name'] . "."),
                     'estimated_time' => '45 phút'
@@ -220,9 +226,9 @@ YÊU CẦU TRẢ VỀ CHỈ LÀ CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU, KHÔNG C
             
             return response()->json(['success' => true, 'slug' => $slug]);
             
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             \Illuminate\Support\Facades\Log::error('Gemini API Error: ' . $e->getMessage());
-            return response()->json(['success' => false, 'message' => 'Lỗi kết nối AI: ' . $e->getMessage()]);
+            return response()->json(['success' => false, 'message' => 'Hệ thống AI đang bận hoặc tạo lộ trình chưa hoàn tất. Vui lòng bấm nút "Tạo Lộ Trình" lại lần nữa!']);
         }
     }
 

@@ -22,6 +22,30 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,500&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     
+    <!-- SweetAlert2 for modern popup alerts -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        // Override native window.alert to render modern modal popups automatically across all food tour pages
+        window.alert = function(message) {
+            if (typeof Swal !== 'undefined') {
+                const msg = String(message || '');
+                const isError = /lỗi|thất bại|không thể|failed|error|violation|integrity/i.test(msg);
+                const isSuccess = /thành công|chúc mừng|đã lưu|success/i.test(msg);
+                Swal.fire({
+                    title: isError ? '❌ Thông báo Lỗi' : (isSuccess ? '🎉 Thành công!' : '🔔 Thông báo'),
+                    text: msg,
+                    icon: isError ? 'error' : (isSuccess ? 'success' : 'info'),
+                    confirmButtonText: 'Đã hiểu',
+                    confirmButtonColor: isError ? '#DC2626' : (isSuccess ? '#10B981' : '#0EA5E9'),
+                    customClass: {
+                        popup: 'rounded-3xl shadow-2xl border border-gray-100 p-6',
+                        confirmButton: 'px-6 py-2.5 rounded-xl font-bold text-white shadow-md'
+                    }
+                });
+            }
+        };
+    </script>
+
     <!-- Custom Theme Styling -->
     <link rel="stylesheet" href="{{ asset('css/app.css') }}?v={{ file_exists(public_path('css/app.css')) ? filemtime(public_path('css/app.css')) : '1.0.0' }}">
     
