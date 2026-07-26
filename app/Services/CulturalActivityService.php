@@ -35,7 +35,7 @@ class CulturalActivityService
 
     public function update($id, CulturalActivityData $data, ?string $connName = null): CulturalActivity
     {
-        $connections = ['mysql', 'mysql_stay', 'mysql_wellness', 'mysql_market', 'mysql_education', 'mysql_culture'];
+        $connections = ['mysql'];
         $activity = null;
         $activeConn = $connName;
 

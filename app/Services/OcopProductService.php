@@ -24,7 +24,7 @@ class OcopProductService
 
     public function update($id, OcopProductData $data, ?string $connName = null): OcopProduct
     {
-        $connections = ['mysql', 'mysql_stay', 'mysql_wellness', 'mysql_market', 'mysql_education', 'mysql_culture'];
+        $connections = ['mysql'];
         $product = null;
         $activeConn = $connName;
 

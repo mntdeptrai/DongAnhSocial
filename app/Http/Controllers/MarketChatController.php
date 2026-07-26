@@ -310,12 +310,6 @@ class MarketChatController extends Controller
         }
 
         $connection = 'mysql';
-        foreach (['mysql', 'mysql_stay', 'mysql_wellness', 'mysql_market', 'mysql_education', 'mysql_culture'] as $conn) {
-            if (\App\Models\Eatery::on($conn)->where('id', $eateryId)->exists()) {
-                $connection = $conn;
-                break;
-            }
-        }
 
         $reviews = \App\Models\Review::on($connection)->where('eatery_id', $eateryId)
             ->where('stall_name', $stallName)
@@ -352,12 +346,6 @@ class MarketChatController extends Controller
         }
 
         $connection = 'mysql';
-        foreach (['mysql', 'mysql_stay', 'mysql_wellness', 'mysql_market', 'mysql_education', 'mysql_culture'] as $conn) {
-            if (\App\Models\Eatery::on($conn)->where('id', $eateryId)->exists()) {
-                $connection = $conn;
-                break;
-            }
-        }
 
         $userName = 'Khách vãng lai';
         if (Auth::check()) {

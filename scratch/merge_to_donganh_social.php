@@ -3,7 +3,7 @@
 set_time_limit(300);
 ini_set('memory_limit', '512M');
 
-echo "=== STARTING DATABASE MERGE TO `donganh_social` ===\n";
+echo "=== STARTING FULL ZERO-LOSS DATABASE MERGE TO `donganh_social` ===\n";
 
 try {
     $pdo = new PDO('mysql:host=127.0.0.1;charset=utf8mb4', 'root', '');
@@ -95,7 +95,6 @@ try {
             unset($e['id']);
             $e['user_id'] = $newUserId;
 
-            // Handle duplicate slug
             $slug = $e['slug'] ?? 'eatery';
             if (in_array($slug, $usedSlugs)) {
                 $slug = $slug . '-' . substr(md5(uniqid() . rand(100, 999)), 0, 4);
@@ -152,7 +151,67 @@ try {
     $totalCulture = $pdo->query("SELECT COUNT(*) FROM `donganh_social`.`cultural_activities`")->fetchColumn();
     echo "[✓] Migrated Cultural Activities: Total $totalCulture items.\n";
 
-    // 8. Migrate Food Tours & Stops from food_map
+    // 8. Migrate Reviews & Review Media & Review Videos from ALL source DBs
+    $reviewMap = [];
+    foreach ($sourceDbs as $dbName => $label) {
+        $stmt = $pdo->query("SELECT * FROM `$dbName`.`reviews` ORDER BY id ASC");
+        $reviews = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($reviews as $r) {
+            $oldId = $r['id'];
+            if (isset($r['user_id']) && isset($userMap[$dbName][$r['user_id']])) {
+                $r['user_id'] = $userMap[$dbName][$r['user_id']];
+            }
+            if (isset($r['eatery_id']) && isset($eateryMap[$dbName][$r['eatery_id']])) {
+                $r['eatery_id'] = $eateryMap[$dbName][$r['eatery_id']];
+            }
+            unset($r['id']);
+            $cols = array_keys($r);
+            $placeholders = array_fill(0, count($cols), '?');
+            $sql = "INSERT INTO `donganh_social`.`reviews` (`" . implode("`, `", $cols) . "`) VALUES (" . implode(", ", $placeholders) . ")";
+            $insertStmt = $pdo->prepare($sql);
+            $insertStmt->execute(array_values($r));
+            $reviewMap[$dbName][$oldId] = (int)$pdo->lastInsertId();
+        }
+
+        // Review Media
+        $stmt = $pdo->query("SELECT * FROM `$dbName`.`review_media` ORDER BY id ASC");
+        $medias = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($medias as $m) {
+            if (isset($m['review_id']) && isset($reviewMap[$dbName][$m['review_id']])) {
+                $m['review_id'] = $reviewMap[$dbName][$m['review_id']];
+            }
+            unset($m['id']);
+            $cols = array_keys($m);
+            $placeholders = array_fill(0, count($cols), '?');
+            $sql = "INSERT INTO `donganh_social`.`review_media` (`" . implode("`, `", $cols) . "`) VALUES (" . implode(", ", $placeholders) . ")";
+            $insertStmt = $pdo->prepare($sql);
+            $insertStmt->execute(array_values($m));
+        }
+
+        // Review Videos
+        $stmt = $pdo->query("SELECT * FROM `$dbName`.`review_videos` ORDER BY id ASC");
+        $videos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($videos as $v) {
+            if (isset($v['review_id']) && isset($reviewMap[$dbName][$v['review_id']])) {
+                $v['review_id'] = $reviewMap[$dbName][$v['review_id']];
+            }
+            if (isset($v['eatery_id']) && isset($eateryMap[$dbName][$v['eatery_id']])) {
+                $v['eatery_id'] = $eateryMap[$dbName][$v['eatery_id']];
+            }
+            if (isset($v['user_id']) && isset($userMap[$dbName][$v['user_id']])) {
+                $v['user_id'] = $userMap[$dbName][$v['user_id']];
+            }
+            unset($v['id']);
+            $cols = array_keys($v);
+            $placeholders = array_fill(0, count($cols), '?');
+            $sql = "INSERT INTO `donganh_social`.`review_videos` (`" . implode("`, `", $cols) . "`) VALUES (" . implode(", ", $placeholders) . ")";
+            $insertStmt = $pdo->prepare($sql);
+            $insertStmt->execute(array_values($v));
+        }
+    }
+    echo "[✓] Migrated Reviews, Review Media & Review Videos.\n";
+
+    // 9. Migrate Food Tours & Stops from food_map
     $tourMap = [];
     $stmt = $pdo->query("SELECT * FROM `food_map`.`food_tours` ORDER BY id ASC");
     $tours = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -188,11 +247,11 @@ try {
     }
     echo "[✓] Migrated Food Tours & Stops.\n";
 
-    // 9. Migrate Carts, Orders, Payments, Messages, Checkins, Reviews
-    $copyTables = ['carts', 'cart_items', 'orders', 'order_items', 'payments', 'messages', 'market_messages', 'checkins', 'checkin_reactions', 'comments', 'reviews', 'review_media', 'review_videos', 'friendships', 'food_tour_diaries', 'daily_food_logs', 'personal_access_tokens', 'password_otps'];
+    // 10. Migrate Carts, Orders, Payments, Messages, Checkins, Sessions, Jobs, Migrations
+    $copyTables = ['carts', 'cart_items', 'orders', 'order_items', 'payments', 'messages', 'market_messages', 'checkins', 'checkin_reactions', 'comments', 'friendships', 'food_tour_diaries', 'daily_food_logs', 'personal_access_tokens', 'password_otps', 'jobs', 'migrations', 'sessions'];
 
     foreach ($copyTables as $tbl) {
-        $stmt = $pdo->query("SELECT * FROM `food_map`.`$tbl` ORDER BY id ASC");
+        $stmt = $pdo->query("SELECT * FROM `food_map`.`$tbl`");
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
         foreach ($rows as $r) {
             if (isset($r['user_id']) && isset($userMap['food_map'][$r['user_id']])) {
@@ -207,7 +266,7 @@ try {
             if (isset($r['eatery_id']) && isset($eateryMap['food_map'][$r['eatery_id']])) {
                 $r['eatery_id'] = $eateryMap['food_map'][$r['eatery_id']];
             }
-            unset($r['id']);
+            if (isset($r['id'])) unset($r['id']);
             $cols = array_keys($r);
             $placeholders = array_fill(0, count($cols), '?');
             $sql = "INSERT IGNORE INTO `donganh_social`.`$tbl` (`" . implode("`, `", $cols) . "`) VALUES (" . implode(", ", $placeholders) . ")";
@@ -215,9 +274,9 @@ try {
             $insertStmt->execute(array_values($r));
         }
     }
-    echo "[✓] Migrated Carts, Orders, Payments, Messages, Checkins & Reviews.\n";
+    echo "[✓] Migrated Carts, Orders, Payments, Messages, Checkins, Sessions & Jobs.\n";
 
-    // 10. Add Indexes and Constraints
+    // 11. Add Indexes and Constraints
     echo "=== ADDING INDEXES AND CONSTRAINTS ===\n";
     $indexes = [
         "ALTER TABLE `donganh_social`.`eateries` ADD INDEX `idx_cat_id` (`category_id`), ADD INDEX `idx_commune_id` (`commune_id`), ADD INDEX `idx_user_id` (`user_id`), ADD INDEX `idx_featured` (`is_featured`), ADD INDEX `idx_status` (`status`);",

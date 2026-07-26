@@ -17,15 +17,6 @@ class MarketStallController extends Controller
      */
     private function resolveConnection(int $eateryId): string
     {
-        foreach (['mysql', 'mysql_market', 'mysql_stay', 'mysql_wellness', 'mysql_education', 'mysql_culture'] as $conn) {
-            try {
-                if (\App\Models\Eatery::on($conn)->where('id', $eateryId)->exists()) {
-                    return $conn;
-                }
-            } catch (\Exception $e) {
-                // connection unavailable
-            }
-        }
         return 'mysql';
     }
 

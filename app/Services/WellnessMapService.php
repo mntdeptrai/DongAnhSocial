@@ -35,7 +35,7 @@ class WellnessMapService
 
     public function update($id, WellnessServiceData $data, ?string $connName = null): WellnessService
     {
-        $connections = ['mysql', 'mysql_stay', 'mysql_wellness', 'mysql_market', 'mysql_education', 'mysql_culture'];
+        $connections = ['mysql'];
         $service = null;
         $activeConn = $connName;
 

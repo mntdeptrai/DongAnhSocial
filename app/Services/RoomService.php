@@ -35,7 +35,7 @@ class RoomService
 
     public function update($id, RoomData $data, ?string $connName = null): Room
     {
-        $connections = ['mysql', 'mysql_stay', 'mysql_wellness', 'mysql_market', 'mysql_education', 'mysql_culture'];
+        $connections = ['mysql'];
         $room = null;
         $activeConn = $connName;
 

@@ -35,7 +35,7 @@ class EducationProgramService
 
     public function update($id, EducationProgramData $data, ?string $connName = null): EducationProgram
     {
-        $connections = ['mysql', 'mysql_stay', 'mysql_wellness', 'mysql_market', 'mysql_education', 'mysql_culture'];
+        $connections = ['mysql'];
         $program = null;
         $activeConn = $connName;
 
