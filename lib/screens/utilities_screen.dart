@@ -221,38 +221,42 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
   }
 
   void _addToCart(Map<String, dynamic> product) async {
-    final String itemKey = 'prod_${product['id']}';
-    setState(() {
-      if (_cartItems.containsKey(itemKey)) {
-        _cartItems[itemKey]!['quantity'] += 1;
-      } else {
-        _cartItems[itemKey] = {
-          'id': product['id'],
-          'name': product['name'],
-          'price': double.tryParse(product['price']?.toString().replaceAll(RegExp(r'[^0-9.]'), '') ?? '50000') ?? 50000.0,
-          'quantity': 1,
-          'subtitle': product['seller_name'] ?? product['stall_name'] ?? 'Gian hàng OCOP',
-          'image': product['image'],
-          'checked': true,
-        };
-      }
-    });
+    final int productId = product['id'] is int ? product['id'] : (int.tryParse(product['id']?.toString() ?? '0') ?? 0);
+    final bool isOcop = product['ocop_star'] != null || product['seller_name'] != null;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const Icon(Icons.check_circle, color: Colors.white),
-            const SizedBox(width: 8),
-            Expanded(child: Text('Đã thêm "${product['name']}" vào giỏ hàng!')),
-          ],
+    // 1. Gọi API Backend lưu vào CSDL để đồng bộ với Web
+    try {
+      if (productId > 0) {
+        if (isOcop) {
+          await ApiService.addToCart(ocopProductId: productId, quantity: 1);
+        } else {
+          await ApiService.addToCart(dishId: productId, quantity: 1);
+        }
+      }
+    } catch (e) {
+      debugPrint('Cart API sync error: $e');
+    }
+
+    // 2. Lấy lại dữ liệu giỏ hàng mới nhất từ Server
+    await _fetchCartData();
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.check_circle, color: Colors.white),
+              const SizedBox(width: 8),
+              Expanded(child: Text('Đã thêm "${product['name']}" vào giỏ hàng!')),
+            ],
+          ),
+          backgroundColor: const Color(0xFF0EA5E9),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          duration: const Duration(seconds: 2),
         ),
-        backgroundColor: const Color(0xFF0EA5E9),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        duration: const Duration(seconds: 2),
-      ),
-    );
+      );
+    }
   }
 
   @override

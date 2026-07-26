@@ -13,11 +13,35 @@ class GioHangController extends Controller
 {
     private function resolveCart(): Cart
     {
-        if (Auth::check()) {
-            return Cart::firstOrCreate(['user_id' => Auth::user()->id]);
+        $user = Auth::user() ?: auth('sanctum')->user();
+        $sessionId = request()->header('X-Session-ID');
+
+        if ($user) {
+            $userCart = Cart::firstOrCreate(['user_id' => $user->id]);
+
+            // Tự động gộp giỏ hàng tạm (Guest Cart) khi người dùng đăng nhập tài khoản
+            if ($sessionId) {
+                $guestCart = Cart::where('session_id', $sessionId)->first();
+                if ($guestCart && $guestCart->id !== $userCart->id) {
+                    foreach ($guestCart->items as $gItem) {
+                        $uItem = CartItem::firstOrNew([
+                            'cart_id'         => $userCart->id,
+                            'dish_id'         => $gItem->dish_id,
+                            'ocop_product_id' => $gItem->ocop_product_id,
+                        ]);
+                        $uItem->quantity = ($uItem->exists ? $uItem->quantity : 0) + $gItem->quantity;
+                        $uItem->save();
+                    }
+                    $guestCart->items()->delete();
+                    $guestCart->delete();
+                }
+            }
+
+            return $userCart;
         }
-        $sessionId = request()->header('X-Session-ID') ?: session()->getId();
-        return Cart::firstOrCreate(['session_id' => $sessionId]);
+
+        $sid = $sessionId ?: session()->getId();
+        return Cart::firstOrCreate(['session_id' => $sid]);
     }
 
     private function formatCartResponse(Cart $cart)
