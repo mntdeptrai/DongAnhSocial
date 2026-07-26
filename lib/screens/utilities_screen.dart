@@ -571,7 +571,7 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
                         ? item['image_path']
                         : ((item['image'] != null && item['image'].toString().isNotEmpty)
                             ? item['image']
-                            : 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=800&q=80'),
+                            : 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=800&q=80'),
                     height: 160,
                     width: double.infinity,
                     fit: BoxFit.cover,
