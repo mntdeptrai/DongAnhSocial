@@ -461,7 +461,7 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
                     SizedBox(height: 4),
                     Text('Bún Chả Cổ Loa & Tương Nếp', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
                     SizedBox(height: 4),
-                    Text('Thưởng thức đặc sản đạt chuẩn vệ sinh an toàn thực phẩm', style: TextStyle(color: Colors.white90, fontSize: 11)),
+                    Text('Thưởng thức đặc sản đạt chuẩn vệ sinh an toàn thực phẩm', style: TextStyle(color: Colors.white70, fontSize: 11)),
                   ],
                 ),
               ),
@@ -498,7 +498,13 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
         onTap: () {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (_) => EateryDetailScreen(eatery: item)),
+            MaterialPageRoute(
+              builder: (_) => EateryDetailScreen(
+                categorySlug: item['category_slug'] ?? 'dong-anh-food-map',
+                eaterySlug: item['slug'] ?? 'eatery-${item['id']}',
+                initialData: item,
+              ),
+            ),
           );
         },
         borderRadius: BorderRadius.circular(20),
@@ -624,7 +630,13 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
                         onPressed: () {
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (_) => EateryDetailScreen(eatery: item)),
+                            MaterialPageRoute(
+                              builder: (_) => EateryDetailScreen(
+                                categorySlug: item['category_slug'] ?? 'dong-anh-food-map',
+                                eaterySlug: item['slug'] ?? 'eatery-${item['id']}',
+                                initialData: item,
+                              ),
+                            ),
                           );
                         },
                         icon: const Icon(Icons.arrow_forward, size: 14),
@@ -679,7 +691,7 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
                     SizedBox(height: 4),
                     Text('Sản Phẩm Đạt Chuẩn OCOP 4-5 Sao', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
                     SizedBox(height: 4),
-                    Text('Trực tiếp từ hợp tác xã và hộ kinh doanh chính gốc', style: TextStyle(color: Colors.white90, fontSize: 11)),
+                    Text('Trực tiếp từ hợp tác xã và hộ kinh doanh chính gốc', style: TextStyle(color: Colors.white70, fontSize: 11)),
                   ],
                 ),
               ),
