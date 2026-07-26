@@ -151,7 +151,7 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
   Future<void> _fetchCartData() async {
     try {
       final res = await ApiService.getCart();
-      if (res['success'] == true && res['data'] is List) {
+      if (res is Map && res['success'] == true && res['data'] is List) {
         final List items = res['data'];
         final Map<String, Map<String, dynamic>> loadedCart = {};
         for (var item in items) {

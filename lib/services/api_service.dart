@@ -681,20 +681,23 @@ class ApiService {
       final response = await http.get(Uri.parse('$baseUrl/social/unread-check'), headers: _getHeaders());
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        if (data['unread_count'] is int) return data['unread_count'];
-        return data['has_unread'] == true ? 1 : 0;
+        if (data is Map) {
+          if (data['unread_count'] is int) return data['unread_count'];
+          return data['has_unread'] == true ? 1 : 0;
+        }
       }
     } catch (_) {}
     return 0;
   }
-
 
   /// GET /market-products — Lấy danh sách sản phẩm OCOP & Gian hàng chợ
   static Future<List<dynamic>> getMarketProducts() async {
     try {
       final response = await http.get(Uri.parse('$baseUrl/market-products'), headers: _getHeaders());
       if (response.statusCode == 200) {
-        return jsonDecode(response.body);
+        final data = jsonDecode(response.body);
+        if (data is List) return data;
+        if (data is Map && data['data'] is List) return data['data'];
       }
     } catch (_) {}
     return [];
@@ -705,7 +708,9 @@ class ApiService {
     try {
       final response = await http.get(Uri.parse('$baseUrl/notifications'), headers: _getHeaders());
       if (response.statusCode == 200) {
-        return jsonDecode(response.body);
+        final data = jsonDecode(response.body);
+        if (data is List) return data;
+        if (data is Map && data['data'] is List) return data['data'];
       }
     } catch (_) {}
     return [];
@@ -716,7 +721,9 @@ class ApiService {
     try {
       final response = await http.get(Uri.parse('$baseUrl/seller/profile'), headers: _getHeaders());
       if (response.statusCode == 200) {
-        return jsonDecode(response.body);
+        final data = jsonDecode(response.body);
+        if (data is Map<String, dynamic>) return data;
+        if (data is Map) return Map<String, dynamic>.from(data);
       }
     } catch (_) {}
     return {};
@@ -731,7 +738,9 @@ class ApiService {
         body: jsonEncode(body),
       );
       if (response.statusCode == 200) {
-        return jsonDecode(response.body);
+        final data = jsonDecode(response.body);
+        if (data is Map<String, dynamic>) return data;
+        if (data is Map) return Map<String, dynamic>.from(data);
       }
     } catch (_) {}
     return {'success': false};
@@ -744,7 +753,8 @@ class ApiService {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (data is List) return data;
-        if (data['data'] is List) return data['data'];
+        if (data is Map && data['data'] is List) return data['data'];
+        if (data is Map && data['orders'] is List) return data['orders'];
       }
     } catch (_) {}
     return [];
@@ -757,6 +767,7 @@ class ApiService {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (data is List) return data;
+        if (data is Map && data['data'] is List) return data['data'];
       }
     } catch (_) {}
     return [];
@@ -769,7 +780,8 @@ class ApiService {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (data is List) return data;
-        if (data['users'] is List) return data['users'];
+        if (data is Map && data['users'] is List) return data['users'];
+        if (data is Map && data['data'] is List) return data['data'];
       }
     } catch (_) {}
     return [];
