@@ -162,31 +162,13 @@
                             </svg>
                         </a>
 
-                        <!-- Nút Thông báo (System & Order & Friend Requests Dropdown) -->
+                        <!-- Nút Thông báo (Pure Notifications Dropdown) -->
                         <div class="notif-dropdown" x-data="{ 
                             open: false, 
-                            notifs: [], 
-                            friendRequestsCount: {{ $pendingCount }},
-                            loading: false, 
-                            fetchNotifs() {
-                                if (this.notifs.length === 0) {
-                                    this.loading = true;
-                                    fetch('/api/orders?status=all', {
-                                        headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
-                                    })
-                                    .then(res => res.json())
-                                    .then(data => {
-                                        if (data.success && data.data) {
-                                            this.notifs = data.data.slice(0, 5);
-                                        }
-                                        this.loading = false;
-                                    })
-                                    .catch(() => { this.loading = false; });
-                                }
-                            } 
+                            friendRequestsCount: {{ $pendingCount }}
                         }" @click.outside="open = false" style="position: relative; display: flex; align-items: center;">
                             
-                            <button @click="open = !open; if(open) fetchNotifs();" class="header-action-btn" title="Thông báo hệ thống & Đơn hàng" style="outline: none; border: none; background: rgba(0, 0, 0, 0.05); cursor: pointer; position: relative;">
+                            <button @click="open = !open" class="header-action-btn" title="Thông báo" style="outline: none; border: none; background: rgba(0, 0, 0, 0.05); cursor: pointer; position: relative;">
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
                                     <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
@@ -208,51 +190,33 @@
                                  style="position: absolute; right: -40px; top: 100%; margin-top: 10px; width: 340px; background: var(--bg-card, #ffffff); border: 1px solid var(--border-glow, rgba(0,0,0,0.08)); border-radius: 20px; box-shadow: 0 12px 40px rgba(0,0,0,0.15); z-index: 10000; overflow: hidden; display: flex; flex-direction: column; text-align: left;">
                                 
                                 <div style="padding: 16px 18px; border-bottom: 1px solid rgba(0,0,0,0.06); display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.015);">
-                                    <h4 style="margin: 0; font-size: 1.05rem; font-weight: 800; color: var(--text-main, #1e293b); font-family: var(--font-heading);">Thông báo & Đơn hàng</h4>
-                                    <a href="/orders" style="font-size: 0.8rem; color: var(--primary, #0ea5e9); text-decoration: none; font-weight: 700;">Xem tất cả</a>
+                                    <h4 style="margin: 0; font-size: 1.05rem; font-weight: 800; color: var(--text-main, #1e293b); font-family: var(--font-heading);">Thông báo</h4>
+                                    @if($pendingCount > 0)
+                                        <span style="font-size: 0.78rem; color: #ea580c; font-weight: 700; background: rgba(234,88,12,0.1); padding: 3px 8px; border-radius: 12px;">{{ $pendingCount }} mới</span>
+                                    @endif
                                 </div>
 
                                 <div style="max-height: 380px; overflow-y: auto; display: flex; flex-direction: column; padding: 8px 0; -webkit-overflow-scrolling: touch;">
                                     @if($pendingCount > 0)
-                                        <a href="/social" style="display: flex; align-items: center; gap: 12px; padding: 12px 18px; text-decoration: none; background: rgba(14, 165, 233, 0.06); border-bottom: 1px solid rgba(0,0,0,0.04);">
-                                            <div style="width: 36px; height: 36px; border-radius: 50%; background: #0ea5e9; color: white; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0;">👥</div>
+                                        <a href="/social" style="display: flex; align-items: center; gap: 12px; padding: 14px 18px; text-decoration: none; background: rgba(14, 165, 233, 0.06); border-bottom: 1px solid rgba(0,0,0,0.04);">
+                                            <div style="width: 38px; height: 38px; border-radius: 50%; background: #0ea5e9; color: white; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0;">👥</div>
                                             <div style="flex: 1;">
                                                 <div style="font-size: 0.88rem; font-weight: 800; color: #0284c7;">Lời mời kết bạn</div>
                                                 <div style="font-size: 0.78rem; color: #64748b;">Bạn có {{ $pendingCount }} lời mời kết bạn mới đang chờ</div>
                                             </div>
                                         </a>
+                                    @else
+                                        <!-- Empty state -->
+                                        <div style="padding: 40px 20px; text-align: center; color: var(--text-muted, #64748b); font-size: 0.88rem; display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                                            <span style="font-size: 2rem;">🔔</span>
+                                            <span>Hiện chưa có thông báo mới nào.</span>
+                                        </div>
                                     @endif
-
-                                    <!-- Loading Spinner -->
-                                    <div x-show="loading" style="padding: 30px; text-align: center; color: var(--text-muted, #64748b); font-size: 0.88rem;">
-                                        <span style="display: inline-block; animation: spin 1s linear infinite; margin-right: 6px;">⏳</span> Đang tải...
-                                    </div>
-
-                                    <!-- Empty state -->
-                                    <div x-show="!loading && notifs.length === 0 && friendRequestsCount === 0" style="padding: 40px 20px; text-align: center; color: var(--text-muted, #64748b); font-size: 0.88rem; display: flex; flex-direction: column; align-items: center; gap: 8px;">
-                                        <span style="font-size: 2rem;">🔔</span>
-                                        <span>Chưa có thông báo đơn hàng mới nào.</span>
-                                    </div>
-
-                                    <!-- Orders Notification items -->
-                                    <template x-show="!loading" x-for="ord in notifs" :key="ord.id">
-                                        <a :href="'/orders/' + ord.order_code_full.replace('#', '')" style="display: flex; align-items: flex-start; gap: 12px; padding: 12px 18px; text-decoration: none; color: inherit; transition: background 0.15s; border-bottom: 1px solid rgba(0,0,0,0.03);" onmouseover="this.style.background='rgba(0,0,0,0.03)'" onmouseout="this.style.background='transparent'">
-                                            <div style="width: 38px; height: 38px; border-radius: 12px; background: rgba(234, 88, 12, 0.1); color: #ea580c; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; margin-top: 2px;">📦</div>
-                                            <div style="flex: 1; min-width: 0;">
-                                                <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 6px;">
-                                                    <span style="font-size: 0.85rem; font-weight: 800; color: var(--text-main, #0f172a);" x-text="'Đơn #' + ord.order_code"></span>
-                                                    <span style="font-size: 0.72rem; color: var(--text-muted, #64748b);" x-text="ord.created_at_formatted"></span>
-                                                </div>
-                                                <div style="font-size: 0.8rem; color: #0ea5e9; font-weight: 700; margin-top: 2px;" x-text="ord.status_label"></div>
-                                                <div style="font-size: 0.78rem; color: var(--text-muted, #64748b); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px;" x-text="ord.eatery_name + ' • ' + ord.items.length + ' món'"></div>
-                                            </div>
-                                        </a>
-                                    </template>
                                 </div>
 
                                 <div style="border-top: 1px solid rgba(0,0,0,0.06); text-align: center; background: rgba(0,0,0,0.015);">
-                                    <a href="/orders" style="display: block; padding: 12px; font-size: 0.82rem; color: var(--text-main, #1e293b); text-decoration: none; font-weight: 700;">
-                                        Quản lý lịch sử đơn hàng ➔
+                                    <a href="/social" style="display: block; padding: 12px; font-size: 0.82rem; color: var(--text-main, #1e293b); text-decoration: none; font-weight: 700;">
+                                        Xem tất cả thông báo ➔
                                     </a>
                                 </div>
                             </div>
