@@ -582,7 +582,7 @@ class ApiService {
   }
 
   /// POST /checkins/{id}/react — React emoji vào check-in
-  static Future<bool> reactToCheckin(int id, String emoji, String type) async {
+  static Future<Map<String, dynamic>> reactToCheckin(int id, String emoji, String type) async {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/checkins/$id/react'),
@@ -592,9 +592,17 @@ class ApiService {
           'type': type,
         }),
       );
-      return response.statusCode == 200;
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return {
+          'success': true,
+          'counts': data['counts'] ?? {},
+          'total': data['total'] ?? 0,
+        };
+      }
+      return {'success': false};
     } catch (_) {
-      return false;
+      return {'success': false};
     }
   }
 

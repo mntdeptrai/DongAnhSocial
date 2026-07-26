@@ -348,8 +348,8 @@ class FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
   }
 
   void _react(int id, String emoji, String type) async {
-    final success = await ApiService.reactToCheckin(id, emoji, type);
-    if (success && mounted) {
+    final res = await ApiService.reactToCheckin(id, emoji, type);
+    if (res['success'] == true && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Bạn đã thả $emoji'),
@@ -1161,11 +1161,22 @@ class FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
                       // Interactions row
                       Row(
                         children: [
-                          _reactionButton(commentableId, '👍', item['type']),
-                          _reactionButton(commentableId, '❤️', item['type']),
-                          _reactionButton(commentableId, '😋', item['type']),
-                          _reactionButton(commentableId, '🔥', item['type']),
-                          const Spacer(),
+                          Expanded(
+                            child: SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: Row(
+                                children: [
+                                  _reactionButton(commentableId, '❤️', item['type'], item),
+                                  _reactionButton(commentableId, '🔥', item['type'], item),
+                                  _reactionButton(commentableId, '👍', item['type'], item),
+                                  _reactionButton(commentableId, '😂', item['type'], item),
+                                  _reactionButton(commentableId, '😍', item['type'], item),
+                                  _reactionButton(commentableId, '🤤', item['type'], item),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
                           // Slide comments bottom drawer trigger
                           GestureDetector(
                             onTap: () => _openCommentsBottomSheet(item),
@@ -1222,27 +1233,37 @@ class FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
     );
   }
 
-  Widget _reactionButton(int id, String emoji, String type) {
+  Widget _reactionButton(int id, String emoji, String type, Map item) {
+    final counts = (item['reaction_counts'] is Map) ? item['reaction_counts'] as Map : {};
+    final cnt = counts[emoji] ?? 0;
+
     return InkWell(
       onTap: () => _react(id, emoji, type),
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(16),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        margin: const EdgeInsets.only(right: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+        margin: const EdgeInsets.only(right: 5),
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.2),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.white.withOpacity(0.25)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
-            )
+          color: Colors.black.withOpacity(0.4),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.white.withOpacity(0.2)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(emoji, style: const TextStyle(fontSize: 14)),
+            const SizedBox(width: 4),
+            Text(
+              '$cnt',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+                color: cnt > 0 ? const Color(0xFFF97316) : Colors.white70,
+              ),
+            ),
           ],
         ),
-        child: Text(emoji, style: const TextStyle(fontSize: 16)),
       ),
     );
   }

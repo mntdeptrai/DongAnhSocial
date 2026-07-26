@@ -127,10 +127,50 @@ class HomeController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
+        // 3. Tải tất cả bộ đếm cảm xúc (Reactions) từ DB
+        $allCheckinReactions = \App\Models\CheckinReaction::selectRaw('reactionable_type, reactionable_id, emoji, count(*) as count')
+            ->groupBy('reactionable_type', 'reactionable_id', 'emoji')
+            ->get()
+            ->groupBy(function($item) {
+                return $item->reactionable_type . '_' . $item->reactionable_id;
+            });
+
+        $emojis = ['❤️', '🔥', '👍', '😂', '😍', '🤤'];
+
+        $standaloneCheckins->transform(function($chk) use ($allCheckinReactions, $emojis) {
+            $key = 'checkin_' . $chk->id;
+            $reactionsGroup = $allCheckinReactions->get($key, collect());
+            $counts = [];
+            $total = 0;
+            foreach ($emojis as $e) {
+                $cnt = (int) ($reactionsGroup->firstWhere('emoji', $e)?->count ?? 0);
+                $counts[$e] = $cnt;
+                $total += $cnt;
+            }
+            $chk->reaction_counts = $counts;
+            $chk->reaction_total = $total;
+            return $chk;
+        });
+
+        $diaries->transform(function($dry) use ($allCheckinReactions, $emojis) {
+            $key = 'diary_' . $dry->id;
+            $reactionsGroup = $allCheckinReactions->get($key, collect());
+            $counts = [];
+            $total = 0;
+            foreach ($emojis as $e) {
+                $cnt = (int) ($reactionsGroup->firstWhere('emoji', $e)?->count ?? 0);
+                $counts[$e] = $cnt;
+                $total += $cnt;
+            }
+            $dry->reaction_counts = $counts;
+            $dry->reaction_total = $total;
+            return $dry;
+        });
+
         $eateries = EateryApiService::getEateries();
         $eateriesMap = $eateries->keyBy('id');
 
-        // 3. Danh sách địa điểm cho modal tạo check-in từ tất cả 7 DB
+        // 4. Danh sách địa điểm cho modal tạo check-in
         $allEateries = EateryApiService::getEateries()->sortBy('name')->values();
 
         return view('checkin', compact('diaries', 'eateriesMap', 'standaloneCheckins', 'allEateries'));

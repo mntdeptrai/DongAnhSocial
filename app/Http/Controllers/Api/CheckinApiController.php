@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Checkin;
+use App\Models\CheckinReaction;
 use App\Models\FoodTourDiary;
 use App\Models\Eatery;
 use App\Models\User;
@@ -299,7 +300,7 @@ class CheckinApiController extends Controller
     }
 
     /**
-     * Gửi reaction từ Mobile App
+     * Gửi reaction từ Mobile App / Web
      */
     public function reactToCheckin(Request $request, $id)
     {
@@ -308,11 +309,59 @@ class CheckinApiController extends Controller
             'type'  => 'required|string|in:checkin,diary',
         ]);
 
-        event(new CheckinReacted((int) $id, $request->type, $request->emoji));
+        $userId = Auth::id() ?? session('user_id');
+        $sessionId = $request->header('X-Session-ID') ?? session()->getId();
+
+        $query = CheckinReaction::where('reactionable_type', $request->type)
+            ->where('reactionable_id', (int) $id);
+
+        if ($userId) {
+            $query->where('user_id', $userId);
+        } else {
+            $query->where('session_id', $sessionId);
+        }
+
+        $existing = $query->first();
+
+        if ($existing) {
+            if ($existing->emoji === $request->emoji) {
+                $existing->delete();
+            } else {
+                $existing->update(['emoji' => $request->emoji]);
+            }
+        } else {
+            CheckinReaction::create([
+                'reactionable_type' => $request->type,
+                'reactionable_id'   => (int) $id,
+                'user_id'           => $userId,
+                'session_id'        => $sessionId,
+                'emoji'             => $request->emoji,
+            ]);
+        }
+
+        $allReactions = CheckinReaction::where('reactionable_type', $request->type)
+            ->where('reactionable_id', (int) $id)
+            ->selectRaw('emoji, count(*) as count')
+            ->groupBy('emoji')
+            ->pluck('count', 'emoji')
+            ->toArray();
+
+        $emojis = ['❤️', '🔥', '👍', '😂', '😍', '🤤'];
+        $counts = [];
+        $total = 0;
+        foreach ($emojis as $e) {
+            $cnt = (int) ($allReactions[$e] ?? 0);
+            $counts[$e] = $cnt;
+            $total += $cnt;
+        }
+
+        event(new CheckinReacted((int) $id, $request->type, $request->emoji, $counts, $total));
 
         return response()->json([
             'success' => true,
-            'message' => 'Thả cảm xúc thành công.'
+            'message' => 'Thả cảm xúc thành công.',
+            'counts'  => $counts,
+            'total'   => $total,
         ]);
     }
 

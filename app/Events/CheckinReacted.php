@@ -18,7 +18,9 @@ class CheckinReacted implements ShouldBroadcastNow
     public function __construct(
         public readonly int $id,
         public readonly string $type,
-        public readonly string $emoji
+        public readonly string $emoji,
+        public readonly array $counts = [],
+        public readonly int $total = 0
     ) {}
 
     /**
@@ -43,9 +45,11 @@ class CheckinReacted implements ShouldBroadcastNow
     public function broadcastWith(): array
     {
         return [
-            'id'    => $this->id,
-            'type'  => $this->type,
-            'emoji' => $this->emoji,
+            'id'     => $this->id,
+            'type'   => $this->type,
+            'emoji'  => $this->emoji,
+            'counts' => $this->counts,
+            'total'  => $this->total,
         ];
     }
 }

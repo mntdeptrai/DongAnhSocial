@@ -364,29 +364,63 @@
                 color: #ef4444;
             }
 
-            /* Reactions and Floating Emojis styling */
+            /* Reactions and Floating Emojis styling (Facebook style counts) */
             .reactions-bar {
                 display: flex;
                 align-items: center;
-                gap: 12px;
+                justify-content: space-between;
+                flex-wrap: wrap;
+                gap: 10px;
                 margin-top: 12px;
-                padding-top: 12px;
-                border-top: 1px dashed var(--border-glow);
+                padding: 8px 12px;
+                background: rgba(255, 255, 255, 0.03);
+                border-radius: 16px;
+                border: 1px dashed var(--border-glow);
+            }
+            .reactions-list {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                flex-wrap: wrap;
             }
             .react-btn {
-                background: none;
-                border: none;
-                font-size: 1.3rem;
+                display: inline-flex;
+                align-items: center;
+                gap: 4px;
+                padding: 4px 10px;
+                background: var(--bg-card, #ffffff);
+                border: 1px solid var(--border-glow, rgba(0, 0, 0, 0.08));
+                border-radius: 20px;
+                font-size: 0.95rem;
                 cursor: pointer;
-                padding: 2px 4px;
-                transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
                 user-select: none;
+                box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
             }
             .react-btn:hover {
-                transform: scale(1.3) rotate(5deg);
+                transform: scale(1.15) translateY(-2px);
+                border-color: var(--primary, #0ea5e9);
+                box-shadow: 0 4px 12px rgba(14, 165, 233, 0.2);
             }
             .react-btn:active {
-                transform: scale(0.9);
+                transform: scale(0.95);
+            }
+            .react-count {
+                font-size: 0.78rem;
+                font-weight: 800;
+                color: var(--text-muted, #64748b);
+                line-height: 1;
+            }
+            .react-count.active-count {
+                color: #ea580c;
+            }
+            .reaction-total-badge {
+                font-size: 0.78rem;
+                font-weight: 700;
+                color: var(--text-muted, #64748b);
+                background: rgba(0, 0, 0, 0.04);
+                padding: 4px 10px;
+                border-radius: 12px;
             }
             .checkin-post-card {
                 position: relative;
@@ -670,14 +704,34 @@
 
                                 <!-- Reactions Bar -->
                                 <div class="reactions-bar">
-                                    <span style="font-size:0.8rem; font-weight:800; color:var(--text-muted);">Thả cảm xúc:</span>
-                                    <div style="display:flex; gap:8px;">
-                                        <button type="button" class="react-btn" onclick="sendReaction({{ $checkin->id }}, 'checkin', '❤️', event)">❤️</button>
-                                        <button type="button" class="react-btn" onclick="sendReaction({{ $checkin->id }}, 'checkin', '🔥', event)">🔥</button>
-                                        <button type="button" class="react-btn" onclick="sendReaction({{ $checkin->id }}, 'checkin', '👍', event)">👍</button>
-                                        <button type="button" class="react-btn" onclick="sendReaction({{ $checkin->id }}, 'checkin', '😂', event)">😂</button>
-                                        <button type="button" class="react-btn" onclick="sendReaction({{ $checkin->id }}, 'checkin', '😍', event)">😍</button>
-                                        <button type="button" class="react-btn" onclick="sendReaction({{ $checkin->id }}, 'checkin', '🤤', event)">🤤</button>
+                                    <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                                        <span style="font-size:0.8rem; font-weight:800; color:var(--text-muted);">Thả cảm xúc:</span>
+                                        <div class="reactions-list" data-post-id="{{ $checkin->id }}" data-post-type="checkin">
+                                            @php
+                                                $rCounts = $checkin->reaction_counts ?? ['❤️'=>0, '🔥'=>0, '👍'=>0, '😂'=>0, '😍'=>0, '🤤'=>0];
+                                            @endphp
+                                            <button type="button" class="react-btn" data-emoji="❤️" onclick="sendReaction({{ $checkin->id }}, 'checkin', '❤️', event)">
+                                                <span>❤️</span> <span class="react-count {{ ($rCounts['❤️'] ?? 0) > 0 ? 'active-count' : '' }}">{{ $rCounts['❤️'] ?? 0 }}</span>
+                                            </button>
+                                            <button type="button" class="react-btn" data-emoji="🔥" onclick="sendReaction({{ $checkin->id }}, 'checkin', '🔥', event)">
+                                                <span>🔥</span> <span class="react-count {{ ($rCounts['🔥'] ?? 0) > 0 ? 'active-count' : '' }}">{{ $rCounts['🔥'] ?? 0 }}</span>
+                                            </button>
+                                            <button type="button" class="react-btn" data-emoji="👍" onclick="sendReaction({{ $checkin->id }}, 'checkin', '👍', event)">
+                                                <span>👍</span> <span class="react-count {{ ($rCounts['👍'] ?? 0) > 0 ? 'active-count' : '' }}">{{ $rCounts['👍'] ?? 0 }}</span>
+                                            </button>
+                                            <button type="button" class="react-btn" data-emoji="😂" onclick="sendReaction({{ $checkin->id }}, 'checkin', '😂', event)">
+                                                <span>😂</span> <span class="react-count {{ ($rCounts['😂'] ?? 0) > 0 ? 'active-count' : '' }}">{{ $rCounts['😂'] ?? 0 }}</span>
+                                            </button>
+                                            <button type="button" class="react-btn" data-emoji="😍" onclick="sendReaction({{ $checkin->id }}, 'checkin', '😍', event)">
+                                                <span>😍</span> <span class="react-count {{ ($rCounts['😍'] ?? 0) > 0 ? 'active-count' : '' }}">{{ $rCounts['😍'] ?? 0 }}</span>
+                                            </button>
+                                            <button type="button" class="react-btn" data-emoji="🤤" onclick="sendReaction({{ $checkin->id }}, 'checkin', '🤤', event)">
+                                                <span>🤤</span> <span class="react-count {{ ($rCounts['🤤'] ?? 0) > 0 ? 'active-count' : '' }}">{{ $rCounts['🤤'] ?? 0 }}</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="reaction-total-badge" style="{{ ($checkin->reaction_total ?? 0) > 0 ? '' : 'display:none;' }}">
+                                        <span class="total-num">{{ $checkin->reaction_total ?? 0 }}</span> lượt bày tỏ
                                     </div>
                                 </div>
 
@@ -848,14 +902,34 @@
 
                                 <!-- Reactions Bar -->
                                 <div class="reactions-bar">
-                                    <span style="font-size:0.8rem; font-weight:800; color:var(--text-muted);">Thả cảm xúc:</span>
-                                    <div style="display:flex; gap:8px;">
-                                        <button type="button" class="react-btn" onclick="sendReaction({{ $diary->id }}, 'diary', '❤️', event)">❤️</button>
-                                        <button type="button" class="react-btn" onclick="sendReaction({{ $diary->id }}, 'diary', '🔥', event)">🔥</button>
-                                        <button type="button" class="react-btn" onclick="sendReaction({{ $diary->id }}, 'diary', '👍', event)">👍</button>
-                                        <button type="button" class="react-btn" onclick="sendReaction({{ $diary->id }}, 'diary', '😂', event)">😂</button>
-                                        <button type="button" class="react-btn" onclick="sendReaction({{ $diary->id }}, 'diary', '😍', event)">😍</button>
-                                        <button type="button" class="react-btn" onclick="sendReaction({{ $diary->id }}, 'diary', '🤤', event)">🤤</button>
+                                    <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                                        <span style="font-size:0.8rem; font-weight:800; color:var(--text-muted);">Thả cảm xúc:</span>
+                                        <div class="reactions-list" data-post-id="{{ $diary->id }}" data-post-type="diary">
+                                            @php
+                                                $rCounts = $diary->reaction_counts ?? ['❤️'=>0, '🔥'=>0, '👍'=>0, '😂'=>0, '😍'=>0, '🤤'=>0];
+                                            @endphp
+                                            <button type="button" class="react-btn" data-emoji="❤️" onclick="sendReaction({{ $diary->id }}, 'diary', '❤️', event)">
+                                                <span>❤️</span> <span class="react-count {{ ($rCounts['❤️'] ?? 0) > 0 ? 'active-count' : '' }}">{{ $rCounts['❤️'] ?? 0 }}</span>
+                                            </button>
+                                            <button type="button" class="react-btn" data-emoji="🔥" onclick="sendReaction({{ $diary->id }}, 'diary', '🔥', event)">
+                                                <span>🔥</span> <span class="react-count {{ ($rCounts['🔥'] ?? 0) > 0 ? 'active-count' : '' }}">{{ $rCounts['🔥'] ?? 0 }}</span>
+                                            </button>
+                                            <button type="button" class="react-btn" data-emoji="👍" onclick="sendReaction({{ $diary->id }}, 'diary', '👍', event)">
+                                                <span>👍</span> <span class="react-count {{ ($rCounts['👍'] ?? 0) > 0 ? 'active-count' : '' }}">{{ $rCounts['👍'] ?? 0 }}</span>
+                                            </button>
+                                            <button type="button" class="react-btn" data-emoji="😂" onclick="sendReaction({{ $diary->id }}, 'diary', '😂', event)">
+                                                <span>😂</span> <span class="react-count {{ ($rCounts['😂'] ?? 0) > 0 ? 'active-count' : '' }}">{{ $rCounts['😂'] ?? 0 }}</span>
+                                            </button>
+                                            <button type="button" class="react-btn" data-emoji="😍" onclick="sendReaction({{ $diary->id }}, 'diary', '😍', event)">
+                                                <span>😍</span> <span class="react-count {{ ($rCounts['😍'] ?? 0) > 0 ? 'active-count' : '' }}">{{ $rCounts['😍'] ?? 0 }}</span>
+                                            </button>
+                                            <button type="button" class="react-btn" data-emoji="🤤" onclick="sendReaction({{ $diary->id }}, 'diary', '🤤', event)">
+                                                <span>🤤</span> <span class="react-count {{ ($rCounts['🤤'] ?? 0) > 0 ? 'active-count' : '' }}">{{ $rCounts['🤤'] ?? 0 }}</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="reaction-total-badge" style="{{ ($diary->reaction_total ?? 0) > 0 ? '' : 'display:none;' }}">
+                                        <span class="total-num">{{ $diary->reaction_total ?? 0 }}</span> lượt bày tỏ
                                     </div>
                                 </div>
 
@@ -1275,15 +1349,29 @@
     @endif
 
     /* ========================================================
-       Floating Emoji Reactions Logic
+       Floating Emoji Reactions & Counts Logic
        ======================================================== */
     function sendReaction(id, type, emoji, event) {
         if (event) {
             event.preventDefault();
             event.stopPropagation();
         }
-        // Spawn locally immediately
+        // Spawn floating animation locally
         spawnFloatingEmojis(id, type, emoji, event);
+
+        // Optimistically update local counter UI
+        const list = document.querySelector(`article.checkin-post-card[data-${type}-id="${id}"] .reactions-list`);
+        if (list) {
+            const btn = list.querySelector(`button[data-emoji="${emoji}"]`);
+            if (btn) {
+                const countSpan = btn.querySelector('.react-count');
+                if (countSpan) {
+                    let val = parseInt(countSpan.textContent) || 0;
+                    countSpan.textContent = val + 1;
+                    countSpan.classList.add('active-count');
+                }
+            }
+        }
 
         // POST request to backend
         fetch(`/api/checkins/${id}/react`, {
@@ -1293,7 +1381,44 @@
                 'X-CSRF-TOKEN': document.querySelector('input[name="_token"]')?.value || ''
             },
             body: JSON.stringify({ type: type, emoji: emoji })
-        }).catch(err => console.error('Failed to send reaction:', err));
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success && data.counts) {
+                updateReactionCounts(id, type, data.counts, data.total);
+            }
+        })
+        .catch(err => console.error('Failed to send reaction:', err));
+    }
+
+    function updateReactionCounts(id, type, counts, total) {
+        const list = document.querySelector(`article.checkin-post-card[data-${type}-id="${id}"] .reactions-list`);
+        if (!list) return;
+
+        for (const [emoji, cnt] of Object.entries(counts)) {
+            const btn = list.querySelector(`button[data-emoji="${emoji}"]`);
+            if (btn) {
+                const countSpan = btn.querySelector('.react-count');
+                if (countSpan) {
+                    countSpan.textContent = cnt;
+                    if (cnt > 0) {
+                        countSpan.classList.add('active-count');
+                    } else {
+                        countSpan.classList.remove('active-count');
+                    }
+                }
+            }
+        }
+
+        const card = list.closest('article.checkin-post-card');
+        if (card) {
+            const totalBadge = card.querySelector('.reaction-total-badge');
+            if (totalBadge) {
+                const totalNum = totalBadge.querySelector('.total-num');
+                if (totalNum) totalNum.textContent = total;
+                totalBadge.style.display = total > 0 ? 'inline-block' : 'none';
+            }
+        }
     }
 
     function spawnFloatingEmojis(id, type, emoji, event) {
@@ -1484,14 +1609,31 @@
             ${photoHtml}
             <!-- Reactions Bar -->
             <div class="reactions-bar">
-                <span style="font-size:0.8rem; font-weight:800; color:var(--text-muted);">Thả cảm xúc:</span>
-                <div style="display:flex; gap:8px;">
-                    <button type="button" class="react-btn" onclick="sendReaction(${data.id}, 'checkin', '❤️', event)">❤️</button>
-                    <button type="button" class="react-btn" onclick="sendReaction(${data.id}, 'checkin', '🔥', event)">🔥</button>
-                    <button type="button" class="react-btn" onclick="sendReaction(${data.id}, 'checkin', '👍', event)">👍</button>
-                    <button type="button" class="react-btn" onclick="sendReaction(${data.id}, 'checkin', '😂', event)">😂</button>
-                    <button type="button" class="react-btn" onclick="sendReaction(${data.id}, 'checkin', '😍', event)">😍</button>
-                    <button type="button" class="react-btn" onclick="sendReaction(${data.id}, 'checkin', '🤤', event)">🤤</button>
+                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                    <span style="font-size:0.8rem; font-weight:800; color:var(--text-muted);">Thả cảm xúc:</span>
+                    <div class="reactions-list" data-post-id="${data.id}" data-post-type="checkin">
+                        <button type="button" class="react-btn" data-emoji="❤️" onclick="sendReaction(${data.id}, 'checkin', '❤️', event)">
+                            <span>❤️</span> <span class="react-count">0</span>
+                        </button>
+                        <button type="button" class="react-btn" data-emoji="🔥" onclick="sendReaction(${data.id}, 'checkin', '🔥', event)">
+                            <span>🔥</span> <span class="react-count">0</span>
+                        </button>
+                        <button type="button" class="react-btn" data-emoji="👍" onclick="sendReaction(${data.id}, 'checkin', '👍', event)">
+                            <span>👍</span> <span class="react-count">0</span>
+                        </button>
+                        <button type="button" class="react-btn" data-emoji="😂" onclick="sendReaction(${data.id}, 'checkin', '😂', event)">
+                            <span>😂</span> <span class="react-count">0</span>
+                        </button>
+                        <button type="button" class="react-btn" data-emoji="😍" onclick="sendReaction(${data.id}, 'checkin', '😍', event)">
+                            <span>😍</span> <span class="react-count">0</span>
+                        </button>
+                        <button type="button" class="react-btn" data-emoji="🤤" onclick="sendReaction(${data.id}, 'checkin', '🤤', event)">
+                            <span>🤤</span> <span class="react-count">0</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="reaction-total-badge" style="display:none;">
+                    <span class="total-num">0</span> lượt bày tỏ
                 </div>
             </div>
 
@@ -1622,14 +1764,31 @@
             ${stopsHtml}
             <!-- Reactions Bar -->
             <div class="reactions-bar">
-                <span style="font-size:0.8rem; font-weight:800; color:var(--text-muted);">Thả cảm xúc:</span>
-                <div style="display:flex; gap:8px;">
-                    <button type="button" class="react-btn" onclick="sendReaction(${data.id}, 'diary', '❤️', event)">❤️</button>
-                    <button type="button" class="react-btn" onclick="sendReaction(${data.id}, 'diary', '🔥', event)">🔥</button>
-                    <button type="button" class="react-btn" onclick="sendReaction(${data.id}, 'diary', '👍', event)">👍</button>
-                    <button type="button" class="react-btn" onclick="sendReaction(${data.id}, 'diary', '😂', event)">😂</button>
-                    <button type="button" class="react-btn" onclick="sendReaction(${data.id}, 'diary', '😍', event)">😍</button>
-                    <button type="button" class="react-btn" onclick="sendReaction(${data.id}, 'diary', '🤤', event)">🤤</button>
+                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                    <span style="font-size:0.8rem; font-weight:800; color:var(--text-muted);">Thả cảm xúc:</span>
+                    <div class="reactions-list" data-post-id="${data.id}" data-post-type="diary">
+                        <button type="button" class="react-btn" data-emoji="❤️" onclick="sendReaction(${data.id}, 'diary', '❤️', event)">
+                            <span>❤️</span> <span class="react-count">0</span>
+                        </button>
+                        <button type="button" class="react-btn" data-emoji="🔥" onclick="sendReaction(${data.id}, 'diary', '🔥', event)">
+                            <span>🔥</span> <span class="react-count">0</span>
+                        </button>
+                        <button type="button" class="react-btn" data-emoji="👍" onclick="sendReaction(${data.id}, 'diary', '👍', event)">
+                            <span>👍</span> <span class="react-count">0</span>
+                        </button>
+                        <button type="button" class="react-btn" data-emoji="😂" onclick="sendReaction(${data.id}, 'diary', '😂', event)">
+                            <span>😂</span> <span class="react-count">0</span>
+                        </button>
+                        <button type="button" class="react-btn" data-emoji="😍" onclick="sendReaction(${data.id}, 'diary', '😍', event)">
+                            <span>😍</span> <span class="react-count">0</span>
+                        </button>
+                        <button type="button" class="react-btn" data-emoji="🤤" onclick="sendReaction(${data.id}, 'diary', '🤤', event)">
+                            <span>🤤</span> <span class="react-count">0</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="reaction-total-badge" style="display:none;">
+                    <span class="total-num">0</span> lượt bày tỏ
                 </div>
             </div>
 
@@ -1831,6 +1990,9 @@
                 .listen('.CheckinReacted', (data) => {
                     if (typeof spawnFloatingEmojis === 'function') {
                         spawnFloatingEmojis(data.id, data.type, data.emoji, null);
+                    }
+                    if (typeof updateReactionCounts === 'function' && data.counts) {
+                        updateReactionCounts(data.id, data.type, data.counts, data.total);
                     }
                 });
 
