@@ -12,6 +12,7 @@ use App\Models\OcopProduct;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Helpers\R2Helper;
 
 class CheckoutController extends Controller
 {
@@ -767,12 +768,12 @@ class CheckoutController extends Controller
 
         $mediaFiles = [];
         if ($request->hasFile('media')) {
-            foreach ($request->file('media') as $file) {
-                $path = $file->store('reviews', 'public');
-                $type = str_starts_with($file->getMimeType(), 'video/') ? 'video' : 'image';
+            $files = is_array($request->file('media')) ? $request->file('media') : [$request->file('media')];
+            $uploaded = R2Helper::uploadMultiple($files, 'reviews');
+            foreach ($uploaded as $item) {
                 $mediaFiles[] = [
-                    'path' => '/storage/' . $path,
-                    'type' => $type
+                    'path' => $item['url'],
+                    'type' => $item['file_type']
                 ];
             }
         }

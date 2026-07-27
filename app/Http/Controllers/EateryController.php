@@ -7,6 +7,7 @@ use App\Models\Review;
 use Illuminate\Http\Request;
 
 use App\Services\EateryApiService;
+use App\Helpers\R2Helper;
 
 class EateryController extends Controller
 {
@@ -151,12 +152,12 @@ class EateryController extends Controller
         
         $mediaFiles = [];
         if ($request->hasFile('media')) {
-            foreach ($request->file('media') as $file) {
-                $path = $file->store('reviews', 'public');
-                $type = str_starts_with($file->getMimeType(), 'video/') ? 'video' : 'image';
+            $files = is_array($request->file('media')) ? $request->file('media') : [$request->file('media')];
+            $uploaded = R2Helper::uploadMultiple($files, 'reviews');
+            foreach ($uploaded as $item) {
                 $mediaFiles[] = [
-                    'path' => '/storage/' . $path,
-                    'type' => $type
+                    'path' => $item['url'],
+                    'type' => $item['file_type']
                 ];
             }
         }

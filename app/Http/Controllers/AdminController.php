@@ -2137,10 +2137,7 @@ class AdminController extends Controller
 
         $qrCodePath = null;
         if ($request->hasFile('qr_code')) {
-            $qrFile = $request->file('qr_code');
-            $qrFilename = 'qr_' . time() . '_' . Str::random(8) . '.' . $qrFile->getClientOriginalExtension();
-            $qrFile->move(public_path('uploads/qrcodes'), $qrFilename);
-            $qrCodePath = '/uploads/qrcodes/' . $qrFilename;
+            $qrCodePath = R2Helper::upload($request->file('qr_code'), 'qrcodes');
         } elseif ($request->filled('qr_code_url')) {
             $qrCodePath = $request->qr_code_url;
         } elseif (!empty($bankAccount)) {
@@ -2259,10 +2256,7 @@ class AdminController extends Controller
         }
 
         if ($request->hasFile('image')) {
-            $file = $request->file('image');
-            $filename = time() . '_' . Str::random(8) . '.' . $file->getClientOriginalExtension();
-            $file->move(public_path('uploads/stalls'), $filename);
-            $imagePath = '/uploads/stalls/' . $filename;
+            $imagePath = R2Helper::upload($request->file('image'), 'stalls');
         }
 
         $bankName = $request->bank_name ?: 'MBBank';
@@ -2271,10 +2265,7 @@ class AdminController extends Controller
 
         $qrCodePath = null;
         if ($request->hasFile('qr_code')) {
-            $qrFile = $request->file('qr_code');
-            $qrFilename = 'qr_' . time() . '_' . Str::random(8) . '.' . $qrFile->getClientOriginalExtension();
-            $qrFile->move(public_path('uploads/qrcodes'), $qrFilename);
-            $qrCodePath = '/uploads/qrcodes/' . $qrFilename;
+            $qrCodePath = R2Helper::upload($request->file('qr_code'), 'qrcodes');
         } elseif ($request->filled('qr_code_url')) {
             $qrCodePath = $request->qr_code_url;
         } elseif (!empty($bankAccount)) {

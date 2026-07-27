@@ -110,6 +110,7 @@ Route::prefix('v1')->group(function () {
 
         // Tải lên tệp đa phương tiện (Tải lên nhiều ảnh/video tối đa 500MB)
         Route::post('/upload', [\App\Http\Controllers\Api\UploadApiController::class, 'upload'])->middleware('throttle:uploads');
+        Route::post('/upload-chunk', [\App\Http\Controllers\Api\UploadApiController::class, 'uploadChunk'])->middleware('throttle:uploads');
 
         // Logout
         Route::post('/auth/logout', [EateryApiController::class, 'apiLogout']);
