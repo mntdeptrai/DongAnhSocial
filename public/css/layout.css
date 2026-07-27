@@ -11,7 +11,7 @@
     display: flex;
     align-items: center;
     gap: clamp(4px, 0.5vw, 6px);
-    font-family: 'Outfit', var(--font-heading);
+    font-family: var(--font-heading);
     font-weight: 900;
     font-size: clamp(1.05rem, 1.15vw, 1.22rem);
     background: linear-gradient(135deg, #0ea5e9 0%, #06b6d4 50%, #10b981 100%);

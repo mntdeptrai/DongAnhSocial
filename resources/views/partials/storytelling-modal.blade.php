@@ -118,7 +118,7 @@
         <div class="story-announcement-icon">✨</div>
         <div class="story-announcement-date">TỪ NGÀY 01 THÁNG 08 NĂM 2026</div>
         <div class="story-announcement-title">TỔ CHỨC LẠI & THÀNH LẬP</div>
-        <h2 id="storyAnnounceTitle" style="font-size: 1.8rem; color: #818cf8; font-family: 'Outfit', sans-serif; font-weight: 900; margin: 0;">
+        <h2 id="storyAnnounceTitle" style="font-size: 1.8rem; color: #818cf8; font-family: 'Be Vietnam Pro', sans-serif; font-weight: 900; margin: 0;">
             TRƯỜNG MẦM NON PHÚC LỘC
         </h2>
     </div>
