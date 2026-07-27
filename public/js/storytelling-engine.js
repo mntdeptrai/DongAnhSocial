@@ -132,28 +132,26 @@ class SchoolStoryteller {
             await this.phase1_Overview();
             if (this.isSkipped) return;
 
-            // Stage 2: Component 1
-            await this.phase2_Component1();
+            // Stage 2: Dynamic iteration over all component schools
+            for (let i = 0; i < this.currentData.components.length; i++) {
+                await this.phase_Component(i);
+                if (this.isSkipped) return;
+            }
+
+            // Stage 3: Connection & Distance
+            await this.phase_Connection();
             if (this.isSkipped) return;
 
-            // Stage 3: Component 2 (and 3 if exists)
-            await this.phase3_Component2();
+            // Stage 4: Merger Convergence Beam
+            await this.phase_Merger();
             if (this.isSkipped) return;
 
-            // Stage 4: Connection & Distance
-            await this.phase4_Connection();
+            // Stage 5: New School Presentation
+            await this.phase_NewSchool();
             if (this.isSkipped) return;
 
-            // Stage 5: Merger Convergence Beam
-            await this.phase5_Merger();
-            if (this.isSkipped) return;
-
-            // Stage 6: New School Presentation
-            await this.phase6_NewSchool();
-            if (this.isSkipped) return;
-
-            // Stage 7: Transition
-            await this.phase7_Transition();
+            // Stage 6: Transition
+            await this.phase_Transition();
         } catch (err) {
             console.warn('Storytelling sequence interrupted or completed:', err);
         } finally {
@@ -222,16 +220,21 @@ class SchoolStoryteller {
         const list = document.getElementById('storyTimelineList');
         if (!list) return;
 
-        const compCount = this.currentData.components.length;
-        const steps = [
-            '1. Khái quát quy hoạch',
-            `2. Cơ sở 1: ${this.currentData.components[0].name.replace('Trường ', '')}`,
-            compCount > 1 ? `3. Cơ sở 2: ${this.currentData.components[1].name.replace('Trường ', '')}` : '3. Cơ sở bổ sung',
-            '4. Tuyến đường kết nối',
-            '5. Hợp nhất thương hiệu',
-            `6. Trường mới: ${this.currentData.mergedSchool.name}`,
-            '7. Hoàn tất & Chuyển trang'
-        ];
+        const components = this.currentData.components || [];
+        let stepIdx = 1;
+        const steps = [];
+
+        steps.push(`${stepIdx++}. Khái quát quy hoạch`);
+
+        components.forEach((comp, i) => {
+            const shortName = comp.name.replace(/^Trường\s+/, '');
+            steps.push(`${stepIdx++}. Cơ sở ${i + 1}: ${shortName}`);
+        });
+
+        steps.push(`${stepIdx++}. Tuyến đường kết nối`);
+        steps.push(`${stepIdx++}. Hợp nhất thương hiệu`);
+        steps.push(`${stepIdx++}. Trường mới: ${this.currentData.mergedSchool.name}`);
+        steps.push(`${stepIdx++}. Hoàn tất & Chuyển trang`);
 
         list.innerHTML = steps.map((st, i) => `
             <div class="story-timeline-item ${i === 0 ? 'active' : ''}" onclick="window.storyteller.jumpToStep(${i + 1})">
@@ -239,6 +242,11 @@ class SchoolStoryteller {
                 <div class="story-timeline-text">${st}</div>
             </div>
         `).join('');
+
+        const progressWrap = document.querySelector('.story-progress-bar-wrap');
+        if (progressWrap) {
+            progressWrap.innerHTML = steps.map((_, i) => `<div class="story-progress-dot ${i === 0 ? 'active' : ''}"></div>`).join('');
+        }
     }
 
     async jumpToStep(stepNum) {
@@ -332,18 +340,28 @@ class SchoolStoryteller {
     }
 
     // ==========================================
-    // STAGE 2: COMPONENT SCHOOL 1
+    // STAGE 2: COMPONENT SCHOOL N (DYNAMIC)
     // ==========================================
-    async phase2_Component1() {
-        this.setStep(2);
-        document.getElementById('storyPhaseLabel').innerText = 'GIAI ĐOẠN 2: ĐƠN VỊ SÁP NHẬP #1';
+    async phase_Component(index) {
+        const comp = this.currentData.components[index];
+        const circleNums = ['①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧'];
+        const circleChar = circleNums[index] || (index + 1).toString();
+        const stepNum = 2 + index;
 
-        const comp1 = this.currentData.components[0];
+        this.setStep(stepNum);
+        document.getElementById('storyPhaseLabel').innerText = `GIAI ĐOẠN ${stepNum}: ĐƠN VỊ SÁP NHẬP #${index + 1}`;
+
+        // Hide old card momentarily if not first component
+        const card = document.getElementById('storyGlassCard');
+        if (card && index > 0) {
+            card.classList.remove('show');
+            await this.sleep(150);
+        }
 
         // Create pulsing marker
         const iconHtml = `
             <div class="story-marker-icon">
-                <div class="story-marker-inner">①</div>
+                <div class="story-marker-inner">${circleChar}</div>
                 <div class="story-marker-pulse"></div>
             </div>
         `;
@@ -354,32 +372,31 @@ class SchoolStoryteller {
             iconAnchor: [22, 22]
         });
 
-        const m1 = L.marker([comp1.lat, comp1.lng], { icon: customIcon }).addTo(this.map);
-        m1.bindTooltip(`<b>① ${comp1.name}</b><br><span style="color:#a5b4fc;">(Trước sáp nhập)</span>`, {
+        const m = L.marker([comp.lat, comp.lng], { icon: customIcon }).addTo(this.map);
+        m.bindTooltip(`<b>${circleChar} ${comp.name}</b><br><span style="color:#a5b4fc;">(Trước sáp nhập)</span>`, {
             permanent: true,
             direction: 'top',
             className: 'story-tooltip-custom',
             offset: [0, -20]
         });
-        this.markers.push(m1);
+        this.markers.push(m);
 
         // Fly camera
-        this.map.flyTo([comp1.lat, comp1.lng], 15.5, {
+        this.map.flyTo([comp.lat, comp.lng], 15.5, {
             duration: 1.0
         });
 
         // Show Glass Card UI
-        const card = document.getElementById('storyGlassCard');
         if (card) {
-            document.getElementById('storyCardBadge').innerText = 'Đơn vị sáp nhập #1';
+            document.getElementById('storyCardBadge').innerText = `Đơn vị sáp nhập #${index + 1}`;
             document.getElementById('storyCardBadge').classList.remove('merged');
-            document.getElementById('storyCardImage').src = comp1.photo;
-            document.getElementById('storyCardTitle').innerText = comp1.name;
-            document.getElementById('storyCardAddress').innerHTML = `📍 ${comp1.address}`;
-            document.getElementById('storyStatClasses').innerText = `${comp1.classes} Lớp`;
-            document.getElementById('storyStatStudents').innerText = `${comp1.students} HS`;
-            document.getElementById('storyCardPrincipal').innerText = comp1.principal;
-            document.getElementById('storyCardPhone').innerText = comp1.phone;
+            document.getElementById('storyCardImage').src = comp.photo;
+            document.getElementById('storyCardTitle').innerText = comp.name;
+            document.getElementById('storyCardAddress').innerHTML = `📍 ${comp.address}`;
+            document.getElementById('storyStatClasses').innerText = `${comp.classes} Lớp`;
+            document.getElementById('storyStatStudents').innerText = `${comp.students} HS`;
+            document.getElementById('storyCardPrincipal').innerText = comp.principal || 'Đang cập nhật';
+            document.getElementById('storyCardPhone').innerText = comp.phone || 'Đang cập nhật';
 
             const actionBtn = document.getElementById('storyCardActionBtn');
             if (actionBtn) actionBtn.style.display = 'none';
@@ -387,7 +404,7 @@ class SchoolStoryteller {
             card.classList.add('show');
         }
 
-        const msg = `Cơ sở 1: ${comp1.name} hiện tại có quy mô ${comp1.classes} lớp học và ${comp1.students} học sinh.`;
+        const msg = `Cơ sở ${index + 1}: ${comp.name} hiện tại có quy mô ${comp.classes} lớp học và ${comp.students} học sinh.`;
         this.speak(msg);
         await this.typeText('storyNarrativeText', msg, 12);
 
@@ -395,92 +412,19 @@ class SchoolStoryteller {
     }
 
     // ==========================================
-    // STAGE 3: COMPONENT SCHOOL 2
+    // STAGE 3: CONNECTION & ROUTE DISTANCE
     // ==========================================
-    async phase3_Component2() {
-        this.setStep(3);
-        document.getElementById('storyPhaseLabel').innerText = 'GIAI ĐOẠN 3: ĐƠN VỊ SÁP NHẬP #2';
-
-        if (this.currentData.components.length < 2) {
-            const msgSingle = `Đơn vị giữ nguyên vị trí và nâng cấp chuẩn Quốc gia chất lượng cao.`;
-            this.speak(msgSingle);
-            await this.typeText('storyNarrativeText', msgSingle, 20);
-            await this.sleep(2000);
-            return;
-        }
-
-        const comp2 = this.currentData.components[1];
-
-        // Hide old card momentarily
-        const card = document.getElementById('storyGlassCard');
-        if (card) card.classList.remove('show');
-        await this.sleep(150);
-
-        // Create Marker 2
-        const iconHtml = `
-            <div class="story-marker-icon">
-                <div class="story-marker-inner">②</div>
-                <div class="story-marker-pulse"></div>
-            </div>
-        `;
-        const customIcon = L.divIcon({
-            html: iconHtml,
-            className: 'custom-story-div-icon',
-            iconSize: [44, 44],
-            iconAnchor: [22, 22]
-        });
-
-        const m2 = L.marker([comp2.lat, comp2.lng], { icon: customIcon }).addTo(this.map);
-        m2.bindTooltip(`<b>② ${comp2.name}</b><br><span style="color:#a5b4fc;">(Trước sáp nhập)</span>`, {
-            permanent: true,
-            direction: 'top',
-            className: 'story-tooltip-custom',
-            offset: [0, -20]
-        });
-        this.markers.push(m2);
-
-        // Fly camera
-        this.map.flyTo([comp2.lat, comp2.lng], 15.5, {
-            duration: 1.0
-        });
-
-        // Populate Card 2
-        if (card) {
-            document.getElementById('storyCardBadge').innerText = 'Đơn vị sáp nhập #2';
-            document.getElementById('storyCardBadge').classList.remove('merged');
-            document.getElementById('storyCardImage').src = comp2.photo;
-            document.getElementById('storyCardTitle').innerText = comp2.name;
-            document.getElementById('storyCardAddress').innerHTML = `📍 ${comp2.address}`;
-            document.getElementById('storyStatClasses').innerText = `${comp2.classes} Lớp`;
-            document.getElementById('storyStatStudents').innerText = `${comp2.students} HS`;
-            document.getElementById('storyCardPrincipal').innerText = comp2.principal;
-            document.getElementById('storyCardPhone').innerText = comp2.phone;
-
-            const actionBtn = document.getElementById('storyCardActionBtn');
-            if (actionBtn) actionBtn.style.display = 'none';
-
-            card.classList.add('show');
-        }
-
-        const msg = `Cơ sở 2 được tổ chức lại: ${comp2.name} với quy mô ${comp2.classes} lớp và ${comp2.students} học sinh.`;
-        this.speak(msg);
-        await this.typeText('storyNarrativeText', msg, 12);
-
-        await this.sleep(1600);
-    }
-
-    // ==========================================
-    // STAGE 4: CONNECTION & ROUTE DISTANCE
-    // ==========================================
-    async phase4_Connection() {
-        this.setStep(4);
-        document.getElementById('storyPhaseLabel').innerText = 'GIAI ĐOẠN 4: TIẾP CẬN & KẾT NỐI HẠ TẦNG';
+    async phase_Connection() {
+        const compCount = this.currentData.components.length;
+        const stepNum = 2 + compCount;
+        this.setStep(stepNum);
+        document.getElementById('storyPhaseLabel').innerText = `GIAI ĐOẠN ${stepNum}: TIẾP CẬN & KẾT NỐI HẠ TẦNG`;
 
         // Hide Glass Card
         const card = document.getElementById('storyGlassCard');
         if (card) card.classList.remove('show');
 
-        // Zoom out to fit both markers
+        // Zoom out to fit all markers
         const latLngs = this.markers.map(m => m.getLatLng());
         latLngs.push([this.currentData.mergedSchool.lat, this.currentData.mergedSchool.lng]);
 
@@ -492,12 +436,11 @@ class SchoolStoryteller {
 
         await this.sleep(500);
 
-        // Draw animated Polyline route
-        if (this.currentData.components.length >= 2) {
-            const p1 = [this.currentData.components[0].lat, this.currentData.components[0].lng];
-            const p2 = [this.currentData.components[1].lat, this.currentData.components[1].lng];
+        // Draw animated Polyline route connecting all component schools
+        if (compCount >= 2) {
+            const points = this.currentData.components.map(c => [c.lat, c.lng]);
 
-            this.routePolyline = L.polyline([p1, p2], {
+            this.routePolyline = L.polyline(points, {
                 color: '#38bdf8',
                 weight: 4,
                 opacity: 0.9,
@@ -505,11 +448,18 @@ class SchoolStoryteller {
             }).addTo(this.map);
 
             // Draw catchment zone polygon
+            const lats = points.map(p => p[0]);
+            const lngs = points.map(p => p[1]);
+            const minLat = Math.min(...lats) - 0.003;
+            const maxLat = Math.max(...lats) + 0.003;
+            const minLng = Math.min(...lngs) - 0.003;
+            const maxLng = Math.max(...lngs) + 0.003;
+
             this.catchmentPolygon = L.polygon([
-                [p1[0] + 0.003, p1[1] - 0.003],
-                [p2[0] + 0.003, p2[1] + 0.003],
-                [p2[0] - 0.003, p2[1] + 0.003],
-                [p1[0] - 0.003, p1[1] - 0.003]
+                [maxLat, minLng],
+                [maxLat, maxLng],
+                [minLat, maxLng],
+                [minLat, minLng]
             ], {
                 color: '#6366f1',
                 fillColor: '#818cf8',
@@ -527,7 +477,7 @@ class SchoolStoryteller {
             distBox.classList.add('show');
         }
 
-        const msg = `Khoảng cách giữa hai cơ sở là ${this.currentData.distanceText}, thời gian di chuyển khoảng ${this.currentData.durationText}. Hạ tầng giao thông kết nối hoàn hảo.`;
+        const msg = `Khoảng cách kết nối giữa ${compCount} cơ sở là ${this.currentData.distanceText}, thời gian di chuyển khoảng ${this.currentData.durationText}. Hạ tầng giao thông kết nối hoàn hảo.`;
         this.speak(msg);
         await this.typeText('storyNarrativeText', msg, 12);
 
@@ -535,11 +485,13 @@ class SchoolStoryteller {
     }
 
     // ==========================================
-    // STAGE 5: MERGER & PARTICLE CONVERGENCE
+    // STAGE 4: MERGER & CONVERGENCE
     // ==========================================
-    async phase5_Merger() {
-        this.setStep(5);
-        document.getElementById('storyPhaseLabel').innerText = 'GIAI ĐOẠN 5: TỔ CHỨC LẠI & SÁP NHẬP';
+    async phase_Merger() {
+        const compCount = this.currentData.components.length;
+        const stepNum = 3 + compCount;
+        this.setStep(stepNum);
+        document.getElementById('storyPhaseLabel').innerText = `GIAI ĐOẠN ${stepNum}: TỔ CHỨC LẠI & SÁP NHẬP`;
 
         // Hide distance box
         const distBox = document.getElementById('storyDistanceBox');
@@ -600,11 +552,13 @@ class SchoolStoryteller {
     }
 
     // ==========================================
-    // STAGE 6: NEW MERGED SCHOOL HERO PRESENTATION
+    // STAGE 5: NEW MERGED SCHOOL HERO PRESENTATION
     // ==========================================
-    async phase6_NewSchool() {
-        this.setStep(6);
-        document.getElementById('storyPhaseLabel').innerText = 'GIAI ĐOẠN 6: TRƯỜNG MỚI HÌNH THÀNH';
+    async phase_NewSchool() {
+        const compCount = this.currentData.components.length;
+        const stepNum = 4 + compCount;
+        this.setStep(stepNum);
+        document.getElementById('storyPhaseLabel').innerText = `GIAI ĐOẠN ${stepNum}: TRƯỜNG MỚI HÌNH THÀNH`;
 
         // Hide announcement card
         const annCard = document.getElementById('storyAnnouncementCard');
@@ -641,11 +595,13 @@ class SchoolStoryteller {
     }
 
     // ==========================================
-    // STAGE 7: SEAMLESS TRANSITION TO DETAIL PAGE
+    // STAGE 6: SEAMLESS TRANSITION TO DETAIL PAGE
     // ==========================================
-    async phase7_Transition() {
-        this.setStep(7);
-        document.getElementById('storyPhaseLabel').innerText = 'GIAI ĐOẠN 7: HOÀN TẤT & CHUYỂN TRANG';
+    async phase_Transition() {
+        const compCount = this.currentData.components.length;
+        const stepNum = 5 + compCount;
+        this.setStep(stepNum);
+        document.getElementById('storyPhaseLabel').innerText = `GIAI ĐOẠN ${stepNum}: HOÀN TẤT & CHUYỂN TRANG`;
 
         const msg = `Đang chuyển tới trang thông tin chi tiết trường...`;
         this.speak(msg);
