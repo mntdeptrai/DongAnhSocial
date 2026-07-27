@@ -66,12 +66,15 @@ class Eatery extends Model
     /**
      * Get rich heritage storytelling and cultural data for digital museum showcase dynamically from database
      */
-    public function getHeritageDossierAttribute()
+    public function getHeritageDossierAttribute(): ?array
     {
         $ocopProduct = $this->relationLoaded('ocopProducts') 
-            ? $this->ocopProducts->first(fn($p) => !empty($p->story) || !empty($p->heritage_year))
+            ? $this->ocopProducts->first(fn($p) => !empty($p->story) || !empty($p->heritage_year) || !empty($p->ingredients) || !empty($p->timeline))
             : $this->ocopProducts()->where(function($q) {
-                $q->whereNotNull('story')->orWhereNotNull('heritage_year');
+                $q->whereNotNull('story')
+                  ->orWhereNotNull('heritage_year')
+                  ->orWhereNotNull('ingredients')
+                  ->orWhereNotNull('timeline');
             })->first();
 
         if (!$ocopProduct) {
@@ -80,23 +83,58 @@ class Eatery extends Model
                 : $this->ocopProducts()->first();
         }
 
-        if ($ocopProduct && ($ocopProduct->story || $ocopProduct->heritage_year || $ocopProduct->artisans || $ocopProduct->fun_fact || $ocopProduct->audio_narrative)) {
+        if ($ocopProduct && ($ocopProduct->story || $ocopProduct->heritage_year || $ocopProduct->artisans || $ocopProduct->fun_fact || $ocopProduct->audio_narrative || $ocopProduct->ingredients || $ocopProduct->timeline)) {
             $stars = null;
             if ($ocopProduct->star_rating) {
                 preg_match('/(\d+)/', $ocopProduct->star_rating, $matches);
                 $stars = isset($matches[1]) ? (int)$matches[1] : 0;
             }
 
+            // Parse ingredients array
+            $rawIngStr = is_string($ocopProduct->ingredients) ? str_replace(['\r\n', '\n', '\r'], "\n", $ocopProduct->ingredients) : '';
+            $ingredientLines = is_array($ocopProduct->ingredients) 
+                ? $ocopProduct->ingredients 
+                : array_values(array_filter(array_map('trim', explode("\n", str_replace("\r", "", $rawIngStr)))));
+
+            // Parse timeline array with year + event
+            $rawTimeStr = is_string($ocopProduct->timeline) ? str_replace(['\r\n', '\n', '\r'], "\n", $ocopProduct->timeline) : '';
+            $rawTimeline = is_array($ocopProduct->timeline) 
+                ? $ocopProduct->timeline 
+                : array_values(array_filter(array_map('trim', explode("\n", str_replace("\r", "", $rawTimeStr)))));
+
+            $parsedTimeline = [];
+            foreach ($rawTimeline as $item) {
+                if (is_array($item)) {
+                    $parsedTimeline[] = [
+                        'year' => $item['year'] ?? 'Di sản',
+                        'event' => $item['event'] ?? '',
+                    ];
+                } elseif (is_string($item)) {
+                    $parts = explode('|', $item, 2);
+                    if (count($parts) === 2) {
+                        $parsedTimeline[] = [
+                            'year' => trim($parts[0]),
+                            'event' => trim($parts[1]),
+                        ];
+                    } else {
+                        $parsedTimeline[] = [
+                            'year' => 'Di sản',
+                            'event' => trim($item),
+                        ];
+                    }
+                }
+            }
+
             return [
-                'ocop_stars' => $stars ?? 0,
-                'heritage_year' => $ocopProduct->heritage_year,
+                'ocop_stars' => $stars ?? 4,
+                'heritage_year' => $ocopProduct->heritage_year ?: 'Đặc sản Đông Anh',
                 'story' => $ocopProduct->story,
                 'artisans' => $ocopProduct->artisans,
-                'ingredients' => is_array($ocopProduct->ingredients) ? $ocopProduct->ingredients : (is_string($ocopProduct->ingredients) ? array_filter(array_map('trim', explode("\n", $ocopProduct->ingredients))) : []),
+                'ingredients' => $ingredientLines,
                 'fun_fact' => $ocopProduct->fun_fact,
                 'audio_narrative' => $ocopProduct->audio_narrative,
                 'nearby_attractions' => [],
-                'timeline' => is_array($ocopProduct->timeline) ? $ocopProduct->timeline : (is_string($ocopProduct->timeline) ? array_filter(array_map('trim', explode("\n", $ocopProduct->timeline))) : []),
+                'timeline' => $parsedTimeline,
             ];
         }
 

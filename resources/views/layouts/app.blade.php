@@ -57,13 +57,17 @@
     </script>
     
     <!-- Custom Theme Styling -->
-    <link rel="stylesheet" href="{{ asset('css/app.css') }}?v={{ file_exists(public_path('css/app.css')) ? filemtime(public_path('css/app.css')) : '1.0.0' }}">
+    <link rel="stylesheet" href="{{ asset('css/app.css') }}?v={{ time() }}">
     
     <!-- Mobile Native Overrides (Only load for mobile and high zoom desktops) -->
     <link rel="stylesheet" media="screen and (max-width: 1200px)" href="{{ asset('css/mobile-native.css') }}?v={{ file_exists(public_path('css/mobile-native.css')) ? filemtime(public_path('css/mobile-native.css')) : '1.0.0' }}">
 
     <!-- 📱 Mobile Viewport Fit Fix — Ôm gọn nội dung, không scroll ngang -->
     <link rel="stylesheet" href="{{ asset('css/mobile-fix.css') }}?v={{ file_exists(public_path('css/mobile-fix.css')) ? filemtime(public_path('css/mobile-fix.css')) : '1.0.0' }}">
+    
+    <!-- Map-Based Storytelling CSS & GSAP Animation Library -->
+    <link rel="stylesheet" href="{{ asset('css/storytelling.css') }}?v={{ time() }}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
     
     <!-- Dynamic Schema.org JSON-LD Structured Data for Google Indexing -->
     @yield('seo_schema')
@@ -426,26 +430,29 @@
                                 </div>
                             </button>
                             <div x-show="open" x-transition class="profile-dropdown-menu">
+                                @php
+                                    $effectiveRole = session('user_role') ?: (Auth::check() ? Auth::user()->role : 'user');
+                                @endphp
                                 <div class="user-info-header">
-                                    <div class="user-name">{{ session('user_name') }}</div>
+                                    <div class="user-name">{{ session('user_name') ?: (Auth::check() ? Auth::user()->name : '') }}</div>
                                     <div class="user-role">
-                                        @if(session('user_role') === 'admin')
+                                        @if($effectiveRole === 'admin')
                                             🏛️ Quản trị viên Tổng
-                                        @elseif(session('user_role') === 'manager')
+                                        @elseif($effectiveRole === 'manager')
                                             🏛️ Ban Quản lý Chợ
-                                        @elseif(session('user_role') === 'seller')
-                                            🛍️ Chủ Gian Hàng Số
+                                        @elseif($effectiveRole === 'seller')
+                                            🛍️ Chủ Gian Hàng / Cơ Sở
                                         @else
                                             👤 Thành viên cộng đồng
                                         @endif
                                     </div>
                                 </div>
                                 
-                                @if(session('user_role') === 'admin' || session('user_role') === 'manager')
+                                @if($effectiveRole === 'admin' || $effectiveRole === 'manager')
                                     <a href="/admin/dashboard" class="dropdown-item" style="color: #0ea5e9; font-weight: 700; background: rgba(14, 165, 233, 0.06);">
                                         <span>⚙️</span> Trang Quản Trị Chợ
                                     </a>
-                                @elseif(session('user_role') === 'seller')
+                                @elseif($effectiveRole === 'seller')
                                     <a href="/seller/dashboard" class="dropdown-item" style="color: #10b981; font-weight: 700; background: rgba(16, 185, 129, 0.06);">
                                         <span>🛒</span> Kênh Quản Lý Gian Hàng
                                     </a>
@@ -492,9 +499,9 @@
         <div class="container">
             <div class="footer-grid">
                 <div>
-                    <h3 class="logo" style="margin-bottom: 16px; font-size: 1.3rem;">🗺️ Dong Anh Map</h3>
+                    <h3 class="logo" style="margin-bottom: 16px; font-size: 1.3rem;">📖 DongAnh Discovery</h3>
                     <p style="font-size: 0.85rem; line-height: 1.6; max-width: 480px;">
-                        Bản đồ số Đông Anh là giải pháp công nghệ số hóa toàn bộ trường học, bệnh viện, cơ sở y tế, khách sạn, nhà nghỉ, nhà hàng, quán cafe và quảng bá các sản phẩm OCOP đặc sản truyền thống của xã Đông Anh, Hà Nội. Hỗ trợ chuyển đổi số và nâng tầm văn hóa du lịch địa phương.
+                        Bản đồ số Đông Anh (DongAnh Discovery) là giải pháp công nghệ số hóa toàn bộ trường học, bệnh viện, cơ sở y tế, khách sạn, nhà nghỉ, nhà hàng, quán cafe và quảng bá các sản phẩm OCOP đặc sản truyền thống của xã Đông Anh, Hà Nội. Hỗ trợ chuyển đổi số và nâng tầm văn hóa du lịch địa phương.
                     </p>
                 </div>
                 <div>
@@ -518,7 +525,7 @@
                 </div>
             </div>
             <div style="border-top: 1px solid rgba(255,255,255,0.05); padding-top: 20px; text-align: center; font-size: 0.8rem; color: rgba(255,255,255,0.3);">
-                &copy; 2026 Bản đồ số Đông Anh (Dong Anh Map). Tất cả quyền được bảo lưu. Phát triển bởi Phòng Văn hóa - Xã hội xã Đông Anh
+                &copy; 2026 DongAnh Discovery (Bản đồ số Đông Anh). Tất cả quyền được bảo lưu. Phát triển bởi Phòng Văn hóa - Xã hội xã Đông Anh
             </div>
         </div>
     </footer>
@@ -2033,6 +2040,11 @@
             <span id="floatingCartCount" style="display: none; position: absolute; top: -2px; right: -2px; background: #ef4444; color: #ffffff; font-size: 0.72rem; font-weight: 800; min-width: 18px; height: 18px; border-radius: 9px; align-items: center; justify-content: center; padding: 0 4px; border: 2px solid #ffffff;">0</span>
         </button>
     </div>
+
+    <!-- Map-Based Storytelling Modal & JS Engine -->
+    @include('partials.storytelling-modal')
+    <script src="{{ asset('js/storytelling-data.js') }}?v={{ time() }}"></script>
+    <script src="{{ asset('js/storytelling-engine.js') }}?v={{ time() }}"></script>
 
     {{-- Laravel Echo + Reverb WebSocket client — chỉ load trên trang cần real-time --}}
     @stack('realtime-scripts')

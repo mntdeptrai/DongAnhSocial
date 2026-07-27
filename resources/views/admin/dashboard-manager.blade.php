@@ -160,7 +160,7 @@
     </div>
 
     <!-- FORM DĂNG BẢN TIN SỐ -->
-    <form action="{{ route('admin.announcement.store', $managedMarket->id) }}" method="POST" style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 20px; border-radius: 16px; margin-bottom: 24px;">
+    <form action="{{ route('admin.announcements.store', $managedMarket->id) }}" method="POST" style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 20px; border-radius: 16px; margin-bottom: 24px;">
         @csrf
         <div style="display: grid; grid-template-columns: 1fr 2fr 1fr; gap: 12px; margin-bottom: 12px;">
             <div>
@@ -200,7 +200,7 @@
                 <div style="font-size: 0.85rem; color: #374151; margin-top: 4px;">{{ $anc['content'] ?? '' }}</div>
                 <div style="font-size: 0.75rem; color: #6b7280; margin-top: 4px;">⏱️ {{ $anc['time'] ?? '' }} ({{ $anc['created_at'] ?? '' }})</div>
             </div>
-            <form action="{{ route('admin.announcement.destroy', [$managedMarket->id, $anc['id'] ?? 0]) }}" method="POST" onsubmit="return confirm('Bạn muốn xóa bản tin này?')">
+            <form action="{{ route('admin.announcements.destroy', [$managedMarket->id, $anc['id'] ?? 0]) }}" method="POST" onsubmit="return confirm('Bạn muốn xóa bản tin này?')">
                 @csrf
                 @method('DELETE')
                 <button type="submit" style="background: #fef2f2; color: #ef4444; border: 1px solid #fecaca; padding: 6px 12px; border-radius: 8px; font-weight: 700; font-size: 0.78rem; cursor: pointer;">

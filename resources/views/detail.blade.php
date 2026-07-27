@@ -701,6 +701,16 @@
                     <p style="font-size: 1rem; color: var(--text-main); line-height: 1.8;">
                         {{ $eatery->description }}
                     </p>
+                    @if($categorySlug === 'smart-education-map')
+                        <div style="margin-top: 20px; margin-bottom: 8px;">
+                            <button onclick="window.openSchoolStoryteller('{{ $eatery->slug }}', '{{ request()->url() }}')" 
+                                    style="background: linear-gradient(135deg, #6366f1, #4f46e5); color: #ffffff; border: none; padding: 12px 24px; border-radius: 14px; font-size: 0.95rem; font-weight: 800; cursor: pointer; display: inline-flex; align-items: center; gap: 10px; box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4); transition: all 0.3s ease;"
+                                    onmouseover="this.style.transform='translateY(-2px) scale(1.02)';"
+                                    onmouseout="this.style.transform='none';">
+                                <span>🎬 Xem lại quá trình sáp nhập & hình thành trường (Map Storytelling)</span> ➔
+                            </button>
+                        </div>
+                    @endif
                 </div>
                 @endif
             @endif
@@ -905,11 +915,11 @@
                                                     @elseif($categorySlug === 'stay-in-dong-anh')
                                                         <span class="tag-badge" style="padding: 1px 6px; font-size: 0.65rem; font-weight: 700; margin-bottom: 4px; display: inline-block; background: rgba(155, 89, 182, 0.1); border-color: rgba(155, 89, 182, 0.2); color: #9b59b6;">🛏️ {{ $item->bed_type }} | 👤 Sức chứa: {{ $item->capacity }}</span>
                                                     @elseif($categorySlug === 'dong-anh-market' && $item->star_rating)
-                                                        <span class="tag-badge" style="padding: 1px 6px; font-size: 0.65rem; font-weight: 700; margin-bottom: 4px; display: inline-block; background: rgba(241, 196, 15, 0.1); border-color: rgba(241, 196, 15, 0.2); color: #f1c40f;">⭐ OCOP: {{ $item->star_rating }}</span>
+                                                        <span class="tag-badge" style="padding: 3px 8px; font-size: 0.7rem; font-weight: 800; margin-bottom: 6px; display: inline-flex; align-items: center; gap: 4px; background: linear-gradient(135deg, #f59e0b, #d97706); color: #ffffff; border: none; border-radius: 12px; box-shadow: 0 2px 6px rgba(245, 158, 11, 0.3);">🌾 ⭐ OCOP: {{ $item->star_rating }}</span>
                                                     @elseif(isset($item->is_signature) && $item->is_signature)
                                                         <span class="tag-badge" style="padding: 1px 6px; font-size: 0.65rem; font-weight: 700; margin-bottom: 4px; display: inline-block;">★ Món đặc trưng</span>
                                                     @endif
-                                                    <h3 class="dish-name">{{ $item->name }}</h3>
+                                                    <h3 class="dish-name" style="{{ $categorySlug === 'dong-anh-market' ? 'font-size: 1.18rem; font-weight: 800; color: #064e3b; background: linear-gradient(135deg, #064e3b, #059669); -webkit-background-clip: text; -webkit-text-fill-color: transparent;' : '' }}">{{ $item->name }}</h3>
                                                     @if($item->description && $item->description !== 'null' && $item->description !== 'NULL')
                                                         <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; line-height: 1.4;">{{ $item->description }}</p>
                                                     @endif
@@ -942,163 +952,7 @@
                     </div>
 
                     <!-- Flat Heritage Dossiers Section -->
-                    @php
-                        $heritageProducts = $items->filter(function($prod) {
-                            return !empty($prod->story) || !empty($prod->artisans) || !empty($prod->heritage_year) || !empty($prod->fun_fact) || !empty($prod->ingredients) || !empty($prod->timeline);
-                        });
-                    @endphp
 
-                    @if($heritageProducts->count() > 0)
-                        <div class="heritage-flat-section" style="margin-top: 35px; border-top: 1.5px dashed rgba(255,255,255,0.08); padding-top: 30px;">
-                            <h3 style="font-size: 1.2rem; font-weight: 800; color: #ffb300; margin-bottom: 24px; display: flex; align-items: center; gap: 10px; text-shadow: 0 0 10px rgba(255,179,0,0.15);">
-                                🏺 Hồ Sơ Di Sản & Câu Chuyện Đặc Sản Làng Nghề
-                            </h3>
-                            <div style="display: flex; flex-direction: column; gap: 30px;">
-                                @foreach($heritageProducts as $prod)
-                                    <div id="heritage-dossier-{{ $prod->id }}" class="glass-panel" style="background: rgba(255, 255, 255, 0.02); border: 1.5px solid rgba(212, 175, 55, 0.25); border-radius: 20px; padding: 24px; position: relative; overflow: hidden;">
-                                        <!-- Decorative background patterns -->
-                                        <div class="heritage-pattern-overlay" style="opacity: 0.08;"></div>
-                                        
-                                        <div style="position: relative; z-index: 2; display: flex; flex-direction: column; gap: 20px;">
-                                            <!-- Header: Name, OCOP stars, heritage year -->
-                                            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 16px;">
-                                                <div>
-                                                    <h4 style="font-size: 1.35rem; font-weight: 800; color: #ffb300; margin: 0 0 6px 0; text-shadow: 0 0 10px rgba(255,179,0,0.15);">
-                                                        Hồ Sơ Di Sản: {{ $prod->name }}
-                                                    </h4>
-                                                    @if($prod->heritage_year)
-                                                        <p style="font-style: italic; color: var(--primary); font-size: 0.95rem; font-weight: 600; margin: 0; display: flex; align-items: center; gap: 6px;">
-                                                            🌾 {{ $prod->heritage_year }}
-                                                        </p>
-                                                    @endif
-                                                </div>
-                                                @if($prod->star_rating)
-                                                    @php
-                                                        $starsMatch = [];
-                                                        preg_match('/\d+/', $prod->star_rating, $starsMatch);
-                                                        $starsCount = !empty($starsMatch) ? (int)$starsMatch[0] : 0;
-                                                    @endphp
-                                                    @if($starsCount > 0)
-                                                        <div class="ocop-star-badge" style="flex-shrink: 0; text-align: center; background: rgba(14, 165, 233, 0.05); border: 1px solid rgba(14, 165, 233, 0.15); padding: 8px 16px; border-radius: 12px; min-width: 140px;">
-                                                            <span style="font-weight: 900; font-size: 0.65rem; color: #0ea5e9; display: block; letter-spacing: 1px; margin-bottom: 4px;">CHỨNG NHẬN OCOP</span>
-                                                            <div style="color: #ffb300; font-size: 1.1rem; display: flex; gap: 2px; justify-content: center; margin-bottom: 4px;">
-                                                                @for($i = 1; $i <= 5; $i++)
-                                                                    <span style="{{ $i <= $starsCount ? 'color: #ffb300; text-shadow: 0 0 10px rgba(255, 179, 0, 0.5);' : 'color: rgba(255,255,255,0.15);' }}">★</span>
-                                                                @endfor
-                                                            </div>
-                                                            <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: 500;">{{ $prod->star_rating }} Cấp Quốc Gia</span>
-                                                        </div>
-                                                    @endif
-                                                @endif
-                                            </div>
-
-                                            <!-- TTS Audio Widget (Flat, standalone!) -->
-                                            @if($prod->audio_narrative)
-                                                <div class="audio-storyteller-widget glass-panel" style="background: rgba(212, 175, 55, 0.04); border: 1px solid rgba(212, 175, 55, 0.15); padding: 16px 20px; border-radius: 16px; display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap;">
-                                                    <div style="display: flex; align-items: center; gap: 16px; flex: 1; min-width: 0;">
-                                                        <button class="audio-play-btn flat-audio-play-btn" data-narrative="{{ $prod->audio_narrative }}" onclick="toggleFlatAudio(this)" aria-label="Play narrative audio" style="outline: none; background: linear-gradient(135deg, #f79d00, #f87a00); border: none; width: 44px; height: 44px; border-radius: 50%; cursor: pointer; transition: transform 0.2s ease; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(248, 122, 0, 0.3);">
-                                                            <span class="play-icon" style="color: #ffffff; font-size: 1.1rem; line-height: 1;">🔊</span>
-                                                        </button>
-                                                        <div>
-                                                            <strong style="color: #ffb300; display: block; font-size: 0.95rem; margin-bottom: 2px;">🎧 Nghe kể chuyện di sản</strong>
-                                                            <span style="font-size: 0.8rem; color: var(--text-muted);" class="flat-audio-status-text">Bấm để lắng nghe giọng đọc AI thuyết minh văn hóa món ăn</span>
-                                                        </div>
-                                                    </div>
-                                                    <!-- Equalizer Visualizer / Six dots -->
-                                                    <div class="equalizer-container flat-audio-equalizer" style="display: none; height: 20px; align-items: flex-end; gap: 3px;">
-                                                        <div class="eq-bar" style="width: 3px; height: 100%; background: #ffb300; animation: eq 0.8s infinite alternate;"></div>
-                                                        <div class="eq-bar" style="width: 3px; height: 60%; background: #ffb300; animation: eq 1.2s infinite alternate;"></div>
-                                                        <div class="eq-bar" style="width: 3px; height: 80%; background: #ffb300; animation: eq 0.9s infinite alternate;"></div>
-                                                        <div class="eq-bar" style="width: 3px; height: 40%; background: #ffb300; animation: eq 1.1s infinite alternate;"></div>
-                                                    </div>
-                                                    <div class="dots-placeholder" style="color: #ffb300; letter-spacing: 2px; font-weight: 900; font-size: 1.2rem; opacity: 0.7;">......</div>
-                                                </div>
-                                            @endif
-
-                                            <!-- Tab Buttons -->
-                                            <div class="heritage-tab-buttons" style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 12px;">
-                                                <button class="flat-heritage-tab-btn active" onclick="switchFlatTab(this, 'flat-tab-story-{{ $prod->id }}')">🏛️ Nguồn Gốc & Câu Chuyện</button>
-                                                @if($prod->artisans)
-                                                    <button class="flat-heritage-tab-btn" onclick="switchFlatTab(this, 'flat-tab-artisans-{{ $prod->id }}')">🧑‍🍳 Nghệ Nhân Truyền Nghề</button>
-                                                @endif
-                                                @if(is_array($prod->ingredients) && count($prod->ingredients) > 0)
-                                                    <button class="flat-heritage-tab-btn" onclick="switchFlatTab(this, 'flat-tab-ingredients-{{ $prod->id }}')">🌾 Bí Quyết & Nguyên Liệu</button>
-                                                @endif
-                                                @if(is_array($prod->timeline) && count($prod->timeline) > 0)
-                                                    <button class="flat-heritage-tab-btn" onclick="switchFlatTab(this, 'flat-tab-timeline-{{ $prod->id }}')">📜 Hành Trình Di Sản</button>
-                                                @endif
-                                            </div>
-
-                                            <!-- Tab Contents -->
-                                            <div class="flat-tab-content-container" style="min-height: 120px; margin-top: 10px;">
-                                                <!-- Story Tab -->
-                                                <div id="flat-tab-story-{{ $prod->id }}" class="flat-tab-panel" style="display: block;">
-                                                    <p style="font-size: 0.92rem; color: var(--text-main); line-height: 1.7; margin: 0; text-align: justify; white-space: pre-line;">
-                                                        {{ $prod->story }}
-                                                    </p>
-                                                </div>
-
-                                                <!-- Artisans Tab -->
-                                                @if($prod->artisans)
-                                                    <div id="flat-tab-artisans-{{ $prod->id }}" class="flat-tab-panel" style="display: none;">
-                                                        <div class="glass-panel" style="background: rgba(52, 152, 219, 0.02); border: 1px solid rgba(52, 152, 219, 0.15); padding: 18px; border-radius: 12px;">
-                                                            <strong style="color: #3498db; display: block; font-size: 1.05rem; margin-bottom: 8px;">Gặp Gỡ Những Người Giữ Lửa Di Sản</strong>
-                                                            <p style="font-size: 0.9rem; color: var(--text-main); line-height: 1.6; margin: 0; white-space: pre-line;">
-                                                                {{ $prod->artisans }}
-                                                            </p>
-                                                        </div>
-                                                    </div>
-                                                @endif
-
-                                                <!-- Ingredients Tab -->
-                                                @if(is_array($prod->ingredients) && count($prod->ingredients) > 0)
-                                                    <div id="flat-tab-ingredients-{{ $prod->id }}" class="flat-tab-panel" style="display: none;">
-                                                        <strong style="color: #0ea5e9; display: block; font-size: 1.05rem; margin-bottom: 12px;">Bảng Thành Phần Bản Địa Thuần Khiết</strong>
-                                                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px;">
-                                                            @foreach($prod->ingredients as $ing)
-                                                                <div class="glass-panel" style="padding: 14px 18px; background: rgba(212, 175, 55, 0.03); border: 1px solid rgba(212, 175, 55, 0.15); display: flex; align-items: center; gap: 12px; border-radius: 12px; transition: transform 0.2s ease;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
-                                                                    <span style="font-size: 1.25rem; color: #ffb300; filter: drop-shadow(0 0 5px rgba(255,179,0,0.4)); flex-shrink: 0;">✨</span>
-                                                                    <span style="font-size: 0.88rem; font-weight: 600; color: var(--text-main); line-height: 1.4;">{{ $ing }}</span>
-                                                                </div>
-                                                            @endforeach
-                                                        </div>
-                                                    </div>
-                                                @endif
-
-                                                <!-- Timeline Tab -->
-                                                @if(is_array($prod->timeline) && count($prod->timeline) > 0)
-                                                    <div id="flat-tab-timeline-{{ $prod->id }}" class="flat-tab-panel" style="display: none;">
-                                                        <div style="position: relative; border-left: 2px solid rgba(255,255,255,0.08); margin-left: 15px; padding-left: 20px; display: flex; flex-direction: column; gap: 20px;">
-                                                            @foreach($prod->timeline as $t)
-                                                                <div style="position: relative;">
-                                                                    <div style="position: absolute; left: -27px; top: 4px; width: 12px; height: 12px; border-radius: 50%; background: #f87a00; border: 2.5px solid #1a202c;"></div>
-                                                                    <span style="background: linear-gradient(135deg, #f79d00, #f87a00); color: #fff; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 800; display: inline-block; margin-bottom: 8px; box-shadow: 0 2px 6px rgba(248,122,0,0.2);">{{ $t['year'] ?? 'Mốc thời gian' }}</span>
-                                                                    <div class="glass-panel" style="padding: 14px 18px; border: 1px solid var(--border-glow); border-radius: 12px; background: rgba(255,255,255,0.015);">
-                                                                        <p style="font-size: 0.88rem; margin: 0; line-height: 1.5; color: var(--text-main);">{{ $t['event'] ?? '' }}</p>
-                                                                    </div>
-                                                                </div>
-                                                            @endforeach
-                                                        </div>
-                                                    </div>
-                                                @endif
-                                            </div>
-
-                                            <!-- Fun Fact -->
-                                            @if($prod->fun_fact)
-                                                <div class="glass-panel" style="background: rgba(14, 165, 233, 0.03); border: 1.5px solid rgba(14, 165, 233, 0.15); padding: 18px 20px; border-radius: 16px; display: flex; align-items: flex-start; gap: 14px; margin-top: 15px;">
-                                                    <div style="font-size: 1.6rem; line-height: 1; filter: drop-shadow(0 0 8px rgba(255,179,0,0.3));">💡</div>
-                                                    <div>
-                                                        <strong style="color: #0ea5e9; font-size: 0.85rem; display: block; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 800;">BẠN CÓ BIẾT?</strong>
-                                                        <p style="font-size: 0.88rem; color: var(--text-muted); margin: 0; line-height: 1.5; text-align: justify;">{{ $prod->fun_fact }}</p>
-                                                    </div>
-                                                </div>
-                                            @endif
-                                        </div>
-                                    </div>
-                                @endforeach
-                            </div>
-                        </div>
-                    @endif
                 @else
                     <div style="text-align: center; padding: 50px 20px; background: rgba(255,255,255,0.015); border-radius: 20px; border: 1px dashed rgba(255,255,255,0.1); display: flex; flex-direction: column; align-items: center; justify-content: center;">
                         <div style="font-size: 3.5rem; opacity: 0.4; margin-bottom: 16px; filter: grayscale(1);">{!! $icon !!}</div>

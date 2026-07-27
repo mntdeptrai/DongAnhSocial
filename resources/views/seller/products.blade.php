@@ -141,10 +141,27 @@
                     </td>
                     <td style="text-align: center;">
                         <div style="display: flex; gap: 6px; justify-content: center; align-items: center;">
+                            <!-- Nút Xem chi tiết mở modal -->
+                            <button type="button"
+                                class="btn-admin"
+                                style="padding: 6px 11px; font-size: 0.78rem; background: #eff6ff; color: #1d4ed8; border: 1.5px solid rgba(29,78,216,0.3); border-radius: 8px; font-weight: 700; cursor: pointer; transition: all 0.2s;"
+                                onmouseover="this.style.background='#dbeafe'"
+                                onmouseout="this.style.background='#eff6ff'"
+                                onclick="openDetailModal(
+                                    {{ json_encode($p->name) }},
+                                    {{ intval($p->price) }},
+                                    {{ json_encode($p->unit ?? '') }},
+                                    {{ json_encode($p->description ?? '') }},
+                                    {{ json_encode($p->image_path ?? '') }},
+                                    {{ json_encode($p->star_rating ?? '4 sao') }}
+                                )">
+                                👁️ Xem
+                            </button>
+
                             <!-- Nút Sửa mở modal -->
                             <button type="button"
                                 class="btn-admin"
-                                style="padding: 6px 12px; font-size: 0.78rem; background: #fef3c7; color: #92400e; border: 1.5px solid rgba(217,119,6,0.3); border-radius: 8px; font-weight: 700; cursor: pointer; transition: all 0.2s;"
+                                style="padding: 6px 11px; font-size: 0.78rem; background: #fef3c7; color: #92400e; border: 1.5px solid rgba(217,119,6,0.3); border-radius: 8px; font-weight: 700; cursor: pointer; transition: all 0.2s;"
                                 onmouseover="this.style.background='#fde68a'"
                                 onmouseout="this.style.background='#fef3c7'"
                                 onclick="openEditModal(
@@ -178,7 +195,7 @@
 </div>
 
 <!-- ============================================================
-     MODAL SỬA SẢN PHẨM
+     MODAL SỬA SẢN PHẨM (Form đồng bộ 100% với Form Thêm)
      ============================================================ -->
 <div id="edit-product-modal" style="
     display: none;
@@ -192,7 +209,7 @@
         background: #ffffff;
         border-radius: 20px;
         box-shadow: 0 25px 60px rgba(0,0,0,0.25);
-        width: 100%; max-width: 580px;
+        width: 100%; max-width: 720px;
         margin: 24px;
         overflow: hidden;
         transform: scale(0.92);
@@ -203,7 +220,7 @@
         <div style="background: linear-gradient(135deg, #1c1007 0%, #2d1a0a 100%); color: #fff; padding: 20px 28px; display: flex; align-items: center; justify-content: space-between;">
             <div>
                 <div style="font-size: 1.1rem; font-weight: 800;">✏️ Sửa Thông Tin Sản Phẩm</div>
-                <div style="font-size: 0.8rem; color: rgba(255,255,255,0.55); margin-top: 2px;" id="edit-modal-subtitle">Cập nhật tên, giá, mô tả và hình ảnh</div>
+                <div style="font-size: 0.8rem; color: rgba(255,255,255,0.55); margin-top: 2px;" id="edit-modal-subtitle">Cập nhật tên, giá, nguồn gốc và hình ảnh</div>
             </div>
             <button onclick="closeEditModal()" style="background: rgba(255,255,255,0.12); border: none; color: #fff; width: 36px; height: 36px; border-radius: 50%; font-size: 1.2rem; cursor: pointer; transition: background 0.2s;"
                     onmouseover="this.style.background='rgba(255,255,255,0.22)'"
@@ -213,10 +230,10 @@
         <!-- Current Image Preview -->
         <div style="padding: 16px 28px 0; display: flex; align-items: center; gap: 14px;">
             <img id="edit-current-img" src="" alt="Ảnh hiện tại"
-                 style="width: 72px; height: 72px; border-radius: 12px; object-fit: cover; border: 2px solid #fde68a; flex-shrink: 0;">
+                 style="width: 64px; height: 64px; border-radius: 12px; object-fit: cover; border: 2px solid #fde68a; flex-shrink: 0;">
             <div>
                 <div style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #92400e;">Ảnh hiện tại</div>
-                <div style="font-size: 0.8rem; color: #78716c; margin-top: 2px;">Tải ảnh mới bên dưới để thay thế</div>
+                <div style="font-size: 0.8rem; color: #78716c; margin-top: 2px;">Tải ảnh mới bên dưới nếu muốn thay đổi</div>
             </div>
         </div>
 
@@ -226,27 +243,27 @@
             @method('PUT')
             <input type="hidden" name="price" id="edit-price-raw">
 
-            <!-- Tên sản phẩm -->
-            <div class="admin-form-group">
-                <label class="admin-form-label">Tên sản phẩm / Món ăn *</label>
-                <input type="text" name="name" id="edit-name" class="admin-form-input" required placeholder="Tên sản phẩm...">
-            </div>
+            <!-- Row 1: 3 Cols (Tên, Giá, Đơn vị) -->
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;">
+                <div>
+                    <label class="admin-form-label">Tên sản phẩm / Món ăn *</label>
+                    <input type="text" name="name" id="edit-name" class="admin-form-input" required placeholder="Ví dụ: Bún riêu cua, Cà chua hữu cơ...">
+                </div>
 
-            <!-- Giá + Đơn vị -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-                <div class="admin-form-group" style="margin-bottom: 0;">
+                <div>
                     <label class="admin-form-label">Giá niêm yết (VNĐ) *</label>
                     <div style="position: relative;">
                         <input type="text" id="edit-price-display" class="admin-form-input"
                                autocomplete="off"
-                               style="padding-right: 56px;"
+                               style="padding-right: 52px;"
                                placeholder="VD: 30.000 VND"
                                oninput="formatPriceInput(this, 'edit-price-raw')"
                                onblur="formatPriceInput(this, 'edit-price-raw')">
-                        <span style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 0.72rem; font-weight: 700; color: var(--slr-primary); pointer-events: none;">VND</span>
+                        <span style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 0.75rem; font-weight: 700; color: var(--slr-primary); pointer-events: none;">VND</span>
                     </div>
                 </div>
-                <div class="admin-form-group" style="margin-bottom: 0;">
+
+                <div>
                     <label class="admin-form-label">Đơn vị tính</label>
                     <select id="edit-unit" class="admin-form-input" onchange="handleUnitChange(this, 'edit-unit-custom', 'edit-unit-hidden')">
                         <option value="bát">Bát / Suất</option>
@@ -266,31 +283,32 @@
                 </div>
             </div>
 
-            <!-- Mô tả -->
-            <div class="admin-form-group" style="margin-top: 16px;">
-                <label class="admin-form-label">Mô tả sản phẩm</label>
-                <textarea name="description" id="edit-description" class="admin-form-input" rows="3"
-                          placeholder="Mô tả ngắn: thành phần, nguồn gốc, hỗ trợ thanh toán..."></textarea>
-            </div>
+            <!-- Row 2: 2 Cols (Nguồn gốc, Ảnh đại diện mới) -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px;">
+                <div>
+                    <label class="admin-form-label">Nguồn gốc hàng hóa / Nông sản</label>
+                    <input type="text" name="origin" id="edit-origin" class="admin-form-input" placeholder="Ví dụ: Tự sản xuất, Chợ đầu mối Long Biên...">
+                </div>
 
-            <!-- Ảnh mới -->
-            <div class="admin-form-group" style="margin-bottom: 24px;">
-                <label class="admin-form-label">Thay Ảnh Sản Phẩm (tuỳ chọn)</label>
-                <div style="border: 1.5px dashed #fde68a; border-radius: 10px; padding: 14px 16px; background: #fffbeb; display: flex; align-items: center; gap: 12px;">
-                    <span style="font-size: 1.5rem;">🖼️</span>
-                    <div style="flex: 1;">
-                        <input type="file" name="image" id="edit-image" accept="image/*" style="font-size: 0.82rem; color: #78716c;">
-                        <div style="font-size: 0.72rem; color: #a8a29e; margin-top: 4px;">JPG, PNG, WEBP — tối đa 10MB. Để trống nếu không muốn thay ảnh.</div>
-                    </div>
+                <div>
+                    <label class="admin-form-label">Ảnh đại diện sản phẩm (Upload)</label>
+                    <input type="file" name="image" id="edit-image" class="admin-form-input" accept="image/*">
                 </div>
             </div>
 
+            <!-- Row 3: Mô tả -->
+            <div style="margin-top: 16px;">
+                <label class="admin-form-label">Mô tả sản phẩm</label>
+                <textarea name="description" id="edit-description" class="admin-form-input" rows="2"
+                          placeholder="Nhập mô tả ngắn về thành phần, nguyên liệu tươi ngon..."></textarea>
+            </div>
+
             <!-- Actions -->
-            <div style="display: flex; gap: 12px; justify-content: flex-end; border-top: 1px solid #fde68a; padding-top: 20px;">
+            <div style="display: flex; gap: 12px; justify-content: flex-end; border-top: 1px solid #fde68a; padding-top: 20px; margin-top: 20px;">
                 <button type="button" onclick="closeEditModal()" class="btn-admin btn-admin-secondary">
                     Hủy bỏ
                 </button>
-                <button type="submit" class="btn-admin btn-admin-primary" style="min-width: 140px;">
+                <button type="submit" class="btn-admin btn-admin-primary" style="min-width: 140px; font-weight: 700;">
                     💾 Lưu thay đổi
                 </button>
             </div>
@@ -298,10 +316,127 @@
     </div>
 </div>
 
+<!-- ============================================================
+     MODAL XEM CHI TIẾT SẢN PHẨM
+     ============================================================ -->
+<div id="detail-product-modal" style="
+    display: none;
+    position: fixed; inset: 0; z-index: 10000;
+    background: rgba(28,16,7,0.65);
+    backdrop-filter: blur(8px);
+    align-items: center; justify-content: center;
+" onclick="closeDetailModal(event)">
+
+    <div style="
+        background: #ffffff;
+        border-radius: 20px;
+        box-shadow: 0 25px 60px rgba(0,0,0,0.3);
+        width: 100%; max-width: 580px;
+        margin: 24px;
+        overflow: hidden;
+        transform: scale(0.92);
+        transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    " id="detail-modal-box" onclick="event.stopPropagation()">
+
+        <!-- Modal Header -->
+        <div style="background: linear-gradient(135deg, #1c1007 0%, #2d1a0a 100%); color: #fff; padding: 20px 24px; display: flex; align-items: center; justify-content: space-between;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 1.3rem;">👁️</span>
+                <div>
+                    <div style="font-size: 1.1rem; font-weight: 800;">Chi Tiết Sản Phẩm</div>
+                    <div style="font-size: 0.78rem; color: rgba(255,255,255,0.6); margin-top: 2px;">Gian hàng: {{ $stallName }}</div>
+                </div>
+            </div>
+            <button onclick="closeDetailModal()" style="background: rgba(255,255,255,0.12); border: none; color: #fff; width: 36px; height: 36px; border-radius: 50%; font-size: 1.2rem; cursor: pointer; transition: background 0.2s;"
+                    onmouseover="this.style.background='rgba(255,255,255,0.22)'"
+                    onmouseout="this.style.background='rgba(255,255,255,0.12)'">×</button>
+        </div>
+
+        <div style="padding: 24px;">
+            <div style="display: flex; gap: 20px; align-items: flex-start;">
+                <!-- Product Image -->
+                <img id="detail-img" src="" alt="Ảnh sản phẩm"
+                     style="width: 150px; height: 150px; border-radius: 16px; object-fit: cover; border: 2.5px solid #fde68a; box-shadow: 0 4px 12px rgba(0,0,0,0.08); flex-shrink: 0;">
+
+                <!-- Main Meta Info -->
+                <div style="flex: 1;">
+                    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 6px;">
+                        <span id="detail-star" style="background: #fef3c7; color: #92400e; font-size: 0.72rem; font-weight: 800; padding: 3px 8px; border-radius: 12px; border: 1px solid #fde68a;">⭐ 4 sao</span>
+                        <span style="background: #ecfdf5; color: #065f46; font-size: 0.72rem; font-weight: 800; padding: 3px 8px; border-radius: 12px; border: 1px solid #a7f3d0;">Đã niêm yết</span>
+                    </div>
+
+                    <h3 id="detail-name" style="font-size: 1.25rem; font-weight: 800; color: #1c1007; margin: 0 0 8px 0; line-height: 1.3;"></h3>
+
+                    <div style="font-size: 1.4rem; font-weight: 900; color: var(--slr-primary); margin-bottom: 12px;">
+                        <span id="detail-price"></span> <span id="detail-unit" style="font-size: 0.85rem; font-weight: 600; color: #78716c;"></span>
+                    </div>
+
+                    <div style="font-size: 0.82rem; color: #78716c; background: #fffbeb; padding: 10px 14px; border-radius: 10px; border: 1px solid #fde68a;">
+                        <div style="font-weight: 700; color: #92400e; margin-bottom: 2px;">📍 Nguồn gốc / Xuất xứ:</div>
+                        <div id="detail-origin" style="color: #44403c; font-weight: 600;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Description Block -->
+            <div style="margin-top: 20px; border-top: 1px solid #f3f4f6; padding-top: 16px;">
+                <div style="font-size: 0.82rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; color: #92400e; margin-bottom: 6px;">📝 Mô tả chi tiết</div>
+                <div id="detail-description" style="font-size: 0.9rem; color: #44403c; line-height: 1.6; background: #f8fafc; padding: 14px 16px; border-radius: 12px; border: 1px solid #e2e8f0; white-space: pre-line;"></div>
+            </div>
+
+            <!-- Footer button -->
+            <div style="margin-top: 24px; text-align: right;">
+                <button type="button" onclick="closeDetailModal()" class="btn-admin btn-admin-secondary" style="padding: 9px 20px; font-weight: 700;">
+                    Đóng cửa sổ
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @endsection
 
 @section('scripts')
 <script>
+/* ==========================================================
+   Detail Product Modal
+   ========================================================== */
+function openDetailModal(name, price, unit, description, imagePath, starRating) {
+    document.getElementById('detail-name').textContent = name;
+    document.getElementById('detail-unit').textContent = unit ? ('/' + unit) : '';
+    document.getElementById('detail-price').textContent = price > 0 ? (parseInt(price).toLocaleString('vi-VN') + 'đ') : 'Liên hệ';
+    document.getElementById('detail-img').src = imagePath || '/images/stalls/food.png';
+    document.getElementById('detail-star').textContent = '⭐ ' + (starRating || '4 sao');
+    
+    let originVal = 'Chưa cập nhật';
+    let descVal = description || 'Chưa có mô tả.';
+    if (descVal.startsWith('Nguồn gốc:')) {
+        const parts = descVal.split('.');
+        const firstPart = parts.shift();
+        originVal = firstPart.replace(/^Nguồn gốc:\s*/, '').trim();
+        descVal = parts.join('.').trim() || 'Chưa có mô tả thêm.';
+    }
+    document.getElementById('detail-origin').textContent = originVal;
+    document.getElementById('detail-description').textContent = descVal;
+
+    const modal = document.getElementById('detail-product-modal');
+    const box = document.getElementById('detail-modal-box');
+    modal.style.display = 'flex';
+    setTimeout(function() { box.style.transform = 'scale(1)'; }, 10);
+    document.body.style.overflow = 'hidden';
+}
+
+function closeDetailModal(e) {
+    if (e && e.target !== document.getElementById('detail-product-modal')) return;
+    const modal = document.getElementById('detail-product-modal');
+    const box = document.getElementById('detail-modal-box');
+    box.style.transform = 'scale(0.92)';
+    setTimeout(function() {
+        modal.style.display = 'none';
+        document.body.style.overflow = '';
+    }, 250);
+}
+
 /* ==========================================================
    Unit Select — Khác (nhập tay)
    ========================================================== */
@@ -381,7 +516,6 @@ function openEditModal(id, name, price, unit, description, imagePath) {
         unitCustom.required = false;
         unitHidden.value = unit;
     } else if (unit && unit !== '') {
-        // Đơn vị tùy chỉnh không có trong danh sách
         unitSelect.value = '__custom__';
         unitCustom.style.display = 'block';
         unitCustom.value = unit;
@@ -392,7 +526,18 @@ function openEditModal(id, name, price, unit, description, imagePath) {
         unitCustom.style.display = 'none';
         unitHidden.value = 'kg';
     }
-    document.getElementById('edit-description').value = description || '';
+
+    /* Separate Origin & Description */
+    let originVal = '';
+    let descVal = description || '';
+    if (descVal.startsWith('Nguồn gốc:')) {
+        const parts = descVal.split('.');
+        const firstPart = parts.shift();
+        originVal = firstPart.replace(/^Nguồn gốc:\s*/, '').trim();
+        descVal = parts.join('.').trim();
+    }
+    document.getElementById('edit-origin').value = originVal;
+    document.getElementById('edit-description').value = descVal;
 
     /* Price */
     document.getElementById('edit-price-raw').value = price;
@@ -431,8 +576,10 @@ function closeEditModal(e) {
 /* Close on ESC */
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
-        const modal = document.getElementById('edit-product-modal');
-        if (modal.style.display === 'flex') closeEditModal();
+        const modalEdit = document.getElementById('edit-product-modal');
+        const modalDetail = document.getElementById('detail-product-modal');
+        if (modalEdit && modalEdit.style.display === 'flex') closeEditModal();
+        if (modalDetail && modalDetail.style.display === 'flex') closeDetailModal();
     }
 });
 

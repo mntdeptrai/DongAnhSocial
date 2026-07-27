@@ -288,26 +288,29 @@
                                 </div>
                             </button>
                             <div x-show="open" x-transition class="profile-dropdown-menu">
+                                @php
+                                    $effectiveRole = session('user_role') ?: (Auth::check() ? Auth::user()->role : 'user');
+                                @endphp
                                 <div class="user-info-header">
-                                    <div class="user-name">{{ session('user_name') }}</div>
+                                    <div class="user-name">{{ session('user_name') ?: (Auth::check() ? Auth::user()->name : '') }}</div>
                                     <div class="user-role">
-                                        @if(session('user_role') === 'admin')
+                                        @if($effectiveRole === 'admin')
                                             🏛️ Quản trị viên Tổng
-                                        @elseif(session('user_role') === 'manager')
+                                        @elseif($effectiveRole === 'manager')
                                             🏛️ Ban Quản lý Chợ
-                                        @elseif(session('user_role') === 'seller')
-                                            🛍️ Chủ Gian Hàng Số
+                                        @elseif($effectiveRole === 'seller')
+                                            🛍️ Chủ Gian Hàng / Cơ Sở
                                         @else
                                             👤 Thành viên cộng đồng
                                         @endif
                                     </div>
                                 </div>
                                 
-                                @if(session('user_role') === 'admin' || session('user_role') === 'manager')
+                                @if($effectiveRole === 'admin' || $effectiveRole === 'manager')
                                     <a href="/admin/dashboard" class="dropdown-item" style="color: #0ea5e9; font-weight: 700; background: rgba(14, 165, 233, 0.06);">
                                         <span>⚙️</span> Trang Quản Trị Chợ
                                     </a>
-                                @elseif(session('user_role') === 'seller')
+                                @elseif($effectiveRole === 'seller')
                                     <a href="/seller/dashboard" class="dropdown-item" style="color: #10b981; font-weight: 700; background: rgba(16, 185, 129, 0.06);">
                                         <span>🛒</span> Kênh Quản Lý Gian Hàng
                                     </a>

@@ -85,12 +85,20 @@
             <div class="admin-form-group">
                 <label class="admin-form-label" style="font-weight: 700; font-size: 0.82rem; margin-bottom: 8px; display: block; color: var(--admin-text-main);">Vai trò <span style="color: var(--admin-danger);">*</span></label>
                 <div style="position: relative;">
-                    <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--admin-text-muted);">🛡️</span>
-                    <select name="role" required class="admin-form-input" style="padding-left: 38px; border-radius: 10px; height: 42px; font-size: 0.86rem;">
-                        <option value="user" {{ old('role') === 'user' ? 'selected' : '' }}>Customer (Khách hàng)</option>
-                        <option value="seller" {{ old('role') === 'seller' ? 'selected' : '' }}>Seller (Chủ cơ sở ẩm thực)</option>
-                        <option value="admin" {{ old('role') === 'admin' ? 'selected' : '' }}>Admin (Quản trị viên hệ thống)</option>
-                    </select>
+                    @if(session('user_role') === 'manager')
+                        <div style="background: #f0fdf4; border: 1.5px solid #86efac; padding: 8px 14px; border-radius: 10px; color: #166534; font-weight: 700; font-size: 0.86rem; display: flex; align-items: center; gap: 8px; height: 42px; box-sizing: border-box;">
+                            <span>🛡️</span> Seller (Chủ gian hàng / Tiểu thương) 🔒 <span style="font-weight: 400; font-size: 0.76rem; color: #15803d;">(Cố định theo BQL Chợ)</span>
+                        </div>
+                        <input type="hidden" name="role" value="seller">
+                    @else
+                        <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--admin-text-muted);">🛡️</span>
+                        <select name="role" required class="admin-form-input" style="padding-left: 38px; border-radius: 10px; height: 42px; font-size: 0.86rem;">
+                            <option value="seller" {{ old('role') === 'seller' ? 'selected' : '' }}>Seller (Chủ cơ sở / Tiểu thương)</option>
+                            <option value="manager" {{ old('role') === 'manager' ? 'selected' : '' }}>Manager (Ban Quản Lý Chợ)</option>
+                            <option value="user" {{ old('role') === 'user' ? 'selected' : '' }}>Customer (Khách hàng)</option>
+                            <option value="admin" {{ old('role') === 'admin' ? 'selected' : '' }}>Admin (Quản trị viên hệ thống)</option>
+                        </select>
+                    @endif
                 </div>
             </div>
 
@@ -104,21 +112,40 @@
             </div>
         </div>
 
-        <!-- Cơ sở kinh doanh (Chỉ hiện khi chọn Seller) -->
-        <div id="eatery_selection_group" class="admin-form-group" style="display: none; margin-bottom: 28px;">
-            <label class="admin-form-label" style="font-weight: 700; font-size: 0.82rem; margin-bottom: 8px; display: block; color: var(--admin-text-main);">Cơ sở kinh doanh liên kết (Dành cho Seller)</label>
-            <div style="position: relative;">
-                <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--admin-text-muted);">🏢</span>
-                <select name="eatery_id" class="admin-form-input" style="padding-left: 38px; border-radius: 10px; height: 42px; font-size: 0.86rem;">
-                    <option value="">-- Chọn cơ sở quản lý (Hoặc để trống tạo sau) --</option>
-                    @foreach($eateries as $eat)
-                        <option value="{{ $eat->id }}" {{ old('eatery_id') == $eat->id ? 'selected' : '' }}>
-                            [{{ $eat->category->name }}] {{ $eat->name }} ({{ $eat->address }})
-                        </option>
-                    @endforeach
-                </select>
+        @if(session('user_role') === 'manager' || (isset($stalls) && count($stalls) > 0))
+            <!-- Gian Hàng Chợ Số liên kết (Dành cho Manager quản lý tiểu thương) -->
+            <div id="stall_selection_group" class="admin-form-group" style="margin-bottom: 28px;">
+                <label class="admin-form-label" style="font-weight: 700; font-size: 0.84rem; margin-bottom: 8px; display: block; color: var(--admin-text-main);">🛒 Gian Hàng Số Trong Chợ Liên Kết <span style="color: var(--admin-danger);">*</span></label>
+                <div style="position: relative;">
+                    <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--admin-text-muted);">🛒</span>
+                    <select name="stall_id" id="stall_id_select" class="admin-form-input" style="padding-left: 38px; border-radius: 10px; height: 42px; font-size: 0.86rem;" onchange="autoFillStallInfo(this)">
+                        <option value="">-- Chọn Gian Hàng Quản Lý trong Chợ --</option>
+                        @foreach($stalls as $st)
+                            <option value="{{ $st->id }}" data-seller="{{ $st->seller_name }}" data-phone="{{ $st->seller_phone }}" {{ old('stall_id') == $st->id ? 'selected' : '' }}>
+                                [{{ $st->stall_name }}] - Hộ: {{ $st->seller_name }} (SĐT: {{ $st->seller_phone ?: 'Chưa có' }})
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+                <small style="color: var(--admin-text-muted); display: block; margin-top: 6px;">Tài khoản tiểu thương sẽ trực tiếp làm chủ và quản lý dữ liệu gian hàng số này.</small>
             </div>
-        </div>
+        @else
+            <!-- Cơ sở kinh doanh (Chỉ hiện khi chọn Seller) -->
+            <div id="eatery_selection_group" class="admin-form-group" style="display: none; margin-bottom: 28px;">
+                <label class="admin-form-label" style="font-weight: 700; font-size: 0.82rem; margin-bottom: 8px; display: block; color: var(--admin-text-main);">Cơ sở kinh doanh liên kết (Dành cho Seller)</label>
+                <div style="position: relative;">
+                    <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--admin-text-muted);">🏢</span>
+                    <select name="eatery_id" class="admin-form-input" style="padding-left: 38px; border-radius: 10px; height: 42px; font-size: 0.86rem;">
+                        <option value="">-- Chọn cơ sở quản lý (Hoặc để trống tạo sau) --</option>
+                        @foreach($eateries as $eat)
+                            <option value="{{ $eat->id }}" {{ old('eatery_id') == $eat->id ? 'selected' : '' }}>
+                                [{{ $eat->category->name }}] {{ $eat->name }} ({{ $eat->address }})
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+            </div>
+        @endif
 
         <div style="display: flex; justify-content: flex-end; gap: 12px; border-top: 1.5px solid var(--admin-border); padding-top: 20px;">
             <a href="/admin/users" class="btn-admin btn-admin-accent" style="padding: 10px 24px; border-radius: 10px; font-weight: 700; font-size: 0.84rem; text-decoration: none;">
@@ -132,20 +159,40 @@
 </div>
 
 <script>
+function autoFillStallInfo(select) {
+    const option = select.options[select.selectedIndex];
+    if (option && option.value) {
+        const sellerName = option.getAttribute('data-seller');
+        const sellerPhone = option.getAttribute('data-phone');
+        const nameInput = document.querySelector('input[name="name"]');
+        const phoneInput = document.querySelector('input[name="phone"]');
+
+        if (sellerName && sellerName !== 'Cần cập nhật thông tin' && (!nameInput.value || nameInput.dataset.autofilled)) {
+            nameInput.value = sellerName;
+            nameInput.dataset.autofilled = "true";
+        }
+        if (sellerPhone && sellerPhone !== 'Cần cập nhật thông tin' && (!phoneInput.value || phoneInput.dataset.autofilled)) {
+            phoneInput.value = sellerPhone;
+            phoneInput.dataset.autofilled = "true";
+        }
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     const roleSelect = document.querySelector('select[name="role"]');
     const eateryGroup = document.getElementById('eatery_selection_group');
 
-    function toggleEaterySelection() {
-        if (roleSelect.value === 'seller') {
-            eateryGroup.style.display = 'block';
-        } else {
-            eateryGroup.style.display = 'none';
+    if (roleSelect && eateryGroup) {
+        function toggleEaterySelection() {
+            if (roleSelect.value === 'seller') {
+                eateryGroup.style.display = 'block';
+            } else {
+                eateryGroup.style.display = 'none';
+            }
         }
+        roleSelect.addEventListener('change', toggleEaterySelection);
+        toggleEaterySelection();
     }
-
-    roleSelect.addEventListener('change', toggleEaterySelection);
-    toggleEaterySelection();
 });
 </script>
 @endsection

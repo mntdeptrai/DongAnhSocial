@@ -1,0 +1,824 @@
+/* ==========================================================================
+   STORYTELLING MAP EXPERIENCE - DONG ANH PUBLIC SCHOOL MERGER & REORGANIZATION
+   Government Digital Modern | Apple Glassmorphism | Google Earth Flyover
+   ========================================================================== */
+
+/* 1. Modal Overlay Container */
+.story-overlay-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 999999;
+    background: #090d16;
+    color: #ffffff;
+    font-family: 'Be Vietnam Pro', sans-serif;
+    display: none;
+    opacity: 0;
+    transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    overflow: hidden;
+}
+
+.story-overlay-modal.active {
+    display: block;
+    opacity: 1;
+}
+
+/* 2. Phase 0: Intro Screen */
+.story-intro-screen {
+    position: absolute;
+    inset: 0;
+    z-index: 10000;
+    background: radial-gradient(circle at center, #1e1b4b 0%, #090d16 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 30px;
+    opacity: 1;
+    transition: opacity 0.8s ease-in-out, transform 0.8s ease-in-out;
+}
+
+.story-intro-screen.hidden {
+    opacity: 0;
+    pointer-events: none;
+    transform: scale(1.05);
+}
+
+.story-intro-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 20px;
+    border-radius: 30px;
+    background: rgba(99, 102, 241, 0.15);
+    border: 1px solid rgba(165, 180, 252, 0.3);
+    color: #c7d2fe;
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 24px;
+    box-shadow: 0 0 20px rgba(99, 102, 241, 0.2);
+    animation: storyGlowPulse 2s infinite alternate;
+}
+
+.story-intro-divider {
+    width: 120px;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #818cf8, transparent);
+    margin: 16px 0;
+}
+
+.story-intro-title {
+    font-family: 'Outfit', sans-serif;
+    font-size: clamp(1.8rem, 4.5vw, 3.5rem);
+    font-weight: 900;
+    line-height: 1.25;
+    background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 50%, #818cf8 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 10px 40px rgba(99, 102, 241, 0.4);
+    letter-spacing: -0.5px;
+    max-width: 900px;
+    margin: 0 auto;
+    animation: storyTitleFocus 1.2s ease-out forwards;
+}
+
+.story-intro-subtitle {
+    font-size: clamp(1rem, 2vw, 1.3rem);
+    color: #94a3b8;
+    margin-top: 16px;
+    font-weight: 400;
+    letter-spacing: 0.5px;
+}
+
+/* 3. Story Map Container */
+.story-map-wrapper {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+}
+
+#storyMap {
+    width: 100%;
+    height: 100%;
+    background: #090d16;
+}
+
+.story-map-dark-overlay {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at center, rgba(9, 13, 22, 0.2) 0%, rgba(9, 13, 22, 0.75) 100%);
+    pointer-events: none;
+    z-index: 400;
+}
+
+/* 4. Top Controls Bar (Skip, Voice, Stage Title) */
+.story-top-bar {
+    position: absolute;
+    top: 24px;
+    left: 24px;
+    right: 24px;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    pointer-events: none;
+}
+
+.story-top-bar > * {
+    pointer-events: auto;
+}
+
+.story-header-branding {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: rgba(15, 23, 42, 0.75);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    padding: 10px 20px;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+
+.story-header-logo {
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(135deg, #4f46e5, #3b82f6);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+}
+
+.story-header-text h1 {
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: #f8fafc;
+    margin: 0;
+}
+
+.story-header-text p {
+    font-size: 0.75rem;
+    color: #94a3b8;
+    margin: 0;
+}
+
+.story-action-buttons {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.story-btn-voice {
+    background: rgba(15, 23, 42, 0.75);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #f8fafc;
+    padding: 10px 16px;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.25s ease;
+}
+
+.story-btn-voice:hover {
+    background: rgba(99, 102, 241, 0.25);
+    border-color: #818cf8;
+    transform: translateY(-2px);
+}
+
+.story-btn-skip {
+    background: linear-gradient(135deg, #4f46e5, #0284c7);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 10px 20px;
+    border-radius: 12px;
+    font-size: 0.88rem;
+    font-weight: 800;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 8px 25px rgba(79, 70, 229, 0.4);
+    transition: all 0.25s ease;
+}
+
+.story-btn-skip:hover {
+    transform: translateY(-2px) scale(1.03);
+    box-shadow: 0 12px 35px rgba(79, 70, 229, 0.6);
+}
+
+/* 5. Left Timeline Sidebar */
+.story-timeline-sidebar {
+    position: absolute;
+    left: 24px;
+    top: 100px;
+    z-index: 1000;
+    width: 280px;
+    background: rgba(15, 23, 42, 0.82);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    padding: 20px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    transition: transform 0.4s ease, opacity 0.4s ease;
+}
+
+.story-timeline-title {
+    font-size: 0.78rem;
+    font-weight: 800;
+    color: #818cf8;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.story-timeline-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    position: relative;
+}
+
+.story-timeline-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 12px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.story-timeline-item.active {
+    background: rgba(99, 102, 241, 0.18);
+    border-color: rgba(129, 140, 248, 0.4);
+    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.2);
+}
+
+.story-timeline-item.completed .story-timeline-num {
+    background: #10b981;
+    color: #ffffff;
+}
+
+.story-timeline-num {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    color: #cbd5e1;
+    font-size: 0.72rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.story-timeline-item.active .story-timeline-num {
+    background: #6366f1;
+    color: #ffffff;
+    box-shadow: 0 0 10px #6366f1;
+}
+
+.story-timeline-text {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #cbd5e1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.story-timeline-item.active .story-timeline-text {
+    color: #ffffff;
+    font-weight: 700;
+}
+
+/* 6. Narrative Typing Box (Bottom Left / Center) */
+.story-narrative-box {
+    position: absolute;
+    bottom: 30px;
+    left: 24px;
+    z-index: 1000;
+    max-width: 440px;
+    background: rgba(15, 23, 42, 0.88);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(129, 140, 248, 0.3);
+    border-radius: 20px;
+    padding: 20px 24px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+    transition: all 0.4s ease;
+}
+
+.story-narrative-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.story-narrative-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #6366f1;
+    box-shadow: 0 0 10px #6366f1;
+    animation: storyPulseDot 1.5s infinite;
+}
+
+.story-narrative-phase {
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: #a5b4fc;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.story-narrative-text {
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: #f1f5f9;
+    font-weight: 500;
+    min-height: 48px;
+}
+
+.story-typing-cursor {
+    display: inline-block;
+    width: 2px;
+    height: 16px;
+    background: #818cf8;
+    margin-left: 4px;
+    animation: storyBlink 0.8s infinite;
+}
+
+/* 7. Floating Cards UI (Right Side Glass Card) */
+.story-card-container {
+    position: absolute;
+    right: 30px;
+    top: 100px;
+    bottom: 30px;
+    z-index: 1000;
+    width: 420px;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.story-glass-card {
+    width: 100%;
+    max-height: calc(100vh - 140px);
+    background: rgba(15, 23, 42, 0.85);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 24px;
+    overflow-y: auto;
+    padding: 24px;
+    box-shadow: 0 30px 70px rgba(0, 0, 0, 0.7), 0 0 40px rgba(99, 102, 241, 0.15);
+    pointer-events: auto;
+    opacity: 0;
+    transform: translateX(60px) scale(0.95);
+    transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.story-glass-card.show {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+}
+
+.story-card-image-wrap {
+    position: relative;
+    width: 100%;
+    height: 190px;
+    border-radius: 16px;
+    overflow: hidden;
+    margin-bottom: 18px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+}
+
+.story-card-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.6s ease;
+}
+
+.story-glass-card:hover .story-card-image {
+    transform: scale(1.05);
+}
+
+.story-card-badge {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    background: rgba(15, 23, 42, 0.85);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #38bdf8;
+    font-size: 0.72rem;
+    font-weight: 800;
+    padding: 5px 12px;
+    border-radius: 20px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.story-card-badge.merged {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: #ffffff;
+    border: none;
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+}
+
+.story-card-title {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: #ffffff;
+    margin: 0 0 8px 0;
+    line-height: 1.3;
+}
+
+.story-card-address {
+    font-size: 0.85rem;
+    color: #94a3b8;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    line-height: 1.4;
+}
+
+.story-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 18px;
+}
+
+.story-stat-box {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    padding: 12px 14px;
+    text-align: center;
+}
+
+.story-stat-val {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: #818cf8;
+}
+
+.story-stat-lbl {
+    font-size: 0.72rem;
+    color: #94a3b8;
+    font-weight: 600;
+    text-transform: uppercase;
+    margin-top: 2px;
+}
+
+.story-info-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 14px;
+    padding: 12px 16px;
+    margin-bottom: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.story-info-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.84rem;
+}
+
+.story-info-row span:first-child {
+    color: #94a3b8;
+}
+
+.story-info-row span:last-child {
+    color: #f1f5f9;
+    font-weight: 700;
+}
+
+.story-card-action-btn {
+    width: 100%;
+    background: linear-gradient(135deg, #6366f1, #4f46e5);
+    color: #ffffff;
+    border: none;
+    padding: 14px 20px;
+    border-radius: 14px;
+    font-size: 0.95rem;
+    font-weight: 800;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-shadow: 0 10px 25px rgba(99, 102, 241, 0.4);
+    transition: all 0.25s ease;
+}
+
+.story-card-action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 14px 35px rgba(99, 102, 241, 0.6);
+}
+
+/* 8. Distance Floating Card (Phase 4) */
+.story-distance-box {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.9);
+    z-index: 1000;
+    background: rgba(15, 23, 42, 0.92);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(56, 189, 248, 0.4);
+    border-radius: 20px;
+    padding: 16px 28px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7), 0 0 30px rgba(56, 189, 248, 0.2);
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.story-distance-box.show {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+    pointer-events: auto;
+}
+
+.story-distance-item {
+    text-align: center;
+}
+
+.story-distance-item h4 {
+    font-size: 0.75rem;
+    color: #94a3b8;
+    text-transform: uppercase;
+    margin: 0 0 4px 0;
+    letter-spacing: 1px;
+}
+
+.story-distance-item p {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: #38bdf8;
+    margin: 0;
+}
+
+.story-distance-divider {
+    width: 1px;
+    height: 36px;
+    background: rgba(255, 255, 255, 0.15);
+}
+
+/* 9. Merger Phase 5 Flash Announcement Overlay */
+.story-announcement-card {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.8);
+    z-index: 1005;
+    background: radial-gradient(circle at center, rgba(30, 27, 75, 0.95), rgba(15, 23, 42, 0.95));
+    backdrop-filter: blur(24px);
+    border: 2px solid rgba(165, 180, 252, 0.5);
+    border-radius: 28px;
+    padding: 32px 40px;
+    text-align: center;
+    max-width: 500px;
+    width: 90%;
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.8), 0 0 60px rgba(99, 102, 241, 0.3);
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.story-announcement-card.show {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+}
+
+.story-announcement-icon {
+    font-size: 2.8rem;
+    margin-bottom: 12px;
+    animation: storyBounce 1.5s infinite alternate;
+}
+
+.story-announcement-date {
+    font-size: 0.8rem;
+    font-weight: 800;
+    color: #34d399;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+}
+
+.story-announcement-title {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.6rem;
+    font-weight: 900;
+    color: #ffffff;
+    margin-bottom: 12px;
+    line-height: 1.3;
+}
+
+/* 10. Bottom Progress Indicator Bar */
+.story-progress-bar-wrap {
+    position: absolute;
+    bottom: 24px;
+    right: 30px;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(15, 23, 42, 0.75);
+    backdrop-filter: blur(12px);
+    padding: 8px 16px;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.story-progress-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    transition: all 0.3s ease;
+}
+
+.story-progress-dot.active {
+    background: #818cf8;
+    width: 24px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px #818cf8;
+}
+
+/* 11. Custom Leaflet Marker Styling */
+.story-marker-icon {
+    position: relative;
+    width: 44px;
+    height: 44px;
+}
+
+.story-marker-inner {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #0284c7, #0284c7);
+    border: 3px solid #ffffff;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    color: #ffffff;
+    z-index: 2;
+    position: relative;
+    transition: transform 0.3s ease;
+}
+
+.story-marker-pulse {
+    position: absolute;
+    top: -8px;
+    left: -8px;
+    right: -8px;
+    bottom: -8px;
+    border-radius: 50%;
+    border: 2px solid #38bdf8;
+    animation: storyMarkerPulse 1.8s infinite ease-out;
+}
+
+.story-marker-icon.merged .story-marker-inner {
+    background: linear-gradient(135deg, #10b981, #059669);
+    border-color: #fef08a;
+    width: 52px;
+    height: 52px;
+    font-size: 1.4rem;
+}
+
+.story-marker-icon.merged .story-marker-pulse {
+    border-color: #10b981;
+    animation: storyMarkerPulseMerged 1.5s infinite ease-out;
+}
+
+/* Tooltip custom styling */
+.story-tooltip-custom {
+    background: rgba(15, 23, 42, 0.9) !important;
+    backdrop-filter: blur(10px) !important;
+    border: 1px solid rgba(129, 140, 248, 0.4) !important;
+    color: #ffffff !important;
+    font-family: 'Be Vietnam Pro', sans-serif !important;
+    font-size: 0.85rem !important;
+    font-weight: 700 !important;
+    padding: 6px 14px !important;
+    border-radius: 12px !important;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4) !important;
+}
+
+.story-tooltip-custom::before {
+    border-top-color: rgba(15, 23, 42, 0.9) !important;
+}
+
+/* 12. Animations Keyframes */
+@keyframes storyGlowPulse {
+    0% { box-shadow: 0 0 10px rgba(99, 102, 241, 0.2); }
+    100% { box-shadow: 0 0 25px rgba(99, 102, 241, 0.6); }
+}
+
+@keyframes storyTitleFocus {
+    0% { opacity: 0; transform: scale(0.9) translateY(20px); filter: blur(10px); }
+    100% { opacity: 1; transform: scale(1) translateY(0); filter: blur(0); }
+}
+
+@keyframes storyPulseDot {
+    0%, 100% { opacity: 0.4; transform: scale(0.9); }
+    50% { opacity: 1; transform: scale(1.2); }
+}
+
+@keyframes storyBlink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+}
+
+@keyframes storyBounce {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(-8px); }
+}
+
+@keyframes storyMarkerPulse {
+    0% { transform: scale(0.7); opacity: 1; }
+    100% { transform: scale(1.5); opacity: 0; }
+}
+
+@keyframes storyMarkerPulseMerged {
+    0% { transform: scale(0.7); opacity: 1; }
+    100% { transform: scale(1.8); opacity: 0; }
+}
+
+/* Energy Beam Particle Canvas overlay */
+#storyParticleCanvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 500;
+    pointer-events: none;
+}
+
+/* 13. Responsive Breakpoints */
+@media (max-width: 992px) {
+    .story-timeline-sidebar {
+        display: none;
+    }
+
+    .story-card-container {
+        width: calc(100vw - 32px);
+        left: 16px;
+        right: 16px;
+        top: 80px;
+        bottom: 120px;
+    }
+
+    .story-narrative-box {
+        left: 16px;
+        right: 16px;
+        bottom: 16px;
+        max-width: none;
+    }
+
+    .story-top-bar {
+        top: 12px;
+        left: 12px;
+        right: 12px;
+    }
+}

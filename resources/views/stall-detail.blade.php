@@ -760,6 +760,9 @@
                 <span class="stall-badge badge-sky">
                     <i class="bi bi-tag-fill"></i> {{ $category }}
                 </span>
+                <span class="stall-badge badge-green" style="background: #dcfce7; color: #15803d; border: 1px solid #86efac; font-weight: 700;">
+                    <i class="bi bi-shield-check"></i> Đạt chuẩn ATTP
+                </span>
                 @if($hasQr)
                     <span class="stall-badge badge-green">
                         <i class="bi bi-qr-code-scan"></i> VietQR
@@ -848,6 +851,15 @@
                         </div>
                     </div>
                     @endif
+
+                    <div class="info-row">
+                        <div class="info-icon" style="background: rgba(16, 185, 129, 0.1); color: #10b981;"><i class="bi bi-shield-check"></i></div>
+                        <div>
+                            <span class="info-label">Chứng nhận An Toàn Thực Phẩm (ATTP)</span>
+                            <span class="info-value" style="color: #059669; font-weight: 700;">✓ Đạt chuẩn ATTP (BQL Chợ Kiểm Định)</span>
+                        </div>
+                    </div>
+
                     @if($originText && $originText !== 'Tự sản xuất')
                     <div class="info-row">
                         <div class="info-icon"><i class="bi bi-geo-fill"></i></div>
@@ -958,50 +970,75 @@
                     </div>
                 @endif
 
-                <div class="panel-body" id="stallProductsContainer" style="{{ $stallProducts->count() > 5 ? 'max-height: 520px; overflow-y: auto; padding-right: 14px;' : '' }}">
+                <div class="panel-body" id="stallProductsContainer" style="{{ $stallProducts->count() > 5 ? 'max-height: 540px; overflow-y: auto; padding-right: 14px;' : '' }}">
                     @forelse($stallProducts as $product)
                         @php
                             $prodOrigin = 'Tự sản xuất';
-                            if ($product->description && preg_match('/Nguồn gốc[:\s]+(.*?)[\.\n]/u', $product->description, $pm)) {
-                                $prodOrigin = trim($pm[1]);
+                            $cleanDesc = '';
+                            if (!empty($product->description)) {
+                                if (preg_match('/^Nguồn gốc[:\s]+(.*?)(?:\.|\n|$)(.*)/us', $product->description, $pm)) {
+                                    $prodOrigin = trim($pm[1]);
+                                    $cleanDesc = trim($pm[2], " .\t\n\r");
+                                } else {
+                                    $cleanDesc = trim($product->description);
+                                }
                             }
                             $prodEmoji = '🛒';
                             if (str_contains($product->name, 'Bún') || str_contains($product->name, 'Phở')) $prodEmoji = '🍜';
                             elseif (str_contains($product->name, 'Rau')) $prodEmoji = '🥦';
                             elseif (str_contains($product->name, 'Thịt') || str_contains($product->name, 'Giò')) $prodEmoji = '🥩';
                             $pCat = $prodCatAssoc[$product->id] ?? 'other';
+                            $starRating = $product->star_rating ?? '4 sao';
                         @endphp
-                        <div class="product-card" data-name="{{ mb_strtolower($product->name) }}" data-category="{{ $pCat }}">
+                        <div class="product-card" data-name="{{ mb_strtolower($product->name) }}" data-category="{{ $pCat }}" style="padding: 14px 16px; align-items: flex-start;">
                             {{-- Thumbnail --}}
                             @if($product->image_path)
-                                <img src="{{ asset($product->image_path) }}" alt="{{ $product->name }}" class="product-img">
+                                <img src="{{ asset($product->image_path) }}" alt="{{ $product->name }}" class="product-img" style="width: 76px; height: 76px; cursor: pointer;" onclick="openPublicDetailModal({{ json_encode($product->name) }}, {{ intval($product->price) }}, {{ json_encode($product->unit ?: 'kg') }}, {{ json_encode($product->description ?: '') }}, {{ json_encode(asset($product->image_path)) }}, {{ json_encode($starRating) }}, {{ $product->id }})">
                             @else
-                                <div class="product-img-placeholder">{{ $prodEmoji }}</div>
+                                <div class="product-img-placeholder" style="width: 76px; height: 76px; font-size: 1.8rem; cursor: pointer;" onclick="openPublicDetailModal({{ json_encode($product->name) }}, {{ intval($product->price) }}, {{ json_encode($product->unit ?: 'kg') }}, {{ json_encode($product->description ?: '') }}, '', {{ json_encode($starRating) }}, {{ $product->id }})">{{ $prodEmoji }}</div>
                             @endif
 
                             {{-- Info --}}
-                            <div style="flex: 1; min-width: 0;">
-                                <div class="product-name">{{ $product->name }}</div>
-                                <div class="product-origin">
-                                    <i class="bi bi-geo-alt-fill" style="color: var(--primary);"></i>
-                                    {{ $prodOrigin }} &middot; Cam kết tươi sạch
+                            <div style="flex: 1; min-width: 0; padding-right: 10px;">
+                                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 2px;">
+                                    <div class="product-name" style="cursor: pointer;" onclick="openPublicDetailModal({{ json_encode($product->name) }}, {{ intval($product->price) }}, {{ json_encode($product->unit ?: 'kg') }}, {{ json_encode($product->description ?: '') }}, {{ json_encode($product->image_path ? asset($product->image_path) : '') }}, {{ json_encode($starRating) }}, {{ $product->id }})">{{ $product->name }}</div>
+                                    <span style="background: #fef3c7; color: #92400e; font-size: 0.68rem; font-weight: 700; padding: 2px 7px; border-radius: 8px; border: 1px solid #fde68a;">⭐ {{ $starRating }}</span>
                                 </div>
-                                <div class="product-price-chip">
+
+                                <div class="product-origin" style="margin-top: 2px;">
+                                    <i class="bi bi-geo-alt-fill" style="color: var(--primary);"></i>
+                                    <strong>Nguồn gốc:</strong> {{ $prodOrigin }} &middot; <span style="color: #059669; font-weight: 600;">Cam kết tươi sạch</span>
+                                </div>
+
+                                @if(!empty($cleanDesc))
+                                    <div style="font-size: 0.8rem; color: #64748b; margin-top: 4px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                                        {{ $cleanDesc }}
+                                    </div>
+                                @endif
+
+                                <div class="product-price-chip" style="margin-top: 6px;">
                                     <span class="product-price-num">{{ number_format($product->price, 0, ',', '.') }}₫</span>
-                                    @php
-                                        $displayUnit = $product->unit ?: 'kg';
-                                    @endphp
-                                    <span class="product-price-unit">&nbsp;/ {{ $displayUnit }}</span>
+                                    <span class="product-price-unit">&nbsp;/ {{ $product->unit ?: 'kg' }}</span>
                                 </div>
                             </div>
 
-                            {{-- Order button --}}
-                            <button class="btn-order add-to-cart-btn"
-                                    data-id="{{ $product->id }}"
-                                    data-type="ocop_product"
-                                    onclick="addToCart(event, this); animateFlyToCart(this);">
-                                <i class="bi bi-cart-plus-fill"></i> Đặt hàng
-                            </button>
+                            {{-- Action buttons (Nằm ngang đồng đều 100%) --}}
+                            <div style="display: flex; gap: 8px; align-items: center; flex-shrink: 0; margin-top: 4px;">
+                                <button type="button"
+                                        style="height: 38px; padding: 0 14px; border-radius: 20px; border: 1.5px solid #7dd3fc; background: #f0f9ff; color: #0284c7; font-size: 0.8rem; font-weight: 700; display: inline-flex; align-items: center; gap: 5px; cursor: pointer; transition: all 0.2s;"
+                                        onmouseover="this.style.background='#e0f2fe'; this.style.borderColor='#0284c7'"
+                                        onmouseout="this.style.background='#f0f9ff'; this.style.borderColor='#7dd3fc'"
+                                        onclick="openPublicDetailModal({{ json_encode($product->name) }}, {{ intval($product->price) }}, {{ json_encode($product->unit ?: 'kg') }}, {{ json_encode($product->description ?: '') }}, {{ json_encode($product->image_path ? asset($product->image_path) : '') }}, {{ json_encode($starRating) }}, {{ $product->id }})">
+                                    <i class="bi bi-eye-fill"></i> Xem
+                                </button>
+                                <button class="btn-order add-to-cart-btn"
+                                        data-id="{{ $product->id }}"
+                                        data-type="ocop_product"
+                                        style="height: 38px; padding: 0 16px; border-radius: 20px; font-size: 0.8rem; font-weight: 700; display: inline-flex; align-items: center; gap: 5px;"
+                                        onclick="addToCart(event, this); animateFlyToCart(this);">
+                                    <i class="bi bi-cart-plus-fill"></i> Đặt hàng
+                                </button>
+                            </div>
                         </div>
                     @empty
                         <div style="text-align:center; padding: 32px 0; color: var(--text-muted);">
@@ -1037,37 +1074,28 @@
                 <div id="stallMap"></div>
             </div>
 
-            {{-- QR Thanh toán --}}
-            @if($bankName && $bankAcct)
+            {{-- QR Thanh toán VietQR 4.0 --}}
+            @if(!empty($qrCodeUrl))
             <div class="stall-panel">
-                <div class="stall-panel-header">
-                    <div class="panel-icon" style="background: rgba(99,102,241,0.1); color: #6366F1;">
+                <div class="stall-panel-header" style="background: linear-gradient(90deg, rgba(16, 185, 129, 0.08) 0%, transparent 100%); border-bottom: 1px solid rgba(16, 185, 129, 0.2);">
+                    <div class="panel-icon" style="background: #e6f4ea; color: #10b981;">
                         <i class="bi bi-qr-code-scan"></i>
                     </div>
-                    <h3>Thanh toán VietQR</h3>
+                    <h3 style="color: #047857;">MÃ VIETQR THANH TOÁN SỐ 4.0</h3>
                 </div>
-                <div class="qr-panel-body">
-                    <div class="qr-box">
-                        @php
-                            $qrDesc = urlencode('Thanh toan cho ' . $stallName);
-                            $qrUrl  = "https://img.vietqr.io/image/{$bankName}-{$bankAcct}-compact2.png?accountName=" . urlencode($sellerName) . "&addInfo={$qrDesc}";
-                        @endphp
-                        <img src="{{ $qrUrl }}" alt="VietQR {{ $bankName }}" style="width:160px;height:auto;display:block;">
+                <div class="qr-panel-body" style="padding: 20px; background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%); text-align: center;">
+                    <div style="background: #ffffff; padding: 12px; border-radius: 16px; display: inline-block; box-shadow: 0 6px 18px rgba(0,0,0,0.06); border: 1.5px solid #d1fae5; margin-bottom: 12px;">
+                        <img src="{{ $qrCodeUrl }}" style="width: 200px; height: auto; max-width: 100%; display: block; border-radius: 8px;" alt="VietQR Thanh toán Chợ số">
                     </div>
-                    <div style="text-align: center;">
-                        <div style="font-size: 0.72rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">
-                            Số tài khoản
-                        </div>
-                        <div style="font-family: monospace; font-weight: 900; font-size: 1.05rem; color: var(--text-main); letter-spacing: 1px; margin-bottom: 2px;">
-                            {{ $bankAcct }}
-                        </div>
-                        <div style="font-size: 0.78rem; font-weight: 700; color: #6366F1; margin-bottom: 6px;">
-                            {{ $bankName }} Bank
-                        </div>
-                        <div style="font-size: 0.75rem; color: var(--text-muted);">
-                            Quét mã QR để chuyển khoản · 100% bảo mật
-                        </div>
+                    <div style="font-size: 0.9rem; font-weight: 800; color: #065f46; margin-bottom: 2px;">
+                        {{ $bankName ?? 'MBBank' }} · {{ $bankAcct }}
                     </div>
+                    <div style="font-size: 0.76rem; color: #047857; text-transform: uppercase; font-weight: 700; margin-bottom: 12px;">
+                        CHỦ TK: {{ $bankHolder ?? $sellerName }}
+                    </div>
+                    <a href="{{ $qrCodeUrl }}" target="_blank" download="VietQR_{{ Str::slug($stallName) }}.png" class="btn-stall-primary" style="background: #10b981; border: none; justify-content: center; width: 100%; text-decoration: none;">
+                        <i class="bi bi-download"></i> Tải Mã QR Thanh Toán
+                    </a>
                 </div>
             </div>
             @endif
@@ -1542,6 +1570,158 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('reviewsAnchor')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     };
 });
+
+/* ==========================================================
+   Public Product Detail Modal (Đồng bộ 100% dữ liệu)
+   ========================================================== */
+let activePublicProdId = null;
+
+function openPublicDetailModal(name, price, unit, description, imagePath, starRating, productId) {
+    activePublicProdId = productId;
+    document.getElementById('pub-detail-name').textContent = name;
+    document.getElementById('pub-detail-unit').textContent = unit ? ('/ ' + unit) : '';
+    document.getElementById('pub-detail-price').textContent = price > 0 ? (parseInt(price).toLocaleString('vi-VN') + '₫') : 'Liên hệ';
+    document.getElementById('pub-detail-img').src = imagePath || '/images/stalls/food.png';
+    document.getElementById('pub-detail-star').textContent = '⭐ ' + (starRating || '4 sao');
+
+    let originVal = 'Tự sản xuất';
+    let descVal = description || 'Chưa có mô tả chi tiết.';
+    if (descVal.startsWith('Nguồn gốc:')) {
+        const parts = descVal.split('.');
+        const firstPart = parts.shift();
+        originVal = firstPart.replace(/^Nguồn gốc:\s*/, '').trim();
+        descVal = parts.join('.').trim() || 'Chưa có mô tả thêm.';
+    }
+    document.getElementById('pub-detail-origin').textContent = originVal;
+    document.getElementById('pub-detail-description').textContent = descVal;
+
+    const modal = document.getElementById('pub-detail-product-modal');
+    const box = document.getElementById('pub-detail-modal-box');
+    modal.style.display = 'flex';
+    setTimeout(function() { box.style.transform = 'scale(1)'; }, 10);
+    document.body.style.overflow = 'hidden';
+}
+
+function closePublicDetailModal(e) {
+    if (e && e.target !== document.getElementById('pub-detail-product-modal')) return;
+    const modal = document.getElementById('pub-detail-product-modal');
+    const box = document.getElementById('pub-detail-modal-box');
+    box.style.transform = 'scale(0.92)';
+    setTimeout(function() {
+        modal.style.display = 'none';
+        document.body.style.overflow = '';
+    }, 250);
+}
+
+function orderFromPublicModal() {
+    if (!activePublicProdId) return;
+    const btn = document.querySelector(`.add-to-cart-btn[data-id="${activePublicProdId}"]`);
+    if (btn) {
+        closePublicDetailModal();
+        addToCart(new Event('click'), btn);
+        animateFlyToCart(btn);
+    }
+}
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        const modal = document.getElementById('pub-detail-product-modal');
+        if (modal && modal.style.display === 'flex') closePublicDetailModal();
+    }
+});
 </script>
+
+<!-- ============================================================
+     MODAL XEM CHI TIẾT SẢN PHẨM (Giao diện Sang Trọng & Đã Làm Đẹp)
+     ============================================================ -->
+<div id="pub-detail-product-modal" style="
+    display: none;
+    position: fixed; inset: 0; z-index: 10000;
+    background: rgba(15, 23, 42, 0.7);
+    backdrop-filter: blur(10px);
+    align-items: center; justify-content: center;
+" onclick="closePublicDetailModal(event)">
+
+    <div style="
+        background: #ffffff;
+        border-radius: 24px;
+        box-shadow: 0 30px 70px rgba(0,0,0,0.3);
+        width: 100%; max-width: 620px;
+        margin: 24px;
+        overflow: hidden;
+        transform: scale(0.92);
+        transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    " id="pub-detail-modal-box" onclick="event.stopPropagation()">
+
+        <!-- Header -->
+        <div style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: #fff; padding: 22px 28px; display: flex; align-items: center; justify-content: space-between;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="width: 40px; height: 40px; background: rgba(255,255,255,0.2); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem;">👁️</div>
+                <div>
+                    <div style="font-size: 1.15rem; font-weight: 800; letter-spacing: -0.01em;">Chi Tiết Sản Phẩm</div>
+                    <div style="font-size: 0.8rem; color: rgba(255,255,255,0.85); margin-top: 2px;">🏪 Gian hàng: <strong>{{ $stallName }}</strong></div>
+                </div>
+            </div>
+            <button onclick="closePublicDetailModal()" style="background: rgba(255,255,255,0.18); border: none; color: #fff; width: 38px; height: 38px; border-radius: 50%; font-size: 1.3rem; cursor: pointer; transition: background 0.2s;"
+                    onmouseover="this.style.background='rgba(255,255,255,0.3)'"
+                    onmouseout="this.style.background='rgba(255,255,255,0.18)'">×</button>
+        </div>
+
+        <div style="padding: 26px;">
+            <div style="display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap;">
+                <!-- Product Image -->
+                <div style="position: relative; flex-shrink: 0;">
+                    <img id="pub-detail-img" src="" alt="Ảnh sản phẩm"
+                         style="width: 150px; height: 150px; border-radius: 18px; object-fit: cover; border: 2.5px solid #e0f2fe; box-shadow: 0 8px 20px rgba(2,132,199,0.15);">
+                </div>
+
+                <!-- Main Meta Info -->
+                <div style="flex: 1; min-width: 240px;">
+                    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 8px;">
+                        <span id="pub-detail-star" style="background: #fef3c7; color: #92400e; font-size: 0.73rem; font-weight: 800; padding: 4px 10px; border-radius: 20px; border: 1px solid #fde68a;">⭐ 4 sao</span>
+                        <span style="background: #ecfdf5; color: #065f46; font-size: 0.73rem; font-weight: 800; padding: 4px 10px; border-radius: 20px; border: 1px solid #a7f3d0;">🛡️ Đạt chuẩn ATTP</span>
+                        <span style="background: #f0f9ff; color: #0369a1; font-size: 0.73rem; font-weight: 800; padding: 4px 10px; border-radius: 20px; border: 1px solid #bae6fd;">✅ Chính hãng</span>
+                    </div>
+
+                    <h3 id="pub-detail-name" style="font-size: 1.35rem; font-weight: 800; color: #0f172a; margin: 0 0 8px 0; line-height: 1.35; word-break: break-word; overflow-wrap: anywhere;"></h3>
+
+                    <div style="font-size: 1.5rem; font-weight: 900; color: #0284c7; margin-bottom: 14px; display: flex; align-items: baseline; gap: 4px;">
+                        <span id="pub-detail-price"></span>
+                        <span id="pub-detail-unit" style="font-size: 0.88rem; font-weight: 700; color: #64748b;"></span>
+                    </div>
+
+                    <div style="font-size: 0.83rem; color: #475569; background: #f0f9ff; padding: 12px 16px; border-radius: 12px; border: 1px solid #bae6fd; word-break: break-word; overflow-wrap: anywhere;">
+                        <div style="font-weight: 800; color: #0369a1; margin-bottom: 3px; display: flex; align-items: center; gap: 6px;">
+                            <span>📍</span> Nguồn gốc / Xuất xứ:
+                        </div>
+                        <div id="pub-detail-origin" style="color: #0f172a; font-weight: 700; font-size: 0.88rem;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Description Block -->
+            <div style="margin-top: 22px; border-top: 1px solid #f1f5f9; padding-top: 18px;">
+                <div style="font-size: 0.8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: #0369a1; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+                    <span>📝</span> Mô tả chi tiết sản phẩm
+                </div>
+                <div id="pub-detail-description" style="font-size: 0.92rem; color: #334155; line-height: 1.65; background: #f8fafc; padding: 16px 18px; border-radius: 14px; border: 1px solid #e2e8f0; max-height: 180px; overflow-y: auto; word-break: break-word; overflow-wrap: anywhere; white-space: pre-line;"></div>
+            </div>
+
+            <!-- Actions -->
+            <div style="margin-top: 24px; display: flex; gap: 12px; justify-content: flex-end; align-items: center;">
+                <button type="button" onclick="closePublicDetailModal()" style="height: 42px; padding: 0 22px; border-radius: 12px; border: 1.5px solid #cbd5e1; background: #ffffff; color: #475569; font-weight: 700; font-size: 0.88rem; cursor: pointer; transition: all 0.2s;"
+                        onmouseover="this.style.background='#f8fafc'"
+                        onmouseout="this.style.background='#ffffff'">
+                    Đóng
+                </button>
+                <button type="button" onclick="orderFromPublicModal()" style="height: 42px; padding: 0 24px; border-radius: 12px; border: none; background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: #ffffff; font-weight: 800; font-size: 0.92rem; cursor: pointer; box-shadow: 0 4px 16px rgba(2,132,199,0.35); display: flex; align-items: center; gap: 8px; transition: all 0.2s;"
+                        onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 20px rgba(2,132,199,0.45)'"
+                        onmouseout="this.style.transform='none'; this.style.boxShadow='0 4px 16px rgba(2,132,199,0.35)'">
+                    <i class="bi bi-cart-plus-fill" style="font-size: 1.05rem;"></i> Thêm vào giỏ hàng
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
 @endsection

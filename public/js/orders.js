@@ -537,11 +537,11 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         // Stepper for inside order card: Đã xác nhận → Đang chuẩn bị → Đang giao → Hoàn thành
-        function renderCardTimelineProgress(status, isMarket = false) {
+        function renderCardTimelineProgress(status, isMarket = true) {
             if (status === 'cancelled') {
                 return `
                     <div style="background: rgba(239, 68, 68, 0.04); border: 1px solid rgba(239, 68, 68, 0.1); border-radius: 10px; padding: 8px 12px; margin-top: 16px; font-size: 0.8rem; color: #EF4444; font-weight: 600; display: flex; align-items: center; gap: 6px;">
-                        <span>🚫</span> Đơn hàng đã bị hủy.
+                        <span>🚫</span> Đơn hàng đã bị từ chối / hủy.
                     </div>
                 `;
             }
@@ -552,15 +552,11 @@ document.addEventListener('DOMContentLoaded', function () {
             if (status === 'pending') {
                 step1 = 'active';
                 barWidth = '0%';
-            } else if (status === 'confirmed') {
+            } else if (status === 'confirmed' || status === 'paid' || status === 'processing' || status === 'preparing') {
                 step1 = 'completed';
                 step2 = 'active';
                 barWidth = '33.3%';
-            } else if (status === 'paid' || status === 'processing') {
-                step1 = 'completed';
-                step2 = 'active';
-                barWidth = '33.3%';
-            } else if (status === 'shipping' || status === 'delivering') {
+            } else if (status === 'ready' || status === 'shipping' || status === 'delivering') {
                 step1 = 'completed';
                 step2 = 'completed';
                 step3 = 'active';
@@ -579,15 +575,15 @@ document.addEventListener('DOMContentLoaded', function () {
                     
                     <div class="card-timeline-step ${step1}">
                         <div class="card-timeline-dot"></div>
-                        <span class="card-timeline-label">Xác nhận</span>
+                        <span class="card-timeline-label">Khách đặt</span>
                     </div>
                     <div class="card-timeline-step ${step2}">
                         <div class="card-timeline-dot"></div>
-                        <span class="card-timeline-label">Chuẩn bị</span>
+                        <span class="card-timeline-label">Sạp nhận</span>
                     </div>
                     <div class="card-timeline-step ${step3}">
                         <div class="card-timeline-dot"></div>
-                        <span class="card-timeline-label">${isMarket ? 'Chờ lấy hàng' : 'Đang giao'}</span>
+                        <span class="card-timeline-label">Chờ lấy</span>
                     </div>
                     <div class="card-timeline-step ${step4}">
                         <div class="card-timeline-dot"></div>
@@ -821,6 +817,37 @@ document.addEventListener('DOMContentLoaded', function () {
                 `;
             }
 
+            let noticeBannerHtml = '';
+            if (order.status === 'ready' || order.status === 'shipping' || order.status === 'delivering') {
+                noticeBannerHtml = `
+                    <div style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border: 1.5px solid #7dd3fc; border-radius: 14px; padding: 14px 18px; margin-top: 6px; display: flex; align-items: center; gap: 12px; box-shadow: 0 4px 12px rgba(2, 132, 199, 0.08);">
+                        <div style="font-size: 1.8rem;">🏪</div>
+                        <div>
+                            <div style="font-weight: 800; color: #0369a1; font-size: 0.95rem; margin-bottom: 2px;">
+                                🏪 Đồ của bạn đã sẵn sàng tại sạp!
+                            </div>
+                            <div style="font-size: 0.84rem; color: #0284c7; line-height: 1.4;">
+                                Gian hàng <strong>${order.stall_name || 'tại chợ'}</strong> đã chuẩn bị xong. Hãy ghé sạp và đọc Mã đơn <strong>#ORD${String(order.id).padStart(6, '0')}</strong> hoặc SĐT <strong>${order.customer_phone}</strong> để nhận đồ nhé!
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else if (order.status === 'confirmed' || order.status === 'preparing') {
+                noticeBannerHtml = `
+                    <div style="background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); border: 1.5px solid #6ee7b7; border-radius: 14px; padding: 14px 18px; margin-top: 6px; display: flex; align-items: center; gap: 12px;">
+                        <div style="font-size: 1.8rem;">👨‍🍳</div>
+                        <div>
+                            <div style="font-weight: 800; color: #065f46; font-size: 0.95rem; margin-bottom: 2px;">
+                                ✅ Gian hàng đã nhận đơn & đang chuẩn bị đồ!
+                            </div>
+                            <div style="font-size: 0.84rem; color: #047857; line-height: 1.4;">
+                                Chủ gian <strong>${order.stall_name || 'tại chợ'}</strong> đang đóng gói túi đồ cho bạn theo giờ hẹn.
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
             // Build details layout
             detailContainer.innerHTML = `
                 <!-- Stepper Progress Card -->
@@ -834,6 +861,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         </div>
                     </div>
                     ${stepperHtml}
+                    ${noticeBannerHtml}
                 </div>
 
                 <!-- 2 Column Layout (60/40) -->
@@ -930,39 +958,33 @@ document.addEventListener('DOMContentLoaded', function () {
             `;
         }
 
-        function renderHorizontalStepper(status, isMarket = false) {
+        function renderHorizontalStepper(status, isMarket = true) {
+            // Luồng 4 bước chuẩn Chợ 4.0: Khách đặt -> Sạp nhận -> Chờ lấy tại sạp -> Hoàn thành
             const steps = [
-                { key: 'placed', label: 'Đặt đơn', icon: '📝', check: true },
-                { key: 'confirmed', label: 'Xác nhận', icon: '📋', check: false },
-                { key: 'preparing', label: 'Chuẩn bị', icon: '🍳', check: false },
-                { key: 'shipping', label: isMarket ? 'Chờ lấy hàng' : 'Đang giao', icon: isMarket ? '🏪' : '🚴', check: false },
-                { key: 'completed', label: 'Hoàn thành', icon: '📦', check: false }
+                { key: 'placed', label: 'Khách đặt', icon: '📝', check: true },
+                { key: 'confirmed', label: 'Sạp nhận đơn', icon: '📋', check: false },
+                { key: 'ready', label: 'Chờ lấy tại sạp', icon: '🏪', check: false },
+                { key: 'completed', label: 'Hoàn thành', icon: '🎉', check: false }
             ];
 
             if (status === 'pending') {
                 steps[0].check = true;
-            } else if (status === 'confirmed') {
+            } else if (status === 'confirmed' || status === 'paid' || status === 'processing' || status === 'preparing') {
                 steps[0].check = true;
                 steps[1].check = true;
-            } else if (status === 'paid' || status === 'processing') {
-                steps[0].check = true;
-                steps[1].check = true;
-                steps[2].check = true;
-            } else if (status === 'shipping' || status === 'delivering') {
+            } else if (status === 'ready' || status === 'shipping' || status === 'delivering') {
                 steps[0].check = true;
                 steps[1].check = true;
                 steps[2].check = true;
-                steps[3].check = true;
             } else if (status === 'completed') {
                 steps[0].check = true;
                 steps[1].check = true;
                 steps[2].check = true;
                 steps[3].check = true;
-                steps[4].check = true;
             } else if (status === 'cancelled') {
                 return `
                     <div style="background: rgba(239, 68, 68, 0.04); border: 1.5px solid rgba(239, 68, 68, 0.15); border-radius: 12px; padding: 16px; text-align: center; color: var(--danger); font-weight: 750; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; gap: 8px;">
-                        <span>🚫</span> Đơn hàng đã bị hủy.
+                        <span>🚫</span> Đơn hàng đã bị từ chối / hủy.
                     </div>
                 `;
             }

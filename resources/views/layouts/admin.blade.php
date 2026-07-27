@@ -101,8 +101,8 @@
             <a href="/admin/users" class="admin-menu-item {{ request()->is('admin/users*') ? 'active' : '' }}">
                 <span>👥</span> Quản Lý Tài Khoản
             </a>
-            <a href="/admin/eateries/create" class="admin-menu-item {{ request()->is('admin/eateries/create') ? 'active' : '' }}">
-                <span>➕</span> Đăng Ký Địa Điểm
+            <a href="/admin/stalls" class="admin-menu-item {{ request()->is('admin/stalls*') ? 'active' : '' }}">
+                <span>🛒</span> Quản Lý Gian Hàng
             </a>
 
             <div class="admin-sidebar-divider"></div>

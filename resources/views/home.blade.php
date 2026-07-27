@@ -649,6 +649,709 @@
         margin-top: 5px;
     }
 }
+
+/* ==========================================================================
+   CHỢ TRUYỀN THỐNG / CHỢ SỐ MASTER CSS OVERRIDES
+   ========================================================================== */
+.traditional-market-hero-box {
+    background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 50%, #f0f9ff 100%) !important;
+    border: 1.5px solid #7dd3fc !important;
+    border-radius: 22px !important;
+    padding: 24px 28px !important;
+    margin-bottom: 24px !important;
+    box-shadow: 0 12px 30px -8px rgba(14, 165, 233, 0.18) !important;
+    position: relative !important;
+    overflow: hidden !important;
+    transition: all 0.35s ease !important;
+}
+
+.traditional-market-hero-box::before {
+    content: '';
+    position: absolute;
+    top: -40%;
+    right: -15%;
+    width: 220px;
+    height: 220px;
+    background: radial-gradient(circle, rgba(14, 165, 233, 0.15) 0%, rgba(255, 255, 255, 0) 70%);
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.market-badge-chip {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    font-size: 0.78rem !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.5px !important;
+    text-transform: uppercase !important;
+    color: #0284c7 !important;
+    background: #ffffff !important;
+    border: 1.5px solid #7dd3fc !important;
+    padding: 6px 14px !important;
+    border-radius: 30px !important;
+    box-shadow: 0 2px 8px rgba(14, 165, 233, 0.1) !important;
+}
+
+.market-hero-title {
+    font-family: var(--font-heading) !important;
+    font-size: 1.8rem !important;
+    font-weight: 900 !important;
+    line-height: 1.25 !important;
+    margin: 12px 0 8px 0 !important;
+    color: #0f172a !important;
+}
+
+.market-stats-pills {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+    margin-top: 16px !important;
+}
+
+.market-stat-pill {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    padding: 7px 14px !important;
+    background: #ffffff !important;
+    border: 1.5px solid #7dd3fc !important;
+    border-radius: 12px !important;
+    font-size: 0.82rem !important;
+    font-weight: 700 !important;
+    color: #0369a1 !important;
+    box-shadow: 0 2px 6px rgba(14, 165, 233, 0.08) !important;
+    transition: all 0.2s ease !important;
+}
+
+.market-stat-pill:hover {
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 10px rgba(14, 165, 233, 0.15) !important;
+}
+
+.market-stat-pill span.icon {
+    font-size: 1rem !important;
+}
+
+.eatery-card.market-card-highlight {
+    border: 1.5px solid #e2e8f0 !important;
+    background: #ffffff !important;
+    border-radius: 20px !important;
+    padding: 18px !important;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.04) !important;
+    transition: all 0.3s cubic-bezier(0.32, 0.72, 0, 1) !important;
+    position: relative !important;
+    overflow: hidden !important;
+}
+
+.eatery-card.market-card-highlight:hover {
+    transform: translateY(-4px) !important;
+    border-color: #38bdf8 !important;
+    box-shadow: 0 12px 28px rgba(14, 165, 233, 0.18) !important;
+}
+
+.market-title-badge {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    font-size: 0.62rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.4px !important;
+    text-transform: uppercase !important;
+    color: #0284c7 !important;
+    background: rgba(14, 165, 233, 0.08) !important;
+    border: 1px solid rgba(14, 165, 233, 0.25) !important;
+    padding: 2px 7px !important;
+    border-radius: 10px !important;
+    box-shadow: none !important;
+}
+
+.eatery-card.market-card-highlight .eatery-title {
+    font-size: 1.35rem !important;
+    font-weight: 900 !important;
+    color: #0f172a !important;
+    letter-spacing: -0.3px !important;
+}
+
+.market-explore-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    width: 100% !important;
+    margin-top: 14px !important;
+    padding: 12px 20px !important;
+    background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%) !important;
+    color: #ffffff !important;
+    font-weight: 800 !important;
+    font-size: 0.9rem !important;
+    border-radius: 12px !important;
+    border: none !important;
+    box-shadow: 0 4px 14px rgba(2, 132, 199, 0.3) !important;
+    transition: all 0.25s ease !important;
+    cursor: pointer !important;
+    text-decoration: none !important;
+}
+
+.market-explore-btn:hover {
+    background: linear-gradient(135deg, #0369a1 0%, #075985 100%) !important;
+    box-shadow: 0 6px 20px rgba(2, 132, 199, 0.45) !important;
+    transform: translateY(-2px) !important;
+}
+
+/* ==========================================================================
+   ẨM THỰC ĐÔNG ANH / FOOD & RESTAURANTS MASTER CSS
+   ========================================================================== */
+.food-hero-box {
+    background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 50%, #fef3c7 100%) !important;
+    border: 1.5px solid #fdba74 !important;
+    border-radius: 22px !important;
+    padding: 24px 28px !important;
+    margin-bottom: 24px !important;
+    box-shadow: 0 12px 30px -8px rgba(249, 115, 22, 0.18) !important;
+    position: relative !important;
+    overflow: hidden !important;
+    transition: all 0.35s ease !important;
+}
+
+.food-hero-box::before {
+    content: '' !important;
+    position: absolute !important;
+    top: -40% !important;
+    right: -15% !important;
+    width: 220px !important;
+    height: 220px !important;
+    background: radial-gradient(circle, rgba(249, 115, 22, 0.15) 0%, rgba(255, 255, 255, 0) 70%) !important;
+    border-radius: 50% !important;
+    pointer-events: none !important;
+}
+
+.food-badge-chip {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    font-size: 0.78rem !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.5px !important;
+    text-transform: uppercase !important;
+    color: #ea580c !important;
+    background: #ffffff !important;
+    border: 1.5px solid #fdba74 !important;
+    padding: 6px 14px !important;
+    border-radius: 30px !important;
+    box-shadow: 0 2px 8px rgba(249, 115, 22, 0.1) !important;
+}
+
+.food-hero-title {
+    font-family: var(--font-heading) !important;
+    font-size: 1.8rem !important;
+    font-weight: 900 !important;
+    line-height: 1.25 !important;
+    margin: 12px 0 8px 0 !important;
+    color: #431407 !important;
+}
+
+.food-stats-pills {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+    margin-top: 16px !important;
+}
+
+.food-stat-pill {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    padding: 7px 14px !important;
+    background: #ffffff !important;
+    border: 1.5px solid #fdba74 !important;
+    border-radius: 12px !important;
+    font-size: 0.82rem !important;
+    font-weight: 700 !important;
+    color: #c2410c !important;
+    box-shadow: 0 2px 6px rgba(249, 115, 22, 0.08) !important;
+    transition: all 0.2s ease !important;
+}
+
+.food-stat-pill:hover {
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 10px rgba(249, 115, 22, 0.15) !important;
+}
+
+.food-stat-pill span.icon {
+    font-size: 1rem !important;
+}
+
+.eatery-card.food-card-highlight {
+    border: 1.5px solid #fed7aa !important;
+    background: #ffffff !important;
+    border-radius: 20px !important;
+    padding: 18px !important;
+    box-shadow: 0 4px 18px rgba(249, 115, 22, 0.06) !important;
+    transition: all 0.3s cubic-bezier(0.32, 0.72, 0, 1) !important;
+    position: relative !important;
+    overflow: hidden !important;
+}
+
+.eatery-card.food-card-highlight:hover {
+    transform: translateY(-4px) !important;
+    border-color: #f97316 !important;
+    box-shadow: 0 12px 28px rgba(249, 115, 22, 0.2) !important;
+}
+
+.food-title-badge {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    font-size: 0.62rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.4px !important;
+    text-transform: uppercase !important;
+    color: #ea580c !important;
+    background: rgba(249, 115, 22, 0.08) !important;
+    border: 1px solid rgba(249, 115, 22, 0.25) !important;
+    padding: 2px 7px !important;
+    border-radius: 10px !important;
+    box-shadow: none !important;
+}
+
+.eatery-card.food-card-highlight .eatery-title {
+    font-size: 1.35rem !important;
+    font-weight: 900 !important;
+    color: #0f172a !important;
+    letter-spacing: -0.3px !important;
+}
+
+.food-explore-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    width: 100% !important;
+    margin-top: 14px !important;
+    padding: 12px 20px !important;
+    background: linear-gradient(135deg, #f97316 0%, #ea580c 100%) !important;
+    color: #ffffff !important;
+    font-weight: 800 !important;
+    font-size: 0.9rem !important;
+    border-radius: 12px !important;
+    border: none !important;
+    box-shadow: 0 4px 14px rgba(249, 115, 22, 0.3) !important;
+    transition: all 0.25s ease !important;
+    cursor: pointer !important;
+    text-decoration: none !important;
+}
+
+.food-explore-btn:hover {
+    background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%) !important;
+    box-shadow: 0 6px 20px rgba(249, 115, 22, 0.45) !important;
+    transform: translateY(-2px) !important;
+}
+
+/* STAY IN ĐÔNG ANH (NHÀ NGHĨ, KHÁCH SẠN) */
+.stay-hero-box {
+    background: linear-gradient(135deg, #fdf2f8 0%, #fce7f3 50%, #ffe4e6 100%) !important;
+    border: 1.5px solid #fbcfe8 !important;
+    border-radius: 22px !important;
+    padding: 24px 28px !important;
+    margin-bottom: 24px !important;
+    box-shadow: 0 12px 30px -8px rgba(219, 39, 119, 0.18) !important;
+    position: relative !important;
+    overflow: hidden !important;
+    transition: all 0.35s ease !important;
+}
+.stay-badge-chip {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    font-size: 0.78rem !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.5px !important;
+    text-transform: uppercase !important;
+    color: #be185d !important;
+    background: #ffffff !important;
+    border: 1.5px solid #fbcfe8 !important;
+    padding: 6px 14px !important;
+    border-radius: 30px !important;
+    box-shadow: 0 2px 8px rgba(219, 39, 119, 0.1) !important;
+}
+.stay-hero-title {
+    font-family: var(--font-heading) !important;
+    font-size: 1.8rem !important;
+    font-weight: 900 !important;
+    line-height: 1.25 !important;
+    margin: 12px 0 8px 0 !important;
+    color: #831843 !important;
+}
+.stay-stats-pills {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+    margin-top: 16px !important;
+}
+.stay-stat-pill {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    padding: 7px 14px !important;
+    background: #ffffff !important;
+    border: 1.5px solid #fbcfe8 !important;
+    border-radius: 12px !important;
+    font-size: 0.82rem !important;
+    font-weight: 700 !important;
+    color: #be185d !important;
+    box-shadow: 0 2px 6px rgba(219, 39, 119, 0.08) !important;
+}
+.eatery-card.stay-card-highlight {
+    border: 1.5px solid #fbcfe8 !important;
+    background: #ffffff !important;
+    border-radius: 20px !important;
+    padding: 18px !important;
+    box-shadow: 0 4px 18px rgba(219, 39, 119, 0.06) !important;
+}
+.eatery-card.stay-card-highlight:hover {
+    transform: translateY(-4px) !important;
+    border-color: #db2777 !important;
+    box-shadow: 0 12px 28px rgba(219, 39, 119, 0.2) !important;
+}
+.stay-title-badge {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    font-size: 0.62rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.4px !important;
+    text-transform: uppercase !important;
+    color: #be185d !important;
+    background: rgba(219, 39, 119, 0.08) !important;
+    border: 1px solid rgba(219, 39, 119, 0.25) !important;
+    padding: 2px 7px !important;
+    border-radius: 10px !important;
+}
+.stay-explore-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    width: 100% !important;
+    margin-top: 14px !important;
+    padding: 12px 20px !important;
+    background: linear-gradient(135deg, #db2777 0%, #be185d 100%) !important;
+    color: #ffffff !important;
+    font-weight: 800 !important;
+    font-size: 0.9rem !important;
+    border-radius: 12px !important;
+    border: none !important;
+    box-shadow: 0 4px 14px rgba(219, 39, 119, 0.3) !important;
+    text-decoration: none !important;
+}
+.stay-explore-btn:hover {
+    background: linear-gradient(135deg, #be185d 0%, #9d174d 100%) !important;
+    transform: translateY(-2px) !important;
+}
+
+/* WELLNESS & CARE (Y TẾ, SPA) */
+.wellness-hero-box {
+    background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 50%, #ccfbf1 100%) !important;
+    border: 1.5px solid #a7f3d0 !important;
+    border-radius: 22px !important;
+    padding: 24px 28px !important;
+    margin-bottom: 24px !important;
+    box-shadow: 0 12px 30px -8px rgba(5, 150, 105, 0.18) !important;
+    position: relative !important;
+    overflow: hidden !important;
+}
+.wellness-badge-chip {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    font-size: 0.78rem !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.5px !important;
+    text-transform: uppercase !important;
+    color: #047857 !important;
+    background: #ffffff !important;
+    border: 1.5px solid #a7f3d0 !important;
+    padding: 6px 14px !important;
+    border-radius: 30px !important;
+    box-shadow: 0 2px 8px rgba(5, 150, 105, 0.1) !important;
+}
+.wellness-hero-title {
+    font-family: var(--font-heading) !important;
+    font-size: 1.8rem !important;
+    font-weight: 900 !important;
+    line-height: 1.25 !important;
+    margin: 12px 0 8px 0 !important;
+    color: #064e3b !important;
+}
+.wellness-stats-pills {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+    margin-top: 16px !important;
+}
+.wellness-stat-pill {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    padding: 7px 14px !important;
+    background: #ffffff !important;
+    border: 1.5px solid #a7f3d0 !important;
+    border-radius: 12px !important;
+    font-size: 0.82rem !important;
+    font-weight: 700 !important;
+    color: #047857 !important;
+    box-shadow: 0 2px 6px rgba(5, 150, 105, 0.08) !important;
+}
+.eatery-card.wellness-card-highlight {
+    border: 1.5px solid #a7f3d0 !important;
+    background: #ffffff !important;
+    border-radius: 20px !important;
+    padding: 18px !important;
+    box-shadow: 0 4px 18px rgba(5, 150, 105, 0.06) !important;
+}
+.eatery-card.wellness-card-highlight:hover {
+    transform: translateY(-4px) !important;
+    border-color: #059669 !important;
+    box-shadow: 0 12px 28px rgba(5, 150, 105, 0.2) !important;
+}
+.wellness-title-badge {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    font-size: 0.62rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.4px !important;
+    text-transform: uppercase !important;
+    color: #047857 !important;
+    background: rgba(5, 150, 105, 0.08) !important;
+    border: 1px solid rgba(5, 150, 105, 0.25) !important;
+    padding: 2px 7px !important;
+    border-radius: 10px !important;
+}
+.wellness-explore-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    width: 100% !important;
+    margin-top: 14px !important;
+    padding: 12px 20px !important;
+    background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
+    color: #ffffff !important;
+    font-weight: 800 !important;
+    font-size: 0.9rem !important;
+    border-radius: 12px !important;
+    border: none !important;
+    box-shadow: 0 4px 14px rgba(5, 150, 105, 0.3) !important;
+    text-decoration: none !important;
+}
+.wellness-explore-btn:hover {
+    background: linear-gradient(135deg, #047857 0%, #065f46 100%) !important;
+    transform: translateY(-2px) !important;
+}
+
+/* COMMUNITY & CULTURE HUB (THIẾT CHẾ VĂN HÓA) */
+.culture-hero-box {
+    background: linear-gradient(135deg, #fefce8 0%, #fef9c3 50%, #fef08a 100%) !important;
+    border: 1.5px solid #fde047 !important;
+    border-radius: 22px !important;
+    padding: 24px 28px !important;
+    margin-bottom: 24px !important;
+    box-shadow: 0 12px 30px -8px rgba(217, 119, 6, 0.18) !important;
+    position: relative !important;
+    overflow: hidden !important;
+}
+.culture-badge-chip {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    font-size: 0.78rem !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.5px !important;
+    text-transform: uppercase !important;
+    color: #b45309 !important;
+    background: #ffffff !important;
+    border: 1.5px solid #fde047 !important;
+    padding: 6px 14px !important;
+    border-radius: 30px !important;
+    box-shadow: 0 2px 8px rgba(217, 119, 6, 0.1) !important;
+}
+.culture-hero-title {
+    font-family: var(--font-heading) !important;
+    font-size: 1.8rem !important;
+    font-weight: 900 !important;
+    line-height: 1.25 !important;
+    margin: 12px 0 8px 0 !important;
+    color: #78350f !important;
+}
+.culture-stats-pills {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+    margin-top: 16px !important;
+}
+.culture-stat-pill {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    padding: 7px 14px !important;
+    background: #ffffff !important;
+    border: 1.5px solid #fde047 !important;
+    border-radius: 12px !important;
+    font-size: 0.82rem !important;
+    font-weight: 700 !important;
+    color: #b45309 !important;
+    box-shadow: 0 2px 6px rgba(217, 119, 6, 0.08) !important;
+}
+.eatery-card.culture-card-highlight {
+    border: 1.5px solid #fde047 !important;
+    background: #ffffff !important;
+    border-radius: 20px !important;
+    padding: 18px !important;
+    box-shadow: 0 4px 18px rgba(217, 119, 6, 0.06) !important;
+}
+.eatery-card.culture-card-highlight:hover {
+    transform: translateY(-4px) !important;
+    border-color: #d97706 !important;
+    box-shadow: 0 12px 28px rgba(217, 119, 6, 0.2) !important;
+}
+.culture-title-badge {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    font-size: 0.62rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.4px !important;
+    text-transform: uppercase !important;
+    color: #b45309 !important;
+    background: rgba(217, 119, 6, 0.08) !important;
+    border: 1px solid rgba(217, 119, 6, 0.25) !important;
+    padding: 2px 7px !important;
+    border-radius: 10px !important;
+}
+.culture-explore-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    width: 100% !important;
+    margin-top: 14px !important;
+    padding: 12px 20px !important;
+    background: linear-gradient(135deg, #d97706 0%, #b45309 100%) !important;
+    color: #ffffff !important;
+    font-weight: 800 !important;
+    font-size: 0.9rem !important;
+    border-radius: 12px !important;
+    border: none !important;
+    box-shadow: 0 4px 14px rgba(217, 119, 6, 0.3) !important;
+    text-decoration: none !important;
+}
+.culture-explore-btn:hover {
+    background: linear-gradient(135deg, #b45309 0%, #92400e 100%) !important;
+    transform: translateY(-2px) !important;
+}
+
+/* SMART EDUCATION MAP (TRƯỜNG HỌC) */
+.edu-hero-box {
+    background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 50%, #c7d2fe 100%) !important;
+    border: 1.5px solid #a5b4fc !important;
+    border-radius: 22px !important;
+    padding: 24px 28px !important;
+    margin-bottom: 24px !important;
+    box-shadow: 0 12px 30px -8px rgba(79, 70, 229, 0.18) !important;
+    position: relative !important;
+    overflow: hidden !important;
+}
+.edu-badge-chip {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    font-size: 0.78rem !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.5px !important;
+    text-transform: uppercase !important;
+    color: #4338ca !important;
+    background: #ffffff !important;
+    border: 1.5px solid #a5b4fc !important;
+    padding: 6px 14px !important;
+    border-radius: 30px !important;
+    box-shadow: 0 2px 8px rgba(79, 70, 229, 0.1) !important;
+}
+.edu-hero-title {
+    font-family: var(--font-heading) !important;
+    font-size: 1.8rem !important;
+    font-weight: 900 !important;
+    line-height: 1.25 !important;
+    margin: 12px 0 8px 0 !important;
+    color: #1e1b4b !important;
+}
+.edu-stats-pills {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+    margin-top: 16px !important;
+}
+.edu-stat-pill {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    padding: 7px 14px !important;
+    background: #ffffff !important;
+    border: 1.5px solid #a5b4fc !important;
+    border-radius: 12px !important;
+    font-size: 0.82rem !important;
+    font-weight: 700 !important;
+    color: #4338ca !important;
+    box-shadow: 0 2px 6px rgba(79, 70, 229, 0.08) !important;
+}
+.eatery-card.edu-card-highlight {
+    border: 1.5px solid #a5b4fc !important;
+    background: #ffffff !important;
+    border-radius: 20px !important;
+    padding: 18px !important;
+    box-shadow: 0 4px 18px rgba(79, 70, 229, 0.06) !important;
+}
+.eatery-card.edu-card-highlight:hover {
+    transform: translateY(-4px) !important;
+    border-color: #4f46e5 !important;
+    box-shadow: 0 12px 28px rgba(79, 70, 229, 0.2) !important;
+}
+.edu-title-badge {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    font-size: 0.62rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.4px !important;
+    text-transform: uppercase !important;
+    color: #4338ca !important;
+    background: rgba(79, 70, 229, 0.08) !important;
+    border: 1px solid rgba(79, 70, 229, 0.25) !important;
+    padding: 2px 7px !important;
+    border-radius: 10px !important;
+}
+.edu-explore-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    width: 100% !important;
+    margin-top: 14px !important;
+    padding: 12px 20px !important;
+    background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%) !important;
+    color: #ffffff !important;
+    font-weight: 800 !important;
+    font-size: 0.9rem !important;
+    border-radius: 12px !important;
+    border: none !important;
+    box-shadow: 0 4px 14px rgba(79, 70, 229, 0.3) !important;
+    text-decoration: none !important;
+}
+.edu-explore-btn:hover {
+    background: linear-gradient(135deg, #4338ca 0%, #3730a3 100%) !important;
+    transform: translateY(-2px) !important;
+}
 </style>
 
 <section class="custom-hero-banner">
@@ -1037,6 +1740,132 @@
                         </div>
                     </div>
                 </div>
+            @elseif($selectedCatSlug === 'dong-anh-food-map')
+                <div class="food-hero-box">
+                    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                        <span class="food-badge-chip">
+                            <span>🍜</span> ẨM THỰC ĐÔNG ANH
+                        </span>
+                        <span id="resultsCountSpan" style="font-size: 0.85rem; font-weight: 700; color: #ea580c; background: #ffffff; padding: 5px 14px; border-radius: 20px; border: 1.5px solid #fdba74; box-shadow: 0 2px 8px rgba(249, 115, 22, 0.1);">
+                            📍 {{ $eateries->count() }} Quán Ngon & Nhà Hàng Nổi Tiếng
+                        </span>
+                    </div>
+                    
+                    <h2 class="food-hero-title">
+                        Bản Đồ Khám Phá Ẩm Thực Đông Anh
+                    </h2>
+                    
+                    <p style="font-size: 0.92rem; color: #431407; line-height: 1.65; margin: 0;">
+                        Thưởng thức hương vị đậm đà đặc sản Đông Anh: Lẩu ếch măng cay, Quán nướng rặng tre, Bún chả làng quê... Đã được xác minh vệ sinh ATTP và đánh giá chất lượng thực tế.
+                    </p>
+
+                    <div class="food-stats-pills">
+                        <div class="food-stat-pill">
+                            <span class="icon">🔥</span> Quán ngon tuyển chọn
+                        </div>
+                        <div class="food-stat-pill">
+                            <span class="icon">⭐</span> Đánh giá thực tế
+                        </div>
+                        <div class="food-stat-pill">
+                            <span class="icon">🛡️</span> Chuẩn VSTP
+                        </div>
+                        <div class="food-stat-pill">
+                            <span class="icon">🛵</span> Đặt món & Chỉ đường
+                        </div>
+                    </div>
+                </div>
+            @elseif($selectedCatSlug === 'stay-in-dong-anh')
+                <div class="stay-hero-box">
+                    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                        <span class="stay-badge-chip">
+                            <span>🏨</span> STAY IN ĐÔNG ANH
+                        </span>
+                        <span id="resultsCountSpan" style="font-size: 0.85rem; font-weight: 700; color: #be185d; background: #ffffff; padding: 5px 14px; border-radius: 20px; border: 1.5px solid #fbcfe8; box-shadow: 0 2px 8px rgba(219, 39, 119, 0.1);">
+                            📍 {{ $eateries->count() }} Địa Điểm Lưu Trú & Khách Sạn
+                        </span>
+                    </div>
+                    <h2 class="stay-hero-title">
+                        Không Gian Lưu Trú & Nghỉ Dưỡng Đông Anh
+                    </h2>
+                    <p style="font-size: 0.92rem; color: #831843; line-height: 1.65; margin: 0;">
+                        Trải nghiệm dịch vụ nghỉ dưỡng cao cấp, khách sạn đạt chuẩn, homestay ấm cúng ngợp tràn không gian xanh cho chuyến du lịch Đông Anh hoàn hảo.
+                    </p>
+                    <div class="stay-stats-pills">
+                        <div class="stay-stat-pill"><span class="icon">✨</span> Khách sạn & Homestay</div>
+                        <div class="stay-stat-pill"><span class="icon">⭐</span> Đạt chuẩn dịch vụ</div>
+                        <div class="stay-stat-pill"><span class="icon">🏊</span> Tiện ích hiện đại</div>
+                        <div class="stay-stat-pill"><span class="icon">🛎️</span> Đặt phòng nhanh</div>
+                    </div>
+                </div>
+            @elseif($selectedCatSlug === 'wellness-care')
+                <div class="wellness-hero-box">
+                    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                        <span class="wellness-badge-chip">
+                            <span>🩺</span> WELLNESS & CARE
+                        </span>
+                        <span id="resultsCountSpan" style="font-size: 0.85rem; font-weight: 700; color: #047857; background: #ffffff; padding: 5px 14px; border-radius: 20px; border: 1.5px solid #a7f3d0; box-shadow: 0 2px 8px rgba(5, 150, 105, 0.1);">
+                            📍 {{ $eateries->count() }} Cơ Sở Y Tế & Spa Chăm Sóc Sức Khỏe
+                        </span>
+                    </div>
+                    <h2 class="wellness-hero-title">
+                        Hệ Thống Y Tế & Chăm Sóc Sức Khỏe Đông Anh
+                    </h2>
+                    <p style="font-size: 0.92rem; color: #064e3b; line-height: 1.65; margin: 0;">
+                        Tra cứu các bệnh viện uy tín, phòng khám đa khoa chất lượng cao, trung tâm spa & phục hồi sức khỏe được cấp phép và đánh giá hàng đầu.
+                    </p>
+                    <div class="wellness-stats-pills">
+                        <div class="wellness-stat-pill"><span class="icon">🏥</span> Bệnh viện & Phòng khám</div>
+                        <div class="wellness-stat-pill"><span class="icon">🌿</span> Spa & Phục hồi sức khỏe</div>
+                        <div class="wellness-stat-pill"><span class="icon">👨‍⚕️</span> Bác sĩ chuyên khoa</div>
+                        <div class="wellness-stat-pill"><span class="icon">🚑</span> Hỗ trợ Y tế 24/7</div>
+                    </div>
+                </div>
+            @elseif($selectedCatSlug === 'discover-dong-anh-community-culture-hub')
+                <div class="culture-hero-box">
+                    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                        <span class="culture-badge-chip">
+                            <span>🏛️</span> COMMUNITY & CULTURE HUB
+                        </span>
+                        <span id="resultsCountSpan" style="font-size: 0.85rem; font-weight: 700; color: #b45309; background: #ffffff; padding: 5px 14px; border-radius: 20px; border: 1.5px solid #fde047; box-shadow: 0 2px 8px rgba(217, 119, 6, 0.1);">
+                            📍 {{ $eateries->count() }} Thiết Chế Văn Hóa - Thể Thao
+                        </span>
+                    </div>
+                    <h2 class="culture-hero-title">
+                        Trung Tâm Văn Hóa, Thể Thao & Sinh Hoạt Cộng Đồng
+                    </h2>
+                    <p style="font-size: 0.92rem; color: #78350f; line-height: 1.65; margin: 0;">
+                        Không gian giao lưu văn hóa, nhà văn hóa huyện, sân vận động, trung tâm thể dục thể thao và các điểm sinh hoạt cộng đồng năng động Đông Anh.
+                    </p>
+                    <div class="culture-stats-pills">
+                        <div class="culture-stat-pill"><span class="icon">🏛️</span> Nhà văn hóa & Sân vận động</div>
+                        <div class="culture-stat-pill"><span class="icon">🎨</span> Triển lãm & Sự kiện</div>
+                        <div class="culture-stat-pill"><span class="icon">⚽</span> Khu vui chơi thể thao</div>
+                        <div class="culture-stat-pill"><span class="icon">🤝</span> Kết nối cộng đồng</div>
+                    </div>
+                </div>
+            @elseif($selectedCatSlug === 'smart-education-map')
+                <div class="edu-hero-box">
+                    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                        <span class="edu-badge-chip">
+                            <span>🎓</span> SMART EDUCATION MAP
+                        </span>
+                        <span id="resultsCountSpan" style="font-size: 0.85rem; font-weight: 700; color: #4338ca; background: #ffffff; padding: 5px 14px; border-radius: 20px; border: 1.5px solid #a5b4fc; box-shadow: 0 2px 8px rgba(79, 70, 229, 0.1);">
+                            📍 {{ $eateries->count() }} Trường Học & Cơ Sở Giáo Dục
+                        </span>
+                    </div>
+                    <h2 class="edu-hero-title">
+                        Hệ Thống Mạng Lưới Giáo Dục & Trường Học Đông Anh
+                    </h2>
+                    <p style="font-size: 0.92rem; color: #1e1b4b; line-height: 1.65; margin: 0;">
+                        Bản đồ thông minh tra cứu hệ thống các trường mầm non, tiểu học, THCS, THPT và trung tâm giáo dục chất lượng cao trên địa bàn huyện Đông Anh.
+                    </p>
+                    <div class="edu-stats-pills">
+                        <div class="edu-stat-pill"><span class="icon">🏫</span> Trường đạt chuẩn Quốc gia</div>
+                        <div class="edu-stat-pill"><span class="icon">📚</span> Cơ sở vật chất hiện đại</div>
+                        <div class="edu-stat-pill"><span class="icon">👩‍🏫</span> Đội ngũ giáo viên giỏi</div>
+                        <div class="edu-stat-pill"><span class="icon">🗺️</span> Chỉ đường trường học</div>
+                    </div>
+                </div>
             @else
                 <h2 style="font-size: 1.25rem; margin: 6px 0 0 0; font-family: var(--font-heading); font-weight: 700; line-height: 1.4; color: var(--text-main);">
                     <span style="margin-right: 4px;">📍</span> 
@@ -1154,21 +1983,26 @@
                     @endphp
 
                     @foreach($displayCards as $card)
-                        <div class="eatery-card glass-panel reveal reveal-fade-up hover-lift {{ $isMarket ? 'market-card-highlight' : '' }}" 
+                        @php 
+                            $isOcopItem = ($eat->category->slug === 'dong-anh-market'); 
+                            $isFoodItem = ($eat->category->slug === 'dong-anh-food-map');
+                            $isStayItem = ($eat->category->slug === 'stay-in-dong-anh');
+                            $isWellnessItem = ($eat->category->slug === 'wellness-care');
+                            $isCultureItem = ($eat->category->slug === 'discover-dong-anh-community-culture-hub');
+                            $isEduItem = ($eat->category->slug === 'smart-education-map');
+                            $isCustomStyled = ($isMarket || $isOcopItem || $isFoodItem || $isStayItem || $isWellnessItem || $isCultureItem || $isEduItem);
+                        @endphp
+                        <div class="eatery-card glass-panel reveal reveal-fade-up hover-lift {{ $isOcopItem ? 'ocop-card-highlight' : '' }} {{ $isMarket ? 'market-card-highlight' : '' }} {{ $isFoodItem ? 'food-card-highlight' : '' }} {{ $isStayItem ? 'stay-card-highlight' : '' }} {{ $isWellnessItem ? 'wellness-card-highlight' : '' }} {{ $isCultureItem ? 'culture-card-highlight' : '' }} {{ $isEduItem ? 'edu-card-highlight' : '' }}" 
                              data-slug="{{ $eat->slug }}"
                              data-name="{{ $card['title'] }}"
                              data-address="{{ $eat->address }}"
                              data-desc="{{ $card['desc'] }}"
                              data-commune="{{ $eat->commune->name }}"
                              data-category="{{ $eat->category->slug }}"
-                             onclick="focusOnEatery({{ number_format($eat->latitude, 6, '.', '') }}, {{ number_format($eat->longitude, 6, '.', '') }}, '{{ $eat->slug }}')">
+                             onclick="focusOnEatery({{ number_format($eat->latitude, 6, '.', '') }}, {{ number_format($eat->longitude, 6, '.', '') }}, '{{ $eat->slug }}', '{{ addslashes($card['title']) }}', '{{ $card['image'] }}', '{{ $card['price'] }}', '{{ $card['stars'] }}', '{{ addslashes($card['subtitle'] ?? '') }}')">
                             <div class="eatery-img-wrapper hover-zoom-container">
                                 <img src="{{ $card['image'] }}" class="eatery-img hover-zoom-img" alt="{{ $card['title'] }}">
-                                @if($isMarket)
-                                    <div class="market-card-tag">
-                                        <span>🏪</span> Chợ Số
-                                    </div>
-                                @else
+                                @if(!$isCustomStyled)
                                     <div style="position: absolute; top: 8px; left: 8px; max-width: calc(100% - 16px); display: flex; align-items: center; gap: 4px; font-size: 0.68rem; font-weight: 700; color: #ffffff; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(4px); padding: 4px 8px; border-radius: 6px; box-shadow: 0 2px 10px rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1);">
                                         <span>{{ $card['badgeIcon'] }}</span>
                                         <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ $card['badgeText'] }}</span>
@@ -1176,26 +2010,101 @@
                                 @endif
                             </div>
                             <div class="eatery-info">
-                                <div class="eatery-header">
-                                    <h3 class="eatery-title">{{ $card['title'] }}</h3>
-                                    <div class="rating-stars">
-                                        <span>⭐</span> {{ $card['stars'] }}
+                                @if($isOcopItem)
+                                    <div style="margin-bottom: 4px;">
+                                        <span class="ocop-title-badge">🌾 ĐẶC SẢN OCOP</span>
                                     </div>
-                                </div>
+                                    <div class="eatery-header" style="align-items: center; margin-bottom: 6px;">
+                                        <h3 class="eatery-title ocop-product-title">{{ $card['title'] }}</h3>
+                                        <div class="ocop-star-tag">
+                                            <span>⭐</span> {{ $card['stars'] }}
+                                        </div>
+                                    </div>
+                                @elseif($isMarket)
+                                    <div style="margin-bottom: 4px;">
+                                        <span class="market-title-badge">🏪 CHỢ SỐ</span>
+                                    </div>
+                                    <div class="eatery-header" style="align-items: center; margin-bottom: 6px;">
+                                        <h3 class="eatery-title">{{ $card['title'] }}</h3>
+                                        <div class="rating-stars">
+                                            <span>⭐</span> {{ $card['stars'] }}
+                                        </div>
+                                    </div>
+                                @elseif($isFoodItem)
+                                    <div style="margin-bottom: 4px;">
+                                        <span class="food-title-badge">🍜 QUÁN NGON NỔI BẬT</span>
+                                    </div>
+                                    <div class="eatery-header" style="align-items: center; margin-bottom: 6px;">
+                                        <h3 class="eatery-title">{{ $card['title'] }}</h3>
+                                        <div class="rating-stars" style="color: #f59e0b; font-weight: 800;">
+                                            <span>⭐</span> {{ $card['stars'] }}
+                                        </div>
+                                    </div>
+                                @elseif($isStayItem)
+                                    <div style="margin-bottom: 4px;">
+                                        <span class="stay-title-badge">🏨 LƯU TRÚ DỊCH VỤ</span>
+                                    </div>
+                                    <div class="eatery-header" style="align-items: center; margin-bottom: 6px;">
+                                        <h3 class="eatery-title">{{ $card['title'] }}</h3>
+                                        <div class="rating-stars" style="color: #db2777; font-weight: 800;">
+                                            <span>⭐</span> {{ $card['stars'] }}
+                                        </div>
+                                    </div>
+                                @elseif($isWellnessItem)
+                                    <div style="margin-bottom: 4px;">
+                                        <span class="wellness-title-badge">🩺 CHĂM SÓC SỨC KHỎE</span>
+                                    </div>
+                                    <div class="eatery-header" style="align-items: center; margin-bottom: 6px;">
+                                        <h3 class="eatery-title">{{ $card['title'] }}</h3>
+                                        <div class="rating-stars" style="color: #059669; font-weight: 800;">
+                                            <span>⭐</span> {{ $card['stars'] }}
+                                        </div>
+                                    </div>
+                                @elseif($isCultureItem)
+                                    <div style="margin-bottom: 4px;">
+                                        <span class="culture-title-badge">🏛️ THIẾT CHẾ VĂN HÓA</span>
+                                    </div>
+                                    <div class="eatery-header" style="align-items: center; margin-bottom: 6px;">
+                                        <h3 class="eatery-title">{{ $card['title'] }}</h3>
+                                        <div class="rating-stars" style="color: #d97706; font-weight: 800;">
+                                            <span>⭐</span> {{ $card['stars'] }}
+                                        </div>
+                                    </div>
+                                @elseif($isEduItem)
+                                    <div style="margin-bottom: 4px;">
+                                        <span class="edu-title-badge">🎓 CƠ SỞ GIÁO DỤC</span>
+                                    </div>
+                                    <div class="eatery-header" style="align-items: center; margin-bottom: 6px;">
+                                        <h3 class="eatery-title">{{ $card['title'] }}</h3>
+                                        <div class="rating-stars" style="color: #4f46e5; font-weight: 800;">
+                                            <span>⭐</span> {{ $card['stars'] }}
+                                        </div>
+                                    </div>
+                                @else
+                                    <div class="eatery-header">
+                                        <h3 class="eatery-title">{{ $card['title'] }}</h3>
+                                        <div class="rating-stars">
+                                            <span>⭐</span> {{ $card['stars'] }}
+                                        </div>
+                                    </div>
+                                @endif
+
                                 @if($card['subtitle'])
-                                <div style="font-size: 0.75rem; font-weight: 700; color: var(--primary); margin-top: -2px; margin-bottom: 6px;">
+                                <div class="{{ $isOcopItem ? 'ocop-seller-badge' : '' }}" style="{{ !$isOcopItem ? 'font-size: 0.75rem; font-weight: 700; color: var(--primary); margin-top: -2px; margin-bottom: 6px;' : '' }}">
                                     🏛️ {{ $card['subtitle'] }}
                                 </div>
                                 @endif
+
                                 @if(!empty($card['desc']) && $card['desc'] !== 'null')
                                 <p class="eatery-desc">{{ $card['desc'] }}</p>
                                 @endif
+
                                 <div class="eatery-footer">
                                     <div class="eatery-meta-item">
                                         <span>📍</span> {{ $eat->commune->name }}
                                     </div>
                                     @if(!in_array($eat->category->slug, ['smart-education-map', 'hanh-trinh-di-san', 'discover-dong-anh-community-culture-hub']))
-                                    <div class="eatery-meta-item" style="color: var(--primary); font-weight: 600;">
+                                    <div class="eatery-meta-item {{ $isOcopItem ? 'ocop-price-tag' : '' }}" style="{{ !$isOcopItem ? 'color: var(--primary); font-weight: 700;' : '' }}">
                                         {{ $card['price'] }}
                                     </div>
                                     @endif
@@ -1203,6 +2112,26 @@
                                 @if($isMarket)
                                     <a href="{{ route('eatery.show', $eat->slug) }}" class="market-explore-btn" onclick="event.stopPropagation();">
                                         <span>🛒 Xem Gian Hàng Số & Sơ Đồ Chợ</span> ➔
+                                    </a>
+                                @elseif($isFoodItem)
+                                    <a href="{{ route('eatery.show', $eat->slug) }}" class="food-explore-btn" onclick="event.stopPropagation();">
+                                        <span>🍽️ Xem Thực Đơn & Chỉ Đường</span> ➔
+                                    </a>
+                                @elseif($isStayItem)
+                                    <a href="{{ route('eatery.show', $eat->slug) }}" class="stay-explore-btn" onclick="event.stopPropagation();">
+                                        <span>🏨 Xem Chi Tiết & Đặt Phòng</span> ➔
+                                    </a>
+                                @elseif($isWellnessItem)
+                                    <a href="{{ route('eatery.show', $eat->slug) }}" class="wellness-explore-btn" onclick="event.stopPropagation();">
+                                        <span>🩺 Xem Dịch Vụ & Đặt Lịch</span> ➔
+                                    </a>
+                                @elseif($isCultureItem)
+                                    <a href="{{ route('eatery.show', $eat->slug) }}" class="culture-explore-btn" onclick="event.stopPropagation();">
+                                        <span>🏛️ Khám Phá Hoạt Động & Sự Kiện</span> ➔
+                                    </a>
+                                @elseif($isEduItem)
+                                    <a href="{{ route('eatery.show', $eat->slug) }}" class="edu-explore-btn" onclick="event.stopPropagation(); window.openSchoolStoryteller('{{ $eat->slug }}', '{{ route('eatery.show', $eat->slug) }}'); return false;">
+                                        <span>🎓 Tra Cứu Thông Tin Trường</span> ➔
                                     </a>
                                 @endif
                             </div>
@@ -1477,6 +2406,11 @@
                         ? `<button onclick="openReelsModal('${eat.slug}', '${eat.name.replace(/'/g, "\\'")}', '${signatureDishName}', '${eat.image_path}')" class="btn-secondary" style="padding: 4px 10px; font-size: 0.75rem; border-radius: 6px; font-family: var(--font-heading); background: rgba(var(--primary-rgb), 0.08); border-color: rgba(var(--primary-rgb), 0.25); color: var(--primary); display: inline-flex; align-items: center; gap: 4px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(var(--primary-rgb), 0.15)'" onmouseout="this.style.background='rgba(var(--primary-rgb), 0.08)'">🎬 Video</button>`
                         : '';
 
+                    const isEduMarker = (catSlug === 'smart-education-map' || (window.STORYTELLING_SCHOOLS && window.STORYTELLING_SCHOOLS[eat.slug]));
+                    const detailBtnAction = isEduMarker 
+                        ? `onclick="event.stopPropagation(); window.openSchoolStoryteller('${eat.slug}', '/dia-diem/${eat.slug}'); return false;"` 
+                        : '';
+
                     const popupContent = `
                         <div class="map-popup-card">
                             <img src="${eat.image_path ? eat.image_path : 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=300&q=80'}" class="map-popup-img">
@@ -1486,7 +2420,7 @@
                                 <span class="rating-stars">⭐ ${ratingVal}</span>
                                 <div style="display: flex; gap: 6px; align-items: center;">
                                     ${videoBtn}
-                                    <a href="/dia-diem/${eat.slug}" class="btn-primary" style="padding: 4px 10px; font-size: 0.75rem; border-radius: 6px; font-family: var(--font-heading);">Xem chi tiết</a>
+                                    <a href="/dia-diem/${eat.slug}" ${detailBtnAction} class="btn-primary" style="padding: 4px 10px; font-size: 0.75rem; border-radius: 6px; font-family: var(--font-heading);">Xem chi tiết</a>
                                 </div>
                             </div>
                         </div>
@@ -1695,13 +2629,42 @@
     });
 
     // 6. Hàm đồng bộ click card bên trái -> di chuyển camera map qua phải và mở popup marker tương ứng
-    function focusOnEatery(lat, lng, slug) {
+    function focusOnEatery(lat, lng, slug, pName = null, pImg = null, pPrice = null, pStars = null, sellerName = null) {
         if (map && markers[slug]) {
             let targetLat = lat;
-            // Trên mobile, dịch chuyển tâm bản đồ lên phía bắc (lat + offset) để đẩy marker xuống phía dưới,
-            // giúp phần popup hiển thị trọn vẹn trong khung bản đồ nhỏ (320px) không bị che khuất ở cạnh trên.
             if (window.innerWidth <= 768) {
                 targetLat = lat + 0.0018;
+            }
+
+            if (pName && pImg) {
+                const isOcop = pName.includes('OCOP') || pStars || sellerName;
+                const imgHtml = `<div style="position: relative; width: 100%; height: 155px; border-radius: 10px; overflow: hidden; border: 1px solid rgba(0,0,0,0.08);">
+                    <img src="${pImg}" class="map-popup-img" style="width: 100%; height: 100%; object-fit: cover; object-position: center;" alt="${pName}">
+                    ${isOcop ? '<span style="position: absolute; top: 8px; left: 8px; background: linear-gradient(135deg, #059669, #10b981); color: #fff; font-size: 0.65rem; font-weight: 800; padding: 3px 9px; border-radius: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.25);">🌾 OCOP</span>' : ''}
+                </div>`;
+
+                const titleHtml = `<h4 class="map-popup-title" style="font-size: 0.95rem; font-weight: 800; color: #064e3b; margin: 6px 0 2px 0; line-height: 1.35;">${pName}</h4>`;
+                const sellerHtml = sellerName ? `<div style="font-size: 0.72rem; font-weight: 700; color: #0284c7; margin-bottom: 4px;">🏛️ ${sellerName}</div>` : '';
+                const starsHtml = pStars ? `<span class="ocop-star-tag" style="font-size: 0.7rem; padding: 2px 8px;">⭐ ${pStars}</span>` : '';
+                const priceHtml = pPrice ? `<span style="font-size: 0.75rem; font-weight: 800; color: #059669;">${pPrice}</span>` : '';
+
+                const isEduFocus = (window.STORYTELLING_SCHOOLS && window.STORYTELLING_SCHOOLS[slug]);
+                const focusBtnAction = isEduFocus 
+                    ? `onclick="event.stopPropagation(); window.openSchoolStoryteller('${slug}', '/dia-diem/${slug}'); return false;"` 
+                    : '';
+
+                const customPopupHtml = `
+                    <div class="map-popup-card">
+                        ${imgHtml}
+                        ${titleHtml}
+                        ${sellerHtml}
+                        <div class="map-popup-footer" style="margin-top: 4px; display: flex; align-items: center; justify-content: space-between;">
+                            ${starsHtml || priceHtml}
+                            <a href="/dia-diem/${slug}" ${focusBtnAction} class="btn-primary" style="padding: 4px 10px; font-size: 0.72rem; border-radius: 6px; font-weight: 700;">Xem chi tiết</a>
+                        </div>
+                    </div>
+                `;
+                markers[slug].setPopupContent(customPopupHtml);
             }
 
             map.flyTo([targetLat, lng], 16, {
@@ -1753,6 +2716,7 @@
                 }
                 
                 const isOcopCategory = (slug === 'dong-anh-market');
+                const isTraditionalMarket = (slug === 'traditional-market');
                 const ocopProductsList = (data.ocopProducts && data.ocopProducts.length > 0) ? data.ocopProducts : [];
 
                 // Cập nhật tiêu đề header của danh sách
@@ -1772,6 +2736,146 @@
                                 <p style="font-size: 0.88rem; color: var(--text-muted); line-height: 1.5; margin: 0;">
                                     Khám phá các sản phẩm OCOP đặc trưng, quà lưu niệm độc đáo, nông sản sạch mang đậm hồn quê Đông Anh.
                                 </p>
+                            </div>
+                        `;
+                    } else if (isTraditionalMarket) {
+                        headerContainer.innerHTML = `
+                            <div class="traditional-market-hero-box">
+                                <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                                    <span class="market-badge-chip">
+                                        <span>🏪</span> CHỢ SỐ
+                                    </span>
+                                    <span id="resultsCountSpan" style="font-size: 0.85rem; font-weight: 700; color: #0284c7; background: #ffffff; padding: 5px 14px; border-radius: 20px; border: 1.5px solid #7dd3fc; box-shadow: 0 2px 8px rgba(14, 165, 233, 0.1);">
+                                        📍 ${data.eateries.length} Chợ Quê & Trung Tâm Thương Mại
+                                    </span>
+                                </div>
+                                
+                                <h2 class="market-hero-title">
+                                    Hệ Thống Chợ Số Đông Anh
+                                </h2>
+                                
+                                <p style="font-size: 0.92rem; color: #334155; line-height: 1.65; margin: 0;">
+                                    Khám phá nét đẹp văn hóa Chợ Quê Đông Anh kết hợp công nghệ Chuyển Đổi Số. Tra cứu sơ đồ gian hàng, bảng giá nông sản sạch, thanh toán quét mã VietQR không dùng tiền mặt và giao hàng tận nơi.
+                                </p>
+
+                                <div class="market-stats-pills">
+                                    <div class="market-stat-pill">
+                                        <span class="icon">✨</span> 100% Gian hàng chuẩn hóa
+                                    </div>
+                                    <div class="market-stat-pill">
+                                        <span class="icon">📲</span> Thanh toán VietQR / Chuyển khoản
+                                    </div>
+                                    <div class="market-stat-pill">
+                                        <span class="icon">🌱</span> Nông sản ATTP
+                                    </div>
+                                    <div class="market-stat-pill">
+                                        <span class="icon">🗺️</span> Sơ đồ gian hàng 2D
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    } else if (slug === 'dong-anh-food-map') {
+                        headerContainer.innerHTML = `
+                            <div class="food-hero-box">
+                                <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                                    <span class="food-badge-chip">
+                                        <span>🍜</span> ẨM THỰC ĐÔNG ANH
+                                    </span>
+                                    <span id="resultsCountSpan" style="font-size: 0.85rem; font-weight: 700; color: #ea580c; background: #ffffff; padding: 5px 14px; border-radius: 20px; border: 1.5px solid #fdba74; box-shadow: 0 2px 8px rgba(249, 115, 22, 0.1);">
+                                        📍 ${data.eateries.length} Quán Ngon & Nhà Hàng Nổi Tiếng
+                                    </span>
+                                </div>
+                                
+                                <h2 class="food-hero-title">
+                                    Bản Đồ Khám Phá Ẩm Thực Đông Anh
+                                </h2>
+                                
+                                <p style="font-size: 0.92rem; color: #431407; line-height: 1.65; margin: 0;">
+                                    Thưởng thức hương vị đậm đà đặc sản Đông Anh: Lẩu ếch măng cay, Quán nướng rặng tre, Bún chả làng quê... Đã được xác minh vệ sinh ATTP và đánh giá chất lượng thực tế.
+                                </p>
+
+                                <div class="food-stats-pills">
+                                    <div class="food-stat-pill">
+                                        <span class="icon">🔥</span> Quán ngon tuyển chọn
+                                    </div>
+                                    <div class="food-stat-pill">
+                                        <span class="icon">⭐</span> Đánh giá thực tế
+                                    </div>
+                                    <div class="food-stat-pill">
+                                        <span class="icon">🛡️</span> Chuẩn VSTP
+                                    </div>
+                                    <div class="food-stat-pill">
+                                        <span class="icon">🛵</span> Đặt món & Chỉ đường
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    } else if (slug === 'stay-in-dong-anh') {
+                        headerContainer.innerHTML = `
+                            <div class="stay-hero-box">
+                                <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                                    <span class="stay-badge-chip"><span>🏨</span> STAY IN ĐÔNG ANH</span>
+                                    <span id="resultsCountSpan" style="font-size: 0.85rem; font-weight: 700; color: #be185d; background: #ffffff; padding: 5px 14px; border-radius: 20px; border: 1.5px solid #fbcfe8;">📍 ${data.eateries.length} Địa Điểm Lưu Trú & Khách Sạn</span>
+                                </div>
+                                <h2 class="stay-hero-title">Không Gian Lưu Trú & Nghỉ Dưỡng Đông Anh</h2>
+                                <p style="font-size: 0.92rem; color: #831843; line-height: 1.65; margin: 0;">Trải nghiệm dịch vụ nghỉ dưỡng cao cấp, khách sạn đạt chuẩn, homestay ấm cúng ngợp tràn không gian xanh.</p>
+                                <div class="stay-stats-pills">
+                                    <div class="stay-stat-pill"><span class="icon">✨</span> Khách sạn & Homestay</div>
+                                    <div class="stay-stat-pill"><span class="icon">⭐</span> Đạt chuẩn dịch vụ</div>
+                                    <div class="stay-stat-pill"><span class="icon">🏊</span> Tiện ích hiện đại</div>
+                                    <div class="stay-stat-pill"><span class="icon">🛎️</span> Đặt phòng nhanh</div>
+                                </div>
+                            </div>
+                        `;
+                    } else if (slug === 'wellness-care') {
+                        headerContainer.innerHTML = `
+                            <div class="wellness-hero-box">
+                                <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                                    <span class="wellness-badge-chip"><span>🩺</span> WELLNESS & CARE</span>
+                                    <span id="resultsCountSpan" style="font-size: 0.85rem; font-weight: 700; color: #047857; background: #ffffff; padding: 5px 14px; border-radius: 20px; border: 1.5px solid #a7f3d0;">📍 ${data.eateries.length} Cơ Sở Y Tế & Spa Chăm Sóc Sức Khỏe</span>
+                                </div>
+                                <h2 class="wellness-hero-title">Hệ Thống Y Tế & Chăm Sóc Sức Khỏe Đông Anh</h2>
+                                <p style="font-size: 0.92rem; color: #064e3b; line-height: 1.65; margin: 0;">Tra cứu các bệnh viện uy tín, phòng khám đa khoa chất lượng cao, trung tâm spa & phục hồi sức khỏe được cấp phép.</p>
+                                <div class="wellness-stats-pills">
+                                    <div class="wellness-stat-pill"><span class="icon">🏥</span> Bệnh viện & Phòng khám</div>
+                                    <div class="wellness-stat-pill"><span class="icon">🌿</span> Spa & Phục hồi sức khỏe</div>
+                                    <div class="wellness-stat-pill"><span class="icon">👨‍⚕️</span> Bác sĩ chuyên khoa</div>
+                                    <div class="wellness-stat-pill"><span class="icon">🚑</span> Hỗ trợ Y tế 24/7</div>
+                                </div>
+                            </div>
+                        `;
+                    } else if (slug === 'discover-dong-anh-community-culture-hub') {
+                        headerContainer.innerHTML = `
+                            <div class="culture-hero-box">
+                                <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                                    <span class="culture-badge-chip"><span>🏛️</span> COMMUNITY & CULTURE HUB</span>
+                                    <span id="resultsCountSpan" style="font-size: 0.85rem; font-weight: 700; color: #b45309; background: #ffffff; padding: 5px 14px; border-radius: 20px; border: 1.5px solid #fde047;">📍 ${data.eateries.length} Thiết Chế Văn Hóa - Thể Thao</span>
+                                </div>
+                                <h2 class="culture-hero-title">Trung Tâm Văn Hóa, Thể Thao & Sinh Hoạt Cộng Đồng</h2>
+                                <p style="font-size: 0.92rem; color: #78350f; line-height: 1.65; margin: 0;">Không gian giao lưu văn hóa, nhà văn hóa huyện, sân vận động và các điểm sinh hoạt cộng đồng năng động.</p>
+                                <div class="culture-stats-pills">
+                                    <div class="culture-stat-pill"><span class="icon">🏛️</span> Nhà văn hóa & Sân vận động</div>
+                                    <div class="culture-stat-pill"><span class="icon">🎨</span> Triển lãm & Sự kiện</div>
+                                    <div class="culture-stat-pill"><span class="icon">⚽</span> Khu vui chơi thể thao</div>
+                                    <div class="culture-stat-pill"><span class="icon">🤝</span> Kết nối cộng đồng</div>
+                                </div>
+                            </div>
+                        `;
+                    } else if (slug === 'smart-education-map') {
+                        headerContainer.innerHTML = `
+                            <div class="edu-hero-box">
+                                <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                                    <span class="edu-badge-chip"><span>🎓</span> SMART EDUCATION MAP</span>
+                                    <span id="resultsCountSpan" style="font-size: 0.85rem; font-weight: 700; color: #4338ca; background: #ffffff; padding: 5px 14px; border-radius: 20px; border: 1.5px solid #a5b4fc;">📍 ${data.eateries.length} Trường Học & Cơ Sở Giáo Dục</span>
+                                </div>
+                                <h2 class="edu-hero-title">Hệ Thống Mạng Lưới Giáo Dục & Trường Học Đông Anh</h2>
+                                <p style="font-size: 0.92rem; color: #1e1b4b; line-height: 1.65; margin: 0;">Bản đồ thông minh tra cứu hệ thống các trường mầm non, tiểu học, THCS, THPT và trung tâm giáo dục chất lượng cao.</p>
+                                <div class="edu-stats-pills">
+                                    <div class="edu-stat-pill"><span class="icon">🏫</span> Trường đạt chuẩn Quốc gia</div>
+                                    <div class="edu-stat-pill"><span class="icon">📚</span> Cơ sở vật chất hiện đại</div>
+                                    <div class="edu-stat-pill"><span class="icon">👩‍🏫</span> Đội ngũ giáo viên giỏi</div>
+                                    <div class="edu-stat-pill"><span class="icon">🗺️</span> Chỉ đường trường học</div>
+                                </div>
                             </div>
                         `;
                     } else {
@@ -1811,7 +2915,7 @@
                         const lng = eat.longitude || 105.8458;
 
                         cardsHtml += `
-                            <div class="eatery-card glass-panel revealed hover-lift" 
+                            <div class="eatery-card glass-panel revealed hover-lift ocop-card-highlight" 
                                  data-slug="${slug}"
                                  data-name="${pName}"
                                  data-address="${eat.address || ''}"
@@ -1819,22 +2923,21 @@
                                  data-commune="${communeName}"
                                  data-category="dong-anh-market"
                                  style="animation: fadeIn 0.4s ease forwards;"
-                                 onclick="focusOnEatery(${lat}, ${lng}, '${slug}')">
+                                 onclick="focusOnEatery(${lat}, ${lng}, '${slug}', '${pName.replace(/'/g, "\\'")}', '${imgUrl}', '${formattedPrice}', '${stars}', '${sellerName.replace(/'/g, "\\'")}')">
                                 <div class="eatery-img-wrapper hover-zoom-container">
                                     <img src="${imgUrl}" class="eatery-img hover-zoom-img" alt="${pName}">
-                                    <div style="position: absolute; top: 8px; left: 8px; max-width: calc(100% - 16px); display: flex; align-items: center; gap: 4px; font-size: 0.68rem; font-weight: 700; color: #ffffff; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(4px); padding: 4px 8px; border-radius: 6px; box-shadow: 0 2px 10px rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1);">
-                                        <span>🌾</span>
-                                        <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">⭐ ${stars}</span>
-                                    </div>
                                 </div>
                                 <div class="eatery-info">
-                                    <div class="eatery-header">
-                                        <h3 class="eatery-title">${pName}</h3>
-                                        <div class="rating-stars">
+                                    <div style="margin-bottom: 4px;">
+                                        <span class="ocop-title-badge">🌾 ĐẶC SẢN OCOP</span>
+                                    </div>
+                                    <div class="eatery-header" style="align-items: center; margin-bottom: 6px;">
+                                        <h3 class="eatery-title ocop-product-title">${pName}</h3>
+                                        <div class="ocop-star-tag">
                                             <span>⭐</span> ${stars}
                                         </div>
                                     </div>
-                                    <div style="font-size: 0.75rem; font-weight: 700; color: var(--primary); margin-top: -2px; margin-bottom: 6px;">
+                                    <div class="ocop-seller-badge">
                                         🏛️ Chủ thể sản xuất: ${sellerName}
                                     </div>
                                     ${p.description || eat.description ? `<p class="eatery-desc">${p.description || eat.description}</p>` : ''}
@@ -1842,7 +2945,7 @@
                                         <div class="eatery-meta-item">
                                             <span>📍</span> ${communeName}
                                         </div>
-                                        <div class="eatery-meta-item" style="color: var(--primary); font-weight: 600;">
+                                        <div class="eatery-meta-item ocop-price-tag">
                                             ${formattedPrice}
                                         </div>
                                     </div>
@@ -1854,51 +2957,200 @@
                 } else if (data.eateries.length > 0) {
                     let cardsHtml = '';
                     data.eateries.forEach(eat => {
-                        const imgUrl = eat.image_path ? eat.image_path : 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=300&q=80';
-                        const ratingVal = eat.average_rating || (eat.rating ? parseFloat(eat.rating).toFixed(1) : '5.0');
-                        const communeName = eat.commune ? (eat.commune.name || eat.commune) : '';
-                        const categoryIcon = eat.category ? (eat.category.icon || '') : '';
-                        const categoryName = eat.category ? (eat.category.name || '') : '';
                         const categorySlug = eat.category ? (eat.category.slug || '') : '';
+                        const isMarket = (categorySlug === 'traditional-market' || isTraditionalMarket);
+                        const isOcopItem = (categorySlug === 'dong-anh-market' || isOcopCategory);
 
-                        cardsHtml += `
-                            <div class="eatery-card glass-panel revealed hover-lift" 
-                                 data-slug="${eat.slug}"
-                                 data-name="${eat.name}"
-                                 data-address="${eat.address}"
-                                 data-desc="${eat.description && eat.description !== 'null' ? eat.description : ''}"
-                                 data-commune="${communeName}"
-                                 data-category="${categorySlug}"
-                                 style="animation: fadeIn 0.4s ease forwards;"
-                                 onclick="focusOnEatery(${eat.latitude}, ${eat.longitude}, '${eat.slug}')">
-                                <div class="eatery-img-wrapper hover-zoom-container">
-                                    <img src="${imgUrl}" class="eatery-img hover-zoom-img" alt="${eat.name}">
-                                    <div style="position: absolute; top: 8px; left: 8px; max-width: calc(100% - 16px); display: flex; align-items: center; gap: 4px; font-size: 0.68rem; font-weight: 700; color: #ffffff; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(4px); padding: 4px 8px; border-radius: 6px; box-shadow: 0 2px 10px rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1);">
-                                        <span>${categoryIcon}</span>
-                                        <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${categoryName}</span>
-                                    </div>
-                                </div>
-                                <div class="eatery-info">
-                                    <div class="eatery-header">
-                                        <h3 class="eatery-title">${eat.name}</h3>
-                                        <div class="rating-stars">
-                                            <span>⭐</span> ${ratingVal}
+                        if (isOcopItem) {
+                            let ocopCards = [];
+                            if (eat.ocop_products && eat.ocop_products.length > 0) {
+                                eat.ocop_products.forEach(p => {
+                                    ocopCards.push({
+                                        title: p.name,
+                                        subtitle: 'Chủ thể sản xuất: ' + (p.seller_name || eat.name),
+                                        desc: p.description || eat.description || '',
+                                        image: p.image_path || eat.image_path || 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=300&q=80',
+                                        stars: p.star_rating ? (p.star_rating.includes('sao') ? p.star_rating : p.star_rating + ' sao') : (eat.average_rating || '5.0'),
+                                        price: p.price ? (isFinite(p.price) ? Number(p.price).toLocaleString('vi-VN') + 'đ' : p.price) : (eat.price_range || 'Liên hệ')
+                                    });
+                                });
+                            } else {
+                                const desc = eat.description || '';
+                                const match = desc.match(/tên\s+sản\s+phẩm\s+OCOP:\s*([^;]+)/i);
+                                if (match && match[1]) {
+                                    const rawProducts = match[1].split(',').map(s => s.trim()).filter(Boolean);
+                                    let cleanDesc = desc.replace(/tên\s+sản\s+phẩm\s+OCOP:\s*[^;]+;?\s*/i, '').replace(/^[^;]+;\s*địa chỉ[^;]+;\s*/i, '');
+                                    if (!cleanDesc.trim()) cleanDesc = desc;
+
+                                    rawProducts.forEach(pName => {
+                                        ocopCards.push({
+                                            title: pName,
+                                            subtitle: 'Chủ thể sản xuất: ' + eat.name,
+                                            desc: cleanDesc,
+                                            image: eat.image_path || 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=300&q=80',
+                                            stars: eat.average_rating || '5.0',
+                                            price: eat.price_range || 'Liên hệ'
+                                        });
+                                    });
+                                } else {
+                                    const cleanName = eat.name.replace(/^(HKD|HTX|Hộ kinh doanh|Cơ sở|Công ty)\s+/i, '');
+                                    ocopCards.push({
+                                        title: 'Sản phẩm OCOP - ' + cleanName,
+                                        subtitle: 'Chủ thể sản xuất: ' + eat.name,
+                                        desc: desc,
+                                        image: eat.image_path || 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=300&q=80',
+                                        stars: eat.average_rating || '5.0',
+                                        price: eat.price_range || 'Liên hệ'
+                                    });
+                                }
+                            }
+
+                            ocopCards.forEach(card => {
+                                const communeName = eat.commune ? (eat.commune.name || eat.commune) : 'Đông Anh';
+                                cardsHtml += `
+                                    <div class="eatery-card glass-panel revealed hover-lift ocop-card-highlight" 
+                                         data-slug="${eat.slug || ''}"
+                                         data-name="${card.title}"
+                                         data-address="${eat.address || ''}"
+                                         data-desc="${card.desc}"
+                                         data-commune="${communeName}"
+                                         data-category="dong-anh-market"
+                                         style="animation: fadeIn 0.4s ease forwards;"
+                                         onclick="focusOnEatery(${eat.latitude || 21.1352}, ${eat.longitude || 105.8458}, '${eat.slug || ''}', '${card.title.replace(/'/g, "\\'")}', '${card.image}', '${card.price}', '${card.stars}', '${card.subtitle.replace(/'/g, "\\'")}')">
+                                        <div class="eatery-img-wrapper hover-zoom-container">
+                                            <img src="${card.image}" class="eatery-img hover-zoom-img" alt="${card.title}">
+                                        </div>
+                                        <div class="eatery-info">
+                                            <div style="margin-bottom: 4px;">
+                                                <span class="ocop-title-badge">🌾 ĐẶC SẢN OCOP</span>
+                                            </div>
+                                            <div class="eatery-header" style="align-items: center; margin-bottom: 6px;">
+                                                <h3 class="eatery-title ocop-product-title">${card.title}</h3>
+                                                <div class="ocop-star-tag">
+                                                    <span>⭐</span> ${card.stars}
+                                                </div>
+                                            </div>
+                                            <div class="ocop-seller-badge">
+                                                🏛️ ${card.subtitle}
+                                            </div>
+                                            ${card.desc && card.desc !== 'null' ? `<p class="eatery-desc">${card.desc}</p>` : ''}
+                                            <div class="eatery-footer">
+                                                <div class="eatery-meta-item">
+                                                    <span>📍</span> ${communeName}
+                                                </div>
+                                                <div class="eatery-meta-item ocop-price-tag">
+                                                    ${card.price}
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
-                                    ${eat.description && eat.description !== 'null' ? `<p class="eatery-desc">${eat.description}</p>` : ''}
-                                    <div class="eatery-footer">
-                                        <div class="eatery-meta-item">
-                                            <span>📍</span> ${communeName}
+                                `;
+                            });
+                        } else {
+                            const imgUrl = eat.image_path ? eat.image_path : 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=300&q=80';
+                            const ratingVal = eat.average_rating || (eat.rating ? parseFloat(eat.rating).toFixed(1) : '5.0');
+                            const communeName = eat.commune ? (eat.commune.name || eat.commune) : '';
+                            const categoryIcon = eat.category ? (eat.category.icon || '') : '';
+                            const categoryName = eat.category ? (eat.category.name || '') : '';
+                            
+                            const isFoodItem = (categorySlug === 'dong-anh-food-map' || slug === 'dong-anh-food-map');
+                            const isStayItem = (categorySlug === 'stay-in-dong-anh' || slug === 'stay-in-dong-anh');
+                            const isWellnessItem = (categorySlug === 'wellness-care' || slug === 'wellness-care');
+                            const isCultureItem = (categorySlug === 'discover-dong-anh-community-culture-hub' || slug === 'discover-dong-anh-community-culture-hub');
+                            const isEduItem = (categorySlug === 'smart-education-map' || slug === 'smart-education-map');
+                            const isCustomStyled = (isMarket || isFoodItem || isStayItem || isWellnessItem || isCultureItem || isEduItem);
+
+                            cardsHtml += `
+                                <div class="eatery-card glass-panel revealed hover-lift ${isMarket ? 'market-card-highlight' : ''} ${isFoodItem ? 'food-card-highlight' : ''} ${isStayItem ? 'stay-card-highlight' : ''} ${isWellnessItem ? 'wellness-card-highlight' : ''} ${isCultureItem ? 'culture-card-highlight' : ''} ${isEduItem ? 'edu-card-highlight' : ''}" 
+                                     data-slug="${eat.slug}"
+                                     data-name="${eat.name}"
+                                     data-address="${eat.address}"
+                                     data-desc="${eat.description && eat.description !== 'null' ? eat.description : ''}"
+                                     data-commune="${communeName}"
+                                     data-category="${categorySlug}"
+                                     style="animation: fadeIn 0.4s ease forwards;"
+                                     onclick="focusOnEatery(${eat.latitude}, ${eat.longitude}, '${eat.slug}')">
+                                    <div class="eatery-img-wrapper hover-zoom-container">
+                                        <img src="${imgUrl}" class="eatery-img hover-zoom-img" alt="${eat.name}">
+                                        ${!isCustomStyled ? `
+                                            <div style="position: absolute; top: 8px; left: 8px; max-width: calc(100% - 16px); display: flex; align-items: center; gap: 4px; font-size: 0.68rem; font-weight: 700; color: #ffffff; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(4px); padding: 4px 8px; border-radius: 6px; box-shadow: 0 2px 10px rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1);">
+                                                <span>${categoryIcon}</span>
+                                                <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${categoryName}</span>
+                                            </div>
+                                        ` : ''}
+                                    </div>
+                                    <div class="eatery-info">
+                                        ${isMarket ? `
+                                            <div style="margin-bottom: 4px;">
+                                                <span class="market-title-badge">🏪 CHỢ SỐ</span>
+                                            </div>
+                                        ` : isFoodItem ? `
+                                            <div style="margin-bottom: 4px;">
+                                                <span class="food-title-badge">🍜 QUÁN NGON NỔI BẬT</span>
+                                            </div>
+                                        ` : isStayItem ? `
+                                            <div style="margin-bottom: 4px;">
+                                                <span class="stay-title-badge">🏨 LƯU TRÚ DỊCH VỤ</span>
+                                            </div>
+                                        ` : isWellnessItem ? `
+                                            <div style="margin-bottom: 4px;">
+                                                <span class="wellness-title-badge">🩺 CHĂM SÓC SỨC KHỎE</span>
+                                            </div>
+                                        ` : isCultureItem ? `
+                                            <div style="margin-bottom: 4px;">
+                                                <span class="culture-title-badge">🏛️ THIẾT CHẾ VĂN HÓA</span>
+                                            </div>
+                                        ` : isEduItem ? `
+                                            <div style="margin-bottom: 4px;">
+                                                <span class="edu-title-badge">🎓 CƠ SỞ GIÁO DỤC</span>
+                                            </div>
+                                        ` : ''}
+                                        <div class="eatery-header" ${isCustomStyled ? 'style="align-items: center; margin-bottom: 6px;"' : ''}>
+                                            <h3 class="eatery-title">${eat.name}</h3>
+                                            <div class="rating-stars" ${isFoodItem ? 'style="color: #f59e0b; font-weight: 800;"' : isStayItem ? 'style="color: #db2777; font-weight: 800;"' : isWellnessItem ? 'style="color: #059669; font-weight: 800;"' : isCultureItem ? 'style="color: #d97706; font-weight: 800;"' : isEduItem ? 'style="color: #4f46e5; font-weight: 800;"' : ''}>
+                                                <span>⭐</span> ${ratingVal}
+                                            </div>
                                         </div>
-                                        ${!['smart-education-map', 'hanh-trinh-di-san', 'discover-dong-anh-community-culture-hub'].includes(categorySlug) ? `
-                                        <div class="eatery-meta-item" style="color: var(--primary); font-weight: 600;">
-                                            ${eat.price_range}
+                                        ${eat.description && eat.description !== 'null' ? `<p class="eatery-desc">${eat.description}</p>` : ''}
+                                        <div class="eatery-footer">
+                                            <div class="eatery-meta-item">
+                                                <span>📍</span> ${communeName}
+                                            </div>
+                                            ${!['smart-education-map', 'hanh-trinh-di-san', 'discover-dong-anh-community-culture-hub'].includes(categorySlug) ? `
+                                            <div class="eatery-meta-item" style="${isFoodItem ? 'color: #ea580c; font-weight: 700;' : 'color: var(--primary); font-weight: 600;'}">
+                                                ${eat.price_range}
+                                            </div>
+                                            ` : ''}
                                         </div>
+                                        ${isMarket ? `
+                                            <a href="/dia-diem/${eat.slug}" class="market-explore-btn" onclick="event.stopPropagation();">
+                                                <span>🛒 Xem Gian Hàng Số & Sơ Đồ Chợ</span> ➔
+                                            </a>
+                                        ` : isFoodItem ? `
+                                            <a href="/dia-diem/${eat.slug}" class="food-explore-btn" onclick="event.stopPropagation();">
+                                                <span>🍽️ Xem Thực Đơn & Chỉ Đường</span> ➔
+                                            </a>
+                                        ` : isStayItem ? `
+                                            <a href="/dia-diem/${eat.slug}" class="stay-explore-btn" onclick="event.stopPropagation();">
+                                                <span>🏨 Xem Chi Tiết & Đặt Phòng</span> ➔
+                                            </a>
+                                        ` : isWellnessItem ? `
+                                            <a href="/dia-diem/${eat.slug}" class="wellness-explore-btn" onclick="event.stopPropagation();">
+                                                <span>🩺 Xem Dịch Vụ & Đặt Lịch</span> ➔
+                                            </a>
+                                        ` : isCultureItem ? `
+                                            <a href="/dia-diem/${eat.slug}" class="culture-explore-btn" onclick="event.stopPropagation();">
+                                                <span>🏛️ Khám Phá Hoạt Động & Sự Kiện</span> ➔
+                                            </a>
+                                        ` : isEduItem ? `
+                                            <a href="/dia-diem/${eat.slug}" class="edu-explore-btn" onclick="event.stopPropagation(); window.openSchoolStoryteller('${eat.slug}', '/dia-diem/${eat.slug}'); return false;">
+                                                <span>🎓 Tra Cứu Thông Tin Trường</span> ➔
+                                            </a>
                                         ` : ''}
                                     </div>
                                 </div>
-                            </div>
-                        `;
+                            `;
+                        }
                     });
                     eateriesContainer.innerHTML = cardsHtml;
                 } else {

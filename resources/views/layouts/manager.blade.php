@@ -101,6 +101,18 @@
                 </a>
             @endif
 
+            <a href="/admin/stalls" class="mgr-menu-item {{ request()->is('admin/stalls*') ? 'active' : '' }}">
+                <span>🛒</span> Quản Lý Gian Hàng
+            </a>
+
+            <a href="/admin/orders" class="mgr-menu-item {{ request()->is('admin/orders*') ? 'active' : '' }}">
+                <span>🛍️</span> Quản Lý Đơn Hàng
+            </a>
+
+            <a href="/admin/users" class="mgr-menu-item {{ request()->is('admin/users*') ? 'active' : '' }}">
+                <span>👥</span> Quản Lý Tài Khoản
+            </a>
+
             <div class="mgr-sidebar-section-title">Cổng Thông Tin</div>
             <a href="/" class="mgr-menu-item" target="_blank">
                 <span>🗺️</span> Bản Đồ Số Đông Anh

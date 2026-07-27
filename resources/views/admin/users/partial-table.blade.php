@@ -23,8 +23,17 @@
                         <td>
                             <strong style="color: var(--admin-text-main); font-size: 0.9rem; display: block;">{{ $user->name }}</strong>
                             @if($user->role === 'seller')
-                                @php $ownedEateries = $user->getOwnedEateries(); @endphp
-                                @if(count($ownedEateries) > 0)
+                                @php 
+                                    $stall = $user->getStall(); 
+                                    $ownedEateries = $user->getOwnedEateries();
+                                @endphp
+                                @if($stall)
+                                    <div style="margin-top: 4px;">
+                                        <span style="font-size: 0.78rem; color: #0284c7; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; background: #e0f2fe; padding: 2px 8px; border-radius: 6px; border: 1px solid #bae6fd;">
+                                            🛒 {{ $stall->stall_name }}
+                                        </span>
+                                    </div>
+                                @elseif(count($ownedEateries) > 0)
                                     <div style="margin-top: 6px; display: flex; flex-direction: column; gap: 4px;">
                                         @foreach($ownedEateries as $oe)
                                             <span style="font-size: 0.76rem; color: #4f46e5; display: inline-flex; align-items: center; gap: 4px; font-weight: 600;" title="Phân loại: {{ $oe['type'] }}">
@@ -37,7 +46,7 @@
                                     </div>
                                 @else
                                     <span style="font-size: 0.72rem; color: #ef4444; display: block; margin-top: 4px; font-style: italic;">
-                                        ⚠️ Chưa gán cơ sở nào
+                                        ⚠️ Chưa gán gian hàng
                                     </span>
                                 @endif
                             @endif

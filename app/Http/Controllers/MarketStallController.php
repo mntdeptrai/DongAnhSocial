@@ -57,27 +57,33 @@ class MarketStallController extends Controller
         $lat         = ($first->latitude ?? null) ?: ($eatery->latitude ?? 21.1571);
         $lng         = ($first->longitude ?? null) ?: ($eatery->longitude ?? 105.8448);
 
-        // Parse bank info: "Hỗ trợ thanh toán VietQR ngân hàng MB: 0965194462"
-        $bankInfo = '';
-        $bankName = '';
-        $bankAcct = '';
-        if ($first->description) {
-            // Pattern: "ngân hàng MB: 0965194462" or "ngân hàng Techcombank: 2003198099"
-            if (preg_match('/ng[aâ]n h[aà]ng\s+([A-Za-z0-9]+)[:\s]+(\d+)/ui', $first->description, $m)) {
-                $bankName = strtoupper(trim($m[1]));
-                $bankAcct = trim($m[2]);
-                $bankInfo = $bankName . ' · ' . $bankAcct;
-            }
+        // Parse bank info & Auto-generate VietQR URL
+        $bankName   = $first->bank_name ?: 'MBBank';
+        $bankAcct   = $first->bank_account ?: '';
+        $bankHolder = mb_strtoupper($first->bank_holder ?: $sellerName);
+        $bankInfo   = $bankAcct ? ($bankName . ' · ' . $bankAcct) : '';
+
+        $qrCodeUrl = $first->qr_code_path ?: '';
+        if (empty($qrCodeUrl) && !empty($bankAcct)) {
+            $bankCodeMap = [
+                'MBBANK' => 'MB', 'MB' => 'MB', 'VIETCOMBANK' => 'VCB', 'VCB' => 'VCB',
+                'AGRIBANK' => 'VBA', 'VBA' => 'VBA', 'TECHCOMBANK' => 'TCB', 'TCB' => 'TCB',
+                'BIDV' => 'BIDV', 'VPBANK' => 'VPB', 'VPB' => 'VPB', 'VIETINBANK' => 'CTG',
+                'CTG' => 'CTG', 'TPBANK' => 'TPB', 'TPB' => 'TPB', 'SACOMBANK' => 'STB', 'STB' => 'STB'
+            ];
+            $cleanBankKey = strtoupper(str_replace([' ', 'NGÂN HÀNG', 'NH'], '', $bankName));
+            $bankCode = $bankCodeMap[$cleanBankKey] ?? 'MB';
+            $qrCodeUrl = "https://img.vietqr.io/image/{$bankCode}-{$bankAcct}-compact.png?accountName=" . urlencode($bankHolder) . "&addInfo=" . urlencode("TT " . $stallName);
         }
 
         // Detect origin
-        $originText = 'Tự sản xuất';
-        if ($first->description && preg_match('/Nguồn gốc[:\s]+(.*?)[\.\n]/u', $first->description, $m)) {
+        $originText = $first->origin ?: 'Tự sản xuất';
+        if ($originText === 'Tự sản xuất' && $first->description && preg_match('/Nguồn gốc[:\s]+(.*?)[\.\n]/u', $first->description, $m)) {
             $originText = trim($m[1]);
         }
 
-        $hasSmartphone = $first->description ? str_contains($first->description, 'Có sử dụng smartphone') : false;
-        $hasQr         = !empty($bankInfo);
+        $hasSmartphone = true;
+        $hasQr         = !empty($qrCodeUrl) || !empty($bankAcct);
 
         // Detect category badge from stall_name keywords
         $category = 'Khác';
@@ -132,6 +138,8 @@ class MarketStallController extends Controller
             'bankInfo',
             'bankName',
             'bankAcct',
+            'bankHolder',
+            'qrCodeUrl',
             'originText',
             'hasQr',
             'hasSmartphone',

@@ -64,26 +64,30 @@
             <tbody id="orders-tbody">
                 @foreach($orders as $ord)
                 @php
-                    $st = $ord->status ?? 'pending';
-                    $isPending   = $st === 'pending';
-                    $isConfirmed = $st === 'confirmed';
-                    $isCancelled = $st === 'cancelled';
-                    $isDone      = in_array($st, ['completed', 'delivered']);
+                    $st = strtolower($ord->status ?? 'pending');
+                    $isConfirmed = in_array($st, ['confirmed', 'preparing', 'đang chuẩn bị']);
+                    $isReady     = in_array($st, ['ready', 'sẵn sàng', 'chờ lấy']);
+                    $isDone      = in_array($st, ['completed', 'delivered', 'hoàn thành', 'hoàn tất']);
+                    $isCancelled = in_array($st, ['cancelled', 'rejected', 'đã từ chối', 'đã hủy']);
+                    $isPending   = !$isConfirmed && !$isReady && !$isDone && !$isCancelled;
 
                     $badgeStyle  = 'background:#fef3c7; color:#92400e; border:1px solid #fde68a;';
                     $badgeLabel  = 'Chờ xác nhận';
                     if ($isConfirmed) {
                         $badgeStyle = 'background:#ecfdf5; color:#065f46; border:1px solid #a7f3d0;';
-                        $badgeLabel = 'Đã xác nhận';
+                        $badgeLabel = '✅ Đã nhận & Chuẩn bị';
+                    } elseif ($isReady) {
+                        $badgeStyle = 'background:#f0f9ff; color:#0369a1; border:1px solid #bae6fd;';
+                        $badgeLabel = '🏪 Sẵn sàng tại sạp';
                     } elseif ($isDone) {
-                        $badgeStyle = 'background:#e0f2fe; color:#0369a1; border:1px solid #bae6fd;';
-                        $badgeLabel = 'Hoàn tất';
+                        $badgeStyle = 'background:#ecfdf5; color:#047857; border:1px solid #6ee7b7;';
+                        $badgeLabel = '🎉 Hoàn thành';
                     } elseif ($isCancelled) {
                         $badgeStyle = 'background:#fef2f2; color:#b91c1c; border:1px solid #fecaca;';
-                        $badgeLabel = 'Đã từ chối';
+                        $badgeLabel = '✕ Đã từ chối';
                     }
                 @endphp
-                <tr style="cursor: pointer;" onclick="toggleOrderDetail('detail-{{ $ord->id }}')" title="Nhấn để xem chi tiết sản phẩm">
+                <tr style="cursor: pointer;" onclick="location.href='{{ route('seller.orders.show', $ord->id) }}'" title="Nhấn để xem chi tiết đơn hàng">
                     <td style="font-weight: 800; color: var(--slr-primary);">#ORD-{{ str_pad($ord->id, 5, '0', STR_PAD_LEFT) }}</td>
                     <td style="font-size: 0.78rem; color: var(--slr-text-muted); line-height: 1.5;">
                         {{ \Carbon\Carbon::parse($ord->created_at)->format('d/m/Y') }}<br>
@@ -111,45 +115,14 @@
                         {{ number_format($ord->total_amount ?? 0, 0, ',', '.') }}đ
                     </td>
                     <td onclick="event.stopPropagation()">
-                        <span style="display: inline-block; font-size: 0.73rem; font-weight: 800; padding: 5px 10px; border-radius: 20px; {{ $badgeStyle }}">
+                        <span id="badge-{{ $ord->id }}" style="display: inline-block; font-size: 0.73rem; font-weight: 800; padding: 5px 10px; border-radius: 20px; {{ $badgeStyle }}">
                             {{ $badgeLabel }}
                         </span>
                     </td>
                     <td style="text-align: center;" onclick="event.stopPropagation()">
-                        @if($isPending)
-                            <div style="display: flex; gap: 6px; justify-content: center;">
-                                <form action="{{ route('seller.orders.update-status', $ord->id) }}" method="POST"
-                                      onsubmit="return confirm('Xác nhận đơn hàng #ORD-{{ str_pad($ord->id, 5, '0', STR_PAD_LEFT) }}?')">
-                                    @csrf
-                                    @method('PUT')
-                                    <input type="hidden" name="status" value="confirmed">
-                                    <button type="submit" style="display:inline-flex; align-items:center; gap:4px; padding:7px 12px; border-radius:8px; border:none; background:#10b981; color:#fff; font-weight:700; font-size:0.76rem; cursor:pointer; box-shadow:0 2px 8px rgba(16,185,129,0.3); transition:all 0.2s;"
-                                        onmouseover="this.style.background='#059669'"
-                                        onmouseout="this.style.background='#10b981'">
-                                        ✅ Xác nhận
-                                    </button>
-                                </form>
-                                <form action="{{ route('seller.orders.update-status', $ord->id) }}" method="POST"
-                                      onsubmit="return confirm('Từ chối đơn hàng #ORD-{{ str_pad($ord->id, 5, '0', STR_PAD_LEFT) }}?')">
-                                    @csrf
-                                    @method('PUT')
-                                    <input type="hidden" name="status" value="cancelled">
-                                    <button type="submit" style="display:inline-flex; align-items:center; gap:4px; padding:7px 10px; border-radius:8px; border:1.5px solid rgba(239,68,68,0.25); background:#fef2f2; color:#ef4444; font-weight:700; font-size:0.76rem; cursor:pointer; transition:all 0.2s;"
-                                        onmouseover="this.style.background='#fee2e2'"
-                                        onmouseout="this.style.background='#fef2f2'">
-                                        ✕ Từ chối
-                                    </button>
-                                </form>
-                            </div>
-                        @elseif($isConfirmed)
-                            <span style="font-size: 0.75rem; color: #10b981; font-weight: 700;">✅ Đã xác nhận</span>
-                        @elseif($isCancelled)
-                            <span style="font-size: 0.75rem; color: #ef4444; font-weight: 700;">✕ Đã từ chối</span>
-                        @elseif($isDone)
-                            <span style="font-size: 0.75rem; color: #0ea5e9; font-weight: 700;">🎉 Hoàn tất</span>
-                        @else
-                            <span style="font-size: 0.75rem; color: var(--slr-text-muted);">—</span>
-                        @endif
+                        <a href="{{ route('seller.orders.show', $ord->id) }}" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 20px; background: #f3f4f6; color: #374151; font-weight: 700; font-size: 0.78rem; text-decoration: none; border: 1px solid #e5e7eb; transition: all 0.2s;" onmouseover="this.style.background='#e5e7eb'; this.style.color='#111827';" onmouseout="this.style.background='#f3f4f6'; this.style.color='#374151';">
+                            👁️ Chi tiết
+                        </a>
                     </td>
                 </tr>
 

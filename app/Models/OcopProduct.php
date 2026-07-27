@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class OcopProduct extends Model
 {
-    protected $connection = 'mysql_market';
+    protected $table = 'ocop_products';
 
     protected $fillable = [
         'eatery_id',
@@ -31,8 +31,6 @@ class OcopProduct extends Model
 
     protected $casts = [
         'price' => 'decimal:2',
-        'ingredients' => 'array',
-        'timeline' => 'array',
     ];
 
     public function eatery(): BelongsTo

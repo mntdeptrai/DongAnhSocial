@@ -1,6 +1,6 @@
 @extends('layouts.seller')
 
-@section('title', 'Kênh Điều Hành Gian Hàng Số — ' . $stallName)
+@section('title', 'Kênh Điều Hành Gian Hàng — ' . $stallName)
 
 @section('content')
 
@@ -10,8 +10,13 @@
     $productsCount = $productsCount ?? 0;
 @endphp
 
+@if(session('success'))
+    <div style="padding: 14px 20px; background: #ecfdf5; border: 1.5px solid #10b981; color: #065f46; border-radius: 12px; font-weight: 800; margin-bottom: 20px; display: flex; align-items: center; gap: 8px;">
+        <span>🎉</span> {{ session('success') }}
+    </div>
+@endif
+
 <style>
-/* Dedicated Seller Merchant POS Theme */
 .slr-merchant-header {
     background: linear-gradient(135deg, #c2410c 0%, #ea580c 50%, #d97706 100%);
     border-radius: 22px;
@@ -54,12 +59,6 @@
     padding: 22px;
     box-shadow: 0 8px 20px -4px rgba(234, 88, 12, 0.08);
     transition: all 0.25s ease;
-}
-
-.slr-pos-card:hover {
-    transform: translateY(-4px);
-    border-color: #f97316;
-    box-shadow: 0 15px 30px -8px rgba(234, 88, 12, 0.2);
 }
 
 .slr-action-bar {
@@ -132,19 +131,6 @@
         <div style="font-size: 2.2rem; font-weight: 900; color: #7c3aed; margin: 4px 0;">100%</div>
         <div style="font-size: 0.78rem; color: #7c3aed; font-weight: 700;">📲 Chuyển khoản QR ngân hàng</div>
     </div>
-</div>
-
-<!-- QUICK ACTION SHORTCUTS -->
-<div class="slr-action-bar">
-    <a href="{{ route('seller.products.index') }}" class="slr-action-btn" style="background: #ea580c; color: #ffffff; box-shadow: 0 8px 20px rgba(234, 88, 12, 0.3);">
-        <span>➕</span> Thêm Món / Điều Chỉnh Giá Niêm Yết
-    </a>
-    <a href="{{ route('seller.orders.index') }}" class="slr-action-btn" style="background: #ffffff; color: #ea580c; border: 1.5px solid #ffedd5; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
-        <span>📦</span> Kiểm Tra Đơn Hàng Mới
-    </a>
-    <a href="/dia-diem/{{ $market ? $market->slug : 'cho-to' }}" target="_blank" class="slr-action-btn" style="background: #fff7ed; color: #c2410c; border: 1.5px solid #ffedd5;">
-        <span>🗺️</span> Xem Gian Hàng Trực Tuyến Bản Đồ
-    </a>
 </div>
 
 <!-- PRODUCTS TABLE PREVIEW -->

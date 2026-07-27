@@ -120,7 +120,7 @@ class CheckoutController extends Controller
                     'shipping_address' => $request->input('address'),
                     'total_amount' => $totalAmount,
                     'payment_method' => $request->input('payment_method'),
-                    'status' => 'pending',
+                    'status' => 'confirmed', // Tự động chuyển thẳng sang 'Sạp nhận đơn' cho cả COD và Online!
                     'notes' => $request->input('notes'),
                 ]);
 
@@ -224,7 +224,7 @@ class CheckoutController extends Controller
             }
 
             if ($success) {
-                $order->status = 'paid';
+                $order->status = 'confirmed'; // Tự động chuyển sang 'Sạp nhận đơn' khi khách chuyển khoản thành công
                 $order->save();
             }
 

@@ -138,6 +138,20 @@ class User extends Authenticatable
         return $owned;
     }
 
+    /**
+     * Lấy gian hàng chợ số mà Seller này làm chủ
+     */
+    public function getStall()
+    {
+        if ($this->stall_id) {
+            return \Illuminate\Support\Facades\DB::connection('mysql_market')
+                ->table('ocop_products')
+                ->where('id', $this->stall_id)
+                ->first();
+        }
+        return null;
+    }
+
     public function sentRequests()
     {
         return $this->hasMany(Friendship::class, 'user_id');

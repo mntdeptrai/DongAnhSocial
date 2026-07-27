@@ -10,6 +10,7 @@ use App\Http\Controllers\VendorController;
 use App\Http\Controllers\FoodTourController;
 use App\Http\Controllers\SocialHubController;
 use App\Http\Controllers\MarketStallController;
+use App\Http\Controllers\ManagerOrderController;
 
 /*
 |--------------------------------------------------------------------------
@@ -139,11 +140,13 @@ Route::get('/auth/logout', [AuthController::class, 'logout'])->name('logout.get'
 // --- STALL VENDOR SIDE ROUTES (Kênh Điều Hành Chủ Gian Hàng Số) ---
 Route::prefix('seller')->middleware(['auth', 'role:seller,admin', 'tenant.auth'])->group(function () {
     Route::get('/dashboard', [VendorController::class, 'dashboard'])->name('seller.dashboard');
+    Route::post('/dossier', [VendorController::class, 'updateDossier'])->name('seller.dossier.update');
     Route::get('/products', [VendorController::class, 'products'])->name('seller.products.index');
     Route::post('/products', [VendorController::class, 'storeProduct'])->name('seller.products.store');
     Route::put('/products/{id}', [VendorController::class, 'updateProduct'])->name('seller.products.update');
     Route::delete('/products/{id}', [VendorController::class, 'destroyProduct'])->name('seller.products.destroy');
     Route::get('/orders', [VendorController::class, 'orders'])->name('seller.orders.index');
+    Route::get('/orders/{id}', [VendorController::class, 'showOrder'])->name('seller.orders.show');
     Route::put('/orders/{id}/status', [VendorController::class, 'updateOrderStatus'])->name('seller.orders.update-status');
     Route::get('/api/orders', [VendorController::class, 'ordersJson'])->name('seller.orders.json');
 });
@@ -243,5 +246,19 @@ Route::prefix('admin')->middleware(['auth', 'role:admin,manager', 'tenant.auth']
         Route::put('/users/{id}', [AdminController::class, 'updateUser'])->name('admin.users.update');
         Route::delete('/users/{id}', [AdminController::class, 'destroyUser'])->name('admin.users.destroy');
         Route::post('/users/{id}/toggle-status', [AdminController::class, 'toggleUserStatus'])->name('admin.users.toggle-status');
+
+        // Quản lý Gian Hàng Chợ Số (CRUD Gian hàng & Thống kê dữ liệu Chợ 4.0)
+        Route::get('/stalls', [AdminController::class, 'indexStalls'])->name('admin.stalls.index');
+        Route::get('/stalls/create', [AdminController::class, 'createStall'])->name('admin.stalls.create');
+        Route::post('/stalls', [AdminController::class, 'storeStall'])->name('admin.stalls.store');
+        Route::get('/stalls/{id}/edit', [AdminController::class, 'editStall'])->name('admin.stalls.edit');
+        Route::put('/stalls/{id}', [AdminController::class, 'updateStall'])->name('admin.stalls.update');
+        Route::delete('/stalls/{id}', [AdminController::class, 'destroyStall'])->name('admin.stalls.destroy');
+
+        // Quản lý Đơn Hàng Toàn Chợ (BQL Chợ & Admin)
+        Route::get('/orders', [ManagerOrderController::class, 'orders'])->name('admin.orders.index');
+        Route::get('/orders/{id}', [ManagerOrderController::class, 'showOrder'])->name('admin.orders.show');
+        Route::put('/orders/{id}/status', [ManagerOrderController::class, 'updateOrderStatus'])->name('admin.orders.update-status');
+        Route::get('/api/orders', [ManagerOrderController::class, 'ordersJson'])->name('admin.orders.json');
     });
 });
