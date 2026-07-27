@@ -29,11 +29,81 @@ class SchoolStoryteller {
             zoomAnimation: true
         }).setView([21.135, 105.865], 12);
 
-        // Dark Matter CartoDB / Esri Satellite base tile layer for high-end cinematic display
+        // CartoDB Voyager bright light tile layer for crisp, modern, colorful map display
         L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
             maxZoom: 19,
             subdomains: 'abcd'
         }).addTo(this.map);
+    }
+
+    initSparkleCanvas() {
+        const canvas = document.getElementById('storySparkleCanvas');
+        if (!canvas) return;
+        
+        const ctx = canvas.getContext('2d');
+        let width = canvas.width = window.innerWidth;
+        let height = canvas.height = window.innerHeight;
+
+        const onResize = () => {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        };
+        window.removeEventListener('resize', onResize);
+        window.addEventListener('resize', onResize);
+
+        const particles = [];
+        const particleCount = 60;
+        const colors = ['#fef08a', '#fbbf24', '#a5b4fc', '#38bdf8', '#c084fc', '#ffffff'];
+
+        for (let i = 0; i < particleCount; i++) {
+            particles.push({
+                x: Math.random() * width,
+                y: Math.random() * height,
+                size: Math.random() * 3 + 1,
+                color: colors[Math.floor(Math.random() * colors.length)],
+                speedY: -(Math.random() * 0.7 + 0.2),
+                speedX: (Math.random() - 0.5) * 0.4,
+                alpha: Math.random(),
+                fade: Math.random() * 0.02 + 0.005
+            });
+        }
+
+        const animateSparkles = () => {
+            const modal = document.getElementById('storytellingModal');
+            if (!modal || !modal.classList.contains('active')) return;
+            
+            ctx.clearRect(0, 0, width, height);
+
+            particles.forEach(p => {
+                p.y += p.speedY;
+                p.x += p.speedX;
+                p.alpha += p.fade;
+
+                if (p.alpha > 1 || p.alpha < 0.1) {
+                    p.fade = -p.fade;
+                }
+
+                if (p.y < 0) {
+                    p.y = height;
+                    p.x = Math.random() * width;
+                }
+
+                ctx.save();
+                ctx.globalAlpha = Math.max(0, Math.min(1, p.alpha));
+                ctx.fillStyle = p.color;
+                ctx.shadowBlur = 12;
+                ctx.shadowColor = p.color;
+                
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            });
+
+            requestAnimationFrame(animateSparkles);
+        };
+
+        animateSparkles();
     }
 
     async startStory(schoolSlug, redirectUrl) {
@@ -47,8 +117,9 @@ class SchoolStoryteller {
         const modal = document.getElementById('storytellingModal');
         if (modal) modal.classList.add('active');
 
-        // Init map if needed
+        // Init map & sparkle animation
         this.initMap();
+        this.initSparkleCanvas();
         this.resetLayers();
         this.renderTimeline();
 
@@ -310,6 +381,9 @@ class SchoolStoryteller {
             document.getElementById('storyCardPrincipal').innerText = comp1.principal;
             document.getElementById('storyCardPhone').innerText = comp1.phone;
 
+            const actionBtn = document.getElementById('storyCardActionBtn');
+            if (actionBtn) actionBtn.style.display = 'none';
+
             card.classList.add('show');
         }
 
@@ -381,6 +455,9 @@ class SchoolStoryteller {
             document.getElementById('storyStatStudents').innerText = `${comp2.students} HS`;
             document.getElementById('storyCardPrincipal').innerText = comp2.principal;
             document.getElementById('storyCardPhone').innerText = comp2.phone;
+
+            const actionBtn = document.getElementById('storyCardActionBtn');
+            if (actionBtn) actionBtn.style.display = 'none';
 
             card.classList.add('show');
         }
@@ -546,6 +623,12 @@ class SchoolStoryteller {
             document.getElementById('storyStatStudents').innerText = `${mSchool.students} HS`;
             document.getElementById('storyCardPrincipal').innerText = mSchool.principal;
             document.getElementById('storyCardPhone').innerText = mSchool.phone;
+
+            const actionBtn = document.getElementById('storyCardActionBtn');
+            if (actionBtn) {
+                actionBtn.style.display = 'flex';
+                actionBtn.innerHTML = '<span>🔍 Tra cứu chi tiết trường mới</span> ➔';
+            }
 
             card.classList.add('show');
         }

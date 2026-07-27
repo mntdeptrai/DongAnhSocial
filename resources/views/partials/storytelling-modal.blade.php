@@ -4,6 +4,8 @@
      ========================================================================== --}}
 
 <div id="storytellingModal" class="story-overlay-modal" role="dialog" aria-hidden="true">
+    <!-- Sparkle Canvas Overlay -->
+    <canvas id="storySparkleCanvas"></canvas>
     
     <!-- 1. PHASE 0: INTRO SCREEN -->
     <div id="storyIntroScreen" class="story-intro-screen hidden">
@@ -92,8 +94,8 @@
                 </div>
             </div>
 
-            <button class="story-card-action-btn" onclick="window.storyteller.skipStory()">
-                <span>🔍 Tra cứu chi tiết trường</span> ➔
+            <button id="storyCardActionBtn" class="story-card-action-btn" style="display: none;" onclick="window.storyteller.skipStory()">
+                <span>🔍 Tra cứu chi tiết trường mới</span> ➔
             </button>
         </div>
     </div>
