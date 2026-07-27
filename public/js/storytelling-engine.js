@@ -246,7 +246,7 @@ class SchoolStoryteller {
         this.setStep(stepNum);
     }
 
-    typeText(elementId, text, speed = 25) {
+    typeText(elementId, text, speed = 12) {
         return new Promise(resolve => {
             const el = document.getElementById(elementId);
             if (!el) return resolve();
@@ -305,10 +305,10 @@ class SchoolStoryteller {
         document.getElementById('storyIntroSubtitle').innerText = `Tổ chức lại & Sắp xếp các cơ sở giáo dục công lập xã Đông Anh`;
 
         this.speak(`Hành trình hình thành ${this.currentData.mergedSchool.name}`);
-        await this.sleep(2600);
+        await this.sleep(1600);
 
         intro.classList.add('hidden');
-        await this.sleep(600);
+        await this.sleep(400);
     }
 
     // ==========================================
@@ -320,15 +320,15 @@ class SchoolStoryteller {
 
         // Fly camera down to Dong Anh
         this.map.flyTo([21.135, 105.865], 12.5, {
-            duration: 2.2,
+            duration: 1.2,
             easeLinearity: 0.25
         });
 
         const narrativeMsg = `Đang tải ranh giới hành chính xã Đông Anh. Chạm vào các điểm trên bản đồ để khám phá hành trình sáp nhập ${this.currentData.mergedSchool.name}.`;
         this.speak(narrativeMsg);
-        await this.typeText('storyNarrativeText', narrativeMsg, 20);
+        await this.typeText('storyNarrativeText', narrativeMsg, 12);
 
-        await this.sleep(2500);
+        await this.sleep(1200);
     }
 
     // ==========================================
@@ -365,7 +365,7 @@ class SchoolStoryteller {
 
         // Fly camera
         this.map.flyTo([comp1.lat, comp1.lng], 15.5, {
-            duration: 1.8
+            duration: 1.0
         });
 
         // Show Glass Card UI
@@ -389,9 +389,9 @@ class SchoolStoryteller {
 
         const msg = `Cơ sở 1: ${comp1.name} hiện tại có quy mô ${comp1.classes} lớp học và ${comp1.students} học sinh.`;
         this.speak(msg);
-        await this.typeText('storyNarrativeText', msg, 20);
+        await this.typeText('storyNarrativeText', msg, 12);
 
-        await this.sleep(3200);
+        await this.sleep(1600);
     }
 
     // ==========================================
@@ -414,7 +414,7 @@ class SchoolStoryteller {
         // Hide old card momentarily
         const card = document.getElementById('storyGlassCard');
         if (card) card.classList.remove('show');
-        await this.sleep(300);
+        await this.sleep(150);
 
         // Create Marker 2
         const iconHtml = `
@@ -441,7 +441,7 @@ class SchoolStoryteller {
 
         // Fly camera
         this.map.flyTo([comp2.lat, comp2.lng], 15.5, {
-            duration: 1.8
+            duration: 1.0
         });
 
         // Populate Card 2
@@ -464,9 +464,9 @@ class SchoolStoryteller {
 
         const msg = `Cơ sở 2 được tổ chức lại: ${comp2.name} với quy mô ${comp2.classes} lớp và ${comp2.students} học sinh.`;
         this.speak(msg);
-        await this.typeText('storyNarrativeText', msg, 20);
+        await this.typeText('storyNarrativeText', msg, 12);
 
-        await this.sleep(3200);
+        await this.sleep(1600);
     }
 
     // ==========================================
@@ -487,10 +487,10 @@ class SchoolStoryteller {
         const bounds = L.latLngBounds(latLngs);
         this.map.flyToBounds(bounds, {
             padding: [100, 100],
-            duration: 2.0
+            duration: 1.2
         });
 
-        await this.sleep(1000);
+        await this.sleep(500);
 
         // Draw animated Polyline route
         if (this.currentData.components.length >= 2) {
@@ -529,9 +529,9 @@ class SchoolStoryteller {
 
         const msg = `Khoảng cách giữa hai cơ sở là ${this.currentData.distanceText}, thời gian di chuyển khoảng ${this.currentData.durationText}. Hạ tầng giao thông kết nối hoàn hảo.`;
         this.speak(msg);
-        await this.typeText('storyNarrativeText', msg, 20);
+        await this.typeText('storyNarrativeText', msg, 12);
 
-        await this.sleep(3500);
+        await this.sleep(1800);
     }
 
     // ==========================================
@@ -548,13 +548,13 @@ class SchoolStoryteller {
         // Fade out old markers
         this.markers.forEach(m => {
             if (m._icon) {
-                m._icon.style.transition = 'all 0.8s ease';
+                m._icon.style.transition = 'all 0.4s ease';
                 m._icon.style.opacity = '0';
                 m._icon.style.transform = 'scale(0)';
             }
         });
 
-        await this.sleep(600);
+        await this.sleep(300);
 
         // Add Merged School New Marker
         const mSchool = this.currentData.mergedSchool;
@@ -582,7 +582,7 @@ class SchoolStoryteller {
 
         // Fly camera to new school
         this.map.flyTo([mSchool.lat, mSchool.lng], 16, {
-            duration: 1.8
+            duration: 1.0
         });
 
         // Show Flash Announcement Overlay
@@ -594,9 +594,9 @@ class SchoolStoryteller {
 
         const msg = `Hợp nhất các đơn vị thành lập ${mSchool.name}. Tối ưu hóa quy mô và nâng cao chất lượng dạy và học.`;
         this.speak(msg);
-        await this.typeText('storyNarrativeText', msg, 20);
+        await this.typeText('storyNarrativeText', msg, 12);
 
-        await this.sleep(3500);
+        await this.sleep(1800);
     }
 
     // ==========================================
@@ -635,9 +635,9 @@ class SchoolStoryteller {
 
         const msg = `${mSchool.name} chính thức hình thành với tổng quy mô ${mSchool.classes} lớp học, ${mSchool.students} học sinh (${mSchool.ratio}).`;
         this.speak(msg);
-        await this.typeText('storyNarrativeText', msg, 20);
+        await this.typeText('storyNarrativeText', msg, 12);
 
-        await this.sleep(4000);
+        await this.sleep(2200);
     }
 
     // ==========================================
@@ -649,18 +649,18 @@ class SchoolStoryteller {
 
         const msg = `Đang chuyển tới trang thông tin chi tiết trường...`;
         this.speak(msg);
-        await this.typeText('storyNarrativeText', msg, 20);
+        await this.typeText('storyNarrativeText', msg, 12);
 
         // Zoom out and fade map
-        this.map.zoomOut(2, { animate: true, duration: 1.2 });
+        this.map.zoomOut(2, { animate: true, duration: 0.8 });
 
         const modal = document.getElementById('storytellingModal');
         if (modal) {
-            modal.style.transition = 'opacity 1s ease';
+            modal.style.transition = 'opacity 0.5s ease';
             modal.style.opacity = '0';
         }
 
-        await this.sleep(1000);
+        await this.sleep(500);
 
         if (this.targetUrl) {
             window.location.href = this.targetUrl;
