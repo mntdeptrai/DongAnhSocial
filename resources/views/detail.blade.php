@@ -787,13 +787,13 @@
 
                 if ($categorySlug === 'smart-education-map') {
                     $items = $eatery->educationPrograms;
-                    $title = 'Chương trình đào tạo & Khóa học';
-                    $icon = '📚';
-                    $emptyText = 'Chưa cập nhật chương trình đào tạo cho trường này.';
-                    $btnText = 'Xem toàn bộ chương trình';
-                    $modalTitle = 'Chương trình đào tạo - ' . $eatery->name;
-                    $itemUnit = 'chương trình';
-                    $placeholderSearch = 'Tìm kiếm khóa học, chương trình...';
+                    $title = 'Danh sách các trường học sáp nhập vào (Phương án PA3)';
+                    $icon = '🏫';
+                    $emptyText = 'Chưa có thông tin các trường sáp nhập cho đơn vị này.';
+                    $btnText = 'Xem toàn bộ danh sách';
+                    $modalTitle = 'Danh sách các trường sáp nhập vào - ' . $eatery->name;
+                    $itemUnit = 'trường sáp nhập';
+                    $placeholderSearch = 'Tìm kiếm trường sáp nhập...';
                 } elseif ($categorySlug === 'wellness-care') {
                     $items = $eatery->wellnessServices;
                     $title = 'Dịch vụ Y tế & Chăm sóc sức khỏe';
@@ -834,18 +834,140 @@
                     $items = $eatery->dishes;
                     $modalTitle = 'Thực Đơn Chi Tiết - ' . $eatery->name;
                 }
+
+                $mergedSchoolsData = [
+                    'mn-phuc-loc' => [
+                        ['name' => 'Trường Mầm non Phúc Lộc (Cũ)', 'classes' => 16, 'students' => 405, 'address' => 'Khu A, Thôn Phúc Lộc, Xã Đông Anh', 'principal' => 'Cô Nguyễn Thị Hoa', 'photo' => 'https://images.unsplash.com/photo-1587654780291-39c9404d746b?auto=format&fit=crop&w=600&q=80'],
+                        ['name' => 'Trường Mầm non Sao Mai', 'classes' => 14, 'students' => 354, 'address' => 'Khu B, Thôn Phúc Lộc, Xã Đông Anh', 'principal' => 'Cô Trần Thị Mai', 'photo' => 'https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=600&q=80'],
+                    ],
+                    'mn-co-loa' => [
+                        ['name' => 'Trường Mầm non Cổ Loa (Đơn vị 1)', 'classes' => 18, 'students' => 564, 'address' => 'Xóm Chùa, Xã Cổ Loa, Đông Anh', 'principal' => 'Cô Lê Thị Nga', 'photo' => 'https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=600&q=80'],
+                        ['name' => 'Trường Mầm non Thành Loa', 'classes' => 18, 'students' => 383, 'address' => 'Xóm Chợ, Xã Cổ Loa, Đông Anh', 'principal' => 'Cô Phạm Thị Yến', 'photo' => 'https://images.unsplash.com/photo-1576495199011-87b3f6c21dbb?auto=format&fit=crop&w=600&q=80'],
+                    ],
+                    'mn-mai-lam' => [
+                        ['name' => 'Trường Mầm non Thái Bình', 'classes' => 18, 'students' => 521, 'address' => 'Thôn Thái Bình, Xã Mai Lâm', 'principal' => 'Cô Đỗ Thị Kim', 'photo' => 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=600&q=80'],
+                        ['name' => 'Trường Mầm non Mai Lâm (Cũ)', 'classes' => 14, 'students' => 345, 'address' => 'Thôn Mai Lâm, Xã Mai Lâm', 'principal' => 'Cô Hoàng Thị Thu', 'photo' => 'https://images.unsplash.com/photo-1587654780291-39c9404d746b?auto=format&fit=crop&w=600&q=80'],
+                    ],
+                    'mn-viet-hung' => [
+                        ['name' => 'Trường Mầm non Dục Nội', 'classes' => 17, 'students' => 525, 'address' => 'Thôn Dục Nội, Xã Việt Hùng', 'principal' => 'Cô Ngô Thị Bích', 'photo' => 'https://images.unsplash.com/photo-1588072432836-e10032774350?auto=format&fit=crop&w=600&q=80'],
+                        ['name' => 'Trường Mầm non Việt Hùng (Cũ)', 'classes' => 12, 'students' => 268, 'address' => 'Thôn Lương Quán, Xã Việt Hùng', 'principal' => 'Cô Vũ Thị Hà', 'photo' => 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=600&q=80'],
+                        ['name' => 'Trường Mầm non Dục Tú', 'classes' => 26, 'students' => 647, 'address' => 'Thôn Dục Tú, Xã Việt Hùng', 'principal' => 'Cô Trịnh Thị Luyến', 'photo' => 'https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=600&q=80'],
+                    ],
+                    'mn-uy-no' => [
+                        ['name' => 'Trường Mầm non Uy Nỗ A', 'classes' => 15, 'students' => 420, 'address' => 'Tổ 12, Thị trấn Đông Anh', 'principal' => 'Cô Bùi Thị Phương', 'photo' => 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=600&q=80'],
+                        ['name' => 'Trường Mầm non Uy Nỗ (Cũ)', 'classes' => 18, 'students' => 490, 'address' => 'Tổ 15, Thị trấn Đông Anh', 'principal' => 'Cô Đinh Thị Lan', 'photo' => 'https://images.unsplash.com/photo-1587654780291-39c9404d746b?auto=format&fit=crop&w=600&q=80'],
+                    ],
+                    'mn-dong-anh' => [
+                        ['name' => 'Trường Mầm non Tiên Dương', 'classes' => 28, 'students' => 875, 'address' => 'Thôn Cổ Dương, Xã Tiên Dương', 'principal' => 'Cô Nguyễn Thị Thủy', 'photo' => 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=600&q=80'],
+                        ['name' => 'Trường Mầm non Nguyên Khê', 'classes' => 20, 'students' => 589, 'address' => 'Thôn Nguyên Khê, Xã Nguyên Khê', 'principal' => 'Cô Phan Thị Minh', 'photo' => 'https://images.unsplash.com/photo-1588072432836-e10032774350?auto=format&fit=crop&w=600&q=80'],
+                    ],
+                    'th-dong-hoi' => [
+                        ['name' => 'Trường Tiểu học Đông Hội (Cũ)', 'classes' => 38, 'students' => 1887, 'address' => 'Thôn Hội Phụ, Xã Đông Hội', 'principal' => 'Thầy Lê Văn Hùng', 'photo' => 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=600&q=80'],
+                        ['name' => 'Trường Tiểu học Xuân Canh', 'classes' => 17, 'students' => 539, 'address' => 'Thôn Xuân Canh, Xã Xuân Canh', 'principal' => 'Cô Nguyễn Thị Lý', 'photo' => 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=600&q=80'],
+                    ],
+                    'th-viet-hung' => [
+                        ['name' => 'Trường Tiểu học Việt Hùng (Cũ)', 'classes' => 21, 'students' => 667, 'address' => 'Thôn Gia Lương, Xã Việt Hùng', 'principal' => 'Cô Đỗ Thị Thanh', 'photo' => 'https://images.unsplash.com/photo-1564981797816-1043664bf78d?auto=format&fit=crop&w=600&q=80'],
+                        ['name' => 'Trường Tiểu học Việt Hùng 2', 'classes' => 19, 'students' => 570, 'address' => 'Thôn Dục Nội, Xã Việt Hùng', 'principal' => 'Thầy Trần Văn Nam', 'photo' => 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=600&q=80'],
+                    ],
+                    'thcs-an-duong-vuong' => [
+                        ['name' => 'Trường THCS An Dương Vương (Cũ)', 'classes' => 19, 'students' => 739, 'address' => 'Thôn Vân Hà, Xã Vân Hà', 'principal' => 'Thầy Nguyễn Văn Đức', 'photo' => 'https://images.unsplash.com/photo-1541829070764-84a7d30dd3f3?auto=format&fit=crop&w=600&q=80'],
+                        ['name' => 'Trường THCS Việt Hùng', 'classes' => 31, 'students' => 1281, 'address' => 'Thôn Gia Lương, Xã Việt Hùng', 'principal' => 'Cô Nguyễn Thị Dung', 'photo' => 'https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=600&q=80'],
+                    ],
+                    'thcs-dong-hoi' => [
+                        ['name' => 'Trường THCS Đông Hội (Cũ)', 'classes' => 22, 'students' => 940, 'address' => 'Thôn Hội Phụ, Xã Đông Hội', 'principal' => 'Thầy Hoàng Văn Hải', 'photo' => 'https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=600&q=80'],
+                        ['name' => 'Trường THCS Xuân Canh', 'classes' => 16, 'students' => 612, 'address' => 'Thôn Xuân Canh, Xã Xuân Canh', 'principal' => 'Cô Trịnh Thị Huệ', 'photo' => 'https://images.unsplash.com/photo-1541829070764-84a7d30dd3f3?auto=format&fit=crop&w=600&q=80'],
+                    ],
+                    'thcs-vinh-ngoc' => [
+                        ['name' => 'Trường THCS Vĩnh Ngọc (Cũ)', 'classes' => 24, 'students' => 1020, 'address' => 'Thôn Ngọc Chi, Xã Vĩnh Ngọc', 'principal' => 'Thầy Đỗ Văn Sang', 'photo' => 'https://images.unsplash.com/photo-1541829070764-84a7d30dd3f3?auto=format&fit=crop&w=600&q=80'],
+                        ['name' => 'Trường THCS Hải Bối', 'classes' => 25, 'students' => 1080, 'address' => 'Thôn Hải Bối, Xã Hải Bối', 'principal' => 'Cô Phạm Thị Mai', 'photo' => 'https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=600&q=80'],
+                    ],
+                    'thcs-tien-duong' => [
+                        ['name' => 'Trường THCS Tiên Dương (Cũ)', 'classes' => 20, 'students' => 850, 'address' => 'Thôn Cổ Dương, Xã Tiên Dương', 'principal' => 'Thầy Nguyễn Văn Bình', 'photo' => 'https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=600&q=80'],
+                        ['name' => 'Trường THCS Nguyên Khê', 'classes' => 22, 'students' => 920, 'address' => 'Thôn Nguyên Khê, Xã Nguyên Khê', 'principal' => 'Cô Lê Thị Hà', 'photo' => 'https://images.unsplash.com/photo-1541829070764-84a7d30dd3f3?auto=format&fit=crop&w=600&q=80'],
+                    ],
+                    'thpt-lien-ha' => [
+                        ['name' => 'Trường THPT Liên Hà (Cơ sở 1)', 'classes' => 27, 'students' => 1215, 'address' => 'Thôn Khu Đoài, Xã Liên Hà', 'principal' => 'Thầy Ngô Văn Lợi', 'photo' => 'https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?auto=format&fit=crop&w=600&q=80'],
+                        ['name' => 'Trường THPT Liên Hà (Cơ sở 2)', 'classes' => 18, 'students' => 810, 'address' => 'Thôn Lỗ Khê, Xã Liên Hà', 'principal' => 'Cô Bùi Thị Nga', 'photo' => 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=600&q=80'],
+                    ],
+                    'thpt-co-loa' => [
+                        ['name' => 'Trường THPT Cổ Loa (Cơ sở chính)', 'classes' => 30, 'students' => 1350, 'address' => 'Thôn Chợ, Xã Cổ Loa', 'principal' => 'Thầy Lê Văn Thành', 'photo' => 'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?auto=format&fit=crop&w=600&q=80'],
+                        ['name' => 'Trường THPT Cổ Loa (Phân hiệu Dục Tú)', 'classes' => 15, 'students' => 675, 'address' => 'Thôn Dục Tú, Xã Dục Tú', 'principal' => 'Cô Đỗ Thị Linh', 'photo' => 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=600&q=80'],
+                    ],
+                    'thpt-nguyen-huy-tuong' => [
+                        ['name' => 'Trường THPT Nguyễn Huy Tưởng (Khu A)', 'classes' => 28, 'students' => 1260, 'address' => 'Tổ 6, Thị trấn Đông Anh', 'principal' => 'Thầy Nguyễn Văn Toàn', 'photo' => 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=600&q=80'],
+                        ['name' => 'Trường THPT Nguyễn Huy Tưởng (Khu B)', 'classes' => 17, 'students' => 765, 'address' => 'Tổ 10, Thị trấn Đông Anh', 'principal' => 'Cô Hoàng Thị Mai', 'photo' => 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=600&q=80'],
+                    ],
+                    'thpt-van-noi' => [
+                        ['name' => 'Trường THPT Vân Nội (Cơ sở 1)', 'classes' => 25, 'students' => 1125, 'address' => 'Thôn Phủ Luễn, Xã Vân Nội', 'principal' => 'Thầy Đỗ Văn Thịnh', 'photo' => 'https://images.unsplash.com/photo-1564981797816-1043664bf78d?auto=format&fit=crop&w=600&q=80'],
+                        ['name' => 'Trường THPT Vân Nội (Cơ sở 2)', 'classes' => 18, 'students' => 810, 'address' => 'Thôn Ba Chữ, Xã Vân Nội', 'principal' => 'Cô Trần Thị Yến', 'photo' => 'https://images.unsplash.com/photo-1541829070764-84a7d30dd3f3?auto=format&fit=crop&w=600&q=80'],
+                    ],
+                    'thpt-dong-anh' => [
+                        ['name' => 'Trường THPT Đông Anh (Cơ sở 1)', 'classes' => 26, 'students' => 1170, 'address' => 'Tổ 2, Thị trấn Đông Anh', 'principal' => 'Thầy Nguyễn Văn Hoan', 'photo' => 'https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=600&q=80'],
+                        ['name' => 'Trường THPT Đông Anh (Cơ sở 2)', 'classes' => 16, 'students' => 720, 'address' => 'Tổ 8, Thị trấn Đông Anh', 'principal' => 'Cô Phạm Thị Thu', 'photo' => 'https://images.unsplash.com/photo-1587654780291-39c9404d746b?auto=format&fit=crop&w=600&q=80'],
+                    ],
+                    'thpt-bac-thang-long' => [
+                        ['name' => 'Trường THPT Bắc Thăng Long (Cơ sở chính)', 'classes' => 32, 'students' => 1440, 'address' => 'Thôn Kim Chung, Xã Kim Chung', 'principal' => 'Thầy Trịnh Văn Tùng', 'photo' => 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=600&q=80'],
+                        ['name' => 'Trường THPT Bắc Thăng Long (Cơ sở Võ Ninh)', 'classes' => 14, 'students' => 630, 'address' => 'Thôn Bầu, Xã Kim Chung', 'principal' => 'Cô Vũ Thị Thắm', 'photo' => 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=600&q=80'],
+                    ]
+                ];
+
+                $schoolSlugKey = \Illuminate\Support\Str::slug($eatery->slug ?: $eatery->name);
+                $mergedList = $mergedSchoolsData[$schoolSlugKey] ?? null;
+
+                if (!$mergedList && $categorySlug === 'smart-education-map') {
+                    foreach ($mergedSchoolsData as $key => $components) {
+                        $cleanKey = str_replace(['truong-', 'mam-non-', 'tieu-hoc-', 'thcs-', 'thpt-'], '', $key);
+                        if (str_contains($schoolSlugKey, $cleanKey) || str_contains($cleanKey, str_replace(['truong-', 'mam-non-', 'tieu-hoc-', 'thcs-', 'thpt-'], '', $schoolSlugKey))) {
+                            $mergedList = $components;
+                            break;
+                        }
+                    }
+                }
             @endphp
 
             <div class="detail-section glass-panel" style="padding: 28px;">
                 <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
                     <h2 class="section-title" style="margin-bottom: 0;"><span>{!! $icon !!}</span> {{ $title }}</h2>
-                    @if($items->count() > 0)
+                    @if($items->count() > 0 && $categorySlug !== 'smart-education-map')
                         <button onclick="openFullMenuModal()" class="btn-secondary" style="font-size: 0.85rem; padding: 8px 18px; border-radius: 8px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; background: rgba(255, 126, 41, 0.05); border-color: rgba(255, 126, 41, 0.2); color: var(--primary);">
                             {!! $icon !!} {{ $btnText }}
                         </button>
                     @endif
                 </div>
-                @if($items->count() > 0)
+
+                @if($categorySlug === 'smart-education-map' && !empty($mergedList) && count($mergedList) > 0)
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px;">
+                        @foreach($mergedList as $comp)
+                            <div class="glass-panel" style="background: rgba(255, 255, 255, 0.03); border: 1.5px solid rgba(52, 152, 219, 0.25); border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; transition: all 0.3s ease;">
+                                <div style="position: relative; height: 160px; overflow: hidden;">
+                                    <img src="{{ $comp['photo'] }}" style="width: 100%; height: 100%; object-fit: cover;" alt="{{ $comp['name'] }}">
+                                    <span style="position: absolute; top: 12px; left: 12px; background: rgba(52, 152, 219, 0.95); color: #fff; padding: 4px 12px; border-radius: 20px; font-size: 0.72rem; font-weight: 800; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+                                        🏫 Trường sáp nhập PA3
+                                    </span>
+                                </div>
+                                <div style="padding: 20px; flex: 1; display: flex; flex-direction: column; justify-content: space-between; gap: 12px;">
+                                    <div>
+                                        <h3 style="font-size: 1.08rem; font-weight: 800; color: var(--text-main); margin: 0 0 8px 0;">{{ $comp['name'] }}</h3>
+                                        <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0 0 6px 0; display: flex; align-items: center; gap: 6px;">
+                                            <span>📍</span> {{ $comp['address'] }}
+                                        </p>
+                                        <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0; display: flex; align-items: center; gap: 6px;">
+                                            <span>👤</span> Đại diện: <strong>{{ $comp['principal'] }}</strong>
+                                        </p>
+                                    </div>
+                                    <div style="display: flex; align-items: center; justify-content: space-between; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.08); margin-top: auto;">
+                                        <span style="font-size: 0.82rem; color: var(--primary); font-weight: 700; background: rgba(255,126,41,0.1); padding: 4px 10px; border-radius: 8px;">
+                                            🏫 Quy mô: {{ $comp['classes'] }} lớp
+                                        </span>
+                                        <strong style="color: #2ecc71; font-size: 0.95rem; font-weight: 800;">
+                                            👥 {{ number_format($comp['students'], 0, ',', '.') }} học sinh
+                                        </strong>
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                @elseif($items->count() > 0)
                     <div style="position: relative; width: 100%;">
                         
                         <div class="menu-slider-wrapper" id="menuSliderWrapper">

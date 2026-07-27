@@ -777,136 +777,169 @@
             <!-- Dynamic Category Details Section -->
             @php
                 $items = $eatery->educationPrograms;
-                $title = 'Chương trình đào tạo & Khóa học';
-                $icon = '📚';
-                $emptyText = 'Chưa cập nhật chương trình đào tạo cho trường này.';
-                $btnText = 'Xem toàn bộ chương trình';
-                $modalTitle = 'Chương trình đào tạo - ' . $eatery->name;
-                $itemUnit = 'chương trình';
-                $placeholderSearch = 'Tìm kiếm khóa học, lớp học...';
+                $title = 'Danh sách các trường học sáp nhập vào (Phương án PA3)';
+                $icon = '🏫';
+                $emptyText = 'Chưa có thông tin các trường sáp nhập cho đơn vị này.';
+                $btnText = 'Xem toàn bộ danh sách';
+                $modalTitle = 'Danh sách các trường sáp nhập vào - ' . $eatery->name;
+                $itemUnit = 'trường sáp nhập';
+                $placeholderSearch = 'Tìm kiếm trường sáp nhập...';
+
+                $mergedSchoolsData = [
+                    'mn-phuc-loc' => [
+                        ['name' => 'Trường Mầm non Phúc Lộc (Cũ)', 'classes' => 16, 'students' => 405, 'address' => 'Khu A, Thôn Phúc Lộc, Xã Đông Anh', 'principal' => 'Cô Nguyễn Thị Hoa', 'photo' => 'https://images.unsplash.com/photo-1587654780291-39c9404d746b?auto=format&fit=crop&w=600&q=80'],
+                        ['name' => 'Trường Mầm non Sao Mai', 'classes' => 14, 'students' => 354, 'address' => 'Khu B, Thôn Phúc Lộc, Xã Đông Anh', 'principal' => 'Cô Trần Thị Mai', 'photo' => 'https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=600&q=80'],
+                    ],
+                    'mn-co-loa' => [
+                        ['name' => 'Trường Mầm non Cổ Loa (Đơn vị 1)', 'classes' => 18, 'students' => 564, 'address' => 'Xóm Chùa, Xã Cổ Loa, Đông Anh', 'principal' => 'Cô Lê Thị Nga', 'photo' => 'https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=600&q=80'],
+                        ['name' => 'Trường Mầm non Thành Loa', 'classes' => 18, 'students' => 383, 'address' => 'Xóm Chợ, Xã Cổ Loa, Đông Anh', 'principal' => 'Cô Phạm Thị Yến', 'photo' => 'https://images.unsplash.com/photo-1576495199011-87b3f6c21dbb?auto=format&fit=crop&w=600&q=80'],
+                    ],
+                    'mn-mai-lam' => [
+                        ['name' => 'Trường Mầm non Thái Bình', 'classes' => 18, 'students' => 521, 'address' => 'Thôn Thái Bình, Xã Mai Lâm', 'principal' => 'Cô Đỗ Thị Kim', 'photo' => 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=600&q=80'],
+                        ['name' => 'Trường Mầm non Mai Lâm (Cũ)', 'classes' => 14, 'students' => 345, 'address' => 'Thôn Mai Lâm, Xã Mai Lâm', 'principal' => 'Cô Hoàng Thị Thu', 'photo' => 'https://images.unsplash.com/photo-1587654780291-39c9404d746b?auto=format&fit=crop&w=600&q=80'],
+                    ],
+                    'mn-viet-hung' => [
+                        ['name' => 'Trường Mầm non Dục Nội', 'classes' => 17, 'students' => 525, 'address' => 'Thôn Dục Nội, Xã Việt Hùng', 'principal' => 'Cô Ngô Thị Bích', 'photo' => 'https://images.unsplash.com/photo-1588072432836-e10032774350?auto=format&fit=crop&w=600&q=80'],
+                        ['name' => 'Trường Mầm non Việt Hùng (Cũ)', 'classes' => 12, 'students' => 268, 'address' => 'Thôn Lương Quán, Xã Việt Hùng', 'principal' => 'Cô Vũ Thị Hà', 'photo' => 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=600&q=80'],
+                        ['name' => 'Trường Mầm non Dục Tú', 'classes' => 26, 'students' => 647, 'address' => 'Thôn Dục Tú, Xã Việt Hùng', 'principal' => 'Cô Trịnh Thị Luyến', 'photo' => 'https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=600&q=80'],
+                    ],
+                    'mn-uy-no' => [
+                        ['name' => 'Trường Mầm non Uy Nỗ A', 'classes' => 15, 'students' => 420, 'address' => 'Tổ 12, Thị trấn Đông Anh', 'principal' => 'Cô Bùi Thị Phương', 'photo' => 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=600&q=80'],
+                        ['name' => 'Trường Mầm non Uy Nỗ (Cũ)', 'classes' => 18, 'students' => 490, 'address' => 'Tổ 15, Thị trấn Đông Anh', 'principal' => 'Cô Đinh Thị Lan', 'photo' => 'https://images.unsplash.com/photo-1587654780291-39c9404d746b?auto=format&fit=crop&w=600&q=80'],
+                    ],
+                    'mn-dong-anh' => [
+                        ['name' => 'Trường Mầm non Tiên Dương', 'classes' => 28, 'students' => 875, 'address' => 'Thôn Cổ Dương, Xã Tiên Dương', 'principal' => 'Cô Nguyễn Thị Thủy', 'photo' => 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=600&q=80'],
+                        ['name' => 'Trường Mầm non Nguyên Khê', 'classes' => 20, 'students' => 589, 'address' => 'Thôn Nguyên Khê, Xã Nguyên Khê', 'principal' => 'Cô Phan Thị Minh', 'photo' => 'https://images.unsplash.com/photo-1588072432836-e10032774350?auto=format&fit=crop&w=600&q=80'],
+                    ],
+                    'th-dong-hoi' => [
+                        ['name' => 'Trường Tiểu học Đông Hội (Cũ)', 'classes' => 38, 'students' => 1887, 'address' => 'Thôn Hội Phụ, Xã Đông Hội', 'principal' => 'Thầy Lê Văn Hùng', 'photo' => 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=600&q=80'],
+                        ['name' => 'Trường Tiểu học Xuân Canh', 'classes' => 17, 'students' => 539, 'address' => 'Thôn Xuân Canh, Xã Xuân Canh', 'principal' => 'Cô Nguyễn Thị Lý', 'photo' => 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=600&q=80'],
+                    ],
+                    'th-viet-hung' => [
+                        ['name' => 'Trường Tiểu học Việt Hùng (Cũ)', 'classes' => 21, 'students' => 667, 'address' => 'Thôn Gia Lương, Xã Việt Hùng', 'principal' => 'Cô Đỗ Thị Thanh', 'photo' => 'https://images.unsplash.com/photo-1564981797816-1043664bf78d?auto=format&fit=crop&w=600&q=80'],
+                        ['name' => 'Trường Tiểu học Việt Hùng 2', 'classes' => 19, 'students' => 570, 'address' => 'Thôn Dục Nội, Xã Việt Hùng', 'principal' => 'Thầy Trần Văn Nam', 'photo' => 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=600&q=80'],
+                    ],
+                    'thcs-an-duong-vuong' => [
+                        ['name' => 'Trường THCS An Dương Vương (Cũ)', 'classes' => 19, 'students' => 739, 'address' => 'Thôn Vân Hà, Xã Vân Hà', 'principal' => 'Thầy Nguyễn Văn Đức', 'photo' => 'https://images.unsplash.com/photo-1541829070764-84a7d30dd3f3?auto=format&fit=crop&w=600&q=80'],
+                        ['name' => 'Trường THCS Việt Hùng', 'classes' => 31, 'students' => 1281, 'address' => 'Thôn Gia Lương, Xã Việt Hùng', 'principal' => 'Cô Nguyễn Thị Dung', 'photo' => 'https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=600&q=80'],
+                    ],
+                    'thcs-dong-hoi' => [
+                        ['name' => 'Trường THCS Đông Hội (Cũ)', 'classes' => 22, 'students' => 940, 'address' => 'Thôn Hội Phụ, Xã Đông Hội', 'principal' => 'Thầy Hoàng Văn Hải', 'photo' => 'https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=600&q=80'],
+                        ['name' => 'Trường THCS Xuân Canh', 'classes' => 16, 'students' => 612, 'address' => 'Thôn Xuân Canh, Xã Xuân Canh', 'principal' => 'Cô Trịnh Thị Huệ', 'photo' => 'https://images.unsplash.com/photo-1541829070764-84a7d30dd3f3?auto=format&fit=crop&w=600&q=80'],
+                    ],
+                    'thcs-vinh-ngoc' => [
+                        ['name' => 'Trường THCS Vĩnh Ngọc (Cũ)', 'classes' => 24, 'students' => 1020, 'address' => 'Thôn Ngọc Chi, Xã Vĩnh Ngọc', 'principal' => 'Thầy Đỗ Văn Sang', 'photo' => 'https://images.unsplash.com/photo-1541829070764-84a7d30dd3f3?auto=format&fit=crop&w=600&q=80'],
+                        ['name' => 'Trường THCS Hải Bối', 'classes' => 25, 'students' => 1080, 'address' => 'Thôn Hải Bối, Xã Hải Bối', 'principal' => 'Cô Phạm Thị Mai', 'photo' => 'https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=600&q=80'],
+                    ],
+                    'thcs-tien-duong' => [
+                        ['name' => 'Trường THCS Tiên Dương (Cũ)', 'classes' => 20, 'students' => 850, 'address' => 'Thôn Cổ Dương, Xã Tiên Dương', 'principal' => 'Thầy Nguyễn Văn Bình', 'photo' => 'https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=600&q=80'],
+                        ['name' => 'Trường THCS Nguyên Khê', 'classes' => 22, 'students' => 920, 'address' => 'Thôn Nguyên Khê, Xã Nguyên Khê', 'principal' => 'Cô Lê Thị Hà', 'photo' => 'https://images.unsplash.com/photo-1541829070764-84a7d30dd3f3?auto=format&fit=crop&w=600&q=80'],
+                    ],
+                    'thpt-lien-ha' => [
+                        ['name' => 'Trường THPT Liên Hà (Cơ sở 1)', 'classes' => 27, 'students' => 1215, 'address' => 'Thôn Khu Đoài, Xã Liên Hà', 'principal' => 'Thầy Ngô Văn Lợi', 'photo' => 'https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?auto=format&fit=crop&w=600&q=80'],
+                        ['name' => 'Trường THPT Liên Hà (Cơ sở 2)', 'classes' => 18, 'students' => 810, 'address' => 'Thôn Lỗ Khê, Xã Liên Hà', 'principal' => 'Cô Bùi Thị Nga', 'photo' => 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=600&q=80'],
+                    ],
+                    'thpt-co-loa' => [
+                        ['name' => 'Trường THPT Cổ Loa (Cơ sở chính)', 'classes' => 30, 'students' => 1350, 'address' => 'Thôn Chợ, Xã Cổ Loa', 'principal' => 'Thầy Lê Văn Thành', 'photo' => 'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?auto=format&fit=crop&w=600&q=80'],
+                        ['name' => 'Trường THPT Cổ Loa (Phân hiệu Dục Tú)', 'classes' => 15, 'students' => 675, 'address' => 'Thôn Dục Tú, Xã Dục Tú', 'principal' => 'Cô Đỗ Thị Linh', 'photo' => 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=600&q=80'],
+                    ],
+                    'thpt-nguyen-huy-tuong' => [
+                        ['name' => 'Trường THPT Nguyễn Huy Tưởng (Khu A)', 'classes' => 28, 'students' => 1260, 'address' => 'Tổ 6, Thị trấn Đông Anh', 'principal' => 'Thầy Nguyễn Văn Toàn', 'photo' => 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=600&q=80'],
+                        ['name' => 'Trường THPT Nguyễn Huy Tưởng (Khu B)', 'classes' => 17, 'students' => 765, 'address' => 'Tổ 10, Thị trấn Đông Anh', 'principal' => 'Cô Hoàng Thị Mai', 'photo' => 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=600&q=80'],
+                    ],
+                    'thpt-van-noi' => [
+                        ['name' => 'Trường THPT Vân Nội (Cơ sở 1)', 'classes' => 25, 'students' => 1125, 'address' => 'Thôn Phủ Luễn, Xã Vân Nội', 'principal' => 'Thầy Đỗ Văn Thịnh', 'photo' => 'https://images.unsplash.com/photo-1564981797816-1043664bf78d?auto=format&fit=crop&w=600&q=80'],
+                        ['name' => 'Trường THPT Vân Nội (Cơ sở 2)', 'classes' => 18, 'students' => 810, 'address' => 'Thôn Ba Chữ, Xã Vân Nội', 'principal' => 'Cô Trần Thị Yến', 'photo' => 'https://images.unsplash.com/photo-1541829070764-84a7d30dd3f3?auto=format&fit=crop&w=600&q=80'],
+                    ],
+                    'thpt-dong-anh' => [
+                        ['name' => 'Trường THPT Đông Anh (Cơ sở 1)', 'classes' => 26, 'students' => 1170, 'address' => 'Tổ 2, Thị trấn Đông Anh', 'principal' => 'Thầy Nguyễn Văn Hoan', 'photo' => 'https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=600&q=80'],
+                        ['name' => 'Trường THPT Đông Anh (Cơ sở 2)', 'classes' => 16, 'students' => 720, 'address' => 'Tổ 8, Thị trấn Đông Anh', 'principal' => 'Cô Phạm Thị Thu', 'photo' => 'https://images.unsplash.com/photo-1587654780291-39c9404d746b?auto=format&fit=crop&w=600&q=80'],
+                    ],
+                    'thpt-bac-thang-long' => [
+                        ['name' => 'Trường THPT Bắc Thăng Long (Cơ sở chính)', 'classes' => 32, 'students' => 1440, 'address' => 'Thôn Kim Chung, Xã Kim Chung', 'principal' => 'Thầy Trịnh Văn Tùng', 'photo' => 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=600&q=80'],
+                        ['name' => 'Trường THPT Bắc Thăng Long (Cơ sở Võ Ninh)', 'classes' => 14, 'students' => 630, 'address' => 'Thôn Bầu, Xã Kim Chung', 'principal' => 'Cô Vũ Thị Thắm', 'photo' => 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=600&q=80'],
+                    ]
+                ];
+
+                $schoolSlugKey = \Illuminate\Support\Str::slug($eatery->slug ?: $eatery->name);
+                $mergedList = $mergedSchoolsData[$schoolSlugKey] ?? null;
+
+                if (!$mergedList) {
+                    foreach ($mergedSchoolsData as $key => $components) {
+                        $cleanKey = str_replace(['truong-', 'mam-non-', 'tieu-hoc-', 'thcs-', 'thpt-'], '', $key);
+                        if (str_contains($schoolSlugKey, $cleanKey) || str_contains($cleanKey, str_replace(['truong-', 'mam-non-', 'tieu-hoc-', 'thcs-', 'thpt-'], '', $schoolSlugKey))) {
+                            $mergedList = $components;
+                            break;
+                        }
+                    }
+                }
             @endphp
 
             <div class="detail-section glass-panel" style="padding: 28px;">
                 <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
                     <h2 class="section-title" style="margin-bottom: 0;"><span>{!! $icon !!}</span> {{ $title }}</h2>
-                    @if($items->count() > 0)
-                        <button onclick="openFullMenuModal()" class="btn-secondary" style="font-size: 0.85rem; padding: 8px 18px; border-radius: 8px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; background: rgba(255, 126, 41, 0.05); border-color: rgba(255, 126, 41, 0.2); color: var(--primary);">
-                            {!! $icon !!} {{ $btnText }}
-                        </button>
-                    @endif
                 </div>
-                @if($items->count() > 0)
+
+                @if(!empty($mergedList) && count($mergedList) > 0)
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px;">
+                        @foreach($mergedList as $comp)
+                            <div class="glass-panel" style="background: rgba(255, 255, 255, 0.03); border: 1.5px solid rgba(52, 152, 219, 0.25); border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; transition: all 0.3s ease;">
+                                <div style="position: relative; height: 160px; overflow: hidden;">
+                                    <img src="{{ $comp['photo'] }}" style="width: 100%; height: 100%; object-fit: cover;" alt="{{ $comp['name'] }}">
+                                    <span style="position: absolute; top: 12px; left: 12px; background: rgba(52, 152, 219, 0.95); color: #fff; padding: 4px 12px; border-radius: 20px; font-size: 0.72rem; font-weight: 800; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+                                        🏫 Trường sáp nhập PA3
+                                    </span>
+                                </div>
+                                <div style="padding: 20px; flex: 1; display: flex; flex-direction: column; justify-content: space-between; gap: 12px;">
+                                    <div>
+                                        <h3 style="font-size: 1.08rem; font-weight: 800; color: var(--text-main); margin: 0 0 8px 0;">{{ $comp['name'] }}</h3>
+                                        <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0 0 6px 0; display: flex; align-items: center; gap: 6px;">
+                                            <span>📍</span> {{ $comp['address'] }}
+                                        </p>
+                                        <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0; display: flex; align-items: center; gap: 6px;">
+                                            <span>👤</span> Đại diện: <strong>{{ $comp['principal'] }}</strong>
+                                        </p>
+                                    </div>
+                                    <div style="display: flex; align-items: center; justify-content: space-between; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.08); margin-top: auto;">
+                                        <span style="font-size: 0.82rem; color: var(--primary); font-weight: 700; background: rgba(255,126,41,0.1); padding: 4px 10px; border-radius: 8px;">
+                                            🏫 Quy mô: {{ $comp['classes'] }} lớp
+                                        </span>
+                                        <strong style="color: #2ecc71; font-size: 0.95rem; font-weight: 800;">
+                                            👥 {{ number_format($comp['students'], 0, ',', '.') }} học sinh
+                                        </strong>
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                @elseif($items->count() > 0)
                     <div style="position: relative; width: 100%;">
-                        
                         <div class="menu-slider-wrapper" id="menuSliderWrapper">
                             <div class="menu-slider-content" id="menuSliderContent">
                                 @foreach($items as $item)
-                                    @if(in_array($categorySlug, ['hanh-trinh-di-san', 'discover-dong-anh-community-culture-hub']))
-                                        <div class="dish-card glass-panel" style="background: rgba(255, 255, 255, 0.02); flex: 0 0 350px; min-width: 320px; display: flex; flex-direction: column; gap: 0; padding: 0; overflow: hidden; border: 1.5px solid rgba(16, 185, 129, 0.2); transition: all 0.3s ease; border-radius: 16px;">
-                                            <div style="position: relative; height: 160px; overflow: hidden; width: 100%;">
-                                                <img src="{{ $item->image_path ?: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80' }}" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease;" alt="{{ $item->name }}">
-                                                <div style="position: absolute; top: 12px; left: 12px; display: flex; flex-direction: column; gap: 6px; z-index: 2;">
-                                                    @if($item->type === 'experience')
-                                                        <span style="background: rgba(3, 105, 161, 0.95); color: #fff; padding: 4px 10px; border-radius: 20px; font-size: 0.68rem; font-weight: 800; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">🏛️ Trải nghiệm</span>
-                                                    @elseif($item->type === 'ticket')
-                                                        <span style="background: rgba(21, 128, 61, 0.95); color: #fff; padding: 4px 10px; border-radius: 20px; font-size: 0.68rem; font-weight: 800; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">🎫 Vé tham quan</span>
-                                                    @elseif($item->type === 'service')
-                                                        <span style="background: rgba(161, 98, 7, 0.95); color: #fff; padding: 4px 10px; border-radius: 20px; font-size: 0.68rem; font-weight: 800; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">🙏 Dịch vụ di tích</span>
-                                                    @else
-                                                        <span style="background: rgba(71, 85, 105, 0.95); color: #fff; padding: 4px 10px; border-radius: 20px; font-size: 0.68rem; font-weight: 800; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">🏛️ Khác</span>
-                                                    @endif
-                                                    @if($item->discount_note && $item->discount_note !== 'null')
-                                                        <span style="background: rgba(221, 107, 32, 0.95); color: #fff; padding: 4px 10px; border-radius: 20px; font-size: 0.68rem; font-weight: 800; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">🏷️ {{ $item->discount_note }}</span>
-                                                    @endif
-                                                </div>
+                                    <div class="dish-card glass-panel" style="background: rgba(255,255,255,0.02); flex: 0 0 calc(50% - 10px); min-width: 290px;">
+                                        <img src="{{ $item->image_path ?: 'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?auto=format&fit=crop&w=150&q=80' }}" class="dish-img" alt="{{ $item->name }}">
+                                        <div class="dish-info" style="flex: 1;">
+                                            <div>
+                                                <span class="tag-badge" style="padding: 1px 6px; font-size: 0.65rem; font-weight: 700; margin-bottom: 4px; display: inline-block; background: rgba(52, 152, 219, 0.1); color: #3498db;">⏱️ {{ $item->duration }}</span>
+                                                <h3 class="dish-name">{{ $item->name }}</h3>
+                                                @if($item->description)
+                                                    <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">{{ $item->description }}</p>
+                                                @endif
                                             </div>
-                                            <div style="padding: 20px; display: flex; flex-direction: column; flex-grow: 1; justify-content: space-between; gap: 12px;">
-                                                <div>
-                                                    <h3 style="font-size: 1.05rem; font-weight: 800; color: var(--text-main); line-height: 1.4; margin: 0 0 8px 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 2.8em;" title="{{ $item->name }}">{{ $item->name }}</h3>
-                                                    @if($item->description && $item->description !== 'null' && $item->description !== 'NULL')
-                                                        <p style="font-size: 0.82rem; color: var(--text-muted); line-height: 1.5; margin: 0; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; min-height: 6em;" title="{{ $item->description }}">{{ $item->description }}</p>
-                                                    @else
-                                                        <div style="min-height: 6em;"></div>
-                                                    @endif
-                                                </div>
-                                                <div style="display: flex; align-items: center; justify-content: space-between; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.06); margin-top: auto;">
-                                                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">💰 Dự chi:</span>
-                                                    <strong style="color: #10b981; font-size: 1.05rem; font-weight: 800;">
-                                                        @if($item->price !== null && $item->price > 0)
-                                                            {{ number_format($item->price, 0, ',', '.') }}đ <span style="font-size: 0.75rem; font-weight: 500; color: var(--text-muted);">/ {{ $item->unit ?: 'lượt' }}</span>
-                                                        @else
-                                                            Theo yêu cầu <span style="font-size: 0.75rem; font-weight: 500; color: var(--text-muted);">/ {{ $item->unit ?: 'lượt' }}</span>
-                                                        @endif
-                                                    </strong>
-                                                </div>
+                                            <div style="margin-top: 8px;">
+                                                <span class="dish-price" style="font-size: 0.95rem;">{{ $item->tuition_fee ?: 'Liên hệ trường' }}</span>
                                             </div>
                                         </div>
-                                    @else
-                                        @php
-                                            $hasProductDossier = !empty($item->story) || !empty($item->artisans) || !empty($item->heritage_year) || !empty($item->fun_fact) || !empty($item->ingredients) || !empty($item->timeline);
-                                        @endphp
-                                        <div class="dish-card glass-panel" 
-                                             style="background: rgba(255,255,255,0.02); flex: 0 0 calc(50% - 10px); min-width: 290px; transition: all 0.3s ease; {{ $hasProductDossier ? 'cursor: pointer;' : '' }}"
-                                             @if($hasProductDossier)
-                                                 onclick="const el = document.getElementById('heritage-dossier-{{ $item->id }}'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });"
-                                                 onmouseover="this.style.borderColor='var(--primary)'; this.style.boxShadow='0 0 15px rgba(255, 126, 41, 0.15)'"
-                                                 onmouseout="this.style.borderColor='rgba(255,255,255,0.08)'; this.style.boxShadow='none'"
-                                             @endif>
-                                            <img src="{{ $item->image_path ?: ($categorySlug === 'smart-education-map' ? 'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?auto=format&fit=crop&w=150&q=80' : ($categorySlug === 'wellness-care' ? 'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?auto=format&fit=crop&w=150&q=80' : ($categorySlug === 'stay-in-dong-anh' ? 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=150&q=80' : ($categorySlug === 'dong-anh-market' ? 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=150&q=80' : 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=150&q=80')))) }}" class="dish-img" alt="{{ $item->name }}">
-                                            <div class="dish-info" style="flex: 1;">
-                                                <div>
-                                                    @if($categorySlug === 'dong-anh-market' && $hasProductDossier)
-                                                        <span class="tag-badge" style="padding: 1px 6px; font-size: 0.65rem; font-weight: 700; margin-bottom: 4px; display: inline-block; background: rgba(212, 175, 55, 0.1); border-color: rgba(212, 175, 55, 0.3); color: #ffb300; animation: pulse-trust 2s infinite;">🏺 Xem Chi Tiết Di Sản</span>
-                                                    @endif
-                                                    @if($categorySlug === 'smart-education-map')
-                                                        <span class="tag-badge" style="padding: 1px 6px; font-size: 0.65rem; font-weight: 700; margin-bottom: 4px; display: inline-block; background: rgba(52, 152, 219, 0.1); border-color: rgba(52, 152, 219, 0.2); color: #3498db;">⏱️ {{ $item->duration }}</span>
-                                                    @elseif($categorySlug === 'wellness-care' && $item->duration)
-                                                        <span class="tag-badge" style="padding: 1px 6px; font-size: 0.65rem; font-weight: 700; margin-bottom: 4px; display: inline-block; background: rgba(46, 204, 113, 0.1); border-color: rgba(46, 204, 113, 0.2); color: #2ecc71;">⏱️ {{ $item->duration }}</span>
-                                                    @elseif($categorySlug === 'stay-in-dong-anh')
-                                                        <span class="tag-badge" style="padding: 1px 6px; font-size: 0.65rem; font-weight: 700; margin-bottom: 4px; display: inline-block; background: rgba(155, 89, 182, 0.1); border-color: rgba(155, 89, 182, 0.2); color: #9b59b6;">🛏️ {{ $item->bed_type }} | 👤 Sức chứa: {{ $item->capacity }}</span>
-                                                    @elseif($categorySlug === 'dong-anh-market' && $item->star_rating)
-                                                        <span class="tag-badge" style="padding: 1px 6px; font-size: 0.65rem; font-weight: 700; margin-bottom: 4px; display: inline-block; background: rgba(241, 196, 15, 0.1); border-color: rgba(241, 196, 15, 0.2); color: #f1c40f;">⭐ OCOP: {{ $item->star_rating }}</span>
-                                                    @elseif(isset($item->is_signature) && $item->is_signature)
-                                                        <span class="tag-badge" style="padding: 1px 6px; font-size: 0.65rem; font-weight: 700; margin-bottom: 4px; display: inline-block;">★ Món đặc trưng</span>
-                                                    @endif
-                                                    <h3 class="dish-name">{{ $item->name }}</h3>
-                                                    @if($item->description && $item->description !== 'null' && $item->description !== 'NULL')
-                                                        <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; line-height: 1.4;">{{ $item->description }}</p>
-                                                    @endif
-                                                </div>
-                                                <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 8px; width: 100%;">
-                                                    @if($categorySlug === 'smart-education-map')
-                                                        <span class="dish-price" style="font-size: 0.95rem;">{{ $item->tuition_fee ?: 'Liên hệ trường' }}</span>
-                                                    @elseif(isset($item->price) && $item->price > 0)
-                                                        <span class="dish-price">{{ number_format($item->price, 0, ',', '.') }}đ{{ $categorySlug === 'stay-in-dong-anh' ? ' / đêm' : '' }}</span>
-                                                    @else
-                                                        <span class="dish-price" style="font-size: 0.95rem; color: var(--text-muted);">Liên hệ</span>
-                                                    @endif
-
-                                                    @if(!in_array($categorySlug, ['stay-in-dong-anh', 'wellness-care', 'smart-education-map', 'discover-dong-anh-community-culture-hub']) && isset($item->price) && $item->price > 0)
-                                                        <button class="btn-add-to-cart-mini" 
-                                                                data-id="{{ $item->id }}" 
-                                                                data-type="{{ $categorySlug === 'dong-anh-market' ? 'ocop_product' : 'dish' }}"
-                                                                style="background: var(--primary-grad); border: none; color: white; padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s; box-shadow: 0 4px 10px rgba(255, 126, 41, 0.2);"
-                                                                onclick="addToCart(event, this)">
-                                                            Thêm 🛒
-                                                        </button>
-                                                    @endif
-                                                </div>
-                                            </div>
-                                        </div>
-                                    @endif
+                                    </div>
                                 @endforeach
                             </div>
                         </div>
                     </div>
-
-                    <!-- Flat Heritage Dossiers Section -->
-
                 @else
                     <div style="text-align: center; padding: 50px 20px; background: rgba(255,255,255,0.015); border-radius: 20px; border: 1px dashed rgba(255,255,255,0.1); display: flex; flex-direction: column; align-items: center; justify-content: center;">
                         <div style="font-size: 3.5rem; opacity: 0.4; margin-bottom: 16px; filter: grayscale(1);">{!! $icon !!}</div>
-                        <h4 style="color: var(--text-main); font-weight: 700; font-size: 1.15rem; margin: 0 0 8px 0;">Dữ liệu đang cập nhật</h4>
+                        <h4 style="color: var(--text-main); font-weight: 700; font-size: 1.15rem; margin: 0 0 8px 0;">Dữ liệu sáp nhập đang cập nhật</h4>
                         <p style="color: var(--text-muted); font-size: 0.95rem; margin: 0;">{{ $emptyText }}</p>
                     </div>
                 @endif
