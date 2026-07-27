@@ -20,7 +20,7 @@ class SchoolStoryteller {
 
     initMap() {
         if (this.map) return;
-        
+
         // Initialize Leaflet map centered on Dong Anh
         this.map = L.map('storyMap', {
             zoomControl: false,
@@ -39,7 +39,7 @@ class SchoolStoryteller {
     initSparkleCanvas() {
         const canvas = document.getElementById('storySparkleCanvas');
         if (!canvas) return;
-        
+
         const ctx = canvas.getContext('2d');
         let width = canvas.width = window.innerWidth;
         let height = canvas.height = window.innerHeight;
@@ -71,7 +71,7 @@ class SchoolStoryteller {
         const animateSparkles = () => {
             const modal = document.getElementById('storytellingModal');
             if (!modal || !modal.classList.contains('active')) return;
-            
+
             ctx.clearRect(0, 0, width, height);
 
             particles.forEach(p => {
@@ -93,7 +93,7 @@ class SchoolStoryteller {
                 ctx.fillStyle = p.color;
                 ctx.shadowBlur = 12;
                 ctx.shadowColor = p.color;
-                
+
                 ctx.beginPath();
                 ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
                 ctx.fill();
@@ -164,10 +164,10 @@ class SchoolStoryteller {
     skipStory() {
         this.isSkipped = true;
         if (this.speechSynth) this.speechSynth.cancel();
-        
+
         const modal = document.getElementById('storytellingModal');
         if (modal) modal.classList.remove('active');
-        
+
         if (this.targetUrl) {
             window.location.href = this.targetUrl;
         }
@@ -177,8 +177,8 @@ class SchoolStoryteller {
         this.isVoiceEnabled = !this.isVoiceEnabled;
         const btn = document.getElementById('storyVoiceBtn');
         if (btn) {
-            btn.innerHTML = this.isVoiceEnabled 
-                ? '<span>🔊</span> Trợ lý giọng nói: BẬT' 
+            btn.innerHTML = this.isVoiceEnabled
+                ? '<span>🔊</span> Trợ lý giọng nói: BẬT'
                 : '<span>🔇</span> Trợ lý giọng nói: TẮT';
         }
         if (!this.isVoiceEnabled && this.speechSynth) {
@@ -197,7 +197,7 @@ class SchoolStoryteller {
 
     setStep(stepNum) {
         this.activeStep = stepNum;
-        
+
         // Update progress dots
         const dots = document.querySelectorAll('.story-progress-dot');
         dots.forEach((dot, idx) => {
@@ -250,7 +250,7 @@ class SchoolStoryteller {
         return new Promise(resolve => {
             const el = document.getElementById(elementId);
             if (!el) return resolve();
-            
+
             el.innerHTML = '';
             let i = 0;
             const timer = setInterval(() => {
@@ -317,7 +317,7 @@ class SchoolStoryteller {
     async phase1_Overview() {
         this.setStep(1);
         document.getElementById('storyPhaseLabel').innerText = 'GIAI ĐOẠN 1: KHÁI QUÁT KHU VỰC';
-        
+
         // Fly camera down to Dong Anh
         this.map.flyTo([21.135, 105.865], 12.5, {
             duration: 2.2,
@@ -339,7 +339,7 @@ class SchoolStoryteller {
         document.getElementById('storyPhaseLabel').innerText = 'GIAI ĐOẠN 2: ĐƠN VỊ SÁP NHẬP #1';
 
         const comp1 = this.currentData.components[0];
-        
+
         // Create pulsing marker
         const iconHtml = `
             <div class="story-marker-icon">
@@ -483,7 +483,7 @@ class SchoolStoryteller {
         // Zoom out to fit both markers
         const latLngs = this.markers.map(m => m.getLatLng());
         latLngs.push([this.currentData.mergedSchool.lat, this.currentData.mergedSchool.lng]);
-        
+
         const bounds = L.latLngBounds(latLngs);
         this.map.flyToBounds(bounds, {
             padding: [100, 100],
@@ -496,7 +496,7 @@ class SchoolStoryteller {
         if (this.currentData.components.length >= 2) {
             const p1 = [this.currentData.components[0].lat, this.currentData.components[0].lng];
             const p2 = [this.currentData.components[1].lat, this.currentData.components[1].lng];
-            
+
             this.routePolyline = L.polyline([p1, p2], {
                 color: '#38bdf8',
                 weight: 4,
@@ -653,7 +653,7 @@ class SchoolStoryteller {
 
         // Zoom out and fade map
         this.map.zoomOut(2, { animate: true, duration: 1.2 });
-        
+
         const modal = document.getElementById('storytellingModal');
         if (modal) {
             modal.style.transition = 'opacity 1s ease';
@@ -674,7 +674,7 @@ window.storyteller = new SchoolStoryteller();
 /**
  * Public Trigger Function
  */
-window.openSchoolStoryteller = function(schoolSlug, redirectUrl) {
+window.openSchoolStoryteller = function (schoolSlug, redirectUrl) {
     if (window.storyteller) {
         window.storyteller.startStory(schoolSlug, redirectUrl);
     } else {
