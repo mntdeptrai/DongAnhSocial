@@ -42,7 +42,6 @@
     <div class="story-timeline-sidebar">
         <div class="story-timeline-title">
             <span>📋 Tiến trình sắp xếp</span>
-            <span>PA3</span>
         </div>
         <div id="storyTimelineList" class="story-timeline-list">
             <!-- Timeline items rendered dynamically -->

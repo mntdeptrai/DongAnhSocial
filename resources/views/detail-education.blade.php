@@ -777,7 +777,7 @@
             <!-- Dynamic Category Details Section -->
             @php
                 $items = $eatery->educationPrograms;
-                $title = 'Danh sách các trường học sáp nhập vào (Phương án PA3)';
+                $title = 'Danh sách các trường học sáp nhập vào';
                 $icon = '🏫';
                 $emptyText = 'Chưa có thông tin các trường sáp nhập cho đơn vị này.';
                 $btnText = 'Xem toàn bộ danh sách';
@@ -887,7 +887,7 @@
                                 <div style="position: relative; height: 160px; overflow: hidden;">
                                     <img src="{{ $comp['photo'] }}" style="width: 100%; height: 100%; object-fit: cover;" alt="{{ $comp['name'] }}">
                                     <span style="position: absolute; top: 12px; left: 12px; background: rgba(52, 152, 219, 0.95); color: #fff; padding: 4px 12px; border-radius: 20px; font-size: 0.72rem; font-weight: 800; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
-                                        🏫 Trường sáp nhập PA3
+                                        🏫 Trường sáp nhập
                                     </span>
                                 </div>
                                 <div style="padding: 20px; flex: 1; display: flex; flex-direction: column; justify-content: space-between; gap: 12px;">
