@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use App\Helpers\R2Helper;
 
 class VendorController extends Controller
 {
@@ -281,10 +282,7 @@ class VendorController extends Controller
 
         $imagePath = null;
         if ($request->hasFile('image')) {
-            $file = $request->file('image');
-            $filename = time() . '_' . Str::slug($request->name) . '.' . $file->getClientOriginalExtension();
-            $file->move(public_path('uploads/products'), $filename);
-            $imagePath = '/uploads/products/' . $filename;
+            $imagePath = R2Helper::upload($request->file('image'), 'products');
         }
 
         $numericPrice = $this->parsePriceToDecimal($request->price);
@@ -337,10 +335,7 @@ class VendorController extends Controller
 
         $imagePath = $product->image_path;
         if ($request->hasFile('image')) {
-            $file = $request->file('image');
-            $filename = time() . '_' . Str::slug($request->name) . '.' . $file->getClientOriginalExtension();
-            $file->move(public_path('uploads/products'), $filename);
-            $imagePath = '/uploads/products/' . $filename;
+            $imagePath = R2Helper::upload($request->file('image'), 'products');
         }
 
         $numericPrice = $this->parsePriceToDecimal($request->price);

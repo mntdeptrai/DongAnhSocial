@@ -8,6 +8,7 @@ use App\Models\OcopProduct;
 use App\Models\Review;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
+use App\Helpers\R2Helper;
 
 class MarketStallController extends Controller
 {
@@ -193,19 +194,17 @@ class MarketStallController extends Controller
 
         // Process media uploads
         if ($request->hasFile('media')) {
-            foreach ($request->file('media') as $file) {
-                if ($file && $file->isValid()) {
-                    $path = $file->store('reviews', 'public');
-                    $type = str_starts_with($file->getMimeType(), 'video/') ? 'video' : 'image';
-                    $reviewMedia = new \App\Models\ReviewMedia();
-                    $reviewMedia->setConnection($connection);
-                    $reviewMedia->fill([
-                        'review_id' => $review->id,
-                        'file_path' => '/storage/' . $path,
-                        'file_type' => $type,
-                    ]);
-                    $reviewMedia->save();
-                }
+            $files = is_array($request->file('media')) ? $request->file('media') : [$request->file('media')];
+            $uploaded = R2Helper::uploadMultiple($files, 'reviews');
+            foreach ($uploaded as $item) {
+                $reviewMedia = new \App\Models\ReviewMedia();
+                $reviewMedia->setConnection($connection);
+                $reviewMedia->fill([
+                    'review_id' => $review->id,
+                    'file_path' => $item['url'],
+                    'file_type' => $item['file_type'],
+                ]);
+                $reviewMedia->save();
             }
         }
 

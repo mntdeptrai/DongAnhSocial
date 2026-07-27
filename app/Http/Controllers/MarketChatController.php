@@ -6,6 +6,7 @@ use App\Models\MarketMessage;
 use App\Models\OcopProduct;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Helpers\R2Helper;
 
 class MarketChatController extends Controller
 {
@@ -254,14 +255,7 @@ class MarketChatController extends Controller
         // Handle Image upload
         $imagePath = null;
         if ($request->hasFile('image')) {
-            $file = $request->file('image');
-            $fileName = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-            $destinationPath = public_path('uploads/market_chat');
-            if (!file_exists($destinationPath)) {
-                mkdir($destinationPath, 0755, true);
-            }
-            $file->move($destinationPath, $fileName);
-            $imagePath = 'uploads/market_chat/' . $fileName;
+            $imagePath = R2Helper::upload($request->file('image'), 'market_chat');
         }
 
         $privateStallName = $request->input('private_stall_name');

@@ -58,24 +58,16 @@ class UploadApiController extends Controller
             ], 422);
         }
 
-        // 4. Lưu trữ các tệp lên Cloudflare R2 (tự động resize nếu là hình ảnh) và biên soạn thông tin phản hồi
-        $uploadedFiles = [];
-        foreach ($files as $file) {
-            $url = \App\Helpers\R2Helper::upload($file, 'uploads');
-            
-            // Xác định loại tệp (image hoặc video)
-            $mimeType = $file->getClientMimeType();
-            $fileType = str_starts_with($mimeType, 'video/') ? 'video' : 'image';
+        // 4. Lưu trữ các tệp lên Cloudflare R2 (tự động resize nếu là hình ảnh, nén chuẩn 80% GD)
+        $folder = $request->input('folder', 'uploads');
+        $maxDimension = (int) $request->input('max_dimension', 1200);
 
-            $uploadedFiles[] = [
-                'original_name' => $file->getClientOriginalName(),
-                'stored_name' => basename($url),
-                'url' => $url,
-                'size' => $file->getSize(),
-                'formatted_size' => $this->formatBytes($file->getSize()),
-                'mime_type' => $mimeType,
-                'file_type' => $fileType
-            ];
+        $uploaded = \App\Helpers\R2Helper::uploadMultiple($files, $folder, $maxDimension);
+        $uploadedFiles = [];
+
+        foreach ($uploaded as $item) {
+            $item['formatted_size'] = $this->formatBytes($item['size']);
+            $uploadedFiles[] = $item;
         }
 
         return response()->json([
@@ -101,5 +93,35 @@ class UploadApiController extends Controller
         $bytes /= pow(1024, $pow);
 
         return round($bytes, $precision) . ' ' . $units[$pow];
+    }
+
+    /**
+     * Handle chunked upload for large video files.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function uploadChunk(Request $request)
+    {
+        $request->validate([
+            'chunk'        => 'required|file',
+            'upload_id'    => 'required|string',
+            'chunk_index'  => 'required|integer|min:0',
+            'total_chunks' => 'required|integer|min:1',
+            'folder'       => 'nullable|string'
+        ]);
+
+        $chunk       = $request->file('chunk');
+        $uploadId    = $request->input('upload_id');
+        $chunkIndex  = (int) $request->input('chunk_index');
+        $totalChunks = (int) $request->input('total_chunks');
+        $folder      = $request->input('folder', 'videos');
+
+        $result = \App\Helpers\R2Helper::uploadChunk($chunk, $uploadId, $chunkIndex, $totalChunks, $folder);
+
+        return response()->json([
+            'success' => true,
+            'data'    => $result
+        ], 200);
     }
 }

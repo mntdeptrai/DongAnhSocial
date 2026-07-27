@@ -15,9 +15,10 @@ class R2Helper
      *
      * @param UploadedFile $file
      * @param string $folder  Subfolder inside the bucket (e.g. 'eateries', 'checkins')
+     * @param int $maxDimension Maximum width/height for image resizing (default 1200px)
      * @return string  Public URL via R2_PUBLIC_URL domain
      */
-    public static function upload(UploadedFile $file, string $folder = 'general'): string
+    public static function upload(UploadedFile $file, string $folder = 'general', int $maxDimension = 1200): string
     {
         $mimeType = $file->getClientMimeType();
         $isImage = str_starts_with($mimeType, 'image/');
@@ -27,7 +28,7 @@ class R2Helper
         $resizedContent = null;
         if ($isImage) {
             try {
-                $resizedContent = self::resizeImageGd($file->getRealPath(), $mimeType, 1200);
+                $resizedContent = self::resizeImageGd($file->getRealPath(), $mimeType, $maxDimension);
             } catch (\Throwable $e) {
                 Log::warning('[R2Helper] Resize image failed, using original: ' . $e->getMessage());
             }
@@ -43,6 +44,201 @@ class R2Helper
             // Fallback to local public storage
             return self::fallbackLocal($file, $folder, $resizedContent);
         }
+    }
+
+    /**
+     * Batch upload multiple UploadedFile instances to Cloudflare R2.
+     * Supports images (auto-resized) and videos (original quality).
+     *
+     * @param array $files Array of UploadedFile objects
+     * @param string $folder Subfolder inside bucket
+     * @param int $maxDimension Maximum dimension for image resize
+     * @return array Array of uploaded media descriptors
+     */
+    public static function uploadMultiple(array $files, string $folder = 'general', int $maxDimension = 1200): array
+    {
+        $results = [];
+        foreach ($files as $file) {
+            if (!($file instanceof UploadedFile) || !$file->isValid()) {
+                continue;
+            }
+            $mimeType = $file->getClientMimeType();
+            $fileType = str_starts_with($mimeType, 'video/') ? 'video' : 'image';
+            $url = self::upload($file, $folder, $maxDimension);
+
+            $results[] = [
+                'original_name' => $file->getClientOriginalName(),
+                'stored_name'   => basename($url),
+                'url'           => $url,
+                'size'          => $file->getSize(),
+                'mime_type'     => $mimeType,
+                'file_type'     => $fileType,
+            ];
+        }
+        return $results;
+    }
+
+    /**
+     * Upload a single chunk of a large video file and automatically merge into R2 when complete.
+     * Reduces server bandwidth spikes & memory overload for large video uploads.
+     *
+     * @param UploadedFile $chunk Incoming chunk file
+     * @param string $uploadId Unique upload session identifier
+     * @param int $chunkIndex 0-indexed chunk position
+     * @param int $totalChunks Total number of chunks expected
+     * @param string $folder Subfolder inside R2 bucket
+     * @return array Status payload with progress % or final R2 URL
+     */
+    public static function uploadChunk(UploadedFile $chunk, string $uploadId, int $chunkIndex, int $totalChunks, string $folder = 'videos'): array
+    {
+        $safeUploadId = preg_replace('/[^a-zA-Z0-9_\-]/', '', $uploadId);
+        $tempDir = storage_path('app/chunks/' . $safeUploadId);
+        if (!file_exists($tempDir)) {
+            mkdir($tempDir, 0755, true);
+        }
+
+        $chunkFileName = 'chunk_' . sprintf('%04d', $chunkIndex);
+        $chunk->move($tempDir, $chunkFileName);
+
+        $receivedFiles = glob($tempDir . '/chunk_*');
+        $receivedCount = count($receivedFiles);
+
+        if ($receivedCount >= $totalChunks) {
+            $extension = strtolower($chunk->getClientOriginalExtension()) ?: 'mp4';
+            $finalFilename = time() . '_' . Str::random(8) . '.' . $extension;
+            $mergedPath = $tempDir . '/' . $finalFilename;
+
+            $out = fopen($mergedPath, 'wb');
+            for ($i = 0; $i < $totalChunks; $i++) {
+                $partFile = $tempDir . '/chunk_' . sprintf('%04d', $i);
+                if (file_exists($partFile)) {
+                    $in = fopen($partFile, 'rb');
+                    stream_copy_to_stream($in, $out);
+                    fclose($in);
+                }
+            }
+            fclose($out);
+
+            $safeName = $folder . '/' . $finalFilename;
+            $content = file_get_contents($mergedPath);
+
+            try {
+                Storage::disk('r2')->put($safeName, $content, 'public');
+                $finalUrl = rtrim(env('R2_PUBLIC_URL'), '/') . '/' . $safeName;
+            } catch (\Throwable $e) {
+                Log::error('[R2Helper] Chunk merge R2 upload failed: ' . $e->getMessage());
+                $destDir = public_path('uploads/' . $folder);
+                if (!file_exists($destDir)) {
+                    mkdir($destDir, 0755, true);
+                }
+                rename($mergedPath, $destDir . '/' . $finalFilename);
+                $finalUrl = '/uploads/' . $folder . '/' . $finalFilename;
+            }
+
+            // Cleanup temp chunk files
+            array_map('unlink', glob("$tempDir/*"));
+            @rmdir($tempDir);
+
+            return [
+                'completed'     => true,
+                'progress'      => 100,
+                'url'           => $finalUrl,
+                'stored_name'   => $finalFilename,
+                'total_chunks'  => $totalChunks
+            ];
+        }
+
+        $progress = round(($receivedCount / $totalChunks) * 100, 2);
+        return [
+            'completed'       => false,
+            'progress'        => $progress,
+            'received_chunks' => $receivedCount,
+            'total_chunks'    => $totalChunks
+        ];
+    }
+
+    /**
+     * Slice a large video into small binary segment files (e.g. 5MB per segment)
+     * and upload each segment to R2 for fast chunked video streaming load.
+     *
+     * @param UploadedFile $file The video file
+     * @param string $folder Subfolder inside R2 bucket
+     * @param int $chunkSizeBytes Chunk size in bytes (default 5MB = 5,242,880 bytes)
+     * @return array Segment URLs and master metadata
+     */
+    public static function splitVideoIntoSegments(UploadedFile $file, string $folder = 'videos', int $chunkSizeBytes = 5242880): array
+    {
+        $realPath = $file->getRealPath();
+        $fileSize = filesize($realPath);
+
+        // If file is smaller than chunk size, upload as single video
+        if ($fileSize <= $chunkSizeBytes) {
+            $singleUrl = self::upload($file, $folder);
+            return [
+                'is_chunked'     => false,
+                'total_segments' => 1,
+                'master_url'     => $singleUrl,
+                'segments'       => [$singleUrl]
+            ];
+        }
+
+        $extension = strtolower($file->getClientOriginalExtension()) ?: 'mp4';
+        $baseName  = time() . '_' . Str::random(8);
+        $handle    = fopen($realPath, 'rb');
+        $segmentUrls = [];
+        $partIndex   = 0;
+
+        while (!feof($handle)) {
+            $buffer = fread($handle, $chunkSizeBytes);
+            if ($buffer === false || strlen($buffer) === 0) {
+                break;
+            }
+
+            $segFilename = $baseName . '_seg_' . sprintf('%03d', $partIndex) . '.' . $extension;
+            $safeName    = $folder . '/' . $segFilename;
+
+            try {
+                Storage::disk('r2')->put($safeName, $buffer, 'public');
+                $segUrl = rtrim(env('R2_PUBLIC_URL'), '/') . '/' . $safeName;
+            } catch (\Throwable $e) {
+                Log::error('[R2Helper] Segment R2 upload failed: ' . $e->getMessage());
+                $destDir = public_path('uploads/' . $folder);
+                if (!file_exists($destDir)) {
+                    mkdir($destDir, 0755, true);
+                }
+                file_put_contents($destDir . '/' . $segFilename, $buffer);
+                $segUrl = '/uploads/' . $folder . '/' . $segFilename;
+            }
+
+            $segmentUrls[] = $segUrl;
+            $partIndex++;
+        }
+        fclose($handle);
+
+        // Create master descriptor JSON for playlist playback
+        $masterMetadata = [
+            'is_chunked'     => true,
+            'total_segments' => count($segmentUrls),
+            'chunk_size_mb'  => round($chunkSizeBytes / (1024 * 1024), 2),
+            'segments'       => $segmentUrls
+        ];
+
+        $masterFilename = $baseName . '_master.json';
+        $safeMasterName = $folder . '/' . $masterFilename;
+
+        try {
+            Storage::disk('r2')->put($safeMasterName, json_encode($masterMetadata, JSON_PRETTY_PRINT), 'public');
+            $masterUrl = rtrim(env('R2_PUBLIC_URL'), '/') . '/' . $safeMasterName;
+        } catch (\Throwable $e) {
+            $masterUrl = $segmentUrls[0];
+        }
+
+        return [
+            'is_chunked'     => true,
+            'total_segments' => count($segmentUrls),
+            'master_url'     => $masterUrl,
+            'segments'       => $segmentUrls
+        ];
     }
 
     /**
