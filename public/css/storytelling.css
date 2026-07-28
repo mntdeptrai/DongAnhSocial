@@ -16,6 +16,7 @@
     font-family: 'Be Vietnam Pro', sans-serif;
     display: none;
     opacity: 0;
+    pointer-events: none;
     transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1);
     overflow: hidden;
 }
@@ -23,6 +24,7 @@
 .story-overlay-modal.active {
     display: block;
     opacity: 1;
+    pointer-events: auto;
 }
 
 /* 2. Sparkle Canvas Layer */
@@ -35,12 +37,19 @@
     pointer-events: none;
 }
 
-/* 3. Phase 0: Vibrant Royal Indigo Intro Screen (NO BLACK!) */
+/* 3. Phase 0: Royal Purple & Magenta Gold Light Glassmorphism (Vibrant & Animated) */
 .story-intro-screen {
     position: absolute;
     inset: 0;
     z-index: 99999;
-    background: linear-gradient(135deg, #1e1b4b 0%, #312e81 40%, #4338ca 70%, #6366f1 100%);
+    background: 
+        radial-gradient(circle at 20% 20%, rgba(168, 85, 247, 0.35) 0%, transparent 45%),
+        radial-gradient(circle at 80% 80%, rgba(236, 72, 153, 0.3) 0%, transparent 45%),
+        radial-gradient(circle at 50% 15%, rgba(129, 140, 248, 0.3) 0%, transparent 50%),
+        radial-gradient(circle at 70% 85%, rgba(251, 191, 36, 0.22) 0%, transparent 50%),
+        linear-gradient(135deg, #faf5ff 0%, #f3e8ff 35%, #eef2ff 70%, #fdf4ff 100%);
+    background-size: 200% 200%;
+    animation: storyGradientShift 10s ease infinite alternate;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -57,52 +66,89 @@
     transform: scale(1.06);
 }
 
+.story-intro-card {
+    background: rgba(255, 255, 255, 0.88);
+    backdrop-filter: blur(32px);
+    -webkit-backdrop-filter: blur(32px);
+    border: 2px solid transparent;
+    background: 
+        linear-gradient(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.9)) padding-box,
+        linear-gradient(135deg, #a855f7, #ec4899, #818cf8, #fbbf24) border-box;
+    border-radius: 36px;
+    padding: 50px 60px;
+    max-width: 920px;
+    width: 90%;
+    box-shadow: 0 30px 80px rgba(168, 85, 247, 0.25), 0 10px 30px rgba(129, 140, 248, 0.15);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    animation: storyCardScaleIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards, storyCardFloat 4s ease-in-out infinite alternate 0.8s;
+}
+
 .story-intro-badge {
     display: inline-flex;
     align-items: center;
     gap: 10px;
-    padding: 10px 26px;
+    padding: 10px 28px;
     border-radius: 30px;
-    background: rgba(255, 255, 255, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.4);
+    background: linear-gradient(135deg, #9333ea 0%, #c084fc 50%, #e879f9 100%);
     color: #ffffff;
-    font-size: 0.92rem;
+    font-size: 0.88rem;
     font-weight: 800;
-    letter-spacing: 2.5px;
+    letter-spacing: 2.2px;
     text-transform: uppercase;
-    margin-bottom: 28px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2), inset 0 0 15px rgba(255, 255, 255, 0.3);
+    margin-bottom: 24px;
+    box-shadow: 0 8px 25px rgba(147, 51, 234, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.4);
     animation: storyBadgeShine 2.5s infinite alternate;
 }
 
 .story-intro-divider {
     width: 220px;
-    height: 3.5px;
-    background: linear-gradient(90deg, transparent, #fef08a, #fbbf24, #fef08a, transparent);
-    margin: 20px 0 28px 0;
-    box-shadow: 0 0 25px #fbbf24;
+    height: 4px;
+    border-radius: 4px;
+    background: linear-gradient(90deg, transparent, #a855f7, #ec4899, #fbbf24, transparent);
+    margin: 18px 0 26px 0;
+    box-shadow: 0 0 20px rgba(168, 85, 247, 0.6);
 }
 
 .story-intro-title {
     font-family: 'Be Vietnam Pro', sans-serif;
-    font-size: clamp(2.2rem, 5.5vw, 4.2rem);
+    font-size: clamp(1.75rem, 4vw, 3.2rem);
     font-weight: 900;
-    line-height: 1.25;
-    color: #ffffff;
-    text-shadow: 0 0 35px rgba(255, 255, 255, 0.9), 0 8px 30px rgba(0, 0, 0, 0.3);
-    letter-spacing: -0.5px;
-    max-width: 950px;
+    line-height: 1.3;
+    background: linear-gradient(135deg, #581c87 0%, #7e22ce 50%, #9333ea 100%);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 2px 10px rgba(126, 34, 206, 0.2));
+    max-width: 900px;
     margin: 0 auto;
-    animation: storyTitleSparkle 1.5s ease-out forwards;
+    animation: storyTitleSparkle 1.2s ease-out forwards;
+}
+
+.story-intro-highlight {
+    display: inline-block;
+    padding-top: 8px;
+    padding-bottom: 4px;
+    margin-top: -4px;
+    line-height: 1.35;
+    background: linear-gradient(135deg, #7e22ce 0%, #a855f7 30%, #ec4899 60%, #9333ea 100%);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 4px 15px rgba(168, 85, 247, 0.3));
+    animation: storyTextGlow 3s linear infinite;
 }
 
 .story-intro-subtitle {
-    font-size: clamp(1.1rem, 2.2vw, 1.45rem);
-    color: #f0f9ff;
-    margin-top: 22px;
+    font-size: clamp(1rem, 2vw, 1.25rem);
+    color: #6b21a8;
+    margin-top: 20px;
     font-weight: 700;
-    letter-spacing: 0.8px;
-    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    letter-spacing: 0.5px;
 }
 
 /* 4. Story Map Container (NO DARK OVERLAY!) */
@@ -203,30 +249,32 @@
     box-shadow: 0 14px 40px rgba(124, 58, 237, 0.6);
 }
 
-/* 6. Left Timeline Sidebar (Bright White Glassmorphism) */
+/* 6. Timeline Sidebar UI (Royal Purple & Magenta Silk Glass) */
 .story-timeline-sidebar {
     position: absolute;
     left: 24px;
     top: 105px;
     z-index: 1000;
-    width: 300px;
+    width: 320px;
     background: rgba(255, 255, 255, 0.94);
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
-    border: 1px solid rgba(99, 102, 241, 0.3);
-    border-radius: 24px;
-    padding: 22px;
-    box-shadow: 0 20px 60px rgba(99, 102, 241, 0.2);
+    backdrop-filter: blur(28px);
+    -webkit-backdrop-filter: blur(28px);
+    border: 1.5px solid rgba(168, 85, 247, 0.35);
+    border-radius: 28px;
+    padding: 24px;
+    box-shadow: 0 25px 70px rgba(147, 51, 234, 0.22);
     transition: transform 0.4s ease, opacity 0.4s ease;
 }
 
 .story-timeline-title {
-    font-size: 0.82rem;
-    font-weight: 800;
-    color: #3730a3;
+    font-size: 0.85rem;
+    font-weight: 900;
+    background: linear-gradient(135deg, #7e22ce 0%, #ec4899 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
     text-transform: uppercase;
-    letter-spacing: 1.5px;
-    margin-bottom: 16px;
+    letter-spacing: 1.8px;
+    margin-bottom: 18px;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -242,74 +290,98 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 10px 14px;
-    border-radius: 14px;
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
+    padding: 11px 16px;
+    border-radius: 18px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(243, 232, 255, 0.35));
+    border: 1.5px solid rgba(168, 85, 247, 0.2);
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.story-timeline-item:hover {
+    background: linear-gradient(135deg, rgba(243, 232, 255, 0.75), rgba(252, 231, 243, 0.75));
+    border-color: #a855f7;
+    transform: translateX(4px) scale(1.02);
+    box-shadow: 0 8px 24px rgba(168, 85, 247, 0.22);
 }
 
 .story-timeline-item.active {
-    background: linear-gradient(135deg, #eef2ff, #e0e7ff);
-    border-color: #6366f1;
-    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.25);
+    background: linear-gradient(135deg, rgba(147, 51, 234, 0.14), rgba(236, 72, 153, 0.14));
+    border: 2px solid #a855f7;
+    box-shadow: 0 8px 26px rgba(147, 51, 234, 0.3);
+    transform: translateX(6px);
 }
 
-.story-timeline-item.completed .story-timeline-num {
-    background: #10b981;
-    color: #ffffff;
-    box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+.story-timeline-item.completed {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(52, 211, 153, 0.08));
+    border: 1.5px solid rgba(16, 185, 129, 0.3);
 }
 
 .story-timeline-num {
-    width: 26px;
-    height: 26px;
+    width: 28px;
+    height: 28px;
     border-radius: 50%;
-    background: #cbd5e1;
-    color: #334155;
-    font-size: 0.78rem;
-    font-weight: 800;
+    background: linear-gradient(135deg, rgba(147, 51, 234, 0.12), rgba(236, 72, 153, 0.12));
+    border: 1.5px solid rgba(147, 51, 234, 0.3);
+    color: #9333ea;
+    font-size: 0.82rem;
+    font-weight: 900;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+    transition: all 0.35s ease;
 }
 
 .story-timeline-item.active .story-timeline-num {
-    background: linear-gradient(135deg, #4f46e5, #7c3aed);
+    background: linear-gradient(135deg, #9333ea 0%, #ec4899 100%);
     color: #ffffff;
-    box-shadow: 0 0 15px rgba(124, 58, 237, 0.6);
+    border: 1.5px solid #ffffff;
+    box-shadow: 0 4px 15px rgba(147, 51, 234, 0.5);
+    transform: scale(1.1);
+}
+
+.story-timeline-item.completed .story-timeline-num {
+    background: linear-gradient(135deg, #10b981, #34d399);
+    color: #ffffff;
+    border: 1.5px solid #ffffff;
+    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);
 }
 
 .story-timeline-text {
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: #334155;
+    font-family: 'Be Vietnam Pro', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #581c87;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
 .story-timeline-item.active .story-timeline-text {
-    color: #1e1b4b;
+    color: #6b21a8;
+    font-weight: 900;
+}
+
+.story-timeline-item.completed .story-timeline-text {
+    color: #047857;
     font-weight: 800;
 }
 
-/* 7. Narrative Typing Box (Bright White Theme) */
+/* 7. Narrative Typing Box (Royal Purple & Magenta Silk Glass) */
 .story-narrative-box {
     position: absolute;
     bottom: 32px;
     left: 24px;
     z-index: 1000;
     max-width: 480px;
-    background: rgba(255, 255, 255, 0.96);
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
-    border: 1px solid rgba(99, 102, 241, 0.35);
-    border-radius: 24px;
+    background: rgba(255, 255, 255, 0.94);
+    backdrop-filter: blur(28px);
+    -webkit-backdrop-filter: blur(28px);
+    border: 1.5px solid rgba(168, 85, 247, 0.35);
+    border-radius: 28px;
     padding: 22px 28px;
-    box-shadow: 0 25px 60px rgba(99, 102, 241, 0.25);
+    box-shadow: 0 25px 70px rgba(147, 51, 234, 0.22);
     transition: all 0.4s ease;
 }
 
@@ -317,31 +389,34 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    margin-bottom: 10px;
+    margin-bottom: 12px;
 }
 
 .story-narrative-dot {
     width: 12px;
     height: 12px;
     border-radius: 50%;
-    background: #d97706;
-    box-shadow: 0 0 15px #d97706;
+    background: linear-gradient(135deg, #9333ea, #ec4899);
+    box-shadow: 0 0 15px rgba(236, 72, 153, 0.8);
     animation: storySparklePulse 1.5s infinite alternate;
 }
 
 .story-narrative-phase {
-    font-size: 0.78rem;
-    font-weight: 800;
-    color: #d97706;
+    font-size: 0.82rem;
+    font-weight: 900;
+    background: linear-gradient(135deg, #7e22ce 0%, #ec4899 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
     text-transform: uppercase;
-    letter-spacing: 1.2px;
+    letter-spacing: 1.5px;
 }
 
 .story-narrative-text {
+    font-family: 'Be Vietnam Pro', sans-serif;
     font-size: 1rem;
     line-height: 1.65;
-    color: #0f172a;
-    font-weight: 600;
+    color: #581c87;
+    font-weight: 700;
     min-height: 52px;
 }
 
@@ -349,7 +424,8 @@
     display: inline-block;
     width: 3px;
     height: 18px;
-    background: #d97706;
+    background: linear-gradient(180deg, #9333ea, #ec4899);
+    box-shadow: 0 0 10px rgba(236, 72, 153, 0.8);
     margin-left: 4px;
     animation: storyBlink 0.8s infinite;
 }
@@ -438,7 +514,7 @@
     font-family: 'Be Vietnam Pro', sans-serif;
     font-size: 1.45rem;
     font-weight: 900;
-    color: #0f172a;
+    color: #6b21a8;
     margin: 0 0 10px 0;
     line-height: 1.3;
 }
@@ -484,6 +560,57 @@
     font-weight: 800;
     text-transform: uppercase;
     margin-top: 4px;
+}
+
+/* Ban Giám Hiệu Trường Mới Section */
+.story-board-section {
+    margin-bottom: 22px;
+    background: linear-gradient(135deg, rgba(243, 232, 255, 0.75), rgba(252, 231, 243, 0.75));
+    border: 1.5px solid rgba(168, 85, 247, 0.3);
+    border-radius: 22px;
+    padding: 18px 20px;
+    box-shadow: 0 10px 30px rgba(147, 51, 234, 0.15);
+}
+
+.story-board-title {
+    font-size: 0.82rem;
+    font-weight: 900;
+    background: linear-gradient(135deg, #7e22ce 0%, #ec4899 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.story-board-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.story-board-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.88rem;
+    padding: 8px 14px;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 14px;
+    border: 1px solid rgba(168, 85, 247, 0.2);
+}
+
+.story-board-role {
+    color: #7e22ce;
+    font-weight: 700;
+}
+
+.story-board-name {
+    color: #581c87;
+    font-weight: 900;
 }
 
 .story-info-rows {
@@ -590,86 +717,193 @@
     background: #cbd5e1;
 }
 
-/* 10. Merger Phase 5 Flash Announcement Overlay */
+/* 10. Merger Phase 5 Flash Announcement Overlay (Royal Purple & Magenta Gold Silk) */
 .story-announcement-card {
-    position: absolute;
+    position: fixed;
     top: 50%;
     left: 50%;
-    transform: translate(-50%, -50%) scale(0.8);
-    z-index: 1005;
-    background: linear-gradient(135deg, #ffffff, #eef2ff);
-    backdrop-filter: blur(28px);
-    border: 2px solid #d97706;
-    border-radius: 32px;
-    padding: 36px 48px;
+    transform: translate(-50%, -50%) scale(0.85);
+    z-index: 10005;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(36px);
+    -webkit-backdrop-filter: blur(36px);
+    border: 2.5px solid transparent;
+    background: 
+        linear-gradient(rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0.96)) padding-box,
+        linear-gradient(135deg, #9333ea, #ec4899, #fbbf24) border-box;
+    border-radius: 36px;
+    padding: 44px 54px;
     text-align: center;
-    max-width: 540px;
+    max-width: 560px;
     width: 90%;
-    box-shadow: 0 35px 90px rgba(99, 102, 241, 0.35);
+    box-shadow: 0 40px 120px rgba(147, 51, 234, 0.4), 0 20px 50px rgba(236, 72, 153, 0.25);
     opacity: 0;
     pointer-events: none;
-    transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .story-announcement-card.show {
     opacity: 1;
+    pointer-events: auto;
     transform: translate(-50%, -50%) scale(1);
+    animation: storyAnnounceFloat 4s ease-in-out infinite alternate 0.4s;
 }
 
 .story-announcement-icon {
-    font-size: 3.2rem;
-    margin-bottom: 14px;
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #9333ea, #ec4899);
+    box-shadow: 0 10px 30px rgba(147, 51, 234, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.2rem;
+    color: #ffffff;
+    margin: 0 auto 20px auto;
     animation: storyBounceSparkle 1.5s infinite alternate;
 }
 
 .story-announcement-date {
-    font-size: 0.85rem;
+    display: inline-block;
+    padding: 6px 20px;
+    border-radius: 20px;
+    background: linear-gradient(135deg, rgba(147, 51, 234, 0.12), rgba(236, 72, 153, 0.12));
+    border: 1px solid rgba(147, 51, 234, 0.25);
+    color: #9333ea;
+    font-size: 0.82rem;
     font-weight: 900;
-    color: #d97706;
     letter-spacing: 2.5px;
     text-transform: uppercase;
-    margin-bottom: 10px;
+    margin-bottom: 14px;
 }
 
 .story-announcement-title {
     font-family: 'Be Vietnam Pro', sans-serif;
-    font-size: 1.75rem;
+    font-size: 1.45rem;
     font-weight: 900;
-    color: #0f172a;
-    margin-bottom: 14px;
-    line-height: 1.3;
+    color: #6b21a8;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+}
+
+.story-announcement-school-name {
+    font-family: 'Be Vietnam Pro', sans-serif;
+    font-size: clamp(1.8rem, 4vw, 2.5rem);
+    font-weight: 900;
+    display: inline-block;
+    padding-top: 8px;
+    padding-bottom: 4px;
+    line-height: 1.35;
+    background: linear-gradient(135deg, #7e22ce 0%, #a855f7 40%, #ec4899 100%);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 4px 15px rgba(168, 85, 247, 0.35));
+    animation: storyTextGlow 3s linear infinite;
+    margin: 0;
+}
+
+/* 10.5 Stage 7 Celebration Fireworks Banner */
+.story-celebration-banner {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.8);
+    z-index: 10010;
+    background: rgba(255, 255, 255, 0.96);
+    backdrop-filter: blur(40px);
+    -webkit-backdrop-filter: blur(40px);
+    border: 3px solid transparent;
+    background: 
+        linear-gradient(rgba(255, 255, 255, 0.97), rgba(255, 255, 255, 0.97)) padding-box,
+        linear-gradient(135deg, #fbbf24, #ec4899, #9333ea, #38bdf8) border-box;
+    border-radius: 40px;
+    padding: 48px 60px;
+    text-align: center;
+    max-width: 620px;
+    width: 92%;
+    box-shadow: 0 45px 130px rgba(147, 51, 234, 0.45), 0 20px 60px rgba(251, 191, 36, 0.3);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.story-celebration-banner.show {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translate(-50%, -50%) scale(1);
+    animation: storyAnnounceFloat 3.5s ease-in-out infinite alternate;
+}
+
+.story-celebration-burst {
+    font-size: 2.5rem;
+    margin-bottom: 16px;
+    letter-spacing: 6px;
+    animation: storyBounceSparkle 1.2s infinite alternate;
+}
+
+.story-celebration-title {
+    font-family: 'Be Vietnam Pro', sans-serif;
+    font-size: clamp(1.6rem, 3.5vw, 2.2rem);
+    font-weight: 900;
+    background: linear-gradient(135deg, #7e22ce 0%, #a855f7 35%, #ec4899 70%, #d97706 100%);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 4px 15px rgba(168, 85, 247, 0.35));
+    animation: storyTextGlow 3s linear infinite;
+    margin: 0 0 14px 0;
+    line-height: 1.25;
+}
+
+.story-celebration-sub {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #475569;
+    margin: 0;
 }
 
 /* 11. Bottom Progress Dots Bar */
 .story-progress-bar-wrap {
     position: absolute;
     bottom: 24px;
-    right: 30px;
-    z-index: 1000;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1005;
     display: flex;
     align-items: center;
     gap: 10px;
-    background: rgba(255, 255, 255, 0.94);
-    backdrop-filter: blur(14px);
-    padding: 10px 20px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    padding: 10px 22px;
     border-radius: 24px;
-    border: 1px solid rgba(99, 102, 241, 0.3);
-    box-shadow: 0 10px 30px rgba(99, 102, 241, 0.2);
+    border: 1.5px solid rgba(168, 85, 247, 0.35);
+    box-shadow: 0 10px 35px rgba(147, 51, 234, 0.25);
+    pointer-events: auto;
 }
 
 .story-progress-dot {
     width: 10px;
     height: 10px;
     border-radius: 50%;
-    background: rgba(99, 102, 241, 0.3);
+    background: rgba(147, 51, 234, 0.3);
+    cursor: pointer;
     transition: all 0.35s ease;
 }
 
+.story-progress-dot:hover {
+    background: #a855f7;
+    transform: scale(1.35);
+}
+
 .story-progress-dot.active {
-    background: #4f46e5;
+    background: linear-gradient(135deg, #9333ea, #ec4899);
     width: 28px;
     border-radius: 12px;
-    box-shadow: 0 0 15px rgba(79, 70, 229, 0.6);
+    box-shadow: 0 0 15px rgba(147, 51, 234, 0.6);
 }
 
 /* 12. Leaflet Custom Markers with Glowing Neon Rings */
@@ -683,41 +917,71 @@
     width: 48px;
     height: 48px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #0284c7, #38bdf8);
+    background: linear-gradient(135deg, #8b5cf6 0%, #d946ef 50%, #ec4899 100%);
     border: 3px solid #ffffff;
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3), 0 0 20px rgba(56, 189, 248, 0.6);
+    box-shadow: 0 8px 30px rgba(139, 92, 246, 0.5), 0 0 25px rgba(217, 70, 239, 0.6);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.3rem;
+    font-family: 'Be Vietnam Pro', sans-serif;
+    font-size: 1.15rem;
+    font-weight: 900;
     color: #ffffff;
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
     z-index: 2;
     position: relative;
 }
 
 .story-marker-pulse {
     position: absolute;
-    top: -10px;
-    left: -10px;
-    right: -10px;
-    bottom: -10px;
+    top: -12px;
+    left: -12px;
+    right: -12px;
+    bottom: -12px;
     border-radius: 50%;
-    border: 3px solid #38bdf8;
+    border: 2.5px solid #d946ef;
     animation: storyMarkerPulse 1.8s infinite ease-out;
 }
 
+.story-marker-icon.merged {
+    position: relative;
+    width: 76px;
+    height: 76px;
+    z-index: 1000 !important;
+}
+
 .story-marker-icon.merged .story-marker-inner {
-    background: linear-gradient(135deg, #10b981, #34d399);
-    border-color: #ffffff;
-    width: 58px;
-    height: 58px;
-    font-size: 1.55rem;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3), 0 0 30px rgba(16, 185, 129, 0.8);
+    background: linear-gradient(135deg, #6b21a8 0%, #9333ea 30%, #ec4899 65%, #f59e0b 100%);
+    background-size: 200% 200%;
+    border: 4px solid #ffffff;
+    width: 76px;
+    height: 76px;
+    border-radius: 50%;
+    font-size: 2.3rem;
+    box-shadow: 0 14px 45px rgba(147, 51, 234, 0.75), 0 0 45px rgba(236, 72, 153, 0.9), 0 0 65px rgba(245, 158, 11, 0.8);
+    animation: storyMarkerSupernova 3s ease infinite alternate;
 }
 
 .story-marker-icon.merged .story-marker-pulse {
-    border-color: #10b981;
-    animation: storyMarkerPulseMerged 1.5s infinite ease-out;
+    position: absolute;
+    top: -18px;
+    left: -18px;
+    right: -18px;
+    bottom: -18px;
+    border-radius: 50%;
+    border: 3.5px solid #ec4899;
+    animation: storyMarkerPulseMerged 1.6s infinite ease-out;
+}
+
+.story-marker-icon.merged .story-marker-pulse.pulse-ring-2 {
+    position: absolute;
+    top: -32px;
+    left: -32px;
+    right: -32px;
+    bottom: -32px;
+    border-radius: 50%;
+    border: 3.5px solid #a855f7;
+    animation: storyMarkerPulseMerged 1.6s infinite ease-out 0.5s;
 }
 
 /* Tooltip custom styling */
@@ -725,7 +989,7 @@
     background: rgba(255, 255, 255, 0.95) !important;
     backdrop-filter: blur(12px) !important;
     border: 1px solid rgba(99, 102, 241, 0.4) !important;
-    color: #0f172a !important;
+    color: #581c87 !important;
     font-family: 'Be Vietnam Pro', sans-serif !important;
     font-size: 0.88rem !important;
     font-weight: 800 !important;
@@ -734,11 +998,91 @@
     box-shadow: 0 10px 30px rgba(99, 102, 241, 0.25) !important;
 }
 
+.story-tooltip-custom.story-tooltip-merged {
+    background: rgba(255, 255, 255, 0.96) !important;
+    border: 2.5px solid #a855f7 !important;
+    box-shadow: 0 14px 45px rgba(168, 85, 247, 0.4), 0 0 25px rgba(236, 72, 153, 0.3) !important;
+    animation: storyTooltipGlow 2.5s ease-in-out infinite alternate !important;
+    padding: 8px 18px !important;
+    border-radius: 16px !important;
+    text-align: center !important;
+}
+
+.story-tooltip-custom.story-tooltip-merged b {
+    color: #7e22ce !important;
+    font-size: 0.98rem !important;
+    display: block !important;
+    margin-bottom: 2px !important;
+    line-height: 1.2 !important;
+}
+
+.story-tooltip-custom.story-tooltip-merged .story-tooltip-sublabel {
+    color: #9333ea !important;
+    font-size: 0.82rem !important;
+    font-weight: 800 !important;
+    display: block !important;
+    margin-top: 1px !important;
+    line-height: 1.2 !important;
+}
+
+.story-tooltip-custom.story-tooltip-comp {
+    background: rgba(255, 255, 255, 0.96) !important;
+    border: 2px solid #c084fc !important;
+    box-shadow: 0 12px 35px rgba(139, 92, 246, 0.3) !important;
+    padding: 8px 16px !important;
+    border-radius: 16px !important;
+    text-align: center !important;
+}
+
+.story-tooltip-custom.story-tooltip-comp b {
+    color: #6b21a8 !important;
+    font-size: 0.95rem !important;
+    display: block !important;
+    margin-bottom: 2px !important;
+    line-height: 1.25 !important;
+}
+
+.story-tooltip-custom.story-tooltip-comp .story-tooltip-sublabel {
+    color: #c084fc !important;
+    font-size: 0.8rem !important;
+    font-weight: 800 !important;
+    display: block !important;
+    margin-top: 1px !important;
+    line-height: 1.2 !important;
+}
+
 .story-tooltip-custom::before {
     border-top-color: rgba(255, 255, 255, 0.95) !important;
 }
 
 /* 13. Keyframe Animations */
+@keyframes storyGradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+@keyframes storyCardFloat {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(-12px); }
+}
+
+@keyframes storyTextGlow {
+    0% { background-position: 0% center; }
+    100% { background-position: 200% center; }
+}
+
+@keyframes storyCardScaleIn {
+    0% {
+        opacity: 0;
+        transform: scale(0.92) translateY(20px);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
 @keyframes storyBadgeShine {
     0% {
         box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
@@ -809,15 +1153,54 @@
     }
 }
 
+@keyframes storyMarkerSupernova {
+    0% {
+        background-position: 0% 50%;
+        transform: scale(1);
+        box-shadow: 0 10px 35px rgba(147, 51, 234, 0.6), 0 0 25px rgba(236, 72, 153, 0.7);
+    }
+    50% {
+        background-position: 100% 50%;
+        transform: scale(1.08);
+        box-shadow: 0 14px 45px rgba(236, 72, 153, 0.8), 0 0 45px rgba(251, 191, 36, 0.9);
+    }
+    100% {
+        background-position: 0% 50%;
+        transform: scale(1);
+        box-shadow: 0 10px 35px rgba(147, 51, 234, 0.6), 0 0 25px rgba(236, 72, 153, 0.7);
+    }
+}
+
 @keyframes storyMarkerPulseMerged {
     0% {
-        transform: scale(0.7);
+        transform: scale(0.6);
         opacity: 1;
+        box-shadow: 0 0 10px rgba(168, 85, 247, 0.8);
     }
-
     100% {
-        transform: scale(2.0);
+        transform: scale(2.3);
         opacity: 0;
+        box-shadow: 0 0 35px rgba(236, 72, 153, 0);
+    }
+}
+
+@keyframes storyTooltipGlow {
+    0% {
+        border-color: #a855f7 !important;
+        box-shadow: 0 10px 35px rgba(168, 85, 247, 0.4), 0 0 20px rgba(236, 72, 153, 0.3) !important;
+    }
+    100% {
+        border-color: #ec4899 !important;
+        box-shadow: 0 16px 50px rgba(236, 72, 153, 0.65), 0 0 30px rgba(251, 191, 36, 0.6) !important;
+    }
+}
+
+@keyframes storyAnnounceFloat {
+    0% {
+        transform: translate(-50%, -50%) scale(1);
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(1) translateY(-10px);
     }
 }
 

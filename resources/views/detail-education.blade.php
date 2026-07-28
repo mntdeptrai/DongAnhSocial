@@ -3148,4 +3148,212 @@
     </svg>
 </a>
 @endif
+
+<!-- PAGE CELEBRATION FIREWORKS OVERLAY -->
+<div id="detailPageCelebrationModal" class="detail-page-celebration-overlay" style="display: none;">
+    <canvas id="detailFireworksCanvas" class="detail-fireworks-canvas"></canvas>
+    <div class="detail-celebration-card">
+        <div class="detail-celebration-icons">✨ 🎆 🏫 🍾 🎇 ✨</div>
+        <div class="detail-celebration-badge">THÀNH LẬP & SÁP NHẬP THÀNH CÔNG</div>
+        <h2 class="detail-celebration-school-name">{{ $eatery->name }}</h2>
+        <p class="detail-celebration-desc">Chào mừng quý phụ huynh & học sinh đến với không gian thông tin chi tiết nhà trường!</p>
+        <button type="button" onclick="closeDetailCelebration()" class="detail-celebration-btn">✨ Bắt đầu khám phá ngay ✨</button>
+    </div>
+</div>
+
+<style>
+.detail-page-celebration-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 999999;
+    background: rgba(15, 23, 42, 0.4);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: detailFadeIn 0.4s ease;
+}
+
+.detail-fireworks-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.detail-celebration-card {
+    position: relative;
+    z-index: 2;
+    background: rgba(255, 255, 255, 0.96);
+    backdrop-filter: blur(20px);
+    border: 2.5px solid transparent;
+    background: 
+        linear-gradient(rgba(255, 255, 255, 0.97), rgba(255, 255, 255, 0.97)) padding-box,
+        linear-gradient(135deg, #9333ea, #ec4899, #fbbf24) border-box;
+    border-radius: 36px;
+    padding: 42px 48px;
+    text-align: center;
+    max-width: 580px;
+    width: 90%;
+    box-shadow: 0 30px 80px rgba(147, 51, 234, 0.35);
+    will-change: transform, opacity;
+    animation: detailCardPop 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.detail-celebration-icons {
+    font-size: 2.4rem;
+    margin-bottom: 12px;
+    letter-spacing: 4px;
+    animation: storyBounceSparkle 1.2s infinite alternate;
+}
+
+.detail-celebration-badge {
+    display: inline-block;
+    padding: 6px 18px;
+    border-radius: 20px;
+    background: linear-gradient(135deg, rgba(147, 51, 234, 0.12), rgba(236, 72, 153, 0.12));
+    border: 1px solid rgba(147, 51, 234, 0.25);
+    color: #9333ea;
+    font-size: 0.82rem;
+    font-weight: 900;
+    letter-spacing: 2px;
+    margin-bottom: 14px;
+}
+
+.detail-celebration-school-name {
+    font-family: 'Be Vietnam Pro', sans-serif;
+    font-size: clamp(1.8rem, 4vw, 2.4rem);
+    font-weight: 900;
+    display: inline-block;
+    padding-top: 8px;
+    padding-bottom: 4px;
+    line-height: 1.35;
+    background: linear-gradient(135deg, #7e22ce 0%, #a855f7 35%, #ec4899 70%, #d97706 100%);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 4px 15px rgba(168, 85, 247, 0.35));
+    animation: storyTextGlow 3s linear infinite;
+    margin: 0 0 12px 0;
+}
+
+.detail-celebration-desc {
+    font-size: 0.98rem;
+    font-weight: 600;
+    color: #475569;
+    margin-bottom: 24px;
+    line-height: 1.5;
+}
+
+.detail-celebration-btn {
+    background: linear-gradient(135deg, #9333ea 0%, #ec4899 100%);
+    color: #ffffff;
+    font-family: 'Be Vietnam Pro', sans-serif;
+    font-size: 1.05rem;
+    font-weight: 800;
+    border: none;
+    padding: 14px 32px;
+    border-radius: 24px;
+    box-shadow: 0 10px 30px rgba(147, 51, 234, 0.4);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.detail-celebration-btn:hover {
+    transform: translateY(-2px) scale(1.03);
+    box-shadow: 0 14px 40px rgba(236, 72, 153, 0.6);
+}
+
+@keyframes detailFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes detailCardPop {
+    from { transform: scale(0.85) translateY(20px); opacity: 0; }
+    to { transform: scale(1) translateY(0); opacity: 1; }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('celebrate')) {
+        const modal = document.getElementById('detailPageCelebrationModal');
+        if (modal) {
+            modal.style.display = 'flex';
+            runDetailFireworks();
+            setTimeout(closeDetailCelebration, 3500);
+        }
+    }
+});
+
+function closeDetailCelebration() {
+    const modal = document.getElementById('detailPageCelebrationModal');
+    if (modal) {
+        modal.style.transition = 'opacity 0.4s ease';
+        modal.style.opacity = '0';
+        setTimeout(() => { modal.style.display = 'none'; }, 400);
+    }
+}
+
+function runDetailFireworks() {
+    const canvas = document.getElementById('detailFireworksCanvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    let width = canvas.width = window.innerWidth;
+    let height = canvas.height = window.innerHeight;
+
+    const particles = [];
+    const colors = ['#f59e0b', '#ec4899', '#8b5cf6', '#3b82f6', '#10b981', '#fbbf24', '#a855f7'];
+
+    for (let f = 0; f < 5; f++) {
+        const cx = width * (0.2 + Math.random() * 0.6);
+        const cy = height * (0.2 + Math.random() * 0.35);
+        const count = 24;
+        for (let i = 0; i < count; i++) {
+            const angle = (Math.PI * 2 / count) * i;
+            const speed = Math.random() * 7 + 2;
+            particles.push({
+                x: cx, y: cy,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed,
+                color: colors[Math.floor(Math.random() * colors.length)],
+                size: Math.random() * 3.5 + 2,
+                alpha: 1,
+                decay: Math.random() * 0.02 + 0.015,
+                gravity: 0.12
+            });
+        }
+    }
+
+    const startTime = Date.now();
+    function animate() {
+        if (Date.now() - startTime > 3200) return;
+        ctx.clearRect(0, 0, width, height);
+
+        particles.forEach(p => {
+            p.x += p.vx;
+            p.y += p.vy;
+            p.vy += p.gravity;
+            p.alpha -= p.decay;
+
+            if (p.alpha > 0) {
+                ctx.save();
+                ctx.globalAlpha = Math.max(0, p.alpha);
+                ctx.fillStyle = p.color;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+        });
+
+        requestAnimationFrame(animate);
+    }
+    animate();
+}
+</script>
 @endsection

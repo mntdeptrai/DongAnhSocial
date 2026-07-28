@@ -606,6 +606,21 @@
 
             window.addEventListener('scroll', handleScroll, { passive: true });
             handleScroll(); // Run once on startup
+
+            // Safety: Reset any lingering fullscreen modal or overlay when returning via Back/Forward cache
+            window.addEventListener('pageshow', function() {
+                const storyModal = document.getElementById('storytellingModal');
+                if (storyModal) {
+                    storyModal.classList.remove('active');
+                    storyModal.style.display = 'none';
+                    storyModal.style.opacity = '0';
+                    storyModal.style.pointerEvents = 'none';
+                }
+                if (window.storyteller) {
+                    window.storyteller.closeAndResetModal();
+                }
+                document.body.style.overflow = 'auto';
+            });
         });
 
         window.openGuideModal = function(e) {

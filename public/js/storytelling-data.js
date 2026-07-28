@@ -10,7 +10,12 @@ window.STORYTELLING_SCHOOLS = {
             name: 'Mầm non Phúc Lộc',
             address: 'Thôn Phúc Lộc, Xã Đông Anh, Hà Nội',
             phone: '024 3883 0001',
-            principal: 'Cô Nguyễn Thị Hoa',
+            principal: 'Cô Đỗ Thị Hậu',
+            board: [
+                { role: 'HT MN Phúc Lộc:', name: 'Cô Đỗ Thị Hậu' },
+                { role: 'Phó HT MN Phúc Lộc:', name: 'Cô Vương Thị Huyền' },
+                { role: 'Phó HT MN Sao Mai:', name: 'Cô Lê Thị Thúy Hà' }
+            ],
             classes: 30,
             students: 759,
             ratio: '25.3 HS/lớp (Quy mô chuẩn)',
@@ -53,7 +58,12 @@ window.STORYTELLING_SCHOOLS = {
             name: 'Mầm non Cổ Loa',
             address: 'Thôn Chùa, Xã Cổ Loa, Đông Anh, Hà Nội',
             phone: '024 3883 0002',
-            principal: 'Cô Lê Thị Nga',
+            principal: 'Cô Nguyễn Thị Nhàn',
+            board: [
+                { role: 'HT MN Cổ Loa:', name: 'Cô Nguyễn Thị Nhàn' },
+                { role: 'HT MN Thành Loa:', name: 'Cô Nguyễn Thị Thu Trang' },
+                { role: 'Phó HT MN Thành Loa:', name: 'Cô Đào Thị Kim Yến' }
+            ],
             classes: 36,
             students: 947,
             ratio: '26.3 HS/lớp',
@@ -96,7 +106,12 @@ window.STORYTELLING_SCHOOLS = {
             name: 'Mầm non Mai Lâm',
             address: 'Xã Mai Lâm, Đông Anh, Hà Nội',
             phone: '024 3883 0003',
-            principal: 'Cô Đỗ Thị Kim',
+            principal: 'Cô Nguyễn Thị Vân Anh',
+            board: [
+                { role: 'HT MN Thái Bình:', name: 'Cô Nguyễn Thị Vân Anh' },
+                { role: 'HT MN Mai Lâm:', name: 'Cô Phạm Thị Bích Liên' },
+                { role: 'Phó HT MN Thái Bình:', name: 'Cô Lương Thị Hương' }
+            ],
             classes: 32,
             students: 866,
             ratio: '27.0 HS/lớp',
@@ -139,7 +154,12 @@ window.STORYTELLING_SCHOOLS = {
             name: 'Mầm non Việt Hùng',
             address: 'Thôn Gia Lương, Xã Việt Hùng, Đông Anh, Hà Nội',
             phone: '024 3883 0004',
-            principal: 'Cô Hoàng Thị Lan',
+            principal: 'Cô Hoàng Thị Quỳnh Hoa',
+            board: [
+                { role: 'HT MN Dục Tú:', name: 'Cô Hoàng Thị Quỳnh Hoa' },
+                { role: 'HT MN Đông Hội:', name: 'Cô Trương Thị Thúy Hòa' },
+                { role: 'HT MN Sao Mai:', name: 'Cô Nguyễn Thị Kim Quế' }
+            ],
             classes: 55,
             students: 1440,
             ratio: '26.2 HS/lớp',
@@ -172,7 +192,7 @@ window.STORYTELLING_SCHOOLS = {
                 photo: 'https://images.unsplash.com/photo-1588072432836-e10032774350?auto=format&fit=crop&w=600&q=80'
             },
             {
-                name: 'Trường Mầm non Dục Tú (Nhánh Việt Hùng)',
+                name: 'Trường Mầm non Dục Tú ',
                 address: 'Giáp Ranh Dục Tú, Đông Anh',
                 principal: 'Cô Ngô Thị Liên',
                 phone: '024 3883 0043',
@@ -193,7 +213,12 @@ window.STORYTELLING_SCHOOLS = {
             name: 'Mầm non Uy Nỗ',
             address: 'Xã Uy Nỗ, Đông Anh, Hà Nội',
             phone: '024 3883 0005',
-            principal: 'Cô Trịnh Thị Oanh',
+            principal: 'Cô Trần Thị Yên Giang',
+            board: [
+                { role: 'HT MN Uy Nỗ:', name: 'Cô Trần Thị Yên Giang' },
+                { role: 'HT MN Uy Nỗ:', name: 'Cô Ngô Thị Hạnh' },
+                { role: 'Phó HT MN Uy Nỗ A:', name: 'Cô Nguyễn Thị Minh Toan' }
+            ],
             classes: 33,
             students: 910,
             ratio: '27.5 HS/lớp',
@@ -236,7 +261,12 @@ window.STORYTELLING_SCHOOLS = {
             name: 'Mầm non Đông Hội',
             address: 'Thôn Đông Hói, Xã Đông Hội, Đông Anh, Hà Nội',
             phone: '024 3883 0006',
-            principal: 'Cô Nguyễn Thị Tuyết',
+            principal: 'Cô Trương Thị Nga',
+            board: [
+                { role: 'HT MN Việt Hùng:', name: 'Cô Trương Thị Nga' },
+                { role: 'HT MN Xuân Canh:', name: 'Cô Nguyễn Thị Hà' },
+                { role: 'Phó HT MN Đông Hội:', name: 'Cô Quản Thị Thu Hòa' }
+            ],
             classes: 48,
             students: 1464,
             ratio: '30.5 HS/lớp',
@@ -279,7 +309,12 @@ window.STORYTELLING_SCHOOLS = {
             name: 'Tiểu học An Dương Vương',
             address: 'Thôn Gia Lương, Xã Việt Hùng, Đông Anh, Hà Nội',
             phone: '024 3883 0007',
-            principal: 'Thầy Phạm Văn Hùng',
+            principal: 'Cô Dương Thị Lan Phương',
+            board: [
+                { role: 'HT TH An Dương Vương:', name: 'Cô Dương Thị Lan Phương' },
+                { role: 'Phó HT TH An Dương Vương:', name: 'Cô Lê Hồng Vân' },
+                { role: 'Phó HT TH An Dương Vương:', name: 'Cô Ngô Thị Mai' }
+            ],
             classes: 28,
             students: 1009,
             ratio: '36.0 HS/lớp (Trường Chất lượng cao)',
@@ -311,7 +346,12 @@ window.STORYTELLING_SCHOOLS = {
             name: 'Tiểu học Đông Hội',
             address: 'Xã Đông Hội, Đông Anh, Hà Nội',
             phone: '024 3883 0008',
-            principal: 'Thầy Lê Minh Tuấn',
+            principal: 'Cô Phạm Thị Tân Trang',
+            board: [
+                { role: 'HT TH Ngô Tất Tố:', name: 'Cô Phạm Thị Tân Trang' },
+                { role: 'Phó HT TH Đông Hội:', name: 'Cô Nguyễn Thị Hạnh' },
+                { role: 'HT TH Xuân Canh:', name: 'Cô Lưu Thị Thu Hồng' }
+            ],
             classes: 55,
             students: 2426,
             ratio: '44.1 HS/lớp',
@@ -354,7 +394,12 @@ window.STORYTELLING_SCHOOLS = {
             name: 'Tiểu học Việt Hùng',
             address: 'Thôn Việt Hùng, Xã Việt Hùng, Đông Anh, Hà Nội',
             phone: '024 3883 0009',
-            principal: 'Thầy Trịnh Văn Nam',
+            principal: 'Cô Đỗ Thị Kim Loan',
+            board: [
+                { role: 'HT TH Uy Nỗ:', name: 'Cô Đỗ Thị Kim Loan' },
+                { role: 'HT TH Việt Hùng 2:', name: 'Cô Hữu Thị Như Quỳnh' },
+                { role: 'Phó HT TH Việt Hùng:', name: 'Cô Đào Mỹ Lệ Hằng' }
+            ],
             classes: 40,
             students: 1237,
             ratio: '30.9 HS/lớp',
@@ -365,7 +410,7 @@ window.STORYTELLING_SCHOOLS = {
         },
         components: [
             {
-                name: 'Trường Tiểu học Việt Hùng (Việt Hùng 1)',
+                name: 'Trường Tiểu học Việt Hùng ',
                 address: 'Khu 1, Xã Việt Hùng, Đông Anh',
                 principal: 'Thầy Trịnh Văn Nam',
                 phone: '024 3883 0091',
@@ -397,7 +442,12 @@ window.STORYTELLING_SCHOOLS = {
             name: 'THCS Nguyễn Huy Tưởng',
             address: 'Tổ 4, Thị trấn Đông Anh, Đông Anh, Hà Nội',
             phone: '024 3883 0010',
-            principal: 'Cô Nguyễn Thị Thanh',
+            principal: 'Cô Nguyễn Thị Thu Hà',
+            board: [
+                { role: 'HT THCS N.Huy Tưởng:', name: 'Cô Nguyễn Thị Thu Hà' },
+                { role: 'Phó HT THCS N.Huy Tưởng:', name: 'Cô Nguyễn Thị Mai Lan' },
+                { role: 'Phó HT THCS N.Huy Tưởng:', name: 'Cô Nguyễn Thị Kim Hoa' }
+            ],
             classes: 30,
             students: 1294,
             ratio: '43.1 HS/lớp (Trường Chất lượng cao)',
@@ -429,7 +479,12 @@ window.STORYTELLING_SCHOOLS = {
             name: 'THCS Ngô Quyền',
             address: 'Thị trấn Đông Anh, Đông Anh, Hà Nội',
             phone: '024 3883 0011',
-            principal: 'Thầy Vũ Văn Sang',
+            principal: 'Cô Chử Thị Hồng Yến',
+            board: [
+                { role: 'HT THCS Ngô Quyền:', name: 'Cô Chử Thị Hồng Yến' },
+                { role: 'Phó HT THCS Ngô Quyền:', name: 'Cô Trần Thị Quyên' },
+                { role: 'Phó HT THCS Ngô Quyền:', name: 'Cô Đỗ Thị Kim Hòa' }
+            ],
             classes: 25,
             students: 996,
             ratio: '39.8 HS/lớp',
@@ -461,7 +516,12 @@ window.STORYTELLING_SCHOOLS = {
             name: 'THCS An Dương Vương',
             address: 'Xã Vân Hà, Đông Anh, Hà Nội',
             phone: '024 3883 0012',
-            principal: 'Thầy Đỗ Văn Thắng',
+            principal: 'Cô Đỗ Thị Thanh Thủy',
+            board: [
+                { role: 'HT THCS Việt Hùng:', name: 'Cô Đỗ Thị Thanh Thủy' },
+                { role: 'HT THCS A.Dương Vương:', name: 'Thầy Ngô Văn Thắng' },
+                { role: 'Phó HT THCS Đông Hội:', name: 'Cô Đỗ Thu Phương' }
+            ],
             classes: 50,
             students: 2020,
             ratio: '40.4 HS/lớp',
@@ -504,7 +564,12 @@ window.STORYTELLING_SCHOOLS = {
             name: 'THCS Xuân Canh',
             address: 'Xã Xuân Canh, Đông Anh, Hà Nội',
             phone: '024 3883 0013',
-            principal: 'Cô Bùi Thị Hòa',
+            principal: 'Thầy Nguyễn Đình Diềm',
+            board: [
+                { role: 'HT THCS Đông Hội:', name: 'Thầy Nguyễn Đình Diềm' },
+                { role: 'HT THCS Xuân Canh:', name: 'Thầy Nguyễn Hữu Sính' },
+                { role: 'HT THCS Uy Nỗ:', name: 'Thầy Lê Quang Hoa' }
+            ],
             classes: 45,
             students: 1609,
             ratio: '35.8 HS/lớp',
@@ -547,7 +612,12 @@ window.STORYTELLING_SCHOOLS = {
             name: 'Trường liên cấp Mai Lâm',
             address: 'Xã Mai Lâm, Đông Anh, Hà Nội',
             phone: '024 3883 0014',
-            principal: 'Thầy Ngô Văn Hùng',
+            principal: 'Thầy Hoàng Ngọc Thắng',
+            board: [
+                { role: 'HT THCS Mai Lâm:', name: 'Thầy Hoàng Ngọc Thắng' },
+                { role: 'HT TH Đông Hội:', name: 'Cô Lê Thị Hạnh' },
+                { role: 'Phó HT THCS Xuân Canh:', name: 'Cô Hoàng Phương Anh' }
+            ],
             classes: 50,
             students: 1640,
             ratio: '32.8 HS/lớp (Tiểu học & THCS)',
@@ -590,7 +660,12 @@ window.STORYTELLING_SCHOOLS = {
             name: 'Trường liên cấp Cổ Loa',
             address: 'Thôn Cổ Loa, Xã Cổ Loa, Đông Anh, Hà Nội',
             phone: '024 3883 0015',
-            principal: 'Thầy Nguyễn Văn Tùng',
+            principal: 'Cô Nguyễn Thị Huệ',
+            board: [
+                { role: 'HT TH Đào Duy Tùng:', name: 'Cô Nguyễn Thị Huệ' },
+                { role: 'Phó HT THCS Cổ Loa:', name: 'Cô Đỗ Thị Như Hoa' },
+                { role: 'HT TH Cổ Loa:', name: 'Cô Đào Thị Hòa' }
+            ],
             classes: 52,
             students: 2094,
             ratio: '40.3 HS/lớp (Tiểu học & THCS)',
@@ -633,7 +708,12 @@ window.STORYTELLING_SCHOOLS = {
             name: 'Trường liên cấp Đào Duy Tùng',
             address: 'Đông Anh, Hà Nội',
             phone: '024 3883 0016',
-            principal: 'Cô Nguyễn Thị Loan',
+            principal: 'Cô Hồ Thị Ánh',
+            board: [
+                { role: 'HT THCS Đ.Duy Tùng:', name: 'Cô Hồ Thị Ánh' },
+                { role: 'Phó HT THCS Đ.Duy Tùng:', name: 'Cô Nguyễn Thị Thanh Thủy' },
+                { role: 'Phó HT TH Đào Duy Tùng:', name: 'Cô Bùi Thị Thúy' }
+            ],
             classes: 50,
             students: 1717,
             ratio: '34.3 HS/lớp (Tiểu học & THCS)',
@@ -676,7 +756,12 @@ window.STORYTELLING_SCHOOLS = {
             name: 'Trường liên cấp Dục Tú',
             address: 'Thôn Dục Tú, Xã Dục Tú, Đông Anh, Hà Nội',
             phone: '024 3883 0017',
-            principal: 'Thầy Bùi Văn Thắng',
+            principal: 'Cô Nguyễn Thị Thu Hằng',
+            board: [
+                { role: 'HT TH Dục Tú:', name: 'Cô Nguyễn Thị Thu Hằng' },
+                { role: 'HT THCS Dục Tú:', name: 'Cô Trần Thị Giáng Hương' },
+                { role: 'Phó HT TH Cổ Loa:', name: 'Cô Hoàng Thúy Hòa' }
+            ],
             classes: 60,
             students: 2298,
             ratio: '38.3 HS/lớp (Tiểu học & THCS)',
@@ -719,7 +804,12 @@ window.STORYTELLING_SCHOOLS = {
             name: 'Trường liên cấp Uy Nỗ',
             address: 'Thôn Uy Nỗ, Xã Uy Nỗ, Đông Anh, Hà Nội',
             phone: '024 3883 0018',
-            principal: 'Cô Đỗ Thị Thanh',
+            principal: 'Thầy Nguyễn Quang Anh',
+            board: [
+                { role: 'HT THCS Cổ Loa:', name: 'Thầy Nguyễn Quang Anh' },
+                { role: 'Phó HT THCS Mai Lâm:', name: 'Cô Nguyễn Thiên Hương' },
+                { role: 'Phó HT TH Uy Nỗ:', name: 'Cô Phan Thị Thanh Nhàn' }
+            ],
             classes: 50,
             students: 1493,
             ratio: '29.9 HS/lớp (Tiểu học & THCS)',

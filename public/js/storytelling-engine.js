@@ -14,6 +14,7 @@ class SchoolStoryteller {
         this.isBusy = false;
         this.markers = [];
         this.routePolyline = null;
+        this.routePolylines = [];
         this.catchmentPolygon = null;
         this.speechSynth = null;
     }
@@ -53,7 +54,7 @@ class SchoolStoryteller {
 
         const particles = [];
         const particleCount = 60;
-        const colors = ['#fef08a', '#fbbf24', '#a5b4fc', '#38bdf8', '#c084fc', '#ffffff'];
+        const colors = ['#c084fc', '#e879f9', '#818cf8', '#fbbf24', '#f472b6', '#a855f7'];
 
         for (let i = 0; i < particleCount; i++) {
             particles.push({
@@ -106,16 +107,41 @@ class SchoolStoryteller {
         animateSparkles();
     }
 
+    closeAndResetModal() {
+        this.isSkipped = true;
+        this.isBusy = false;
+        if (this.speechSynth) this.speechSynth.cancel();
+
+        const modal = document.getElementById('storytellingModal');
+        if (modal) {
+            modal.classList.remove('active');
+            modal.style.display = 'none';
+            modal.style.opacity = '0';
+            modal.style.pointerEvents = 'none';
+        }
+
+        const intro = document.getElementById('storyIntroScreen');
+        if (intro) intro.classList.add('hidden');
+
+        document.body.style.overflow = 'auto';
+    }
+
     async startStory(schoolSlug, redirectUrl) {
         if (this.isBusy) return;
         this.isBusy = true;
         this.isSkipped = false;
+        this.isManualMode = false;
         this.targetUrl = redirectUrl || `/dia-diem/${schoolSlug}`;
         this.currentData = window.getSchoolStoryData(schoolSlug);
 
         // Open modal
         const modal = document.getElementById('storytellingModal');
-        if (modal) modal.classList.add('active');
+        if (modal) {
+            modal.style.display = 'block';
+            modal.style.opacity = '1';
+            modal.style.pointerEvents = 'auto';
+            modal.classList.add('active');
+        }
 
         // Init map & sparkle animation
         this.initMap();
@@ -126,31 +152,31 @@ class SchoolStoryteller {
         try {
             // Stage 0: Intro
             await this.phase0_Intro();
-            if (this.isSkipped) return;
+            if (this.isSkipped || this.isManualMode) return;
 
             // Stage 1: Overview
             await this.phase1_Overview();
-            if (this.isSkipped) return;
+            if (this.isSkipped || this.isManualMode) return;
 
             // Stage 2: Dynamic iteration over all component schools
             for (let i = 0; i < this.currentData.components.length; i++) {
                 await this.phase_Component(i);
-                if (this.isSkipped) return;
+                if (this.isSkipped || this.isManualMode) return;
             }
 
             // Stage 3: Connection & Distance
             await this.phase_Connection();
-            if (this.isSkipped) return;
+            if (this.isSkipped || this.isManualMode) return;
 
             // Stage 4: Merger Convergence Beam
             await this.phase_Merger();
-            if (this.isSkipped) return;
+            if (this.isSkipped || this.isManualMode) return;
 
             // Stage 5: New School Presentation
             await this.phase_NewSchool();
-            if (this.isSkipped) return;
+            if (this.isSkipped || this.isManualMode) return;
 
-            // Stage 6: Transition
+            // Stage 6: Transition & Redirect
             await this.phase_Transition();
         } catch (err) {
             console.warn('Storytelling sequence interrupted or completed:', err);
@@ -160,14 +186,11 @@ class SchoolStoryteller {
     }
 
     skipStory() {
-        this.isSkipped = true;
-        if (this.speechSynth) this.speechSynth.cancel();
+        const dest = this.targetUrl;
+        this.closeAndResetModal();
 
-        const modal = document.getElementById('storytellingModal');
-        if (modal) modal.classList.remove('active');
-
-        if (this.targetUrl) {
-            window.location.href = this.targetUrl;
+        if (dest) {
+            window.location.href = dest;
         }
     }
 
@@ -190,7 +213,20 @@ class SchoolStoryteller {
     }
 
     async sleep(ms) {
-        return new Promise(resolve => setTimeout(resolve, ms));
+        const startStep = this.activeStep;
+        return new Promise(resolve => {
+            if (this.isManualMode) return resolve();
+            const checkTimer = setInterval(() => {
+                if (this.isSkipped || this.isManualMode || this.activeStep !== startStep) {
+                    clearInterval(checkTimer);
+                    resolve();
+                }
+            }, 40);
+            setTimeout(() => {
+                clearInterval(checkTimer);
+                resolve();
+            }, ms);
+        });
     }
 
     setStep(stepNum) {
@@ -206,8 +242,10 @@ class SchoolStoryteller {
         // Update timeline items
         const items = document.querySelectorAll('.story-timeline-item');
         items.forEach((item, idx) => {
-            if (idx + 1 === stepNum) item.classList.add('active');
-            else if (idx + 1 < stepNum) {
+            if (idx + 1 === stepNum) {
+                item.classList.add('active');
+                item.classList.remove('completed');
+            } else if (idx + 1 < stepNum) {
                 item.classList.remove('active');
                 item.classList.add('completed');
             } else {
@@ -228,7 +266,7 @@ class SchoolStoryteller {
 
         components.forEach((comp, i) => {
             const shortName = comp.name.replace(/^Trường\s+/, '');
-            steps.push(`${stepIdx++}. Cơ sở ${i + 1}: ${shortName}`);
+            steps.push(`${stepIdx++}. ${shortName}`);
         });
 
         steps.push(`${stepIdx++}. Tuyến đường kết nối`);
@@ -245,13 +283,86 @@ class SchoolStoryteller {
 
         const progressWrap = document.querySelector('.story-progress-bar-wrap');
         if (progressWrap) {
-            progressWrap.innerHTML = steps.map((_, i) => `<div class="story-progress-dot ${i === 0 ? 'active' : ''}"></div>`).join('');
+            progressWrap.innerHTML = steps.map((_, i) => `
+                <div class="story-progress-dot ${i === 0 ? 'active' : ''}" onclick="window.storyteller.jumpToStep(${i + 1})" style="cursor: pointer;" title="Chuyển tới bước ${i + 1}"></div>
+            `).join('');
+        }
+    }
+
+    renderComponentMarkers(count = (this.currentData?.components || []).length) {
+        this.markers.forEach(m => {
+            try {
+                if (m.getTooltip()) {
+                    m.closeTooltip();
+                    m.unbindTooltip();
+                }
+            } catch(e) {}
+            this.map.removeLayer(m);
+        });
+        this.markers = [];
+        document.querySelectorAll('.leaflet-tooltip').forEach(el => el.remove());
+
+        const components = this.currentData?.components || [];
+        const max = Math.min(count, components.length);
+        for (let i = 0; i < max; i++) {
+            const comp = components[i];
+            const compNum = i + 1;
+            const iconHtml = `
+                <div class="story-marker-icon">
+                    <div class="story-marker-inner">${compNum}</div>
+                    <div class="story-marker-pulse"></div>
+                </div>
+            `;
+            const customIcon = L.divIcon({
+                html: iconHtml,
+                className: 'custom-story-div-icon',
+                iconSize: [48, 48],
+                iconAnchor: [24, 24]
+            });
+
+            const m = L.marker([comp.lat, comp.lng], { icon: customIcon }).addTo(this.map);
+            m.bindTooltip(`<b>📍 ${compNum}. ${comp.name}</b><span class="story-tooltip-sublabel">(Trước sáp nhập)</span>`, {
+                permanent: true,
+                direction: 'top',
+                className: 'story-tooltip-custom story-tooltip-comp',
+                offset: [0, -24]
+            });
+            this.markers.push(m);
         }
     }
 
     async jumpToStep(stepNum) {
-        // Simple step navigation support
+        if (!this.currentData) return;
+
+        const compCount = (this.currentData.components || []).length;
+        const totalSteps = 5 + compCount;
+
+        if (stepNum < 1 || stepNum > totalSteps) return;
+
+        // User clicked a step manually: immediately stop auto-play progression!
+        this.isManualMode = true;
+
+        // Reset step state and clear layers
         this.setStep(stepNum);
+        this.resetLayers();
+
+        if (stepNum === 1) {
+            await this.phase1_Overview();
+        } else if (stepNum >= 2 && stepNum < 2 + compCount) {
+            const compIndex = stepNum - 2;
+            this.renderComponentMarkers(compIndex + 1);
+            await this.phase_Component(compIndex);
+        } else if (stepNum === 2 + compCount) {
+            this.renderComponentMarkers(compCount);
+            await this.phase_Connection();
+        } else if (stepNum === 3 + compCount) {
+            this.renderComponentMarkers(compCount);
+            await this.phase_Merger();
+        } else if (stepNum === 4 + compCount) {
+            await this.phase_NewSchool();
+        } else if (stepNum === 5 + compCount) {
+            await this.phase_Transition();
+        }
     }
 
     typeText(elementId, text, speed = 12) {
@@ -259,11 +370,18 @@ class SchoolStoryteller {
             const el = document.getElementById(elementId);
             if (!el) return resolve();
 
+            if (this.isManualMode) {
+                el.innerHTML = text;
+                return resolve();
+            }
+
+            const startStep = this.activeStep;
             el.innerHTML = '';
             let i = 0;
             const timer = setInterval(() => {
-                if (this.isSkipped) {
+                if (this.isSkipped || this.activeStep !== startStep) {
                     clearInterval(timer);
+                    el.innerHTML = text;
                     return resolve();
                 }
                 if (i < text.length) {
@@ -278,8 +396,19 @@ class SchoolStoryteller {
     }
 
     resetLayers() {
-        this.markers.forEach(m => this.map.removeLayer(m));
+        this.markers.forEach(m => {
+            try {
+                if (m.getTooltip()) m.unbindTooltip();
+            } catch(e) {}
+            this.map.removeLayer(m);
+        });
         this.markers = [];
+
+        if (this.routePolylines) {
+            this.routePolylines.forEach(p => this.map.removeLayer(p));
+        }
+        this.routePolylines = [];
+
         if (this.routePolyline) {
             this.map.removeLayer(this.routePolyline);
             this.routePolyline = null;
@@ -298,7 +427,75 @@ class SchoolStoryteller {
 
         const annCard = document.getElementById('storyAnnouncementCard');
         if (annCard) annCard.classList.remove('show');
+
+        const celBanner = document.getElementById('storyCelebrationBanner');
+        if (celBanner) celBanner.classList.remove('show');
+
+        document.querySelectorAll('.leaflet-tooltip').forEach(el => el.remove());
     }
+
+    launchFireworks(durationMs = 2400) {
+        const canvas = document.getElementById('storySparkleCanvas');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        const width = canvas.width = window.innerWidth;
+        const height = canvas.height = window.innerHeight;
+
+        const fireworks = [];
+        const colors = ['#f59e0b', '#ec4899', '#8b5cf6', '#3b82f6', '#10b981', '#fbbf24', '#a855f7'];
+
+        for (let f = 0; f < 5; f++) {
+            const centerX = width * (0.2 + Math.random() * 0.6);
+            const centerY = height * (0.2 + Math.random() * 0.35);
+            const pCount = 24;
+
+            for (let i = 0; i < pCount; i++) {
+                const angle = (Math.PI * 2 / pCount) * i;
+                const speed = Math.random() * 7 + 2;
+                fireworks.push({
+                    x: centerX,
+                    y: centerY,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    size: Math.random() * 3.5 + 2,
+                    alpha: 1,
+                    decay: Math.random() * 0.02 + 0.015,
+                    gravity: 0.12
+                });
+            }
+        }
+
+        const startTime = Date.now();
+        const animateFireworks = () => {
+            if (Date.now() - startTime > durationMs) return;
+
+            ctx.clearRect(0, 0, width, height);
+
+            fireworks.forEach(p => {
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vy += p.gravity;
+                p.alpha -= p.decay;
+
+                if (p.alpha > 0) {
+                    ctx.save();
+                    ctx.globalAlpha = Math.max(0, p.alpha);
+                    ctx.fillStyle = p.color;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.restore();
+                }
+            });
+
+            requestAnimationFrame(animateFireworks);
+        };
+
+        animateFireworks();
+    }
+
+
 
     // ==========================================
     // STAGE 0: INTRO ANIMATION
@@ -309,11 +506,12 @@ class SchoolStoryteller {
         if (!intro) return;
 
         intro.classList.remove('hidden');
-        document.getElementById('storyIntroTitle').innerText = `HÀNH TRÌNH HÌNH THÀNH\n${this.currentData.mergedSchool.name.toUpperCase()}`;
+        const schoolNameUpper = (this.currentData.mergedSchool.name || '').toUpperCase();
+        document.getElementById('storyIntroTitle').innerHTML = `HÀNH TRÌNH HÌNH THÀNH<br><span class="story-intro-highlight">${schoolNameUpper}</span>`;
         document.getElementById('storyIntroSubtitle').innerText = `Tổ chức lại & Sắp xếp các cơ sở giáo dục công lập xã Đông Anh`;
 
         this.speak(`Hành trình hình thành ${this.currentData.mergedSchool.name}`);
-        await this.sleep(1600);
+        await this.sleep(2600);
 
         intro.classList.add('hidden');
         await this.sleep(400);
@@ -344,12 +542,11 @@ class SchoolStoryteller {
     // ==========================================
     async phase_Component(index) {
         const comp = this.currentData.components[index];
-        const circleNums = ['①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧'];
-        const circleChar = circleNums[index] || (index + 1).toString();
+        const compNum = index + 1;
         const stepNum = 2 + index;
 
         this.setStep(stepNum);
-        document.getElementById('storyPhaseLabel').innerText = `GIAI ĐOẠN ${stepNum}: ĐƠN VỊ SÁP NHẬP #${index + 1}`;
+        document.getElementById('storyPhaseLabel').innerText = `GIAI ĐOẠN ${stepNum}: ĐƠN VỊ SÁP NHẬP #${compNum}`;
 
         // Hide old card momentarily if not first component
         const card = document.getElementById('storyGlassCard');
@@ -358,32 +555,39 @@ class SchoolStoryteller {
             await this.sleep(150);
         }
 
-        // Create pulsing marker
-        const iconHtml = `
-            <div class="story-marker-icon">
-                <div class="story-marker-inner">${circleChar}</div>
-                <div class="story-marker-pulse"></div>
-            </div>
-        `;
-        const customIcon = L.divIcon({
-            html: iconHtml,
-            className: 'custom-story-div-icon',
-            iconSize: [44, 44],
-            iconAnchor: [22, 22]
-        });
+        // Create pulsing marker if not already present
+        if (this.markers.length < compNum) {
+            const iconHtml = `
+                <div class="story-marker-icon">
+                    <div class="story-marker-inner">${compNum}</div>
+                    <div class="story-marker-pulse"></div>
+                </div>
+            `;
+            const customIcon = L.divIcon({
+                html: iconHtml,
+                className: 'custom-story-div-icon',
+                iconSize: [48, 48],
+                iconAnchor: [24, 24]
+            });
 
-        const m = L.marker([comp.lat, comp.lng], { icon: customIcon }).addTo(this.map);
-        m.bindTooltip(`<b>${circleChar} ${comp.name}</b><br><span style="color:#a5b4fc;">(Trước sáp nhập)</span>`, {
-            permanent: true,
-            direction: 'top',
-            className: 'story-tooltip-custom',
-            offset: [0, -20]
-        });
-        this.markers.push(m);
+            const m = L.marker([comp.lat, comp.lng], { icon: customIcon }).addTo(this.map);
+            m.bindTooltip(`<b>📍 ${compNum}. ${comp.name}</b><span class="story-tooltip-sublabel">(Trước sáp nhập)</span>`, {
+                permanent: true,
+                direction: 'top',
+                className: 'story-tooltip-custom story-tooltip-comp',
+                offset: [0, -24]
+            });
+            this.markers.push(m);
+        }
 
-        // Fly camera
-        this.map.flyTo([comp.lat, comp.lng], 15.5, {
-            duration: 1.0
+        // Fly camera centered in open viewport space (clearing 340px left sidebar and 440px right glass card)
+        const targetPt = L.latLng(comp.lat, comp.lng);
+        const cBounds = L.latLngBounds([targetPt, targetPt]);
+        this.map.flyToBounds(cBounds, {
+            paddingTopLeft: [360, 120],
+            paddingBottomRight: [480, 160],
+            maxZoom: 15.5,
+            duration: this.isManualMode ? 0.4 : 1.0
         });
 
         // Show Glass Card UI
@@ -395,8 +599,8 @@ class SchoolStoryteller {
             document.getElementById('storyCardAddress').innerHTML = `📍 ${comp.address}`;
             document.getElementById('storyStatClasses').innerText = `${comp.classes} Lớp`;
             document.getElementById('storyStatStudents').innerText = `${comp.students} HS`;
-            document.getElementById('storyCardPrincipal').innerText = comp.principal || 'Đang cập nhật';
-            document.getElementById('storyCardPhone').innerText = comp.phone || 'Đang cập nhật';
+            const boardSec = document.getElementById('storyBoardSection');
+            if (boardSec) boardSec.style.display = 'none';
 
             const actionBtn = document.getElementById('storyCardActionBtn');
             if (actionBtn) actionBtn.style.display = 'none';
@@ -404,7 +608,7 @@ class SchoolStoryteller {
             card.classList.add('show');
         }
 
-        const msg = `Cơ sở ${index + 1}: ${comp.name} hiện tại có quy mô ${comp.classes} lớp học và ${comp.students} học sinh.`;
+        const msg = `${comp.name} hiện tại có quy mô ${comp.classes} lớp học và ${comp.students} học sinh.`;
         this.speak(msg);
         await this.typeText('storyNarrativeText', msg, 12);
 
@@ -430,8 +634,9 @@ class SchoolStoryteller {
 
         const bounds = L.latLngBounds(latLngs);
         this.map.flyToBounds(bounds, {
-            padding: [100, 100],
-            duration: 1.2
+            paddingTopLeft: [360, 120],
+            paddingBottomRight: [140, 160],
+            duration: this.isManualMode ? 0.4 : 1.2
         });
 
         await this.sleep(500);
@@ -493,20 +698,8 @@ class SchoolStoryteller {
         this.setStep(stepNum);
         document.getElementById('storyPhaseLabel').innerText = `GIAI ĐOẠN ${stepNum}: TỔ CHỨC LẠI & SÁP NHẬP`;
 
-        // Hide distance box
-        const distBox = document.getElementById('storyDistanceBox');
-        if (distBox) distBox.classList.remove('show');
-
-        // Fade out old markers
-        this.markers.forEach(m => {
-            if (m._icon) {
-                m._icon.style.transition = 'all 0.4s ease';
-                m._icon.style.opacity = '0';
-                m._icon.style.transform = 'scale(0)';
-            }
-        });
-
-        await this.sleep(300);
+        // Clean up all previous layers (markers, route polylines, catchment polygons, tooltips)
+        this.resetLayers();
 
         // Add Merged School New Marker
         const mSchool = this.currentData.mergedSchool;
@@ -514,27 +707,27 @@ class SchoolStoryteller {
             <div class="story-marker-icon merged">
                 <div class="story-marker-inner">🏫</div>
                 <div class="story-marker-pulse"></div>
+                <div class="story-marker-pulse pulse-ring-2"></div>
             </div>
         `;
         const customIcon = L.divIcon({
             html: iconHtml,
             className: 'custom-story-div-icon',
-            iconSize: [52, 52],
-            iconAnchor: [26, 26]
+            iconSize: [76, 76],
+            iconAnchor: [38, 38]
         });
 
         const newMarker = L.marker([mSchool.lat, mSchool.lng], { icon: customIcon }).addTo(this.map);
-        newMarker.bindTooltip(`<b>✨ ${mSchool.name}</b><br><span style="color:#34d399;">(Trường mới thành lập)</span>`, {
-            permanent: true,
-            direction: 'top',
-            className: 'story-tooltip-custom',
-            offset: [0, -26]
-        });
         this.markers.push(newMarker);
 
-        // Fly camera to new school
-        this.map.flyTo([mSchool.lat, mSchool.lng], 16, {
-            duration: 1.0
+        // Fly camera to new school centered in open viewport space
+        const mPt = L.latLng(mSchool.lat, mSchool.lng);
+        const mBounds = L.latLngBounds([mPt, mPt]);
+        this.map.flyToBounds(mBounds, {
+            paddingTopLeft: [360, 120],
+            paddingBottomRight: [140, 160],
+            maxZoom: 16,
+            duration: this.isManualMode ? 0.4 : 1.0
         });
 
         // Show Flash Announcement Overlay
@@ -548,7 +741,7 @@ class SchoolStoryteller {
         this.speak(msg);
         await this.typeText('storyNarrativeText', msg, 12);
 
-        await this.sleep(1800);
+        await this.sleep(2400);
     }
 
     // ==========================================
@@ -564,8 +757,94 @@ class SchoolStoryteller {
         const annCard = document.getElementById('storyAnnouncementCard');
         if (annCard) annCard.classList.remove('show');
 
-        // Show Merged Hero Card
+        // Clear and re-render clean state for new school phase
+        this.resetLayers();
+
+        // 1. Add Merged School Marker (Center, Large 76px, Z-Index 1000)
         const mSchool = this.currentData.mergedSchool;
+        const iconHtml = `
+            <div class="story-marker-icon merged">
+                <div class="story-marker-inner">🏫</div>
+                <div class="story-marker-pulse"></div>
+                <div class="story-marker-pulse pulse-ring-2"></div>
+            </div>
+        `;
+        const customIcon = L.divIcon({
+            html: iconHtml,
+            className: 'custom-story-div-icon',
+            iconSize: [76, 76],
+            iconAnchor: [38, 38]
+        });
+
+        const mergedMarker = L.marker([mSchool.lat, mSchool.lng], {
+            icon: customIcon,
+            zIndexOffset: 1000
+        }).addTo(this.map);
+        mergedMarker.bindTooltip(`<b>✨ ${mSchool.name}</b><span class="story-tooltip-sublabel">🌟 (Trường mới sau sáp nhập)</span>`, {
+            permanent: true,
+            direction: 'top',
+            className: 'story-tooltip-custom story-tooltip-merged',
+            offset: [0, -44]
+        });
+        this.markers.push(mergedMarker);
+
+        // 2. Add All Component School Markers with Opposing Tooltip Directions (Zero Overlap!)
+        const components = this.currentData.components || [];
+        components.forEach((comp, idx) => {
+            const compNum = idx + 1;
+            const compIconHtml = `
+                <div class="story-marker-icon">
+                    <div class="story-marker-inner">${compNum}</div>
+                    <div class="story-marker-pulse"></div>
+                </div>
+            `;
+            const compCustomIcon = L.divIcon({
+                html: compIconHtml,
+                className: 'custom-story-div-icon',
+                iconSize: [48, 48],
+                iconAnchor: [24, 24]
+            });
+
+            const m = L.marker([comp.lat, comp.lng], { icon: compCustomIcon }).addTo(this.map);
+
+            // Component 1 tooltip opens BOTTOM, Component 2 opens TOP to prevent tooltip overlap!
+            const tDir = (idx === 0) ? 'bottom' : 'top';
+            const tOff = (idx === 0) ? [0, 24] : [0, -24];
+
+            m.bindTooltip(`<b>📍 ${compNum}. ${comp.name}</b><span class="story-tooltip-sublabel">(Trước sáp nhập)</span>`, {
+                permanent: true,
+                direction: tDir,
+                className: 'story-tooltip-custom story-tooltip-comp',
+                offset: tOff
+            });
+            this.markers.push(m);
+
+            if (mSchool.lat && mSchool.lng) {
+                const connLine = L.polyline([
+                    [comp.lat, comp.lng],
+                    [mSchool.lat, mSchool.lng]
+                ], {
+                    color: '#c084fc',
+                    weight: 3.5,
+                    opacity: 0.85,
+                    dashArray: '8, 8'
+                }).addTo(this.map);
+                this.routePolylines.push(connLine);
+            }
+        });
+
+        // Fit map camera bounds to frame all component schools and the new merged school together
+        const allPoints = [
+            [mSchool.lat, mSchool.lng],
+            ...components.map(c => [c.lat, c.lng])
+        ];
+        this.map.fitBounds(allPoints, {
+            paddingTopLeft: [360, 120],
+            paddingBottomRight: [480, 160],
+            maxZoom: 15.5
+        });
+
+        // Show Merged Hero Card
         const card = document.getElementById('storyGlassCard');
         if (card) {
             document.getElementById('storyCardBadge').innerText = 'Trường mới (Sau sáp nhập)';
@@ -575,8 +854,24 @@ class SchoolStoryteller {
             document.getElementById('storyCardAddress').innerHTML = `📍 ${mSchool.address}`;
             document.getElementById('storyStatClasses').innerText = `${mSchool.classes} Lớp`;
             document.getElementById('storyStatStudents').innerText = `${mSchool.students} HS`;
-            document.getElementById('storyCardPrincipal').innerText = mSchool.principal;
-            document.getElementById('storyCardPhone').innerText = mSchool.phone;
+            const boardSec = document.getElementById('storyBoardSection');
+            if (boardSec) {
+                boardSec.style.display = 'block';
+                const gridEl = document.getElementById('storyBoardGrid');
+                const boardItems = mSchool.board || [
+                    { role: 'Hiệu trưởng:', name: mSchool.principal || 'Đang cập nhật' },
+                    { role: 'Phó Hiệu trưởng 1:', name: mSchool.vicePrincipal1 || 'Đang cập nhật' },
+                    { role: 'Phó Hiệu trưởng 2:', name: mSchool.vicePrincipal2 || 'Đang cập nhật' }
+                ];
+                if (gridEl) {
+                    gridEl.innerHTML = boardItems.map(item => `
+                        <div class="story-board-item">
+                            <span class="story-board-role">${item.role}</span>
+                            <span class="story-board-name">${item.name}</span>
+                        </div>
+                    `).join('');
+                }
+            }
 
             const actionBtn = document.getElementById('storyCardActionBtn');
             if (actionBtn) {
@@ -591,7 +886,7 @@ class SchoolStoryteller {
         this.speak(msg);
         await this.typeText('storyNarrativeText', msg, 12);
 
-        await this.sleep(2200);
+        await this.sleep(3200);
     }
 
     // ==========================================
@@ -603,23 +898,42 @@ class SchoolStoryteller {
         this.setStep(stepNum);
         document.getElementById('storyPhaseLabel').innerText = `GIAI ĐOẠN ${stepNum}: HOÀN TẤT & CHUYỂN TRANG`;
 
-        const msg = `Đang chuyển tới trang thông tin chi tiết trường...`;
+        // Launch Fireworks Celebration Explosion!
+        this.launchFireworks(3200);
+
+        // Show Celebration Banner
+        const celBanner = document.getElementById('storyCelebrationBanner');
+        if (celBanner) {
+            celBanner.classList.add('show');
+        }
+
+        const mSchool = this.currentData.mergedSchool;
+        const msg = `🎉 CHÀO MỪNG ${mSchool.name.toUpperCase()} CHÍNH THỨC ĐI VÀO HOẠT ĐỘNG! Chúc mừng đơn vị mới sáp nhập. Đang chuyển tới trang chi tiết...`;
         this.speak(msg);
         await this.typeText('storyNarrativeText', msg, 12);
+
+        await this.sleep(2800);
 
         // Zoom out and fade map
         this.map.zoomOut(2, { animate: true, duration: 0.8 });
 
         const modal = document.getElementById('storytellingModal');
         if (modal) {
-            modal.style.transition = 'opacity 0.5s ease';
+            modal.style.transition = 'opacity 0.6s ease';
             modal.style.opacity = '0';
         }
 
-        await this.sleep(500);
+        await this.sleep(600);
 
-        if (this.targetUrl) {
-            window.location.href = this.targetUrl;
+        let dest = this.targetUrl;
+        if (dest) {
+            dest += (dest.includes('?') ? '&' : '?') + 'celebrate=1';
+        }
+
+        this.closeAndResetModal();
+
+        if (dest) {
+            window.location.href = dest;
         }
     }
 }
@@ -637,3 +951,19 @@ window.openSchoolStoryteller = function (schoolSlug, redirectUrl) {
         window.location.href = redirectUrl || `/dia-diem/${schoolSlug}`;
     }
 };
+
+/**
+ * Automatic BFCache & History Back Reset Handlers
+ * Solves browser back-button freezing when returning from school detail page
+ */
+window.addEventListener('pageshow', function (event) {
+    if (window.storyteller) {
+        window.storyteller.closeAndResetModal();
+    }
+});
+
+window.addEventListener('popstate', function () {
+    if (window.storyteller) {
+        window.storyteller.closeAndResetModal();
+    }
+});

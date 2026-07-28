@@ -9,16 +9,18 @@
     
     <!-- 1. PHASE 0: INTRO SCREEN -->
     <div id="storyIntroScreen" class="story-intro-screen hidden">
-        <div class="story-intro-badge">
-            <span>🎓</span> BẢN ĐỒ SỐ GIÁO DỤC XÃ ĐÔNG ANH
+        <div class="story-intro-card">
+            <div class="story-intro-badge">
+                <span>🎓</span> BẢN ĐỒ SỐ GIÁO DỤC XÃ ĐÔNG ANH
+            </div>
+            <div class="story-intro-divider"></div>
+            <h1 id="storyIntroTitle" class="story-intro-title">
+                <span style="white-space: nowrap; display: inline-block;">HÀNH TRÌNH HÌNH THÀNH</span><br><span class="story-intro-highlight">TRƯỜNG MẦM NON PHÚC LỘC</span>
+            </h1>
+            <p id="storyIntroSubtitle" class="story-intro-subtitle">
+                Hội nghị công bố việc sắp xếp, tổ chức lại các cơ sở giáo dục công lập xã Đông Anh
+            </p>
         </div>
-        <div class="story-intro-divider"></div>
-        <h1 id="storyIntroTitle" class="story-intro-title">
-            HÀNH TRÌNH HÌNH THÀNH<br>TRƯỜNG MẦM NON PHÚC LỘC
-        </h1>
-        <p id="storyIntroSubtitle" class="story-intro-subtitle">
-            Hội nghị công bố việc sắp xếp, tổ chức lại các cơ sở giáo dục công lập xã Đông Anh
-        </p>
     </div>
 
     <!-- 2. TOP CONTROLS BAR -->
@@ -64,7 +66,7 @@
     <div class="story-card-container">
         <div id="storyGlassCard" class="story-glass-card">
             <div class="story-card-image-wrap">
-                <img id="storyCardImage" src="" class="story-card-image" alt="School">
+                <img id="storyCardImage" src="" class="story-card-image" alt="School" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=800&q=80';">
                 <span id="storyCardBadge" class="story-card-badge">Đơn vị sáp nhập</span>
             </div>
 
@@ -82,14 +84,13 @@
                 </div>
             </div>
 
-            <div class="story-info-rows">
-                <div class="story-info-row">
-                    <span>Hiệu trưởng:</span>
-                    <span id="storyCardPrincipal">...</span>
+            <!-- Ban Giám Hiệu Trường Mới (Sau Sáp Nhập) -->
+            <div id="storyBoardSection" class="story-board-section" style="display: none;">
+                <div class="story-board-title">
+                    <span>👑</span> BAN GIÁM HIỆU NHÀ TRƯỜNG
                 </div>
-                <div class="story-info-row">
-                    <span>Điện thoại:</span>
-                    <span id="storyCardPhone">...</span>
+                <div id="storyBoardGrid" class="story-board-grid">
+                    <!-- Dynamic rendering by engine -->
                 </div>
             </div>
 
@@ -117,9 +118,16 @@
         <div class="story-announcement-icon">✨</div>
         <div class="story-announcement-date">TỪ NGÀY 01 THÁNG 08 NĂM 2026</div>
         <div class="story-announcement-title">TỔ CHỨC LẠI & THÀNH LẬP</div>
-        <h2 id="storyAnnounceTitle" style="font-size: 1.8rem; color: #818cf8; font-family: 'Be Vietnam Pro', sans-serif; font-weight: 900; margin: 0;">
+        <h2 id="storyAnnounceTitle" class="story-announcement-school-name">
             TRƯỜNG MẦM NON PHÚC LỘC
         </h2>
+    </div>
+
+    <!-- 7.5. STAGE 7 CELEBRATION FIREWORKS BANNER OVERLAY -->
+    <div id="storyCelebrationBanner" class="story-celebration-banner">
+        <div class="story-celebration-burst">🎆 🎇 🎉 🏫 🍾 ⭐️ 🎆</div>
+        <h2 class="story-celebration-title">CHÀO MỪNG ĐƠN VỊ MỚI THÀNH LẬP!</h2>
+        <p class="story-celebration-sub">Hoàn tất quy hoạch sáp nhập & đang chuyển hướng sang trang chi tiết...</p>
     </div>
 
     <!-- 8. BOTTOM PROGRESS INDICATOR DOTS -->
