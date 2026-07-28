@@ -76,6 +76,115 @@
         background: #dc2626;
         color: #ffffff;
     }
+
+    /* ===== Upload Zone Styles ===== */
+    .r2-upload-zone {
+        border: 2px dashed #cbd5e1;
+        border-radius: 14px;
+        padding: 20px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.25s ease;
+        background: #fafbfc;
+        position: relative;
+    }
+    .r2-upload-zone:hover,
+    .r2-upload-zone.dragover {
+        border-color: #4f46e5;
+        background: #eef2ff;
+        box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.08);
+    }
+    .r2-upload-zone .upload-icon {
+        font-size: 2rem;
+        margin-bottom: 6px;
+        display: block;
+    }
+    .r2-upload-zone .upload-text {
+        font-size: 0.85rem;
+        color: #64748b;
+        line-height: 1.4;
+    }
+    .r2-upload-zone .upload-text strong {
+        color: #4f46e5;
+    }
+    .r2-upload-zone input[type="file"] {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        cursor: pointer;
+        width: 100%;
+        height: 100%;
+    }
+
+    /* Preview Card */
+    .r2-upload-preview {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        margin-top: 12px;
+        padding: 10px 14px;
+        background: #ffffff;
+        border: 1.5px solid #cbd5e1;
+        border-radius: 12px;
+        position: relative;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+    }
+    .r2-upload-preview img {
+        width: 72px;
+        height: 52px;
+        object-fit: cover;
+        border-radius: 8px;
+        flex-shrink: 0;
+        border: 1px solid #e2e8f0;
+    }
+    .r2-upload-preview .preview-info {
+        flex: 1;
+        min-width: 0;
+    }
+    .r2-upload-preview .preview-name {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #1e293b;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        margin-bottom: 2px;
+    }
+    .r2-upload-preview .preview-meta {
+        font-size: 0.76rem;
+        color: #64748b;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .r2-upload-preview .preview-status {
+        font-size: 0.78rem;
+        font-weight: 700;
+    }
+    .r2-upload-preview .preview-status.uploading { color: #d97706; }
+    .r2-upload-preview .preview-status.success { color: #16a34a; }
+    .r2-upload-preview .preview-status.error { color: #dc2626; }
+    .r2-upload-preview .btn-remove-preview {
+        background: #fee2e2;
+        color: #dc2626;
+        border: 1px solid #fca5a5;
+        border-radius: 8px;
+        padding: 5px 12px;
+        font-size: 0.78rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        margin-left: 8px;
+        flex-shrink: 0;
+    }
+    .r2-upload-preview .btn-remove-preview:hover {
+        background: #dc2626;
+        color: #ffffff;
+        border-color: #dc2626;
+    }
 </style>
 
 <!-- Welcome Admin Banner Header -->
@@ -109,7 +218,7 @@
     </div>
 @endif
 
-<form action="{{ route('principal.schools.update', $school->id) }}" method="POST" enctype="multipart/form-data">
+<form id="schoolEditForm" action="{{ route('principal.schools.update', $school->id) }}" method="POST" enctype="multipart/form-data">
     @csrf
     @method('PUT')
 
@@ -142,32 +251,83 @@
                 <input type="text" name="principal_name" class="form-control-custom" value="{{ old('principal_name', $storyData['mergedSchool']['principal'] ?? '') }}" placeholder="Ví dụ: Cô Đỗ Thị Hậu">
             </div>
 
+            <!-- Upload Ảnh Đại Diện Trường (Client-side Nén trước khi lưu) -->
             <div class="col-12">
                 <label class="form-label-custom">Hình Ảnh Đại Diện Trường:</label>
-                <input type="file" name="image" class="form-control-custom" accept="image/*">
-                @if($school->image_path)
-                    <div class="mt-3 p-2 bg-light rounded-3 border d-inline-block">
-                        <img src="{{ $school->image_path }}" class="rounded-2" style="height: 100px; width: 160px; object-fit: cover;">
-                        <span class="d-block text-muted small mt-1 text-center">Ảnh hiện tại</span>
+                <div class="r2-upload-zone" id="mainUploadZone">
+                    <input type="file" name="image" accept="image/*" id="mainFileInput">
+                    <span class="upload-icon">📷</span>
+                    <div class="upload-text">
+                        <strong>Bấm chọn</strong> hoặc <strong>kéo thả ảnh</strong> vào đây<br>
+                        <span style="font-size: 0.78rem; color: #94a3b8;">Tự động nén tối ưu trước khi gửi • Chỉ tải lên khi bạn bấm "Lưu thay đổi"</span>
                     </div>
-                @endif
+                </div>
+                <div id="mainUploadPreview">
+                    @if($school->image_path)
+                        <div class="r2-upload-preview mt-2" id="mainExistingPreview">
+                            <img src="{{ $school->image_path }}" alt="Ảnh hiện tại">
+                            <div class="preview-info">
+                                <div class="preview-name">Ảnh đại diện hiện tại</div>
+                                <div class="preview-meta">
+                                    <span class="preview-status success">✓ Đã lưu trên hệ thống</span>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+                </div>
             </div>
         </div>
     </div>
 
     <!-- SECTION 2: DANH SÁCH CÁC TRƯỜNG THÀNH PHẦN SÁP NHẬP VÀO -->
     <div class="school-edit-card">
-        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2 pb-2 border-bottom">
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2 pb-2 border-bottom">
             <div>
                 <div class="school-edit-card-title mb-1 border-0 pb-0">
                     <span style="background: #ecfdf5; color: #10b981; width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 1rem;">🏫</span>
                     <span>2. Danh sách các trường học thành phần sáp nhập vào</span>
                 </div>
-                <p class="text-muted small mb-0 ms-5">Quản lý tên, địa chỉ, đại diện, quy mô lớp/học sinh & tọa độ bản đồ của các điểm trường cũ</p>
+                <p class="text-muted small mb-0 ms-5">Quản lý tên, địa chỉ, đại diện, quy mô lớp/học sinh, CBGVNV, diện tích & tọa độ bản đồ của các điểm trường cũ</p>
             </div>
             <button type="button" id="addNewComponentBtn" class="btn btn-success rounded-pill px-4 fw-bold shadow-sm" style="background: #10b981; border: none; font-size: 0.88rem;">
                 + Thêm trường sáp nhập
             </button>
+        </div>
+
+        <!-- Real-time Aggregated Summary Banner -->
+        <div class="alert alert-primary border-0 shadow-sm rounded-4 p-3 mb-4" style="background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%); color: #1e1b4b;" id="aggregatedTotalsBanner">
+            <div class="fw-bold mb-2 fs-6 d-flex align-items-center gap-2">
+                <span>📊</span> <span>Tổng hợp quy mô Trường Sáp Nhập Mới (Tự động cộng từ các điểm trường thành phần):</span>
+            </div>
+            <div class="row g-2 text-center mb-2">
+                <div class="col-md-3 col-6">
+                    <div class="bg-white rounded-3 p-2 shadow-sm border">
+                        <small class="text-muted d-block fw-semibold">🏫 Tổng số lớp</small>
+                        <strong class="fs-5" style="color: #4f46e5;" id="sumClasses">0 lớp</strong>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="bg-white rounded-3 p-2 shadow-sm border">
+                        <small class="text-muted d-block fw-semibold">👨‍🎓 Tổng học sinh</small>
+                        <strong class="fs-5" style="color: #10b981;" id="sumStudents">0 học sinh</strong>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="bg-white rounded-3 p-2 shadow-sm border">
+                        <small class="text-muted d-block fw-semibold">👩‍🏫 Tổng CBGVNV</small>
+                        <strong class="fs-5" style="color: #3b82f6;" id="sumStaff">0 CBGVNV</strong>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="bg-white rounded-3 p-2 shadow-sm border">
+                        <small class="text-muted d-block fw-semibold">📐 Tổng diện tích</small>
+                        <strong class="fs-5" style="color: #ef4444;" id="sumArea">0 m²</strong>
+                    </div>
+                </div>
+            </div>
+            <div id="sumLocationsList" class="small text-secondary ps-1 mt-2">
+                <!-- Location list rendered dynamically -->
+            </div>
         </div>
 
         <div id="componentsContainer">
@@ -178,7 +338,7 @@
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label-custom">Tên trường thành phần cũ: <span class="text-danger">*</span></label>
-                            <input type="text" name="components[{{ $index }}][name]" class="form-control-custom" value="{{ $comp['name'] ?? '' }}" required placeholder="Trường Mầm non / Tiểu học cũ...">
+                            <input type="text" name="components[{{ $index }}][name]" class="form-control-custom comp-name" value="{{ $comp['name'] ?? '' }}" required placeholder="Trường Mầm non / Tiểu học cũ..." oninput="recalculateTotals()">
                         </div>
 
                         <div class="col-md-6">
@@ -186,19 +346,29 @@
                             <input type="text" name="components[{{ $index }}][principal]" class="form-control-custom" value="{{ $comp['principal'] ?? '' }}" placeholder="Ví dụ: Cô Nguyễn Thị Hoa">
                         </div>
 
-                        <div class="col-md-8">
+                        <div class="col-md-6">
                             <label class="form-label-custom">Địa chỉ điểm trường cũ:</label>
-                            <input type="text" name="components[{{ $index }}][address]" class="form-control-custom" value="{{ $comp['address'] ?? '' }}" placeholder="Khu A, Thôn Phúc Lộc...">
+                            <input type="text" name="components[{{ $index }}][address]" class="form-control-custom comp-address" value="{{ $comp['address'] ?? '' }}" placeholder="Khu A, Thôn Phúc Lộc..." oninput="recalculateTotals()">
                         </div>
 
-                        <div class="col-md-2">
+                        <div class="col-md-3">
                             <label class="form-label-custom">Số lớp:</label>
-                            <input type="number" name="components[{{ $index }}][classes]" class="form-control-custom" value="{{ $comp['classes'] ?? 0 }}">
+                            <input type="number" name="components[{{ $index }}][classes]" class="form-control-custom comp-classes" value="{{ $comp['classes'] ?? 0 }}" oninput="recalculateTotals()">
                         </div>
 
-                        <div class="col-md-2">
+                        <div class="col-md-3">
                             <label class="form-label-custom">Số học sinh:</label>
-                            <input type="number" name="components[{{ $index }}][students]" class="form-control-custom" value="{{ $comp['students'] ?? 0 }}">
+                            <input type="number" name="components[{{ $index }}][students]" class="form-control-custom comp-students" value="{{ $comp['students'] ?? 0 }}" oninput="recalculateTotals()">
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label-custom">Số CBGVNV (Cán bộ, Giáo viên, Nhân viên):</label>
+                            <input type="number" name="components[{{ $index }}][staff]" class="form-control-custom comp-staff" value="{{ $comp['staff'] ?? 0 }}" placeholder="Ví dụ: 35" oninput="recalculateTotals()">
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label-custom">Tổng diện tích đất / cơ sở (m²):</label>
+                            <input type="number" step="0.1" name="components[{{ $index }}][area]" class="form-control-custom comp-area" value="{{ $comp['area'] ?? 0 }}" placeholder="Ví dụ: 6500" oninput="recalculateTotals()">
                         </div>
 
                         <div class="col-12">
@@ -217,15 +387,30 @@
                             </div>
                         </div>
 
+                        <!-- Upload Hình ảnh cơ sở cũ -->
                         <div class="col-12">
                             <label class="form-label-custom">Hình ảnh cơ sở cũ:</label>
-                            <input type="hidden" name="components[{{ $index }}][existing_photo]" value="{{ $comp['photo'] ?? '' }}">
-                            <input type="file" name="components[{{ $index }}][photo_file]" class="form-control-custom" accept="image/*">
-                            @if(!empty($comp['photo']))
-                                <div class="mt-2 p-1 bg-white rounded border d-inline-block">
-                                    <img src="{{ $comp['photo'] }}" class="rounded" style="height: 65px; width: 100px; object-fit: cover;">
+                            <input type="hidden" name="components[{{ $index }}][existing_photo]" class="comp-photo-url" value="{{ $comp['photo'] ?? '' }}">
+                            <div class="r2-upload-zone comp-upload-zone">
+                                <input type="file" name="components[{{ $index }}][photo_file]" accept="image/*" class="comp-file-input">
+                                <span class="upload-icon">🏫</span>
+                                <div class="upload-text">
+                                    <strong>Bấm chọn</strong> hoặc kéo thả ảnh vào đây
                                 </div>
-                            @endif
+                            </div>
+                            <div class="comp-upload-preview-container">
+                                @if(!empty($comp['photo']))
+                                    <div class="r2-upload-preview mt-2">
+                                        <img src="{{ $comp['photo'] }}" alt="Ảnh cơ sở">
+                                        <div class="preview-info">
+                                            <div class="preview-name">Ảnh điểm trường hiện tại</div>
+                                            <div class="preview-meta">
+                                                <span class="preview-status success">✓ Đã lưu trên hệ thống</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endif
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -240,13 +425,230 @@
 
     <div class="d-flex justify-content-end gap-3 mb-5">
         <a href="{{ route('principal.schools.index') }}" class="btn btn-light border rounded-pill px-4 fw-bold">Hủy bỏ</a>
-        <button type="submit" class="btn btn-primary rounded-pill px-5 fw-bold shadow-lg" style="background: #4f46e5; border: none; font-size: 1rem; padding-top: 12px; padding-bottom: 12px;">
+        <button type="submit" id="submitBtn" class="btn btn-primary rounded-pill px-5 fw-bold shadow-lg" style="background: #4f46e5; border: none; font-size: 1rem; padding-top: 12px; padding-bottom: 12px;">
             💾 Lưu thay đổi
         </button>
     </div>
 </form>
 
 <script>
+// Format bytes to human readable string
+function formatBytes(bytes) {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+}
+
+// Recalculate Totals across all Component Schools dynamically
+function recalculateTotals() {
+    let totalClasses = 0;
+    let totalStudents = 0;
+    let totalStaff = 0;
+    let totalArea = 0;
+    let locations = [];
+
+    document.querySelectorAll('.component-box').forEach((box, idx) => {
+        let classes = parseInt(box.querySelector('.comp-classes')?.value) || 0;
+        let students = parseInt(box.querySelector('.comp-students')?.value) || 0;
+        let staff = parseInt(box.querySelector('.comp-staff')?.value) || 0;
+        let area = parseFloat(box.querySelector('.comp-area')?.value) || 0;
+        let name = box.querySelector('.comp-name')?.value || `Điểm trường ${idx + 1}`;
+        let address = box.querySelector('.comp-address')?.value || '';
+
+        totalClasses += classes;
+        totalStudents += students;
+        totalStaff += staff;
+        totalArea += area;
+
+        if (name || address) {
+            locations.push(`📍 <strong>Địa điểm ${idx + 1}:</strong> ${name} ${address ? '(' + address + ')' : ''}`);
+        }
+    });
+
+    const sumClassesEl = document.getElementById('sumClasses');
+    const sumStudentsEl = document.getElementById('sumStudents');
+    const sumStaffEl = document.getElementById('sumStaff');
+    const sumAreaEl = document.getElementById('sumArea');
+    const sumLocationsListEl = document.getElementById('sumLocationsList');
+
+    if (sumClassesEl) sumClassesEl.textContent = totalClasses.toLocaleString('en-US') + ' lớp';
+    if (sumStudentsEl) sumStudentsEl.textContent = totalStudents.toLocaleString('en-US') + ' học sinh';
+    if (sumStaffEl) sumStaffEl.textContent = totalStaff.toLocaleString('en-US') + ' CBGVNV';
+    if (sumAreaEl) sumAreaEl.textContent = totalArea.toLocaleString('en-US') + 'm2';
+
+    if (sumLocationsListEl) {
+        if (locations.length > 0) {
+            sumLocationsListEl.innerHTML = locations.join(' • ');
+        } else {
+            sumLocationsListEl.innerHTML = '<em>Chưa có thông tin điểm trường sáp nhập.</em>';
+        }
+    }
+}
+
+// Client-side Image Compression using Browser HTML5 Canvas
+function compressImage(file, maxWidth = 1200, maxHeight = 1200, quality = 0.85) {
+    return new Promise((resolve) => {
+        if (!file || !file.type.startsWith('image/')) {
+            resolve(file);
+            return;
+        }
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const img = new Image();
+            img.onload = function() {
+                let width = img.width;
+                let height = img.height;
+
+                if (width > maxWidth || height > maxHeight) {
+                    if (width / height > maxWidth / maxHeight) {
+                        height = Math.round((height * maxWidth) / width);
+                        width = maxWidth;
+                    } else {
+                        width = Math.round((width * maxHeight) / height);
+                        height = maxHeight;
+                    }
+                }
+
+                const canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+
+                canvas.toBlob((blob) => {
+                    if (blob) {
+                        const resizedFile = new File([blob], file.name, {
+                            type: 'image/jpeg',
+                            lastModified: Date.now()
+                        });
+                        resolve(resizedFile);
+                    } else {
+                        resolve(file);
+                    }
+                }, 'image/jpeg', quality);
+            };
+            img.onerror = () => resolve(file);
+            img.src = e.target.result;
+        };
+        reader.onerror = () => resolve(file);
+        reader.readAsDataURL(file);
+    });
+}
+
+// Replace File object in Input element with compressed file using DataTransfer
+function setFileInputFile(input, file) {
+    try {
+        const dt = new DataTransfer();
+        dt.items.add(file);
+        input.files = dt.files;
+    } catch (e) {
+        console.warn('DataTransfer not supported in browser', e);
+    }
+}
+
+// Handle file selection (local preview, no server upload until form submit)
+async function handleFileSelect(file, input, previewContainer) {
+    if (!file || !file.type.startsWith('image/')) return;
+
+    previewContainer.style.display = 'block';
+    previewContainer.innerHTML = `
+        <div class="r2-upload-preview mt-2">
+            <div class="preview-info">
+                <div class="preview-name">${file.name}</div>
+                <div class="preview-meta">
+                    <span class="preview-status uploading">⚡ Đang tối ưu dung lượng ảnh...</span>
+                </div>
+            </div>
+        </div>
+    `;
+
+    const compressedFile = await compressImage(file);
+    setFileInputFile(input, compressedFile);
+
+    const objectUrl = URL.createObjectURL(compressedFile);
+    previewContainer.innerHTML = `
+        <div class="r2-upload-preview mt-2">
+            <img src="${objectUrl}" alt="Preview">
+            <div class="preview-info">
+                <div class="preview-name">${compressedFile.name}</div>
+                <div class="preview-meta">
+                    <span>${formatBytes(compressedFile.size)} (Đã nén tối ưu)</span>
+                    <span class="preview-status success">✓ Sẵn sàng (Chưa lưu)</span>
+                </div>
+            </div>
+            <button type="button" class="btn-remove-preview" onclick="removeSelectedFile(this)" title="Xóa ảnh này">
+                <span>✕</span> Xóa
+            </button>
+        </div>
+    `;
+}
+
+function removeSelectedFile(btn) {
+    const preview = btn.closest('.r2-upload-preview');
+    const container = btn.closest('.col-12');
+    if (container) {
+        const fileInput = container.querySelector('input[type="file"]');
+        if (fileInput) fileInput.value = '';
+        const hiddenInput = container.querySelector('input[type="hidden"]');
+        if (hiddenInput) hiddenInput.value = '';
+    }
+    preview.remove();
+}
+
+// ===== MAIN UPLOAD ZONE =====
+function initMainUpload() {
+    const zone = document.getElementById('mainUploadZone');
+    const fileInput = document.getElementById('mainFileInput');
+    const previewContainer = document.getElementById('mainUploadPreview');
+
+    zone.addEventListener('dragover', function(e) { e.preventDefault(); zone.classList.add('dragover'); });
+    zone.addEventListener('dragleave', function() { zone.classList.remove('dragover'); });
+    zone.addEventListener('drop', function(e) {
+        e.preventDefault();
+        zone.classList.remove('dragover');
+        if (e.dataTransfer.files.length > 0) {
+            const existingPreview = document.getElementById('mainExistingPreview');
+            if (existingPreview) existingPreview.style.display = 'none';
+            handleFileSelect(e.dataTransfer.files[0], fileInput, previewContainer);
+        }
+    });
+
+    fileInput.addEventListener('change', function() {
+        if (fileInput.files.length > 0) {
+            const existingPreview = document.getElementById('mainExistingPreview');
+            if (existingPreview) existingPreview.style.display = 'none';
+            handleFileSelect(fileInput.files[0], fileInput, previewContainer);
+        }
+    });
+}
+
+// ===== COMPONENT UPLOAD ZONE =====
+function initComponentUpload(componentBox) {
+    const zone = componentBox.querySelector('.comp-upload-zone');
+    const fileInput = componentBox.querySelector('.comp-file-input');
+    const previewContainer = componentBox.querySelector('.comp-upload-preview-container');
+    if (!zone || !fileInput || !previewContainer) return;
+
+    zone.addEventListener('dragover', function(e) { e.preventDefault(); zone.classList.add('dragover'); });
+    zone.addEventListener('dragleave', function() { zone.classList.remove('dragover'); });
+    zone.addEventListener('drop', function(e) {
+        e.preventDefault();
+        zone.classList.remove('dragover');
+        if (e.dataTransfer.files.length > 0) {
+            handleFileSelect(e.dataTransfer.files[0], fileInput, previewContainer);
+        }
+    });
+
+    fileInput.addEventListener('change', function() {
+        if (fileInput.files.length > 0) {
+            handleFileSelect(fileInput.files[0], fileInput, previewContainer);
+        }
+    });
+}
+
+// ===== Google Maps Link Button =====
 function updateGmapBtn(input) {
     if (!input) return;
     const box = input.closest('.row');
@@ -257,10 +659,15 @@ function updateGmapBtn(input) {
     }
 }
 
+// ===== Dynamic Components Listener =====
 document.addEventListener('DOMContentLoaded', function() {
     let container = document.getElementById('componentsContainer');
     let addBtn = document.getElementById('addNewComponentBtn');
     let emptyAlert = document.getElementById('emptyComponentsAlert');
+
+    initMainUpload();
+    document.querySelectorAll('.component-box').forEach(box => initComponentUpload(box));
+    recalculateTotals();
 
     function reindexItems() {
         let items = container.querySelectorAll('.component-box');
@@ -272,6 +679,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
         });
+        recalculateTotals();
     }
 
     addBtn.addEventListener('click', function() {
@@ -284,23 +692,31 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="row g-3">
                     <div class="col-md-6">
                         <label class="form-label-custom">Tên trường thành phần cũ: <span class="text-danger">*</span></label>
-                        <input type="text" name="components[${index}][name]" class="form-control-custom" required placeholder="Trường Mầm non / Tiểu học cũ...">
+                        <input type="text" name="components[${index}][name]" class="form-control-custom comp-name" required placeholder="Trường Mầm non / Tiểu học cũ..." oninput="recalculateTotals()">
                     </div>
                     <div class="col-md-6">
                         <label class="form-label-custom">Đại diện / Hiệu trưởng cũ:</label>
                         <input type="text" name="components[${index}][principal]" class="form-control-custom" placeholder="Ví dụ: Cô Nguyễn Thị Hoa">
                     </div>
-                    <div class="col-md-8">
+                    <div class="col-md-6">
                         <label class="form-label-custom">Địa chỉ điểm trường cũ:</label>
-                        <input type="text" name="components[${index}][address]" class="form-control-custom" placeholder="Khu A, Thôn...">
+                        <input type="text" name="components[${index}][address]" class="form-control-custom comp-address" placeholder="Khu A, Thôn..." oninput="recalculateTotals()">
                     </div>
-                    <div class="col-md-2">
+                    <div class="col-md-3">
                         <label class="form-label-custom">Số lớp:</label>
-                        <input type="number" name="components[${index}][classes]" class="form-control-custom" value="10">
+                        <input type="number" name="components[${index}][classes]" class="form-control-custom comp-classes" value="10" oninput="recalculateTotals()">
                     </div>
-                    <div class="col-md-2">
+                    <div class="col-md-3">
                         <label class="form-label-custom">Số học sinh:</label>
-                        <input type="number" name="components[${index}][students]" class="form-control-custom" value="300">
+                        <input type="number" name="components[${index}][students]" class="form-control-custom comp-students" value="300" oninput="recalculateTotals()">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label-custom">Số CBGVNV (Cán bộ, Giáo viên, Nhân viên):</label>
+                        <input type="number" name="components[${index}][staff]" class="form-control-custom comp-staff" value="30" placeholder="Ví dụ: 30" oninput="recalculateTotals()">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label-custom">Tổng diện tích đất / cơ sở (m²):</label>
+                        <input type="number" step="0.1" name="components[${index}][area]" class="form-control-custom comp-area" value="5000" placeholder="Ví dụ: 5000" oninput="recalculateTotals()">
                     </div>
                     <div class="col-12">
                         <label class="form-label-custom">Vị trí Google Maps (Link chia sẻ vị trí Google Maps):</label>
@@ -314,13 +730,24 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                     <div class="col-12">
                         <label class="form-label-custom">Hình ảnh cơ sở cũ:</label>
-                        <input type="file" name="components[${index}][photo_file]" class="form-control-custom" accept="image/*">
+                        <input type="hidden" name="components[${index}][existing_photo]" class="comp-photo-url" value="">
+                        <div class="r2-upload-zone comp-upload-zone">
+                            <input type="file" name="components[${index}][photo_file]" accept="image/*" class="comp-file-input">
+                            <span class="upload-icon">🏫</span>
+                            <div class="upload-text">
+                                <strong>Bấm chọn</strong> hoặc kéo thả ảnh vào đây
+                            </div>
+                        </div>
+                        <div class="comp-upload-preview-container"></div>
                     </div>
                 </div>
             </div>
         `;
         container.insertAdjacentHTML('beforeend', template);
         reindexItems();
+
+        const newBox = container.querySelectorAll('.component-box');
+        initComponentUpload(newBox[newBox.length - 1]);
     });
 
     container.addEventListener('click', function(e) {

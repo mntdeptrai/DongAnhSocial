@@ -133,6 +133,8 @@ class SchoolManagementController extends Controller
             'components.*.phone' => 'nullable|string|max:50',
             'components.*.classes' => 'nullable|numeric',
             'components.*.students' => 'nullable|numeric',
+            'components.*.staff' => 'nullable|numeric',
+            'components.*.area' => 'nullable|numeric',
             'components.*.lat' => 'nullable|numeric',
             'components.*.lng' => 'nullable|numeric',
             'components.*.gmap_link' => 'nullable|string|max:1000',
@@ -146,18 +148,26 @@ class SchoolManagementController extends Controller
         $school->phone = $request->input('phone', $school->phone);
         $school->address = $request->input('address', $school->address);
 
-        // Upload ảnh đại diện nếu có
+        // Upload ảnh đại diện trường nếu có file mới được chọn
         if ($request->hasFile('image')) {
             $imagePath = R2Helper::upload($request->file('image'), 'education');
             if ($imagePath) {
                 $school->image_path = $imagePath;
             }
+        } elseif ($request->filled('image_url')) {
+            $school->image_path = $request->input('image_url');
         }
 
         // Cấu trúc dữ liệu storytelling_data
         $existingData = $school->storytelling_data ?? [];
 
         $components = [];
+        $totalClasses = 0;
+        $totalStudents = 0;
+        $totalStaff = 0;
+        $totalArea = 0;
+        $locations = [];
+
         if ($request->has('components') && is_array($request->input('components'))) {
             foreach ($request->input('components') as $index => $comp) {
                 $compName = VietnameseSeoHelper::standardizeSchoolName($comp['name'] ?? '');
@@ -177,13 +187,34 @@ class SchoolManagementController extends Controller
                     $gmapLink = "https://www.google.com/maps?q={$latVal},{$lngVal}";
                 }
 
+                $classesVal = (int)($comp['classes'] ?? 0);
+                $studentsVal = (int)($comp['students'] ?? 0);
+                $staffVal = (int)($comp['staff'] ?? 0);
+                $areaVal = (float)($comp['area'] ?? 0);
+
+                $totalClasses += $classesVal;
+                $totalStudents += $studentsVal;
+                $totalStaff += $staffVal;
+                $totalArea += $areaVal;
+
+                if (!empty($comp['address'])) {
+                    $locations[] = [
+                        'label' => 'Địa điểm ' . ($index + 1),
+                        'name' => $compName,
+                        'address' => $comp['address'],
+                        'gmap_link' => $gmapLink
+                    ];
+                }
+
                 $components[] = [
                     'name' => $compName,
                     'address' => $comp['address'] ?? '',
                     'principal' => $comp['principal'] ?? '',
                     'phone' => $comp['phone'] ?? '',
-                    'classes' => (int)($comp['classes'] ?? 0),
-                    'students' => (int)($comp['students'] ?? 0),
+                    'classes' => $classesVal,
+                    'students' => $studentsVal,
+                    'staff' => $staffVal,
+                    'area' => $areaVal,
                     'lat' => $latVal,
                     'lng' => $lngVal,
                     'gmap_link' => $gmapLink,
@@ -196,6 +227,12 @@ class SchoolManagementController extends Controller
         $mergedSchoolData['name'] = $stdName;
         $mergedSchoolData['address'] = $school->address;
         $mergedSchoolData['phone'] = $school->phone;
+        $mergedSchoolData['total_classes'] = $totalClasses;
+        $mergedSchoolData['total_students'] = $totalStudents;
+        $mergedSchoolData['total_staff'] = $totalStaff;
+        $mergedSchoolData['total_area'] = $totalArea;
+        $mergedSchoolData['locations'] = $locations;
+
         if ($request->filled('principal_name')) {
             $mergedSchoolData['principal'] = $request->input('principal_name');
         }
