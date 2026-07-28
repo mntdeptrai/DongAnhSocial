@@ -42,7 +42,7 @@
     position: absolute;
     inset: 0;
     z-index: 99999;
-    background: 
+    background:
         radial-gradient(circle at 20% 20%, rgba(168, 85, 247, 0.35) 0%, transparent 45%),
         radial-gradient(circle at 80% 80%, rgba(236, 72, 153, 0.3) 0%, transparent 45%),
         radial-gradient(circle at 50% 15%, rgba(129, 140, 248, 0.3) 0%, transparent 50%),
@@ -71,7 +71,7 @@
     backdrop-filter: blur(32px);
     -webkit-backdrop-filter: blur(32px);
     border: 2px solid transparent;
-    background: 
+    background:
         linear-gradient(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.9)) padding-box,
         linear-gradient(135deg, #a855f7, #ec4899, #818cf8, #fbbf24) border-box;
     border-radius: 36px;
@@ -663,58 +663,79 @@
     box-shadow: 0 16px 40px rgba(124, 58, 237, 0.6);
 }
 
-/* 9. Floating Distance Box (Phase 4 - Bright Blue) */
+/* 9. Dynamic Midpoint Distance Badge (Phase 4 - Leaflet Map Midpoint HUD) */
 .story-distance-box {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%) scale(0.88);
-    z-index: 1000;
+    display: none !important;
+}
+
+.custom-story-distance-icon {
+    background: transparent !important;
+    border: none !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+    height: 100% !important;
+    box-sizing: border-box !important;
+}
+
+.story-distance-box-badge {
     background: rgba(255, 255, 255, 0.96);
-    backdrop-filter: blur(24px);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     border: 2px solid #0284c7;
     border-radius: 24px;
-    padding: 20px 32px;
+    padding: 10px 22px;
     display: flex;
     align-items: center;
-    gap: 24px;
-    box-shadow: 0 25px 70px rgba(2, 132, 199, 0.3);
-    opacity: 0;
-    pointer-events: none;
-    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    justify-content: center;
+    gap: 18px;
+    box-shadow: 0 14px 40px rgba(2, 132, 199, 0.3), 0 0 20px rgba(56, 189, 248, 0.25);
+    white-space: nowrap;
+    box-sizing: border-box;
+    animation: storyBadgeFloat 3s ease-in-out infinite alternate;
 }
 
-.story-distance-box.show {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
-    pointer-events: auto;
-}
-
-.story-distance-item {
+.story-dist-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
     text-align: center;
 }
 
-.story-distance-item h4 {
-    font-size: 0.78rem;
-    color: #0284c7;
-    text-transform: uppercase;
-    margin: 0 0 6px 0;
-    letter-spacing: 1px;
+.story-dist-lbl {
+    font-size: 0.68rem;
     font-weight: 800;
+    color: #0284c7;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    line-height: 1.2;
+    margin-bottom: 2px;
 }
 
-.story-distance-item p {
+.story-dist-val {
     font-family: 'Be Vietnam Pro', sans-serif;
-    font-size: 1.45rem;
+    font-size: 1.15rem;
     font-weight: 900;
     color: #0369a1;
-    margin: 0;
+    line-height: 1.2;
 }
 
-.story-distance-divider {
-    width: 1px;
-    height: 40px;
-    background: #cbd5e1;
+.story-dist-divider {
+    width: 1.5px;
+    height: 30px;
+    background: rgba(2, 132, 199, 0.25);
+}
+
+@keyframes storyBadgeFloat {
+    0% {
+        transform: translateY(0);
+    }
+
+    100% {
+        transform: translateY(-4px);
+    }
 }
 
 /* 10. Merger Phase 5 Flash Announcement Overlay (Royal Purple & Magenta Gold Silk) */
@@ -728,7 +749,7 @@
     backdrop-filter: blur(36px);
     -webkit-backdrop-filter: blur(36px);
     border: 2.5px solid transparent;
-    background: 
+    background:
         linear-gradient(rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0.96)) padding-box,
         linear-gradient(135deg, #9333ea, #ec4899, #fbbf24) border-box;
     border-radius: 36px;
@@ -816,7 +837,7 @@
     backdrop-filter: blur(40px);
     -webkit-backdrop-filter: blur(40px);
     border: 3px solid transparent;
-    background: 
+    background:
         linear-gradient(rgba(255, 255, 255, 0.97), rgba(255, 255, 255, 0.97)) padding-box,
         linear-gradient(135deg, #fbbf24, #ec4899, #9333ea, #38bdf8) border-box;
     border-radius: 40px;
@@ -1057,19 +1078,37 @@
 
 /* 13. Keyframe Animations */
 @keyframes storyGradientShift {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
+    0% {
+        background-position: 0% 50%;
+    }
+
+    50% {
+        background-position: 100% 50%;
+    }
+
+    100% {
+        background-position: 0% 50%;
+    }
 }
 
 @keyframes storyCardFloat {
-    0% { transform: translateY(0); }
-    100% { transform: translateY(-12px); }
+    0% {
+        transform: translateY(0);
+    }
+
+    100% {
+        transform: translateY(-12px);
+    }
 }
 
 @keyframes storyTextGlow {
-    0% { background-position: 0% center; }
-    100% { background-position: 200% center; }
+    0% {
+        background-position: 0% center;
+    }
+
+    100% {
+        background-position: 200% center;
+    }
 }
 
 @keyframes storyCardScaleIn {
@@ -1077,6 +1116,7 @@
         opacity: 0;
         transform: scale(0.92) translateY(20px);
     }
+
     100% {
         opacity: 1;
         transform: scale(1) translateY(0);
@@ -1159,11 +1199,13 @@
         transform: scale(1);
         box-shadow: 0 10px 35px rgba(147, 51, 234, 0.6), 0 0 25px rgba(236, 72, 153, 0.7);
     }
+
     50% {
         background-position: 100% 50%;
         transform: scale(1.08);
         box-shadow: 0 14px 45px rgba(236, 72, 153, 0.8), 0 0 45px rgba(251, 191, 36, 0.9);
     }
+
     100% {
         background-position: 0% 50%;
         transform: scale(1);
@@ -1177,6 +1219,7 @@
         opacity: 1;
         box-shadow: 0 0 10px rgba(168, 85, 247, 0.8);
     }
+
     100% {
         transform: scale(2.3);
         opacity: 0;
@@ -1189,6 +1232,7 @@
         border-color: #a855f7 !important;
         box-shadow: 0 10px 35px rgba(168, 85, 247, 0.4), 0 0 20px rgba(236, 72, 153, 0.3) !important;
     }
+
     100% {
         border-color: #ec4899 !important;
         box-shadow: 0 16px 50px rgba(236, 72, 153, 0.65), 0 0 30px rgba(251, 191, 36, 0.6) !important;
@@ -1199,6 +1243,7 @@
     0% {
         transform: translate(-50%, -50%) scale(1);
     }
+
     100% {
         transform: translate(-50%, -50%) scale(1) translateY(-10px);
     }

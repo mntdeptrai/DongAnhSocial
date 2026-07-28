@@ -3,6 +3,29 @@
  * Leaflet.js | GSAP | Web Speech API TTS | Progressive Timeline Controller
  */
 
+function getCurvedRoutePoints(p1, p2, curveOffset = 0.0012) {
+    const lat1 = p1[0], lng1 = p1[1];
+    const lat2 = p2[0], lng2 = p2[1];
+    const midLat = (lat1 + lat2) / 2;
+    const midLng = (lng1 + lng2) / 2;
+    const dLat = lat2 - lat1;
+    const dLng = lng2 - lng1;
+    const len = Math.sqrt(dLat * dLat + dLng * dLng) || 0.001;
+    const normalLat = -dLng / len;
+    const normalLng = dLat / len;
+    const controlLat = midLat + normalLat * curveOffset;
+    const controlLng = midLng + normalLng * curveOffset;
+    const pts = [];
+    const steps = 24;
+    for (let i = 0; i <= steps; i++) {
+        const t = i / steps;
+        const lat = (1 - t) * (1 - t) * lat1 + 2 * (1 - t) * t * controlLat + t * t * lat2;
+        const lng = (1 - t) * (1 - t) * lng1 + 2 * (1 - t) * t * controlLng + t * t * lng2;
+        pts.push([lat, lng]);
+    }
+    return pts;
+}
+
 class SchoolStoryteller {
     constructor() {
         this.map = null;
@@ -16,31 +39,26 @@ class SchoolStoryteller {
         this.routePolyline = null;
         this.routePolylines = [];
         this.catchmentPolygon = null;
+        this.distanceMarker = null;
         this.speechSynth = null;
     }
 
     initMap() {
-        if (!this.map) {
-            // Initialize Leaflet map centered on Dong Anh
-            this.map = L.map('storyMap', {
-                zoomControl: false,
-                attributionControl: false,
-                fadeAnimation: true,
-                zoomAnimation: true
-            }).setView([21.135, 105.865], 12);
+        if (this.map) return;
 
-            // CartoDB Voyager bright light tile layer for crisp, modern, colorful map display
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-                maxZoom: 19,
-                subdomains: 'abcd'
-            }).addTo(this.map);
-        }
+        // Initialize Leaflet map centered on Dong Anh
+        this.map = L.map('storyMap', {
+            zoomControl: false,
+            attributionControl: false,
+            fadeAnimation: true,
+            zoomAnimation: true
+        }).setView([21.135, 105.865], 12);
 
-        setTimeout(() => {
-            if (this.map) {
-                this.map.invalidateSize();
-            }
-        }, 150);
+        // CartoDB Voyager bright light tile layer for crisp, modern, colorful map display
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+            maxZoom: 19,
+            subdomains: 'abcd'
+        }).addTo(this.map);
     }
 
     initSparkleCanvas() {
@@ -138,35 +156,24 @@ class SchoolStoryteller {
         this.isSkipped = false;
         this.isManualMode = false;
         this.targetUrl = redirectUrl || `/dia-diem/${schoolSlug}`;
+        this.currentData = window.getSchoolStoryData(schoolSlug);
+
+        // Open modal
+        const modal = document.getElementById('storytellingModal');
+        if (modal) {
+            modal.style.display = 'block';
+            modal.style.opacity = '1';
+            modal.style.pointerEvents = 'auto';
+            modal.classList.add('active');
+        }
+
+        // Init map & sparkle animation
+        this.initMap();
+        this.initSparkleCanvas();
+        this.resetLayers();
+        this.renderTimeline();
 
         try {
-            this.currentData = window.getSchoolStoryData(schoolSlug);
-            if (!this.currentData || !this.currentData.components || !this.currentData.components.length) {
-                console.warn('Storytelling data missing for:', schoolSlug);
-                window.location.href = this.targetUrl;
-                return;
-            }
-
-            // Open modal
-            const modal = document.getElementById('storytellingModal');
-            if (modal) {
-                modal.style.display = 'block';
-                modal.style.opacity = '1';
-                modal.style.pointerEvents = 'auto';
-                modal.classList.add('active');
-            }
-
-            // Init map & sparkle animation
-            this.initMap();
-            this.initSparkleCanvas();
-            this.resetLayers();
-            this.renderTimeline();
-
-            // Force Leaflet recalculation after modal displays
-            if (this.map) {
-                this.map.invalidateSize();
-            }
-
             // Stage 0: Intro
             await this.phase0_Intro();
             if (this.isSkipped || this.isManualMode) return;
@@ -196,10 +203,7 @@ class SchoolStoryteller {
             // Stage 6: Transition & Redirect
             await this.phase_Transition();
         } catch (err) {
-            console.error('Storytelling error, fallback to detail:', err);
-            if (this.targetUrl) {
-                window.location.href = this.targetUrl;
-            }
+            console.warn('Storytelling sequence interrupted or completed:', err);
         } finally {
             this.isBusy = false;
         }
@@ -340,7 +344,7 @@ class SchoolStoryteller {
                 iconAnchor: [24, 24]
             });
 
-            const m = L.marker([comp.lat, comp.lng], { icon: customIcon }).addTo(this.map);
+            const m = L.marker([comp.lat || 21.135, comp.lng || 105.865], { icon: customIcon }).addTo(this.map);
             m.bindTooltip(`<b>📍 ${compNum}. ${comp.name}</b><span class="story-tooltip-sublabel">(Trước sáp nhập)</span>`, {
                 permanent: true,
                 direction: 'top',
@@ -436,6 +440,10 @@ class SchoolStoryteller {
         if (this.catchmentPolygon) {
             this.map.removeLayer(this.catchmentPolygon);
             this.catchmentPolygon = null;
+        }
+        if (this.distanceMarker) {
+            this.map.removeLayer(this.distanceMarker);
+            this.distanceMarker = null;
         }
 
         // Hide cards
@@ -590,7 +598,7 @@ class SchoolStoryteller {
                 iconAnchor: [24, 24]
             });
 
-            const m = L.marker([comp.lat, comp.lng], { icon: customIcon }).addTo(this.map);
+            const m = L.marker([comp.lat || 21.135, comp.lng || 105.865], { icon: customIcon }).addTo(this.map);
             m.bindTooltip(`<b>📍 ${compNum}. ${comp.name}</b><span class="story-tooltip-sublabel">(Trước sáp nhập)</span>`, {
                 permanent: true,
                 direction: 'top',
@@ -601,7 +609,7 @@ class SchoolStoryteller {
         }
 
         // Fly camera centered in open viewport space (clearing 340px left sidebar and 440px right glass card)
-        const targetPt = L.latLng(comp.lat, comp.lng);
+        const targetPt = L.latLng(comp.lat || 21.135, comp.lng || 105.865);
         const cBounds = L.latLngBounds([targetPt, targetPt]);
         this.map.flyToBounds(cBounds, {
             paddingTopLeft: [360, 120],
@@ -616,7 +624,7 @@ class SchoolStoryteller {
             document.getElementById('storyCardBadge').classList.remove('merged');
             document.getElementById('storyCardImage').src = comp.photo;
             document.getElementById('storyCardTitle').innerText = comp.name;
-            document.getElementById('storyCardAddress').innerHTML = `📍 ${comp.address}`;
+            document.getElementById('storyCardAddress').innerHTML = comp.mapUrl ? `<a href="${comp.mapUrl}" target="_blank" style="color: inherit; text-decoration: underline;">📍 ${comp.address}</a>` : `📍 ${comp.address}`;
             document.getElementById('storyStatClasses').innerText = `${comp.classes} Lớp`;
             document.getElementById('storyStatStudents').innerText = `${comp.students} HS`;
             const boardSec = document.getElementById('storyBoardSection');
@@ -650,7 +658,9 @@ class SchoolStoryteller {
 
         // Zoom out to fit all markers
         const latLngs = this.markers.map(m => m.getLatLng());
-        latLngs.push([this.currentData.mergedSchool.lat, this.currentData.mergedSchool.lng]);
+        if (this.currentData.mergedSchool.lat && this.currentData.mergedSchool.lng) {
+            latLngs.push([this.currentData.mergedSchool.lat, this.currentData.mergedSchool.lng]);
+        }
 
         const bounds = L.latLngBounds(latLngs);
         this.map.flyToBounds(bounds, {
@@ -661,45 +671,147 @@ class SchoolStoryteller {
 
         await this.sleep(500);
 
-        // Draw animated Polyline route connecting all component schools
-        if (compCount >= 2) {
+        // Draw animated route: Triangle for 3 schools, curved arc for 2 schools
+        if (compCount >= 2 && this.currentData.components.every(c => c.lat && c.lng)) {
             const points = this.currentData.components.map(c => [c.lat, c.lng]);
 
-            this.routePolyline = L.polyline(points, {
-                color: '#38bdf8',
-                weight: 4,
-                opacity: 0.9,
-                dashArray: '10, 10'
-            }).addTo(this.map);
+            // Compute centroid = geometric center of all component schools
+            const centerLat = points.reduce((s, p) => s + p[0], 0) / points.length;
+            const centerLng = points.reduce((s, p) => s + p[1], 0) / points.length;
+            const centerPt = L.latLng(centerLat, centerLng);
 
-            // Draw catchment zone polygon
-            const lats = points.map(p => p[0]);
-            const lngs = points.map(p => p[1]);
-            const minLat = Math.min(...lats) - 0.003;
-            const maxLat = Math.max(...lats) + 0.003;
-            const minLng = Math.min(...lngs) - 0.003;
-            const maxLng = Math.max(...lngs) + 0.003;
+            if (points.length >= 3) {
+                // ===== 3+ SCHOOLS: Draw triangle edges bowing OUTWARD from centroid =====
+                for (let i = 0; i < points.length; i++) {
+                    const a = points[i];
+                    const b = points[(i + 1) % points.length];
 
-            this.catchmentPolygon = L.polygon([
-                [maxLat, minLng],
-                [maxLat, maxLng],
-                [minLat, maxLng],
-                [minLat, minLng]
-            ], {
-                color: '#6366f1',
-                fillColor: '#818cf8',
-                fillOpacity: 0.12,
-                weight: 2,
-                dashArray: '5, 5'
-            }).addTo(this.map);
-        }
+                    // Compute midpoint of this edge
+                    const midEdgeLat = (a[0] + b[0]) / 2;
+                    const midEdgeLng = (a[1] + b[1]) / 2;
 
-        // Show floating distance card
-        const distBox = document.getElementById('storyDistanceBox');
-        if (distBox) {
-            document.getElementById('storyDistVal').innerText = this.currentData.distanceText;
-            document.getElementById('storyDurationVal').innerText = this.currentData.durationText;
-            distBox.classList.add('show');
+                    // Vector from centroid → edge midpoint (outward direction)
+                    const outLat = midEdgeLat - centerLat;
+                    const outLng = midEdgeLng - centerLng;
+                    const outLen = Math.sqrt(outLat * outLat + outLng * outLng) || 0.001;
+
+                    // Compute control point offset: bow outward 60% of edge-to-centroid distance
+                    const bowFactor = 0.0008;
+                    const controlLat = midEdgeLat + (outLat / outLen) * bowFactor;
+                    const controlLng = midEdgeLng + (outLng / outLen) * bowFactor;
+
+                    // Build Bezier edge from a → control → b
+                    const edgePts = [];
+                    const steps = 24;
+                    for (let t = 0; t <= steps; t++) {
+                        const u = t / steps;
+                        const lat = (1 - u) * (1 - u) * a[0] + 2 * (1 - u) * u * controlLat + u * u * b[0];
+                        const lng = (1 - u) * (1 - u) * a[1] + 2 * (1 - u) * u * controlLng + u * u * b[1];
+                        edgePts.push([lat, lng]);
+                    }
+
+                    const edgeLine = L.polyline(edgePts, {
+                        color: '#38bdf8',
+                        weight: 4,
+                        opacity: 0.88,
+                        dashArray: '10, 10'
+                    }).addTo(this.map);
+                    this.routePolylines.push(edgeLine);
+                }
+
+                // Circular catchment zone for 3-school case too
+                let maxDist3 = 0;
+                points.forEach(p => {
+                    const d = centerPt.distanceTo(L.latLng(p[0], p[1]));
+                    if (d > maxDist3) maxDist3 = d;
+                });
+                const catchmentRadius3 = Math.max(500, maxDist3 + 200);
+                this.catchmentPolygon = L.circle(centerPt, {
+                    radius: catchmentRadius3,
+                    color: '#6366f1',
+                    fillColor: '#818cf8',
+                    fillOpacity: 0.08,
+                    weight: 2.5,
+                    dashArray: '6, 8'
+                }).addTo(this.map);
+
+                // Distance badge: vertical stacked layout anchored at centroid (fits inside triangle)
+                const distHtml3 = `
+                    <div class="story-distance-box-badge story-distance-badge-tri">
+                        <div class="story-dist-row">
+                            <span class="story-dist-lbl">📏 KHOẢNG CÁCH</span>
+                            <span class="story-dist-val">${this.currentData.distanceText}</span>
+                        </div>
+                        <div class="story-dist-sep"></div>
+                        <div class="story-dist-row">
+                            <span class="story-dist-lbl">⏱ THỜI GIAN</span>
+                            <span class="story-dist-val">${this.currentData.durationText}</span>
+                        </div>
+                    </div>
+                `;
+                const distIcon3 = L.divIcon({
+                    html: distHtml3,
+                    className: 'custom-story-distance-icon',
+                    iconSize: [180, 80],
+                    iconAnchor: [90, 40]
+                });
+                this.distanceMarker = L.marker(centerPt, {
+                    icon: distIcon3,
+                    zIndexOffset: 950
+                }).addTo(this.map);
+
+            } else {
+                // ===== 2 SCHOOLS: Route line + Badge at exact centerPt (Center of Circle & Midpoint of 2 schools) =====
+                const routePts = getCurvedRoutePoints(points[0], points[1], 0.0003);
+
+                this.routePolyline = L.polyline(routePts, {
+                    color: '#38bdf8',
+                    weight: 4.5,
+                    opacity: 0.9,
+                    dashArray: '10, 10'
+                }).addTo(this.map);
+
+                // Badge anchored at exact centerPt (Center of Catchment Circle & Midpoint of 2 schools)
+                const distHtml = `
+                    <div class="story-distance-box-badge">
+                        <div class="story-dist-item">
+                            <span class="story-dist-lbl">KHOẢNG CÁCH KẾT NỐI</span>
+                            <span class="story-dist-val">${this.currentData.distanceText}</span>
+                        </div>
+                        <div class="story-dist-divider"></div>
+                        <div class="story-dist-item">
+                            <span class="story-dist-lbl">THỜI GIAN DI CHUYỂN</span>
+                            <span class="story-dist-val">${this.currentData.durationText}</span>
+                        </div>
+                    </div>
+                `;
+                const distIcon = L.divIcon({
+                    html: distHtml,
+                    className: 'custom-story-distance-icon',
+                    iconSize: [300, 70],
+                    iconAnchor: [150, 35]
+                });
+                this.distanceMarker = L.marker(centerPt, {
+                    icon: distIcon,
+                    zIndexOffset: 950
+                }).addTo(this.map);
+
+                // Circular catchment zone only for 2-school case
+                let maxDist = 0;
+                points.forEach(p => {
+                    const d = centerPt.distanceTo(L.latLng(p[0], p[1]));
+                    if (d > maxDist) maxDist = d;
+                });
+                const catchmentRadius = Math.max(380, maxDist + 160);
+                this.catchmentPolygon = L.circle(centerPt, {
+                    radius: catchmentRadius,
+                    color: '#6366f1',
+                    fillColor: '#818cf8',
+                    fillOpacity: 0.1,
+                    weight: 2.5,
+                    dashArray: '6, 8'
+                }).addTo(this.map);
+            }
         }
 
         const msg = `Khoảng cách kết nối giữa ${compCount} cơ sở là ${this.currentData.distanceText}, thời gian di chuyển khoảng ${this.currentData.durationText}. Hạ tầng giao thông kết nối hoàn hảo.`;
@@ -737,11 +849,11 @@ class SchoolStoryteller {
             iconAnchor: [38, 38]
         });
 
-        const newMarker = L.marker([mSchool.lat, mSchool.lng], { icon: customIcon }).addTo(this.map);
+        const newMarker = L.marker([mSchool.lat || 21.135, mSchool.lng || 105.865], { icon: customIcon }).addTo(this.map);
         this.markers.push(newMarker);
 
         // Fly camera to new school centered in open viewport space
-        const mPt = L.latLng(mSchool.lat, mSchool.lng);
+        const mPt = L.latLng(mSchool.lat || 21.135, mSchool.lng || 105.865);
         const mBounds = L.latLngBounds([mPt, mPt]);
         this.map.flyToBounds(mBounds, {
             paddingTopLeft: [360, 120],
@@ -796,15 +908,15 @@ class SchoolStoryteller {
             iconAnchor: [38, 38]
         });
 
-        const mergedMarker = L.marker([mSchool.lat, mSchool.lng], {
+        const mergedMarker = L.marker([mSchool.lat || 21.135, mSchool.lng || 105.865], {
             icon: customIcon,
             zIndexOffset: 1000
         }).addTo(this.map);
         mergedMarker.bindTooltip(`<b>✨ ${mSchool.name}</b><span class="story-tooltip-sublabel">🌟 (Trường mới sau sáp nhập)</span>`, {
             permanent: true,
-            direction: 'top',
+            direction: 'right',
             className: 'story-tooltip-custom story-tooltip-merged',
-            offset: [0, -44]
+            offset: [44, 0]
         });
         this.markers.push(mergedMarker);
 
@@ -825,25 +937,20 @@ class SchoolStoryteller {
                 iconAnchor: [24, 24]
             });
 
-            const m = L.marker([comp.lat, comp.lng], { icon: compCustomIcon }).addTo(this.map);
+            const m = L.marker([comp.lat || 21.135, comp.lng || 105.865], { icon: compCustomIcon }).addTo(this.map);
 
-            // Component 1 tooltip opens BOTTOM, Component 2 opens TOP to prevent tooltip overlap!
-            const tDir = (idx === 0) ? 'bottom' : 'top';
-            const tOff = (idx === 0) ? [0, 24] : [0, -24];
-
+            // Component markers: permanent label, spread out by higher zoom level
             m.bindTooltip(`<b>📍 ${compNum}. ${comp.name}</b><span class="story-tooltip-sublabel">(Trước sáp nhập)</span>`, {
                 permanent: true,
-                direction: tDir,
+                direction: (idx === 0) ? 'bottom' : 'top',
                 className: 'story-tooltip-custom story-tooltip-comp',
-                offset: tOff
+                offset: (idx === 0) ? [0, 24] : [0, -24]
             });
             this.markers.push(m);
 
-            if (mSchool.lat && mSchool.lng) {
-                const connLine = L.polyline([
-                    [comp.lat, comp.lng],
-                    [mSchool.lat, mSchool.lng]
-                ], {
+            if (mSchool.lat && mSchool.lng && comp.lat && comp.lng) {
+                const curvedConnPts = getCurvedRoutePoints([comp.lat, comp.lng], [mSchool.lat, mSchool.lng], (idx === 0 ? 0.0007 : -0.0007));
+                const connLine = L.polyline(curvedConnPts, {
                     color: '#c084fc',
                     weight: 3.5,
                     opacity: 0.85,
@@ -854,14 +961,16 @@ class SchoolStoryteller {
         });
 
         // Fit map camera bounds to frame all component schools and the new merged school together
+        // Use generous padding + higher minZoom so markers are well spaced and tooltips never overlap
         const allPoints = [
-            [mSchool.lat, mSchool.lng],
-            ...components.map(c => [c.lat, c.lng])
+            [mSchool.lat || 21.135, mSchool.lng || 105.865],
+            ...components.map(c => [c.lat || 21.135, c.lng || 105.865])
         ];
         this.map.fitBounds(allPoints, {
-            paddingTopLeft: [360, 120],
-            paddingBottomRight: [480, 160],
-            maxZoom: 15.5
+            paddingTopLeft: [360, 180],
+            paddingBottomRight: [520, 200],
+            maxZoom: 16.5,
+            minZoom: 15
         });
 
         // Show Merged Hero Card
@@ -871,18 +980,28 @@ class SchoolStoryteller {
             document.getElementById('storyCardBadge').classList.add('merged');
             document.getElementById('storyCardImage').src = mSchool.photo;
             document.getElementById('storyCardTitle').innerText = mSchool.name;
-            document.getElementById('storyCardAddress').innerHTML = `📍 ${mSchool.address}`;
+            document.getElementById('storyCardAddress').innerHTML = mSchool.mapUrl ? `<a href="${mSchool.mapUrl}" target="_blank" style="color: inherit; text-decoration: underline;">📍 ${mSchool.address}</a>` : `📍 ${mSchool.address}`;
             document.getElementById('storyStatClasses').innerText = `${mSchool.classes} Lớp`;
             document.getElementById('storyStatStudents').innerText = `${mSchool.students} HS`;
             const boardSec = document.getElementById('storyBoardSection');
             if (boardSec) {
                 boardSec.style.display = 'block';
                 const gridEl = document.getElementById('storyBoardGrid');
-                const boardItems = mSchool.board || [
+                const rawBoard = mSchool.board || [
                     { role: 'Hiệu trưởng:', name: mSchool.principal || 'Đang cập nhật' },
                     { role: 'Phó Hiệu trưởng 1:', name: mSchool.vicePrincipal1 || 'Đang cập nhật' },
                     { role: 'Phó Hiệu trưởng 2:', name: mSchool.vicePrincipal2 || 'Đang cập nhật' }
                 ];
+                const viceCount = rawBoard.length - 1;
+                const boardItems = rawBoard.map((item, idx) => {
+                    let roleStr = '';
+                    if (idx === 0) {
+                        roleStr = 'Hiệu trưởng:';
+                    } else {
+                        roleStr = viceCount > 1 ? `Phó Hiệu trưởng ${idx}:` : 'Phó Hiệu trưởng:';
+                    }
+                    return { role: roleStr, name: item.name };
+                });
                 if (gridEl) {
                     gridEl.innerHTML = boardItems.map(item => `
                         <div class="story-board-item">
@@ -920,6 +1039,30 @@ class SchoolStoryteller {
 
         // Launch Fireworks Celebration Explosion!
         this.launchFireworks(3200);
+
+        // Clear all markers & tooltips from map so names don't show behind the banner
+        this.markers.forEach(m => {
+            try { if (m.getTooltip()) m.unbindTooltip(); } catch (e) { }
+            this.map.removeLayer(m);
+        });
+        this.markers = [];
+        if (this.routePolylines) {
+            this.routePolylines.forEach(p => this.map.removeLayer(p));
+            this.routePolylines = [];
+        }
+        if (this.routePolyline) {
+            this.map.removeLayer(this.routePolyline);
+            this.routePolyline = null;
+        }
+        if (this.catchmentPolygon) {
+            this.map.removeLayer(this.catchmentPolygon);
+            this.catchmentPolygon = null;
+        }
+        if (this.distanceMarker) {
+            this.map.removeLayer(this.distanceMarker);
+            this.distanceMarker = null;
+        }
+        document.querySelectorAll('.leaflet-tooltip').forEach(el => el.remove());
 
         // Show Celebration Banner
         const celBanner = document.getElementById('storyCelebrationBanner');

@@ -1876,7 +1876,6 @@
                 </div>
                 @endif
             </div>
-            
             <!-- Mã QR Code Thông Minh -->
             <div class="sidebar-widget glass-panel" style="text-align: center; margin-bottom: 24px; padding-top: 32px;">
                 <h3 style="font-size: 1.2rem; margin-bottom: 12px; color: var(--text-main); font-weight: 800;">
