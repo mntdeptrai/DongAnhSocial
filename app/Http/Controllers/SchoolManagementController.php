@@ -227,6 +227,9 @@ class SchoolManagementController extends Controller
         $mergedSchoolData['name'] = $stdName;
         $mergedSchoolData['address'] = $school->address;
         $mergedSchoolData['phone'] = $school->phone;
+        $mergedSchoolData['photo'] = $school->image_path ?: ($mergedSchoolData['photo'] ?? '');
+        $mergedSchoolData['lat'] = (float)$school->latitude;
+        $mergedSchoolData['lng'] = (float)$school->longitude;
         $mergedSchoolData['total_classes'] = $totalClasses;
         $mergedSchoolData['total_students'] = $totalStudents;
         $mergedSchoolData['total_staff'] = $totalStaff;

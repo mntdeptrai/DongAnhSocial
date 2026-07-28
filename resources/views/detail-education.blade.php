@@ -3411,10 +3411,49 @@ function runDetailFireworks() {
 }
 </script>
 
-@if(!empty($eatery->storytelling_data))
+@php
+    $dbStoryData = $eatery->storytelling_data ?? [];
+    if (!empty($mergedList) && is_array($mergedList)) {
+        $formattedComponents = array_map(function($comp) use ($eatery) {
+            return [
+                'name' => $comp['name'] ?? '',
+                'address' => $comp['address'] ?? '',
+                'principal' => $comp['principal'] ?? '',
+                'phone' => $comp['phone'] ?? '',
+                'classes' => (int)($comp['classes'] ?? 0),
+                'students' => (int)($comp['students'] ?? 0),
+                'staff' => (int)($comp['staff'] ?? 0),
+                'area' => (float)($comp['area'] ?? 0),
+                'lat' => (float)($comp['lat'] ?? $eatery->latitude),
+                'lng' => (float)($comp['lng'] ?? $eatery->longitude),
+                'mapUrl' => $comp['gmap_link'] ?? '',
+                'photo' => !empty($comp['photo']) ? $comp['photo'] : (!empty($comp['existing_photo']) ? $comp['existing_photo'] : 'https://images.unsplash.com/photo-1587654780291-39c9404d746b?auto=format&fit=crop&w=600&q=80')
+            ];
+        }, $mergedList);
+
+        $mSchool = $dbStoryData['mergedSchool'] ?? [];
+        $mSchool['name'] = $eatery->name;
+        $mSchool['address'] = $eatery->address;
+        $mSchool['phone'] = $eatery->phone;
+        $mSchool['photo'] = $eatery->image_path ?: ($mSchool['photo'] ?? 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=800&q=80');
+        $mSchool['lat'] = (float)($eatery->latitude ?: ($mSchool['lat'] ?? 21.135));
+        $mSchool['lng'] = (float)($eatery->longitude ?: ($mSchool['lng'] ?? 105.865));
+        $mSchool['classes'] = array_sum(array_column($mergedList, 'classes'));
+        $mSchool['students'] = array_sum(array_column($mergedList, 'students'));
+        $mSchool['staff'] = array_sum(array_column($mergedList, 'staff'));
+        $mSchool['area'] = array_sum(array_column($mergedList, 'area'));
+        if ($eatery->principal_name) {
+            $mSchool['principal'] = $eatery->principal_name;
+        }
+
+        $dbStoryData['mergedSchool'] = $mSchool;
+        $dbStoryData['components'] = $formattedComponents;
+    }
+@endphp
+@if(!empty($dbStoryData))
 <script>
     window.STORYTELLING_SCHOOLS = window.STORYTELLING_SCHOOLS || {};
-    window.STORYTELLING_SCHOOLS['{{ $eatery->slug }}'] = {!! json_encode($eatery->storytelling_data, JSON_UNESCAPED_UNICODE) !!};
+    window.STORYTELLING_SCHOOLS['{{ $eatery->slug }}'] = {!! json_encode($dbStoryData, JSON_UNESCAPED_UNICODE) !!};
 </script>
 @endif
 @endsection

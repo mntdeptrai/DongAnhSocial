@@ -296,7 +296,6 @@ class SchoolStoryteller {
         steps.push(`${stepIdx++}. Tuyến đường kết nối`);
         steps.push(`${stepIdx++}. Hợp nhất thương hiệu`);
         steps.push(`${stepIdx++}. Trường mới: ${this.currentData.mergedSchool.name}`);
-        steps.push(`${stepIdx++}. Hoàn tất & Chuyển trang`);
 
         list.innerHTML = steps.map((st, i) => `
             <div class="story-timeline-item ${i === 0 ? 'active' : ''}" onclick="window.storyteller.jumpToStep(${i + 1})">
@@ -1032,67 +1031,15 @@ class SchoolStoryteller {
     // STAGE 6: SEAMLESS TRANSITION TO DETAIL PAGE
     // ==========================================
     async phase_Transition() {
-        const compCount = this.currentData.components.length;
-        const stepNum = 5 + compCount;
-        this.setStep(stepNum);
-        document.getElementById('storyPhaseLabel').innerText = `GIAI ĐOẠN ${stepNum}: HOÀN TẤT & CHUYỂN TRANG`;
-
-        // Launch Fireworks Celebration Explosion!
-        this.launchFireworks(3200);
-
-        // Clear all markers & tooltips from map so names don't show behind the banner
-        this.markers.forEach(m => {
-            try { if (m.getTooltip()) m.unbindTooltip(); } catch (e) { }
-            this.map.removeLayer(m);
-        });
-        this.markers = [];
-        if (this.routePolylines) {
-            this.routePolylines.forEach(p => this.map.removeLayer(p));
-            this.routePolylines = [];
-        }
-        if (this.routePolyline) {
-            this.map.removeLayer(this.routePolyline);
-            this.routePolyline = null;
-        }
-        if (this.catchmentPolygon) {
-            this.map.removeLayer(this.catchmentPolygon);
-            this.catchmentPolygon = null;
-        }
-        if (this.distanceMarker) {
-            this.map.removeLayer(this.distanceMarker);
-            this.distanceMarker = null;
-        }
-        document.querySelectorAll('.leaflet-tooltip').forEach(el => el.remove());
-
-        // Show Celebration Banner
-        const celBanner = document.getElementById('storyCelebrationBanner');
-        if (celBanner) {
-            celBanner.classList.add('show');
-        }
-
-        const mSchool = this.currentData.mergedSchool;
-        const msg = `🎉 CHÀO MỪNG ${mSchool.name.toUpperCase()} CHÍNH THỨC ĐI VÀO HOẠT ĐỘNG! Chúc mừng đơn vị mới sáp nhập. Đang chuyển tới trang chi tiết...`;
-        this.speak(msg);
-        await this.typeText('storyNarrativeText', msg, 12);
-
-        await this.sleep(2800);
-
-        // Zoom out and fade map
-        this.map.zoomOut(2, { animate: true, duration: 0.8 });
-
         const modal = document.getElementById('storytellingModal');
         if (modal) {
-            modal.style.transition = 'opacity 0.6s ease';
+            modal.style.transition = 'opacity 0.4s ease';
             modal.style.opacity = '0';
         }
 
-        await this.sleep(600);
+        await this.sleep(400);
 
         let dest = this.targetUrl;
-        if (dest) {
-            dest += (dest.includes('?') ? '&' : '?') + 'celebrate=1';
-        }
-
         this.closeAndResetModal();
 
         if (dest) {

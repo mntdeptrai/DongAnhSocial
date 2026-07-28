@@ -123,12 +123,7 @@
         </h2>
     </div>
 
-    <!-- 7.5. STAGE 7 CELEBRATION FIREWORKS BANNER OVERLAY -->
-    <div id="storyCelebrationBanner" class="story-celebration-banner">
-        <div class="story-celebration-burst">🎆 🎇 🎉 🏫 🍾 ⭐️ 🎆</div>
-        <h2 class="story-celebration-title">CHÀO MỪNG ĐƠN VỊ MỚI THÀNH LẬP!</h2>
-        <p class="story-celebration-sub">Hoàn tất quy hoạch sáp nhập & đang chuyển hướng sang trang chi tiết...</p>
-    </div>
+
 
     <!-- 8. BOTTOM PROGRESS INDICATOR DOTS -->
     <div class="story-progress-bar-wrap">
