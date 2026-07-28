@@ -150,6 +150,10 @@ class SchoolStoryteller {
         document.body.style.overflow = 'auto';
     }
 
+    isStandaloneSchool() {
+        return (this.currentData?.components || []).length === 1;
+    }
+
     async startStory(schoolSlug, redirectUrl) {
         if (this.isBusy) return;
         this.isBusy = true;
@@ -178,29 +182,40 @@ class SchoolStoryteller {
             await this.phase0_Intro();
             if (this.isSkipped || this.isManualMode) return;
 
-            // Stage 1: Overview
-            await this.phase1_Overview();
-            if (this.isSkipped || this.isManualMode) return;
+            if (this.isStandaloneSchool()) {
+                // Standalone School Flow (4 steps)
+                await this.phase1_Overview();
+                if (this.isSkipped || this.isManualMode) return;
 
-            // Stage 2: Dynamic iteration over all component schools
-            for (let i = 0; i < this.currentData.components.length; i++) {
-                await this.phase_Component(i);
+                await this.phaseStandalone_Scale();
+                if (this.isSkipped || this.isManualMode) return;
+
+                await this.phaseStandalone_Stability();
+                if (this.isSkipped || this.isManualMode) return;
+
+                await this.phaseStandalone_Hero();
+                if (this.isSkipped || this.isManualMode) return;
+            } else {
+                // Merged School Flow (5+ steps)
+                await this.phase1_Overview();
+                if (this.isSkipped || this.isManualMode) return;
+
+                for (let i = 0; i < this.currentData.components.length; i++) {
+                    await this.phase_Component(i);
+                    if (this.isSkipped || this.isManualMode) return;
+                }
+
+                await this.phase_Connection();
+                if (this.isSkipped || this.isManualMode) return;
+
+                await this.phase_Merger();
+                if (this.isSkipped || this.isManualMode) return;
+
+                await this.phase_NewSchool();
                 if (this.isSkipped || this.isManualMode) return;
             }
 
-            // Stage 3: Connection & Distance
-            await this.phase_Connection();
-            if (this.isSkipped || this.isManualMode) return;
-
-            // Stage 4: Merger Convergence Beam
-            await this.phase_Merger();
-            if (this.isSkipped || this.isManualMode) return;
-
-            // Stage 5: New School Presentation
-            await this.phase_NewSchool();
-            if (this.isSkipped || this.isManualMode) return;
-
-            // Stage 6: Transition & Redirect
+            // Transition & Redirect
             await this.phase_Transition();
         } catch (err) {
             console.warn('Storytelling sequence interrupted or completed:', err);
@@ -224,7 +239,7 @@ class SchoolStoryteller {
         if (btn) {
             btn.innerHTML = this.isVoiceEnabled
                 ? '<span>🔊</span> Trợ lý giọng nói: BẬT'
-                : '<span>🔇</span> Trợ lý giọng nói: TẮT';
+                : '<span>🔇</span> Trợ lý giọng nói: TẤT';
         }
         if (!this.isVoiceEnabled && this.speechSynth) {
             this.speechSynth.cancel();
@@ -282,20 +297,29 @@ class SchoolStoryteller {
         const list = document.getElementById('storyTimelineList');
         if (!list) return;
 
-        const components = this.currentData.components || [];
-        let stepIdx = 1;
-        const steps = [];
+        let steps = [];
 
-        steps.push(`${stepIdx++}. Khái quát quy hoạch`);
+        if (this.isStandaloneSchool()) {
+            steps = [
+                'Khái quát vị trí chiến lược',
+                'Hiện trạng & Quy mô chuẩn',
+                'Giữ nguyên quy mô & Ổn định',
+                'Vị thế Hạt nhân Chất lượng cao'
+            ];
+        } else {
+            const components = this.currentData.components || [];
 
-        components.forEach((comp, i) => {
-            const shortName = comp.name.replace(/^Trường\s+/, '');
-            steps.push(`${stepIdx++}. ${shortName}`);
-        });
+            steps.push('Khái quát quy hoạch');
 
-        steps.push(`${stepIdx++}. Tuyến đường kết nối`);
-        steps.push(`${stepIdx++}. Hợp nhất thương hiệu`);
-        steps.push(`${stepIdx++}. Trường mới: ${this.currentData.mergedSchool.name}`);
+            components.forEach((comp, i) => {
+                const shortName = comp.name.replace(/^Trường\s+/, '');
+                steps.push(shortName);
+            });
+
+            steps.push('Tuyến đường kết nối');
+            steps.push('Hợp nhất thương hiệu');
+            steps.push(`Trường mới: ${this.currentData.mergedSchool.name}`);
+        }
 
         list.innerHTML = steps.map((st, i) => `
             <div class="story-timeline-item ${i === 0 ? 'active' : ''}" onclick="window.storyteller.jumpToStep(${i + 1})">
@@ -344,11 +368,14 @@ class SchoolStoryteller {
             });
 
             const m = L.marker([comp.lat || 21.135, comp.lng || 105.865], { icon: customIcon }).addTo(this.map);
+            const compDirection = (i === 0) ? 'bottom' : 'top';
+            const compOffset = (i === 0) ? [0, 24] : [0, -24];
+
             m.bindTooltip(`<b>📍 ${compNum}. ${comp.name}</b><span class="story-tooltip-sublabel">(Trước sáp nhập)</span>`, {
                 permanent: true,
-                direction: 'top',
+                direction: compDirection,
                 className: 'story-tooltip-custom story-tooltip-comp',
-                offset: [0, -24]
+                offset: compOffset
             });
             this.markers.push(m);
         }
@@ -356,6 +383,26 @@ class SchoolStoryteller {
 
     async jumpToStep(stepNum) {
         if (!this.currentData) return;
+
+        if (this.isStandaloneSchool()) {
+            const totalSteps = 4;
+            if (stepNum < 1 || stepNum > totalSteps) return;
+
+            this.isManualMode = true;
+            this.setStep(stepNum);
+            this.resetLayers();
+
+            if (stepNum === 1) {
+                await this.phase1_Overview();
+            } else if (stepNum === 2) {
+                await this.phaseStandalone_Scale();
+            } else if (stepNum === 3) {
+                await this.phaseStandalone_Stability();
+            } else if (stepNum === 4) {
+                await this.phaseStandalone_Hero();
+            }
+            return;
+        }
 
         const compCount = (this.currentData.components || []).length;
         const totalSteps = 5 + compCount;
@@ -522,7 +569,51 @@ class SchoolStoryteller {
         animateFireworks();
     }
 
+    createHeartCoordinates(centerLat, centerLng, scaleMeters = 500) {
+        const points = [];
+        const numPoints = 120;
+        const latFactor = (scaleMeters / 111000) / 16;
+        const lngFactor = (scaleMeters / (111000 * Math.cos(centerLat * Math.PI / 180))) / 16;
 
+        for (let i = 0; i <= numPoints; i++) {
+            const t = (Math.PI * 2 * i) / numPoints;
+            const x = 16 * Math.pow(Math.sin(t), 3);
+            const y = 13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t);
+
+            const lat = centerLat + y * latFactor;
+            const lng = centerLng + x * lngFactor;
+            points.push([lat, lng]);
+        }
+        return points;
+    }
+
+
+
+    formatSchoolTitle(name, isUpper = true) {
+        if (!name) return '';
+        const isAllUpper = name === name.toUpperCase();
+        const forceUpper = isUpper || isAllUpper;
+        let str = forceUpper ? name.toUpperCase() : name;
+        const upper = str.toUpperCase();
+        const conjunction = forceUpper ? 'VÀ' : 'và';
+
+        if (upper.includes('TIỂU HỌC VÀ TRUNG HỌC CƠ SỞ')) {
+            const regex = /(TRƯỜNG\s+TIỂU\s+HỌC|TIỂU\s+HỌC)\s+(VÀ|v\u00e0)\s+(TRUNG\s+HỌC\s+CƠ\s+SỞ)/i;
+            return str.replace(regex, `$1 ${conjunction}<br>$3`);
+        }
+
+        if (upper.includes('TIỂU HỌC VÀ THCS') || upper.includes('TIEU HOC VA THCS')) {
+            const regex = /(TRƯỜNG\s+TIỂU\s+HỌC|TIỂU\s+HỌC)\s+(VÀ|v\u00e0)\s+(THCS)/i;
+            return str.replace(regex, `$1 ${conjunction}<br>$3`);
+        }
+
+        if (upper.includes(' VÀ ')) {
+            const regex = /\s+(VÀ|v\u00e0)\s+/i;
+            return str.replace(regex, ` ${conjunction}<br>`);
+        }
+
+        return str;
+    }
 
     // ==========================================
     // STAGE 0: INTRO ANIMATION
@@ -533,11 +624,19 @@ class SchoolStoryteller {
         if (!intro) return;
 
         intro.classList.remove('hidden');
+        this.launchFireworks(2800);
         const schoolNameUpper = (this.currentData.mergedSchool.name || '').toUpperCase();
-        document.getElementById('storyIntroTitle').innerHTML = `HÀNH TRÌNH HÌNH THÀNH<br><span class="story-intro-highlight">${schoolNameUpper}</span>`;
-        document.getElementById('storyIntroSubtitle').innerText = `Tổ chức lại & Sắp xếp các cơ sở giáo dục công lập xã Đông Anh`;
+        const formattedIntroTitle = this.formatSchoolTitle(schoolNameUpper, true);
 
-        this.speak(`Hành trình hình thành ${this.currentData.mergedSchool.name}`);
+        if (this.isStandaloneSchool()) {
+            document.getElementById('storyIntroTitle').innerHTML = `<span class="story-intro-top-heading">ĐỊNH HƯỚNG BỨC PHÁ CHẤT LƯỢNG</span><span class="story-intro-highlight">${formattedIntroTitle}</span>`;
+            document.getElementById('storyIntroSubtitle').innerHTML = `Đơn vị giữ nguyên quy mô, khẳng định vị thế hạt nhân giáo dục <span style="white-space: nowrap;">xã Đông Anh</span>`;
+        } else {
+            document.getElementById('storyIntroTitle').innerHTML = `<span class="story-intro-top-heading">HÀNH TRÌNH HÌNH THÀNH</span><span class="story-intro-highlight">${formattedIntroTitle}</span>`;
+            document.getElementById('storyIntroSubtitle').innerHTML = `Tổ chức lại & Sắp xếp các cơ sở giáo dục công lập <span style="white-space: nowrap;">xã Đông Anh</span>`;
+        }
+
+        this.speak(`Hành trình ${this.currentData.mergedSchool.name}`);
         await this.sleep(2600);
 
         intro.classList.add('hidden');
@@ -549,7 +648,11 @@ class SchoolStoryteller {
     // ==========================================
     async phase1_Overview() {
         this.setStep(1);
-        document.getElementById('storyPhaseLabel').innerText = 'GIAI ĐOẠN 1: KHÁI QUÁT KHU VỰC';
+        if (this.isStandaloneSchool()) {
+            document.getElementById('storyPhaseLabel').innerText = 'GIAI ĐOẠN 1: KHÁI QUÁT VỊ TRÍ CHIẾN LƯỢC';
+        } else {
+            document.getElementById('storyPhaseLabel').innerText = 'GIAI ĐOẠN 1: KHÁI QUÁT KHU VỰC';
+        }
 
         // Fly camera down to Dong Anh
         this.map.flyTo([21.135, 105.865], 12.5, {
@@ -557,11 +660,318 @@ class SchoolStoryteller {
             easeLinearity: 0.25
         });
 
-        const narrativeMsg = `Đang tải ranh giới hành chính xã Đông Anh. Chạm vào các điểm trên bản đồ để khám phá hành trình sáp nhập ${this.currentData.mergedSchool.name}.`;
+        let narrativeMsg = '';
+        if (this.isStandaloneSchool()) {
+            narrativeMsg = `Đang tải ranh giới xã Đông Anh và vị trí chiến lược của ${this.currentData.mergedSchool.name}. Đơn vị trụ cột chất lượng cao.`;
+        } else {
+            narrativeMsg = `Đang tải ranh giới hành chính xã Đông Anh. Chạm vào các điểm trên bản đồ để khám phá hành trình sáp nhập ${this.currentData.mergedSchool.name}.`;
+        }
         this.speak(narrativeMsg);
         await this.typeText('storyNarrativeText', narrativeMsg, 12);
 
         await this.sleep(1200);
+    }
+
+    // ==========================================
+    // STANDALONE STAGE 2: HIỆN TRẠNG & QUY MÔ CHUẨN
+    // ==========================================
+    async phaseStandalone_Scale() {
+        this.setStep(2);
+        document.getElementById('storyPhaseLabel').innerText = 'GIAI ĐOẠN 2: HIỆN TRẠNG & QUY MÔ CHUẨN';
+
+        const mSchool = this.currentData.mergedSchool;
+        const iconHtml = `
+            <div class="story-marker-icon hero-glow">
+                <div class="story-marker-inner">🏫</div>
+                <div class="story-marker-pulse"></div>
+            </div>
+        `;
+        const customIcon = L.divIcon({
+            html: iconHtml,
+            className: 'custom-story-div-icon',
+            iconSize: [60, 60],
+            iconAnchor: [30, 30]
+        });
+
+        const mPt = L.latLng(mSchool.lat || 21.135, mSchool.lng || 105.865);
+        const m = L.marker(mPt, { icon: customIcon }).addTo(this.map);
+        m.bindTooltip(`<b>📍 ${mSchool.name}</b><span class="story-tooltip-sublabel">🌟 (Trường Trọng Điểm - Giữ Nguyên Quy Mô)</span>`, {
+            permanent: true,
+            direction: 'bottom',
+            className: 'story-tooltip-custom story-tooltip-comp',
+            offset: [0, 24]
+        });
+        this.markers.push(m);
+
+        // Fly camera centered in open viewport space
+        const cBounds = L.latLngBounds([mPt, mPt]);
+        this.map.flyToBounds(cBounds, {
+            paddingTopLeft: [360, 120],
+            paddingBottomRight: [480, 160],
+            maxZoom: 16,
+            duration: this.isManualMode ? 0.4 : 1.0
+        });
+
+        // Glass Card UI
+        const card = document.getElementById('storyGlassCard');
+        if (card) {
+            document.getElementById('storyCardBadge').innerText = '🌟 Trường Trọng Điểm (Giữ Nguyên Quy Mô)';
+            document.getElementById('storyCardBadge').classList.remove('merged');
+            document.getElementById('storyCardImage').src = mSchool.photo;
+            document.getElementById('storyCardTitle').innerText = mSchool.name;
+            document.getElementById('storyCardAddress').innerHTML = mSchool.mapUrl ? `<a href="${mSchool.mapUrl}" target="_blank" style="color: inherit; text-decoration: underline;">📍 ${mSchool.address}</a>` : `📍 ${mSchool.address}`;
+            document.getElementById('storyStatClasses').innerText = `${mSchool.classes} Lớp`;
+            if (document.getElementById('storyStatClasses').nextElementSibling) {
+                document.getElementById('storyStatClasses').nextElementSibling.innerText = 'Quy mô phòng học';
+            }
+            document.getElementById('storyStatStudents').innerText = `${mSchool.students} HS`;
+            if (document.getElementById('storyStatStudents').nextElementSibling) {
+                document.getElementById('storyStatStudents').nextElementSibling.innerText = 'Tổng số học sinh';
+            }
+
+            const boardSec = document.getElementById('storyBoardSection');
+            if (boardSec) boardSec.style.display = 'none';
+
+            const actionBtn = document.getElementById('storyCardActionBtn');
+            if (actionBtn) actionBtn.style.display = 'none';
+
+            card.classList.add('show');
+        }
+
+        const msg = `${mSchool.name} hiện tại có quy mô ${mSchool.classes} lớp học chuẩn, ${mSchool.students} học sinh (${mSchool.ratio}). Đội ngũ và CSVC đạt tiêu chuẩn chất lượng cao.`;
+        this.speak(msg);
+        await this.typeText('storyNarrativeText', msg, 12);
+
+        await this.sleep(1800);
+    }
+
+    // ==========================================
+    // STANDALONE STAGE 3: GIỮ NGUYÊN QUY MÔ & ỔN ĐỊNH 100%
+    // ==========================================
+    async phaseStandalone_Stability() {
+        this.setStep(3);
+        document.getElementById('storyPhaseLabel').innerText = 'GIAI ĐOẠN 3: GIỮ NGUYÊN QUY MÔ & ỔN ĐỊNH';
+
+        const mSchool = this.currentData.mergedSchool;
+        const mPt = L.latLng(mSchool.lat || 21.135, mSchool.lng || 105.865);
+
+        // Reset layers & add marker with Stability Shield Halo Circle
+        this.resetLayers();
+
+        const iconHtml = `
+            <div class="story-marker-icon hero-glow" style="background: linear-gradient(135deg, #10b981, #059669);">
+                <div class="story-marker-inner">🛡️</div>
+                <div class="story-marker-pulse"></div>
+            </div>
+        `;
+        const customIcon = L.divIcon({
+            html: iconHtml,
+            className: 'custom-story-div-icon',
+            iconSize: [64, 64],
+            iconAnchor: [32, 32]
+        });
+
+        const m = L.marker(mPt, { icon: customIcon }).addTo(this.map);
+        m.bindTooltip(`<b>🛡️ GIỮ NGUYÊN VỊ TRÍ HÀNH CHÍNH</b><span class="story-tooltip-sublabel">✨ (100% Ổn định Tuyển sinh & Học tập)</span>`, {
+            permanent: true,
+            direction: 'bottom',
+            className: 'story-tooltip-custom story-tooltip-shield',
+            offset: [0, 24]
+        });
+        this.markers.push(m);
+
+        // Circular Emerald Stability Shield Polygon around school
+        this.catchmentPolygon = L.circle(mPt, {
+            radius: 360,
+            color: '#10b981',
+            fillColor: '#34d399',
+            fillOpacity: 0.15,
+            weight: 3,
+            dashArray: '6, 8'
+        }).addTo(this.map);
+
+        // Fly camera centered
+        const cBounds = L.latLngBounds([mPt, mPt]);
+        this.map.flyToBounds(cBounds, {
+            paddingTopLeft: [360, 120],
+            paddingBottomRight: [480, 160],
+            maxZoom: 15.5,
+            duration: this.isManualMode ? 0.4 : 1.0
+        });
+
+        // Show Glass Card on Right in Stability Mode
+        const card = document.getElementById('storyGlassCard');
+        if (card) {
+            document.getElementById('storyCardBadge').innerText = '🛡️ Giữ Nguyên Quy Mô';
+            document.getElementById('storyCardBadge').classList.remove('merged');
+            document.getElementById('storyCardBadge').style.background = 'linear-gradient(135deg, #10b981, #059669)';
+            document.getElementById('storyCardImage').src = mSchool.photo;
+            document.getElementById('storyCardTitle').innerText = mSchool.name;
+            document.getElementById('storyCardAddress').innerHTML = mSchool.mapUrl ? `<a href="${mSchool.mapUrl}" target="_blank" style="color: inherit; text-decoration: underline;">📍 ${mSchool.address}</a>` : `📍 ${mSchool.address}`;
+            document.getElementById('storyStatClasses').innerText = `${mSchool.classes} Lớp`;
+            if (document.getElementById('storyStatClasses').nextElementSibling) {
+                document.getElementById('storyStatClasses').nextElementSibling.innerText = 'Giữ nguyên quy mô';
+            }
+            document.getElementById('storyStatStudents').innerText = `${mSchool.students} HS`;
+            if (document.getElementById('storyStatStudents').nextElementSibling) {
+                document.getElementById('storyStatStudents').nextElementSibling.innerText = '100% Ổn định tuyển sinh';
+            }
+
+            const boardSec = document.getElementById('storyBoardSection');
+            if (boardSec) boardSec.style.display = 'none';
+
+            const actionBtn = document.getElementById('storyCardActionBtn');
+            if (actionBtn) actionBtn.style.display = 'none';
+
+            card.classList.add('show');
+        }
+
+        const msg = `Theo phương án sắp xếp, ${mSchool.name} giữ nguyên vị trí và quy mô hiện tại, tạo sự ổn định tối đa cho học sinh và phụ huynh.`;
+        this.speak(msg);
+        await this.typeText('storyNarrativeText', msg, 12);
+
+        await this.sleep(2200);
+    }
+
+    // ==========================================
+    // STANDALONE STAGE 4: VỊ THẾ HẠT NHÂN CHẤT LƯỢNG CAO
+    // ==========================================
+    async phaseStandalone_Hero() {
+        this.setStep(4);
+        document.getElementById('storyPhaseLabel').innerText = 'GIAI ĐOẠN 4: VỊ THẾ HẠT NHÂN CHẤT LƯỢNG CAO';
+
+        // Clear and re-render clean hero state
+        this.resetLayers();
+
+        const mSchool = this.currentData.mergedSchool;
+        const iconHtml = `
+            <div class="story-marker-icon merged hero-glow">
+                <div class="story-marker-inner">🏫</div>
+                <div class="story-marker-crown">✨</div>
+                <div class="story-marker-pulse"></div>
+                <div class="story-marker-pulse pulse-ring-2"></div>
+                <div class="story-marker-pulse pulse-ring-3"></div>
+            </div>
+        `;
+        const customIcon = L.divIcon({
+            html: iconHtml,
+            className: 'custom-story-div-icon',
+            iconSize: [76, 76],
+            iconAnchor: [38, 38]
+        });
+
+        const mPt = L.latLng(mSchool.lat || 21.135, mSchool.lng || 105.865);
+        const mergedMarker = L.marker(mPt, {
+            icon: customIcon,
+            zIndexOffset: 1000
+        }).addTo(this.map);
+
+        mergedMarker.bindTooltip(
+            `<div class="story-merged-hero-label">
+                <b>✨ ${mSchool.name} ✨</b>
+             </div>`,
+            {
+                permanent: true,
+                direction: 'top',
+                className: 'story-tooltip-custom story-tooltip-merged hero-tooltip',
+                offset: [0, -56]
+            }
+        );
+        this.markers.push(mergedMarker);
+
+        // Soft ambient glowing dashed heart
+        const heartCoords = this.createHeartCoordinates(mPt.lat, mPt.lng, 500);
+        this.catchmentPolygon = L.polygon(heartCoords, {
+            color: '#a855f7',
+            fillColor: '#c084fc',
+            fillOpacity: 0.16,
+            weight: 3.5,
+            dashArray: '8, 8',
+            lineCap: 'round',
+            lineJoin: 'round'
+        }).addTo(this.map);
+
+        // Fly camera centered
+        const mBounds = L.latLngBounds([mPt, mPt]);
+        this.map.flyToBounds(mBounds, {
+            paddingTopLeft: [360, 120],
+            paddingBottomRight: [480, 160],
+            maxZoom: 16,
+            duration: this.isManualMode ? 0.4 : 1.0
+        });
+
+        // Launch celebratory fireworks
+        this.launchFireworks(2800);
+
+        // Hide center announcement overlay box to prevent collision with map marker tooltip
+        const annCard = document.getElementById('storyAnnouncementCard');
+        if (annCard) annCard.classList.remove('show');
+
+        // Show Glass Card on Right
+        const card = document.getElementById('storyGlassCard');
+        if (card) {
+            document.getElementById('storyCardBadge').innerText = '👑 Trường Hạt Nhân (Giữ Nguyên Quy Mô)';
+            document.getElementById('storyCardBadge').classList.add('merged');
+            document.getElementById('storyCardBadge').style.background = 'linear-gradient(135deg, #a855f7, #9333ea)';
+            document.getElementById('storyCardImage').src = mSchool.photo;
+            const formattedCardTitle = this.formatSchoolTitle(mSchool.name, false);
+            document.getElementById('storyCardTitle').innerHTML = formattedCardTitle;
+            document.getElementById('storyCardAddress').innerHTML = mSchool.mapUrl ? `<a href="${mSchool.mapUrl}" target="_blank" style="color: inherit; text-decoration: underline;">📍 ${mSchool.address}</a>` : `📍 ${mSchool.address}`;
+            
+            document.getElementById('storyStatClasses').innerText = `${mSchool.classes} Lớp`;
+            if (document.getElementById('storyStatClasses').nextElementSibling) {
+                document.getElementById('storyStatClasses').nextElementSibling.innerText = 'Quy mô phòng học';
+            }
+            document.getElementById('storyStatStudents').innerText = `${mSchool.students} HS`;
+            if (document.getElementById('storyStatStudents').nextElementSibling) {
+                document.getElementById('storyStatStudents').nextElementSibling.innerText = 'Tổng số học sinh';
+            }
+
+            const boardSec = document.getElementById('storyBoardSection');
+            if (boardSec) {
+                boardSec.style.display = 'block';
+                const gridEl = document.getElementById('storyBoardGrid');
+                const rawBoard = mSchool.board || [
+                    { role: 'Hiệu trưởng:', name: mSchool.principal || 'Đang cập nhật' }
+                ];
+                const boardItems = rawBoard.map((item, idx) => {
+                    const rawRole = (item.role || '').toUpperCase();
+                    let roleStr = 'Phó Hiệu trưởng:';
+                    if (rawRole.includes('PHT') || rawRole.includes('PHÓ') || rawRole.includes('PHO')) {
+                        roleStr = 'Phó Hiệu trưởng:';
+                    } else if (rawRole.includes('HT') || rawRole.includes('HIỆU TRƯỞNG') || rawRole.includes('HIEU TRUONG')) {
+                        roleStr = 'Hiệu trưởng:';
+                    } else if (idx === 0) {
+                        roleStr = 'Hiệu trưởng:';
+                    } else {
+                        roleStr = 'Phó Hiệu trưởng:';
+                    }
+                    return { role: roleStr, name: item.name };
+                });
+                if (gridEl) {
+                    gridEl.innerHTML = boardItems.map(item => `
+                        <div class="story-board-item">
+                            <span class="story-board-role">${item.role}</span>
+                            <span class="story-board-name">${item.name}</span>
+                        </div>
+                    `).join('');
+                }
+            }
+
+            const actionBtn = document.getElementById('storyCardActionBtn');
+            if (actionBtn) {
+                actionBtn.style.display = 'flex';
+                actionBtn.innerHTML = '<span>🔍 Tra cứu chi tiết trường trọng điểm</span> ➔';
+            }
+
+            card.classList.add('show');
+        }
+
+        const msg = `${mSchool.name} tiếp tục khẳng định vị thế hạt nhân, dẫn dắt chất lượng dạy và học của giáo dục Đông Anh giai đoạn 2026 - 2030.`;
+        this.speak(msg);
+        await this.typeText('storyNarrativeText', msg, 12);
+
+        await this.sleep(3200);
     }
 
     // ==========================================
@@ -598,11 +1008,14 @@ class SchoolStoryteller {
             });
 
             const m = L.marker([comp.lat || 21.135, comp.lng || 105.865], { icon: customIcon }).addTo(this.map);
+            const compDirection = (index === 0) ? 'bottom' : 'top';
+            const compOffset = (index === 0) ? [0, 24] : [0, -24];
+
             m.bindTooltip(`<b>📍 ${compNum}. ${comp.name}</b><span class="story-tooltip-sublabel">(Trước sáp nhập)</span>`, {
                 permanent: true,
-                direction: 'top',
+                direction: compDirection,
                 className: 'story-tooltip-custom story-tooltip-comp',
-                offset: [0, -24]
+                offset: compOffset
             });
             this.markers.push(m);
         }
@@ -864,7 +1277,12 @@ class SchoolStoryteller {
         // Show Flash Announcement Overlay
         const annCard = document.getElementById('storyAnnouncementCard');
         if (annCard) {
-            document.getElementById('storyAnnounceTitle').innerText = mSchool.name;
+            const formattedAnnounceTitle = this.formatSchoolTitle(mSchool.name, true);
+            document.getElementById('storyAnnounceTitle').innerHTML = formattedAnnounceTitle;
+            const annDateEl = annCard.querySelector('.story-announcement-date');
+            if (annDateEl) annDateEl.innerText = 'TỪ NGÀY 01 THÁNG 08 NĂM 2026';
+            const annTitleEl = annCard.querySelector('.story-announcement-title');
+            if (annTitleEl) annTitleEl.innerText = 'TỔ CHỨC LẠI & THÀNH LẬP';
             annCard.classList.add('show');
         }
 
@@ -894,10 +1312,12 @@ class SchoolStoryteller {
         // 1. Add Merged School Marker (Center, Large 76px, Z-Index 1000)
         const mSchool = this.currentData.mergedSchool;
         const iconHtml = `
-            <div class="story-marker-icon merged">
+            <div class="story-marker-icon merged hero-glow">
                 <div class="story-marker-inner">🏫</div>
+                <div class="story-marker-crown">✨</div>
                 <div class="story-marker-pulse"></div>
                 <div class="story-marker-pulse pulse-ring-2"></div>
+                <div class="story-marker-pulse pulse-ring-3"></div>
             </div>
         `;
         const customIcon = L.divIcon({
@@ -911,66 +1331,43 @@ class SchoolStoryteller {
             icon: customIcon,
             zIndexOffset: 1000
         }).addTo(this.map);
-        mergedMarker.bindTooltip(`<b>✨ ${mSchool.name}</b><span class="story-tooltip-sublabel">🌟 (Trường mới sau sáp nhập)</span>`, {
-            permanent: true,
-            direction: 'right',
-            className: 'story-tooltip-custom story-tooltip-merged',
-            offset: [44, 0]
-        });
+        mergedMarker.bindTooltip(
+            `<div class="story-merged-hero-label">
+                <b>✨ ${mSchool.name} ✨</b>
+             </div>`,
+            {
+                permanent: true,
+                direction: 'top',
+                className: 'story-tooltip-custom story-tooltip-merged hero-tooltip',
+                offset: [0, -56]
+            }
+        );
         this.markers.push(mergedMarker);
 
-        // 2. Add All Component School Markers with Opposing Tooltip Directions (Zero Overlap!)
-        const components = this.currentData.components || [];
-        components.forEach((comp, idx) => {
-            const compNum = idx + 1;
-            const compIconHtml = `
-                <div class="story-marker-icon">
-                    <div class="story-marker-inner">${compNum}</div>
-                    <div class="story-marker-pulse"></div>
-                </div>
-            `;
-            const compCustomIcon = L.divIcon({
-                html: compIconHtml,
-                className: 'custom-story-div-icon',
-                iconSize: [48, 48],
-                iconAnchor: [24, 24]
-            });
+        // Add soft glowing dashed heart around the new school marker
+        const mPt = L.latLng(mSchool.lat || 21.135, mSchool.lng || 105.865);
+        const heartCoords = this.createHeartCoordinates(mPt.lat, mPt.lng, 500);
+        this.catchmentPolygon = L.polygon(heartCoords, {
+            color: '#ec4899',
+            fillColor: '#f472b6',
+            fillOpacity: 0.16,
+            weight: 3.5,
+            dashArray: '8, 8',
+            lineCap: 'round',
+            lineJoin: 'round'
+        }).addTo(this.map);
 
-            const m = L.marker([comp.lat || 21.135, comp.lng || 105.865], { icon: compCustomIcon }).addTo(this.map);
-
-            // Component markers: permanent label, spread out by higher zoom level
-            m.bindTooltip(`<b>📍 ${compNum}. ${comp.name}</b><span class="story-tooltip-sublabel">(Trước sáp nhập)</span>`, {
-                permanent: true,
-                direction: (idx === 0) ? 'bottom' : 'top',
-                className: 'story-tooltip-custom story-tooltip-comp',
-                offset: (idx === 0) ? [0, 24] : [0, -24]
-            });
-            this.markers.push(m);
-
-            if (mSchool.lat && mSchool.lng && comp.lat && comp.lng) {
-                const curvedConnPts = getCurvedRoutePoints([comp.lat, comp.lng], [mSchool.lat, mSchool.lng], (idx === 0 ? 0.0007 : -0.0007));
-                const connLine = L.polyline(curvedConnPts, {
-                    color: '#c084fc',
-                    weight: 3.5,
-                    opacity: 0.85,
-                    dashArray: '8, 8'
-                }).addTo(this.map);
-                this.routePolylines.push(connLine);
-            }
+        // Fly camera directly centered on the new school
+        const mBounds = L.latLngBounds([mPt, mPt]);
+        this.map.flyToBounds(mBounds, {
+            paddingTopLeft: [360, 120],
+            paddingBottomRight: [480, 160],
+            maxZoom: 16,
+            duration: this.isManualMode ? 0.4 : 1.0
         });
 
-        // Fit map camera bounds to frame all component schools and the new merged school together
-        // Use generous padding + higher minZoom so markers are well spaced and tooltips never overlap
-        const allPoints = [
-            [mSchool.lat || 21.135, mSchool.lng || 105.865],
-            ...components.map(c => [c.lat || 21.135, c.lng || 105.865])
-        ];
-        this.map.fitBounds(allPoints, {
-            paddingTopLeft: [360, 180],
-            paddingBottomRight: [520, 200],
-            maxZoom: 16.5,
-            minZoom: 15
-        });
+        // Launch festive celebratory fireworks effect
+        this.launchFireworks(2800);
 
         // Show Merged Hero Card
         const card = document.getElementById('storyGlassCard');
@@ -978,7 +1375,8 @@ class SchoolStoryteller {
             document.getElementById('storyCardBadge').innerText = 'Trường mới (Sau sáp nhập)';
             document.getElementById('storyCardBadge').classList.add('merged');
             document.getElementById('storyCardImage').src = mSchool.photo;
-            document.getElementById('storyCardTitle').innerText = mSchool.name;
+            const formattedCardTitle = this.formatSchoolTitle(mSchool.name, false);
+            document.getElementById('storyCardTitle').innerHTML = formattedCardTitle;
             document.getElementById('storyCardAddress').innerHTML = mSchool.mapUrl ? `<a href="${mSchool.mapUrl}" target="_blank" style="color: inherit; text-decoration: underline;">📍 ${mSchool.address}</a>` : `📍 ${mSchool.address}`;
             document.getElementById('storyStatClasses').innerText = `${mSchool.classes} Lớp`;
             document.getElementById('storyStatStudents').innerText = `${mSchool.students} HS`;
@@ -988,16 +1386,20 @@ class SchoolStoryteller {
                 const gridEl = document.getElementById('storyBoardGrid');
                 const rawBoard = mSchool.board || [
                     { role: 'Hiệu trưởng:', name: mSchool.principal || 'Đang cập nhật' },
-                    { role: 'Phó Hiệu trưởng 1:', name: mSchool.vicePrincipal1 || 'Đang cập nhật' },
-                    { role: 'Phó Hiệu trưởng 2:', name: mSchool.vicePrincipal2 || 'Đang cập nhật' }
+                    { role: 'Phó Hiệu trưởng:', name: mSchool.vicePrincipal1 || 'Đang cập nhật' },
+                    { role: 'Phó Hiệu trưởng:', name: mSchool.vicePrincipal2 || 'Đang cập nhật' }
                 ];
-                const viceCount = rawBoard.length - 1;
                 const boardItems = rawBoard.map((item, idx) => {
-                    let roleStr = '';
-                    if (idx === 0) {
+                    const rawRole = (item.role || '').toUpperCase();
+                    let roleStr = 'Phó Hiệu trưởng:';
+                    if (rawRole.includes('PHT') || rawRole.includes('PHÓ') || rawRole.includes('PHO')) {
+                        roleStr = 'Phó Hiệu trưởng:';
+                    } else if (rawRole.includes('HT') || rawRole.includes('HIỆU TRƯỞNG') || rawRole.includes('HIEU TRUONG')) {
+                        roleStr = 'Hiệu trưởng:';
+                    } else if (idx === 0) {
                         roleStr = 'Hiệu trưởng:';
                     } else {
-                        roleStr = viceCount > 1 ? `Phó Hiệu trưởng ${idx}:` : 'Phó Hiệu trưởng:';
+                        roleStr = 'Phó Hiệu trưởng:';
                     }
                     return { role: roleStr, name: item.name };
                 });

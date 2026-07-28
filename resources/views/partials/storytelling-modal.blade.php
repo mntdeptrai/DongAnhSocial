@@ -9,6 +9,9 @@
     
     <!-- 1. PHASE 0: INTRO SCREEN -->
     <div id="storyIntroScreen" class="story-intro-screen hidden">
+        <div class="story-intro-orb orb-1"></div>
+        <div class="story-intro-orb orb-2"></div>
+        <div class="story-intro-orb orb-3"></div>
         <div class="story-intro-card">
             <div class="story-intro-badge">
                 <span>🎓</span> BẢN ĐỒ SỐ GIÁO DỤC XÃ ĐÔNG ANH

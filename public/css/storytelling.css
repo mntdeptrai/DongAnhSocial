@@ -57,6 +57,7 @@
     text-align: center;
     padding: 30px;
     opacity: 1;
+    overflow: hidden;
     transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -66,24 +67,68 @@
     transform: scale(1.06);
 }
 
+/* Ambient Floating Background Orbs */
+.story-intro-orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(60px);
+    opacity: 0.65;
+    pointer-events: none;
+    z-index: 1;
+    animation: storyOrbFloat 8s ease-in-out infinite alternate;
+}
+
+.story-intro-orb.orb-1 {
+    width: 400px;
+    height: 400px;
+    top: -80px;
+    left: -80px;
+    background: radial-gradient(circle, rgba(168, 85, 247, 0.55), rgba(147, 51, 234, 0.05));
+}
+
+.story-intro-orb.orb-2 {
+    width: 440px;
+    height: 440px;
+    bottom: -100px;
+    right: -100px;
+    background: radial-gradient(circle, rgba(236, 72, 153, 0.5), rgba(219, 39, 119, 0.05));
+    animation-delay: -3.5s;
+}
+
+.story-intro-orb.orb-3 {
+    width: 320px;
+    height: 320px;
+    top: 18%;
+    right: 12%;
+    background: radial-gradient(circle, rgba(251, 191, 36, 0.4), rgba(245, 158, 11, 0.05));
+    animation-delay: -5s;
+}
+
+@keyframes storyOrbFloat {
+    0% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(35px, -45px) scale(1.15); }
+    100% { transform: translate(-30px, 25px) scale(0.92); }
+}
+
 .story-intro-card {
-    background: rgba(255, 255, 255, 0.88);
-    backdrop-filter: blur(32px);
-    -webkit-backdrop-filter: blur(32px);
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(36px);
+    -webkit-backdrop-filter: blur(36px);
     border: 2px solid transparent;
     background:
-        linear-gradient(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.9)) padding-box,
-        linear-gradient(135deg, #a855f7, #ec4899, #818cf8, #fbbf24) border-box;
-    border-radius: 36px;
-    padding: 50px 60px;
-    max-width: 920px;
-    width: 90%;
-    box-shadow: 0 30px 80px rgba(168, 85, 247, 0.25), 0 10px 30px rgba(129, 140, 248, 0.15);
+        linear-gradient(rgba(255, 255, 255, 0.94), rgba(255, 255, 255, 0.94)) padding-box,
+        linear-gradient(135deg, #a855f7 0%, #ec4899 40%, #fbbf24 75%, #818cf8 100%) border-box;
+    border-radius: 38px;
+    padding: 48px 60px;
+    max-width: 980px;
+    width: 92%;
+    box-shadow: 0 35px 90px rgba(147, 51, 234, 0.28), 0 12px 36px rgba(236, 72, 153, 0.18);
     display: flex;
     flex-direction: column;
     align-items: center;
     text-align: center;
     position: relative;
+    z-index: 10;
     overflow: hidden;
     animation: storyCardScaleIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards, storyCardFloat 4s ease-in-out infinite alternate 0.8s;
 }
@@ -91,64 +136,119 @@
 .story-intro-badge {
     display: inline-flex;
     align-items: center;
-    gap: 10px;
-    padding: 10px 28px;
+    gap: 12px;
+    padding: 11px 30px;
     border-radius: 30px;
-    background: linear-gradient(135deg, #9333ea 0%, #c084fc 50%, #e879f9 100%);
-    color: #ffffff;
-    font-size: 0.88rem;
-    font-weight: 800;
-    letter-spacing: 2.2px;
+    background: linear-gradient(135deg, #581c87 0%, #7e22ce 50%, #9333ea 100%);
+    color: #ffffff !important;
+    font-size: 0.95rem !important;
+    font-weight: 900 !important;
+    letter-spacing: 2px;
     text-transform: uppercase;
-    margin-bottom: 24px;
-    box-shadow: 0 8px 25px rgba(147, 51, 234, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.4);
-    animation: storyBadgeShine 2.5s infinite alternate;
+    margin-bottom: 26px;
+    box-shadow: 0 10px 30px rgba(126, 34, 206, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    -webkit-font-smoothing: antialiased;
+    animation: storyBadgeShimmer 3s ease-in-out infinite alternate;
+}
+
+.story-intro-badge span {
+    display: inline-block;
+    animation: storyIconBounce 2s ease-in-out infinite;
+}
+
+@keyframes storyBadgeShimmer {
+    0% { box-shadow: 0 10px 30px rgba(126, 34, 206, 0.4); transform: scale(1); }
+    50% { box-shadow: 0 14px 40px rgba(236, 72, 153, 0.55); transform: scale(1.03); }
+    100% { box-shadow: 0 10px 30px rgba(126, 34, 206, 0.4); transform: scale(1); }
+}
+
+@keyframes storyIconBounce {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-4px) rotate(-8deg); }
 }
 
 .story-intro-divider {
-    width: 220px;
-    height: 4px;
-    border-radius: 4px;
+    width: 240px;
+    height: 5px;
+    border-radius: 6px;
     background: linear-gradient(90deg, transparent, #a855f7, #ec4899, #fbbf24, transparent);
-    margin: 18px 0 26px 0;
+    margin: 16px 0 28px 0;
     box-shadow: 0 0 20px rgba(168, 85, 247, 0.6);
+    position: relative;
+    overflow: hidden;
+}
+
+.story-intro-divider::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.95), transparent);
+    animation: storyLineSweep 2.2s ease-in-out infinite;
+}
+
+@keyframes storyLineSweep {
+    0% { left: -100%; }
+    100% { left: 100%; }
 }
 
 .story-intro-title {
     font-family: 'Be Vietnam Pro', sans-serif;
-    font-size: clamp(1.75rem, 4vw, 3.2rem);
+    font-size: clamp(1.8rem, 4.2vw, 3.2rem);
     font-weight: 900;
-    line-height: 1.3;
-    background: linear-gradient(135deg, #581c87 0%, #7e22ce 50%, #9333ea 100%);
-    background-size: 200% auto;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    filter: drop-shadow(0 2px 10px rgba(126, 34, 206, 0.2));
-    max-width: 900px;
+    line-height: 1.35;
+    color: #2e1065 !important;
+    max-width: 950px;
     margin: 0 auto;
-    animation: storyTitleSparkle 1.2s ease-out forwards;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+}
+
+.story-intro-top-heading {
+    display: block;
+    font-size: 0.85em;
+    font-weight: 900;
+    color: #3b0764 !important;
+    margin-bottom: 10px;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
 }
 
 .story-intro-highlight {
-    display: inline-block;
-    padding-top: 8px;
-    padding-bottom: 4px;
+    display: block;
+    padding-top: 10px;
+    padding-bottom: 8px;
     margin-top: -4px;
-    line-height: 1.35;
-    background: linear-gradient(135deg, #7e22ce 0%, #a855f7 30%, #ec4899 60%, #9333ea 100%);
+    line-height: 1.4;
+    color: #6b21a8 !important;
+    background: linear-gradient(135deg, #6b21a8 0%, #9333ea 40%, #ec4899 75%, #7e22ce 100%);
     background-size: 200% auto;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    filter: drop-shadow(0 4px 15px rgba(168, 85, 247, 0.3));
-    animation: storyTextGlow 3s linear infinite;
+    font-weight: 900;
+    overflow: visible;
+    letter-spacing: -0.5px;
+    animation: storyTitleGlow 4s ease-in-out infinite alternate;
+}
+
+@keyframes storyTitleGlow {
+    0% { filter: drop-shadow(0 0 0 transparent); }
+    50% { filter: drop-shadow(0 4px 20px rgba(168, 85, 247, 0.35)); }
+    100% { filter: drop-shadow(0 0 0 transparent); }
 }
 
 .story-intro-subtitle {
-    font-size: clamp(1rem, 2vw, 1.25rem);
-    color: #6b21a8;
-    margin-top: 20px;
+    font-size: clamp(1.05rem, 2vw, 1.3rem);
+    color: #4c1d95 !important;
+    margin-top: 24px;
     font-weight: 700;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.3px;
+    line-height: 1.5;
+    max-width: 860px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 /* 4. Story Map Container (NO DARK OVERLAY!) */
@@ -433,11 +533,11 @@
 /* 8. Floating Glass Cards UI (Bright Clean White) */
 .story-card-container {
     position: absolute;
-    right: 30px;
-    top: 105px;
-    bottom: 35px;
+    right: 24px;
+    top: 90px;
+    bottom: 24px;
     z-index: 1000;
-    width: 440px;
+    width: 480px;
     pointer-events: none;
     display: flex;
     align-items: center;
@@ -446,14 +546,14 @@
 
 .story-glass-card {
     width: 100%;
-    max-height: calc(100vh - 150px);
-    background: rgba(255, 255, 255, 0.96);
+    max-height: calc(100vh - 120px);
+    background: rgba(255, 255, 255, 0.97);
     backdrop-filter: blur(28px);
     -webkit-backdrop-filter: blur(28px);
     border: 1px solid rgba(99, 102, 241, 0.35);
-    border-radius: 28px;
-    overflow-y: auto;
-    padding: 26px;
+    border-radius: 26px;
+    overflow: hidden;
+    padding: 20px 22px;
     box-shadow: 0 35px 80px rgba(99, 102, 241, 0.3);
     pointer-events: auto;
     opacity: 0;
@@ -469,11 +569,11 @@
 .story-card-image-wrap {
     position: relative;
     width: 100%;
-    height: 200px;
-    border-radius: 20px;
+    height: 165px;
+    border-radius: 18px;
     overflow: hidden;
-    margin-bottom: 20px;
-    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+    margin-bottom: 14px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
     border: 1px solid rgba(99, 102, 241, 0.2);
 }
 
@@ -490,15 +590,15 @@
 
 .story-card-badge {
     position: absolute;
-    top: 14px;
-    left: 14px;
+    top: 12px;
+    left: 12px;
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(10px);
     border: 1px solid rgba(99, 102, 241, 0.4);
     color: #4f46e5;
     font-size: 0.78rem;
     font-weight: 800;
-    padding: 6px 14px;
+    padding: 5px 13px;
     border-radius: 24px;
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
 }
@@ -512,42 +612,54 @@
 
 .story-card-title {
     font-family: 'Be Vietnam Pro', sans-serif;
-    font-size: 1.45rem;
+    font-size: 1.22rem;
     font-weight: 900;
     color: #6b21a8;
-    margin: 0 0 10px 0;
-    line-height: 1.3;
+    background: linear-gradient(135deg, #581c87 0%, #7e22ce 60%, #9333ea 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    padding-top: 5px;
+    padding-bottom: 3px;
+    margin: -4px 0 4px 0;
+    line-height: 1.32;
+    white-space: normal;
+    text-transform: uppercase;
+    letter-spacing: -0.2px;
+    overflow: visible;
+    text-align: center;
 }
 
 .story-card-address {
-    font-size: 0.88rem;
+    font-size: 0.85rem;
     color: #475569;
-    margin-bottom: 18px;
+    margin-bottom: 14px;
     display: flex;
-    align-items: flex-start;
+    align-items: center;
+    justify-content: center;
     gap: 6px;
-    line-height: 1.45;
+    line-height: 1.4;
     font-weight: 600;
+    text-align: center;
 }
 
 .story-stats-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 14px;
-    margin-bottom: 20px;
+    gap: 12px;
+    margin-bottom: 14px;
 }
 
 .story-stat-box {
     background: linear-gradient(135deg, #f8fafc, #eef2ff);
     border: 1px solid #c7d2fe;
-    border-radius: 16px;
-    padding: 14px 16px;
+    border-radius: 14px;
+    padding: 10px 12px;
     text-align: center;
 }
 
 .story-stat-val {
     font-family: 'Be Vietnam Pro', sans-serif;
-    font-size: 1.55rem;
+    font-size: 1.4rem;
     font-weight: 900;
     background: linear-gradient(135deg, #3730a3, #6366f1);
     -webkit-background-clip: text;
@@ -555,32 +667,32 @@
 }
 
 .story-stat-lbl {
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     color: #475569;
     font-weight: 800;
     text-transform: uppercase;
-    margin-top: 4px;
+    margin-top: 2px;
 }
 
 /* Ban Giám Hiệu Trường Mới Section */
 .story-board-section {
-    margin-bottom: 22px;
+    margin-bottom: 14px;
     background: linear-gradient(135deg, rgba(243, 232, 255, 0.75), rgba(252, 231, 243, 0.75));
     border: 1.5px solid rgba(168, 85, 247, 0.3);
-    border-radius: 22px;
-    padding: 18px 20px;
+    border-radius: 18px;
+    padding: 14px 16px;
     box-shadow: 0 10px 30px rgba(147, 51, 234, 0.15);
 }
 
 .story-board-title {
-    font-size: 0.82rem;
+    font-size: 0.8rem;
     font-weight: 900;
     background: linear-gradient(135deg, #7e22ce 0%, #ec4899 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     letter-spacing: 1.5px;
     text-transform: uppercase;
-    margin-bottom: 12px;
+    margin-bottom: 10px;
     display: flex;
     align-items: center;
     gap: 8px;
@@ -597,30 +709,36 @@
     align-items: center;
     justify-content: space-between;
     font-size: 0.88rem;
-    padding: 8px 14px;
-    background: rgba(255, 255, 255, 0.9);
-    border-radius: 14px;
+    padding: 7px 14px;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 12px;
     border: 1px solid rgba(168, 85, 247, 0.2);
+    gap: 12px;
 }
 
 .story-board-role {
     color: #7e22ce;
     font-weight: 700;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .story-board-name {
     color: #581c87;
     font-weight: 900;
+    white-space: nowrap;
+    text-align: right;
+    flex-shrink: 0;
 }
 
 .story-info-rows {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 10px;
     background: #f1f5f9;
-    border-radius: 16px;
-    padding: 14px 18px;
-    margin-bottom: 22px;
+    border-radius: 14px;
+    padding: 12px 16px;
+    margin-bottom: 14px;
     border: 1px solid #e2e8f0;
 }
 
@@ -628,6 +746,7 @@
     display: flex;
     justify-content: space-between;
     font-size: 0.88rem;
+    white-space: nowrap;
 }
 
 .story-info-row span:first-child {
@@ -645,16 +764,16 @@
     background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
     color: #ffffff;
     border: none;
-    padding: 16px 24px;
-    border-radius: 16px;
-    font-size: 1rem;
+    padding: 13px 20px;
+    border-radius: 14px;
+    font-size: 0.92rem;
     font-weight: 900;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 10px;
-    box-shadow: 0 12px 30px rgba(79, 70, 229, 0.4);
+    gap: 8px;
+    box-shadow: 0 10px 25px rgba(79, 70, 229, 0.35);
     transition: all 0.3s ease;
 }
 
@@ -738,26 +857,28 @@
     }
 }
 
-/* 10. Merger Phase 5 Flash Announcement Overlay (Royal Purple & Magenta Gold Silk) */
+/* 10. Merger Phase 5 Flash Announcement Overlay (Royal Purple & Gold Glassmorphism) */
 .story-announcement-card {
     position: fixed;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%) scale(0.85);
     z-index: 10005;
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(36px);
-    -webkit-backdrop-filter: blur(36px);
-    border: 2.5px solid transparent;
     background:
-        linear-gradient(rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0.96)) padding-box,
-        linear-gradient(135deg, #9333ea, #ec4899, #fbbf24) border-box;
-    border-radius: 36px;
-    padding: 44px 54px;
+        radial-gradient(circle at 50% 0%, rgba(217, 70, 239, 0.12) 0%, transparent 70%),
+        radial-gradient(circle at 50% 100%, rgba(251, 191, 36, 0.08) 0%, transparent 70%),
+        linear-gradient(rgba(255, 255, 255, 0.98), rgba(255, 255, 255, 0.98)) padding-box,
+        linear-gradient(135deg, #a855f7, #ec4899, #fbbf24) border-box;
+    backdrop-filter: blur(32px);
+    -webkit-backdrop-filter: blur(32px);
+    border: 2.5px solid transparent;
+    border-radius: 28px;
+    padding: 24px 42px;
     text-align: center;
-    max-width: 560px;
-    width: 90%;
-    box-shadow: 0 40px 120px rgba(147, 51, 234, 0.4), 0 20px 50px rgba(236, 72, 153, 0.25);
+    width: max-content;
+    min-width: 420px;
+    max-width: 88vw;
+    box-shadow: 0 30px 90px rgba(147, 51, 234, 0.35), 0 15px 40px rgba(236, 72, 153, 0.2);
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
@@ -771,59 +892,64 @@
 }
 
 .story-announcement-icon {
-    width: 72px;
-    height: 72px;
+    width: 52px;
+    height: 52px;
     border-radius: 50%;
     background: linear-gradient(135deg, #9333ea, #ec4899);
-    box-shadow: 0 10px 30px rgba(147, 51, 234, 0.4);
+    box-shadow: 0 8px 22px rgba(147, 51, 234, 0.35);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 2.2rem;
+    font-size: 1.6rem;
     color: #ffffff;
-    margin: 0 auto 20px auto;
+    margin: 0 auto 10px auto;
     animation: storyBounceSparkle 1.5s infinite alternate;
 }
 
 .story-announcement-date {
     display: inline-block;
-    padding: 6px 20px;
+    padding: 4px 16px;
     border-radius: 20px;
-    background: linear-gradient(135deg, rgba(147, 51, 234, 0.12), rgba(236, 72, 153, 0.12));
-    border: 1px solid rgba(147, 51, 234, 0.25);
+    background: linear-gradient(135deg, rgba(147, 51, 234, 0.1), rgba(236, 72, 153, 0.1));
+    border: 1px solid rgba(147, 51, 234, 0.2);
     color: #9333ea;
-    font-size: 0.82rem;
+    font-size: 0.78rem;
     font-weight: 900;
-    letter-spacing: 2.5px;
+    letter-spacing: 2px;
     text-transform: uppercase;
-    margin-bottom: 14px;
+    margin-bottom: 8px;
 }
 
 .story-announcement-title {
     font-family: 'Be Vietnam Pro', sans-serif;
-    font-size: 1.45rem;
+    font-size: 1.25rem;
     font-weight: 900;
-    color: #6b21a8;
+    color: #581c87;
     letter-spacing: 1px;
-    margin-bottom: 12px;
+    margin-bottom: 6px;
     text-transform: uppercase;
+    white-space: nowrap;
 }
 
 .story-announcement-school-name {
     font-family: 'Be Vietnam Pro', sans-serif;
-    font-size: clamp(1.8rem, 4vw, 2.5rem);
+    font-size: clamp(1.6rem, 3.6vw, 2.5rem);
     font-weight: 900;
     display: inline-block;
     padding-top: 8px;
-    padding-bottom: 4px;
-    line-height: 1.35;
-    background: linear-gradient(135deg, #7e22ce 0%, #a855f7 40%, #ec4899 100%);
+    padding-bottom: 6px;
+    margin-top: 0;
+    line-height: 1.22;
+    background: linear-gradient(135deg, #6b21a8 0%, #9333ea 35%, #ec4899 75%, #f59e0b 100%);
     background-size: 200% auto;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    filter: drop-shadow(0 4px 15px rgba(168, 85, 247, 0.35));
+    filter: drop-shadow(0 3px 12px rgba(168, 85, 247, 0.3));
     animation: storyTextGlow 3s linear infinite;
     margin: 0;
+    white-space: normal;
+    text-align: center;
+    overflow: visible;
 }
 
 /* 10.5 Stage 7 Celebration Fireworks Banner */
@@ -1005,6 +1131,40 @@
     animation: storyMarkerPulseMerged 1.6s infinite ease-out 0.5s;
 }
 
+.story-marker-icon.merged .story-marker-pulse.pulse-ring-3 {
+    position: absolute;
+    top: -48px;
+    left: -48px;
+    right: -48px;
+    bottom: -48px;
+    border-radius: 50%;
+    border: 2.5px dashed #fbbf24;
+    animation: storyMarkerPulseMerged 2.2s infinite ease-out 1s;
+}
+
+.story-marker-crown {
+    position: absolute;
+    top: -12px;
+    right: -8px;
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(135deg, #f59e0b, #fbbf24);
+    border: 2px solid #ffffff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    box-shadow: 0 6px 20px rgba(245, 158, 11, 0.7);
+    z-index: 10;
+    animation: storyCrownFloat 2.2s ease-in-out infinite alternate;
+}
+
+@keyframes storyCrownFloat {
+    0% { transform: translateY(0) scale(1); }
+    100% { transform: translateY(-6px) scale(1.1); }
+}
+
 /* Tooltip custom styling */
 .story-tooltip-custom {
     background: rgba(255, 255, 255, 0.95) !important;
@@ -1020,30 +1180,48 @@
 }
 
 .story-tooltip-custom.story-tooltip-merged {
-    background: rgba(255, 255, 255, 0.96) !important;
+    background: rgba(255, 255, 255, 0.98) !important;
     border: 2.5px solid #a855f7 !important;
-    box-shadow: 0 14px 45px rgba(168, 85, 247, 0.4), 0 0 25px rgba(236, 72, 153, 0.3) !important;
+    box-shadow: 0 16px 50px rgba(168, 85, 247, 0.45), 0 0 30px rgba(236, 72, 153, 0.35) !important;
     animation: storyTooltipGlow 2.5s ease-in-out infinite alternate !important;
-    padding: 8px 18px !important;
-    border-radius: 16px !important;
+    padding: 14px 28px !important;
+    border-radius: 22px !important;
     text-align: center !important;
+}
+
+.story-tooltip-custom.story-tooltip-merged.hero-tooltip {
+    border: 3px solid #9333ea !important;
+    box-shadow: 0 20px 60px rgba(147, 51, 234, 0.5), 0 0 40px rgba(251, 191, 36, 0.4) !important;
+}
+
+.story-hero-star {
+    font-size: 0.95rem !important;
+    font-weight: 900 !important;
+    letter-spacing: 1.8px !important;
+    color: #d97706 !important;
+    text-transform: uppercase !important;
+    margin-bottom: 5px !important;
+    white-space: nowrap !important;
 }
 
 .story-tooltip-custom.story-tooltip-merged b {
     color: #7e22ce !important;
-    font-size: 0.98rem !important;
+    font-size: 1.35rem !important;
     display: block !important;
-    margin-bottom: 2px !important;
-    line-height: 1.2 !important;
+    margin-bottom: 4px !important;
+    line-height: 1.45 !important;
+    padding-top: 4px !important;
+    white-space: nowrap !important;
+    overflow: visible !important;
 }
 
 .story-tooltip-custom.story-tooltip-merged .story-tooltip-sublabel {
     color: #9333ea !important;
-    font-size: 0.82rem !important;
+    font-size: 1.05rem !important;
     font-weight: 800 !important;
     display: block !important;
-    margin-top: 1px !important;
-    line-height: 1.2 !important;
+    margin-top: 2px !important;
+    line-height: 1.25 !important;
 }
 
 .story-tooltip-custom.story-tooltip-comp {
@@ -1074,6 +1252,74 @@
 
 .story-tooltip-custom::before {
     border-top-color: rgba(255, 255, 255, 0.95) !important;
+}
+
+/* Standalone / Keep-Scale School Prominent Marker & Tooltip */
+.story-tooltip-custom.story-tooltip-standalone {
+    background: rgba(255, 255, 255, 0.98) !important;
+    border: 3px solid #f59e0b !important;
+    box-shadow: 0 20px 60px rgba(245, 158, 11, 0.5), 0 0 35px rgba(168, 85, 247, 0.4) !important;
+    padding: 14px 28px !important;
+    border-radius: 22px !important;
+    text-align: center !important;
+    animation: storyTooltipGlow 2.5s ease-in-out infinite alternate !important;
+}
+
+.story-tooltip-custom.story-tooltip-standalone b {
+    color: #7e22ce !important;
+    font-size: 1.35rem !important;
+    font-weight: 900 !important;
+    display: block !important;
+    margin-bottom: 4px !important;
+    line-height: 1.35 !important;
+    letter-spacing: -0.2px !important;
+    white-space: nowrap !important;
+}
+
+.story-tooltip-custom.story-tooltip-standalone .story-tooltip-sublabel {
+    color: #d97706 !important;
+    font-size: 1.05rem !important;
+    font-weight: 800 !important;
+    display: block !important;
+    margin-top: 3px !important;
+    line-height: 1.3 !important;
+    white-space: nowrap !important;
+}
+
+.story-marker-icon.standalone-marker {
+    width: 76px !important;
+    height: 76px !important;
+    background: linear-gradient(135deg, #f59e0b, #ec4899, #8b5cf6) !important;
+    border: 3.5px solid #ffffff !important;
+    box-shadow: 0 14px 45px rgba(245, 158, 11, 0.65), 0 0 35px rgba(236, 72, 153, 0.5) !important;
+    font-size: 2.2rem !important;
+}
+
+.story-tooltip-custom.story-tooltip-shield {
+    background: rgba(255, 255, 255, 0.98) !important;
+    border: 2.5px solid #10b981 !important;
+    box-shadow: 0 14px 40px rgba(16, 185, 129, 0.35), 0 0 20px rgba(52, 211, 153, 0.25) !important;
+    padding: 10px 20px !important;
+    border-radius: 18px !important;
+    text-align: center !important;
+}
+
+.story-tooltip-custom.story-tooltip-shield b {
+    color: #047857 !important;
+    font-size: 1.05rem !important;
+    font-weight: 800 !important;
+    display: block !important;
+    margin-bottom: 3px !important;
+    line-height: 1.25 !important;
+}
+
+.story-tooltip-custom.story-tooltip-shield .story-tooltip-sublabel {
+    color: #7e22ce !important;
+    font-size: 0.9rem !important;
+    font-weight: 800 !important;
+    display: block !important;
+    margin-top: 2px !important;
+    line-height: 1.2 !important;
 }
 
 /* 13. Keyframe Animations */

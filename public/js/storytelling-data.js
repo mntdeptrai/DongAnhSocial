@@ -191,7 +191,7 @@ window.STORYTELLING_SCHOOLS = {
                     "name": "Cô Hoàng Thị Quỳnh Hoa"
                 },
                 {
-                    "role": "HT MN Đông Hội:",
+                    "role": "PHT MN Đông Hội:",
                     "name": "Cô Trương Thị Thúy Hòa"
                 },
                 {
@@ -199,7 +199,7 @@ window.STORYTELLING_SCHOOLS = {
                     "name": "Cô Nguyễn Thị Lan Phương"
                 },
                 {
-                    "role": "HT MN Sao Mai:",
+                    "role": "PHT MN Sao Mai:",
                     "name": "Cô Nguyễn Thị Kim Quế"
                 }
             ],
@@ -265,7 +265,7 @@ window.STORYTELLING_SCHOOLS = {
                     "name": "Cô Trần Thị Yên Giang"
                 },
                 {
-                    "role": "HT MN Uy Nỗ:",
+                    "role": "PHT MN Uy Nỗ:",
                     "name": "Cô Ngô Thị Hạnh"
                 },
                 {
@@ -323,7 +323,7 @@ window.STORYTELLING_SCHOOLS = {
                     "name": "Cô Trương Thị Nga"
                 },
                 {
-                    "role": "HT MN Xuân Canh:",
+                    "role": "PHT MN Xuân Canh:",
                     "name": "Cô Nguyễn Thị Hà"
                 },
                 {
@@ -431,7 +431,7 @@ window.STORYTELLING_SCHOOLS = {
                     "name": "Cô Nguyễn Thị Hạnh"
                 },
                 {
-                    "role": "HT TH Xuân Canh:",
+                    "role": "PHT TH Xuân Canh:",
                     "name": "Cô Lưu Thị Thu Hồng"
                 }
             ],
@@ -485,7 +485,7 @@ window.STORYTELLING_SCHOOLS = {
                     "name": "Cô Đỗ Thị Kim Loan"
                 },
                 {
-                    "role": "HT TH Việt Hùng 2:",
+                    "role": "PHT TH Việt Hùng 2:",
                     "name": "Cô Hữu Thị Như Quỳnh"
                 },
                 {
@@ -635,7 +635,7 @@ window.STORYTELLING_SCHOOLS = {
                     "name": "Cô Đỗ Thị Thanh Thủy"
                 },
                 {
-                    "role": "HT THCS A.Dương Vương:",
+                    "role": "PHT THCS A.Dương Vương:",
                     "name": "Thầy Ngô Văn Thắng"
                 },
                 {
@@ -686,15 +686,15 @@ window.STORYTELLING_SCHOOLS = {
             "name": "THCS Xuân Canh",
             "address": "Thôn Xuân Canh, Đông Anh, Hà Nội",
             "phone": "024 3883 0013",
-            "principal": "Thầy Nguyễn Đình Diềm",
+            "principal": "Thầy Nguyễn Đình Điềm",
             "board": [
                 {
                     "role": "HT THCS Đông Hội:",
-                    "name": "Thầy Nguyễn Đình Diềm"
+                    "name": "Thầy Nguyễn Đình Điềm"
                 },
                 {
                     "role": "HT THCS Xuân Canh:",
-                    "name": "Thầy Nguyễn Hữu Sính"
+                    "name": "Thầy Nguyễn Hữu Sướng"
                 },
                 {
                     "role": "HT THCS Uy Nỗ:",
@@ -751,7 +751,7 @@ window.STORYTELLING_SCHOOLS = {
                     "name": "Thầy Hoàng Ngọc Thắng"
                 },
                 {
-                    "role": "HT TH Đông Hội:",
+                    "role": "PHT TH Đông Hội:",
                     "name": "Cô Lê Thị Hạnh"
                 },
                 {
@@ -813,7 +813,7 @@ window.STORYTELLING_SCHOOLS = {
                     "name": "Cô Đỗ Thị Như Hoa"
                 },
                 {
-                    "role": "HT TH Cổ Loa:",
+                    "role": "PHT TH Cổ Loa:",
                     "name": "Cô Đào Thị Hòa"
                 }
             ],
@@ -880,9 +880,9 @@ window.STORYTELLING_SCHOOLS = {
             "ratio": "34.3 HS/lớp (Tiểu học & THCS)",
             "photo": "/js/picture/thcsdaoduytung.png",
             "qrCode": "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://donganh.hanoi.gov.vn/truong-lien-cap-dao-duy-tung",
-            "mapUrl": "",
-            "lat": 21.128767,
-            "lng": 105.855995
+            "mapUrl": "https://maps.app.goo.gl/Cw9pHCojcVXydk3y5",
+            "lat": 21.129444,
+            "lng": 105.857167
         },
         "components": [
             {
@@ -892,7 +892,7 @@ window.STORYTELLING_SCHOOLS = {
                 "phone": "024 3883 0161",
                 "classes": 31,
                 "students": 1016,
-                "mapUrl": "https://maps.app.goo.gl/9S2UT3cX1GdbzaFw5",
+                "mapUrl": "https://maps.app.goo.gl/kPXrcwaKSjAeNEzZ7",
                 "photo": "/js/picture/thdaoduytung.png",
                 "lat": 21.128767,
                 "lng": 105.855995
@@ -904,18 +904,18 @@ window.STORYTELLING_SCHOOLS = {
                 "phone": "024 3883 0162",
                 "classes": 19,
                 "students": 701,
-                "mapUrl": "https://maps.app.goo.gl/4qWteaJjoLLKxQ239",
+                "mapUrl": "https://maps.app.goo.gl/Cw9pHCojcVXydk3y5",
                 "photo": "/js/picture/thcsdaoduytung.png",
-                "lat": 21.128767,
-                "lng": 105.855995
+                "lat": 21.129444,
+                "lng": 105.857167
             }
         ],
-        "distanceText": "0 m",
+        "distanceText": "140 m",
         "durationText": "2 phút"
     },
     "truong-lien-cap-duc-tu": {
         "mergedSchool": {
-            "name": "TRƯỜNG TIỂU HỌC VÀ TRUNG HỌC CƠ SỞ DỤC TÚ",
+            "name": "TRƯỜNG TIỂU HỌC VÀ THCS DỤC TÚ",
             "address": "Thôn Dục Tú, Xã Đông Anh, Hà Nội",
             "phone": "024 3883 0017",
             "principal": "Cô Nguyễn Thị Thu Hằng",
@@ -925,7 +925,7 @@ window.STORYTELLING_SCHOOLS = {
                     "name": "Cô Nguyễn Thị Thu Hằng"
                 },
                 {
-                    "role": "HT THCS Dục Tú:",
+                    "role": "PHT THCS Dục Tú:",
                     "name": "Cô Trần Thị Giáng Hương"
                 },
                 {
@@ -973,7 +973,7 @@ window.STORYTELLING_SCHOOLS = {
     },
     "truong-lien-cap-uy-no": {
         "mergedSchool": {
-            "name": "TRƯỜNG TIỂU HỌC VÀ TRUNG HỌC CƠ SỞ UY NỖ",
+            "name": "TRƯỜNG TIỂU HỌC VÀ THCS UY NỖ",
             "address": " Đông Anh, Hà Nội",
             "phone": "024 3883 0018",
             "principal": "Thầy Nguyễn Quang Anh",
