@@ -11,18 +11,32 @@
         document.documentElement.setAttribute('data-theme', 'light');
     </script>
     
-    <!-- SEO Meta Tags -->
-    <title>@yield('title', 'Bản đồ số Đông Anh - Dong Anh Map')</title>
-    <meta name="description" content="@yield('meta_description', 'Bản đồ số Đông Anh - Số hóa toàn bộ trường học, bệnh viện, khách sạn, nhà hàng, quán ăn và đặc sản tại Đông Anh. Chỉ đường nhanh, thông tin chi tiết, liên kết Google Maps.')">
-    <meta name="keywords" content="bản đồ đông anh, trường học đông anh, bệnh viện đông anh, đặc sản đông anh, khách sạn đông anh, địa điểm đông anh">
+    <!-- Browser Search Engine SEO Indexing Directives (Google, Bing, Yahoo, Cốc Cốc) -->
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+    <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+    <meta name="bingbot" content="index, follow">
+    <meta name="author" content="Đông Anh Social">
+
+    <!-- SEO Meta Tags cho Browser Search Engine -->
+    <title>@yield('title', 'Khám phá Xã Đông Anh - Tra Cứu Địa Điểm, Trường Học, Ăn Uống, Y Tế, Chợ OCOP')</title>
+    <meta name="description" content="@yield('meta_description', 'Khám phá Xã Đông Anh - Tra cứu chính xác các trường học, bệnh viện, nhà hàng quán ăn, đặc sản OCOP, chợ truyền thống tại Xã Đông Anh, Hà Nội trên các công cụ tìm kiếm Google, Cốc Cốc, Bing.')">
+    <meta name="keywords" content="@yield('meta_keywords', 'Khám phá Đông Anh, Khám phá Xã Đông Anh, Trường học Xã Đông Anh, Mầm non Đông Anh, Tiểu học Đông Anh, Địa điểm ăn uống Đông Anh, Bệnh viện Đông Anh, Chợ Đông Anh, OCOP Đông Anh, Di sản Cổ Loa')">
     <link rel="canonical" href="@yield('canonical_url', request()->url())">
     
-    <!-- OpenGraph Social Tags -->
-    <meta property="og:site_name" content="Dong Anh Map">
-    <meta property="og:title" content="@yield('title', 'Bản đồ số Đông Anh - Dong Anh Map')">
-    <meta property="og:description" content="@yield('meta_description', 'Bản đồ số Đông Anh - Số hóa trường học, bệnh viện, khách sạn, nhà hàng và đặc sản.')">
+    <!-- OpenGraph Social & Search Engine Indexing Tags -->
+    <meta property="og:locale" content="vi_VN">
+    <meta property="og:site_name" content="Khám phá Đông Anh - Khám phá Xã Đông Anh">
+    <meta property="og:title" content="@yield('title', 'Khám phá Xã Đông Anh - Tra Cứu Địa Điểm, Trường Học, Ăn Uống, Y Tế, Chợ OCOP')">
+    <meta property="og:description" content="@yield('meta_description', 'Khám phá Xã Đông Anh - Tra cứu chính xác trường học, bệnh viện, nhà hàng quán ăn, đặc sản OCOP, chợ truyền thống tại Xã Đông Anh, Hà Nội.')">
+    <meta property="og:url" content="@yield('canonical_url', request()->url())">
     <meta property="og:image" content="@yield('og_image', 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=800&q=80')">
-    <meta property="og:type" content="website">
+    <meta property="og:type" content="@yield('og_type', 'website')">
+
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="@yield('title', 'Khám phá Xã Đông Anh')">
+    <meta name="twitter:description" content="@yield('meta_description', 'Khám phá trường học, ăn uống, y tế, chợ OCOP tại Xã Đông Anh.')">
+    <meta name="twitter:image" content="@yield('og_image', 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=800&q=80')">
     
     <!-- Leaflet.js Map Assets -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
@@ -187,7 +201,7 @@
     <header class="glass-nav">
         <div class="container nav-wrapper">
             <a href="/" class="logo">
-                <span>🗺️</span> DongAnh Map Discovery
+                <span>🗺️</span> DongAnh Discovery
             </a>
             
             <div class="nav-collapse main-nav-container" id="navCollapse">
@@ -206,6 +220,7 @@
                 </nav>
             
                 <div class="user-actions" style="display: flex; align-items: center; gap: 10px;">
+
                     @if(session()->has('user_id'))
                         @php
                             $pendingCount = \App\Models\Friendship::where('friend_id', session('user_id'))
@@ -438,6 +453,8 @@
                                     <div class="user-role">
                                         @if($effectiveRole === 'admin')
                                             🏛️ Quản trị viên Tổng
+                                        @elseif($effectiveRole === 'principal')
+                                            🏫 Hiệu trưởng Quản lý
                                         @elseif($effectiveRole === 'manager')
                                             🏛️ Ban Quản lý Chợ
                                         @elseif($effectiveRole === 'seller')
@@ -450,7 +467,11 @@
                                 
                                 @if($effectiveRole === 'admin' || $effectiveRole === 'manager')
                                     <a href="/admin/dashboard" class="dropdown-item" style="color: #0ea5e9; font-weight: 700; background: rgba(14, 165, 233, 0.06);">
-                                        <span>⚙️</span> Trang Quản Trị Chợ
+                                        <span>⚙️</span> Trang Quản Trị Hệ Thống
+                                    </a>
+                                @elseif($effectiveRole === 'principal')
+                                    <a href="/principal/schools" class="dropdown-item" style="color: #4f46e5; font-weight: 700; background: rgba(79, 70, 229, 0.06);">
+                                        <span>🏫</span> Kênh Quản Lý Trường Học
                                     </a>
                                 @elseif($effectiveRole === 'seller')
                                     <a href="/seller/dashboard" class="dropdown-item" style="color: #10b981; font-weight: 700; background: rgba(16, 185, 129, 0.06);">
@@ -501,14 +522,14 @@
                 <div>
                     <h3 class="logo" style="margin-bottom: 16px; font-size: 1.3rem;">📖 DongAnh Discovery</h3>
                     <p style="font-size: 0.85rem; line-height: 1.6; max-width: 480px;">
-                        Bản đồ số Đông Anh (DongAnh Discovery) là giải pháp công nghệ số hóa toàn bộ trường học, bệnh viện, cơ sở y tế, khách sạn, nhà nghỉ, nhà hàng, quán cafe và quảng bá các sản phẩm OCOP đặc sản truyền thống của xã Đông Anh, Hà Nội. Hỗ trợ chuyển đổi số và nâng tầm văn hóa du lịch địa phương.
+                        Khám phá Đông Anh (DongAnh Discovery) là giải pháp công nghệ số hóa toàn bộ trường học, bệnh viện, cơ sở y tế, khách sạn, nhà nghỉ, nhà hàng, quán cafe và quảng bá các sản phẩm OCOP đặc sản truyền thống của xã Đông Anh, Hà Nội. Hỗ trợ chuyển đổi số và nâng tầm văn hóa du lịch địa phương.
                     </p>
                 </div>
                 <div>
                     <h4 style="color: var(--text-main); margin-bottom: 16px; font-size: 1rem;">Liên kết nhanh</h4>
                     <ul style="list-style: none; display: flex; flex-direction: column; gap: 8px; font-size: 0.85rem;">
                         <li><a href="/" style="hover: color: var(--primary);">Trang chủ</a></li>
-                        <li><a href="/tim-kiem" style="hover: color: var(--primary);">Bản đồ số</a></li>
+                        <li><a href="/tim-kiem" style="hover: color: var(--primary);">Khám phá bản đồ</a></li>
                         <li><a href="#" onclick="openGuideModal(event)" style="hover: color: var(--primary);">Giới thiệu & Hướng dẫn</a></li>
                         <li><a href="/auth/login" style="hover: color: var(--primary);">Đăng nhập quản trị viên</a></li>
                     </ul>
@@ -525,7 +546,7 @@
                 </div>
             </div>
             <div style="border-top: 1px solid rgba(255,255,255,0.05); padding-top: 20px; text-align: center; font-size: 0.8rem; color: rgba(255,255,255,0.3);">
-                &copy; 2026 DongAnh Discovery (Bản đồ số Đông Anh). Tất cả quyền được bảo lưu. Phát triển bởi Phòng Văn hóa - Xã hội xã Đông Anh
+                &copy; 2026 DongAnh Discovery (Khám phá Đông Anh). Tất cả quyền được bảo lưu. Phát triển bởi Phòng Văn hóa - Xã hội xã Đông Anh
             </div>
         </div>
     </footer>
@@ -2061,7 +2082,57 @@
     <script src="{{ asset('js/storytelling-data.js') }}?v={{ time() }}"></script>
     <script src="{{ asset('js/storytelling-engine.js') }}?v={{ time() }}"></script>
 
+
+    <!-- Back to Top & Quick Controls Floating Widget -->
+    <div class="floating-controls-widget">
+        <button type="button" id="backToTopBtn" onclick="window.scrollTo({top: 0, behavior: 'smooth'})" title="Về đầu trang">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 15l-6-6-6 6"></path>
+            </svg>
+        </button>
+    </div>
+
+    <script>
+                                    <div class="cmd-result-content">
+                                        <div class="cmd-result-title">${item.name}</div>
+                                        <div class="cmd-result-sub">${item.address || 'Đông Anh, Hà Nội'}</div>
+                                    </div>
+                                    <span class="cmd-result-badge">${item.badge || 'Địa điểm'}</span>
+                                </a>
+                            `;
+                        });
+                        container.innerHTML = html;
+                    })
+                    .catch(() => {
+                        container.innerHTML = `
+                            <a href="/tim-kiem?cat=smart-education-map" class="cmd-result-item" onclick="closeCommandPalette()">
+                                <div class="cmd-result-icon">🏫</div>
+                                <div class="cmd-result-content">
+                                    <div class="cmd-result-title">Trường Học & Sáp Nhập Giáo Dục</div>
+                                    <div class="cmd-result-sub">Danh sách 18 trường mầm non, tiểu học, THCS công lập</div>
+                                </div>
+                                <span class="cmd-result-badge">Giáo Dục</span>
+                            </a>
+                        `;
+                    });
+            }, 120);
+        }
+
+        // Back to top scroll listener
+        window.addEventListener('scroll', () => {
+            const btn = document.getElementById('backToTopBtn');
+            if (btn) {
+                if (window.scrollY > 300) {
+                    btn.classList.add('visible');
+                } else {
+                    btn.classList.remove('visible');
+                }
+            }
+        });
+    </script>
+
     {{-- Laravel Echo + Reverb WebSocket client — chỉ load trên trang cần real-time --}}
     @stack('realtime-scripts')
 </body>
 </html>
+

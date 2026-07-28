@@ -311,11 +311,45 @@ class EateryApiService
         }
 
         if (isset($filters['q']) && $filters['q']) {
-            $keyword = $filters['q'];
-            $query->where(function($q) use ($keyword) {
-                $q->where('name', 'like', "%{$keyword}%")
-                  ->orWhere('description', 'like', "%{$keyword}%")
-                  ->orWhere('address', 'like', "%{$keyword}%");
+            $keyword = trim($filters['q']);
+            $unaccented = \App\Helpers\VietnameseSeoHelper::stripAccents($keyword);
+
+            $keywords = array_filter(array_unique([$keyword, $unaccented]));
+
+            // Mở rộng từ đồng nghĩa cho tìm kiếm Tiếng Việt
+            if (preg_match('/(mam non|mn)/i', $unaccented)) {
+                $keywords[] = 'mầm non';
+                $keywords[] = 'mn';
+            }
+            if (preg_match('/(tieu hoc|th)/i', $unaccented)) {
+                $keywords[] = 'tiểu học';
+                $keywords[] = 'th';
+            }
+            if (preg_match('/(benh vien|y te|phong kham)/i', $unaccented)) {
+                $keywords[] = 'bệnh viện';
+                $keywords[] = 'y tế';
+                $keywords[] = 'phòng khám';
+            }
+            if (preg_match('/(cho|nong san|ocop)/i', $unaccented)) {
+                $keywords[] = 'chợ';
+                $keywords[] = 'ocop';
+            }
+            if (preg_match('/(kham pha|di san|van hoa)/i', $unaccented)) {
+                $keywords[] = 'di sản';
+                $keywords[] = 'văn hóa';
+            }
+            if (preg_match('/(dong anh|donganh|xa dong anh)/i', $unaccented)) {
+                $keywords[] = 'Đông Anh';
+                $keywords[] = 'Xã Đông Anh';
+                $keywords[] = 'dong anh';
+            }
+
+            $query->where(function($q) use ($keywords) {
+                foreach ($keywords as $kw) {
+                    $q->orWhere('name', 'like', "%{$kw}%")
+                      ->orWhere('description', 'like', "%{$kw}%")
+                      ->orWhere('address', 'like', "%{$kw}%");
+                }
             });
         }
 

@@ -1,10 +1,12 @@
 @extends('layouts.app')
 
-<!-- Tối ưu hóa SEO: Tiêu đề động chính xác cho Smart Education (Trường học) -->
-@section('title', $eatery->name . ' - Trường học & Giáo dục thông minh tại ' . $eatery->commune->name . ', Đông Anh')
+<!-- Tối ưu hóa SEO Google: Tiêu đề động chính xác cho Smart Education (Trường học chuẩn hóa) -->
+@section('title', \App\Helpers\VietnameseSeoHelper::standardizeSchoolName($eatery->name) . ' - Trường học & Bản đồ Giáo dục thông minh tại ' . $eatery->commune->name . ', Xã Đông Anh')
 
-<!-- Tối ưu hóa SEO: Thẻ mô tả Meta tự sinh chân thực -->
-@section('meta_description', 'Thông tin tuyển sinh & chương trình đào tạo tại ' . $eatery->name . ', địa chỉ: ' . $eatery->address . ', ' . $eatery->commune->name . ', Đông Anh. Số điện thoại liên hệ: ' . $eatery->phone . '. Tra cứu chương trình học và bản đồ chỉ đường.')
+<!-- Tối ưu hóa SEO: Thẻ mô tả Meta giàu từ khóa tiếng Việt (Mầm non, Tiểu học, Sáp nhập) -->
+@section('meta_description', 'Thông tin tuyển sinh, quy mô sáp nhập & chương trình đào tạo tại ' . \App\Helpers\VietnameseSeoHelper::standardizeSchoolName($eatery->name) . ', địa chỉ: ' . $eatery->address . ', ' . $eatery->commune->name . ', Xã Đông Anh. Số điện thoại liên hệ: ' . ($eatery->phone ?: '024 3883 xxx') . '. Tra cứu bản đồ chỉ đường & sơ đồ điểm trường.')
+
+@section('meta_keywords', \App\Helpers\VietnameseSeoHelper::generateKeywords($eatery->name, 'smart-education-map', $eatery->commune->name ?? 'Xã Đông Anh'))
 
 @section('og_image', $eatery->image_path ?: 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=800&q=80')
 
@@ -303,8 +305,13 @@
             <h1 class="detail-title-main">
                 {{ $eatery->name }}
             </h1>
+            @php
+                $gmapSearchUrl = "https://www.google.com/maps/search/?api=1&query=" . urlencode($eatery->name . ' ' . $eatery->address);
+            @endphp
             <p class="detail-address-sub">
-                <span>📍</span> {{ $eatery->address }}
+                <a href="{{ $gmapSearchUrl }}" target="_blank" style="color: var(--primary, #0ea5e9); text-decoration: none; display: inline-flex; align-items: center; gap: 6px; font-weight: 600;" title="Mở đường đi trên Google Maps">
+                    <span>📍</span> {{ $eatery->address }} <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                </a>
             </p>
         </div>
         
@@ -861,15 +868,18 @@
                     ]
                 ];
 
-                $schoolSlugKey = \Illuminate\Support\Str::slug($eatery->slug ?: $eatery->name);
-                $mergedList = $mergedSchoolsData[$schoolSlugKey] ?? null;
+                $mergedList = $eatery->merged_components;
+                if (empty($mergedList)) {
+                    $schoolSlugKey = \Illuminate\Support\Str::slug($eatery->slug ?: $eatery->name);
+                    $mergedList = $mergedSchoolsData[$schoolSlugKey] ?? null;
 
-                if (!$mergedList) {
-                    foreach ($mergedSchoolsData as $key => $components) {
-                        $cleanKey = str_replace(['truong-', 'mam-non-', 'tieu-hoc-', 'thcs-', 'thpt-'], '', $key);
-                        if (str_contains($schoolSlugKey, $cleanKey) || str_contains($cleanKey, str_replace(['truong-', 'mam-non-', 'tieu-hoc-', 'thcs-', 'thpt-'], '', $schoolSlugKey))) {
-                            $mergedList = $components;
-                            break;
+                    if (!$mergedList) {
+                        foreach ($mergedSchoolsData as $key => $components) {
+                            $cleanKey = str_replace(['truong-', 'mam-non-', 'tieu-hoc-', 'thcs-', 'thpt-'], '', $key);
+                            if (str_contains($schoolSlugKey, $cleanKey) || str_contains($cleanKey, str_replace(['truong-', 'mam-non-', 'tieu-hoc-', 'thcs-', 'thpt-'], '', $schoolSlugKey))) {
+                                $mergedList = $components;
+                                break;
+                            }
                         }
                     }
                 }
@@ -3356,4 +3366,11 @@ function runDetailFireworks() {
     animate();
 }
 </script>
+
+@if(!empty($eatery->storytelling_data))
+<script>
+    window.STORYTELLING_SCHOOLS = window.STORYTELLING_SCHOOLS || {};
+    window.STORYTELLING_SCHOOLS['{{ $eatery->slug }}'] = {!! json_encode($eatery->storytelling_data, JSON_UNESCAPED_UNICODE) !!};
+</script>
+@endif
 @endsection

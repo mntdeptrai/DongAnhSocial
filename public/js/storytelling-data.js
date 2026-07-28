@@ -9,7 +9,7 @@ window.STORYTELLING_SCHOOLS = {
         mergedSchool: {
             name: 'Mầm non Phúc Lộc',
             address: 'Thôn Phúc Lộc, Xã Đông Anh, Hà Nội',
-            phone: '024 3883 0001',
+            phone: '',
             principal: 'Cô Đỗ Thị Hậu',
             board: [
                 { role: 'HT MN Phúc Lộc:', name: 'Cô Đỗ Thị Hậu' },
@@ -29,7 +29,7 @@ window.STORYTELLING_SCHOOLS = {
                 name: 'Trường Mầm non Phúc Lộc (Cũ)',
                 address: 'Khu A, Thôn Phúc Lộc, Xã Đông Anh',
                 principal: 'Cô Nguyễn Thị Hoa',
-                phone: '024 3883 1111',
+                phone: '',
                 classes: 16,
                 students: 405,
                 lat: 21.1662,
@@ -40,7 +40,7 @@ window.STORYTELLING_SCHOOLS = {
                 name: 'Trường Mầm non Sao Mai',
                 address: 'Khu B, Thôn Phúc Lộc, Xã Đông Anh',
                 principal: 'Cô Trần Thị Mai',
-                phone: '024 3883 2222',
+                phone: '',
                 classes: 14,
                 students: 354,
                 lat: 21.1710,
@@ -57,7 +57,7 @@ window.STORYTELLING_SCHOOLS = {
         mergedSchool: {
             name: 'Mầm non Cổ Loa',
             address: 'Thôn Chùa, Xã Cổ Loa, Đông Anh, Hà Nội',
-            phone: '024 3883 0002',
+            phone: '',
             principal: 'Cô Nguyễn Thị Nhàn',
             board: [
                 { role: 'HT MN Cổ Loa:', name: 'Cô Nguyễn Thị Nhàn' },
@@ -77,7 +77,7 @@ window.STORYTELLING_SCHOOLS = {
                 name: 'Trường Mầm non Cổ Loa (Đơn vị 1)',
                 address: 'Xóm Chùa, Xã Cổ Loa, Đông Anh',
                 principal: 'Cô Lê Thị Nga',
-                phone: '024 3883 0002',
+                phone: '',
                 classes: 18,
                 students: 564,
                 lat: 21.1380,
@@ -88,7 +88,7 @@ window.STORYTELLING_SCHOOLS = {
                 name: 'Trường Mầm non Thành Loa',
                 address: 'Xóm Chợ, Xã Cổ Loa, Đông Anh',
                 principal: 'Cô Phạm Thị Yến',
-                phone: '024 3883 0022',
+                phone: '',
                 classes: 18,
                 students: 383,
                 lat: 21.1415,
@@ -105,7 +105,7 @@ window.STORYTELLING_SCHOOLS = {
         mergedSchool: {
             name: 'Mầm non Mai Lâm',
             address: 'Xã Mai Lâm, Đông Anh, Hà Nội',
-            phone: '024 3883 0003',
+            phone: '',
             principal: 'Cô Nguyễn Thị Vân Anh',
             board: [
                 { role: 'HT MN Thái Bình:', name: 'Cô Nguyễn Thị Vân Anh' },
@@ -125,7 +125,7 @@ window.STORYTELLING_SCHOOLS = {
                 name: 'Trường Mầm non Thái Bình',
                 address: 'Thôn Thái Bình, Xã Mai Lâm, Đông Anh',
                 principal: 'Cô Đỗ Thị Kim',
-                phone: '024 3883 0031',
+                phone: '',
                 classes: 18,
                 students: 521,
                 lat: 21.1060,
@@ -136,7 +136,7 @@ window.STORYTELLING_SCHOOLS = {
                 name: 'Trường Mầm non Mai Lâm (Cũ)',
                 address: 'Thôn Mai Hiên, Xã Mai Lâm, Đông Anh',
                 principal: 'Cô Vũ Thị Thu',
-                phone: '024 3883 0032',
+                phone: '',
                 classes: 14,
                 students: 345,
                 lat: 21.1110,
@@ -153,7 +153,7 @@ window.STORYTELLING_SCHOOLS = {
         mergedSchool: {
             name: 'Mầm non Việt Hùng',
             address: 'Thôn Gia Lương, Xã Việt Hùng, Đông Anh, Hà Nội',
-            phone: '024 3883 0004',
+            phone: '',
             principal: 'Cô Hoàng Thị Quỳnh Hoa',
             board: [
                 { role: 'HT MN Dục Tú:', name: 'Cô Hoàng Thị Quỳnh Hoa' },
@@ -173,7 +173,7 @@ window.STORYTELLING_SCHOOLS = {
                 name: 'Trường Mầm non Dục Nội',
                 address: 'Thôn Dục Nội, Xã Việt Hùng, Đông Anh',
                 principal: 'Cô Hoàng Thị Lan',
-                phone: '024 3883 0041',
+                phone: '',
                 classes: 17,
                 students: 525,
                 lat: 21.1460,
@@ -184,7 +184,7 @@ window.STORYTELLING_SCHOOLS = {
                 name: 'Trường Mầm non Việt Hùng (Cũ)',
                 address: 'Thôn Gia Lương, Xã Việt Hùng, Đông Anh',
                 principal: 'Cô Bùi Thị Tâm',
-                phone: '024 3883 0042',
+                phone: '',
                 classes: 12,
                 students: 268,
                 lat: 21.1500,
@@ -195,7 +195,7 @@ window.STORYTELLING_SCHOOLS = {
                 name: 'Trường Mầm non Dục Tú ',
                 address: 'Giáp Ranh Dục Tú, Đông Anh',
                 principal: 'Cô Ngô Thị Liên',
-                phone: '024 3883 0043',
+                phone: '',
                 classes: 26,
                 students: 647,
                 lat: 21.1440,
@@ -212,7 +212,7 @@ window.STORYTELLING_SCHOOLS = {
         mergedSchool: {
             name: 'Mầm non Uy Nỗ',
             address: 'Xã Uy Nỗ, Đông Anh, Hà Nội',
-            phone: '024 3883 0005',
+            phone: '',
             principal: 'Cô Trần Thị Yên Giang',
             board: [
                 { role: 'HT MN Uy Nỗ:', name: 'Cô Trần Thị Yên Giang' },
@@ -232,7 +232,7 @@ window.STORYTELLING_SCHOOLS = {
                 name: 'Trường Mầm non Uy Nỗ A',
                 address: 'Khu A, Xã Uy Nỗ, Đông Anh',
                 principal: 'Cô Trịnh Thị Oanh',
-                phone: '024 3883 0051',
+                phone: '',
                 classes: 15,
                 students: 420,
                 lat: 21.1375,
@@ -243,7 +243,7 @@ window.STORYTELLING_SCHOOLS = {
                 name: 'Trường Mầm non Uy Nỗ (Cũ)',
                 address: 'Khu B, Xã Uy Nỗ, Đông Anh',
                 principal: 'Cô Đinh Thị Hồng',
-                phone: '024 3883 0052',
+                phone: '',
                 classes: 18,
                 students: 490,
                 lat: 21.1405,
@@ -260,7 +260,7 @@ window.STORYTELLING_SCHOOLS = {
         mergedSchool: {
             name: 'Mầm non Đông Hội',
             address: 'Thôn Đông Hói, Xã Đông Hội, Đông Anh, Hà Nội',
-            phone: '024 3883 0006',
+            phone: '',
             principal: 'Cô Trương Thị Nga',
             board: [
                 { role: 'HT MN Việt Hùng:', name: 'Cô Trương Thị Nga' },
@@ -280,7 +280,7 @@ window.STORYTELLING_SCHOOLS = {
                 name: 'Trường Mầm non Đông Hội (Cũ)',
                 address: 'Thôn Lại Đà, Xã Đông Hội, Đông Anh',
                 principal: 'Cô Nguyễn Thị Tuyết',
-                phone: '024 3883 0061',
+                phone: '',
                 classes: 28,
                 students: 875,
                 lat: 21.0930,
@@ -291,7 +291,7 @@ window.STORYTELLING_SCHOOLS = {
                 name: 'Trường Mầm non Xuân Canh',
                 address: 'Thôn Xuân Canh, Xã Xuân Canh, Đông Anh',
                 principal: 'Cô Lý Thị Phượng',
-                phone: '024 3883 0062',
+                phone: '',
                 classes: 20,
                 students: 589,
                 lat: 21.0970,
@@ -308,7 +308,7 @@ window.STORYTELLING_SCHOOLS = {
         mergedSchool: {
             name: 'Tiểu học An Dương Vương',
             address: 'Thôn Gia Lương, Xã Việt Hùng, Đông Anh, Hà Nội',
-            phone: '024 3883 0007',
+            phone: '',
             principal: 'Cô Dương Thị Lan Phương',
             board: [
                 { role: 'HT TH An Dương Vương:', name: 'Cô Dương Thị Lan Phương' },
@@ -328,7 +328,7 @@ window.STORYTELLING_SCHOOLS = {
                 name: 'Trường Tiểu học An Dương Vương (Giữ nguyên quy mô)',
                 address: 'Thôn Gia Lương, Xã Việt Hùng, Đông Anh',
                 principal: 'Thầy Phạm Văn Hùng',
-                phone: '024 3883 0007',
+                phone: '',
                 classes: 28,
                 students: 1009,
                 lat: 21.1420,
@@ -345,7 +345,7 @@ window.STORYTELLING_SCHOOLS = {
         mergedSchool: {
             name: 'Tiểu học Đông Hội',
             address: 'Xã Đông Hội, Đông Anh, Hà Nội',
-            phone: '024 3883 0008',
+            phone: '',
             principal: 'Cô Phạm Thị Tân Trang',
             board: [
                 { role: 'HT TH Ngô Tất Tố:', name: 'Cô Phạm Thị Tân Trang' },
@@ -365,7 +365,7 @@ window.STORYTELLING_SCHOOLS = {
                 name: 'Trường Tiểu học Đông Hội (Cũ)',
                 address: 'Thôn Lại Đà, Xã Đông Hội, Đông Anh',
                 principal: 'Thầy Lê Minh Tuấn',
-                phone: '024 3883 0081',
+                phone: '',
                 classes: 38,
                 students: 1887,
                 lat: 21.0910,
@@ -376,7 +376,7 @@ window.STORYTELLING_SCHOOLS = {
                 name: 'Trường Tiểu học Xuân Canh',
                 address: 'Thôn Xuân Canh, Xã Xuân Canh, Đông Anh',
                 principal: 'Cô Đặng Thị Hà',
-                phone: '024 3883 0082',
+                phone: '',
                 classes: 17,
                 students: 539,
                 lat: 21.0955,
@@ -393,7 +393,7 @@ window.STORYTELLING_SCHOOLS = {
         mergedSchool: {
             name: 'Tiểu học Việt Hùng',
             address: 'Thôn Việt Hùng, Xã Việt Hùng, Đông Anh, Hà Nội',
-            phone: '024 3883 0009',
+            phone: '',
             principal: 'Cô Đỗ Thị Kim Loan',
             board: [
                 { role: 'HT TH Uy Nỗ:', name: 'Cô Đỗ Thị Kim Loan' },
@@ -413,7 +413,7 @@ window.STORYTELLING_SCHOOLS = {
                 name: 'Trường Tiểu học Việt Hùng ',
                 address: 'Khu 1, Xã Việt Hùng, Đông Anh',
                 principal: 'Thầy Trịnh Văn Nam',
-                phone: '024 3883 0091',
+                phone: '',
                 classes: 21,
                 students: 667,
                 lat: 21.1435,
@@ -424,7 +424,7 @@ window.STORYTELLING_SCHOOLS = {
                 name: 'Trường Tiểu học Việt Hùng 2',
                 address: 'Khu 2, Xã Việt Hùng, Đông Anh',
                 principal: 'Cô Dương Thị Nga',
-                phone: '024 3883 0092',
+                phone: '',
                 classes: 19,
                 students: 570,
                 lat: 21.1468,
@@ -441,7 +441,7 @@ window.STORYTELLING_SCHOOLS = {
         mergedSchool: {
             name: 'THCS Nguyễn Huy Tưởng',
             address: 'Tổ 4, Thị trấn Đông Anh, Đông Anh, Hà Nội',
-            phone: '024 3883 0010',
+            phone: '',
             principal: 'Cô Nguyễn Thị Thu Hà',
             board: [
                 { role: 'HT THCS N.Huy Tưởng:', name: 'Cô Nguyễn Thị Thu Hà' },
@@ -461,7 +461,7 @@ window.STORYTELLING_SCHOOLS = {
                 name: 'Trường THCS Nguyễn Huy Tưởng (Giữ nguyên quy mô)',
                 address: 'Tổ 4, Thị trấn Đông Anh, Đông Anh',
                 principal: 'Cô Nguyễn Thị Thanh',
-                phone: '024 3883 0010',
+                phone: '',
                 classes: 30,
                 students: 1294,
                 lat: 21.1360,
@@ -478,7 +478,7 @@ window.STORYTELLING_SCHOOLS = {
         mergedSchool: {
             name: 'THCS Ngô Quyền',
             address: 'Thị trấn Đông Anh, Đông Anh, Hà Nội',
-            phone: '024 3883 0011',
+            phone: '',
             principal: 'Cô Chử Thị Hồng Yến',
             board: [
                 { role: 'HT THCS Ngô Quyền:', name: 'Cô Chử Thị Hồng Yến' },
@@ -498,7 +498,7 @@ window.STORYTELLING_SCHOOLS = {
                 name: 'Trường THCS Ngô Quyền (Giữ nguyên quy mô)',
                 address: 'Thị trấn Đông Anh, Đông Anh',
                 principal: 'Thầy Vũ Văn Sang',
-                phone: '024 3883 0011',
+                phone: '',
                 classes: 25,
                 students: 996,
                 lat: 21.1380,
@@ -515,7 +515,7 @@ window.STORYTELLING_SCHOOLS = {
         mergedSchool: {
             name: 'THCS An Dương Vương',
             address: 'Xã Vân Hà, Đông Anh, Hà Nội',
-            phone: '024 3883 0012',
+            phone: '',
             principal: 'Cô Đỗ Thị Thanh Thủy',
             board: [
                 { role: 'HT THCS Việt Hùng:', name: 'Cô Đỗ Thị Thanh Thủy' },
@@ -535,7 +535,7 @@ window.STORYTELLING_SCHOOLS = {
                 name: 'Trường THCS An Dương Vương (Cũ)',
                 address: 'Thôn Thiết Bình, Xã Vân Hà, Đông Anh',
                 principal: 'Thầy Đỗ Văn Thắng',
-                phone: '024 3883 0121',
+                phone: '',
                 classes: 19,
                 students: 739,
                 lat: 21.1630,
@@ -546,7 +546,7 @@ window.STORYTELLING_SCHOOLS = {
                 name: 'Trường THCS Việt Hùng',
                 address: 'Thôn Gia Lương, Xã Việt Hùng, Đông Anh',
                 principal: 'Cô Hoàng Thi Lý',
-                phone: '024 3883 0122',
+                phone: '',
                 classes: 31,
                 students: 1281,
                 lat: 21.1670,
@@ -563,7 +563,7 @@ window.STORYTELLING_SCHOOLS = {
         mergedSchool: {
             name: 'THCS Xuân Canh',
             address: 'Xã Xuân Canh, Đông Anh, Hà Nội',
-            phone: '024 3883 0013',
+            phone: '',
             principal: 'Thầy Nguyễn Đình Diềm',
             board: [
                 { role: 'HT THCS Đông Hội:', name: 'Thầy Nguyễn Đình Diềm' },
@@ -583,7 +583,7 @@ window.STORYTELLING_SCHOOLS = {
                 name: 'Trường THCS Đông Hội',
                 address: 'Thôn Lại Đà, Xã Đông Hội, Đông Anh',
                 principal: 'Cô Bùi Thị Hòa',
-                phone: '024 3883 0131',
+                phone: '',
                 classes: 31,
                 students: 1112,
                 lat: 21.0910,
@@ -594,7 +594,7 @@ window.STORYTELLING_SCHOOLS = {
                 name: 'Trường THCS Xuân Canh (Cũ)',
                 address: 'Thôn Xuân Canh, Xã Xuân Canh, Đông Anh',
                 principal: 'Thầy Phạm Văn Bình',
-                phone: '024 3883 0132',
+                phone: '',
                 classes: 14,
                 students: 497,
                 lat: 21.0870,
@@ -611,7 +611,7 @@ window.STORYTELLING_SCHOOLS = {
         mergedSchool: {
             name: 'Trường liên cấp Mai Lâm',
             address: 'Xã Mai Lâm, Đông Anh, Hà Nội',
-            phone: '024 3883 0014',
+            phone: '',
             principal: 'Thầy Hoàng Ngọc Thắng',
             board: [
                 { role: 'HT THCS Mai Lâm:', name: 'Thầy Hoàng Ngọc Thắng' },
@@ -631,7 +631,7 @@ window.STORYTELLING_SCHOOLS = {
                 name: 'Trường Tiểu học Ngô Tất Tố',
                 address: 'Thôn Thái Bình, Xã Mai Lâm, Đông Anh',
                 principal: 'Thầy Ngô Văn Hùng',
-                phone: '024 3883 0141',
+                phone: '',
                 classes: 29,
                 students: 928,
                 lat: 21.1030,
@@ -642,7 +642,7 @@ window.STORYTELLING_SCHOOLS = {
                 name: 'Trường THCS Mai Lâm',
                 address: 'Thôn Mai Hiên, Xã Mai Lâm, Đông Anh',
                 principal: 'Cô Trần Thị Cúc',
-                phone: '024 3883 0142',
+                phone: '',
                 classes: 21,
                 students: 712,
                 lat: 21.1070,
@@ -659,7 +659,7 @@ window.STORYTELLING_SCHOOLS = {
         mergedSchool: {
             name: 'Trường liên cấp Cổ Loa',
             address: 'Thôn Cổ Loa, Xã Cổ Loa, Đông Anh, Hà Nội',
-            phone: '024 3883 0015',
+            phone: '',
             principal: 'Cô Nguyễn Thị Huệ',
             board: [
                 { role: 'HT TH Đào Duy Tùng:', name: 'Cô Nguyễn Thị Huệ' },
@@ -679,7 +679,7 @@ window.STORYTELLING_SCHOOLS = {
                 name: 'Trường Tiểu học Cổ Loa',
                 address: 'Xóm Chùa, Xã Cổ Loa, Đông Anh',
                 principal: 'Thầy Nguyễn Văn Tùng',
-                phone: '024 3883 0151',
+                phone: '',
                 classes: 30,
                 students: 1166,
                 lat: 21.1360,
@@ -690,7 +690,7 @@ window.STORYTELLING_SCHOOLS = {
                 name: 'Trường THCS Cổ Loa',
                 address: 'Xóm Mới, Xã Cổ Loa, Đông Anh',
                 principal: 'Cô Lê Thị Mai',
-                phone: '024 3883 0152',
+                phone: '',
                 classes: 22,
                 students: 928,
                 lat: 21.1400,
@@ -707,7 +707,7 @@ window.STORYTELLING_SCHOOLS = {
         mergedSchool: {
             name: 'Trường liên cấp Đào Duy Tùng',
             address: 'Đông Anh, Hà Nội',
-            phone: '024 3883 0016',
+            phone: '',
             principal: 'Cô Hồ Thị Ánh',
             board: [
                 { role: 'HT THCS Đ.Duy Tùng:', name: 'Cô Hồ Thị Ánh' },
@@ -727,7 +727,7 @@ window.STORYTELLING_SCHOOLS = {
                 name: 'Trường Tiểu học Đào Duy Tùng',
                 address: 'Khu A, Đông Anh, Hà Nội',
                 principal: 'Cô Nguyễn Thị Loan',
-                phone: '024 3883 0161',
+                phone: '',
                 classes: 31,
                 students: 1016,
                 lat: 21.1390,
@@ -738,7 +738,7 @@ window.STORYTELLING_SCHOOLS = {
                 name: 'Trường THCS Đào Duy Tùng',
                 address: 'Khu B, Đông Anh, Hà Nội',
                 principal: 'Thầy Trịnh Xuân Bách',
-                phone: '024 3883 0162',
+                phone: '',
                 classes: 19,
                 students: 701,
                 lat: 21.1430,
@@ -755,7 +755,7 @@ window.STORYTELLING_SCHOOLS = {
         mergedSchool: {
             name: 'Trường liên cấp Dục Tú',
             address: 'Thôn Dục Tú, Xã Dục Tú, Đông Anh, Hà Nội',
-            phone: '024 3883 0017',
+            phone: '',
             principal: 'Cô Nguyễn Thị Thu Hằng',
             board: [
                 { role: 'HT TH Dục Tú:', name: 'Cô Nguyễn Thị Thu Hằng' },
@@ -775,7 +775,7 @@ window.STORYTELLING_SCHOOLS = {
                 name: 'Trường Tiểu học Dục Tú',
                 address: 'Thôn Dục Tú 1, Xã Dục Tú, Đông Anh',
                 principal: 'Thầy Bùi Văn Thắng',
-                phone: '024 3883 0171',
+                phone: '',
                 classes: 29,
                 students: 1109,
                 lat: 21.1230,
@@ -786,7 +786,7 @@ window.STORYTELLING_SCHOOLS = {
                 name: 'Trường THCS Dục Tú',
                 address: 'Thôn Dục Tú 2, Xã Dục Tú, Đông Anh',
                 principal: 'Cô Nguyễn Thị Hoa',
-                phone: '024 3883 0172',
+                phone: '',
                 classes: 31,
                 students: 1189,
                 lat: 21.1270,
@@ -803,7 +803,7 @@ window.STORYTELLING_SCHOOLS = {
         mergedSchool: {
             name: 'Trường liên cấp Uy Nỗ',
             address: 'Thôn Uy Nỗ, Xã Uy Nỗ, Đông Anh, Hà Nội',
-            phone: '024 3883 0018',
+            phone: '',
             principal: 'Thầy Nguyễn Quang Anh',
             board: [
                 { role: 'HT THCS Cổ Loa:', name: 'Thầy Nguyễn Quang Anh' },
@@ -823,7 +823,7 @@ window.STORYTELLING_SCHOOLS = {
                 name: 'Trường Tiểu học Uy Nỗ',
                 address: 'Thôn Uy Nỗ A, Xã Uy Nỗ, Đông Anh',
                 principal: 'Cô Đỗ Thị Thanh',
-                phone: '024 3883 0181',
+                phone: '',
                 classes: 29,
                 students: 892,
                 lat: 21.1370,
@@ -834,7 +834,7 @@ window.STORYTELLING_SCHOOLS = {
                 name: 'Trường THCS Uy Nỗ',
                 address: 'Thôn Uy Nỗ B, Xã Uy Nỗ, Đông Anh',
                 principal: 'Thầy Lê Văn Thành',
-                phone: '024 3883 0182',
+                phone: '',
                 classes: 21,
                 students: 601,
                 lat: 21.1410,
@@ -848,12 +848,28 @@ window.STORYTELLING_SCHOOLS = {
 };
 
 /**
- * Fallback generator if a custom slug is requested
+ * Fallback & Fuzzy Resolver for school story datasets
  */
 window.getSchoolStoryData = function(slug) {
+    if (!slug) return window.STORYTELLING_SCHOOLS['mn-phuc-loc'];
+
     if (window.STORYTELLING_SCHOOLS[slug]) {
         return window.STORYTELLING_SCHOOLS[slug];
     }
+
+    // Clean slug for fuzzy matching
+    const cleanSlug = slug.toString().toLowerCase()
+        .replace(/^(truong-|co-so-|mam-non-|tieu-hoc-|thcs-|thpt-)+/, '')
+        .replace(/-pa3.*$/, '')
+        .trim();
+
+    for (const key in window.STORYTELLING_SCHOOLS) {
+        const cleanKey = key.replace(/^(truong-|co-so-|mam-non-|tieu-hoc-|thcs-|thpt-)+/, '');
+        if (cleanSlug === cleanKey || cleanSlug.includes(cleanKey) || cleanKey.includes(cleanSlug)) {
+            return window.STORYTELLING_SCHOOLS[key];
+        }
+    }
+
     // Default fallback to MN Phúc Lộc
     return window.STORYTELLING_SCHOOLS['mn-phuc-loc'];
 };

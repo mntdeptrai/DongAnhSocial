@@ -20,21 +20,27 @@ class SchoolStoryteller {
     }
 
     initMap() {
-        if (this.map) return;
+        if (!this.map) {
+            // Initialize Leaflet map centered on Dong Anh
+            this.map = L.map('storyMap', {
+                zoomControl: false,
+                attributionControl: false,
+                fadeAnimation: true,
+                zoomAnimation: true
+            }).setView([21.135, 105.865], 12);
 
-        // Initialize Leaflet map centered on Dong Anh
-        this.map = L.map('storyMap', {
-            zoomControl: false,
-            attributionControl: false,
-            fadeAnimation: true,
-            zoomAnimation: true
-        }).setView([21.135, 105.865], 12);
+            // CartoDB Voyager bright light tile layer for crisp, modern, colorful map display
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+                maxZoom: 19,
+                subdomains: 'abcd'
+            }).addTo(this.map);
+        }
 
-        // CartoDB Voyager bright light tile layer for crisp, modern, colorful map display
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-            maxZoom: 19,
-            subdomains: 'abcd'
-        }).addTo(this.map);
+        setTimeout(() => {
+            if (this.map) {
+                this.map.invalidateSize();
+            }
+        }, 150);
     }
 
     initSparkleCanvas() {
@@ -132,24 +138,35 @@ class SchoolStoryteller {
         this.isSkipped = false;
         this.isManualMode = false;
         this.targetUrl = redirectUrl || `/dia-diem/${schoolSlug}`;
-        this.currentData = window.getSchoolStoryData(schoolSlug);
-
-        // Open modal
-        const modal = document.getElementById('storytellingModal');
-        if (modal) {
-            modal.style.display = 'block';
-            modal.style.opacity = '1';
-            modal.style.pointerEvents = 'auto';
-            modal.classList.add('active');
-        }
-
-        // Init map & sparkle animation
-        this.initMap();
-        this.initSparkleCanvas();
-        this.resetLayers();
-        this.renderTimeline();
 
         try {
+            this.currentData = window.getSchoolStoryData(schoolSlug);
+            if (!this.currentData || !this.currentData.components || !this.currentData.components.length) {
+                console.warn('Storytelling data missing for:', schoolSlug);
+                window.location.href = this.targetUrl;
+                return;
+            }
+
+            // Open modal
+            const modal = document.getElementById('storytellingModal');
+            if (modal) {
+                modal.style.display = 'block';
+                modal.style.opacity = '1';
+                modal.style.pointerEvents = 'auto';
+                modal.classList.add('active');
+            }
+
+            // Init map & sparkle animation
+            this.initMap();
+            this.initSparkleCanvas();
+            this.resetLayers();
+            this.renderTimeline();
+
+            // Force Leaflet recalculation after modal displays
+            if (this.map) {
+                this.map.invalidateSize();
+            }
+
             // Stage 0: Intro
             await this.phase0_Intro();
             if (this.isSkipped || this.isManualMode) return;
@@ -179,7 +196,10 @@ class SchoolStoryteller {
             // Stage 6: Transition & Redirect
             await this.phase_Transition();
         } catch (err) {
-            console.warn('Storytelling sequence interrupted or completed:', err);
+            console.error('Storytelling error, fallback to detail:', err);
+            if (this.targetUrl) {
+                window.location.href = this.targetUrl;
+            }
         } finally {
             this.isBusy = false;
         }
@@ -296,7 +316,7 @@ class SchoolStoryteller {
                     m.closeTooltip();
                     m.unbindTooltip();
                 }
-            } catch(e) {}
+            } catch (e) { }
             this.map.removeLayer(m);
         });
         this.markers = [];
@@ -399,7 +419,7 @@ class SchoolStoryteller {
         this.markers.forEach(m => {
             try {
                 if (m.getTooltip()) m.unbindTooltip();
-            } catch(e) {}
+            } catch (e) { }
             this.map.removeLayer(m);
         });
         this.markers = [];

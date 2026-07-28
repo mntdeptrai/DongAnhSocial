@@ -25,7 +25,8 @@ class Eatery extends Model
         'image_path',
         'is_featured',
         'rating',
-        'status'
+        'status',
+        'storytelling_data'
     ];
 
     protected $casts = [
@@ -33,7 +34,32 @@ class Eatery extends Model
         'rating' => 'decimal:2',
         'latitude' => 'double',
         'longitude' => 'double',
+        'storytelling_data' => 'array',
     ];
+
+    /**
+     * Accessor cho tên chuẩn hóa (MN -> Mầm non, TH -> Tiểu học)
+     */
+    public function getStandardizedNameAttribute(): string
+    {
+        return \App\Helpers\VietnameseSeoHelper::standardizeSchoolName($this->name);
+    }
+
+    /**
+     * Accessor lấy danh sách các trường thành phần sáp nhập vào
+     */
+    public function getMergedComponentsAttribute(): array
+    {
+        if (is_array($this->storytelling_data) && isset($this->storytelling_data['components'])) {
+            return array_map(function($comp) {
+                if (isset($comp['name'])) {
+                    $comp['name'] = \App\Helpers\VietnameseSeoHelper::standardizeSchoolName($comp['name']);
+                }
+                return $comp;
+            }, $this->storytelling_data['components']);
+        }
+        return [];
+    }
 
     /**
      * Scope only active eateries

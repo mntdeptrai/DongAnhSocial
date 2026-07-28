@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Bản đồ số Đông Anh - Bản đồ Số hóa Dịch vụ & Địa phương')
+@section('title', 'Khám phá Đông Anh - Nền tảng Số hóa Dịch vụ & Du lịch Xã Đông Anh')
 
 @section('content')
 <!-- Motion One Animation Library -->
@@ -1857,7 +1857,7 @@
                         Hệ Thống Mạng Lưới Giáo Dục & Trường Học Đông Anh
                     </h2>
                     <p style="font-size: 0.92rem; color: #1e1b4b; line-height: 1.65; margin: 0;">
-                        Bản đồ thông minh tra cứu hệ thống các trường mầm non, tiểu học, THCS, THPT và trung tâm giáo dục chất lượng cao trên địa bàn huyện Đông Anh.
+                        Bản đồ thông minh tra cứu hệ thống các trường mầm non, tiểu học, THCS, THPT và trung tâm giáo dục chất lượng cao trên địa bàn xã Đông Anh.
                     </p>
                     <div class="edu-stats-pills">
                         <div class="edu-stat-pill"><span class="icon">🏫</span> Trường đạt chuẩn Quốc gia</div>

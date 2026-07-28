@@ -1,10 +1,12 @@
 @extends('layouts.app')
 
-<!-- Tối ưu hóa SEO: Tiêu đề động chính xác cho Ẩm thực & Món ngon Đông Anh -->
-@section('title', $eatery->name . ' - Thực đơn món ngon & Nhà hàng tại ' . $eatery->commune->name . ', Đông Anh')
+<!-- Tối ưu hóa SEO Google: Tiêu đề động chính xác cho Ẩm thực & Món ngon Đông Anh -->
+@section('title', $eatery->name . ' - Địa điểm ăn uống & Nhà hàng quán ngon tại ' . $eatery->commune->name . ', Xã Đông Anh')
 
 <!-- Tối ưu hóa SEO: Thẻ mô tả Meta tự sinh chân thực -->
-@section('meta_description', 'Khám phá ẩm thực đặc sắc tại ' . $eatery->name . ' ở ' . $eatery->address . ', ' . $eatery->commune->name . ', Đông Anh. Số điện thoại: ' . $eatery->phone . '. Thực đơn món ngon: ' . $eatery->dishes->take(3)->pluck('name')->implode(', ') . '. Xem đánh giá thực khách và bản đồ dẫn đường.')
+@section('meta_description', 'Khám phá địa điểm ăn uống đặc sắc tại ' . $eatery->name . ' ở ' . $eatery->address . ', ' . $eatery->commune->name . ', Xã Đông Anh, Hà Nội. Số điện thoại liên hệ: ' . ($eatery->phone ?: 'Đang cập nhật') . '. Xem đánh giá thực khách và bản đồ chỉ đường.')
+
+@section('meta_keywords', \App\Helpers\VietnameseSeoHelper::generateKeywords($eatery->name, $eatery->category->slug ?? 'dong-anh-food-map', $eatery->commune->name ?? 'Xã Đông Anh'))
 
 @section('og_image', $eatery->image_path ?: 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=800&q=80')
 

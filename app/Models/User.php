@@ -99,12 +99,17 @@ class User extends Authenticatable
         return $this->role === 'user';
     }
 
+    public function isPrincipal(): bool
+    {
+        return $this->role === 'principal';
+    }
+
     /**
-     * Lấy danh sách các cơ sở (Ẩm thực, y tế, lưu trú...) mà Seller sở hữu
+     * Lấy danh sách các cơ sở (Ẩm thực, y tế, lưu trú, trường học...) mà Seller/Principal sở hữu
      */
     public function getOwnedEateries(): array
     {
-        if ($this->role !== 'seller') {
+        if (!in_array($this->role, ['seller', 'principal', 'admin', 'manager'])) {
             return [];
         }
 

@@ -95,7 +95,7 @@
                 </a>
             @endif
             <a href="/" class="slr-menu-item" target="_blank">
-                <span>🗺️</span> Bản Đồ Số Đông Anh
+                <span>🗺️</span> Khám Phá Đông Anh
             </a>
         </aside>
 

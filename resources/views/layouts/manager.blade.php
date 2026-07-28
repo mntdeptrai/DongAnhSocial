@@ -115,7 +115,7 @@
 
             <div class="mgr-sidebar-section-title">Cổng Thông Tin</div>
             <a href="/" class="mgr-menu-item" target="_blank">
-                <span>🗺️</span> Bản Đồ Số Đông Anh
+                <span>🗺️</span> Khám Phá Đông Anh
             </a>
         </aside>
 

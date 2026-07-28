@@ -9,6 +9,7 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\VendorController;
 use App\Http\Controllers\FoodTourController;
 use App\Http\Controllers\SocialHubController;
+use App\Http\Controllers\SchoolManagementController;
 use App\Http\Controllers\MarketStallController;
 use App\Http\Controllers\ManagerOrderController;
 
@@ -28,6 +29,7 @@ Route::get('/checkin', [HomeController::class, 'checkinFeed'])->name('checkin.fe
 Route::post('/checkin', [HomeController::class, 'storeCheckin'])->name('checkin.store');
 Route::post('/comments', [\App\Http\Controllers\CommentController::class, 'store'])->name('comments.store');
 Route::get('/api/eateries/search', [HomeController::class, 'searchEateries'])->name('api.eateries.search');
+Route::get('/api/quick-search', [SearchController::class, 'quickSearch'])->name('api.quick.search');
 Route::get('/api/eateries/nearby', [HomeController::class, 'nearbyEateries'])->name('api.eateries.nearby');
 Route::get('/api/checkins/latest', [HomeController::class, 'latestCheckins'])->name('api.checkins.latest');
 Route::post('/api/checkins/{id}/react', [HomeController::class, 'reactToCheckin'])->name('api.checkins.react');
@@ -89,6 +91,11 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/api/food-tours/generate-ai', [FoodTourController::class, 'generateAI'])
         ->middleware('throttle:3,1')
         ->name('api.food-tours.generate-ai');
+
+    // --- PRINCIPAL SCHOOL MANAGEMENT ROUTES (Quản lý trường học dành cho Hiệu Trưởng) ---
+    Route::get('/principal/schools', [SchoolManagementController::class, 'index'])->name('principal.schools.index');
+    Route::get('/principal/schools/{id}/edit', [SchoolManagementController::class, 'edit'])->name('principal.schools.edit');
+    Route::put('/principal/schools/{id}', [SchoolManagementController::class, 'update'])->name('principal.schools.update');
 });
 
 Route::get('/food-tour/{slug}', [FoodTourController::class, 'show'])->name('food-tours.show');
@@ -197,6 +204,11 @@ Route::prefix('admin')->middleware(['auth', 'role:admin,manager', 'tenant.auth']
     Route::post('/education-programs', [AdminController::class, 'storeEducationProgram'])->name('admin.education-program.store');
     Route::put('/education-programs/{id}', [AdminController::class, 'updateEducationProgram'])->name('admin.education-program.update');
     Route::delete('/education-programs/{id}', [AdminController::class, 'destroyEducationProgram'])->name('admin.education-program.destroy');
+
+    // Quản lý Trường Học & Sáp Nhập (Admin Panel)
+    Route::get('/schools', [SchoolManagementController::class, 'index'])->name('admin.schools.index');
+    Route::get('/schools/{id}/edit', [SchoolManagementController::class, 'edit'])->name('admin.schools.edit');
+    Route::put('/schools/{id}', [SchoolManagementController::class, 'update'])->name('admin.schools.update');
 
     // Quản lý Video Reels đặc sản
     Route::post('/videos', [AdminController::class, 'storeVideo'])->name('admin.video.store');

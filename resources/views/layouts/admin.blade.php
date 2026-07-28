@@ -12,6 +12,9 @@
     
     <title>@yield('title', 'Kênh Quản trị - DongAnh Discovery')</title>
     
+    <!-- Bootstrap 5 CSS for UI Grid & Form Components -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
     <!-- Leaflet.js Map Assets -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     
@@ -98,18 +101,24 @@
             @endif
 
             <div class="admin-sidebar-section-title">Quản Trị Hệ Thống</div>
-            <a href="/admin/users" class="admin-menu-item {{ request()->is('admin/users*') ? 'active' : '' }}">
-                <span>👥</span> Quản Lý Tài Khoản
+            <a href="/admin/dashboard#eateries" class="admin-menu-item {{ request()->is('admin/dashboard') && isset($eatery) ? 'active' : '' }}">
+                <span>📍</span> Quản Lý Địa Điểm & Cơ Sở
+            </a>
+            <a href="/principal/schools" class="admin-menu-item {{ request()->is('principal/schools*') ? 'active' : '' }}">
+                <span>🏫</span> Quản Lý Trường Học & Sáp Nhập
             </a>
             <a href="/admin/stalls" class="admin-menu-item {{ request()->is('admin/stalls*') ? 'active' : '' }}">
                 <span>🛒</span> Quản Lý Gian Hàng
+            </a>
+            <a href="/admin/users" class="admin-menu-item {{ request()->is('admin/users*') ? 'active' : '' }}">
+                <span>👥</span> Quản Lý Tài Khoản
             </a>
 
             <div class="admin-sidebar-divider"></div>
 
             <div class="admin-sidebar-section-title">Cổng Thông Tin</div>
             <a href="/" class="admin-menu-item" target="_blank">
-                <span>🗺️</span> Bản Đồ Số Đông Anh
+                <span>🗺️</span> Khám Phá Đông Anh
             </a>
         </aside>
 

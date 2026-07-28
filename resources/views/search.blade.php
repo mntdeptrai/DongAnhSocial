@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Bản đồ số Đông Anh - Di tích, Trường học, Dịch vụ')
+@section('title', 'Khám phá Đông Anh - Bản đồ Địa điểm, Trường học, Dịch vụ Xã Đông Anh')
 
 @section('content')
 <style>
