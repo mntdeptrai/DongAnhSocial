@@ -1914,30 +1914,7 @@
                 </div>
             </div>
             
-            <!-- Định vị vị trí & chỉ đường -->
-            <div class="sidebar-widget glass-panel">
-                <h3 style="font-size: 1.2rem; margin-bottom: 16px; color: var(--text-main); font-weight: 800; border-bottom: 2px solid rgba(32, 178, 170, 0.3); padding-bottom: 12px;">
-                    🗺️ Vị trí & Chỉ đường
-                </h3>
-                <p style="font-size: 0.8rem; color: var(--text-muted);">
-                    📍 Vĩ độ: <strong>{{ $eatery->latitude }}</strong> | Kinh độ: <strong>{{ $eatery->longitude }}</strong>
-                </p>
-                
-                <div class="mini-map-container">
-                    <div id="miniMap" style="width: 100%; height: 100%;"></div>
-                </div>
-                
-                <!-- Google Geolocation Distance Widget -->
-                <div id="distanceWidget" class="glass-panel" style="padding: 12px; margin-top: 14px; background: rgba(32,178,170,0.05); border-color: rgba(32,178,170,0.1); display: block;">
-                    <p style="font-size: 0.85rem; display: flex; align-items: center; gap: 8px;">
-                        <span>🚗</span> Khoảng cách đến vị trí của bạn: <strong id="distanceKm" style="color: var(--accent);">Đang tính...</strong>
-                    </p>
-                </div>
-                
-                <a id="directionsLink" href="https://www.google.com/maps/dir/?api=1&destination={{ number_format($eatery->latitude, 6, '.', '') }},{{ number_format($eatery->longitude, 6, '.', '') }}" target="_blank" class="btn-primary" style="width: 100%; justify-content: center; margin-top: 10px; font-size: 0.9rem;">
-                    🗺️ Hướng dẫn đường đi (Google Maps)
-                </a>
-            </div>
+
         </aside>
         
     </div>
