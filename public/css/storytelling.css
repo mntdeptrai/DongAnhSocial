@@ -190,41 +190,41 @@
 .story-header-branding {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 14px;
     background: rgba(255, 255, 255, 0.94);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border: 1px solid rgba(99, 102, 241, 0.3);
-    padding: 14px 28px;
-    border-radius: 24px;
+    padding: 12px 24px;
+    border-radius: 20px;
     box-shadow: 0 10px 40px rgba(99, 102, 241, 0.2);
 }
 
 .story-header-logo {
-    width: 48px;
-    height: 48px;
+    width: 46px;
+    height: 46px;
     background: linear-gradient(135deg, #4f46e5, #7c3aed);
     border-radius: 14px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.6rem;
+    font-size: 1.75rem;
     color: #ffffff;
     box-shadow: 0 4px 15px rgba(79, 70, 229, 0.4);
 }
 
 .story-header-text h1 {
-    font-size: 1.5rem;
-    font-weight: 900;
+    font-size: 1.47rem;
+    font-weight: 800;
     color: #0f172a;
     margin: 0;
     letter-spacing: 0.5px;
 }
 
 .story-header-text p {
-    font-size: 1.15rem;
+    font-size: 1.1rem;
     color: #4338ca;
-    font-weight: 800;
+    font-weight: 700;
     margin: 0;
 }
 
@@ -233,13 +233,13 @@
     color: #ffffff;
     border: 1px solid rgba(255, 255, 255, 0.4);
     padding: 14px 28px;
-    border-radius: 20px;
-    font-size: 1.35rem;
+    border-radius: 18px;
+    font-size: 1.3rem;
     font-weight: 800;
     cursor: pointer;
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     box-shadow: 0 10px 30px rgba(79, 70, 229, 0.4);
     transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -255,26 +255,26 @@
     left: 24px;
     top: 105px;
     z-index: 1000;
-    width: 390px;
+    width: 375px;
     background: rgba(255, 255, 255, 0.94);
     backdrop-filter: blur(28px);
     -webkit-backdrop-filter: blur(28px);
     border: 1.5px solid rgba(168, 85, 247, 0.35);
     border-radius: 28px;
-    padding: 26px;
+    padding: 24px;
     box-shadow: 0 25px 70px rgba(147, 51, 234, 0.22);
     transition: transform 0.4s ease, opacity 0.4s ease;
 }
 
 .story-timeline-title {
-    font-size: 1.35rem;
+    font-size: 1.2rem;
     font-weight: 900;
     background: linear-gradient(135deg, #7e22ce 0%, #ec4899 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     text-transform: uppercase;
     letter-spacing: 1.8px;
-    margin-bottom: 20px;
+    margin-bottom: 18px;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -283,15 +283,15 @@
 .story-timeline-list {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 10px;
 }
 
 .story-timeline-item {
     display: flex;
     align-items: center;
-    gap: 14px;
-    padding: 13px 18px;
-    border-radius: 20px;
+    gap: 12px;
+    padding: 12px 18px;
+    border-radius: 18px;
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(243, 232, 255, 0.35));
     border: 1.5px solid rgba(168, 85, 247, 0.2);
     cursor: pointer;
@@ -318,13 +318,13 @@
 }
 
 .story-timeline-num {
-    width: 36px;
-    height: 36px;
+    width: 34px;
+    height: 34px;
     border-radius: 50%;
     background: linear-gradient(135deg, rgba(147, 51, 234, 0.12), rgba(236, 72, 153, 0.12));
     border: 1.5px solid rgba(147, 51, 234, 0.3);
     color: #9333ea;
-    font-size: 1.25rem;
+    font-size: 1.15rem;
     font-weight: 900;
     display: flex;
     align-items: center;
@@ -350,8 +350,8 @@
 
 .story-timeline-text {
     font-family: 'Be Vietnam Pro', sans-serif;
-    font-size: 1.35rem;
-    font-weight: 800;
+    font-size: 1.23rem;
+    font-weight: 700;
     color: #581c87;
     white-space: nowrap;
     overflow: hidden;
@@ -374,13 +374,13 @@
     bottom: 32px;
     left: 24px;
     z-index: 1000;
-    max-width: 600px;
+    max-width: 560px;
     background: rgba(255, 255, 255, 0.94);
     backdrop-filter: blur(28px);
     -webkit-backdrop-filter: blur(28px);
     border: 1.5px solid rgba(168, 85, 247, 0.35);
     border-radius: 28px;
-    padding: 24px 32px;
+    padding: 24px 30px;
     box-shadow: 0 25px 70px rgba(147, 51, 234, 0.22);
     transition: all 0.4s ease;
 }
@@ -388,8 +388,8 @@
 .story-narrative-header {
     display: flex;
     align-items: center;
-    gap: 12px;
-    margin-bottom: 14px;
+    gap: 10px;
+    margin-bottom: 12px;
 }
 
 .story-narrative-dot {
@@ -402,7 +402,7 @@
 }
 
 .story-narrative-phase {
-    font-size: 1.35rem;
+    font-size: 1.15rem;
     font-weight: 900;
     background: linear-gradient(135deg, #7e22ce 0%, #ec4899 100%);
     -webkit-background-clip: text;
@@ -413,17 +413,17 @@
 
 .story-narrative-text {
     font-family: 'Be Vietnam Pro', sans-serif;
-    font-size: 1.6rem;
+    font-size: 1.4rem;
     line-height: 1.65;
     color: #581c87;
-    font-weight: 800;
+    font-weight: 700;
     min-height: 60px;
 }
 
 .story-typing-cursor {
     display: inline-block;
     width: 3px;
-    height: 18px;
+    height: 22px;
     background: linear-gradient(180deg, #9333ea, #ec4899);
     box-shadow: 0 0 10px rgba(236, 72, 153, 0.8);
     margin-left: 4px;
@@ -437,7 +437,7 @@
     top: 105px;
     bottom: 35px;
     z-index: 1000;
-    width: 440px;
+    width: 480px;
     pointer-events: none;
     display: flex;
     align-items: center;
@@ -453,7 +453,7 @@
     border: 1px solid rgba(99, 102, 241, 0.35);
     border-radius: 28px;
     overflow-y: auto;
-    padding: 26px;
+    padding: 28px;
     box-shadow: 0 35px 80px rgba(99, 102, 241, 0.3);
     pointer-events: auto;
     opacity: 0;
@@ -469,7 +469,7 @@
 .story-card-image-wrap {
     position: relative;
     width: 100%;
-    height: 200px;
+    height: 220px;
     border-radius: 20px;
     overflow: hidden;
     margin-bottom: 20px;
@@ -496,10 +496,10 @@
     backdrop-filter: blur(10px);
     border: 1px solid rgba(99, 102, 241, 0.4);
     color: #4f46e5;
-    font-size: 1.35rem;
+    font-size: 1.1rem;
     font-weight: 800;
     padding: 8px 18px;
-    border-radius: 26px;
+    border-radius: 24px;
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
 }
 
@@ -512,22 +512,22 @@
 
 .story-card-title {
     font-family: 'Be Vietnam Pro', sans-serif;
-    font-size: 2.3rem;
+    font-size: 2.05rem;
     font-weight: 900;
     color: #6b21a8;
-    margin: 0 0 12px 0;
+    margin: 0 0 10px 0;
     line-height: 1.3;
 }
 
 .story-card-address {
-    font-size: 1.45rem;
+    font-size: 1.23rem;
     color: #475569;
-    margin-bottom: 20px;
+    margin-bottom: 18px;
     display: flex;
     align-items: flex-start;
-    gap: 8px;
+    gap: 6px;
     line-height: 1.45;
-    font-weight: 700;
+    font-weight: 600;
 }
 
 .story-stats-grid {
@@ -541,13 +541,13 @@
     background: linear-gradient(135deg, #f8fafc, #eef2ff);
     border: 1px solid #c7d2fe;
     border-radius: 16px;
-    padding: 14px 16px;
+    padding: 16px 18px;
     text-align: center;
 }
 
 .story-stat-val {
     font-family: 'Be Vietnam Pro', sans-serif;
-    font-size: 2.4rem;
+    font-size: 2.15rem;
     font-weight: 900;
     background: linear-gradient(135deg, #3730a3, #6366f1);
     -webkit-background-clip: text;
@@ -555,11 +555,11 @@
 }
 
 .story-stat-lbl {
-    font-size: 1.25rem;
+    font-size: 1.05rem;
     color: #475569;
     font-weight: 800;
     text-transform: uppercase;
-    margin-top: 6px;
+    margin-top: 4px;
 }
 
 /* Ban Giám Hiệu Trường Mới Section */
@@ -573,14 +573,14 @@
 }
 
 .story-board-title {
-    font-size: 1.35rem;
+    font-size: 1.15rem;
     font-weight: 900;
     background: linear-gradient(135deg, #7e22ce 0%, #ec4899 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     letter-spacing: 1.5px;
     text-transform: uppercase;
-    margin-bottom: 14px;
+    margin-bottom: 12px;
     display: flex;
     align-items: center;
     gap: 8px;
@@ -589,14 +589,14 @@
 .story-board-grid {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
 }
 
 .story-board-item {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    font-size: 1.4rem;
+    font-size: 1.23rem;
     padding: 10px 16px;
     background: rgba(255, 255, 255, 0.9);
     border-radius: 14px;
@@ -605,7 +605,7 @@
 
 .story-board-role {
     color: #7e22ce;
-    font-weight: 800;
+    font-weight: 700;
 }
 
 .story-board-name {
@@ -627,7 +627,7 @@
 .story-info-row {
     display: flex;
     justify-content: space-between;
-    font-size: 1.35rem;
+    font-size: 1.23rem;
 }
 
 .story-info-row span:first-child {
@@ -645,9 +645,9 @@
     background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
     color: #ffffff;
     border: none;
-    padding: 18px 26px;
+    padding: 18px 28px;
     border-radius: 18px;
-    font-size: 1.6rem;
+    font-size: 1.4rem;
     font-weight: 900;
     cursor: pointer;
     display: flex;
@@ -683,13 +683,13 @@
     background: rgba(255, 255, 255, 0.96);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border: 2.5px solid #0284c7;
-    border-radius: 28px;
-    padding: 14px 28px;
+    border: 2px solid #0284c7;
+    border-radius: 24px;
+    padding: 10px 22px;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 22px;
+    gap: 18px;
     box-shadow: 0 14px 40px rgba(2, 132, 199, 0.3), 0 0 20px rgba(56, 189, 248, 0.25);
     white-space: nowrap;
     box-sizing: border-box;
@@ -705,18 +705,18 @@
 }
 
 .story-dist-lbl {
-    font-size: 1.15rem;
+    font-size: 0.95rem;
     font-weight: 800;
     color: #0284c7;
     letter-spacing: 0.8px;
     text-transform: uppercase;
     line-height: 1.2;
-    margin-bottom: 4px;
+    margin-bottom: 2px;
 }
 
 .story-dist-val {
     font-family: 'Be Vietnam Pro', sans-serif;
-    font-size: 1.85rem;
+    font-size: 1.6rem;
     font-weight: 900;
     color: #0369a1;
     line-height: 1.2;
@@ -1021,37 +1021,37 @@
 
 .story-tooltip-custom.story-tooltip-merged {
     background: rgba(255, 255, 255, 0.98) !important;
-    border: 3px solid #a855f7 !important;
-    box-shadow: 0 16px 50px rgba(168, 85, 247, 0.45), 0 0 30px rgba(236, 72, 153, 0.35) !important;
+    border: 3.5px solid #a855f7 !important;
+    box-shadow: 0 18px 55px rgba(168, 85, 247, 0.48), 0 0 35px rgba(236, 72, 153, 0.38) !important;
     animation: storyTooltipGlow 2.5s ease-in-out infinite alternate !important;
-    padding: 12px 24px !important;
-    border-radius: 20px !important;
+    padding: 14px 28px !important;
+    border-radius: 22px !important;
     text-align: center !important;
 }
 
 .story-tooltip-custom.story-tooltip-merged b {
     color: #7e22ce !important;
-    font-size: 2.2rem !important;
+    font-size: 2.25rem !important;
     font-weight: 900 !important;
     display: block !important;
-    margin-bottom: 6px !important;
+    margin-bottom: 4px !important;
     line-height: 1.25 !important;
     letter-spacing: 0.5px !important;
 }
 
 .story-tooltip-custom.story-tooltip-merged .story-tooltip-sublabel {
     color: #9333ea !important;
-    font-size: 1.45rem !important;
+    font-size: 1.47rem !important;
     font-weight: 800 !important;
     display: block !important;
-    margin-top: 3px !important;
+    margin-top: 2px !important;
     line-height: 1.25 !important;
 }
 
 .story-tooltip-custom.story-tooltip-comp {
     background: rgba(255, 255, 255, 0.96) !important;
-    border: 2px solid #c084fc !important;
-    box-shadow: 0 12px 35px rgba(139, 92, 246, 0.3) !important;
+    border: 2.5px solid #c084fc !important;
+    box-shadow: 0 14px 40px rgba(139, 92, 246, 0.35) !important;
     padding: 10px 20px !important;
     border-radius: 18px !important;
     text-align: center !important;
@@ -1059,10 +1059,10 @@
 
 .story-tooltip-custom.story-tooltip-comp b {
     color: #6b21a8 !important;
-    font-size: 1.7rem !important;
+    font-size: 1.75rem !important;
     font-weight: 800 !important;
     display: block !important;
-    margin-bottom: 4px !important;
+    margin-bottom: 2px !important;
     line-height: 1.25 !important;
 }
 
