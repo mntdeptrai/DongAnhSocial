@@ -81,6 +81,7 @@
     
     <!-- Map-Based Storytelling CSS & GSAP Animation Library -->
     <link rel="stylesheet" href="{{ asset('css/storytelling.css') }}?v={{ time() }}">
+    <link rel="stylesheet" href="{{ asset('css/storytelling-mobile.css') }}?v={{ time() }}">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
     
     <!-- Dynamic Schema.org JSON-LD Structured Data for Google Indexing -->

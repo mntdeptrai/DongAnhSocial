@@ -569,20 +569,173 @@ class SchoolStoryteller {
         animateFireworks();
     }
 
+    renderBookOverlay(mPt) {
+        if (this.catchmentPolygon) {
+            try { this.map.removeLayer(this.catchmentPolygon); } catch (e) {}
+            this.catchmentPolygon = null;
+        }
+
+        const bookSvgHtml = `
+            <div class="story-bright-book-wrapper">
+                <div class="story-bright-book-aura"></div>
+                <div class="story-bright-book-aura ring-2"></div>
+
+                <svg viewBox="0 0 200 150" class="story-bright-book-svg">
+                    <defs>
+                        <filter id="bright-book-glow" x="-20%" y="-20%" width="140%" height="140%">
+                            <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#8b5cf6" flood-opacity="0.35"/>
+                            <feGaussianBlur stdDeviation="3" result="blur"/>
+                            <feMerge>
+                                <feMergeNode in="blur"/>
+                                <feMergeNode in="SourceGraphic"/>
+                            </feMerge>
+                        </filter>
+
+                        <!-- Book Cover Gradient (Bright Purple to Indigo) -->
+                        <linearGradient id="cover-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#7c3aed"/>
+                            <stop offset="100%" stop-color="#4f46e5"/>
+                        </linearGradient>
+
+                        <!-- Book Page Gradient (Soft Clean White/Cream) -->
+                        <linearGradient id="page-left-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" stop-color="#eef2ff"/>
+                            <stop offset="100%" stop-color="#ffffff"/>
+                        </linearGradient>
+                        <linearGradient id="page-right-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" stop-color="#ffffff"/>
+                            <stop offset="100%" stop-color="#eef2ff"/>
+                        </linearGradient>
+
+                        <!-- Gold accents gradient -->
+                        <linearGradient id="gold-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#fbbf24"/>
+                            <stop offset="100%" stop-color="#f59e0b"/>
+                        </linearGradient>
+                    </defs>
+
+                    <!-- BOOK COVER UNDERLAY (Bìa sách tím-xanh) -->
+                    <path d="M 100,16 C 68,0 26,10 4,26 L 4,126 C 26,110 68,100 100,118 C 132,100 174,110 196,126 L 196,26 C 174,10 132,0 100,16 Z" 
+                          fill="url(#cover-grad)" 
+                          filter="url(#bright-book-glow)"/>
+
+                    <!-- LEFT PAGE (Trang sách trái màu trắng sáng) -->
+                    <path d="M 98,22 C 68,8 30,16 10,31 L 10,120 C 30,106 68,97 98,112 Z" 
+                          fill="url(#page-left-grad)" 
+                          stroke="#cbd5e1" 
+                          stroke-width="1"/>
+
+                    <!-- RIGHT PAGE (Trang sách phải màu trắng sáng) -->
+                    <path d="M 102,22 C 132,8 170,16 190,31 L 190,120 C 170,106 132,97 102,112 Z" 
+                          fill="url(#page-right-grad)" 
+                          stroke="#cbd5e1" 
+                          stroke-width="1"/>
+
+                    <!-- CENTER GOLDEN SPINE (Gáy sách mạ vàng) -->
+                    <path d="M 100,18 L 100,116" 
+                          stroke="url(#gold-grad)" 
+                          stroke-width="5" 
+                          stroke-linecap="round"/>
+
+                    <!-- CENTER ALIGNMENT EMBLEM RING (Vòng tròn nhung vàng đệm cho icon ngôi trường) -->
+                    <circle cx="100" cy="68" r="36" fill="rgba(124, 58, 237, 0.08)" stroke="url(#gold-grad)" stroke-width="2.5" stroke-dasharray="4, 3" opacity="0.85"/>
+
+                    <!-- GOLDEN BOOKMARK RIBBON (Ruy-băng đánh dấu trang) -->
+                    <path d="M 100,116 Q 106,132 114,142 L 106,138 L 98,142 Z" 
+                          fill="url(#gold-grad)"/>
+
+                    <!-- DASHED GLOWING BORDER (Đường viền nét đứt phát sáng) -->
+                    <path d="M 100,10 C 66,-6 22,5 0,22 L 0,132 C 22,114 66,104 100,124 C 134,104 178,114 200,132 L 200,22 C 178,5 134,-6 100,10 Z" 
+                          fill="none" 
+                          stroke="#a855f7" 
+                          stroke-width="3" 
+                          stroke-dasharray="8, 6" 
+                          stroke-linecap="round"/>
+                </svg>
+
+                <div class="story-bright-sparkles">
+                    <span class="sp-1">✨</span>
+                    <span class="sp-2">🎓</span>
+                    <span class="sp-3">⭐</span>
+                    <span class="sp-4">✨</span>
+                </div>
+            </div>
+        `;
+
+        const isMobile = window.innerWidth <= 768;
+        const bookIcon = L.divIcon({
+            html: bookSvgHtml,
+            className: 'story-ai-book-marker',
+            iconSize: isMobile ? [260, 195] : [460, 345],
+            iconAnchor: isMobile ? [130, 97.5] : [230, 172.5]
+        });
+
+        this.catchmentPolygon = L.marker(mPt, {
+            icon: bookIcon,
+            interactive: false,
+            zIndexOffset: -50
+        }).addTo(this.map);
+
+        return this.catchmentPolygon;
+    }
+
     createHeartCoordinates(centerLat, centerLng, scaleMeters = 500) {
+        return this.createBookCoordinates(centerLat, centerLng, scaleMeters);
+    }
+
+    createBookCoordinates(centerLat, centerLng, scaleMeters = 500) {
+        // Keypoints defining an open book shape contour (spine top, page curves, corners, spine bottom)
+        const keypoints = [
+            [0, 3],       // Spine Top
+            [8, 12],      // Right Page Top Peak
+            [16, 9],      // Right Page Top Right Corner
+            [16, 0],      // Right Page Outer Edge Mid
+            [16, -9],     // Right Page Bottom Right Corner
+            [8, -12],     // Right Page Bottom Peak
+            [0, -5],      // Spine Bottom
+            [-8, -12],    // Left Page Bottom Peak
+            [-16, -9],    // Left Page Bottom Left Corner
+            [-16, 0],     // Left Page Outer Edge Mid
+            [-16, 9],     // Left Page Top Left Corner
+            [-8, 12],     // Left Page Top Peak
+            [0, 3]        // Back to Spine Top
+        ];
+
         const points = [];
-        const numPoints = 120;
+        const numKeypoints = keypoints.length - 1;
+        const samplesPerSegment = 10;
+
         const latFactor = (scaleMeters / 111000) / 16;
         const lngFactor = (scaleMeters / (111000 * Math.cos(centerLat * Math.PI / 180))) / 16;
 
-        for (let i = 0; i <= numPoints; i++) {
-            const t = (Math.PI * 2 * i) / numPoints;
-            const x = 16 * Math.pow(Math.sin(t), 3);
-            const y = 13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t);
+        for (let i = 0; i < numKeypoints; i++) {
+            const p0 = keypoints[i === 0 ? numKeypoints - 1 : i - 1];
+            const p1 = keypoints[i];
+            const p2 = keypoints[i + 1];
+            const p3 = keypoints[i + 2 >= keypoints.length ? (i + 2) - keypoints.length + 1 : i + 2];
 
-            const lat = centerLat + y * latFactor;
-            const lng = centerLng + x * lngFactor;
-            points.push([lat, lng]);
+            for (let s = 0; s < samplesPerSegment; s++) {
+                const t = s / samplesPerSegment;
+                const t2 = t * t;
+                const t3 = t2 * t;
+
+                const x = 0.5 * (
+                    (2 * p1[0]) +
+                    (-p0[0] + p2[0]) * t +
+                    (2 * p0[0] - 5 * p1[0] + 4 * p2[0] - p3[0]) * t2 +
+                    (-p0[0] + 3 * p1[0] - 3 * p2[0] + p3[0]) * t3
+                );
+                const y = 0.5 * (
+                    (2 * p1[1]) +
+                    (-p0[1] + p2[1]) * t +
+                    (2 * p0[1] - 5 * p1[1] + 4 * p2[1] - p3[1]) * t2 +
+                    (-p0[1] + 3 * p1[1] - 3 * p2[1] + p3[1]) * t3
+                );
+
+                const lat = centerLat + y * latFactor;
+                const lng = centerLng + x * lngFactor;
+                points.push([lat, lng]);
+            }
         }
         return points;
     }
@@ -708,10 +861,11 @@ class SchoolStoryteller {
         this.markers.push(m);
 
         // Fly camera centered in open viewport space
+        const isMobile = window.innerWidth <= 768;
         const cBounds = L.latLngBounds([mPt, mPt]);
         this.map.flyToBounds(cBounds, {
-            paddingTopLeft: [360, 120],
-            paddingBottomRight: [480, 160],
+            paddingTopLeft: isMobile ? [70, 20] : [360, 120],
+            paddingBottomRight: isMobile ? [20, 240] : [480, 160],
             maxZoom: 16,
             duration: this.isManualMode ? 0.4 : 1.0
         });
@@ -795,10 +949,11 @@ class SchoolStoryteller {
         }).addTo(this.map);
 
         // Fly camera centered
+        const isMobile = window.innerWidth <= 768;
         const cBounds = L.latLngBounds([mPt, mPt]);
         this.map.flyToBounds(cBounds, {
-            paddingTopLeft: [360, 120],
-            paddingBottomRight: [480, 160],
+            paddingTopLeft: isMobile ? [70, 20] : [360, 120],
+            paddingBottomRight: isMobile ? [20, 240] : [480, 160],
             maxZoom: 15.5,
             duration: this.isManualMode ? 0.4 : 1.0
         });
@@ -883,23 +1038,15 @@ class SchoolStoryteller {
         );
         this.markers.push(mergedMarker);
 
-        // Soft ambient glowing dashed heart
-        const heartCoords = this.createHeartCoordinates(mPt.lat, mPt.lng, 500);
-        this.catchmentPolygon = L.polygon(heartCoords, {
-            color: '#a855f7',
-            fillColor: '#c084fc',
-            fillOpacity: 0.16,
-            weight: 3.5,
-            dashArray: '8, 8',
-            lineCap: 'round',
-            lineJoin: 'round'
-        }).addTo(this.map);
+        // Soft ambient glowing dashed open book overlay
+        this.renderBookOverlay(mPt);
 
         // Fly camera centered
+        const isMobile = window.innerWidth <= 768;
         const mBounds = L.latLngBounds([mPt, mPt]);
         this.map.flyToBounds(mBounds, {
-            paddingTopLeft: [360, 120],
-            paddingBottomRight: [480, 160],
+            paddingTopLeft: isMobile ? [70, 20] : [360, 120],
+            paddingBottomRight: isMobile ? [20, 240] : [480, 160],
             maxZoom: 16,
             duration: this.isManualMode ? 0.4 : 1.0
         });
@@ -1025,11 +1172,12 @@ class SchoolStoryteller {
         }
 
         // Fly camera centered in open viewport space (clearing 340px left sidebar and 440px right glass card)
+        const isMobile = window.innerWidth <= 768;
         const targetPt = L.latLng(comp.lat || 21.135, comp.lng || 105.865);
         const cBounds = L.latLngBounds([targetPt, targetPt]);
         this.map.flyToBounds(cBounds, {
-            paddingTopLeft: [360, 120],
-            paddingBottomRight: [480, 160],
+            paddingTopLeft: isMobile ? [70, 20] : [360, 120],
+            paddingBottomRight: isMobile ? [20, 240] : [480, 160],
             maxZoom: 15.5,
             duration: this.isManualMode ? 0.4 : 1.0
         });
@@ -1078,10 +1226,11 @@ class SchoolStoryteller {
             latLngs.push([this.currentData.mergedSchool.lat, this.currentData.mergedSchool.lng]);
         }
 
+        const isMobile = window.innerWidth <= 768;
         const bounds = L.latLngBounds(latLngs);
         this.map.flyToBounds(bounds, {
-            paddingTopLeft: [360, 120],
-            paddingBottomRight: [140, 160],
+            paddingTopLeft: isMobile ? [70, 20] : [360, 120],
+            paddingBottomRight: isMobile ? [20, 120] : [140, 160],
             duration: this.isManualMode ? 0.4 : 1.2
         });
 
@@ -1269,11 +1418,12 @@ class SchoolStoryteller {
         this.markers.push(newMarker);
 
         // Fly camera to new school centered in open viewport space
+        const isMobile = window.innerWidth <= 768;
         const mPt = L.latLng(mSchool.lat || 21.135, mSchool.lng || 105.865);
         const mBounds = L.latLngBounds([mPt, mPt]);
         this.map.flyToBounds(mBounds, {
-            paddingTopLeft: [360, 120],
-            paddingBottomRight: [140, 160],
+            paddingTopLeft: isMobile ? [70, 20] : [360, 120],
+            paddingBottomRight: isMobile ? [20, 240] : [140, 160],
             maxZoom: 16,
             duration: this.isManualMode ? 0.4 : 1.0
         });
@@ -1348,24 +1498,16 @@ class SchoolStoryteller {
         );
         this.markers.push(mergedMarker);
 
-        // Add soft glowing dashed heart around the new school marker
+        // Add soft glowing dashed open book overlay around the new school marker
         const mPt = L.latLng(mSchool.lat || 21.135, mSchool.lng || 105.865);
-        const heartCoords = this.createHeartCoordinates(mPt.lat, mPt.lng, 500);
-        this.catchmentPolygon = L.polygon(heartCoords, {
-            color: '#ec4899',
-            fillColor: '#f472b6',
-            fillOpacity: 0.16,
-            weight: 3.5,
-            dashArray: '8, 8',
-            lineCap: 'round',
-            lineJoin: 'round'
-        }).addTo(this.map);
+        this.renderBookOverlay(mPt);
 
         // Fly camera directly centered on the new school
+        const isMobile = window.innerWidth <= 768;
         const mBounds = L.latLngBounds([mPt, mPt]);
         this.map.flyToBounds(mBounds, {
-            paddingTopLeft: [360, 120],
-            paddingBottomRight: [480, 160],
+            paddingTopLeft: isMobile ? [70, 20] : [360, 120],
+            paddingBottomRight: isMobile ? [20, 240] : [480, 160],
             maxZoom: 16,
             duration: this.isManualMode ? 0.4 : 1.0
         });
