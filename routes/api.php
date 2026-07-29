@@ -22,7 +22,7 @@ Route::prefix('v1')->group(function () {
     // -----------------------------------------------------------------------
     // MOBILE LOCKET APP ROUTES (Xác thực qua Sanctum & Hỗ trợ Khách vãng lai)
     // -----------------------------------------------------------------------
-    Route::post('/auth/token', [\App\Http\Controllers\Api\CheckinApiController::class, 'issueToken']);
+    Route::post('/auth/token', [\App\Http\Controllers\Api\AuthApiController::class, 'issueToken']);
     Route::get('/checkins/feed', [\App\Http\Controllers\Api\CheckinApiController::class, 'getFeed']);
     Route::post('/checkins', [\App\Http\Controllers\Api\CheckinApiController::class, 'storeCheckin']);
     Route::post('/checkins/comments', [\App\Http\Controllers\Api\CheckinApiController::class, 'storeComment']);
@@ -35,8 +35,27 @@ Route::prefix('v1')->group(function () {
     Route::delete('/cart/remove/{id}', [\App\Http\Controllers\GioHangController::class, 'destroy']);
     Route::post('/cart/clear', [\App\Http\Controllers\GioHangController::class, 'clear']);
 
+    // -----------------------------------------------------------------------
+    // FLEXIBLE / MULTI-PROTOCOL API ENDPOINTS
+    // -----------------------------------------------------------------------
+    // 1. GraphQL API (Flexible query endpoint)
+    Route::post('/graphql', [\App\Http\Controllers\Api\GraphQLApiController::class, 'query']);
+
+    // 2. JSON-RPC 2.0 API (Action-oriented / Batch calls)
+    Route::post('/rpc', [\App\Http\Controllers\Api\RpcApiController::class, 'handle']);
+
+    // 3. Server-Sent Events (SSE - One-way real-time events)
+    Route::get('/stream/events', [\App\Http\Controllers\Api\SseApiController::class, 'streamEvents']);
+
+    // 4. Streaming API (Chunked progressive response for AI)
+    Route::post('/stream/ai/generate-tour', [\App\Http\Controllers\Api\StreamApiController::class, 'streamAiTour']);
+
+    // 5 & 6. Webhooks (Event-driven third-party callbacks)
+    Route::post('/webhooks/payment', [\App\Http\Controllers\Api\WebhookApiController::class, 'handlePayment']);
+    Route::post('/webhooks/sync-stall', [\App\Http\Controllers\Api\WebhookApiController::class, 'syncStall']);
+
     Route::middleware('auth:sanctum')->group(function () {
-        Route::post('/auth/token/revoke', [\App\Http\Controllers\Api\CheckinApiController::class, 'revokeToken']);
+        Route::post('/auth/token/revoke', [\App\Http\Controllers\Api\AuthApiController::class, 'revokeToken']);
         
         // FCM Token update
         Route::post('/user/fcm-token', [\App\Http\Controllers\SocialHubController::class, 'updateFcmToken']);
@@ -53,19 +72,19 @@ Route::prefix('v1')->group(function () {
         Route::get('/checkins/my', [\App\Http\Controllers\Api\CheckinApiController::class, 'getMyCheckins']);
 
         // Admin Management APIs (Đầy đủ 100% chức năng như Web Admin)
-        Route::get('/admin/users', [\App\Http\Controllers\Api\CheckinApiController::class, 'getAdminUsers']);
-        Route::post('/admin/users', [\App\Http\Controllers\Api\CheckinApiController::class, 'storeUser']);
-        Route::delete('/admin/users/{id}', [\App\Http\Controllers\Api\CheckinApiController::class, 'deleteUser']);
-        Route::post('/admin/users/{id}/role', [\App\Http\Controllers\Api\CheckinApiController::class, 'updateUserRole']);
+        Route::get('/admin/users', [\App\Http\Controllers\Api\AdminApiController::class, 'getAdminUsers']);
+        Route::post('/admin/users', [\App\Http\Controllers\Api\AdminApiController::class, 'storeUser']);
+        Route::delete('/admin/users/{id}', [\App\Http\Controllers\Api\AdminApiController::class, 'deleteUser']);
+        Route::post('/admin/users/{id}/role', [\App\Http\Controllers\Api\AdminApiController::class, 'updateUserRole']);
 
-        Route::get('/admin/dashboard', [\App\Http\Controllers\Api\CheckinApiController::class, 'getAdminDashboardData']);
-        Route::post('/admin/eateries', [\App\Http\Controllers\Api\CheckinApiController::class, 'storeEatery']);
-        Route::put('/admin/eateries/{id}', [\App\Http\Controllers\Api\CheckinApiController::class, 'updateEatery']);
-        Route::post('/admin/eateries/{id}/toggle-featured', [\App\Http\Controllers\Api\CheckinApiController::class, 'toggleEateryFeatured']);
-        Route::delete('/admin/eateries/{id}', [\App\Http\Controllers\Api\CheckinApiController::class, 'deleteEatery']);
+        Route::get('/admin/dashboard', [\App\Http\Controllers\Api\AdminApiController::class, 'getAdminDashboardData']);
+        Route::post('/admin/eateries', [\App\Http\Controllers\Api\AdminApiController::class, 'storeEatery']);
+        Route::put('/admin/eateries/{id}', [\App\Http\Controllers\Api\AdminApiController::class, 'updateEatery']);
+        Route::post('/admin/eateries/{id}/toggle-featured', [\App\Http\Controllers\Api\AdminApiController::class, 'toggleEateryFeatured']);
+        Route::delete('/admin/eateries/{id}', [\App\Http\Controllers\Api\AdminApiController::class, 'deleteEatery']);
 
-        Route::delete('/admin/reviews/{id}', [\App\Http\Controllers\Api\CheckinApiController::class, 'deleteReview']);
-        Route::post('/admin/categories', [\App\Http\Controllers\Api\CheckinApiController::class, 'storeCategory']);
+        Route::delete('/admin/reviews/{id}', [\App\Http\Controllers\Api\AdminApiController::class, 'deleteReview']);
+        Route::post('/admin/categories', [\App\Http\Controllers\Api\AdminApiController::class, 'storeCategory']);
     });
 
     // -----------------------------------------------------------------------
@@ -75,17 +94,17 @@ Route::prefix('v1')->group(function () {
     Route::get('/communes', [EateryApiController::class, 'getCommunes']);
     Route::get('/market-products', [EateryApiController::class, 'getMarketProducts']);
     Route::get('/notifications', [EateryApiController::class, 'getAppNotifications']);
-    Route::get('/seller/profile', [EateryApiController::class, 'getSellerProfile']);
-    Route::post('/seller/profile', [EateryApiController::class, 'updateSellerProfile']);
-    Route::get('/seller/orders', [EateryApiController::class, 'getSellerOrders']);
-    Route::get('/seller/dashboard-data', [EateryApiController::class, 'getSellerDashboardData']);
-    Route::post('/seller/dishes', [EateryApiController::class, 'storeDish']);
-    Route::delete('/seller/dishes/{id}', [EateryApiController::class, 'deleteDish']);
-    Route::post('/seller/orders/{id}/status', [EateryApiController::class, 'updateOrderStatus']);
+    Route::get('/seller/profile', [\App\Http\Controllers\Api\SellerApiController::class, 'getSellerProfile']);
+    Route::post('/seller/profile', [\App\Http\Controllers\Api\SellerApiController::class, 'updateSellerProfile']);
+    Route::get('/seller/orders', [\App\Http\Controllers\Api\SellerApiController::class, 'getSellerOrders']);
+    Route::get('/seller/dashboard-data', [\App\Http\Controllers\Api\SellerApiController::class, 'getSellerDashboardData']);
+    Route::post('/seller/dishes', [\App\Http\Controllers\Api\SellerApiController::class, 'storeDish']);
+    Route::delete('/seller/dishes/{id}', [\App\Http\Controllers\Api\SellerApiController::class, 'deleteDish']);
+    Route::post('/seller/orders/{id}/status', [\App\Http\Controllers\Api\SellerApiController::class, 'updateOrderStatus']);
 
-    Route::get('/manager/dashboard-data', [EateryApiController::class, 'getManagerDashboardData']);
-    Route::post('/manager/bulletins', [EateryApiController::class, 'storeManagerBulletin']);
-    Route::post('/manager/stalls/{id}/status', [EateryApiController::class, 'updateStallStatus']);
+    Route::get('/manager/dashboard-data', [\App\Http\Controllers\Api\ManagerApiController::class, 'getManagerDashboardData']);
+    Route::post('/manager/bulletins', [\App\Http\Controllers\Api\ManagerApiController::class, 'storeManagerBulletin']);
+    Route::post('/manager/stalls/{id}/status', [\App\Http\Controllers\Api\ManagerApiController::class, 'updateStallStatus']);
 
     // Videos Reels đặc sản (xem công khai)
     Route::get('/videos', [EateryApiController::class, 'getVideos']);
@@ -100,8 +119,8 @@ Route::prefix('v1')->group(function () {
     Route::get('/food-tours/{slug}', [EateryApiController::class, 'getFoodTour']);
 
     // Auth API
-    Route::post('/auth/login', [EateryApiController::class, 'apiLogin'])->middleware('throttle:10,1');
-    Route::post('/auth/register', [EateryApiController::class, 'apiRegister'])->middleware('throttle:5,1');
+    Route::post('/auth/login', [\App\Http\Controllers\Api\AuthApiController::class, 'apiLogin'])->middleware('throttle:10,1');
+    Route::post('/auth/register', [\App\Http\Controllers\Api\AuthApiController::class, 'apiRegister'])->middleware('throttle:5,1');
 
     // -----------------------------------------------------------------------
     // PROTECTED ROUTES — Bắt buộc đăng nhập (auth web session)
@@ -113,7 +132,7 @@ Route::prefix('v1')->group(function () {
         Route::post('/upload-chunk', [\App\Http\Controllers\Api\UploadApiController::class, 'uploadChunk'])->middleware('throttle:uploads');
 
         // Logout
-        Route::post('/auth/logout', [EateryApiController::class, 'apiLogout']);
+        Route::post('/auth/logout', [\App\Http\Controllers\Api\AuthApiController::class, 'apiLogout']);
 
         // CRUD Eateries / Địa điểm (chỉ admin/seller)
         Route::post('/{category}/eateries', [EateryApiController::class, 'store']);
@@ -178,11 +197,11 @@ Route::prefix('v1')->group(function () {
 
         // User Management — Chỉ Admin được thực hiện
         Route::middleware(['role:admin'])->group(function () {
-            Route::get('/users', [EateryApiController::class, 'getUsers']);
-            Route::post('/users', [EateryApiController::class, 'storeUser']);
-            Route::put('/users/{id}', [EateryApiController::class, 'updateUser']);
-            Route::delete('/users/{id}', [EateryApiController::class, 'destroyUser']);
-            Route::post('/users/{id}/toggle-status', [EateryApiController::class, 'toggleUserStatus']);
+            Route::get('/users', [\App\Http\Controllers\Api\AdminApiController::class, 'getUsers']);
+            Route::post('/users', [\App\Http\Controllers\Api\AdminApiController::class, 'storeUserWeb']);
+            Route::put('/users/{id}', [\App\Http\Controllers\Api\AdminApiController::class, 'updateUserWeb']);
+            Route::delete('/users/{id}', [\App\Http\Controllers\Api\AdminApiController::class, 'destroyUser']);
+            Route::post('/users/{id}/toggle-status', [\App\Http\Controllers\Api\AdminApiController::class, 'toggleUserStatus']);
         });
     });
 });

@@ -24,9 +24,9 @@
     --text-muted: #94a3b8;
     --text-dark: #090e11;
     
-    /* Typography - Preferred Be Vietnam Pro for Vietnamese Typography */
-    --font-heading: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, sans-serif;
-    --font-body: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, sans-serif;
+    /* Typography - Youthful, Dynamic & Premium Fonts (Outfit + Plus Jakarta Sans + Lexend) */
+    --font-heading: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+    --font-body: 'Plus Jakarta Sans', 'Lexend', sans-serif;
     --font-mono: SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
     
     /* Layout constants */

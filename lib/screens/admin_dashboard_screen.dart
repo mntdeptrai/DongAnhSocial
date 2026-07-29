@@ -4,8 +4,9 @@ import 'map_screen.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   final VoidCallback? onBack;
+  final int initialTabIndex;
 
-  const AdminDashboardScreen({super.key, this.onBack});
+  const AdminDashboardScreen({super.key, this.onBack, this.initialTabIndex = 0});
 
   @override
   State<AdminDashboardScreen> createState() => _AdminDashboardScreenState();
@@ -20,15 +21,23 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
   List<dynamic> _eateriesList = [];
   List<dynamic> _categoriesList = [];
   List<dynamic> _reviewsList = [];
+  List<dynamic> _schoolsList = [];
+  List<dynamic> _stallsList = [];
 
   String _userSearchQuery = '';
   String _eaterySearchQuery = '';
+  String _schoolSearchQuery = '';
+  String _stallSearchQuery = '';
   String _selectedCategoryFilter = 'Tất cả';
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(
+      length: 5,
+      initialIndex: widget.initialTabIndex.clamp(0, 4),
+      vsync: this,
+    );
     _loadAdminData();
   }
 
@@ -50,6 +59,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
             _eateriesList = data['eateries'] ?? [];
             _categoriesList = data['categories'] ?? [];
             _reviewsList = data['reviews'] ?? [];
+            _schoolsList = (data['schools'] is List) ? data['schools'] : [];
+            _stallsList = (data['stalls'] is List) ? data['stalls'] : [];
           });
         }
       } else {
@@ -57,6 +68,37 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
         if (mounted) {
           setState(() {
             _usersList = users;
+          });
+        }
+      }
+
+      // Fetch real Schools from DB if empty
+      if (_schoolsList.isEmpty) {
+        final educationData = await ApiService.getEateries(category: 'smart-education-map');
+        if (educationData.isNotEmpty && mounted) {
+          setState(() {
+            _schoolsList = educationData.map((e) => {
+              'id': e['id'],
+              'name': e['name'],
+              'address': e['address'] ?? 'Xã Đông Anh, Hà Nội',
+              'level': e['category_name'] ?? 'Trường học',
+            }).toList();
+          });
+        }
+      }
+
+      // Fetch real Market Stalls from DB if empty
+      if (_stallsList.isEmpty) {
+        final marketData = await ApiService.getManagerDashboardData();
+        if (marketData['stalls'] is List && (marketData['stalls'] as List).isNotEmpty && mounted) {
+          setState(() {
+            _stallsList = (marketData['stalls'] as List).map((s) => {
+              'id': s['id'],
+              'name': s['name'],
+              'vendor': s['address'] ?? 'Chủ gian hàng Đông Anh',
+              'phone': s['phone'] ?? 'Chưa cập nhật',
+              'status': s['status'] ?? 'approved',
+            }).toList();
           });
         }
       }
@@ -516,6 +558,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
         ],
         bottom: TabBar(
           controller: _tabController,
+          isScrollable: true,
           indicatorColor: crimsonColor,
           indicatorWeight: 3,
           labelColor: Colors.white,
@@ -523,9 +566,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
           labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
           tabs: const [
             Tab(icon: Icon(Icons.dashboard_rounded, size: 18), text: 'Tổng quan'),
+            Tab(icon: Icon(Icons.location_on_rounded, size: 18), text: 'Địa điểm & Cơ sở'),
+            Tab(icon: Icon(Icons.school_rounded, size: 18), text: 'Trường học & Sáp nhập'),
+            Tab(icon: Icon(Icons.shopping_bag_rounded, size: 18), text: 'Gian hàng & OCOP'),
             Tab(icon: Icon(Icons.people_alt_rounded, size: 18), text: 'Tài khoản'),
-            Tab(icon: Icon(Icons.storefront_rounded, size: 18), text: 'Cơ sở Bản đồ'),
-            Tab(icon: Icon(Icons.category_rounded, size: 18), text: 'Danh mục'),
           ],
         ),
       ),
@@ -535,9 +579,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
               controller: _tabController,
               children: [
                 _buildOverviewTab(),
-                _buildUsersTab(crimsonColor),
                 _buildEateriesTab(crimsonColor),
-                _buildCategoriesAndReviewsTab(crimsonColor),
+                _buildSchoolsTab(crimsonColor),
+                _buildStallsTab(crimsonColor),
+                _buildUsersTab(crimsonColor),
               ],
             ),
     );
@@ -1127,6 +1172,298 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
             ),
           );
         }).toList(),
+      ],
+    );
+  }
+
+  // =========================================================================
+  // TAB 3: 🏫 QUẢN LÝ TRƯỜNG HỌC & SÁP NHẬP
+  // =========================================================================
+  Widget _buildSchoolsTab(Color crimsonColor) {
+    final filtered = _schoolsList.where((sch) {
+      final q = _schoolSearchQuery.toLowerCase();
+      final name = (sch['name'] ?? '').toString().toLowerCase();
+      final address = (sch['address'] ?? '').toString().toLowerCase();
+      return name.contains(q) || address.contains(q);
+    }).toList();
+
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: TextField(
+                onChanged: (val) => setState(() => _schoolSearchQuery = val),
+                decoration: InputDecoration(
+                  hintText: 'Search trường học, mầm non, tiểu học...',
+                  prefixIcon: const Icon(Icons.search_rounded, color: Colors.grey),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  fillColor: Colors.white,
+                  filled: true,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF0284C7),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              ),
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('🏫 Chức năng Thêm Trường học & Bản đồ Tuyển sinh đã mở!')),
+                );
+              },
+              icon: const Icon(Icons.add_rounded, color: Colors.white, size: 18),
+              label: const Text('Thêm Trường', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: const Color(0xFFE0F2FE),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFFBAE6FD)),
+          ),
+          child: const Row(
+            children: [
+              Icon(Icons.school_rounded, color: Color(0xFF0284C7), size: 24),
+              SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'Quản lý hệ thống Trường học, Tuyến tuyển sinh & Phương án sáp nhập đơn vị hành chính Huyện Đông Anh.',
+                  style: TextStyle(fontSize: 12, color: Color(0xFF0369A1), fontWeight: FontWeight.w500),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        if (filtered.isEmpty)
+          const Center(
+            child: Padding(
+              padding: EdgeInsets.all(32),
+              child: Text('Không tìm thấy trường học nào.', style: TextStyle(color: Colors.grey)),
+            ),
+          )
+        else
+          ...filtered.map((sch) {
+            return Card(
+              margin: const EdgeInsets.only(bottom: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+              child: Padding(
+                padding: const EdgeInsets.all(14),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 46,
+                      height: 46,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE0F2FE),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: const Icon(Icons.school_rounded, color: Color(0xFF0284C7)),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            sch['name'] ?? 'Trường Mầm Non Đông Anh',
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '📍 ${sch['address'] ?? 'Xã Đông Anh, Huyện Đông Anh, Hà Nội'}',
+                            style: const TextStyle(fontSize: 12, color: Colors.grey),
+                          ),
+                          const SizedBox(height: 4),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Colors.blue.shade50,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              'Cấp: ${sch['level'] ?? 'Mầm non / Tiểu học'}',
+                              style: TextStyle(fontSize: 10, color: Colors.blue.shade700, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.edit_note_rounded, color: Color(0xFF0284C7)),
+                      onPressed: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('✏️ Đã mở trình chỉnh sửa thông tin "${sch['name']}"')),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }).toList(),
+      ],
+    );
+  }
+
+  // =========================================================================
+  // TAB 4: 🛍️ QUẢN LÝ GIAN HÀNG & OCOP
+  // =========================================================================
+  Widget _buildStallsTab(Color crimsonColor) {
+    final filtered = _stallsList.where((stl) {
+      final q = _stallSearchQuery.toLowerCase();
+      final name = (stl['name'] ?? '').toString().toLowerCase();
+      final vendor = (stl['vendor'] ?? '').toString().toLowerCase();
+      return name.contains(q) || vendor.contains(q);
+    }).toList();
+
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: TextField(
+                onChanged: (val) => setState(() => _stallSearchQuery = val),
+                decoration: InputDecoration(
+                  hintText: 'Search gian hàng, sản phẩm OCOP...',
+                  prefixIcon: const Icon(Icons.search_rounded, color: Colors.grey),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  fillColor: Colors.white,
+                  filled: true,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF059669),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              ),
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('🛍️ Mở kênh đăng ký Gian Hàng OCOP mới!')),
+                );
+              },
+              icon: const Icon(Icons.storefront_rounded, color: Colors.white, size: 18),
+              label: const Text('Tạo Gian Hàng', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: const Color(0xFFD1FAE5),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFFA7F3D0)),
+          ),
+          child: const Row(
+            children: [
+              Icon(Icons.shopping_bag_rounded, color: Color(0xFF059669), size: 24),
+              SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'Quản lý danh sách Gian hàng Chợ Truyền thống, Đặc sản OCOP Đông Anh & Duyệt người bán hàng (Seller).',
+                  style: TextStyle(fontSize: 12, color: Color(0xFF047857), fontWeight: FontWeight.w500),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        if (filtered.isEmpty)
+          const Center(
+            child: Padding(
+              padding: EdgeInsets.all(32),
+              child: Text('Không tìm thấy gian hàng nào.', style: TextStyle(color: Colors.grey)),
+            ),
+          )
+        else
+          ...filtered.map((stl) {
+            final isApproved = stl['status'] == 'approved';
+            return Card(
+              margin: const EdgeInsets.only(bottom: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+              child: Padding(
+                padding: const EdgeInsets.all(14),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 46,
+                      height: 46,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFD1FAE5),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: const Icon(Icons.storefront_rounded, color: Color(0xFF059669)),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            stl['name'] ?? 'Gian hàng OCOP Đông Anh',
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Chủ gian: ${stl['vendor'] ?? 'Chưa xác định'} | SĐT: ${stl['phone'] ?? '0988xxx'}',
+                            style: const TextStyle(fontSize: 12, color: Colors.grey),
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: isApproved ? Colors.green.shade50 : Colors.amber.shade50,
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  isApproved ? '✅ Đã duyệt' : '⏳ Chờ duyệt',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    color: isApproved ? Colors.green.shade700 : Colors.amber.shade800,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    Switch(
+                      value: isApproved,
+                      activeColor: const Color(0xFF059669),
+                      onChanged: (val) {
+                        setState(() {
+                          stl['status'] = val ? 'approved' : 'pending';
+                        });
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }).toList(),
       ],
     );
   }

@@ -41,10 +41,10 @@
     <!-- Leaflet.js Map Assets -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     
-    <!-- Google Fonts Preload: Outfit (heading) + Be Vietnam Pro (body) -->
+    <!-- Google Fonts Preload: Outfit (Headings - Dynamic/Youthful) + Plus Jakarta Sans & Lexend (Body) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,500&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=Sora:wght@400;600;700;800&display=swap" rel="stylesheet">
     
     <!-- SweetAlert2 for modern popup alerts -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -787,7 +787,7 @@
             flex-direction: column;
             overflow: hidden;
             transition: height 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-            font-family: 'Be Vietnam Pro', -apple-system, sans-serif;
+            font-family: 'Plus Jakarta Sans', sans-serif;
         }
         .fchat-header {
             background: #ffffff;
@@ -902,7 +902,7 @@
 
     <div id="floating-chat-container" 
          x-data 
-         style="position: fixed; bottom: 24px; right: 24px; display: flex; gap: 14px; z-index: 99999; align-items: flex-end; pointer-events: none; font-family: 'Be Vietnam Pro', sans-serif;">
+         style="position: fixed; bottom: 24px; right: 24px; display: flex; gap: 14px; z-index: 99999; align-items: flex-end; pointer-events: none; font-family: 'Plus Jakarta Sans', sans-serif;">
         
         <template x-for="(chat, index) in $store.chatStore.openChats" :key="chat.id">
             <div class="fchat-window"
@@ -1307,7 +1307,7 @@
     <div id="cartToastContainer" style="position: fixed; top: 90px; right: 24px; z-index: 9999999; display: flex; flex-direction: column; gap: 8px; pointer-events: none;"></div>
 
     <style>
-        #cartDrawer { font-family: 'Be Vietnam Pro', sans-serif; }
+        #cartDrawer { font-family: 'Plus Jakarta Sans', sans-serif; }
         #cartDrawerList { gap: 0; }
         .cart-group-header {
             background: linear-gradient(135deg, rgba(0, 168, 107, 0.08), rgba(0, 168, 107, 0.04));

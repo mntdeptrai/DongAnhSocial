@@ -96,7 +96,7 @@ class MyApp extends StatelessWidget {
           surface: Colors.white,
         ),
         scaffoldBackgroundColor: const Color(0xFFF8FAFC),
-        fontFamily: 'Be Vietnam Pro',
+        fontFamily: 'Plus Jakarta Sans',
         appBarTheme: const AppBarTheme(
           centerTitle: false,
           elevation: 0,
