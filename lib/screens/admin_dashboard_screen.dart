@@ -74,7 +74,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
 
       // Fetch real Schools from DB if empty
       if (_schoolsList.isEmpty) {
-        final educationData = await ApiService.getEateries(category: 'smart-education-map');
+        final educationData = await ApiService.getEateries('smart-education-map');
         if (educationData.isNotEmpty && mounted) {
           setState(() {
             _schoolsList = educationData.map((e) => {
