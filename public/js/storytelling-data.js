@@ -7,7 +7,7 @@
 window.STORYTELLING_SCHOOLS = {
     "mn-phuc-loc": {
         "mergedSchool": {
-            "name": "Mầm non Phúc Lộc",
+            "name": "Trường Mầm non Phúc Lộc",
             "address": "Thôn Hùng Sơn, Xã Đông Anh, Hà Nội",
             "phone": "024 3883 0001",
             "principal": "Cô Đỗ Thị Hậu",
@@ -65,7 +65,7 @@ window.STORYTELLING_SCHOOLS = {
     },
     "mn-co-loa": {
         "mergedSchool": {
-            "name": "Mầm non Cổ Loa",
+            "name": "Trường Mầm non Cổ Loa",
             "address": "Thôn Hồng Lạc, Xã Đông Anh",
             "phone": "024 3883 0002",
             "principal": "Cô Nguyễn Thị Nhàn",
@@ -123,7 +123,7 @@ window.STORYTELLING_SCHOOLS = {
     },
     "mn-mai-lam": {
         "mergedSchool": {
-            "name": "Mầm non Mai Lâm",
+            "name": "Trường Mầm non Mai Lâm",
             "address": "Thôn Mai Lâm,xã Đông Anh",
             "phone": "024 3883 0003",
             "principal": "Cô Nguyễn Thị Vân Anh",
@@ -181,7 +181,7 @@ window.STORYTELLING_SCHOOLS = {
     },
     "mn-viet-hung": {
         "mergedSchool": {
-            "name": "Mầm non Việt Hùng",
+            "name": "Trường Mầm non Việt Hùng",
             "address": "Thôn Gia Lương, Đông Anh",
             "phone": "024 3883 0004",
             "principal": "Cô Hoàng Thị Quỳnh Hoa",
@@ -255,7 +255,7 @@ window.STORYTELLING_SCHOOLS = {
     },
     "mn-uy-no": {
         "mergedSchool": {
-            "name": "Mầm non Uy Nỗ",
+            "name": "Trường Mầm non Uy Nỗ",
             "address": "Thôn Uy Nỗ,xã Đông Anh, Hà Nội",
             "phone": "024 3883 0005",
             "principal": "Cô Trần Thị Yên Giang",
@@ -313,7 +313,7 @@ window.STORYTELLING_SCHOOLS = {
     },
     "mn-dong-hoi": {
         "mergedSchool": {
-            "name": "Mầm non Đông Hội",
+            "name": "Trường Mầm non Đông Hội",
             "address": "Thôn Đông Hội, Đông Anh, Hà Nội",
             "phone": "024 3883 0006",
             "principal": "Cô Trương Thị Nga",
@@ -371,7 +371,7 @@ window.STORYTELLING_SCHOOLS = {
     },
     "th-an-duong-vuong": {
         "mergedSchool": {
-            "name": "Tiểu học An Dương Vương",
+            "name": "Trường Tiểu học An Dương Vương",
             "address": "Thôn Gia Lương, Xã Đông Anh, Hà Nội",
             "phone": "024 3883 0007",
             "principal": "Cô Dương Thị Lan Phương",
@@ -417,7 +417,7 @@ window.STORYTELLING_SCHOOLS = {
     },
     "th-dong-hoi": {
         "mergedSchool": {
-            "name": "Tiểu học Đông Hội",
+            "name": "Trường Tiểu học Đông Hội",
             "address": " Thôn Đông Trù, Xã Đông Anh,",
             "phone": "024 3883 0008",
             "principal": "Cô Phạm Thị Tân Trang",
@@ -475,7 +475,7 @@ window.STORYTELLING_SCHOOLS = {
     },
     "th-viet-hung": {
         "mergedSchool": {
-            "name": "Tiểu học Việt Hùng",
+            "name": "Trường Tiểu học Việt Hùng",
             "address": "Thôn Cổ Vân, Xã Đông Anh, Hà Nội",
             "phone": "024 3883 0009",
             "principal": "Cô Đỗ Thị Kim Loan",
@@ -533,7 +533,7 @@ window.STORYTELLING_SCHOOLS = {
     },
     "thcs-nguyen-huy-tuong": {
         "mergedSchool": {
-            "name": "THCS Nguyễn Huy Tưởng",
+            "name": "Trường THCS Nguyễn Huy Tưởng",
             "address": "Thôn Đông Anh, xã Đông Anh, Hà Nội",
             "phone": "024 3883 0010",
             "principal": "Cô Nguyễn Thị Thu Hà",
@@ -579,7 +579,7 @@ window.STORYTELLING_SCHOOLS = {
     },
     "thcs-ngo-quyen": {
         "mergedSchool": {
-            "name": "THCS Ngô Quyền",
+            "name": "Trường THCS Ngô Quyền",
             "address": "Thôn Đông Trù, xã Đông Anh, Hà Nội",
             "phone": "024 3883 0011",
             "principal": "Cô Chử Thị Hồng Yến",
@@ -625,7 +625,7 @@ window.STORYTELLING_SCHOOLS = {
     },
     "thcs-an-duong-vuong": {
         "mergedSchool": {
-            "name": "THCS An Dương Vương",
+            "name": "Trường THCS An Dương Vương",
             "address": "Thôn Gia Lương, xã Đông Anh, Hà Nội",
             "phone": "024 3883 0012",
             "principal": "Cô Đỗ Thị Thanh Thủy",
@@ -683,7 +683,7 @@ window.STORYTELLING_SCHOOLS = {
     },
     "thcs-xuan-canh": {
         "mergedSchool": {
-            "name": "THCS Xuân Canh",
+            "name": "Trường THCS Xuân Canh",
             "address": "Thôn Xuân Canh, Đông Anh, Hà Nội",
             "phone": "024 3883 0013",
             "principal": "Thầy Nguyễn Đình Điềm",

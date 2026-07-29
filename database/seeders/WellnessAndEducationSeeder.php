@@ -51,7 +51,46 @@ class WellnessAndEducationSeeder extends Seeder
 
         // 2. Education data (Chính xác 18 trường & danh sách các trường sáp nhập thành phần từ File Excel PA3)
         $educationData = [
-            // A. SẮP XẾP CÁC TRƯỜNG MẦM NON (06 TRƯỜNG)
+            // 1. Trường Tiểu học An Dương Vương
+            [
+                'name' => 'TH An Dương Vương',
+                'address' => 'Thôn Gia Lương, Xã Việt Hùng, Đông Anh, Hà Nội',
+                'commune_slug' => 'to-dan-pho-so-6',
+                'phone' => '02438830007',
+                'opening_hours' => '07:30 - 17:00',
+                'latitude' => 21.1420,
+                'longitude' => 105.8690,
+                'price_range' => 'Công lập chuẩn (28 lớp)',
+                'description' => 'Trường TH An Dương Vương giữ nguyên quy mô (28 lớp, 1.009 học sinh). Trường CLC.',
+                'image_path' => 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=800&q=80',
+            ],
+            // 2. Trường THCS Nguyễn Huy Tưởng
+            [
+                'name' => 'THCS Nguyễn Huy Tưởng',
+                'address' => 'Tổ 4, Thị trấn Đông Anh, Đông Anh, Hà Nội',
+                'commune_slug' => 'to-dan-pho-so-6',
+                'phone' => '02438830010',
+                'opening_hours' => '07:00 - 17:00',
+                'latitude' => 21.1360,
+                'longitude' => 105.8450,
+                'price_range' => 'Công lập chất lượng cao (30 lớp)',
+                'description' => 'Trường THCS Nguyễn Huy Tưởng giữ nguyên quy mô (30 lớp, 1.294 học sinh). Trường CLC.',
+                'image_path' => 'https://images.unsplash.com/photo-1541829070764-84a7d30dd3f3?auto=format&fit=crop&w=800&q=80',
+            ],
+            // 3. Trường THCS Ngô Quyền
+            [
+                'name' => 'THCS Ngô Quyền',
+                'address' => 'Thị trấn Đông Anh, Đông Anh, Hà Nội',
+                'commune_slug' => 'to-dan-pho-so-6',
+                'phone' => '02438830011',
+                'opening_hours' => '07:00 - 17:00',
+                'latitude' => 21.1380,
+                'longitude' => 105.8420,
+                'price_range' => 'Công lập chuẩn (25 lớp)',
+                'description' => 'Trường THCS Ngô Quyền giữ nguyên quy mô (25 lớp, 996 học sinh).',
+                'image_path' => 'https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=800&q=80',
+            ],
+            // 4. Trường Mầm non Phúc Lộc
             [
                 'name' => 'MN Phúc Lộc',
                 'address' => 'Xã Phúc Lộc, Đông Anh, Hà Nội',
@@ -61,9 +100,10 @@ class WellnessAndEducationSeeder extends Seeder
                 'latitude' => 21.1685,
                 'longitude' => 105.8920,
                 'price_range' => 'Công lập chuẩn (30 lớp)',
-                'description' => 'Trường MN Phúc Lộc theo PA3: Sáp nhập từ Mầm non Phúc Lộc (16 lớp, 405 HS) và Mầm non Sao Mai (14 lớp, 354 HS). Tổng quy mô 30 lớp, 759 học sinh.',
+                'description' => 'Trường MN Phúc Lộc: Sáp nhập từ Mầm non Phúc Lộc (16 lớp, 405 HS) và Mầm non Sao Mai (14 lớp, 354 HS). Tổng quy mô 30 lớp, 759 học sinh.',
                 'image_path' => 'https://images.unsplash.com/photo-1587654780291-39c9404d746b?auto=format&fit=crop&w=800&q=80',
             ],
+            // 5. Trường Mầm non Cổ Loa
             [
                 'name' => 'MN Cổ Loa',
                 'address' => 'Xã Cổ Loa, Đông Anh, Hà Nội',
@@ -73,7 +113,7 @@ class WellnessAndEducationSeeder extends Seeder
                 'latitude' => 21.1398,
                 'longitude' => 105.8655,
                 'price_range' => 'Công lập chuẩn (36 lớp)',
-                'description' => 'Trường MN Cổ Loa theo PA3: Sáp nhập từ Mầm non Cổ Loa (18 lớp, 564 HS) và Mầm non Thành Loa (18 lớp, 383 HS). Tổng quy mô 36 lớp, 947 học sinh.',
+                'description' => 'Trường MN Cổ Loa: Sáp nhập từ Mầm non Cổ Loa (18 lớp, 564 HS) và Mầm non Thành Loa (18 lớp, 383 HS). Tổng quy mô 36 lớp, 947 học sinh.',
                 'image_path' => 'https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=800&q=80',
             ],
             [
@@ -85,7 +125,7 @@ class WellnessAndEducationSeeder extends Seeder
                 'latitude' => 21.1085,
                 'longitude' => 105.8820,
                 'price_range' => 'Công lập chuẩn (32 lớp)',
-                'description' => 'Trường MN Mai Lâm theo PA3: Sáp nhập từ Mầm non Thái Bình (18 lớp, 521 HS) và Mầm non Mai Lâm (14 lớp, 345 HS). Tổng quy mô 32 lớp, 866 học sinh.',
+                'description' => 'Trường MN Mai Lâm: Sáp nhập từ Mầm non Thái Bình (18 lớp, 521 HS) và Mầm non Mai Lâm (14 lớp, 345 HS). Tổng quy mô 32 lớp, 866 học sinh.',
                 'image_path' => 'https://images.unsplash.com/photo-1576495199011-87b3f6c21dbb?auto=format&fit=crop&w=800&q=80',
             ],
             [
@@ -97,7 +137,7 @@ class WellnessAndEducationSeeder extends Seeder
                 'latitude' => 21.1480,
                 'longitude' => 105.8750,
                 'price_range' => 'Công lập chuẩn (55 lớp)',
-                'description' => 'Trường MN Việt Hùng theo PA3: Sáp nhập từ Mầm non Dục Nội (17 lớp, 525 HS), Mầm non Việt Hùng (12 lớp, 268 HS) và Mầm non Dục Tú (26 lớp, 647 HS). Tổng quy mô 55 lớp, 1.440 học sinh.',
+                'description' => 'Trường MN Việt Hùng: Sáp nhập từ Mầm non Dục Nội (17 lớp, 525 HS), Mầm non Việt Hùng (12 lớp, 268 HS) và Mầm non Dục Tú (26 lớp, 647 HS). Tổng quy mô 55 lớp, 1.440 học sinh.',
                 'image_path' => 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=800&q=80',
             ],
             [
@@ -109,7 +149,7 @@ class WellnessAndEducationSeeder extends Seeder
                 'latitude' => 21.1390,
                 'longitude' => 105.8500,
                 'price_range' => 'Công lập chuẩn (33 lớp)',
-                'description' => 'Trường MN Uy Nỗ theo PA3: Sáp nhập từ Mầm non Uy Nỗ A (15 lớp, 420 HS) và Mầm non Uy Nỗ (18 lớp, 490 HS). Tổng quy mô 33 lớp, 910 học sinh.',
+                'description' => 'Trường MN Uy Nỗ: Sáp nhập từ Mầm non Uy Nỗ A (15 lớp, 420 HS) và Mầm non Uy Nỗ (18 lớp, 490 HS). Tổng quy mô 33 lớp, 910 học sinh.',
                 'image_path' => 'https://images.unsplash.com/photo-1588072432836-e10032774350?auto=format&fit=crop&w=800&q=80',
             ],
             [
@@ -121,23 +161,11 @@ class WellnessAndEducationSeeder extends Seeder
                 'latitude' => 21.0950,
                 'longitude' => 105.8710,
                 'price_range' => 'Công lập chuẩn (48 lớp)',
-                'description' => 'Trường MN Đông Hội theo PA3: Sáp nhập từ Mầm non Đông Hội (28 lớp, 875 HS) và Mầm non Xuân Canh (20 lớp, 589 HS). Tổng quy mô 48 lớp, 1.464 học sinh.',
+                'description' => 'Trường MN Đông Hội: Sáp nhập từ Mầm non Đông Hội (28 lớp, 875 HS) và Mầm non Xuân Canh (20 lớp, 589 HS). Tổng quy mô 48 lớp, 1.464 học sinh.',
                 'image_path' => 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=800&q=80',
             ],
 
-            // B. SẮP XẾP CÁC TRƯỜNG TIỂU HỌC (03 TRƯỜNG)
-            [
-                'name' => 'TH An Dương Vương',
-                'address' => 'Thôn Gia Lương, Xã Việt Hùng, Đông Anh, Hà Nội',
-                'commune_slug' => 'to-dan-pho-so-6',
-                'phone' => '02438830007',
-                'opening_hours' => '07:30 - 17:00',
-                'latitude' => 21.1420,
-                'longitude' => 105.8690,
-                'price_range' => 'Công lập chuẩn (28 lớp)',
-                'description' => 'Trường TH An Dương Vương giữ nguyên quy mô theo PA3 (28 lớp, 1.009 học sinh). Trường CLC.',
-                'image_path' => 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=800&q=80',
-            ],
+            // B. TRƯỜNG TIỂU HỌC & THCS TIẾP THEO
             [
                 'name' => 'TH Đông Hội',
                 'address' => 'Xã Đông Hội, Đông Anh, Hà Nội',
@@ -147,7 +175,7 @@ class WellnessAndEducationSeeder extends Seeder
                 'latitude' => 21.0930,
                 'longitude' => 105.8680,
                 'price_range' => 'Công lập chuẩn (55 lớp)',
-                'description' => 'Trường TH Đông Hội theo PA3: Sáp nhập từ Tiểu học Đông Hội (38 lớp, 1.887 HS) và Tiểu học Xuân Canh (17 lớp, 539 HS). Tổng quy mô 55 lớp, 2.426 học sinh.',
+                'description' => 'Trường TH Đông Hội: Sáp nhập từ Tiểu học Đông Hội (38 lớp, 1.887 HS) và Tiểu học Xuân Canh (17 lớp, 539 HS). Tổng quy mô 55 lớp, 2.426 học sinh.',
                 'image_path' => 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=800&q=80',
             ],
             [
@@ -159,34 +187,8 @@ class WellnessAndEducationSeeder extends Seeder
                 'latitude' => 21.1450,
                 'longitude' => 105.8780,
                 'price_range' => 'Công lập chuẩn (40 lớp)',
-                'description' => 'Trường TH Việt Hùng theo PA3: Sáp nhập từ Tiểu học Việt Hùng (21 lớp, 667 HS) và Tiểu học Việt Hùng 2 (19 lớp, 570 HS). Tổng quy mô 40 lớp, 1.237 học sinh.',
+                'description' => 'Trường TH Việt Hùng: Sáp nhập từ Tiểu học Việt Hùng (21 lớp, 667 HS) và Tiểu học Việt Hùng 2 (19 lớp, 570 HS). Tổng quy mô 40 lớp, 1.237 học sinh.',
                 'image_path' => 'https://images.unsplash.com/photo-1564981797816-1043664bf78d?auto=format&fit=crop&w=800&q=80',
-            ],
-
-            // C. SẮP XẾP CÁC TRƯỜNG THCS (04 TRƯỜNG)
-            [
-                'name' => 'THCS Nguyễn Huy Tưởng',
-                'address' => 'Tổ 4, Thị trấn Đông Anh, Đông Anh, Hà Nội',
-                'commune_slug' => 'to-dan-pho-so-6',
-                'phone' => '02438830010',
-                'opening_hours' => '07:00 - 17:00',
-                'latitude' => 21.1360,
-                'longitude' => 105.8450,
-                'price_range' => 'Công lập chất lượng cao (30 lớp)',
-                'description' => 'Trường THCS Nguyễn Huy Tưởng giữ nguyên quy mô theo PA3 (30 lớp, 1.294 học sinh). Trường CLC.',
-                'image_path' => 'https://images.unsplash.com/photo-1541829070764-84a7d30dd3f3?auto=format&fit=crop&w=800&q=80',
-            ],
-            [
-                'name' => 'THCS Ngô Quyền',
-                'address' => 'Thị trấn Đông Anh, Đông Anh, Hà Nội',
-                'commune_slug' => 'to-dan-pho-so-6',
-                'phone' => '02438830011',
-                'opening_hours' => '07:00 - 17:00',
-                'latitude' => 21.1380,
-                'longitude' => 105.8420,
-                'price_range' => 'Công lập chuẩn (25 lớp)',
-                'description' => 'Trường THCS Ngô Quyền giữ nguyên quy mô theo PA3 (25 lớp, 996 học sinh).',
-                'image_path' => 'https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=800&q=80',
             ],
             [
                 'name' => 'THCS An Dương Vương',
@@ -197,7 +199,7 @@ class WellnessAndEducationSeeder extends Seeder
                 'latitude' => 21.1650,
                 'longitude' => 105.8890,
                 'price_range' => 'Công lập chuẩn (50 lớp)',
-                'description' => 'Trường THCS An Dương Vương theo PA3: Sáp nhập từ THCS An Dương Vương (19 lớp, 739 HS) và THCS Việt Hùng (31 lớp, 1.281 HS). Tổng quy mô 50 lớp, 2.020 học sinh.',
+                'description' => 'Trường THCS An Dương Vương: Sáp nhập từ THCS An Dương Vương (19 lớp, 739 HS) và THCS Việt Hùng (31 lớp, 1.281 HS). Tổng quy mô 50 lớp, 2.020 học sinh.',
                 'image_path' => 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=800&q=80',
             ],
             [
@@ -209,7 +211,7 @@ class WellnessAndEducationSeeder extends Seeder
                 'latitude' => 21.0890,
                 'longitude' => 105.8560,
                 'price_range' => 'Công lập chuẩn (45 lớp)',
-                'description' => 'Trường THCS Xuân Canh theo PA3: Sáp nhập từ THCS Đông Hội (31 lớp, 1.112 HS) và THCS Xuân Canh (14 lớp, 497 HS). Tổng quy mô 45 lớp, 1.609 học sinh.',
+                'description' => 'Trường THCS Xuân Canh: Sáp nhập từ THCS Đông Hội (31 lớp, 1.112 HS) và THCS Xuân Canh (14 lớp, 497 HS). Tổng quy mô 45 lớp, 1.609 học sinh.',
                 'image_path' => 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=800&q=80',
             ],
 
@@ -223,7 +225,7 @@ class WellnessAndEducationSeeder extends Seeder
                 'latitude' => 21.1050,
                 'longitude' => 105.8800,
                 'price_range' => 'Công lập liên cấp (50 lớp)',
-                'description' => 'Trường liên cấp Mai Lâm theo PA3: Hợp nhất từ Tiểu học Ngô Tất Tố (29 lớp, 928 HS) và THCS Mai Lâm (21 lớp, 712 HS). Tổng quy mô 50 lớp, 1.640 học sinh.',
+                'description' => 'Trường liên cấp Mai Lâm: Hợp nhất từ Tiểu học Ngô Tất Tố (29 lớp, 928 HS) và THCS Mai Lâm (21 lớp, 712 HS). Tổng quy mô 50 lớp, 1.640 học sinh.',
                 'image_path' => 'https://images.unsplash.com/photo-1562774053-701939374585?auto=format&fit=crop&w=800&q=80',
             ],
             [
@@ -235,7 +237,7 @@ class WellnessAndEducationSeeder extends Seeder
                 'latitude' => 21.1380,
                 'longitude' => 105.8620,
                 'price_range' => 'Công lập liên cấp (52 lớp)',
-                'description' => 'Trường liên cấp Cổ Loa theo PA3: Hợp nhất từ Tiểu học Cổ Loa (30 lớp, 1.166 HS) và THCS Cổ Loa (22 lớp, 928 HS). Tổng quy mô 52 lớp, 2.094 học sinh.',
+                'description' => 'Trường liên cấp Cổ Loa: Hợp nhất từ Tiểu học Cổ Loa (30 lớp, 1.166 HS) và THCS Cổ Loa (22 lớp, 928 HS). Tổng quy mô 52 lớp, 2.094 học sinh.',
                 'image_path' => 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=800&q=80',
             ],
             [
@@ -247,7 +249,7 @@ class WellnessAndEducationSeeder extends Seeder
                 'latitude' => 21.1410,
                 'longitude' => 105.8550,
                 'price_range' => 'Công lập liên cấp (50 lớp)',
-                'description' => 'Trường liên cấp Đào Duy Tùng theo PA3: Hợp nhất từ Tiểu học Đào Duy Tùng (31 lớp, 1.016 HS) và THCS Đào Duy Tùng (19 lớp, 701 HS). Tổng quy mô 50 lớp, 1.717 học sinh.',
+                'description' => 'Trường liên cấp Đào Duy Tùng: Hợp nhất từ Tiểu học Đào Duy Tùng (31 lớp, 1.016 HS) và THCS Đào Duy Tùng (19 lớp, 701 HS). Tổng quy mô 50 lớp, 1.717 học sinh.',
                 'image_path' => 'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?auto=format&fit=crop&w=800&q=80',
             ],
             [
@@ -259,7 +261,7 @@ class WellnessAndEducationSeeder extends Seeder
                 'latitude' => 21.1250,
                 'longitude' => 105.8950,
                 'price_range' => 'Công lập liên cấp (60 lớp)',
-                'description' => 'Trường liên cấp Dục Tú theo PA3: Hợp nhất từ Tiểu học Dục Tú (29 lớp, 1.109 HS) và THCS Dục Tú (31 lớp, 1.189 HS). Tổng quy mô 60 lớp, 2.298 học sinh.',
+                'description' => 'Trường liên cấp Dục Tú: Hợp nhất từ Tiểu học Dục Tú (29 lớp, 1.109 HS) và THCS Dục Tú (31 lớp, 1.189 HS). Tổng quy mô 60 lớp, 2.298 học sinh.',
                 'image_path' => 'https://images.unsplash.com/photo-1592280771190-3e2e4d571952?auto=format&fit=crop&w=800&q=80',
             ],
             [
@@ -271,7 +273,7 @@ class WellnessAndEducationSeeder extends Seeder
                 'latitude' => 21.1390,
                 'longitude' => 105.8500,
                 'price_range' => 'Công lập liên cấp (50 lớp)',
-                'description' => 'Trường liên cấp Uy Nỗ theo PA3: Hợp nhất từ Tiểu học Uy Nỗ (29 lớp, 892 HS) và THCS Uy Nỗ (21 lớp, 601 HS). Tổng quy mô 50 lớp, 1.493 học sinh.',
+                'description' => 'Trường liên cấp Uy Nỗ: Hợp nhất từ Tiểu học Uy Nỗ (29 lớp, 892 HS) và THCS Uy Nỗ (21 lớp, 601 HS). Tổng quy mô 50 lớp, 1.493 học sinh.',
                 'image_path' => 'https://images.unsplash.com/photo-1577896851231-70ef18881754?auto=format&fit=crop&w=800&q=80',
             ],
         ];

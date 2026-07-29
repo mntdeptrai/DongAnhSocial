@@ -24,7 +24,7 @@ class VietnameseSeoHelper
         $clean = preg_replace('/^Tiểu Học\b/u', 'Tiểu học', $clean);
 
         // Đảm bảo có tiền tố "Trường" nếu chưa có
-        if (preg_replace('/^(Trường|Mầm non|Tiểu học|THCS|THPT)\b/ui', '', $clean) === $clean) {
+        if (!preg_match('/^Trường\b/ui', $clean)) {
             $clean = 'Trường ' . $clean;
         }
 

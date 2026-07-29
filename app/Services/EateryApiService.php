@@ -353,7 +353,36 @@ class EateryApiService
             });
         }
 
-        return $query->get();
+        $results = $query->get();
+
+        if ($categorySlug === 'smart-education-map' && !isset($filters['q'])) {
+            $orderedSlugs = [
+                'th-an-duong-vuong',
+                'thcs-nguyen-huy-tuong',
+                'thcs-ngo-quyen',
+                'mn-phuc-loc',
+                'mn-co-loa',
+                'mn-mai-lam',
+                'mn-viet-hung',
+                'mn-uy-no',
+                'mn-dong-hoi',
+                'th-dong-hoi',
+                'th-viet-hung',
+                'thcs-an-duong-vuong',
+                'thcs-xuan-canh',
+                'truong-lien-cap-mai-lam',
+                'truong-lien-cap-co-loa',
+                'truong-lien-cap-dao-duy-tung',
+                'truong-lien-cap-duc-tu',
+                'truong-lien-cap-uy-no',
+            ];
+            $slugOrderMap = array_flip($orderedSlugs);
+            return $results->sortBy(function($item) use ($slugOrderMap) {
+                return $slugOrderMap[$item->slug] ?? 999;
+            })->values();
+        }
+
+        return $results;
     }
 
     /**

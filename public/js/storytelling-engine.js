@@ -591,9 +591,13 @@ class SchoolStoryteller {
 
     formatSchoolTitle(name, isUpper = true) {
         if (!name) return '';
-        const isAllUpper = name === name.toUpperCase();
+        let cleanName = name.trim();
+        if (!cleanName.toUpperCase().startsWith('TRƯỜNG')) {
+            cleanName = (isUpper || name === name.toUpperCase() ? 'TRƯỜNG ' : 'Trường ') + cleanName;
+        }
+        const isAllUpper = cleanName === cleanName.toUpperCase();
         const forceUpper = isUpper || isAllUpper;
-        let str = forceUpper ? name.toUpperCase() : name;
+        let str = forceUpper ? cleanName.toUpperCase() : cleanName;
         const upper = str.toUpperCase();
         const conjunction = forceUpper ? 'VÀ' : 'và';
 
@@ -629,7 +633,7 @@ class SchoolStoryteller {
         const formattedIntroTitle = this.formatSchoolTitle(schoolNameUpper, true);
 
         if (this.isStandaloneSchool()) {
-            document.getElementById('storyIntroTitle').innerHTML = `<span class="story-intro-top-heading">ĐỊNH HƯỚNG BỨC PHÁ CHẤT LƯỢNG</span><span class="story-intro-highlight">${formattedIntroTitle}</span>`;
+            document.getElementById('storyIntroTitle').innerHTML = `<span class="story-intro-top-heading">TRƯỜNG CHẤT LƯỢNG CAO</span><span class="story-intro-highlight" style="white-space: nowrap; font-size: clamp(1.2rem, 3.2vw, 2.5rem);">${formattedIntroTitle}</span>`;
             document.getElementById('storyIntroSubtitle').innerHTML = `Đơn vị giữ nguyên quy mô, khẳng định vị thế hạt nhân giáo dục <span style="white-space: nowrap;">xã Đông Anh</span>`;
         } else {
             document.getElementById('storyIntroTitle').innerHTML = `<span class="story-intro-top-heading">HÀNH TRÌNH HÌNH THÀNH</span><span class="story-intro-highlight">${formattedIntroTitle}</span>`;
