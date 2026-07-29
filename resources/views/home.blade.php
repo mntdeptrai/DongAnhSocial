@@ -37,6 +37,7 @@
 @section('title', $pageTitle)
 @section('meta_description', $pageDesc)
 @section('og_image', $pageOgImage)
+@section('canonical_url', request()->fullUrl())
 
 @section('content')
 <!-- Motion One Animation Library -->
