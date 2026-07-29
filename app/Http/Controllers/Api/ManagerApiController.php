@@ -20,7 +20,10 @@ class ManagerApiController extends Controller
     public function getManagerDashboardData(Request $request)
     {
         $stalls = Eatery::on('mysql_market')
-            ->select('id', 'name', 'address', 'phone', 'rating', 'status', 'user_id', 'created_at')
+            ->whereHas('category', function($q) {
+                $q->where('slug', 'like', '%market%')->orWhere('slug', 'like', '%ocop%');
+            })
+            ->select('id', 'name', 'address', 'phone', 'rating', 'status', 'user_id', 'created_at', 'category_id')
             ->latest()
             ->get();
 
