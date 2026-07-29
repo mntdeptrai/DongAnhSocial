@@ -672,7 +672,7 @@ class SchoolStoryteller {
             html: bookSvgHtml,
             className: 'story-ai-book-marker',
             iconSize: isMobile ? [260, 195] : [460, 345],
-            iconAnchor: isMobile ? [130, 97.5] : [230, 172.5]
+            iconAnchor: isMobile ? [130, 88.4] : [230, 156.4]
         });
 
         this.catchmentPolygon = L.marker(mPt, {

@@ -639,6 +639,9 @@
 
 .story-bright-book-aura {
     position: absolute;
+    top: 45.33%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     width: 440px;
     height: 330px;
     border-radius: 50%;
