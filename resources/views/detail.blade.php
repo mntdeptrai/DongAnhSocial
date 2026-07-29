@@ -948,11 +948,8 @@
                                 <div style="padding: 20px; flex: 1; display: flex; flex-direction: column; justify-content: space-between; gap: 12px;">
                                     <div>
                                         <h3 style="font-size: 1.08rem; font-weight: 800; color: var(--text-main); margin: 0 0 8px 0;">{{ $comp['name'] }}</h3>
-                                        <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0 0 6px 0; display: flex; align-items: center; gap: 6px;">
-                                            <span>📍</span> {{ $comp['address'] }}
-                                        </p>
                                         <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0; display: flex; align-items: center; gap: 6px;">
-                                            <span>👤</span> Đại diện: <strong>{{ $comp['principal'] }}</strong>
+                                            <span>📍</span> {{ $comp['address'] }}
                                         </p>
                                     </div>
                                     <div style="display: flex; align-items: center; justify-content: space-between; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.08); margin-top: auto;">
