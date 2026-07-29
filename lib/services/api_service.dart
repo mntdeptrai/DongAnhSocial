@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
@@ -1111,5 +1112,135 @@ class ApiService {
     } catch (e) {
       return {'success': false, 'message': 'Lỗi kết nối máy chủ: $e'};
     }
+  }
+
+  // =========================================================================
+  // MULTI-PROTOCOL / FLEXIBLE API CLIENTS (GraphQL, JSON-RPC, SSE, Streaming)
+  // =========================================================================
+
+  /// 1. GraphQL client — Gửi query động lên server để chỉ lấy các trường cần thiết
+  static Future<Map<String, dynamic>> graphqlQuery(String query) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/graphql'),
+        headers: _getHeaders(),
+        body: jsonEncode({'query': query}),
+      );
+      return jsonDecode(response.body);
+    } catch (e) {
+      return {
+        'errors': [
+          {'message': 'Lỗi kết nối GraphQL: $e'}
+        ]
+      };
+    }
+  }
+
+  /// 2. JSON-RPC 2.0 client — Hỗ trợ gọi hàm hàng loạt (batching) hoặc các hành động gộp
+  static Future<Map<String, dynamic>> jsonRpcCall(String method, {dynamic params, String? id}) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/rpc'),
+        headers: _getHeaders(),
+        body: jsonEncode({
+          'jsonrpc': '2.0',
+          'method': method,
+          if (params != null) 'params': params,
+          'id': id ?? 'mobile_${DateTime.now().millisecondsSinceEpoch}',
+        }),
+      );
+      return jsonDecode(response.body);
+    } catch (e) {
+      return {
+        'jsonrpc': '2.0',
+        'error': {'code': -32000, 'message': 'Lỗi kết nối RPC: $e'},
+        'id': id
+      };
+    }
+  }
+
+  /// 3. Server-Sent Events (SSE) Listener — Lắng nghe các sự kiện thời gian thực đẩy từ Server (một chiều)
+  static Stream<String> getSseEventStream() {
+    final client = http.Client();
+    final request = http.Request('GET', Uri.parse('$baseUrl/stream/events'));
+    
+    request.headers['Accept'] = 'text/event-stream';
+    request.headers['Cache-Control'] = 'no-cache';
+    if (_token != null) {
+      request.headers['Authorization'] = 'Bearer $_token';
+    }
+
+    final controller = StreamController<String>();
+
+    client.send(request).then((response) {
+      if (response.statusCode == 200) {
+        response.stream
+            .transform(utf8.decoder)
+            .transform(const LineSplitter())
+            .listen((line) {
+              if (line.startsWith('data: ')) {
+                controller.add(line.substring(6));
+              }
+            }, onError: (error) {
+              controller.addError(error);
+            }, onDone: () {
+              controller.close();
+              client.close();
+            });
+      } else {
+        controller.addError('SSE connection failed: status ${response.statusCode}');
+        controller.close();
+        client.close();
+      }
+    }).catchError((error) {
+      controller.addError(error);
+      controller.close();
+      client.close();
+    });
+
+    return controller.stream;
+  }
+
+  /// 4. Generative AI Streaming client — Stream dữ liệu chạy chữ progressive từ gợi ý Food Tour AI
+  static Stream<String> streamAiTour(int budget, String mood) {
+    final client = http.Client();
+    final request = http.Request('POST', Uri.parse('$baseUrl/stream/ai/generate-tour'));
+    
+    request.headers['Content-Type'] = 'application/json';
+    request.headers['Accept'] = 'text/event-stream';
+    if (_token != null) {
+      request.headers['Authorization'] = 'Bearer $_token';
+    }
+    request.body = jsonEncode({'budget': budget, 'mood': mood});
+
+    final controller = StreamController<String>();
+
+    client.send(request).then((response) {
+      if (response.statusCode == 200) {
+        response.stream
+            .transform(utf8.decoder)
+            .transform(const LineSplitter())
+            .listen((line) {
+              if (line.startsWith('data: ')) {
+                controller.add(line.substring(6));
+              }
+            }, onError: (error) {
+              controller.addError(error);
+            }, onDone: () {
+              controller.close();
+              client.close();
+            });
+      } else {
+        controller.addError('AI Streaming failed: status ${response.statusCode}');
+        controller.close();
+        client.close();
+      }
+    }).catchError((error) {
+      controller.addError(error);
+      controller.close();
+      client.close();
+    });
+
+    return controller.stream;
   }
 }

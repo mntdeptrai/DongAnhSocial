@@ -133,7 +133,10 @@ class AdminApiController extends Controller
         $stalls = [];
         try {
             $stallsQuery = \App\Models\Eatery::on('mysql_market')
-                ->select('id', 'name', 'address', 'phone', 'rating', 'status', 'user_id', 'created_at')
+                ->whereHas('category', function($q) {
+                    $q->where('slug', 'like', '%market%')->orWhere('slug', 'like', '%ocop%');
+                })
+                ->select('id', 'name', 'address', 'phone', 'rating', 'status', 'user_id', 'created_at', 'category_id')
                 ->latest()->get();
             if ($stallsQuery->isEmpty()) {
                 $stallsQuery = \App\Models\Eatery::on('mysql')
