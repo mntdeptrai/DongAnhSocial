@@ -1,6 +1,42 @@
 @extends('layouts.app')
 
-@section('title', 'Khám phá Đông Anh - Nền tảng Số hóa Dịch vụ & Du lịch Xã Đông Anh')
+@php
+    $pageTitle = 'Khám phá Đông Anh - Nền tảng Số hóa Dịch vụ & Du lịch Xã Đông Anh';
+    $pageDesc = 'Khám phá Xã Đông Anh - Tra cứu chính xác các trường học, bệnh viện, nhà hàng quán ăn, đặc sản OCOP, chợ truyền thống tại Xã Đông Anh, Hà Nội.';
+    $pageOgImage = 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=800&q=80'; // Món ăn (mặc định)
+
+    if (isset($selectedCatSlug)) {
+        if ($selectedCatSlug === 'smart-education-map') {
+            $pageTitle = 'Bản đồ Giáo dục thông minh Đông Anh - Tra cứu Trường học chuẩn hóa';
+            $pageDesc = 'Bản đồ Giáo dục thông minh Xã Đông Anh: Tra cứu thông tin chi tiết các trường mầm non, tiểu học, THCS, THPT, quy mô lớp học, học sinh và đề án sáp nhập trường lớp.';
+            $pageOgImage = 'https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?auto=format&fit=crop&w=800&q=80'; // Ảnh trường học / thư viện đẹp
+        } elseif ($selectedCatSlug === 'dong-anh-market') {
+            $pageTitle = 'Nông sản sạch & Đặc sản OCOP Đông Anh - Chợ Số Truyền Thống';
+            $pageDesc = 'Gian hàng nông sản và đặc sản OCOP Xã Đông Anh: Bản đồ số các chợ, danh sách sản phẩm OCOP đạt chuẩn 3 sao, 4 sao và thông tin nhà sản xuất uy tín.';
+            $pageOgImage = 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=800&q=80'; // Ảnh chợ / nông sản
+        } elseif ($selectedCatSlug === 'dong-anh-food-map') {
+            $pageTitle = 'Bản đồ Ẩm thực & Quán ngon nổi bật Đông Anh';
+            $pageDesc = 'Bản đồ Ẩm thực Đông Anh: Khám phá danh sách nhà hàng, quán ăn ngon nổi tiếng, ẩm thực đặc trưng của vùng đất Đông Anh, Hà Nội.';
+            $pageOgImage = 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=800&q=80'; // Ảnh món ăn ẩm thực
+        } elseif ($selectedCatSlug === 'stay-in-dong-anh') {
+            $pageTitle = 'Khách sạn, Homestay & Dịch vụ Lưu trú Đông Anh';
+            $pageDesc = 'Cơ sở lưu trú dịch vụ Đông Anh: Tìm kiếm và đặt phòng khách sạn, homestay chất lượng tốt tại Đông Anh, Hà Nội kèm theo hướng dẫn đường đi.';
+            $pageOgImage = 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80'; // Ảnh phòng khách sạn
+        } elseif ($selectedCatSlug === 'wellness-care') {
+            $pageTitle = 'Bệnh viện, Phòng khám & Dịch vụ Y tế Đông Anh';
+            $pageDesc = 'Hệ thống y tế & Chăm sóc sức khỏe Đông Anh: Tra cứu nhanh bệnh viện, trạm y tế, spa chăm sóc da, phòng khám đa khoa uy tín chất lượng.';
+            $pageOgImage = 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=800&q=80'; // Ảnh y tế chăm sóc sức khỏe
+        } elseif ($selectedCatSlug === 'discover-dong-anh-community-culture-hub' || $selectedCatSlug === 'hanh-trinh-di-san') {
+            $pageTitle = 'Hành trình Di sản Lịch sử & Thiết chế Văn hóa Đông Anh';
+            $pageDesc = 'Khám phá văn hóa Đông Anh: Điểm đến di tích lịch sử Cổ Loa, các đền chùa lễ hội truyền thống cổ xưa và nhà văn hóa cộng đồng Đông Anh.';
+            $pageOgImage = 'https://images.unsplash.com/photo-1599707367072-cd6ada2bc375?auto=format&fit=crop&w=800&q=80'; // Ảnh di sản đình chùa Cổ Loa
+        }
+    }
+@endphp
+
+@section('title', $pageTitle)
+@section('meta_description', $pageDesc)
+@section('og_image', $pageOgImage)
 
 @section('content')
 <!-- Motion One Animation Library -->
