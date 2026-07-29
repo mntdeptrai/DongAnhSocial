@@ -35,6 +35,7 @@ class SchoolStoryteller {
         this.isVoiceEnabled = false;
         this.isSkipped = false;
         this.isBusy = false;
+        this.sessionId = 0;
         this.markers = [];
         this.routePolyline = null;
         this.routePolylines = [];
@@ -132,11 +133,14 @@ class SchoolStoryteller {
     }
 
     closeAndResetModal() {
+        this.sessionId++; // Invalidate all running async loops
         this.isSkipped = true;
         this.isBusy = false;
         this.isManualMode = false;
         this.activeStep = 0;
         if (this.speechSynth) this.speechSynth.cancel();
+
+        this.resetLayers();
 
         const modal = document.getElementById('storytellingModal');
         if (modal) {
@@ -160,12 +164,18 @@ class SchoolStoryteller {
         // Always reset previous modal state & cancel running loops before launching new story
         this.closeAndResetModal();
 
+        const session = ++this.sessionId;
         this.isBusy = true;
         this.isSkipped = false;
         this.isManualMode = false;
         this.activeStep = 0;
-        this.targetUrl = redirectUrl || `/dia-diem/${schoolSlug}`;
+        this.targetUrl = redirectUrl || `/?cat=smart-education-map`;
         this.currentData = window.getSchoolStoryData(schoolSlug);
+
+        if (!this.currentData) {
+            this.closeAndResetModal();
+            return;
+        }
 
         // Open modal
         const modal = document.getElementById('storytellingModal');
@@ -184,57 +194,59 @@ class SchoolStoryteller {
 
         try {
             // Stage 0: Intro
-            await this.phase0_Intro();
-            if (this.isSkipped || this.isManualMode) return;
+            await this.phase0_Intro(session);
+            if (session !== this.sessionId || this.isSkipped || this.isManualMode) return;
 
             if (this.isStandaloneSchool()) {
                 // Standalone School Flow (4 steps)
-                await this.phase1_Overview();
-                if (this.isSkipped || this.isManualMode) return;
+                await this.phase1_Overview(session);
+                if (session !== this.sessionId || this.isSkipped || this.isManualMode) return;
 
-                await this.phaseStandalone_Scale();
-                if (this.isSkipped || this.isManualMode) return;
+                await this.phaseStandalone_Scale(session);
+                if (session !== this.sessionId || this.isSkipped || this.isManualMode) return;
 
-                await this.phaseStandalone_Stability();
-                if (this.isSkipped || this.isManualMode) return;
+                await this.phaseStandalone_Stability(session);
+                if (session !== this.sessionId || this.isSkipped || this.isManualMode) return;
 
-                await this.phaseStandalone_Hero();
-                if (this.isSkipped || this.isManualMode) return;
+                await this.phaseStandalone_Hero(session);
+                if (session !== this.sessionId || this.isSkipped || this.isManualMode) return;
             } else {
                 // Merged School Flow (5+ steps)
-                await this.phase1_Overview();
-                if (this.isSkipped || this.isManualMode) return;
+                await this.phase1_Overview(session);
+                if (session !== this.sessionId || this.isSkipped || this.isManualMode) return;
 
                 for (let i = 0; i < this.currentData.components.length; i++) {
-                    await this.phase_Component(i);
-                    if (this.isSkipped || this.isManualMode) return;
+                    await this.phase_Component(i, session);
+                    if (session !== this.sessionId || this.isSkipped || this.isManualMode) return;
                 }
 
-                await this.phase_Connection();
-                if (this.isSkipped || this.isManualMode) return;
+                await this.phase_Connection(session);
+                if (session !== this.sessionId || this.isSkipped || this.isManualMode) return;
 
-                await this.phase_Merger();
-                if (this.isSkipped || this.isManualMode) return;
+                await this.phase_Merger(session);
+                if (session !== this.sessionId || this.isSkipped || this.isManualMode) return;
 
-                await this.phase_NewSchool();
-                if (this.isSkipped || this.isManualMode) return;
+                await this.phase_NewSchool(session);
+                if (session !== this.sessionId || this.isSkipped || this.isManualMode) return;
             }
 
-            // Transition & Redirect
-            await this.phase_Transition();
+            // Transition & Finish
+            if (session === this.sessionId) {
+                await this.phase_Transition();
+            }
         } catch (err) {
             console.warn('Storytelling sequence interrupted or completed:', err);
         } finally {
-            this.isBusy = false;
+            if (session === this.sessionId) {
+                this.isBusy = false;
+            }
         }
     }
 
     skipStory() {
-        const dest = this.targetUrl;
         this.closeAndResetModal();
-
-        if (dest) {
-            window.location.href = dest;
+        if (window.location.pathname.includes('/dia-diem/')) {
+            window.location.href = '/?cat=smart-education-map';
         }
     }
 
@@ -257,15 +269,16 @@ class SchoolStoryteller {
     }
 
     async sleep(ms) {
+        const startSession = this.sessionId;
         const startStep = this.activeStep;
         return new Promise(resolve => {
             if (this.isManualMode) return resolve();
             const checkTimer = setInterval(() => {
-                if (this.isSkipped || this.isManualMode || this.activeStep !== startStep) {
+                if (this.sessionId !== startSession || this.isSkipped || this.isManualMode || this.activeStep !== startStep) {
                     clearInterval(checkTimer);
                     resolve();
                 }
-            }, 40);
+            }, 30);
             setTimeout(() => {
                 clearInterval(checkTimer);
                 resolve();
@@ -441,11 +454,12 @@ class SchoolStoryteller {
     }
 
     typeText(elementId, text, speed = 12) {
+        const startSession = this.sessionId;
         return new Promise(resolve => {
             const el = document.getElementById(elementId);
             if (!el) return resolve();
 
-            if (this.isManualMode) {
+            if (this.isManualMode || this.sessionId !== startSession) {
                 el.innerHTML = text;
                 return resolve();
             }
@@ -454,7 +468,7 @@ class SchoolStoryteller {
             el.innerHTML = '';
             let i = 0;
             const timer = setInterval(() => {
-                if (this.isSkipped || this.activeStep !== startStep) {
+                if (this.sessionId !== startSession || this.isSkipped || this.activeStep !== startStep) {
                     clearInterval(timer);
                     el.innerHTML = text;
                     return resolve();
@@ -643,7 +657,7 @@ class SchoolStoryteller {
                           stroke-linecap="round"/>
 
                     <!-- CENTER ALIGNMENT EMBLEM RING (Vòng tròn nhung vàng đệm cho icon ngôi trường) -->
-                    <circle cx="100" cy="68" r="36" fill="rgba(124, 58, 237, 0.08)" stroke="url(#gold-grad)" stroke-width="2.5" stroke-dasharray="4, 3" opacity="0.85"/>
+                    <circle cx="100" cy="68" r="42" fill="rgba(124, 58, 237, 0.08)" stroke="url(#gold-grad)" stroke-width="2.5" stroke-dasharray="4, 3" opacity="0.85"/>
 
                     <!-- GOLDEN BOOKMARK RIBBON (Ruy-băng đánh dấu trang) -->
                     <path d="M 100,116 Q 106,132 114,142 L 106,138 L 98,142 Z" 
@@ -672,7 +686,7 @@ class SchoolStoryteller {
             html: bookSvgHtml,
             className: 'story-ai-book-marker',
             iconSize: isMobile ? [260, 195] : [460, 345],
-            iconAnchor: isMobile ? [130, 97.5] : [230, 172.5]
+            iconAnchor: isMobile ? [130, 88.4] : [230, 156.4]
         });
 
         this.catchmentPolygon = L.marker(mPt, {
@@ -891,8 +905,8 @@ class SchoolStoryteller {
         const isMobile = window.innerWidth <= 768;
         const cBounds = L.latLngBounds([mPt, mPt]);
         this.map.flyToBounds(cBounds, {
-            paddingTopLeft: isMobile ? [70, 20] : [360, 120],
-            paddingBottomRight: isMobile ? [20, 240] : [480, 160],
+            paddingTopLeft: isMobile ? [75, 20] : [360, 120],
+            paddingBottomRight: isMobile ? [240, 20] : [480, 160],
             maxZoom: 16,
             duration: this.isManualMode ? 0.4 : 1.0
         });
@@ -979,8 +993,8 @@ class SchoolStoryteller {
         const isMobile = window.innerWidth <= 768;
         const cBounds = L.latLngBounds([mPt, mPt]);
         this.map.flyToBounds(cBounds, {
-            paddingTopLeft: isMobile ? [70, 20] : [360, 120],
-            paddingBottomRight: isMobile ? [20, 240] : [480, 160],
+            paddingTopLeft: isMobile ? [75, 20] : [360, 120],
+            paddingBottomRight: isMobile ? [240, 20] : [480, 160],
             maxZoom: 15.5,
             duration: this.isManualMode ? 0.4 : 1.0
         });
@@ -1072,8 +1086,8 @@ class SchoolStoryteller {
         const isMobile = window.innerWidth <= 768;
         const mBounds = L.latLngBounds([mPt, mPt]);
         this.map.flyToBounds(mBounds, {
-            paddingTopLeft: isMobile ? [70, 20] : [360, 120],
-            paddingBottomRight: isMobile ? [20, 240] : [480, 160],
+            paddingTopLeft: isMobile ? [75, 20] : [360, 120],
+            paddingBottomRight: isMobile ? [240, 20] : [480, 160],
             maxZoom: 16,
             duration: this.isManualMode ? 0.4 : 1.0
         });
@@ -1139,7 +1153,7 @@ class SchoolStoryteller {
             const actionBtn = document.getElementById('storyCardActionBtn');
             if (actionBtn) {
                 actionBtn.style.display = 'flex';
-                actionBtn.innerHTML = '<span>🔍 Tra cứu chi tiết trường trọng điểm</span> ➔';
+                actionBtn.innerHTML = '<span>🗺️ Hoàn tất & Quay về Bản đồ Giáo dục</span> ➔';
             }
 
             card.classList.add('show');
@@ -1533,8 +1547,8 @@ class SchoolStoryteller {
         const isMobile = window.innerWidth <= 768;
         const mBounds = L.latLngBounds([mPt, mPt]);
         this.map.flyToBounds(mBounds, {
-            paddingTopLeft: isMobile ? [70, 20] : [360, 120],
-            paddingBottomRight: isMobile ? [20, 240] : [480, 160],
+            paddingTopLeft: isMobile ? [75, 20] : [360, 120],
+            paddingBottomRight: isMobile ? [240, 20] : [480, 160],
             maxZoom: 16,
             duration: this.isManualMode ? 0.4 : 1.0
         });
@@ -1589,7 +1603,7 @@ class SchoolStoryteller {
             const actionBtn = document.getElementById('storyCardActionBtn');
             if (actionBtn) {
                 actionBtn.style.display = 'flex';
-                actionBtn.innerHTML = '<span>🔍 Tra cứu chi tiết trường mới</span> ➔';
+                actionBtn.innerHTML = '<span>🗺️ Hoàn tất & Quay về Bản đồ Giáo dục</span> ➔';
             }
 
             card.classList.add('show');
@@ -1603,9 +1617,10 @@ class SchoolStoryteller {
     }
 
     // ==========================================
-    // STAGE 6: SEAMLESS TRANSITION TO DETAIL PAGE
+    // STAGE 6: FINISH STORYTELLING & RETURN TO MAP
     // ==========================================
     async phase_Transition() {
+        const currentSession = this.sessionId;
         const modal = document.getElementById('storytellingModal');
         if (modal) {
             modal.style.transition = 'opacity 0.4s ease';
@@ -1613,12 +1628,12 @@ class SchoolStoryteller {
         }
 
         await this.sleep(400);
+        if (currentSession !== this.sessionId) return;
 
-        let dest = this.targetUrl;
         this.closeAndResetModal();
 
-        if (dest) {
-            window.location.href = dest;
+        if (window.location.pathname.includes('/dia-diem/')) {
+            window.location.href = '/?cat=smart-education-map';
         }
     }
 }

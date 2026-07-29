@@ -627,32 +627,40 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    transform-origin: 50% 45.33%;
     animation: floatBrightBook 3.2s ease-in-out infinite alternate;
 }
 
 .story-bright-book-svg {
-    width: 380px;
-    height: 285px;
+    position: absolute !important;
+    top: 45.33% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    width: 86% !important;
+    height: 86% !important;
     overflow: visible;
     z-index: 2;
 }
 
 .story-bright-book-aura {
     position: absolute;
+    top: 45.33%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     width: 440px;
     height: 330px;
     border-radius: 50%;
     background: radial-gradient(ellipse at center, rgba(168, 85, 247, 0.22) 0%, rgba(99, 102, 241, 0.12) 50%, rgba(255, 255, 255, 0) 72%);
-    border: 3px dashed rgba(168, 85, 247, 0.65);
-    box-shadow: 0 0 35px rgba(168, 85, 247, 0.3);
+    border: 3.5px dashed rgba(168, 85, 247, 0.7);
+    box-shadow: 0 0 40px rgba(168, 85, 247, 0.35);
     animation: pulseBrightAura 3s ease-in-out infinite alternate;
 }
 
 .story-bright-book-aura.ring-2 {
-    width: 500px;
-    height: 375px;
-    border-color: rgba(245, 158, 11, 0.45);
-    border-style: dotted;
+    width: 520px;
+    height: 390px;
+    border: 3px dotted rgba(245, 158, 11, 0.55);
+    box-shadow: 0 0 30px rgba(245, 158, 11, 0.25);
     animation-delay: -1.5s;
 }
 
@@ -675,13 +683,13 @@
 .story-bright-sparkles .sp-4 { bottom: 0%; right: 12%; animation-delay: 1.8s; }
 
 @keyframes floatBrightBook {
-    0% { transform: translateY(0) scale(0.96); }
-    100% { transform: translateY(-8px) scale(1.04); }
+    0% { transform: scale(0.97); }
+    100% { transform: scale(1.03); }
 }
 
 @keyframes pulseBrightAura {
-    0% { transform: scale(0.94); opacity: 0.7; }
-    100% { transform: scale(1.06); opacity: 1; }
+    0% { transform: translate(-50%, -50%) scale(0.94); opacity: 0.7; }
+    100% { transform: translate(-50%, -50%) scale(1.06); opacity: 1; }
 }
 
 @keyframes floatSparkleEmoji {
