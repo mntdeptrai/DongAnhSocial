@@ -134,6 +134,8 @@ class SchoolStoryteller {
     closeAndResetModal() {
         this.isSkipped = true;
         this.isBusy = false;
+        this.isManualMode = false;
+        this.activeStep = 0;
         if (this.speechSynth) this.speechSynth.cancel();
 
         const modal = document.getElementById('storytellingModal');
@@ -155,10 +157,13 @@ class SchoolStoryteller {
     }
 
     async startStory(schoolSlug, redirectUrl) {
-        if (this.isBusy) return;
+        // Always reset previous modal state & cancel running loops before launching new story
+        this.closeAndResetModal();
+
         this.isBusy = true;
         this.isSkipped = false;
         this.isManualMode = false;
+        this.activeStep = 0;
         this.targetUrl = redirectUrl || `/dia-diem/${schoolSlug}`;
         this.currentData = window.getSchoolStoryData(schoolSlug);
 
@@ -755,13 +760,35 @@ class SchoolStoryteller {
         const conjunction = forceUpper ? 'VÀ' : 'và';
 
         if (upper.includes('TIỂU HỌC VÀ TRUNG HỌC CƠ SỞ')) {
-            const regex = /(TRƯỜNG\s+TIỂU\s+HỌC|TIỂU\s+HỌC)\s+(VÀ|v\u00e0)\s+(TRUNG\s+HỌC\s+CƠ\s+SỞ)/i;
-            return str.replace(regex, `$1 ${conjunction}<br>$3`);
+            const regex = /(TRƯỜNG\s+TIỂU\s+HỌC|TIỂU\s+HỌC)\s+(VÀ|v\u00e0)\s+(TRUNG\s+HỌC\s+CƠ\s+SỞ)\s+/i;
+            return str.replace(regex, `$1 ${conjunction} $3<br>`);
         }
 
         if (upper.includes('TIỂU HỌC VÀ THCS') || upper.includes('TIEU HOC VA THCS')) {
-            const regex = /(TRƯỜNG\s+TIỂU\s+HỌC|TIỂU\s+HỌC)\s+(VÀ|v\u00e0)\s+(THCS)/i;
-            return str.replace(regex, `$1 ${conjunction}<br>$3`);
+            const regex = /(TRƯỜNG\s+TIỂU\s+HỌC|TIỂU\s+HỌC)\s+(VÀ|v\u00e0)\s+(THCS)\s+/i;
+            return str.replace(regex, `$1 ${conjunction} $3<br>`);
+        }
+
+        const prefixes = [
+            'TRƯỜNG TIỂU HỌC ',
+            'TRƯỜNG MẦM NON ',
+            'TRƯỜNG TRUNG HỌC CƠ SỞ ',
+            'TRƯỜNG THCS ',
+            'TRƯỜNG THPT ',
+            'Trường Tiểu học ',
+            'Trường Mầm non ',
+            'Trường THCS ',
+            'Trường THPT '
+        ];
+
+        for (let p of prefixes) {
+            if (str.startsWith(p)) {
+                const type = p.trim();
+                const remainder = str.substring(p.length).trim();
+                if (remainder) {
+                    return `${type}<br>${remainder}`;
+                }
+            }
         }
 
         if (upper.includes(' VÀ ')) {
@@ -786,7 +813,7 @@ class SchoolStoryteller {
         const formattedIntroTitle = this.formatSchoolTitle(schoolNameUpper, true);
 
         if (this.isStandaloneSchool()) {
-            document.getElementById('storyIntroTitle').innerHTML = `<span class="story-intro-top-heading">TRƯỜNG CHẤT LƯỢNG CAO</span><span class="story-intro-highlight" style="white-space: nowrap; font-size: clamp(1.2rem, 3.2vw, 2.5rem);">${formattedIntroTitle}</span>`;
+            document.getElementById('storyIntroTitle').innerHTML = `<span class="story-intro-top-heading">TRƯỜNG CHẤT LƯỢNG CAO</span><span class="story-intro-highlight">${formattedIntroTitle}</span>`;
             document.getElementById('storyIntroSubtitle').innerHTML = `Đơn vị giữ nguyên quy mô, khẳng định vị thế hạt nhân giáo dục <span style="white-space: nowrap;">xã Đông Anh</span>`;
         } else {
             document.getElementById('storyIntroTitle').innerHTML = `<span class="story-intro-top-heading">HÀNH TRÌNH HÌNH THÀNH</span><span class="story-intro-highlight">${formattedIntroTitle}</span>`;

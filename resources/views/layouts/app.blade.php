@@ -80,8 +80,8 @@
     <link rel="stylesheet" href="{{ asset('css/mobile-fix.css') }}?v={{ file_exists(public_path('css/mobile-fix.css')) ? filemtime(public_path('css/mobile-fix.css')) : '1.0.0' }}">
     
     <!-- Map-Based Storytelling CSS & GSAP Animation Library -->
-    <link rel="stylesheet" href="{{ asset('css/storytelling.css') }}?v={{ time() }}">
-    <link rel="stylesheet" href="{{ asset('css/storytelling-mobile.css') }}?v={{ time() }}">
+    <link rel="stylesheet" href="{{ asset('css/storytelling.css') }}?v={{ file_exists(public_path('css/storytelling.css')) ? filemtime(public_path('css/storytelling.css')) : time() }}">
+    <link rel="stylesheet" href="{{ asset('css/storytelling-mobile.css') }}?v={{ file_exists(public_path('css/storytelling-mobile.css')) ? filemtime(public_path('css/storytelling-mobile.css')) : time() }}">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
     
     <!-- Dynamic Schema.org JSON-LD Structured Data for Google Indexing -->
@@ -2080,8 +2080,8 @@
 
     <!-- Map-Based Storytelling Modal & JS Engine -->
     @include('partials.storytelling-modal')
-    <script src="{{ asset('js/storytelling-data.js') }}?v={{ time() }}"></script>
-    <script src="{{ asset('js/storytelling-engine.js') }}?v={{ time() }}"></script>
+    <script src="{{ asset('js/storytelling-data.js') }}?v={{ file_exists(public_path('js/storytelling-data.js')) ? filemtime(public_path('js/storytelling-data.js')) : time() }}"></script>
+    <script src="{{ asset('js/storytelling-engine.js') }}?v={{ file_exists(public_path('js/storytelling-engine.js')) ? filemtime(public_path('js/storytelling-engine.js')) : time() }}"></script>
 
 
     <!-- Back to Top & Quick Controls Floating Widget -->

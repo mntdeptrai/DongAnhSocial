@@ -14,7 +14,7 @@
         <div class="story-intro-orb orb-3"></div>
         <div class="story-intro-card">
             <div class="story-intro-badge">
-                <span>🎓</span> BẢN ĐỒ SỐ GIÁO DỤC XÃ ĐÔNG ANH
+                <span>🎓</span> <span style="white-space: nowrap;">BẢN ĐỒ SỐ GIÁO DỤC</span> <span style="white-space: nowrap;">XÃ ĐÔNG ANH</span>
             </div>
             <div class="story-intro-divider"></div>
             <h1 id="storyIntroTitle" class="story-intro-title">
