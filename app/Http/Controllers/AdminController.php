@@ -2045,7 +2045,46 @@ class AdminController extends Controller
             });
         }
 
-        $stalls = $query->orderBy('id', 'desc')->paginate(12)->withQueryString();
+        $rawProducts = $query->orderBy('id', 'desc')->get();
+
+        // Gom nhóm bản ghi theo từng Gian Hàng / Hộ Kinh Doanh duy nhất
+        $groupedStalls = $rawProducts->groupBy(function($item) {
+            $key = trim($item->stall_name);
+            return $key !== '' ? $key : trim($item->seller_name);
+        })->map(function($prods, $stallKey) {
+            $first = $prods->first();
+            $imagePath = $prods->whereNotNull('image_path')->filter(fn($p) => !empty($p->image_path))->first()?->image_path ?: $first->image_path;
+
+            // Chọn sản phẩm có thông tin ngân hàng chuẩn xác nhất
+            $bankItem = $prods->filter(fn($p) => !empty($p->bank_account) && !empty($p->bank_name))->first()
+                     ?: $prods->filter(fn($p) => !empty($p->bank_account))->first()
+                     ?: $first;
+
+            $phoneItem = $prods->filter(fn($p) => !empty($p->seller_phone) && $p->seller_phone !== 'Cần cập nhật thông tin')->first() ?: $first;
+
+            return (object)[
+                'id' => $first->id,
+                'stall_name' => $first->stall_name ?: $stallKey,
+                'seller_name' => $first->seller_name ?: $stallKey,
+                'seller_phone' => $phoneItem->seller_phone,
+                'bank_name' => $bankItem->bank_name,
+                'bank_account' => $bankItem->bank_account,
+                'image_path' => $imagePath,
+                'eatery_id' => $first->eatery_id,
+                'products' => $prods,
+                'products_count' => $prods->count(),
+            ];
+        })->values();
+
+        $page = (int) $request->input('page', 1);
+        $perPage = 10;
+        $stalls = new \Illuminate\Pagination\LengthAwarePaginator(
+            $groupedStalls->slice(($page - 1) * $perPage, $perPage)->values(),
+            $groupedStalls->count(),
+            $perPage,
+            $page,
+            ['path' => $request->url(), 'query' => $request->query()]
+        );
 
         if ($request->ajax()) {
             return view('admin.stalls.partial-table', compact('stalls', 'managerEatery'))->render();
@@ -2131,7 +2170,7 @@ class AdminController extends Controller
             }
         }
 
-        $bankName = $request->bank_name ?: 'MBBank';
+        $bankName = trim($request->bank_name ?: '');
         $bankAccount = trim($request->bank_account ?: '');
         $bankHolder = mb_strtoupper(trim($request->bank_holder ?: $request->seller_name));
 
@@ -2259,7 +2298,7 @@ class AdminController extends Controller
             $imagePath = R2Helper::upload($request->file('image'), 'stalls');
         }
 
-        $bankName = $request->bank_name ?: 'MBBank';
+        $bankName = trim($request->bank_name ?: '');
         $bankAccount = trim($request->bank_account ?: '');
         $bankHolder = mb_strtoupper(trim($request->bank_holder ?: $request->seller_name));
 
