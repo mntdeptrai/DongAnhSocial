@@ -905,8 +905,8 @@ class SchoolStoryteller {
         const isMobile = window.innerWidth <= 768;
         const cBounds = L.latLngBounds([mPt, mPt]);
         this.map.flyToBounds(cBounds, {
-            paddingTopLeft: isMobile ? [70, 20] : [360, 120],
-            paddingBottomRight: isMobile ? [20, 240] : [480, 160],
+            paddingTopLeft: isMobile ? [75, 20] : [360, 120],
+            paddingBottomRight: isMobile ? [240, 20] : [480, 160],
             maxZoom: 16,
             duration: this.isManualMode ? 0.4 : 1.0
         });
@@ -993,8 +993,8 @@ class SchoolStoryteller {
         const isMobile = window.innerWidth <= 768;
         const cBounds = L.latLngBounds([mPt, mPt]);
         this.map.flyToBounds(cBounds, {
-            paddingTopLeft: isMobile ? [70, 20] : [360, 120],
-            paddingBottomRight: isMobile ? [20, 240] : [480, 160],
+            paddingTopLeft: isMobile ? [75, 20] : [360, 120],
+            paddingBottomRight: isMobile ? [240, 20] : [480, 160],
             maxZoom: 15.5,
             duration: this.isManualMode ? 0.4 : 1.0
         });
@@ -1086,8 +1086,8 @@ class SchoolStoryteller {
         const isMobile = window.innerWidth <= 768;
         const mBounds = L.latLngBounds([mPt, mPt]);
         this.map.flyToBounds(mBounds, {
-            paddingTopLeft: isMobile ? [70, 20] : [360, 120],
-            paddingBottomRight: isMobile ? [20, 240] : [480, 160],
+            paddingTopLeft: isMobile ? [75, 20] : [360, 120],
+            paddingBottomRight: isMobile ? [240, 20] : [480, 160],
             maxZoom: 16,
             duration: this.isManualMode ? 0.4 : 1.0
         });
@@ -1547,8 +1547,8 @@ class SchoolStoryteller {
         const isMobile = window.innerWidth <= 768;
         const mBounds = L.latLngBounds([mPt, mPt]);
         this.map.flyToBounds(mBounds, {
-            paddingTopLeft: isMobile ? [70, 20] : [360, 120],
-            paddingBottomRight: isMobile ? [20, 240] : [480, 160],
+            paddingTopLeft: isMobile ? [75, 20] : [360, 120],
+            paddingBottomRight: isMobile ? [240, 20] : [480, 160],
             maxZoom: 16,
             duration: this.isManualMode ? 0.4 : 1.0
         });

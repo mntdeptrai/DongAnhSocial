@@ -441,11 +441,18 @@
         margin-top: 14px !important;
     }
 
-    /* 9. BOTTOM PROGRESS DOTS */
+    /* 9. BOTTOM PROGRESS DOTS (Positioned under top header bar on mobile) */
     #storytellingModal .story-progress-bar-wrap {
-        bottom: 4px !important;
-        gap: 5px !important;
+        top: 66px !important;
+        bottom: auto !important;
+        gap: 6px !important;
         z-index: 100 !important;
+        background: rgba(15, 23, 42, 0.65) !important;
+        backdrop-filter: blur(12px) !important;
+        -webkit-backdrop-filter: blur(12px) !important;
+        padding: 4px 10px !important;
+        border-radius: 12px !important;
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
     }
 
     #storytellingModal .story-progress-dot {
@@ -457,13 +464,13 @@
         width: 18px !important;
     }
 
-    /* 10. OPEN BOOK MAP OVERLAY & CENTERING FIX ON MOBILE */
+    /* 10. OPEN BOOK MAP OVERLAY & PERFECT CONCENTRIC CENTERING FIX ON MOBILE */
     #storytellingModal .story-ai-book-marker {
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
-        width: 240px !important;
-        height: 180px !important;
+        width: 260px !important;
+        height: 195px !important;
         pointer-events: none !important;
     }
 
@@ -474,6 +481,7 @@
         width: 100% !important;
         height: 100% !important;
         position: relative !important;
+        transform-origin: 50% 45.33% !important;
     }
 
     #storytellingModal .story-bright-book-svg {
@@ -486,8 +494,8 @@
     }
 
     #storytellingModal .story-bright-book-aura {
-        width: 310px !important;
-        height: 232px !important;
+        width: 240px !important;
+        height: 180px !important;
         position: absolute !important;
         left: 50% !important;
         top: 45.33% !important;
@@ -495,8 +503,8 @@
     }
 
     #storytellingModal .story-bright-book-aura.ring-2 {
-        width: 360px !important;
-        height: 270px !important;
+        width: 280px !important;
+        height: 210px !important;
         position: absolute !important;
         left: 50% !important;
         top: 45.33% !important;
@@ -569,7 +577,11 @@
     }
 
     #storytellingModal .story-bright-book-svg {
-        width: 100% !important;
-        height: 100% !important;
+        position: absolute !important;
+        top: 45.33% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%) !important;
+        width: 86% !important;
+        height: 86% !important;
     }
 }
