@@ -643,7 +643,7 @@ class SchoolStoryteller {
                           stroke-linecap="round"/>
 
                     <!-- CENTER ALIGNMENT EMBLEM RING (Vòng tròn nhung vàng đệm cho icon ngôi trường) -->
-                    <circle cx="100" cy="68" r="36" fill="rgba(124, 58, 237, 0.08)" stroke="url(#gold-grad)" stroke-width="2.5" stroke-dasharray="4, 3" opacity="0.85"/>
+                    <circle cx="100" cy="68" r="42" fill="rgba(124, 58, 237, 0.08)" stroke="url(#gold-grad)" stroke-width="2.5" stroke-dasharray="4, 3" opacity="0.85"/>
 
                     <!-- GOLDEN BOOKMARK RIBBON (Ruy-băng đánh dấu trang) -->
                     <path d="M 100,116 Q 106,132 114,142 L 106,138 L 98,142 Z" 

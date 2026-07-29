@@ -1331,26 +1331,76 @@
     padding: 2px 7px !important;
     border-radius: 10px !important;
 }
-.edu-explore-btn {
+.edu-card-actions {
+    display: flex !important;
+    align-items: stretch !important;
+    gap: 8px !important;
+    margin-top: 14px !important;
+    width: 100% !important;
+}
+.edu-story-btn {
+    flex: 1 !important;
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
-    gap: 8px !important;
-    width: 100% !important;
-    margin-top: 14px !important;
-    padding: 12px 20px !important;
-    background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%) !important;
+    gap: 6px !important;
+    padding: 10px 12px !important;
+    background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%) !important;
+    color: #4338ca !important;
+    font-weight: 800 !important;
+    font-size: 0.82rem !important;
+    border-radius: 12px !important;
+    border: 1.5px solid #c7d2fe !important;
+    box-shadow: 0 2px 8px rgba(79, 70, 229, 0.1) !important;
+    cursor: pointer !important;
+    text-decoration: none !important;
+    white-space: nowrap !important;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    box-sizing: border-box !important;
+}
+.edu-story-btn:hover {
+    background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%) !important;
+    border-color: #a5b4fc !important;
+    color: #312e81 !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2) !important;
+}
+.edu-explore-btn {
+    flex: 1.6 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    padding: 10px 12px !important;
+    background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%) !important;
     color: #ffffff !important;
     font-weight: 800 !important;
-    font-size: 0.9rem !important;
+    font-size: 0.82rem !important;
     border-radius: 12px !important;
     border: none !important;
-    box-shadow: 0 4px 14px rgba(79, 70, 229, 0.3) !important;
+    box-shadow: 0 4px 14px rgba(79, 70, 229, 0.28) !important;
     text-decoration: none !important;
+    white-space: nowrap !important;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    box-sizing: border-box !important;
 }
 .edu-explore-btn:hover {
-    background: linear-gradient(135deg, #4338ca 0%, #3730a3 100%) !important;
+    background: linear-gradient(135deg, #4338ca 0%, #312e81 100%) !important;
     transform: translateY(-2px) !important;
+    box-shadow: 0 6px 18px rgba(79, 70, 229, 0.38) !important;
+}
+@media (max-width: 540px) {
+    .edu-card-actions {
+        flex-direction: column !important;
+        gap: 8px !important;
+    }
+    .edu-card-actions > .edu-story-btn,
+    .edu-card-actions > .edu-explore-btn {
+        width: 100% !important;
+        flex: none !important;
+        padding: 11px 14px !important;
+        font-size: 0.85rem !important;
+    }
 }
 </style>
 
@@ -2130,9 +2180,14 @@
                                         <span>🏛️ Khám Phá Hoạt Động & Sự Kiện</span> ➔
                                     </a>
                                 @elseif($isEduItem)
-                                    <a href="{{ route('eatery.show', $eat->slug) }}" class="edu-explore-btn" onclick="event.stopPropagation(); window.openSchoolStoryteller('{{ $eat->slug }}', '{{ route('eatery.show', $eat->slug) }}'); return false;">
-                                        <span>🎓 Tra Cứu Thông Tin Trường</span> ➔
-                                    </a>
+                                    <div class="edu-card-actions">
+                                        <button type="button" class="edu-story-btn" onclick="event.stopPropagation(); window.openSchoolStoryteller('{{ $eat->slug }}', '{{ route('eatery.show', $eat->slug) }}');">
+                                            <span>📖 Xem Story</span>
+                                        </button>
+                                        <a href="{{ route('eatery.show', $eat->slug) }}" class="edu-explore-btn" onclick="event.stopPropagation();">
+                                            <span>🎓 Tra Cứu Thông Tin Trường</span> ➔
+                                        </a>
+                                    </div>
                                 @endif
                             </div>
                         </div>
@@ -2407,8 +2462,8 @@
                         : '';
 
                     const isEduMarker = (catSlug === 'smart-education-map' || (window.STORYTELLING_SCHOOLS && window.STORYTELLING_SCHOOLS[eat.slug]));
-                    const detailBtnAction = isEduMarker 
-                        ? `onclick="event.stopPropagation(); window.openSchoolStoryteller('${eat.slug}', '/dia-diem/${eat.slug}'); return false;"` 
+                    const storyBtn = isEduMarker 
+                        ? `<button onclick="event.stopPropagation(); window.openSchoolStoryteller('${eat.slug}', '/dia-diem/${eat.slug}'); return false;" class="btn-secondary" style="padding: 4px 10px; font-size: 0.75rem; border-radius: 6px; font-family: var(--font-heading); background: rgba(99, 102, 241, 0.12); border: 1px solid rgba(99, 102, 241, 0.3); color: #4f46e5; display: inline-flex; align-items: center; gap: 4px; cursor: pointer; transition: all 0.2s; font-weight: 700;" onmouseover="this.style.background='rgba(99, 102, 241, 0.2)'" onmouseout="this.style.background='rgba(99, 102, 241, 0.12)'">📖 Story</button>` 
                         : '';
 
                     const popupContent = `
@@ -2420,7 +2475,8 @@
                                 <span class="rating-stars">⭐ ${ratingVal}</span>
                                 <div style="display: flex; gap: 6px; align-items: center;">
                                     ${videoBtn}
-                                    <a href="/dia-diem/${eat.slug}" ${detailBtnAction} class="btn-primary" style="padding: 4px 10px; font-size: 0.75rem; border-radius: 6px; font-family: var(--font-heading);">Xem chi tiết</a>
+                                    ${storyBtn}
+                                    <a href="/dia-diem/${eat.slug}" class="btn-primary" style="padding: 4px 10px; font-size: 0.75rem; border-radius: 6px; font-family: var(--font-heading);">Xem chi tiết</a>
                                 </div>
                             </div>
                         </div>
@@ -2649,8 +2705,8 @@
                 const priceHtml = pPrice ? `<span style="font-size: 0.75rem; font-weight: 800; color: #059669;">${pPrice}</span>` : '';
 
                 const isEduFocus = (window.STORYTELLING_SCHOOLS && window.STORYTELLING_SCHOOLS[slug]);
-                const focusBtnAction = isEduFocus 
-                    ? `onclick="event.stopPropagation(); window.openSchoolStoryteller('${slug}', '/dia-diem/${slug}'); return false;"` 
+                const storyFocusBtn = isEduFocus 
+                    ? `<button onclick="event.stopPropagation(); window.openSchoolStoryteller('${slug}', '/dia-diem/${slug}'); return false;" class="btn-secondary" style="padding: 4px 10px; font-size: 0.72rem; border-radius: 6px; font-family: var(--font-heading); background: rgba(99, 102, 241, 0.12); border: 1px solid rgba(99, 102, 241, 0.3); color: #4f46e5; display: inline-flex; align-items: center; gap: 4px; cursor: pointer; transition: all 0.2s; font-weight: 700;">📖 Story</button>` 
                     : '';
 
                 const customPopupHtml = `
@@ -2660,7 +2716,10 @@
                         ${sellerHtml}
                         <div class="map-popup-footer" style="margin-top: 4px; display: flex; align-items: center; justify-content: space-between;">
                             ${starsHtml || priceHtml}
-                            <a href="/dia-diem/${slug}" ${focusBtnAction} class="btn-primary" style="padding: 4px 10px; font-size: 0.72rem; border-radius: 6px; font-weight: 700;">Xem chi tiết</a>
+                            <div style="display: flex; gap: 6px; align-items: center;">
+                                ${storyFocusBtn}
+                                <a href="/dia-diem/${slug}" class="btn-primary" style="padding: 4px 10px; font-size: 0.72rem; border-radius: 6px; font-weight: 700;">Xem chi tiết</a>
+                            </div>
                         </div>
                     </div>
                 `;
@@ -3143,9 +3202,14 @@
                                                 <span>🏛️ Khám Phá Hoạt Động & Sự Kiện</span> ➔
                                             </a>
                                         ` : isEduItem ? `
-                                            <a href="/dia-diem/${eat.slug}" class="edu-explore-btn" onclick="event.stopPropagation(); window.openSchoolStoryteller('${eat.slug}', '/dia-diem/${eat.slug}'); return false;">
-                                                <span>🎓 Tra Cứu Thông Tin Trường</span> ➔
-                                            </a>
+                                            <div class="edu-card-actions">
+                                                <button type="button" class="edu-story-btn" onclick="event.stopPropagation(); window.openSchoolStoryteller('${eat.slug}', '/dia-diem/${eat.slug}');">
+                                                    <span>📖 Xem Story</span>
+                                                </button>
+                                                <a href="/dia-diem/${eat.slug}" class="edu-explore-btn" onclick="event.stopPropagation();">
+                                                    <span>🎓 Tra Cứu Thông Tin Trường</span> ➔
+                                                </a>
+                                            </div>
                                         ` : ''}
                                     </div>
                                 </div>

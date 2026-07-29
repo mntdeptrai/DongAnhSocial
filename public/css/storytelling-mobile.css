@@ -477,13 +477,17 @@
     }
 
     #storytellingModal .story-bright-book-svg {
-        width: 240px !important;
-        height: 180px !important;
+        position: absolute !important;
+        top: 45.33% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%) !important;
+        width: 86% !important;
+        height: 86% !important;
     }
 
     #storytellingModal .story-bright-book-aura {
-        width: 280px !important;
-        height: 210px !important;
+        width: 310px !important;
+        height: 232px !important;
         position: absolute !important;
         left: 50% !important;
         top: 45.33% !important;
@@ -491,8 +495,8 @@
     }
 
     #storytellingModal .story-bright-book-aura.ring-2 {
-        width: 320px !important;
-        height: 240px !important;
+        width: 360px !important;
+        height: 270px !important;
         position: absolute !important;
         left: 50% !important;
         top: 45.33% !important;
@@ -565,7 +569,7 @@
     }
 
     #storytellingModal .story-bright-book-svg {
-        width: 170px !important;
-        height: 128px !important;
+        width: 100% !important;
+        height: 100% !important;
     }
 }

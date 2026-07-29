@@ -44,8 +44,8 @@ window.STORYTELLING_SCHOOLS = {
                 "students": 405,
                 "mapUrl": "https://maps.app.goo.gl/9y9AUUbFDEXH7eBh6",
                 "photo": "/js/picture/mnphucloc.png",
-                "lat": 21.133805,
-                "lng": 105.846985
+                "lat": 21.1685,
+                "lng": 105.892
             },
             {
                 "name": "Trường Mầm non Sao Mai",
@@ -102,8 +102,8 @@ window.STORYTELLING_SCHOOLS = {
                 "students": 564,
                 "mapUrl": "https://maps.app.goo.gl/HWA7rdQoYeWcn3ENA",
                 "photo": "/js/picture/M%E1%BA%A7m%20non%20C%E1%BB%95%20Loa.png",
-                "lat": 21.119947,
-                "lng": 105.868962
+                "lat": 21.1398,
+                "lng": 105.8655
             },
             {
                 "name": "Trường Mầm non Thành Loa",
@@ -160,8 +160,8 @@ window.STORYTELLING_SCHOOLS = {
                 "students": 521,
                 "mapUrl": "https://maps.app.goo.gl/uY8A6D5Szx46iEzM9",
                 "photo": "/js/picture/mam-non-thai-binh.png",
-                "lat": 21.082372,
-                "lng": 105.883505
+                "lat": 21.1085,
+                "lng": 105.882
             },
             {
                 "name": "Trường Mầm non Mai Lâm ",
@@ -222,8 +222,8 @@ window.STORYTELLING_SCHOOLS = {
                 "students": 525,
                 "mapUrl": "https://maps.app.goo.gl/tgNDRcA26qgs2Fhs9",
                 "photo": "/js/picture/mam-nonduc-noi.png",
-                "lat": 21.136194,
-                "lng": 105.872222
+                "lat": 21.148,
+                "lng": 105.875
             },
             {
                 "name": "Trường Mầm non Việt Hùng",
@@ -292,8 +292,8 @@ window.STORYTELLING_SCHOOLS = {
                 "students": 420,
                 "mapUrl": "https://maps.app.goo.gl/TRKwpJ2D2pf4ZVwP6",
                 "photo": "/js/picture/mnuynoa.png",
-                "lat": 21.144002,
-                "lng": 105.855919
+                "lat": 21.139,
+                "lng": 105.85
             },
             {
                 "name": "Trường Mầm non Uy Nỗ",
@@ -350,8 +350,8 @@ window.STORYTELLING_SCHOOLS = {
                 "students": 875,
                 "mapUrl": "https://maps.app.goo.gl/ZQpzxZJauizwwNBWA",
                 "photo": "/js/picture/Mam-non-Dong-Hoi.png",
-                "lat": 21.10075,
-                "lng": 105.862528
+                "lat": 21.095,
+                "lng": 105.871
             },
             {
                 "name": "Trường Mầm non Xuân Canh",
@@ -408,8 +408,8 @@ window.STORYTELLING_SCHOOLS = {
                 "students": 1009,
                 "mapUrl": "https://maps.app.goo.gl/YieK3S3jn9phJ9gP6",
                 "photo": "/js/picture/th-an-duong-vuong.png",
-                "lat": 21.129434,
-                "lng": 105.880866
+                "lat": 21.142,
+                "lng": 105.869
             }
         ],
         "distanceText": "0 km",
@@ -454,8 +454,8 @@ window.STORYTELLING_SCHOOLS = {
                 "students": 1887,
                 "mapUrl": "https://maps.app.goo.gl/61LK62Ns11w6q4gt7",
                 "photo": "/js/picture/th-dong-hoi.png",
-                "lat": 21.07916,
-                "lng": 105.875463
+                "lat": 21.093,
+                "lng": 105.868
             },
             {
                 "name": "Trường Tiểu học Xuân Canh",
@@ -512,8 +512,8 @@ window.STORYTELLING_SCHOOLS = {
                 "students": 667,
                 "mapUrl": "https://maps.app.goo.gl/8n4PSrdwkLLXmDft6",
                 "photo": "/js/picture/th-viet-hung.png",
-                "lat": 21.137122,
-                "lng": 105.87636
+                "lat": 21.145,
+                "lng": 105.878
             },
             {
                 "name": "Trường Tiểu học Việt Hùng 2",
@@ -570,8 +570,8 @@ window.STORYTELLING_SCHOOLS = {
                 "students": 1294,
                 "mapUrl": "https://maps.app.goo.gl/kwKAd91Sgb1c6WNL6",
                 "photo": "/js/picture/thcs-nguyen-huy-tuong.png",
-                "lat": 21.139393,
-                "lng": 105.847561
+                "lat": 21.136,
+                "lng": 105.845
             }
         ],
         "distanceText": "0 km",
@@ -616,8 +616,8 @@ window.STORYTELLING_SCHOOLS = {
                 "students": 996,
                 "mapUrl": "https://maps.app.goo.gl/8jZZK7h2r7MrpGSC6",
                 "photo": "/js/picture/thcs-ngo-quyen.png",
-                "lat": 21.078665,
-                "lng": 105.878953
+                "lat": 21.138,
+                "lng": 105.842
             }
         ],
         "distanceText": "0 km",
@@ -662,8 +662,8 @@ window.STORYTELLING_SCHOOLS = {
                 "students": 739,
                 "mapUrl": "https://maps.app.goo.gl/dvpeDAC3ETiuZaUw7",
                 "photo": "/js/picture/thcs-an-duong-vuong.png",
-                "lat": 21.130111,
-                "lng": 105.882472
+                "lat": 21.165,
+                "lng": 105.889
             },
             {
                 "name": "Trường THCS Việt Hùng",
@@ -720,8 +720,8 @@ window.STORYTELLING_SCHOOLS = {
                 "students": 1112,
                 "mapUrl": "https://maps.app.goo.gl/rMex8PaR3cwLhqH2A",
                 "photo": "/js/picture/thcs-dong-hoi.png",
-                "lat": 21.083611,
-                "lng": 105.871324
+                "lat": 21.089,
+                "lng": 105.856
             },
             {
                 "name": "Trường THCS Xuân Canh",
@@ -778,8 +778,8 @@ window.STORYTELLING_SCHOOLS = {
                 "students": 928,
                 "mapUrl": "https://maps.app.goo.gl/rcAvadRPQWyYjmR68",
                 "photo": "/js/picture/th-ngo-tat-to.png",
-                "lat": 21.089673,
-                "lng": 105.892267
+                "lat": 21.105,
+                "lng": 105.88
             },
             {
                 "name": "Trường THCS Mai Lâm",
@@ -836,8 +836,8 @@ window.STORYTELLING_SCHOOLS = {
                 "students": 1166,
                 "mapUrl": "https://maps.app.goo.gl/GcygcijfbK7Jd5xu9",
                 "photo": "/js/picture/th-co-loa.png",
-                "lat": 21.120318,
-                "lng": 105.874177
+                "lat": 21.138,
+                "lng": 105.862
             },
             {
                 "name": "Trường THCS Cổ Loa",
@@ -894,8 +894,8 @@ window.STORYTELLING_SCHOOLS = {
                 "students": 1016,
                 "mapUrl": "https://maps.app.goo.gl/kPXrcwaKSjAeNEzZ7",
                 "photo": "/js/picture/thdaoduytung.png",
-                "lat": 21.128767,
-                "lng": 105.855995
+                "lat": 21.141,
+                "lng": 105.855
             },
             {
                 "name": "Trường THCS Đào Duy Tùng",
@@ -952,8 +952,8 @@ window.STORYTELLING_SCHOOLS = {
                 "students": 1109,
                 "mapUrl": "https://maps.app.goo.gl/WLg8devognqCKaHV6",
                 "photo": "/js/picture/th-duc-tu.png",
-                "lat": 21.114509,
-                "lng": 105.896651
+                "lat": 21.125,
+                "lng": 105.895
             },
             {
                 "name": "Trường THCS Dục Tú",
@@ -1010,8 +1010,8 @@ window.STORYTELLING_SCHOOLS = {
                 "students": 892,
                 "mapUrl": "https://maps.app.goo.gl/31tkH16AY87TvTtk8",
                 "photo": "/js/picture/th-uy-no.png",
-                "lat": 21.143767,
-                "lng": 105.855316
+                "lat": 21.139,
+                "lng": 105.85
             },
             {
                 "name": "Trường THCS Uy Nỗ",
