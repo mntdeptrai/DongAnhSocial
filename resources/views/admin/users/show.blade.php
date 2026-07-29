@@ -83,28 +83,76 @@
         </div>
 
         @if($user->role === 'seller')
-            @php $ownedEateries = $user->getOwnedEateries(); @endphp
-            <div style="margin-top: 24px; margin-bottom: 32px; padding: 20px; border: 1.5px solid rgba(124, 58, 237, 0.2); border-radius: 16px; background-color: rgba(124, 58, 237, 0.02);">
-                <span style="font-size: 0.82rem; color: #6d28d9; display: block; margin-bottom: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">🏢 Danh sách cơ sở / địa điểm quản lý</span>
-                @if(count($ownedEateries) > 0)
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px;">
-                        @foreach($ownedEateries as $oe)
-                            <div style="padding: 12px 16px; background: #ffffff; border: 1px solid var(--admin-border); border-radius: 12px; display: flex; flex-direction: column; gap: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
-                                <strong style="font-size: 0.92rem; color: var(--admin-text-main);">{{ $oe['name'] }}</strong>
-                                <span style="font-size: 0.76rem; color: #4f46e5; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
-                                    📌 Phân loại: {{ $oe['type'] }}
-                                </span>
-                                <a href="/dia-diem/{{ $oe['slug'] }}" target="_blank" style="font-size: 0.76rem; color: #2563eb; text-decoration: none; display: inline-flex; align-items: center; gap: 2px; margin-top: 4px; font-weight: 500;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">
-                                    🔗 Xem trên bản đồ ↗
-                                </a>
-                            </div>
-                        @endforeach
+            <div style="margin-top: 24px; margin-bottom: 32px; padding: 22px; border: 1.5px solid rgba(124, 58, 237, 0.2); border-radius: 16px; background-color: rgba(124, 58, 237, 0.02);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px dashed rgba(124, 58, 237, 0.2); padding-bottom: 10px;">
+                    <span style="font-size: 0.88rem; color: #6d28d9; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px;">
+                        🛒 THÔNG TIN GIAN HÀNG SỐ & CHỢ QUẢN LÝ
+                    </span>
+                    <a href="/admin/stalls" class="btn-admin" style="font-size: 0.76rem; padding: 4px 12px; background: #e0e7ff; color: #3730a3; font-weight: 700; border-radius: 6px; text-decoration: none;">
+                        🏬 Đến quản lý gian hàng ➔
+                    </a>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                    <!-- Gian Hàng Số -->
+                    <div style="padding: 12px 16px; background: #ffffff; border: 1px solid var(--admin-border); border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+                        <span style="font-size: 0.75rem; color: var(--admin-text-muted); display: block; font-weight: 700; text-transform: uppercase;">🛒 Gian hàng số</span>
+                        <strong style="font-size: 0.95rem; color: #2563eb; display: block; margin-top: 2px;">
+                            {{ $stall ? ($stall->stall_name ?: $stall->seller_name) : 'Gian Hàng Chưa Gán' }}
+                        </strong>
+                        @if($stall && $stall->seller_name)
+                            <span style="font-size: 0.78rem; color: var(--admin-text-muted); display: block; margin-top: 2px;">
+                                👤 Chủ sạp: {{ $stall->seller_name }}
+                            </span>
+                        @endif
                     </div>
-                @else
-                    <div style="padding: 16px; border: 1px dashed #ef4444; border-radius: 12px; background-color: rgba(239, 68, 68, 0.02); text-align: center; color: #ef4444; font-size: 0.86rem; font-weight: 600;">
-                        ⚠️ Tài khoản này chưa được gán quyền quản lý cơ sở nào trên hệ thống.
+
+                    <!-- Chợ Quản Lý -->
+                    <div style="padding: 12px 16px; background: #ffffff; border: 1px solid var(--admin-border); border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+                        <span style="font-size: 0.75rem; color: var(--admin-text-muted); display: block; font-weight: 700; text-transform: uppercase;">🏢 Thuộc Chợ / Cơ sở</span>
+                        <strong style="font-size: 0.95rem; color: #166534; display: block; margin-top: 2px;">
+                            {{ $market ? $market->name : 'Chợ Mạch Tràng' }}
+                        </strong>
+                        <span style="font-size: 0.78rem; color: var(--admin-text-muted); display: block; margin-top: 2px;">
+                            📍 Khu vực Đông Anh, Hà Nội
+                        </span>
+                    </div>
+                </div>
+
+                @if($stall && !empty($stall->bank_account) && $stall->bank_account !== '0987654321')
+                    <div style="padding: 10px 14px; background: #e0f2fe; border: 1px solid #bae6fd; border-radius: 10px; margin-bottom: 16px; color: #0369a1; font-size: 0.82rem; font-weight: 700; display: flex; align-items: center; gap: 8px;">
+                        💳 Thông tin thanh toán QR: <span>🏦 {{ !empty($stall->bank_name) ? $stall->bank_name : 'Ngân hàng' }}: {{ $stall->bank_account }}</span>
                     </div>
                 @endif
+
+                <!-- Danh sách sản phẩm của gian hàng -->
+                <div>
+                    <span style="font-size: 0.8rem; color: var(--admin-text-main); font-weight: 700; display: block; margin-bottom: 8px;">
+                        📦 Danh sách sản phẩm kinh doanh ({{ count($products) }} mặt hàng):
+                    </span>
+                    @if(count($products) > 0)
+                        <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                            @foreach($products as $prod)
+                                <div style="padding: 6px 12px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 0.8rem; font-weight: 600; color: #334155; display: flex; align-items: center; gap: 6px;">
+                                    <span>📦 {{ $prod->name }}</span>
+                                    <span style="color: #059669; font-weight: 700;">{{ number_format($prod->price) }}đ{{ $prod->unit ? '/'.$prod->unit : '' }}</span>
+                                </div>
+                            @endforeach
+                        </div>
+                    @else
+                        <span style="font-size: 0.8rem; color: var(--admin-text-muted); font-style: italic;">Chưa có sản phẩm nào được tải lên.</span>
+                    @endif
+                </div>
+            </div>
+        @elseif($user->role === 'manager')
+            <div style="margin-top: 24px; margin-bottom: 32px; padding: 20px; border: 1.5px solid rgba(16, 185, 129, 0.3); border-radius: 16px; background-color: rgba(16, 185, 129, 0.03);">
+                <span style="font-size: 0.85rem; color: #047857; display: block; margin-bottom: 8px; font-weight: 800; text-transform: uppercase;">🏢 Ban Quản Lý Chợ</span>
+                <strong style="font-size: 1rem; color: var(--admin-text-main); display: block;">
+                    {{ $market ? $market->name : 'Chợ Mạch Tràng' }}
+                </strong>
+                <span style="font-size: 0.8rem; color: var(--admin-text-muted); display: block; margin-top: 4px;">
+                    Chịu trách nhiệm quản lý toàn bộ các gian hàng số & tiểu thương thuộc Chợ.
+                </span>
             </div>
         @endif
 

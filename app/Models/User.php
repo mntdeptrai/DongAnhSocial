@@ -30,6 +30,8 @@ class User extends Authenticatable
         'latitude',
         'longitude',
         'last_active_at',
+        'eatery_id',
+        'stall_id',
     ];
 
     /**

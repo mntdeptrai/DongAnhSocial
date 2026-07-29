@@ -1563,7 +1563,49 @@ class AdminController extends Controller
             abort(403, 'Ban Quản Lý Chợ chỉ được quyền quản lý tiểu thương trong chợ của mình!');
         }
 
-        return view('admin.users.show', compact('user'));
+        $stall = null;
+        $market = null;
+        $products = collect();
+
+        if ($user->stall_id) {
+            $stall = \Illuminate\Support\Facades\DB::connection('mysql_market')
+                ->table('ocop_products')
+                ->where('id', $user->stall_id)
+                ->first();
+        }
+        if (!$stall) {
+            $stall = \Illuminate\Support\Facades\DB::connection('mysql_market')
+                ->table('ocop_products')
+                ->where('user_id', $user->id)
+                ->first();
+        }
+        if (!$stall && $user->phone) {
+            $stall = \Illuminate\Support\Facades\DB::connection('mysql_market')
+                ->table('ocop_products')
+                ->where('seller_phone', $user->phone)
+                ->first();
+        }
+
+        $eateryId = $user->eatery_id ?: ($stall ? $stall->eatery_id : null);
+        if ($eateryId) {
+            $market = \Illuminate\Support\Facades\DB::connection('mysql_market')
+                ->table('eateries')
+                ->where('id', $eateryId)
+                ->first();
+        }
+
+        if ($stall) {
+            $stallNameKey = trim($stall->stall_name) ?: trim($stall->seller_name);
+            $products = \Illuminate\Support\Facades\DB::connection('mysql_market')
+                ->table('ocop_products')
+                ->where(function($q) use ($stall, $stallNameKey, $user) {
+                    $q->where('stall_name', $stallNameKey)
+                      ->orWhere('user_id', $user->id);
+                })
+                ->get();
+        }
+
+        return view('admin.users.show', compact('user', 'stall', 'market', 'products'));
     }
 
     public function editUser($id)
@@ -1642,11 +1684,17 @@ class AdminController extends Controller
         ]);
 
         $eateryId = $request->eatery_id ?: $user->eatery_id;
-        $stallId = $request->stall_id;
+        $stallId = $request->stall_id ?: $user->stall_id;
 
         if ($role === 'manager') {
             $managerUserId = session('user_id');
-            $managerEatery = EateryApiService::getEateries('traditional-market')->firstWhere('user_id', $managerUserId);
+            $managerEatery = \Illuminate\Support\Facades\DB::connection('mysql_market')
+                ->table('eateries')
+                ->where('user_id', $managerUserId)
+                ->first();
+            if (!$managerEatery) {
+                $managerEatery = EateryApiService::getEateries()->firstWhere('user_id', $managerUserId);
+            }
             $eateryId = $managerEatery ? $managerEatery->id : $user->eatery_id;
         }
 
@@ -1666,6 +1714,11 @@ class AdminController extends Controller
         }
 
         $user->update($data);
+
+        \Illuminate\Support\Facades\DB::table('users')->where('id', $user->id)->update([
+            'eatery_id' => $eateryId,
+            'stall_id' => $stallId
+        ]);
 
         // Cập nhật thông tin gian hàng nếu có chọn stall_id
         if ($stallId) {
@@ -1700,9 +1753,16 @@ class AdminController extends Controller
             return redirect()->back()->with('error', 'Bạn không được phép tự xóa tài khoản của chính mình!');
         }
 
+        // Unlink products
+        \Illuminate\Support\Facades\DB::connection('mysql_market')
+            ->table('ocop_products')
+            ->where('user_id', $user->id)
+            ->update(['user_id' => null]);
+
+        $userName = $user->name;
         $user->delete();
 
-        return redirect('/admin/users')->with('success', 'Đã xóa tài khoản người dùng khỏi hệ thống!');
+        return redirect('/admin/users')->with('success', "Đã xóa tài khoản tiểu thương '{$userName}' thành công!");
     }
 
     public function toggleUserStatus($id)
