@@ -98,7 +98,7 @@
             </div>
 
             <button id="storyCardActionBtn" class="story-card-action-btn" style="display: none;" onclick="window.storyteller.skipStory()">
-                <span>🔍 Tra cứu chi tiết trường mới</span> ➔
+                <span>🗺️ Hoàn tất & Quay về Bản đồ Giáo dục</span> ➔
             </button>
         </div>
     </div>
