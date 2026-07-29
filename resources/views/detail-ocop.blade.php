@@ -1,10 +1,10 @@
 @extends('layouts.app')
 
 <!-- Tối ưu hóa SEO: Tiêu đề động chính xác cho Nông Sản Số & Sản phẩm OCOP -->
-@section('title', $eatery->name . ' - Hồ sơ Di sản & Sản phẩm OCOP tại ' . $eatery->commune->name . ', Đông Anh')
+@section('title', $eatery->name . ' - Hồ sơ Di sản & Sản phẩm OCOP tại ' . ($eatery->commune?->name ?? 'Đông Anh') . ', Đông Anh')
 
 <!-- Tối ưu hóa SEO: Thẻ mô tả Meta tự sinh chân thực -->
-@section('meta_description', 'Khám phá sản phẩm OCOP & nông sản đặc sản tại ' . $eatery->name . ', địa chỉ: ' . $eatery->address . ', ' . $eatery->commune->name . ', Đông Anh. Xem chứng nhận sao OCOP, hồ sơ di sản, nghệ nhân giữ lửa và đặt mua trực tiếp.')
+@section('meta_description', 'Khám phá sản phẩm OCOP & nông sản đặc sản tại ' . $eatery->name . ', địa chỉ: ' . $eatery->address . ', ' . ($eatery->commune?->name ?? 'Đông Anh') . ', Đông Anh. Xem chứng nhận sao OCOP, hồ sơ di sản, nghệ nhân giữ lửa và đặt mua trực tiếp.')
 
 @section('og_image', $eatery->image_path ?: 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=800&q=80')
 

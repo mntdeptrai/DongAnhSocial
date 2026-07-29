@@ -1,10 +1,10 @@
 @extends('layouts.app')
 
 <!-- Tối ưu hóa SEO: Tiêu đề động chính xác theo yêu cầu khách hàng -->
-@section('title', $eatery->name . ' - ' . $eatery->category->name . ' ngon tại ' . $eatery->commune->name . ', Đông Anh')
+@section('title', $eatery->name . ' - ' . $eatery->category->name . ' ngon tại ' . ($eatery->commune?->name ?? 'Đông Anh') . ', Đông Anh')
 
 <!-- Tối ưu hóa SEO: Thẻ mô tả Meta tự sinh chân thực -->
-@section('meta_description', 'Khám phá ' . $eatery->name . ' tại ' . $eatery->address . ', ' . $eatery->commune->name . ', Đông Anh. Số điện thoại liên hệ: ' . $eatery->phone . '. Thực đơn món đặc sắc: ' . $eatery->dishes->take(2)->pluck('name')->implode(', ') . '. Xem đánh giá khách hàng và bản đồ hướng dẫn đường đi chi tiết.')
+@section('meta_description', 'Khám phá ' . $eatery->name . ' tại ' . $eatery->address . ', ' . ($eatery->commune?->name ?? 'Đông Anh') . ', Đông Anh. Số điện thoại liên hệ: ' . $eatery->phone . '. Thực đơn món đặc sắc: ' . $eatery->dishes->take(2)->pluck('name')->implode(', ') . '. Xem đánh giá khách hàng và bản đồ hướng dẫn đường đi chi tiết.')
 
 @section('og_image', $eatery->image_path ?: 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=800&q=80')
 

@@ -167,7 +167,7 @@
                             data-address="{{ $eat->address }}" 
                             data-phone="{{ $eat->phone ?: '' }}"
                             data-category="{{ $eat->category->name }}" 
-                            data-commune="{{ $eat->commune->name }}">
+                            data-commune="{{ $eat->commune?->name ?? 'Đông Anh' }}">
                             <td>
                                 <img src="{{ $eat->image_path ?: 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=300&q=80' }}" style="width: 48px; height: 48px; object-fit: cover; border-radius: 8px; border: 1px solid var(--admin-border);" loading="lazy">
                             </td>
@@ -179,7 +179,7 @@
                                 <span class="admin-badge admin-badge-primary">{{ $eat->category->icon }} {{ $eat->category->name }}</span>
                             </td>
                             <td>
-                                <span style="font-size: 0.88rem; font-weight: 600; color: var(--admin-text-main);">{{ $eat->commune->name }}</span>
+                                <span style="font-size: 0.88rem; font-weight: 600; color: var(--admin-text-main);">{{ $eat->commune?->name ?? 'Đông Anh' }}</span>
                             </td>
                             <td>
                                 <span style="font-size: 0.88rem; font-weight: 700; color: var(--admin-primary);">{{ $eat->phone ?: 'Chưa có' }}</span>

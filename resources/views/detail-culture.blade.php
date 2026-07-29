@@ -1,10 +1,10 @@
 @extends('layouts.app')
 
 <!-- Tối ưu hóa SEO: Tiêu đề động chính xác cho Hành trình Di sản & Văn hóa Đông Anh -->
-@section('title', $eatery->name . ' - Di sản văn hóa & Thiết chế Thể thao tại ' . $eatery->commune->name . ', Đông Anh')
+@section('title', $eatery->name . ' - Di sản văn hóa & Thiết chế Thể thao tại ' . ($eatery->commune?->name ?? 'Đông Anh') . ', Đông Anh')
 
 <!-- Tối ưu hóa SEO: Thẻ mô tả Meta tự sinh chân thực -->
-@section('meta_description', 'Khám phá di sản văn hóa, lễ hội truyền thống & thiết chế thể thao tại ' . $eatery->name . ', địa chỉ: ' . $eatery->address . ', ' . $eatery->commune->name . ', Đông Anh. Xem lịch trình di sản và thông tin sự kiện.')
+@section('meta_description', 'Khám phá di sản văn hóa, lễ hội truyền thống & thiết chế thể thao tại ' . $eatery->name . ', địa chỉ: ' . $eatery->address . ', ' . ($eatery->commune?->name ?? 'Đông Anh') . ', Đông Anh. Xem lịch trình di sản và thông tin sự kiện.')
 
 @section('og_image', $eatery->image_path ?: 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=800&q=80')
 

@@ -528,7 +528,7 @@
                         </div>
                     </td>
                     <td><span class="adm-cat-badge">{{ $e->category->name ?? 'N/A' }}</span></td>
-                    <td style="font-weight: 600; color: #475569;">{{ $e->commune->name ?? 'N/A' }}</td>
+                    <td style="font-weight: 600; color: #475569;">{{ $e->commune?->name ?? 'N/A' }}</td>
                     <td style="font-weight: 600; color: #475569;">{{ $e->phone ?: '—' }}</td>
                     <td><span style="display: inline-flex; align-items: center; gap: 5px; font-weight: 700; font-size: 0.8rem; color: #059669; background: #dcfce7; padding: 5px 12px; border-radius: 20px;">🟢 Hoạt động</span></td>
                     <td style="text-align: center;">

@@ -2047,7 +2047,7 @@
                              data-name="{{ $card['title'] }}"
                              data-address="{{ $eat->address }}"
                              data-desc="{{ $card['desc'] }}"
-                             data-commune="{{ $eat->commune->name }}"
+                             data-commune="{{ $eat->commune?->name ?? 'Đông Anh' }}"
                              data-category="{{ $eat->category->slug }}"
                              onclick="focusOnEatery({{ number_format($eat->latitude, 6, '.', '') }}, {{ number_format($eat->longitude, 6, '.', '') }}, '{{ $eat->slug }}', '{{ addslashes($card['title']) }}', '{{ $card['image'] }}', '{{ $card['price'] }}', '{{ $card['stars'] }}', '{{ addslashes($card['subtitle'] ?? '') }}')">
                             <div class="eatery-img-wrapper hover-zoom-container">
@@ -2151,7 +2151,7 @@
 
                                 <div class="eatery-footer">
                                     <div class="eatery-meta-item">
-                                        <span>📍</span> {{ $eat->commune->name }}
+                                        <span>📍</span> {{ $eat->commune?->name ?? 'Đông Anh' }}
                                     </div>
                                     @if(!in_array($eat->category->slug, ['smart-education-map', 'hanh-trinh-di-san', 'discover-dong-anh-community-culture-hub']))
                                     <div class="eatery-meta-item {{ $isOcopItem ? 'ocop-price-tag' : '' }}" style="{{ !$isOcopItem ? 'color: var(--primary); font-weight: 700;' : '' }}">
