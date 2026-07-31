@@ -192,7 +192,7 @@
     <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
         <div>
             <div class="mb-1">
-                <a href="{{ route('principal.schools.index') }}" class="text-white text-decoration-none small fw-bold opacity-75 hover-opacity-100">
+                <a href="{{ request()->is('admin*') ? route('admin.schools.index') : route('principal.schools.index') }}" class="text-white text-decoration-none small fw-bold opacity-75 hover-opacity-100">
                     ⬅ Quay lại danh sách trường
                 </a>
             </div>
@@ -218,7 +218,7 @@
     </div>
 @endif
 
-<form id="schoolEditForm" action="{{ route('principal.schools.update', $school->id) }}" method="POST" enctype="multipart/form-data">
+<form id="schoolEditForm" action="{{ request()->is('admin*') ? route('admin.schools.update', $school->id) : route('principal.schools.update', $school->id) }}" method="POST" enctype="multipart/form-data">
     @csrf
     @method('PUT')
 
@@ -424,7 +424,7 @@
     </div>
 
     <div class="d-flex justify-content-end gap-3 mb-5">
-        <a href="{{ route('principal.schools.index') }}" class="btn btn-light border rounded-pill px-4 fw-bold">Hủy bỏ</a>
+        <a href="{{ request()->is('admin*') ? route('admin.schools.index') : route('principal.schools.index') }}" class="btn btn-light border rounded-pill px-4 fw-bold">Hủy bỏ</a>
         <button type="submit" id="submitBtn" class="btn btn-primary rounded-pill px-5 fw-bold shadow-lg" style="background: #4f46e5; border: none; font-size: 1rem; padding-top: 12px; padding-bottom: 12px;">
             💾 Lưu thay đổi
         </button>

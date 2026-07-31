@@ -104,7 +104,7 @@
             <a href="/admin/dashboard#eateries" class="admin-menu-item {{ request()->is('admin/dashboard') && isset($eatery) ? 'active' : '' }}">
                 <span>📍</span> Quản Lý Địa Điểm & Cơ Sở
             </a>
-            <a href="/principal/schools" class="admin-menu-item {{ request()->is('principal/schools*') ? 'active' : '' }}">
+            <a href="/admin/schools" class="admin-menu-item {{ request()->is('admin/schools*') ? 'active' : '' }}">
                 <span>🏫</span> Quản Lý Trường Học & Sáp Nhập
             </a>
             <a href="/admin/stalls" class="admin-menu-item {{ request()->is('admin/stalls*') ? 'active' : '' }}">

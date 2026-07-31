@@ -84,7 +84,7 @@ class SchoolManagementController extends Controller
         }
 
         if (!$school) {
-            return redirect()->route('principal.schools.index')->with('error', 'Không tìm thấy thông tin trường học!');
+            return redirect()->route(request()->is('admin*') ? 'admin.schools.index' : 'principal.schools.index')->with('error', 'Không tìm thấy thông tin trường học!');
         }
 
         // Kiểm tra quyền: Hiệu trưởng CHỈ được chỉnh sửa 1 trường học mà mình được phân công (user_id = Auth::id())
@@ -250,7 +250,7 @@ class SchoolManagementController extends Controller
         $school->storytelling_data = $updatedStoryData;
         $school->save();
 
-        return redirect()->route('principal.schools.edit', $school->id)
+        return redirect()->route(request()->is('admin*') ? 'admin.schools.edit' : 'principal.schools.edit', $school->id)
             ->with('success', 'Đã cập nhật thông tin trường học & các điểm trường sáp nhập thành công!');
     }
 }
