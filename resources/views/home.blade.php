@@ -2199,7 +2199,7 @@
                                     @endif
                                 </div>
                                 @if($isOcopItem)
-                                    <a href="{{ isset($card['product_id']) ? route('ocop.product.show', $card['product_id']) : route('eatery.show', $eat->slug) }}" class="ocop-explore-btn" style="width: 100%; margin-top: 10px; padding: 10px 14px; background: linear-gradient(135deg, #059669, #10b981); color: #ffffff; border: none; border-radius: 10px; font-weight: 800; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3); text-decoration: none;" onclick="event.stopPropagation();">
+                                    <a href="{{ isset($card['product_id']) ? route('ocop.product.show', $card['product_id']) : route('eatery.show', $eat->slug) }}" class="ocop-explore-btn" onclick="event.stopPropagation();">
                                         <span>🌾 Xem Chi Tiết Sản Phẩm OCOP</span> ➔
                                     </a>
                                 @elseif($isMarket)
@@ -3129,6 +3129,9 @@
                                             ${formattedPrice}
                                         </div>
                                     </div>
+                                    <a href="/san-pham-ocop/${p.id}" class="ocop-explore-btn" onclick="event.stopPropagation();">
+                                        <span>🌾 Xem Chi Tiết Sản Phẩm OCOP</span> ➔
+                                    </a>
                                 </div>
                             </div>
                         `;
@@ -3146,6 +3149,7 @@
                             if (eat.ocop_products && eat.ocop_products.length > 0) {
                                 eat.ocop_products.forEach(p => {
                                     ocopCards.push({
+                                        id: p.id,
                                         title: p.name,
                                         subtitle: 'Chủ thể sản xuất: ' + (p.seller_name || eat.name),
                                         desc: p.description || eat.description || '',
@@ -3222,6 +3226,9 @@
                                                     ${card.price}
                                                 </div>
                                             </div>
+                                            <a href="${card.id ? `/san-pham-ocop/${card.id}` : `/dia-diem/${eat.slug}`}" class="ocop-explore-btn" onclick="event.stopPropagation();">
+                                                <span>🌾 Xem Chi Tiết Sản Phẩm OCOP</span> ➔
+                                            </a>
                                         </div>
                                     </div>
                                 `;
@@ -3332,9 +3339,6 @@
                                                 </a>
                                             </div>
                                         ` : ''}
-                                        <a href="/san-pham-ocop/${p.id}" class="ocop-explore-btn" style="width: 100%; margin-top: 10px; padding: 10px 14px; background: linear-gradient(135deg, #059669, #10b981); color: #ffffff; border: none; border-radius: 10px; font-weight: 800; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3); text-decoration: none;" onclick="event.stopPropagation();">
-                                            <span>🌾 Xem Chi Tiết Sản Phẩm OCOP</span> ➔
-                                        </a>
                                     </div>
                                 </div>
                             `;
