@@ -31,6 +31,8 @@ class OcopProduct extends Model
 
     protected $casts = [
         'price' => 'decimal:2',
+        'ingredients' => 'array',
+        'timeline' => 'array',
     ];
 
     public function eatery(): BelongsTo

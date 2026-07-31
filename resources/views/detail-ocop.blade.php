@@ -878,21 +878,21 @@
                                             </div>
                                         </div>
                                     @else
-                                        @php
-                                            $hasProductDossier = !empty($item->story) || !empty($item->artisans) || !empty($item->heritage_year) || !empty($item->fun_fact) || !empty($item->ingredients) || !empty($item->timeline);
-                                        @endphp
                                         <div class="dish-card glass-panel" 
-                                             style="background: rgba(255,255,255,0.02); flex: 0 0 calc(50% - 10px); min-width: 290px; transition: all 0.3s ease; {{ $hasProductDossier ? 'cursor: pointer;' : '' }}"
-                                             @if($hasProductDossier)
-                                                 onclick="const el = document.getElementById('heritage-dossier-{{ $item->id }}'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });"
-                                                 onmouseover="this.style.borderColor='var(--primary)'; this.style.boxShadow='0 0 15px rgba(255, 126, 41, 0.15)'"
-                                                 onmouseout="this.style.borderColor='rgba(255,255,255,0.08)'; this.style.boxShadow='none'"
-                                             @endif>
+                                             data-product="{{ json_encode($item) }}"
+                                             style="background: rgba(255,255,255,0.02); flex: 0 0 calc(50% - 10px); min-width: 290px; transition: all 0.3s ease; cursor: pointer;"
+                                             @if(in_array($categorySlug, ['dong-anh-market', 'traditional-market']))
+                                                 onclick="window.location.href='/san-pham-ocop/{{ $item->id }}'"
+                                             @else
+                                                 onclick="openProductHeritageModal(this)"
+                                             @endif
+                                             onmouseover="this.style.borderColor='var(--primary)'; this.style.boxShadow='0 0 15px rgba(255, 126, 41, 0.15)'"
+                                             onmouseout="this.style.borderColor='rgba(255,255,255,0.08)'; this.style.boxShadow='none'">
                                             <img src="{{ $item->image_path ?: ($categorySlug === 'smart-education-map' ? 'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?auto=format&fit=crop&w=150&q=80' : ($categorySlug === 'wellness-care' ? 'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?auto=format&fit=crop&w=150&q=80' : ($categorySlug === 'stay-in-dong-anh' ? 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=150&q=80' : ($categorySlug === 'dong-anh-market' ? 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=150&q=80' : 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=150&q=80')))) }}" class="dish-img" alt="{{ $item->name }}">
                                             <div class="dish-info" style="flex: 1;">
                                                 <div>
-                                                    @if($categorySlug === 'dong-anh-market' && $hasProductDossier)
-                                                        <span class="tag-badge" style="padding: 1px 6px; font-size: 0.65rem; font-weight: 700; margin-bottom: 4px; display: inline-block; background: rgba(212, 175, 55, 0.1); border-color: rgba(212, 175, 55, 0.3); color: #ffb300; animation: pulse-trust 2s infinite;">🏺 Xem Chi Tiết Di Sản</span>
+                                                    @if(in_array($categorySlug, ['dong-anh-market', 'traditional-market']))
+                                                        <span class="tag-badge" style="padding: 1px 6px; font-size: 0.65rem; font-weight: 700; margin-bottom: 4px; display: inline-block; background: rgba(212, 175, 55, 0.1); border-color: rgba(212, 175, 55, 0.3); color: #ffb300;">🏺 Xem chi tiết sản phẩm</span>
                                                     @endif
                                                     @if($categorySlug === 'smart-education-map')
                                                         <span class="tag-badge" style="padding: 1px 6px; font-size: 0.65rem; font-weight: 700; margin-bottom: 4px; display: inline-block; background: rgba(52, 152, 219, 0.1); border-color: rgba(52, 152, 219, 0.2); color: #3498db;">⏱️ {{ $item->duration }}</span>
@@ -900,14 +900,14 @@
                                                         <span class="tag-badge" style="padding: 1px 6px; font-size: 0.65rem; font-weight: 700; margin-bottom: 4px; display: inline-block; background: rgba(46, 204, 113, 0.1); border-color: rgba(46, 204, 113, 0.2); color: #2ecc71;">⏱️ {{ $item->duration }}</span>
                                                     @elseif($categorySlug === 'stay-in-dong-anh')
                                                         <span class="tag-badge" style="padding: 1px 6px; font-size: 0.65rem; font-weight: 700; margin-bottom: 4px; display: inline-block; background: rgba(155, 89, 182, 0.1); border-color: rgba(155, 89, 182, 0.2); color: #9b59b6;">🛏️ {{ $item->bed_type }} | 👤 Sức chứa: {{ $item->capacity }}</span>
-                                                    @elseif($categorySlug === 'dong-anh-market' && $item->star_rating)
+                                                    @elseif($item->star_rating)
                                                         <span class="tag-badge" style="padding: 1px 6px; font-size: 0.65rem; font-weight: 700; margin-bottom: 4px; display: inline-block; background: rgba(241, 196, 15, 0.1); border-color: rgba(241, 196, 15, 0.2); color: #f1c40f;">⭐ OCOP: {{ $item->star_rating }}</span>
                                                     @elseif(isset($item->is_signature) && $item->is_signature)
                                                         <span class="tag-badge" style="padding: 1px 6px; font-size: 0.65rem; font-weight: 700; margin-bottom: 4px; display: inline-block;">★ Món đặc trưng</span>
                                                     @endif
                                                     <h3 class="dish-name">{{ $item->name }}</h3>
                                                     @if($item->description && $item->description !== 'null' && $item->description !== 'NULL')
-                                                        <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; line-height: 1.4;">{{ $item->description }}</p>
+                                                        <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; max-height: 2.8em;" title="{{ $item->description }}">{{ $item->description }}</p>
                                                     @endif
                                                 </div>
                                                 <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 8px; width: 100%;">
@@ -1144,26 +1144,21 @@
                                         </div>
                                     </div>
                                 @else
-                                    @php
-                                        $hasProductDossier = !empty($item->story) || !empty($item->artisans) || !empty($item->heritage_year) || !empty($item->fun_fact) || !empty($item->ingredients) || !empty($item->timeline);
-                                    @endphp
                                     <div class="dish-card glass-panel" 
                                          data-name="{{ strtolower($item->name) }}" 
                                          data-desc="{{ strtolower($item->description) }}" 
                                          data-signature="{{ isset($item->is_signature) && $item->is_signature ? 'true' : 'false' }}" 
                                          data-price="{{ $item->price ?? 0 }}"
-                                         style="background: rgba(255,255,255,0.02); display: flex; gap: 16px; padding: 16px; border-radius: 12px; border: 1px solid var(--border-glow); transition: all 0.3s ease; opacity: 1; transform: translateY(0); {{ $hasProductDossier ? 'cursor: pointer;' : '' }}"
-                                         @if($hasProductDossier)
-                                             onclick="closeFullMenuModal(); const el = document.getElementById('heritage-dossier-{{ $item->id }}'); if (el) setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'center' }), 350);"
-                                             data-product="{{ json_encode($item) }}"
-                                             onmouseover="this.style.borderColor='var(--primary)'; this.style.boxShadow='0 0 15px rgba(255, 126, 41, 0.15)'"
-                                             onmouseout="this.style.borderColor='var(--border-glow)'; this.style.boxShadow='none'"
-                                         @endif>
+                                         data-product="{{ json_encode($item) }}"
+                                         style="background: rgba(255,255,255,0.02); display: flex; gap: 16px; padding: 16px; border-radius: 12px; border: 1px solid var(--border-glow); transition: all 0.3s ease; opacity: 1; transform: translateY(0); cursor: pointer;"
+                                         onclick="closeFullMenuModal(); openProductHeritageModal(this);"
+                                         onmouseover="this.style.borderColor='var(--primary)'; this.style.boxShadow='0 0 15px rgba(255, 126, 41, 0.15)'"
+                                         onmouseout="this.style.borderColor='var(--border-glow)'; this.style.boxShadow='none'">
                                         <img src="{{ $item->image_path ?: ($categorySlug === 'smart-education-map' ? 'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?auto=format&fit=crop&w=150&q=80' : ($categorySlug === 'wellness-care' ? 'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?auto=format&fit=crop&w=150&q=80' : ($categorySlug === 'stay-in-dong-anh' ? 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=150&q=80' : ($categorySlug === 'dong-anh-market' ? 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=150&q=80' : 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=150&q=80')))) }}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; flex-shrink: 0;" alt="{{ $item->name }}">
                                         <div style="display: flex; flex-direction: column; justify-content: space-between; flex: 1;">
                                             <div>
-                                                @if($categorySlug === 'dong-anh-market' && $hasProductDossier)
-                                                    <span class="tag-badge" style="padding: 1px 6px; font-size: 0.65rem; font-weight: 700; margin-bottom: 4px; display: inline-block; background: rgba(212, 175, 55, 0.1); border-color: rgba(212, 175, 55, 0.3); color: #ffb300; animation: pulse-trust 2s infinite;">🏺 Xem Chi Tiết Di Sản</span>
+                                                @if(in_array($categorySlug, ['dong-anh-market', 'traditional-market']))
+                                                    <span class="tag-badge" style="padding: 1px 6px; font-size: 0.65rem; font-weight: 700; margin-bottom: 4px; display: inline-block; background: rgba(212, 175, 55, 0.1); border-color: rgba(212, 175, 55, 0.3); color: #ffb300;">🏺 Xem chi tiết sản phẩm</span>
                                                 @endif
                                                 @if($categorySlug === 'smart-education-map')
                                                     <span class="tag-badge" style="padding: 1px 6px; font-size: 0.65rem; font-weight: 700; margin-bottom: 4px; display: inline-block; background: rgba(52, 152, 219, 0.1); border-color: rgba(52, 152, 219, 0.2); color: #3498db;">⏱️ {{ $item->duration }}</span>

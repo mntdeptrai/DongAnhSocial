@@ -94,73 +94,21 @@ class Eatery extends Model
      */
     public function getHeritageDossierAttribute(): ?array
     {
-        $ocopProduct = $this->relationLoaded('ocopProducts') 
-            ? $this->ocopProducts->first(fn($p) => !empty($p->story) || !empty($p->heritage_year) || !empty($p->ingredients) || !empty($p->timeline))
-            : $this->ocopProducts()->where(function($q) {
-                $q->whereNotNull('story')
-                  ->orWhereNotNull('heritage_year')
-                  ->orWhereNotNull('ingredients')
-                  ->orWhereNotNull('timeline');
-            })->first();
-
-        if (!$ocopProduct) {
-            $ocopProduct = $this->relationLoaded('ocopProducts') 
-                ? $this->ocopProducts->first() 
-                : $this->ocopProducts()->first();
-        }
-
-        if ($ocopProduct && ($ocopProduct->story || $ocopProduct->heritage_year || $ocopProduct->artisans || $ocopProduct->fun_fact || $ocopProduct->audio_narrative || $ocopProduct->ingredients || $ocopProduct->timeline)) {
-            $stars = null;
-            if ($ocopProduct->star_rating) {
-                preg_match('/(\d+)/', $ocopProduct->star_rating, $matches);
-                $stars = isset($matches[1]) ? (int)$matches[1] : 0;
+        if (is_array($this->storytelling_data) && (!empty($this->storytelling_data['story']) || !empty($this->storytelling_data['heritage_year']))) {
+            $stars = 4;
+            if (isset($this->storytelling_data['ocop_stars'])) {
+                preg_match('/(\d+)/', (string)$this->storytelling_data['ocop_stars'], $matches);
+                $stars = isset($matches[1]) ? (int)$matches[1] : 4;
             }
-
-            // Parse ingredients array
-            $rawIngStr = is_string($ocopProduct->ingredients) ? str_replace(['\r\n', '\n', '\r'], "\n", $ocopProduct->ingredients) : '';
-            $ingredientLines = is_array($ocopProduct->ingredients) 
-                ? $ocopProduct->ingredients 
-                : array_values(array_filter(array_map('trim', explode("\n", str_replace("\r", "", $rawIngStr)))));
-
-            // Parse timeline array with year + event
-            $rawTimeStr = is_string($ocopProduct->timeline) ? str_replace(['\r\n', '\n', '\r'], "\n", $ocopProduct->timeline) : '';
-            $rawTimeline = is_array($ocopProduct->timeline) 
-                ? $ocopProduct->timeline 
-                : array_values(array_filter(array_map('trim', explode("\n", str_replace("\r", "", $rawTimeStr)))));
-
-            $parsedTimeline = [];
-            foreach ($rawTimeline as $item) {
-                if (is_array($item)) {
-                    $parsedTimeline[] = [
-                        'year' => $item['year'] ?? 'Di sản',
-                        'event' => $item['event'] ?? '',
-                    ];
-                } elseif (is_string($item)) {
-                    $parts = explode('|', $item, 2);
-                    if (count($parts) === 2) {
-                        $parsedTimeline[] = [
-                            'year' => trim($parts[0]),
-                            'event' => trim($parts[1]),
-                        ];
-                    } else {
-                        $parsedTimeline[] = [
-                            'year' => 'Di sản',
-                            'event' => trim($item),
-                        ];
-                    }
-                }
-            }
-
             return [
-                'ocop_stars' => $stars ?? 4,
-                'heritage_year' => $ocopProduct->heritage_year ?: 'Đặc sản Đông Anh',
-                'story' => $ocopProduct->story,
-                'artisans' => $ocopProduct->artisans,
-                'ingredients' => $ingredientLines,
-                'fun_fact' => $ocopProduct->fun_fact,
-                'audio_narrative' => $ocopProduct->audio_narrative,
-                'nearby_attractions' => [],
-                'timeline' => $parsedTimeline,
+                'ocop_stars' => $stars,
+                'heritage_year' => $this->storytelling_data['heritage_year'] ?? 'Đặc sản & Di sản Đông Anh',
+                'story' => $this->storytelling_data['story'] ?? null,
+                'artisans' => $this->storytelling_data['artisans'] ?? null,
+                'ingredients' => $this->storytelling_data['ingredients'] ?? [],
+                'fun_fact' => $this->storytelling_data['fun_fact'] ?? null,
+                'audio_narrative' => $this->storytelling_data['audio_narrative'] ?? null,
+                'timeline' => $this->storytelling_data['timeline'] ?? [],
             ];
         }
 

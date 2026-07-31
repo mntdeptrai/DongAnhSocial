@@ -37,6 +37,7 @@ Route::get('/api/user-notifications', [HomeController::class, 'getWebNotificatio
 
 // URL Thân thiện chuẩn SEO Google cho địa điểm ẩm thực & đặc sản
 Route::get('/dia-diem/{slug}', [EateryController::class, 'show'])->name('eatery.show');
+Route::get('/san-pham-ocop/{id}', [\App\Http\Controllers\OcopProductController::class, 'show'])->name('ocop.product.show');
 Route::post('/dia-diem/reviews/{id}', [EateryController::class, 'storeReview'])->name('eatery.review.store');
 Route::get('/api/market-chat/{eateryId}/messages', [\App\Http\Controllers\MarketChatController::class, 'getMessages'])->name('market.chat.messages');
 Route::post('/api/market-chat/{eateryId}/send', [\App\Http\Controllers\MarketChatController::class, 'sendMessage'])->name('market.chat.send');

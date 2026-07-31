@@ -2012,6 +2012,7 @@
                                 foreach ($eat->ocopProducts as $p) {
                                     $displayCards[] = [
                                         'title' => $p->name,
+                                        'product_id' => $p->id,
                                         'subtitle' => 'Chủ thể sản xuất: ' . ($p->seller_name ?: $eat->name),
                                         'desc' => $p->description ?: $eat->description,
                                         'image' => $p->image_path ?: ($eat->image_path ?: 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=300&q=80'),
@@ -2197,7 +2198,11 @@
                                     </div>
                                     @endif
                                 </div>
-                                @if($isMarket)
+                                @if($isOcopItem)
+                                    <a href="{{ isset($card['product_id']) ? route('ocop.product.show', $card['product_id']) : route('eatery.show', $eat->slug) }}" class="ocop-explore-btn" style="width: 100%; margin-top: 10px; padding: 10px 14px; background: linear-gradient(135deg, #059669, #10b981); color: #ffffff; border: none; border-radius: 10px; font-weight: 800; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3); text-decoration: none;" onclick="event.stopPropagation();">
+                                        <span>🌾 Xem Chi Tiết Sản Phẩm OCOP</span> ➔
+                                    </a>
+                                @elseif($isMarket)
                                     <a href="{{ route('eatery.show', $eat->slug) }}" class="market-explore-btn" onclick="event.stopPropagation();">
                                         <span>🛒 Xem Gian Hàng Số & Sơ Đồ Chợ</span> ➔
                                     </a>
@@ -2247,7 +2252,81 @@
         
         <!-- Floating Tóp Tóp Reels FAB removed -->
     </div>
-</section>
+<!-- Dedicated OCOP Product Detail Modal -->
+<div id="homeOcopProductModal" style="display: none; position: fixed; inset: 0; z-index: 99999; background: rgba(0, 0, 0, 0.82); backdrop-filter: blur(14px); align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s ease;">
+    <div style="background: #ffffff; color: #1e293b; width: 92%; max-width: 820px; max-height: 90vh; border-radius: 20px; box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5); overflow: hidden; transform: scale(0.92); transition: transform 0.3s ease; display: flex; flex-direction: column; position: relative; border: 2px solid #059669;">
+        
+        <!-- Modal Header -->
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 18px 24px; background: linear-gradient(135deg, #064e3b 0%, #047857 100%); color: #ffffff;">
+            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                <span style="background: #fbbf24; color: #78350f; font-weight: 800; font-size: 0.7rem; padding: 3px 10px; border-radius: 12px; text-transform: uppercase; letter-spacing: 0.5px;">🌾 SẢN PHẨM OCOP CHỨNG NHẬN</span>
+                <h3 id="hpmName" style="margin: 0; font-size: 1.25rem; font-weight: 800; font-family: var(--font-heading); color: #ffffff;"></h3>
+            </div>
+            <button onclick="closeHomeOcopModal()" style="background: rgba(255,255,255,0.2); border: none; font-size: 1.2rem; color: #ffffff; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.35)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">✕</button>
+        </div>
+
+        <!-- Scrollable Modal Content -->
+        <div style="overflow-y: auto; padding: 24px; flex: 1;">
+            
+            <!-- Hero Top Row: Image + Main Card Info -->
+            <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 24px; border-bottom: 1px solid #e2e8f0; padding-bottom: 20px;">
+                <!-- Product Image -->
+                <div style="flex: 0 0 220px; height: 220px; border-radius: 14px; overflow: hidden; border: 1px solid #cbd5e1; box-shadow: 0 4px 12px rgba(0,0,0,0.08); background: #f8fafc;">
+                    <img id="hpmImg" src="" style="width: 100%; height: 100%; object-fit: cover;" alt="">
+                </div>
+
+                <!-- Product Quick Specs & Seller -->
+                <div style="flex: 1; min-width: 260px; display: flex; flex-direction: column; justify-content: space-between;">
+                    <div>
+                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px;">
+                            <span id="hpmStars" style="background: #fef3c7; color: #d97706; border: 1px solid #fde68a; font-weight: 800; font-size: 0.85rem; padding: 4px 12px; border-radius: 20px; display: inline-flex; align-items: center; gap: 4px;"></span>
+                            <span id="hpmPrice" style="font-size: 1.2rem; font-weight: 800; color: #059669;"></span>
+                        </div>
+
+                        <!-- Seller Info Box -->
+                        <div style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 12px 16px; border-radius: 12px; margin-bottom: 12px;">
+                            <strong style="color: #166534; font-size: 0.85rem; display: block; margin-bottom: 2px;">🏛️ Chủ thể sản xuất / Hộ kinh doanh:</strong>
+                            <span id="hpmSeller" style="font-weight: 700; color: #0f172a; font-size: 0.95rem;"></span>
+                            <div id="hpmAddress" style="font-size: 0.82rem; color: #475569; margin-top: 4px;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Action Buttons -->
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <a id="hpmCallBtn" href="tel:" style="flex: 1; min-width: 140px; background: #059669; color: #ffffff; text-align: center; padding: 10px 16px; border-radius: 10px; font-weight: 700; font-size: 0.88rem; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 10px rgba(5, 150, 105, 0.25);">
+                            📞 Liên hệ chủ sạp
+                        </a>
+                        <a id="hpmEateryLink" href="#" style="background: #f1f5f9; color: #334155; padding: 10px 16px; border-radius: 10px; font-weight: 700; font-size: 0.88rem; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; border: 1px solid #cbd5e1;">
+                            🏪 Trang gian hàng
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detailed Content Sections -->
+            <div style="display: flex; flex-direction: column; gap: 20px;">
+                <!-- Description Section -->
+                <div>
+                    <h4 style="font-size: 1rem; font-weight: 800; color: #064e3b; margin-bottom: 8px; border-left: 4px solid #059669; padding-left: 10px; font-family: var(--font-heading);">
+                        📝 Thông Tin Chi Tiết & Nguồn Gốc Sản Phẩm
+                    </h4>
+                    <div id="hpmDesc" style="font-size: 0.92rem; color: #334155; line-height: 1.7; background: #f8fafc; padding: 16px; border-radius: 12px; border: 1px solid #e2e8f0; white-space: pre-line;">
+                    </div>
+                </div>
+
+                <!-- Ingredients & Secret Section (If available) -->
+                <div id="hpmIngSection" style="display: none;">
+                    <h4 style="font-size: 1rem; font-weight: 800; color: #064e3b; margin-bottom: 8px; border-left: 4px solid #d97706; padding-left: 10px; font-family: var(--font-heading);">
+                        🌾 Thành Phần & Bí Quyết Sản Xuất
+                    </h4>
+                    <div id="hpmIngGrid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
 
 <!-- Fullscreen Reels Modal -->
 <div id="reelsModal" class="reels-overlay" style="display: none;">
@@ -2514,7 +2593,7 @@
                                 <div style="display: flex; gap: 6px; align-items: center;">
                                     ${videoBtn}
                                     ${storyBtn}
-                                    <a href="/dia-diem/${eat.slug}" class="btn-primary" style="padding: 4px 10px; font-size: 0.75rem; border-radius: 6px; font-family: var(--font-heading);">Xem chi tiết</a>
+                                    ${catSlug === 'dong-anh-market' ? `<button onclick="event.stopPropagation(); window.openHomeOcopModalFromPopup('${eat.slug}', '${eat.name.replace(/'/g, "\\'")}')" class="btn-primary" style="padding: 4px 10px; font-size: 0.75rem; border-radius: 6px; font-family: var(--font-heading); background: linear-gradient(135deg, #059669, #10b981); border: none; color: #ffffff; cursor: pointer;">Xem chi tiết</button>` : `<a href="/dia-diem/${eat.slug}" class="btn-primary" style="padding: 4px 10px; font-size: 0.75rem; border-radius: 6px; font-family: var(--font-heading);">Xem chi tiết</a>`}
                                 </div>
                             </div>
                         </div>
@@ -2747,6 +2826,10 @@
                     ? `<button onclick="event.stopPropagation(); window.openSchoolStoryteller('${slug}', '/dia-diem/${slug}'); return false;" class="btn-secondary" style="padding: 4px 10px; font-size: 0.72rem; border-radius: 6px; font-family: var(--font-heading); background: rgba(99, 102, 241, 0.12); border: 1px solid rgba(99, 102, 241, 0.3); color: #4f46e5; display: inline-flex; align-items: center; gap: 4px; cursor: pointer; transition: all 0.2s; font-weight: 700;">📖 Story</button>` 
                     : '';
 
+                const actionBtnHtml = isOcop 
+                    ? `<button onclick="event.stopPropagation(); window.openHomeOcopModalFromPopup('${slug}', '${pName.replace(/'/g, "\\'")}')" class="btn-primary" style="padding: 4px 10px; font-size: 0.72rem; border-radius: 6px; font-weight: 700; background: linear-gradient(135deg, #059669, #10b981); border: none; color: #fff; cursor: pointer;">Xem chi tiết</button>`
+                    : `<a href="/dia-diem/${slug}" class="btn-primary" style="padding: 4px 10px; font-size: 0.72rem; border-radius: 6px; font-weight: 700;">Xem chi tiết</a>`;
+
                 const customPopupHtml = `
                     <div class="map-popup-card">
                         ${imgHtml}
@@ -2756,7 +2839,7 @@
                             ${starsHtml || priceHtml}
                             <div style="display: flex; gap: 6px; align-items: center;">
                                 ${storyFocusBtn}
-                                <a href="/dia-diem/${slug}" class="btn-primary" style="padding: 4px 10px; font-size: 0.72rem; border-radius: 6px; font-weight: 700;">Xem chi tiết</a>
+                                ${actionBtnHtml}
                             </div>
                         </div>
                     </div>
@@ -3249,6 +3332,9 @@
                                                 </a>
                                             </div>
                                         ` : ''}
+                                        <a href="/san-pham-ocop/${p.id}" class="ocop-explore-btn" style="width: 100%; margin-top: 10px; padding: 10px 14px; background: linear-gradient(135deg, #059669, #10b981); color: #ffffff; border: none; border-radius: 10px; font-weight: 800; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3); text-decoration: none;" onclick="event.stopPropagation();">
+                                            <span>🌾 Xem Chi Tiết Sản Phẩm OCOP</span> ➔
+                                        </a>
                                     </div>
                                 </div>
                             `;
@@ -3492,5 +3578,134 @@
         container.appendChild(heart);
         setTimeout(() => heart.remove(), 1000);
     }
+
+    // ----------------------------------------------------
+    // OCOP Product Modal Logic (Home Page & Maps)
+    // ----------------------------------------------------
+    @php
+        $allOcopProductsData = [];
+        try {
+            $allOcopList = \App\Models\OcopProduct::with('eatery.commune')->get();
+            foreach ($allOcopList as $p) {
+                $eat = $p->eatery;
+                $allOcopProductsData[] = [
+                    'id' => $p->id,
+                    'name' => $p->name,
+                    'star_rating' => $p->star_rating ? (str_contains($p->star_rating, 'sao') ? $p->star_rating : $p->star_rating . ' sao') : '3 sao',
+                    'price' => $p->price ? (is_numeric($p->price) ? number_format($p->price, 0, ',', '.') . 'đ' : $p->price) : ($eat ? $eat->price_range : 'Liên hệ'),
+                    'image' => $p->image_path ?: ($eat && $eat->image_path ? $eat->image_path : 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=300&q=80'),
+                    'seller_name' => $p->seller_name ?: ($eat ? $eat->name : 'Cơ sở sản xuất Đông Anh'),
+                    'address' => $eat ? ($eat->address ?: ($eat->commune ? $eat->commune->name . ', Đông Anh' : 'Đông Anh, Hà Nội')) : 'Đông Anh, Hà Nội',
+                    'phone' => $p->phone ?: ($eat ? $eat->phone : ''),
+                    'description' => $p->description ?: ($eat ? $eat->description : 'Chưa có bài viết mô tả chi tiết sản phẩm.'),
+                    'story' => $p->story,
+                    'artisans' => $p->artisans,
+                    'ingredients' => $p->ingredients,
+                    'timeline' => $p->timeline,
+                    'fun_fact' => $p->fun_fact,
+                    'slug' => $eat ? $eat->slug : '',
+                ];
+            }
+        } catch(\Exception $e) {}
+    @endphp
+
+    window.OCOP_PRODUCTS = {!! json_encode($allOcopProductsData) !!};
+
+    window.openHomeOcopModalFromPopup = function(slug, pName) {
+        let found = null;
+        if (window.OCOP_PRODUCTS && window.OCOP_PRODUCTS.length > 0) {
+            found = window.OCOP_PRODUCTS.find(p => (pName && p.name && p.name.toLowerCase().trim() === pName.toLowerCase().trim()) || (p.slug && p.slug === slug));
+            if (!found) {
+                found = window.OCOP_PRODUCTS.find(p => pName && p.name && p.name.toLowerCase().includes(pName.toLowerCase()));
+            }
+        }
+        if (!found) {
+            found = {
+                name: pName || 'Sản phẩm OCOP',
+                seller_name: 'Hộ kinh doanh Đông Anh',
+                image: 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=300&q=80',
+                star_rating: '3 sao',
+                price: 'Theo yêu cầu',
+                description: 'Thông tin chi tiết về sản phẩm OCOP Đông Anh.',
+                slug: slug
+            };
+        }
+        openHomeOcopModal(found);
+    };
+
+    window.openHomeOcopModal = function(product) {
+        document.getElementById('hpmName').textContent = product.name || 'Sản phẩm OCOP';
+        document.getElementById('hpmImg').src = product.image || 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=300&q=80';
+        document.getElementById('hpmStars').textContent = '⭐ ' + (product.star_rating || 'Chứng nhận OCOP');
+        document.getElementById('hpmPrice').textContent = product.price || 'Liên hệ';
+        document.getElementById('hpmSeller').textContent = product.seller_name || 'Cơ sở sản xuất Đông Anh';
+        document.getElementById('hpmAddress').textContent = '📍 ' + (product.address || 'Đông Anh, Hà Nội');
+        
+        // Call phone button
+        const callBtn = document.getElementById('hpmCallBtn');
+        if (product.phone) {
+            callBtn.href = 'tel:' + product.phone;
+            callBtn.innerHTML = '📞 Gọi hotline: ' + product.phone;
+            callBtn.style.display = 'inline-flex';
+        } else {
+            callBtn.style.display = 'none';
+        }
+
+        // Eatery page link
+        const eateryBtn = document.getElementById('hpmEateryLink');
+        if (product.slug) {
+            eateryBtn.href = '/dia-diem/' + product.slug;
+            eateryBtn.style.display = 'inline-flex';
+        } else {
+            eateryBtn.style.display = 'none';
+        }
+
+        // Description & Story
+        let fullDesc = product.story || product.description || 'Chưa cập nhật mô tả chi tiết.';
+        document.getElementById('hpmDesc').innerText = fullDesc;
+
+        // Ingredients & Secret Section
+        const ingSection = document.getElementById('hpmIngSection');
+        const ingGrid = document.getElementById('hpmIngGrid');
+        ingGrid.innerHTML = '';
+
+        let ingredientsArray = [];
+        if (Array.isArray(product.ingredients)) {
+            ingredientsArray = product.ingredients;
+        } else if (typeof product.ingredients === 'string') {
+            try { ingredientsArray = JSON.parse(product.ingredients) || []; } catch(e) {}
+        }
+
+        if (ingredientsArray && ingredientsArray.length > 0) {
+            ingredientsArray.forEach(ing => {
+                const div = document.createElement('div');
+                div.style.cssText = 'padding: 10px 14px; background: #fefce8; border: 1px solid #fef08a; color: #854d0e; display: flex; align-items: center; gap: 8px; border-radius: 8px; font-size: 0.88rem; font-weight: 600;';
+                div.innerHTML = `<span>✨</span><span>${ing}</span>`;
+                ingGrid.appendChild(div);
+            });
+            ingSection.style.display = 'block';
+        } else {
+            ingSection.style.display = 'none';
+        }
+
+        // Show modal
+        const modal = document.getElementById('homeOcopProductModal');
+        modal.style.display = 'flex';
+        setTimeout(() => {
+            modal.style.opacity = '1';
+            modal.children[0].style.transform = 'scale(1)';
+        }, 10);
+        document.body.style.overflow = 'hidden';
+    };
+
+    window.closeHomeOcopModal = function() {
+        const modal = document.getElementById('homeOcopProductModal');
+        modal.style.opacity = '0';
+        modal.children[0].style.transform = 'scale(0.92)';
+        setTimeout(() => {
+            modal.style.display = 'none';
+            document.body.style.overflow = '';
+        }, 300);
+    };
 </script>
 @endsection

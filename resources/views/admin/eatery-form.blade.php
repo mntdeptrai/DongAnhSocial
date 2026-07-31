@@ -633,7 +633,9 @@
                                     </span>
                                 </td>
                                 <td style="font-size: 0.83rem; color: #334155; max-width: 320px; line-height: 1.5;">
-                                    {{ $product->description ?: 'Chưa có mô tả' }}
+                                    <div style="display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; max-height: 4.5em;" title="{{ $product->description }}">
+                                        {{ $product->description ?: 'Chưa có mô tả' }}
+                                    </div>
                                 </td>
                                 <td style="text-align: center; white-space: nowrap;">
                                     <div style="display: inline-flex; gap: 6px;">
