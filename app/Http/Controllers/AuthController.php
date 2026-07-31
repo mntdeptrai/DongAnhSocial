@@ -21,6 +21,8 @@ class AuthController extends Controller
                 return redirect('/admin/dashboard');
             } elseif ($role === 'seller') {
                 return redirect('/seller/dashboard');
+            } elseif ($role === 'principal') {
+                return redirect('/principal/schools');
             }
             return redirect('/');
         }
@@ -60,6 +62,8 @@ class AuthController extends Controller
                 return redirect()->intended('/admin/dashboard');
             } elseif ($user->role === 'seller') {
                 return redirect()->intended('/seller/dashboard');
+            } elseif ($user->role === 'principal') {
+                return redirect()->intended('/principal/schools');
             }
             return redirect()->intended('/');
         }

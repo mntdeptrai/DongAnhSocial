@@ -1495,7 +1495,7 @@ class AdminController extends Controller
             abort(403, 'Bạn không có quyền thêm người dùng mới!');
         }
 
-        $allowedRoles = $role === 'admin' ? 'admin,manager,seller,user' : 'seller';
+        $allowedRoles = $role === 'admin' ? 'admin,manager,seller,user,principal' : 'seller';
 
         $request->validate([
             'name' => 'required|string|max:255',
@@ -1669,7 +1669,7 @@ class AdminController extends Controller
             abort(403, 'Ban Quản Lý Chợ chỉ được quyền quản lý tiểu thương trong chợ của mình!');
         }
 
-        $allowedRoles = $role === 'admin' ? 'admin,manager,seller,user' : 'seller';
+        $allowedRoles = $role === 'admin' ? 'admin,manager,seller,user,principal' : 'seller';
 
         $request->validate([
             'name' => 'required|string|max:255',

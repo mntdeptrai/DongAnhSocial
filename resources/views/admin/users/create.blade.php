@@ -96,6 +96,7 @@
                             <option value="seller" {{ old('role') === 'seller' ? 'selected' : '' }}>Seller (Chủ cơ sở / Tiểu thương)</option>
                             <option value="manager" {{ old('role') === 'manager' ? 'selected' : '' }}>Manager (Ban Quản Lý Chợ)</option>
                             <option value="user" {{ old('role') === 'user' ? 'selected' : '' }}>Customer (Khách hàng)</option>
+                            <option value="principal" {{ old('role') === 'principal' ? 'selected' : '' }}>Principal (Hiệu trưởng / Quản lý giáo dục)</option>
                             <option value="admin" {{ old('role') === 'admin' ? 'selected' : '' }}>Admin (Quản trị viên hệ thống)</option>
                         </select>
                     @endif
@@ -184,7 +185,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (roleSelect && eateryGroup) {
         function toggleEaterySelection() {
-            if (roleSelect.value === 'seller') {
+            if (roleSelect.value === 'seller' || roleSelect.value === 'principal') {
                 eateryGroup.style.display = 'block';
             } else {
                 eateryGroup.style.display = 'none';
