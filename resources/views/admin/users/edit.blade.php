@@ -73,10 +73,10 @@
 
             <!-- Số điện thoại -->
             <div class="admin-form-group">
-                <label class="admin-form-label" style="font-weight: 700; font-size: 0.82rem; margin-bottom: 8px; display: block; color: var(--admin-text-main);">Số điện thoại <span style="color: var(--admin-danger);">*</span></label>
+                <label class="admin-form-label" style="font-weight: 700; font-size: 0.82rem; margin-bottom: 8px; display: block; color: var(--admin-text-main);">Số điện thoại <span style="color: var(--admin-text-muted); font-weight: normal;">(Không bắt buộc)</span></label>
                 <div style="position: relative;">
                     <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--admin-text-muted);">📞</span>
-                    <input type="text" name="phone" required value="{{ old('phone', $user->phone) }}" class="admin-form-input" pattern="0[0-9]{9}" title="Số điện thoại phải gồm đúng 10 chữ số và bắt đầu bằng số 0" placeholder="0901234567" style="padding-left: 38px; border-radius: 10px; height: 42px;">
+                    <input type="text" name="phone" value="{{ old('phone', $user->phone) }}" class="admin-form-input" pattern="0[0-9]{9}" title="Số điện thoại phải gồm đúng 10 chữ số và bắt đầu bằng số 0" placeholder="0901234567" style="padding-left: 38px; border-radius: 10px; height: 42px;">
                 </div>
             </div>
         </div>
