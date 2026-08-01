@@ -158,15 +158,15 @@
                 <small style="color: var(--admin-text-muted); display: block; margin-top: 6px;">Tài khoản tiểu thương sẽ trực tiếp làm chủ và quản lý dữ liệu gian hàng số này.</small>
             </div>
         @else
-            <!-- Cơ sở kinh doanh (Chỉ hiện khi chọn Seller) -->
+            <!-- Cơ sở kinh doanh (Dành cho Seller, Principal, Manager) -->
             <div id="eatery_selection_group" class="admin-form-group" style="display: none; margin-bottom: 28px;">
                 <label class="admin-form-label" style="font-weight: 700; font-size: 0.82rem; margin-bottom: 8px; display: block; color: var(--admin-text-main);">Cơ sở kinh doanh liên kết (Dành cho Seller)</label>
                 <div style="position: relative;">
                     <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--admin-text-muted);">🏢</span>
-                    <select name="eatery_id" class="admin-form-input" style="padding-left: 38px; border-radius: 10px; height: 42px; font-size: 0.86rem;">
+                    <select name="eatery_id" id="eatery_id_select" class="admin-form-input" style="padding-left: 38px; border-radius: 10px; height: 42px; font-size: 0.86rem;">
                         <option value="">-- Chọn cơ sở quản lý (Hoặc để trống tạo sau) --</option>
                         @foreach($eateries as $eat)
-                            <option value="{{ $eat->id }}" {{ old('eatery_id', $currentEateryId) == $eat->id ? 'selected' : '' }}>
+                            <option value="{{ $eat->id }}" data-category="{{ $eat->category->slug }}" {{ old('eatery_id', $currentEateryId) == $eat->id ? 'selected' : '' }}>
                                 [{{ $eat->category->name }}] {{ $eat->name }} ({{ $eat->address }})
                             </option>
                         @endforeach
@@ -190,11 +190,64 @@
 document.addEventListener('DOMContentLoaded', function() {
     const roleSelect = document.querySelector('select[name="role"]');
     const eateryGroup = document.getElementById('eatery_selection_group');
+    const eaterySelect = document.getElementById('eatery_id_select');
 
-    if (roleSelect && eateryGroup) {
+    if (roleSelect && eateryGroup && eaterySelect) {
+        // Lưu danh sách options ban đầu
+        const originalOptions = Array.from(eaterySelect.options).map(option => ({
+            value: option.value,
+            text: option.text,
+            category: option.getAttribute('data-category') || ''
+        }));
+
+        const originalLabel = eateryGroup.querySelector('label');
+
         function toggleEaterySelection() {
-            if (roleSelect.value === 'seller' || roleSelect.value === 'principal') {
+            const role = roleSelect.value;
+            const currentSelectedValue = eaterySelect.value;
+
+            if (role === 'seller' || role === 'principal' || role === 'manager') {
                 eateryGroup.style.display = 'block';
+
+                // Cập nhật tiêu đề nhãn tùy theo vai trò
+                if (role === 'manager') {
+                    originalLabel.innerHTML = '🏪 Chợ truyền thống liên kết (Dành cho Manager) <span style="color: var(--admin-danger);">*</span>';
+                } else if (role === 'principal') {
+                    originalLabel.innerHTML = '🏫 Trường học liên kết (Dành cho Principal) <span style="color: var(--admin-danger);">*</span>';
+                } else {
+                    originalLabel.innerHTML = '🏢 Cơ sở kinh doanh liên kết (Dành cho Seller)';
+                }
+
+                // Xóa các options cũ
+                eaterySelect.innerHTML = '';
+
+                // Lọc danh sách theo vai trò
+                const filtered = originalOptions.filter(opt => {
+                    if (opt.value === '') return true; // Luôn giữ placeholder
+                    if (role === 'manager') {
+                        return opt.category === 'dong-anh-market';
+                    }
+                    if (role === 'principal') {
+                        return opt.category === 'smart-education-map';
+                    }
+                    if (role === 'seller') {
+                        // Seller: hiển thị các cơ sở ăn uống, lưu trú, y tế... (trừ chợ và trường học)
+                        return opt.category !== 'dong-anh-market' && opt.category !== 'smart-education-map';
+                    }
+                    return false;
+                });
+
+                // Thêm các option đã lọc vào select
+                filtered.forEach(opt => {
+                    const newOpt = document.createElement('option');
+                    newOpt.value = opt.value;
+                    newOpt.text = opt.text;
+                    newOpt.setAttribute('data-category', opt.category);
+                    if (opt.value === currentSelectedValue) {
+                        newOpt.selected = true;
+                    }
+                    eaterySelect.appendChild(newOpt);
+                });
             } else {
                 eateryGroup.style.display = 'none';
             }
