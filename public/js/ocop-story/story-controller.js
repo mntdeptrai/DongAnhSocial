@@ -328,7 +328,7 @@ class OcopStoryController {
             await this.markerCtrl.triggerDominoLedEffect();
             await new Promise(r => setTimeout(r, 1200));
             if (!this.isSkipped && session === this.sessionId) {
-                await this.animCtrl.playSloganChainAndFinale();
+                await this.animCtrl.playSloganChainAndFinale(this.products);
             }
         }
     }

@@ -130,6 +130,20 @@
             OCOP ĐÔNG ANH
         </div>
 
+        <!-- Memory Flashback Container (Tua ký ức) -->
+        <div id="ocopFlashbackContainer" class="ocop-flashback-container" style="display: none; flex-direction: column; align-items: center; justify-content: center; gap: 16px; transform: scale(0.9); opacity: 0; transition: all 0.5s ease; position: absolute; z-index: 10;">
+            <div class="flashback-frame" style="width: 280px; height: 280px; border-radius: 20px; border: 4px solid #D4A017; box-shadow: 0 0 50px rgba(212, 160, 23, 0.7); overflow: hidden; position: relative;">
+                <img id="ocopFlashbackImage" src="" style="width: 100%; height: 100%; object-fit: cover;" />
+                <div class="flashback-glow" style="position: absolute; inset: 0; box-shadow: inset 0 0 40px rgba(15, 94, 74, 0.8);"></div>
+            </div>
+            <h2 id="ocopFlashbackTitle" style="color: #ffffff; font-family: 'Outfit', sans-serif; font-weight: 900; font-size: 1.6rem; margin: 10px 0 0 0; text-align: center; text-shadow: 0 2px 10px rgba(0,0,0,0.5); max-width: 500px; line-height: 1.3;">
+                Tên Sản Phẩm
+            </h2>
+            <div id="ocopFlashbackBadge" style="background: #D4A017; color: #173B32; font-family: 'Outfit', sans-serif; font-weight: 900; font-size: 0.82rem; padding: 4px 14px; border-radius: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); letter-spacing: 0.5px;">
+                ⭐ OCOP 4 SAO
+            </div>
+        </div>
+
         <!-- Grand Finale Stats Card -->
         <div id="ocopFinaleStatsCard" class="ocop-finale-stats-card" style="display: none;">
             <div style="font-size: 3.5rem; margin-bottom: 10px; filter: drop-shadow(0 0 15px rgba(212, 160, 23, 0.6));">✨🌾✨</div>
