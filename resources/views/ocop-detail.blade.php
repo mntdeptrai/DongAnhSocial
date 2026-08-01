@@ -694,8 +694,8 @@
     </div>
 
     <!-- OFFICIAL INTERACTIVE OCOP CERTIFICATE MODAL -->
-    <div id="ocopCertModal" style="display: none; position: fixed; inset: 0; z-index: 999999; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(6px); align-items: center; justify-content: center; padding: 20px;">
-        <div style="background: #fffdf5; border: 10px double #d97706; border-radius: 20px; max-width: 680px; width: 100%; padding: 40px 30px; position: relative; box-shadow: 0 25px 60px rgba(0,0,0,0.4); text-align: center; font-family: 'Times New Roman', Times, serif; color: #1e293b;">
+    <div id="ocopCertModal" style="display: none; position: fixed; inset: 0; z-index: 999999; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(6px); overflow-y: auto; padding: 20px; box-sizing: border-box; justify-content: center; align-items: flex-start;">
+        <div style="background: #fffdf5; border: 10px double #d97706; border-radius: 20px; max-width: 680px; width: 100%; padding: 40px 30px; position: relative; box-shadow: 0 25px 60px rgba(0,0,0,0.4); text-align: center; font-family: 'Times New Roman', Times, serif; color: #1e293b; margin: 30px auto; box-sizing: border-box;">
             
             <!-- Close Button -->
             <button onclick="closeOcopCertModal()" style="position: absolute; top: 15px; right: 20px; background: #fee2e2; border: 1px solid #fca5a5; color: #991b1b; width: 36px; height: 36px; border-radius: 50%; font-size: 1.2rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center;">✕</button>

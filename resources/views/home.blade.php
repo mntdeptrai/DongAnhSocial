@@ -1440,6 +1440,54 @@
         font-size: 0.85rem !important;
     }
 }
+
+/* OCOP Product detail popup CSS classes to prevent layout squishing on mobile */
+.ocop-popup-hero {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 20px;
+}
+
+.ocop-popup-img-col {
+    flex: 0 0 220px;
+    width: 220px;
+    height: 220px;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid #cbd5e1;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    background: #f8fafc;
+}
+
+.ocop-popup-info-col {
+    flex: 1;
+    min-width: 260px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 767px) {
+    .ocop-popup-hero {
+        gap: 16px;
+    }
+    
+    .ocop-popup-img-col {
+        flex: 0 0 100%;
+        width: 100%;
+        height: 200px;
+    }
+    
+    .ocop-popup-info-col {
+        flex: 0 0 100%;
+        min-width: 100%;
+        gap: 16px;
+    }
+}
 </style>
 
 <section class="custom-hero-banner">
@@ -2269,14 +2317,14 @@
         <div style="overflow-y: auto; padding: 24px; flex: 1;">
             
             <!-- Hero Top Row: Image + Main Card Info -->
-            <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 24px; border-bottom: 1px solid #e2e8f0; padding-bottom: 20px;">
+            <div class="ocop-popup-hero">
                 <!-- Product Image -->
-                <div style="flex: 0 0 220px; height: 220px; border-radius: 14px; overflow: hidden; border: 1px solid #cbd5e1; box-shadow: 0 4px 12px rgba(0,0,0,0.08); background: #f8fafc;">
+                <div class="ocop-popup-img-col">
                     <img id="hpmImg" src="" style="width: 100%; height: 100%; object-fit: cover;" alt="">
                 </div>
 
                 <!-- Product Quick Specs & Seller -->
-                <div style="flex: 1; min-width: 260px; display: flex; flex-direction: column; justify-content: space-between;">
+                <div class="ocop-popup-info-col">
                     <div>
                         <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px;">
                             <span id="hpmStars" style="background: #fef3c7; color: #d97706; border: 1px solid #fde68a; font-weight: 800; font-size: 0.85rem; padding: 4px 12px; border-radius: 20px; display: inline-flex; align-items: center; gap: 4px;"></span>
