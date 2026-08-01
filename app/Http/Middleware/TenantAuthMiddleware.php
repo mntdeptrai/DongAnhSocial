@@ -62,12 +62,30 @@ class TenantAuthMiddleware
 
         // 3. Chủ Gian hàng (Stall Tenant Vendor): Scoped to single Stall within Market
         if ($role === 'seller') {
-            $stallProduct = DB::connection('mysql_market')->table('ocop_products')
-                ->where('seller_phone', $user->phone ?? '')
-                ->orWhere('seller_name', 'LIKE', '%' . $user->name . '%')
-                ->first();
+            $stallProduct = null;
 
-            $tenantId = $stallProduct ? $stallProduct->eatery_id : null;
+            // 3a. Ưu tiên stall_id từ bảng users
+            if ($user->stall_id) {
+                $stallProduct = DB::connection('mysql_market')->table('ocop_products')
+                    ->where('id', $user->stall_id)
+                    ->first();
+            }
+
+            // 3b. Tìm theo eatery_id được gắn cho user
+            if (!$stallProduct && $user->eatery_id) {
+                $stallProduct = DB::connection('mysql_market')->table('ocop_products')
+                    ->where('eatery_id', $user->eatery_id)
+                    ->first();
+            }
+
+            // 3c. Tìm theo seller_phone
+            if (!$stallProduct && !empty($user->phone)) {
+                $stallProduct = DB::connection('mysql_market')->table('ocop_products')
+                    ->where('seller_phone', $user->phone)
+                    ->first();
+            }
+
+            $tenantId = $stallProduct ? $stallProduct->eatery_id : ($user->eatery_id ?: null);
             $stallName = $stallProduct ? $stallProduct->stall_name : ($user->stall_name ?? 'Gian hàng số');
 
             session([

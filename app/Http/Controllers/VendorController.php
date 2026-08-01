@@ -36,42 +36,35 @@ class VendorController extends Controller
         $resolvedStallName = null;
 
         // === BƯỚC 1: Xác định gian hàng cụ thể của Seller ===
+        $db = DB::connection('mysql_market');
 
         // 1a. Ưu tiên dùng stall_id từ bảng users (nếu đã gán)
         if ($user && $user->stall_id) {
-            $stallRecord = DB::table('ocop_products')->where('id', $user->stall_id)->first();
+            $stallRecord = $db->table('ocop_products')->where('id', $user->stall_id)->first();
             if ($stallRecord) {
                 $resolvedStallName = $stallRecord->stall_name;
-                $eatery = DB::table('eateries')->where('id', $stallRecord->eatery_id)->first();
+                $eatery = $db->table('eateries')->where('id', $stallRecord->eatery_id)->first();
             }
         }
 
         // 1b. Tìm theo seller_phone
         if (!$stallRecord && !empty($userPhone)) {
-            $stallRecord = DB::table('ocop_products')->where('seller_phone', $userPhone)->first();
+            $stallRecord = $db->table('ocop_products')->where('seller_phone', $userPhone)->first();
             if ($stallRecord) {
                 $resolvedStallName = $stallRecord->stall_name;
-                $eatery = DB::table('eateries')->where('id', $stallRecord->eatery_id)->first();
+                $eatery = $db->table('eateries')->where('id', $stallRecord->eatery_id)->first();
             }
         }
 
-        // 1c. Tìm theo seller_name
-        if (!$stallRecord && !empty($userName)) {
-            $stallRecord = DB::table('ocop_products')->where('seller_name', 'LIKE', '%' . $userName . '%')->first();
-            if ($stallRecord) {
-                $resolvedStallName = $stallRecord->stall_name;
-                $eatery = DB::table('eateries')->where('id', $stallRecord->eatery_id)->first();
-            }
-        }
 
         // 1d. Fallback: Tìm eatery sở hữu bởi User (qua user_id trên eateries)
         if (!$eatery && $userId) {
-            $eatery = DB::table('eateries')->where('user_id', $userId)->first();
+            $eatery = $db->table('eateries')->where('user_id', $userId)->first();
         }
 
         // 1e. Tìm eatery qua eatery_id được gắn cho user (khi admin cấp tài khoản)
         if (!$eatery && $user && $user->eatery_id) {
-            $eatery = DB::table('eateries')->where('id', $user->eatery_id)->first();
+            $eatery = $db->table('eateries')->where('id', $user->eatery_id)->first();
         }
 
         // 1f. Session stall_name (được set bởi TenantAuthMiddleware)
@@ -81,7 +74,7 @@ class VendorController extends Controller
 
         // 1g. Nếu vẫn không có, lấy địa điểm mặc định đầu tiên
         if (!$eatery) {
-            $eatery = DB::table('eateries')->first();
+            $eatery = $db->table('eateries')->first();
         }
 
         $eateryId = $eatery ? $eatery->id : 1;
@@ -92,32 +85,34 @@ class VendorController extends Controller
         // Lấy danh mục địa điểm
         $category = null;
         if ($eatery && $eatery->category_id) {
-            $category = DB::table('categories')->where('id', $eatery->category_id)->first();
+            $category = $db->table('categories')->where('id', $eatery->category_id)->first();
         }
         $categorySlug = $category ? $category->slug : '';
 
-        // === BƯỚC 2: Query sản phẩm CHỈ CỦA GIAN HÀNG NÀY ===
-        // Dùng AND (eatery_id + stall_name) thay vì chỉ eatery_id
+        // Phân biệt chính xác:
+        // - Doanh nghiệp / HTX Đặc sản OCOP (categorySlug === 'dong-anh-market') → $isOcopSeller = true
+        // - Tiểu thương kinh doanh trong Chợ truyền thống (categorySlug === 'traditional-market') → $isOcopSeller = false
+        $isOcopSeller = ($categorySlug === 'dong-anh-market');
+
+        // === BƯỚC 2: Query sản phẩm ===
         $products = collect();
-        if ($resolvedStallName) {
-            // Seller có gian hàng rõ ràng → chỉ lấy sản phẩm của gian hàng này
-            $products = DB::table('ocop_products')
+        if ($isOcopSeller) {
+            // OCOP seller: lấy TẤT CẢ sản phẩm thuộc cơ sở kinh doanh
+            $products = $db->table('ocop_products')->where('eatery_id', $eateryId)->get();
+        } elseif ($resolvedStallName) {
+            // Chợ truyền thống: chỉ lấy sản phẩm của gian hàng cụ thể
+            $products = $db->table('ocop_products')
                 ->where('eatery_id', $eateryId)
                 ->where('stall_name', $resolvedStallName)
                 ->get();
         } else {
-            // Fallback cho trường hợp eatery chỉ có 1 gian hàng (non-market seller)
-            $products = DB::table('ocop_products')->where('eatery_id', $eateryId)->get();
+            // Fallback
+            $products = $db->table('ocop_products')->where('eatery_id', $eateryId)->get();
         }
-
-        // Phân biệt chính xác:
-        // - Doanh nghiệp / HTX Đặc sản OCOP (categorySlug === 'dong-anh-market') -> $isOcopSeller = true
-        // - Tiểu thương kinh doanh trong Chợ truyền thống (categorySlug === 'traditional-market') -> $isOcopSeller = false
-        $isOcopSeller = ($categorySlug === 'dong-anh-market');
         $primaryProduct = $products->first();
 
         if ($products->isEmpty() && $eatery) {
-            $dishes = DB::table('dishes')->where('eatery_id', $eatery->id)->get();
+            $dishes = DB::connection('mysql_market')->table('dishes')->where('eatery_id', $eatery->id)->get();
             if ($dishes->isNotEmpty()) {
                 $products = $dishes->map(function($d) use ($eatery) {
                     return (object)[
@@ -207,7 +202,7 @@ class VendorController extends Controller
         }
         if (!empty($eateryUpdate)) {
             $eateryUpdate['updated_at'] = now();
-            DB::table('eateries')->where('id', $eateryId)->update($eateryUpdate);
+            DB::connection('mysql_market')->table('eateries')->where('id', $eateryId)->update($eateryUpdate);
         }
 
         // 2. Cập nhật Hồ Sơ Di Sản OCOP (dossier fields) cho các sản phẩm OCOP thuộc địa điểm này
@@ -239,7 +234,7 @@ class VendorController extends Controller
             $ocopUpdate['star_rating'] = $request->star_rating;
         }
 
-        DB::table('ocop_products')->where('eatery_id', $eateryId)->update($ocopUpdate);
+        DB::connection('mysql_market')->table('ocop_products')->where('eatery_id', $eateryId)->update($ocopUpdate);
 
         return redirect()->back()->with('success', '🎉 Đã cập nhật Hồ Sơ Di Sản & Thuyết Minh OCOP thành công! Tất cả thông tin đã được phát hành trực tiếp lên bản đồ.');
     }
@@ -298,7 +293,7 @@ class VendorController extends Controller
             $description = $description ? ($originText . '. ' . $description) : $originText;
         }
 
-        DB::table('ocop_products')->insert([
+        DB::connection('mysql_market')->table('ocop_products')->insert([
             'eatery_id' => $context['eateryId'],
             'stall_name' => $context['stallName'],
             'seller_name' => $context['sellerName'],
@@ -323,7 +318,7 @@ class VendorController extends Controller
     {
         $this->verifyVendor();
 
-        $product = DB::table('ocop_products')->where('id', $id)->first();
+        $product = DB::connection('mysql_market')->table('ocop_products')->where('id', $id)->first();
         if (!$product) {
             return redirect()->back()->with('error', 'Sản phẩm không tồn tại!');
         }
@@ -365,7 +360,7 @@ class VendorController extends Controller
             $updateData['star_rating'] = $request->star_rating;
         }
 
-        DB::table('ocop_products')->where('id', $id)->update($updateData);
+        DB::connection('mysql_market')->table('ocop_products')->where('id', $id)->update($updateData);
 
         return redirect()->back()->with('success', 'Đã cập nhật sản phẩm OCOP thành công!');
     }
@@ -377,7 +372,7 @@ class VendorController extends Controller
     {
         $this->verifyVendor();
 
-        DB::table('ocop_products')->where('id', $id)->delete();
+        DB::connection('mysql_market')->table('ocop_products')->where('id', $id)->delete();
 
         return redirect()->back()->with('success', 'Đã xóa sản phẩm khỏi gian hàng!');
     }
