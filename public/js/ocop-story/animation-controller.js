@@ -577,11 +577,12 @@ class OcopAnimationController {
         const offsetX = Math.cos(angle) * radius;
         const offsetY = Math.sin(angle) * radius;
 
-        // Keep cards cleanly within the map viewport (avoiding left sidebar ~320px)
-        const minX = 330;
-        const maxX = screenW - 180;
-        const minY = 75;
-        const maxY = screenH - 50;
+        // Keep cards cleanly within the map viewport (responsive for mobile & desktop)
+        const isMobile = screenW <= 768;
+        const minX = isMobile ? 12 : 330;
+        const maxX = isMobile ? (screenW - 130) : (screenW - 180);
+        const minY = isMobile ? 115 : 75;
+        const maxY = isMobile ? (screenH - 120) : (screenH - 50);
 
         const rawX = tx + offsetX - 60;
         const rawY = ty + offsetY - 18;
