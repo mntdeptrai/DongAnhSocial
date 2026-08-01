@@ -64,17 +64,22 @@ class VendorController extends Controller
             }
         }
 
-        // 1d. Fallback: Tìm eatery sở hữu bởi User
+        // 1d. Fallback: Tìm eatery sở hữu bởi User (qua user_id trên eateries)
         if (!$eatery && $userId) {
             $eatery = DB::table('eateries')->where('user_id', $userId)->first();
         }
 
-        // 1e. Session stall_name (được set bởi TenantAuthMiddleware)
+        // 1e. Tìm eatery qua eatery_id được gắn cho user (khi admin cấp tài khoản)
+        if (!$eatery && $user && $user->eatery_id) {
+            $eatery = DB::table('eateries')->where('id', $user->eatery_id)->first();
+        }
+
+        // 1f. Session stall_name (được set bởi TenantAuthMiddleware)
         if (!$resolvedStallName && session('stall_name')) {
             $resolvedStallName = session('stall_name');
         }
 
-        // 1f. Nếu vẫn không có, lấy địa điểm mặc định đầu tiên
+        // 1g. Nếu vẫn không có, lấy địa điểm mặc định đầu tiên
         if (!$eatery) {
             $eatery = DB::table('eateries')->first();
         }

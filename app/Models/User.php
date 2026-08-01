@@ -143,6 +143,26 @@ class User extends Authenticatable
             }
         }
 
+        // Nếu chưa tìm thấy qua user_id, thử tìm qua eatery_id được gắn cho user
+        if (empty($owned) && $this->eatery_id) {
+            foreach ($connections as $conn => $typeName) {
+                try {
+                    $eatery = Eatery::on($conn)->where('id', $this->eatery_id)->with('category')->first();
+                    if ($eatery) {
+                        $catName = ($eatery->category) ? $eatery->category->name : $typeName;
+                        $owned[] = [
+                            'name' => $eatery->name,
+                            'type' => $catName,
+                            'slug' => $eatery->slug,
+                            'category_slug' => ($eatery->category) ? $eatery->category->slug : 'dong-anh-food-map'
+                        ];
+                        break; // Đã tìm thấy, dừng
+                    }
+                } catch (\Exception $e) {
+                }
+            }
+        }
+
         return $owned;
     }
 
