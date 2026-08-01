@@ -2980,6 +2980,20 @@
                                 <p style="font-size: 0.88rem; color: var(--text-muted); line-height: 1.5; margin: 0;">
                                     Khám phá các sản phẩm OCOP đặc trưng, quà lưu niệm độc đáo, nông sản sạch mang đậm hồn quê Đông Anh.
                                 </p>
+
+                                <!-- Banner Trình Diễn Story Liên Hoàn Tất Cả Sản Phẩm OCOP -->
+                                <div style="margin-top: 14px; background: linear-gradient(135deg, rgba(217, 119, 6, 0.15) 0%, rgba(5, 150, 105, 0.2) 100%); border: 1.5px solid rgba(251, 191, 36, 0.5); border-radius: 14px; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; box-shadow: 0 8px 20px rgba(217, 119, 6, 0.15);">
+                                    <div style="display: flex; align-items: center; gap: 10px;">
+                                        <span style="font-size: 1.8rem;">🎬</span>
+                                        <div>
+                                            <h4 style="margin: 0; color: #d97706; font-size: 0.98rem; font-weight: 800; font-family: var(--font-heading);">HÀNH TRÌNH TỔNG THỂ DI SẢN OCOP ĐÔNG ANH</h4>
+                                            <p style="margin: 2px 0 0 0; color: var(--text-muted); font-size: 0.8rem;">Xem trình diễn liên hoàn tất cả các vùng nguyên liệu & sản phẩm OCOP đạt sao trên bản đồ</p>
+                                        </div>
+                                    </div>
+                                    <button type="button" onclick="window.openOcopFullHeritageStory()" style="background: linear-gradient(135deg, #d97706 0%, #059669 100%); border: none; color: #ffffff; padding: 9px 18px; border-radius: 10px; font-weight: 800; font-size: 0.85rem; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(217, 119, 6, 0.4); transition: all 0.2s;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
+                                        <span>🌾 Xem Story Tất Cả OCOP</span> ➔
+                                    </button>
+                                </div>
                             </div>
                         `;
                     } else if (isTraditionalMarket) {
