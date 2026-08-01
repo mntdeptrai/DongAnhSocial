@@ -1499,13 +1499,19 @@ class AdminController extends Controller
 
         $request->validate([
             'name' => 'required|string|max:255',
+            'username' => ['required', 'string', 'max:50', 'unique:users', 'regex:/^[a-zA-Z0-9_.-]+$/'],
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:6',
             'role' => 'required|string|in:' . $allowedRoles,
-            'phone' => 'nullable|string|max:15',
+            'phone' => ['nullable', 'string', 'regex:/^0[0-9]{9}$/'],
             'avatar' => 'nullable|string|max:10',
             'eatery_id' => 'nullable|integer',
             'stall_id' => 'nullable|integer',
+        ], [
+            'username.required' => 'Vui lòng nhập tên đăng nhập (username)!',
+            'username.unique' => 'Tên đăng nhập này đã tồn tại trên hệ thống!',
+            'username.regex' => 'Tên đăng nhập chỉ gồm các ký tự không dấu (chữ, số, gạch nối, gạch dưới, hoặc dấu chấm)!',
+            'phone.regex' => 'Số điện thoại Việt Nam phải có đúng 10 chữ số và bắt đầu bằng số 0!',
         ]);
 
         $eateryId = $request->eatery_id;
@@ -1525,6 +1531,7 @@ class AdminController extends Controller
 
         $user = User::create([
             'name' => $request->name,
+            'username' => $request->username,
             'email' => $request->email,
             'password' => \Illuminate\Support\Facades\Hash::make($request->password),
             'role' => $request->role,
@@ -1673,14 +1680,20 @@ class AdminController extends Controller
 
         $request->validate([
             'name' => 'required|string|max:255',
+            'username' => ['required', 'string', 'max:50', 'unique:users,username,' . $id, 'regex:/^[a-zA-Z0-9_.-]+$/'],
             'email' => 'required|string|email|max:255|unique:users,email,' . $id,
             'role' => 'required|string|in:' . $allowedRoles,
-            'phone' => 'nullable|string|max:15',
+            'phone' => ['nullable', 'string', 'regex:/^0[0-9]{9}$/'],
             'avatar' => 'nullable|string|max:10',
             'status' => 'required|string|in:active,disabled',
             'password' => 'nullable|string|min:6',
             'eatery_id' => 'nullable|integer',
             'stall_id' => 'nullable|integer',
+        ], [
+            'username.required' => 'Vui lòng nhập tên đăng nhập (username)!',
+            'username.unique' => 'Tên đăng nhập này đã tồn tại trên hệ thống!',
+            'username.regex' => 'Tên đăng nhập chỉ gồm các ký tự không dấu (chữ, số, gạch nối, gạch dưới, hoặc dấu chấm)!',
+            'phone.regex' => 'Số điện thoại Việt Nam phải có đúng 10 chữ số và bắt đầu bằng số 0!',
         ]);
 
         $eateryId = $request->eatery_id ?: $user->eatery_id;
@@ -1700,6 +1713,7 @@ class AdminController extends Controller
 
         $data = [
             'name' => $request->name,
+            'username' => $request->username,
             'email' => $request->email,
             'role' => $request->role,
             'avatar' => $request->avatar ?: '👨‍🍳',

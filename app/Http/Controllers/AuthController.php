@@ -34,13 +34,23 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
-        $credentials = $request->validate([
-            'email' => 'required|email',
-            'password' => 'required',
+        $request->validate([
+            'email' => 'required|string',
+            'password' => 'required|string',
         ]);
 
-        if (Auth::attempt($credentials)) {
-            $user = Auth::user();
+        $login = $request->input('email');
+        $password = $request->input('password');
+
+        // Tìm người dùng bằng email, username, name hoặc phone
+        $user = User::where('email', $login)
+            ->orWhere('username', $login)
+            ->orWhere('name', $login)
+            ->orWhere('phone', $login)
+            ->first();
+
+        if ($user && Hash::check($password, $user->password)) {
+            Auth::login($user);
             
             if ($user->status === 'disabled') {
                 Auth::logout();
@@ -69,7 +79,7 @@ class AuthController extends Controller
         }
 
         return back()->withErrors([
-            'email' => 'email hoặc mật khẩu không chính xác !',
+            'email' => 'Thông tin đăng nhập hoặc mật khẩu không chính xác!',
         ])->onlyInput('email');
     }
 
@@ -92,14 +102,19 @@ class AuthController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:50',
+            'username' => ['required', 'string', 'max:50', 'unique:users', 'regex:/^[a-zA-Z0-9_.-]+$/'],
             'email' => 'required|string|email|max:100|unique:users',
-            'phone' => 'required|string|max:15',
+            'phone' => ['required', 'string', 'regex:/^0[0-9]{9}$/'],
             'password' => 'required|string|min:6|confirmed',
             'role' => 'nullable|string|in:user,seller',
             'otp' => 'required|string|size:6',
         ], [
+            'username.required' => 'Vui lòng cung cấp tên đăng nhập (username)!',
+            'username.unique' => 'Tên đăng nhập này đã tồn tại trên hệ thống!',
+            'username.regex' => 'Tên đăng nhập chỉ gồm chữ, số, dấu gạch nối, gạch dưới hoặc dấu chấm (không chứa khoảng trắng và tiếng Việt có dấu)!',
             'email.unique' => 'Email này đã tồn tại trên hệ thống!',
             'phone.required' => 'Vui lòng cung cấp số điện thoại liên hệ!',
+            'phone.regex' => 'Số điện thoại Việt Nam phải có đúng 10 chữ số và bắt đầu bằng số 0!',
             'otp.required' => 'Vui lòng nhập mã xác thực OTP!',
             'otp.size' => 'Mã OTP phải có độ dài 6 ký tự!',
         ]);
@@ -129,6 +144,7 @@ class AuthController extends Controller
 
         $user = User::create([
             'name' => $request->name,
+            'username' => $request->username,
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'role' => $role,

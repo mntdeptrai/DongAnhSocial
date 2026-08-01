@@ -88,6 +88,7 @@ class SocialHubController extends Controller
         $users = User::where('id', '!=', $user->id)
             ->where(function ($q) use ($query) {
                 $q->where('name', 'like', "%{$query}%")
+                  ->orWhere('username', 'like', "%{$query}%")
                   ->orWhere('email', 'like', "%{$query}%");
             })
             ->limit(15)

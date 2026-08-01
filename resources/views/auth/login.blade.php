@@ -52,8 +52,8 @@
                 @csrf
                 
                 <div class="review-form-group">
-                    <label class="review-form-label" style="font-size: 0.85rem; font-weight: 600;">Địa chỉ Email</label>
-                    <input type="email" name="email" value="{{ old('email') }}" class="form-input" required placeholder="name@example.com" style="padding: 12px 16px; width: 100%;">
+                    <label class="review-form-label" style="font-size: 0.85rem; font-weight: 600;">Tài khoản đăng nhập</label>
+                    <input type="text" name="email" value="{{ old('email') }}" class="form-input" required placeholder="Email, tên đăng nhập hoặc số điện thoại" style="padding: 12px 16px; width: 100%;">
                 </div>
                 
                 <div class="review-form-group" style="margin-bottom: 24px;">

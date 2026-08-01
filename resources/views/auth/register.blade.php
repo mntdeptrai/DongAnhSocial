@@ -143,8 +143,13 @@
                     <!-- Cột 2 -->
                     <div>
                         <div class="review-form-group" style="margin-bottom: 16px;">
+                            <label class="review-form-label" style="font-size: 0.85rem; font-weight: 600;">Tên đăng nhập (Username)</label>
+                            <input type="text" name="username" value="{{ old('username') }}" class="form-input" required pattern="^[a-zA-Z0-9_.-]+$" title="Tên đăng nhập chỉ gồm chữ, số, dấu gạch nối, gạch dưới hoặc dấu chấm (không dấu, không khoảng trắng)" placeholder="Ví dụ: nguyenvana" style="padding: 11px 16px; width: 100%;">
+                        </div>
+
+                        <div class="review-form-group" style="margin-bottom: 16px;">
                             <label class="review-form-label" style="font-size: 0.85rem; font-weight: 600;">Số điện thoại liên hệ</label>
-                            <input type="text" name="phone" value="{{ old('phone') }}" class="form-input" required placeholder="Ví dụ: 0901234567" style="padding: 11px 16px; width: 100%;">
+                            <input type="text" name="phone" value="{{ old('phone') }}" class="form-input" required pattern="0[0-9]{9}" title="Số điện thoại phải gồm đúng 10 chữ số và bắt đầu bằng số 0" placeholder="Ví dụ: 0901234567" style="padding: 11px 16px; width: 100%;">
                         </div>
     
                         <div class="review-form-group" style="margin-bottom: 16px;">

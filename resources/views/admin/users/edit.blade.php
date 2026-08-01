@@ -51,12 +51,12 @@
                 </div>
             </div>
 
-            <!-- Avatar Emoji -->
+            <!-- Tên đăng nhập (username) -->
             <div class="admin-form-group">
-                <label class="admin-form-label" style="font-weight: 700; font-size: 0.82rem; margin-bottom: 8px; display: block; color: var(--admin-text-main);">Avatar (Emoji) <span style="color: var(--admin-danger);">*</span></label>
+                <label class="admin-form-label" style="font-weight: 700; font-size: 0.82rem; margin-bottom: 8px; display: block; color: var(--admin-text-main);">Tên đăng nhập (Username) <span style="color: var(--admin-danger);">*</span></label>
                 <div style="position: relative;">
-                    <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--admin-text-muted);">👤</span>
-                    <input type="text" name="avatar" required value="{{ old('avatar', $user->avatar ?: '🧑') }}" class="admin-form-input" placeholder="Nhập Emoji đại diện..." style="padding-left: 38px; border-radius: 10px; height: 42px;">
+                    <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--admin-text-muted);">🔑</span>
+                    <input type="text" name="username" required value="{{ old('username', $user->username) }}" class="admin-form-input" pattern="^[a-zA-Z0-9_.-]+$" title="Tên đăng nhập chỉ gồm chữ, số, dấu gạch nối, gạch dưới hoặc dấu chấm (không dấu, không khoảng trắng)" placeholder="Nhập tên đăng nhập (Ví dụ: nguyenvana)..." style="padding-left: 38px; border-radius: 10px; height: 42px;">
                 </div>
             </div>
         </div>
@@ -76,7 +76,7 @@
                 <label class="admin-form-label" style="font-weight: 700; font-size: 0.82rem; margin-bottom: 8px; display: block; color: var(--admin-text-main);">Số điện thoại <span style="color: var(--admin-danger);">*</span></label>
                 <div style="position: relative;">
                     <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--admin-text-muted);">📞</span>
-                    <input type="text" name="phone" required value="{{ old('phone', $user->phone) }}" class="admin-form-input" placeholder="0901234567" style="padding-left: 38px; border-radius: 10px; height: 42px;">
+                    <input type="text" name="phone" required value="{{ old('phone', $user->phone) }}" class="admin-form-input" pattern="0[0-9]{9}" title="Số điện thoại phải gồm đúng 10 chữ số và bắt đầu bằng số 0" placeholder="0901234567" style="padding-left: 38px; border-radius: 10px; height: 42px;">
                 </div>
             </div>
         </div>
@@ -104,6 +104,17 @@
                 </div>
             </div>
 
+            <!-- Avatar Emoji -->
+            <div class="admin-form-group">
+                <label class="admin-form-label" style="font-weight: 700; font-size: 0.82rem; margin-bottom: 8px; display: block; color: var(--admin-text-main);">Avatar (Emoji) <span style="color: var(--admin-danger);">*</span></label>
+                <div style="position: relative;">
+                    <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--admin-text-muted);">👤</span>
+                    <input type="text" name="avatar" required value="{{ old('avatar', $user->avatar ?: '🧑') }}" class="admin-form-input" placeholder="Nhập Emoji đại diện..." style="padding-left: 38px; border-radius: 10px; height: 42px;">
+                </div>
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px;">
             <!-- Trạng thái -->
             <div class="admin-form-group">
                 <label class="admin-form-label" style="font-weight: 700; font-size: 0.82rem; margin-bottom: 8px; display: block; color: var(--admin-text-main);">Trạng thái tài khoản <span style="color: var(--admin-danger);">*</span></label>
@@ -118,14 +129,14 @@
                     @endif
                 </div>
             </div>
-        </div>
 
-        <!-- Đổi mật khẩu -->
-        <div class="admin-form-group" style="margin-bottom: 24px;">
-            <label class="admin-form-label" style="font-weight: 700; font-size: 0.82rem; margin-bottom: 8px; display: block; color: var(--admin-text-main);">Thay đổi mật khẩu <span style="color: var(--admin-text-muted); font-weight: normal;">(Để trống nếu không muốn đổi mật khẩu)</span></label>
-            <div style="position: relative;">
-                <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--admin-text-muted);">🔒</span>
-                <input type="password" name="password" class="admin-form-input" placeholder="Nhập mật khẩu mới..." style="padding-left: 38px; border-radius: 10px; height: 42px;">
+            <!-- Thay đổi mật khẩu -->
+            <div class="admin-form-group">
+                <label class="admin-form-label" style="font-weight: 700; font-size: 0.82rem; margin-bottom: 8px; display: block; color: var(--admin-text-main);">Thay đổi mật khẩu <span style="color: var(--admin-text-muted); font-weight: normal;">(Để trống nếu giữ nguyên)</span></label>
+                <div style="position: relative;">
+                    <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--admin-text-muted);">🔒</span>
+                    <input type="password" name="password" class="admin-form-input" placeholder="Nhập mật khẩu mới..." style="padding-left: 38px; border-radius: 10px; height: 42px;">
+                </div>
             </div>
         </div>
 

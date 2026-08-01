@@ -21,17 +21,22 @@ class AuthApiController extends Controller
     {
         try {
             $request->validate([
-                'email'       => 'required|email',
+                'email'       => 'required|string',
                 'password'    => 'required|string',
                 'device_name' => 'nullable|string',
             ]);
 
-            $user = User::where('email', $request->email)->first();
+            $login = $request->input('email');
+            $user = User::where('email', $login)
+                ->orWhere('username', $login)
+                ->orWhere('name', $login)
+                ->orWhere('phone', $login)
+                ->first();
 
             if (!$user || !Hash::check($request->password, $user->password)) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Email hoặc mật khẩu không chính xác.'
+                    'message' => 'Thông tin đăng nhập hoặc mật khẩu không chính xác.'
                 ], 401);
             }
 
@@ -90,13 +95,22 @@ class AuthApiController extends Controller
      */
     public function apiLogin(Request $request)
     {
-        $credentials = $request->validate([
-            'email' => 'required|email',
-            'password' => 'required',
+        $request->validate([
+            'email' => 'required|string',
+            'password' => 'required|string',
         ]);
 
-        if (\Illuminate\Support\Facades\Auth::attempt($credentials)) {
-            $user = \Illuminate\Support\Facades\Auth::user();
+        $login = $request->input('email');
+        $password = $request->input('password');
+
+        $user = User::where('email', $login)
+            ->orWhere('username', $login)
+            ->orWhere('name', $login)
+            ->orWhere('phone', $login)
+            ->first();
+
+        if ($user && Hash::check($password, $user->password)) {
+            \Illuminate\Support\Facades\Auth::login($user);
             
             if ($user->status === 'disabled') {
                 \Illuminate\Support\Facades\Auth::logout();
@@ -112,7 +126,7 @@ class AuthApiController extends Controller
             return response()->json(['success' => true, 'user' => $user]);
         }
 
-        return response()->json(['success' => false, 'message' => 'Email hoặc mật khẩu không đúng.'], 401);
+        return response()->json(['success' => false, 'message' => 'Thông tin đăng nhập hoặc mật khẩu không chính xác.'], 401);
     }
 
     /**
@@ -122,10 +136,18 @@ class AuthApiController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:50',
+            'username' => ['required', 'string', 'max:50', 'unique:users', 'regex:/^[a-zA-Z0-9_.-]+$/'],
             'email' => 'required|string|email|max:100|unique:users',
-            'phone' => 'required|string|max:15',
+            'phone' => ['required', 'string', 'regex:/^0[0-9]{9}$/'],
             'password' => 'required|string|min:6',
             'role' => 'nullable|string|in:user,seller',
+        ], [
+            'username.required' => 'Vui lòng cung cấp tên đăng nhập (username)!',
+            'username.unique' => 'Tên đăng nhập này đã tồn tại trên hệ thống!',
+            'username.regex' => 'Tên đăng nhập chỉ gồm chữ, số, dấu gạch nối, gạch dưới hoặc dấu chấm (không chứa khoảng trắng và tiếng Việt có dấu)!',
+            'email.unique' => 'Email này đã tồn tại trên hệ thống!',
+            'phone.required' => 'Vui lòng cung cấp số điện thoại liên hệ!',
+            'phone.regex' => 'Số điện thoại Việt Nam phải có đúng 10 chữ số và bắt đầu bằng số 0!',
         ]);
 
         $role = $request->input('role', 'user');
@@ -135,6 +157,7 @@ class AuthApiController extends Controller
 
         $user = User::create([
             'name' => $request->name,
+            'username' => $request->username,
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'role' => $role,
