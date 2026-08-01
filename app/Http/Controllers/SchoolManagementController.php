@@ -61,9 +61,9 @@ class SchoolManagementController extends Controller
                     ->get();
             }
 
-            // Nếu Hiệu trưởng đã được phân công 1 trường, chuyển thẳng vào trang quản lý trường đó
+            // Nếu Hiệu trưởng đã được phân công 1 trường, chuyển thẳng vào trang dashboard trường đó
             if ($schools->count() === 1) {
-                return redirect()->route('principal.schools.edit', $schools->first()->id);
+                return redirect()->route('principal.schools.dashboard', $schools->first()->id);
             }
         }
 
@@ -252,5 +252,277 @@ class SchoolManagementController extends Controller
 
         return redirect()->route(request()->is('admin*') ? 'admin.schools.edit' : 'principal.schools.edit', $school->id)
             ->with('success', 'Đã cập nhật thông tin trường học & các điểm trường sáp nhập thành công!');
+    }
+
+    /**
+     * Trang dashboard quản lý trường học dành cho Hiệu trưởng
+     */
+    public function dashboard($id)
+    {
+        $this->verifyPrincipalOrAdmin();
+        $user = Auth::user();
+
+        $school = Eatery::on('mysql_education')->find($id);
+        if (!$school) {
+            $school = Eatery::on('mysql')->find($id);
+        }
+
+        if (!$school) {
+            return redirect()->route('principal.schools.index')->with('error', 'Không tìm thấy thông tin trường học!');
+        }
+
+        // Kiểm tra quyền
+        if (!$user->isAdmin() && $school->user_id !== $user->id) {
+            abort(403, 'Bạn không có quyền quản trị trường học này!');
+        }
+
+        // Lấy các bài viết, ảnh, và video liên kết với trường học
+        $posts = $school->educationPrograms()->orderBy('created_at', 'desc')->get();
+        $photos = $school->photos()->orderBy('sort_order')->get();
+        $videos = $school->reviewVideos()->orderBy('created_at', 'desc')->get();
+
+        return view('principal.dashboard', compact('school', 'posts', 'photos', 'videos'));
+    }
+
+    /**
+     * Đăng bài viết / Chương trình học mới
+     */
+    public function storePost(Request $request)
+    {
+        $this->verifyPrincipalOrAdmin();
+        $user = Auth::user();
+
+        $request->validate([
+            'eatery_id' => 'required|integer',
+            'name' => 'required|string|max:255',
+            'description' => 'required|string',
+            'duration' => 'nullable|string|max:255',
+            'tuition_fee' => 'nullable|numeric',
+            'image' => 'nullable|image|max:5120',
+        ]);
+
+        $school = Eatery::on('mysql_education')->find($request->eatery_id);
+        if (!$school) {
+            $school = Eatery::on('mysql')->find($request->eatery_id);
+        }
+
+        if (!$school || (!$user->isAdmin() && $school->user_id !== $user->id)) {
+            abort(403, 'Quyền truy cập bị từ chối!');
+        }
+
+        $imagePath = null;
+        if ($request->hasFile('image')) {
+            $imagePath = R2Helper::upload($request->file('image'), 'education');
+        }
+
+        \App\Models\EducationProgram::create([
+            'eatery_id' => $school->id,
+            'name' => $request->name,
+            'description' => $request->description,
+            'duration' => $request->duration,
+            'tuition_fee' => $request->tuition_fee,
+            'image_path' => $imagePath,
+        ]);
+
+        return redirect()->back()->with('success', 'Đăng bài viết hoạt động thành công!');
+    }
+
+    /**
+     * Cập nhật bài viết / Chương trình học
+     */
+    public function updatePost(Request $request, $id)
+    {
+        $this->verifyPrincipalOrAdmin();
+        $user = Auth::user();
+
+        $post = \App\Models\EducationProgram::findOrFail($id);
+        
+        $school = Eatery::on('mysql_education')->find($post->eatery_id);
+        if (!$school) {
+            $school = Eatery::on('mysql')->find($post->eatery_id);
+        }
+
+        if (!$school || (!$user->isAdmin() && $school->user_id !== $user->id)) {
+            abort(403, 'Quyền truy cập bị từ chối!');
+        }
+
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'required|string',
+            'duration' => 'nullable|string|max:255',
+            'tuition_fee' => 'nullable|numeric',
+            'image' => 'nullable|image|max:5120',
+        ]);
+
+        $post->name = $request->name;
+        $post->description = $request->description;
+        $post->duration = $request->duration;
+        $post->tuition_fee = $request->tuition_fee;
+
+        if ($request->hasFile('image')) {
+            $imagePath = R2Helper::upload($request->file('image'), 'education');
+            if ($imagePath) {
+                $post->image_path = $imagePath;
+            }
+        }
+
+        $post->save();
+
+        return redirect()->back()->with('success', 'Cập nhật bài viết thành công!');
+    }
+
+    /**
+     * Xóa bài viết / Chương trình học
+     */
+    public function destroyPost($id)
+    {
+        $this->verifyPrincipalOrAdmin();
+        $user = Auth::user();
+
+        $post = \App\Models\EducationProgram::findOrFail($id);
+        
+        $school = Eatery::on('mysql_education')->find($post->eatery_id);
+        if (!$school) {
+            $school = Eatery::on('mysql')->find($post->eatery_id);
+        }
+
+        if (!$school || (!$user->isAdmin() && $school->user_id !== $user->id)) {
+            abort(403, 'Quyền truy cập bị từ chối!');
+        }
+
+        $post->delete();
+
+        return redirect()->back()->with('success', 'Đã xóa bài viết thành công!');
+    }
+
+    /**
+     * Thêm ảnh mới vào thư viện trường học
+     */
+    public function storePhoto(Request $request)
+    {
+        $this->verifyPrincipalOrAdmin();
+        $user = Auth::user();
+
+        $request->validate([
+            'eatery_id' => 'required|integer',
+            'image' => 'required|image|max:5120',
+            'caption' => 'nullable|string|max:255',
+        ]);
+
+        $school = Eatery::on('mysql_education')->find($request->eatery_id);
+        if (!$school) {
+            $school = Eatery::on('mysql')->find($request->eatery_id);
+        }
+
+        if (!$school || (!$user->isAdmin() && $school->user_id !== $user->id)) {
+            abort(403, 'Quyền truy cập bị từ chối!');
+        }
+
+        $imagePath = R2Helper::upload($request->file('image'), 'education');
+
+        // Tìm sort order cao nhất hiện tại
+        $maxSort = \App\Models\EateryPhoto::where('eatery_id', $school->id)->max('sort_order') ?? 0;
+
+        \App\Models\EateryPhoto::create([
+            'eatery_id' => $school->id,
+            'image_path' => $imagePath,
+            'caption' => $request->caption ?: '',
+            'sort_order' => $maxSort + 1,
+        ]);
+
+        return redirect()->back()->with('success', 'Tải lên hình ảnh thư viện thành công!');
+    }
+
+    /**
+     * Xóa ảnh trong thư viện
+     */
+    public function destroyPhoto($id)
+    {
+        $this->verifyPrincipalOrAdmin();
+        $user = Auth::user();
+
+        $photo = \App\Models\EateryPhoto::findOrFail($id);
+
+        $school = Eatery::on('mysql_education')->find($photo->eatery_id);
+        if (!$school) {
+            $school = Eatery::on('mysql')->find($photo->eatery_id);
+        }
+
+        if (!$school || (!$user->isAdmin() && $school->user_id !== $user->id)) {
+            abort(403, 'Quyền truy cập bị từ chối!');
+        }
+
+        $photo->delete();
+
+        return redirect()->back()->with('success', 'Đã xóa hình ảnh khỏi thư viện!');
+    }
+
+    /**
+     * Đăng video giới thiệu trường học mới
+     */
+    public function storeVideo(Request $request)
+    {
+        $this->verifyPrincipalOrAdmin();
+        $user = Auth::user();
+
+        $request->validate([
+            'eatery_id' => 'required|integer',
+            'title' => 'required|string|max:255',
+            'video_url' => 'required|string|max:1000',
+            'video_type' => 'required|string|in:youtube,tiktok,file',
+            'thumbnail' => 'nullable|image|max:2048',
+        ]);
+
+        $school = Eatery::on('mysql_education')->find($request->eatery_id);
+        if (!$school) {
+            $school = Eatery::on('mysql')->find($request->eatery_id);
+        }
+
+        if (!$school || (!$user->isAdmin() && $school->user_id !== $user->id)) {
+            abort(403, 'Quyền truy cập bị từ chối!');
+        }
+
+        // Upload thumbnail
+        $thumbnailPath = null;
+        if ($request->hasFile('thumbnail')) {
+            $thumbnailPath = R2Helper::upload($request->file('thumbnail'), 'education');
+        }
+
+        \App\Models\ReviewVideo::create([
+            'eatery_id' => $school->id,
+            'user_id' => $user->id,
+            'title' => $request->title,
+            'video_url' => $request->video_url,
+            'video_type' => $request->video_type,
+            'thumbnail_path' => $thumbnailPath,
+            'likes_count' => 0,
+            'status' => 'approved',
+        ]);
+
+        return redirect()->back()->with('success', 'Thêm video giới thiệu trường học thành công!');
+    }
+
+    /**
+     * Xóa video trường học
+     */
+    public function destroyVideo($id)
+    {
+        $this->verifyPrincipalOrAdmin();
+        $user = Auth::user();
+
+        $video = \App\Models\ReviewVideo::findOrFail($id);
+
+        $school = Eatery::on('mysql_education')->find($video->eatery_id);
+        if (!$school) {
+            $school = Eatery::on('mysql')->find($video->eatery_id);
+        }
+
+        if (!$school || (!$user->isAdmin() && $school->user_id !== $user->id)) {
+            abort(403, 'Quyền truy cập bị từ chối!');
+        }
+
+        $video->delete();
+
+        return redirect()->back()->with('success', 'Đã xóa video trường học!');
     }
 }

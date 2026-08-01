@@ -74,6 +74,14 @@
 .nav-link::after {
     display: none !important;
 }
+
+/* Hide navigation icons & arrows on desktop/laptop */
+@media (min-width: 992px) {
+    .nav-link .nav-icon,
+    .nav-link .nav-arrow {
+        display: none !important;
+    }
+}
  
 .user-actions {
     display: flex;

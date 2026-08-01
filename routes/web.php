@@ -95,8 +95,20 @@ Route::middleware(['auth'])->group(function () {
 
     // --- PRINCIPAL SCHOOL MANAGEMENT ROUTES (Quản lý trường học dành cho Hiệu Trưởng) ---
     Route::get('/principal/schools', [SchoolManagementController::class, 'index'])->name('principal.schools.index');
+    Route::get('/principal/schools/{id}/dashboard', [SchoolManagementController::class, 'dashboard'])->name('principal.schools.dashboard');
     Route::get('/principal/schools/{id}/edit', [SchoolManagementController::class, 'edit'])->name('principal.schools.edit');
     Route::put('/principal/schools/{id}', [SchoolManagementController::class, 'update'])->name('principal.schools.update');
+
+    // Principal management sub-actions (Posts, Photos, Videos)
+    Route::post('/principal/posts', [SchoolManagementController::class, 'storePost'])->name('principal.posts.store');
+    Route::post('/principal/posts/{id}/update', [SchoolManagementController::class, 'updatePost'])->name('principal.posts.update');
+    Route::delete('/principal/posts/{id}', [SchoolManagementController::class, 'destroyPost'])->name('principal.posts.destroy');
+
+    Route::post('/principal/photos', [SchoolManagementController::class, 'storePhoto'])->name('principal.photos.store');
+    Route::delete('/principal/photos/{id}', [SchoolManagementController::class, 'destroyPhoto'])->name('principal.photos.destroy');
+
+    Route::post('/principal/videos', [SchoolManagementController::class, 'storeVideo'])->name('principal.videos.store');
+    Route::delete('/principal/videos/{id}', [SchoolManagementController::class, 'destroyVideo'])->name('principal.videos.destroy');
 });
 
 Route::get('/food-tour/{slug}', [FoodTourController::class, 'show'])->name('food-tours.show');

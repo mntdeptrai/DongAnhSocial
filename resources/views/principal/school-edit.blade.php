@@ -424,7 +424,7 @@
     </div>
 
     <div class="d-flex justify-content-end gap-3 mb-5">
-        <a href="{{ request()->is('admin*') ? route('admin.schools.index') : route('principal.schools.index') }}" class="btn btn-light border rounded-pill px-4 fw-bold">Hủy bỏ</a>
+        <a href="{{ request()->is('admin*') ? route('admin.schools.index') : route('principal.schools.dashboard', $school->id) }}" class="btn btn-light border rounded-pill px-4 fw-bold">Hủy bỏ</a>
         <button type="submit" id="submitBtn" class="btn btn-primary rounded-pill px-5 fw-bold shadow-lg" style="background: #4f46e5; border: none; font-size: 1rem; padding-top: 12px; padding-bottom: 12px;">
             💾 Lưu thay đổi
         </button>

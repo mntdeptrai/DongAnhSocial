@@ -95,9 +95,14 @@
                             </span>
                         @endif
 
-                        <a href="{{ $editUrl }}" class="btn btn-sm btn-primary rounded-pill px-4 fw-bold shadow-sm" style="background: #4f46e5; border: none; font-size: 0.85rem; padding-top: 8px; padding-bottom: 8px;">
-                            ✏️ Chỉnh sửa
-                        </a>
+                        <div class="d-flex gap-2">
+                            <a href="/principal/schools/{{ $sch->id }}/dashboard" class="btn btn-sm btn-success rounded-pill px-3 fw-bold shadow-sm" style="background: #10b981; border: none; font-size: 0.82rem; padding-top: 7px; padding-bottom: 7px;">
+                                📊 Dashboard
+                            </a>
+                            <a href="{{ $editUrl }}" class="btn btn-sm btn-light border rounded-pill px-3 fw-bold shadow-sm" style="font-size: 0.82rem; padding-top: 7px; padding-bottom: 7px;">
+                                ⚙️ Cấu hình
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
