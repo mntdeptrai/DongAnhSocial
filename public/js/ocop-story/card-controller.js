@@ -45,7 +45,9 @@ class OcopCardController {
         document.getElementById('ocopCinematicBadge').innerText = badgeText;
         
         document.getElementById('ocopCinematicProducer').innerText = `🏢 Đơn vị: ${product.seller_name || product.eatery_name || 'Cơ sở sản xuất Đông Anh'}`;
-        document.getElementById('ocopCinematicAddress').innerText = `📍 Địa chỉ: ${product.address || product.eatery_address || 'Đông Anh, Hà Nội'}`;
+        const rawAddress = product.address || product.eatery_address || 'Đông Anh, Hà Nội';
+        const cleanedAddress = rawAddress.replace(/^[A-Z0-9]{4,8}\+[A-Z0-9]{2,4}(,\s*|\s+)?/i, '').trim();
+        document.getElementById('ocopCinematicAddress').innerText = `📍 Địa chỉ: ${cleanedAddress}`;
         document.getElementById('ocopCinematicPrice').innerText = product.price || 'Giá niêm yết';
         document.getElementById('ocopCinematicDesc').innerText = product.description || 'Sản phẩm OCOP đặc trưng đạt tiêu chuẩn chất lượng cao của Xã Đông Anh.';
 
