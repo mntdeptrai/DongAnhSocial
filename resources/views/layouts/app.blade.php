@@ -82,6 +82,7 @@
     <!-- Map-Based Storytelling CSS & GSAP Animation Library -->
     <link rel="stylesheet" href="{{ asset('css/storytelling.css') }}?v={{ file_exists(public_path('css/storytelling.css')) ? filemtime(public_path('css/storytelling.css')) : time() }}">
     <link rel="stylesheet" href="{{ asset('css/storytelling-mobile.css') }}?v={{ file_exists(public_path('css/storytelling-mobile.css')) ? filemtime(public_path('css/storytelling-mobile.css')) : time() }}">
+    <link rel="stylesheet" href="{{ asset('css/ocop-storytelling.css') }}?v={{ file_exists(public_path('css/ocop-storytelling.css')) ? filemtime(public_path('css/ocop-storytelling.css')) : time() }}">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
     
     <!-- Dynamic Schema.org JSON-LD Structured Data for Google Indexing -->
@@ -2122,6 +2123,19 @@
     @include('partials.storytelling-modal')
     <script src="{{ asset('js/storytelling-data.js') }}?v={{ file_exists(public_path('js/storytelling-data.js')) ? filemtime(public_path('js/storytelling-data.js')) : time() }}"></script>
     <script src="{{ asset('js/storytelling-engine.js') }}?v={{ file_exists(public_path('js/storytelling-engine.js')) ? filemtime(public_path('js/storytelling-engine.js')) : time() }}"></script>
+
+    <!-- OCOP Map-Based Storytelling Modal & JS Engine -->
+    @include('partials.ocop-storytelling-modal')
+    <script src="{{ asset('js/ocop-official-data.js') }}?v={{ file_exists(public_path('js/ocop-official-data.js')) ? filemtime(public_path('js/ocop-official-data.js')) : time() }}"></script>
+    <script>
+        window.DB_OCOP_PRODUCTS = window.OFFICIAL_OCOP_PRODUCTS;
+    </script>
+    <script src="{{ asset('js/ocop-story-data.js') }}?v={{ file_exists(public_path('js/ocop-story-data.js')) ? filemtime(public_path('js/ocop-story-data.js')) : time() }}"></script>
+    <script src="{{ asset('js/ocop-story/camera-controller.js') }}?v={{ file_exists(public_path('js/ocop-story/camera-controller.js')) ? filemtime(public_path('js/ocop-story/camera-controller.js')) : time() }}"></script>
+    <script src="{{ asset('js/ocop-story/marker-controller.js') }}?v={{ file_exists(public_path('js/ocop-story/marker-controller.js')) ? filemtime(public_path('js/ocop-story/marker-controller.js')) : time() }}"></script>
+    <script src="{{ asset('js/ocop-story/card-controller.js') }}?v={{ file_exists(public_path('js/ocop-story/card-controller.js')) ? filemtime(public_path('js/ocop-story/card-controller.js')) : time() }}"></script>
+    <script src="{{ asset('js/ocop-story/animation-controller.js') }}?v={{ file_exists(public_path('js/ocop-story/animation-controller.js')) ? filemtime(public_path('js/ocop-story/animation-controller.js')) : time() }}"></script>
+    <script src="{{ asset('js/ocop-story/story-controller.js') }}?v={{ file_exists(public_path('js/ocop-story/story-controller.js')) ? filemtime(public_path('js/ocop-story/story-controller.js')) : time() }}"></script>
 
 
     <!-- Back to Top & Quick Controls Floating Widget -->

@@ -615,6 +615,20 @@
                             </div>
                         </div>
 
+                        <!-- Interactive OCOP Map Storytelling Trigger Banner -->
+                        <div style="background: linear-gradient(135deg, rgba(217, 119, 6, 0.15) 0%, rgba(5, 150, 105, 0.15) 100%); border: 1px solid rgba(251, 191, 36, 0.4); border-radius: 16px; padding: 18px 24px; margin-bottom: 30px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; box-shadow: 0 10px 25px rgba(217, 119, 6, 0.15);">
+                            <div style="display: flex; align-items: center; gap: 14px;">
+                                <span style="font-size: 2rem;">🌾</span>
+                                <div>
+                                    <h4 style="margin: 0; color: #fbbf24; font-size: 1.05rem; font-weight: 800; font-family: var(--font-heading);">🎬 TRÌNH DIỄN HÀNH TRÌNH DI SẢN OCOP (MAP STORYTELLING)</h4>
+                                    <p style="margin: 4px 0 0 0; color: var(--text-muted); font-size: 0.85rem;">Khám phá trực quan vùng nguyên liệu, bàn tay nghệ nhân & quy trình chế biến độc bản trên bản đồ số</p>
+                                </div>
+                            </div>
+                            <button type="button" onclick="window.openOcopStoryteller('{{ $eatery->slug }}')" class="btn-primary" style="background: linear-gradient(135deg, #d97706 0%, #059669 100%); border: none; color: #ffffff; padding: 10px 20px; border-radius: 10px; font-weight: 800; font-size: 0.9rem; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 15px rgba(217, 119, 6, 0.4); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
+                                <span>▶ Bắt đầu Trình diễn</span> ➔
+                            </button>
+                        </div>
+
                         <!-- Heritage Tab Content -->
                         <div class="heritage-tabs-container">
                             <div class="heritage-tab-buttons">

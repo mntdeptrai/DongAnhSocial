@@ -1841,6 +1841,20 @@
                     <p style="font-size: 0.88rem; color: var(--text-muted); line-height: 1.5; margin: 0;">
                         Khám phá các sản phẩm OCOP đặc trưng, quà lưu niệm độc đáo, nông sản sạch mang đậm hồn quê Đông Anh. <span style="display: block; font-style: italic; margin-top: 4px; font-size: 0.8rem; opacity: 0.8;">Discover signature OCOP products, unique souvenirs, organic agriculture filled with Đông Anh's cultural soul.</span>
                     </p>
+
+                    <!-- Banner Trình Diễn Story Liên Hoàn Tất Cả Sản Phẩm OCOP -->
+                    <div style="margin-top: 14px; background: linear-gradient(135deg, rgba(217, 119, 6, 0.15) 0%, rgba(5, 150, 105, 0.2) 100%); border: 1.5px solid rgba(251, 191, 36, 0.5); border-radius: 14px; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; box-shadow: 0 8px 20px rgba(217, 119, 6, 0.15);">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span style="font-size: 1.8rem;">🎬</span>
+                            <div>
+                                <h4 style="margin: 0; color: #d97706; font-size: 0.98rem; font-weight: 800; font-family: var(--font-heading);">HÀNH TRÌNH TỔNG THỂ DI SẢN OCOP ĐÔNG ANH</h4>
+                                <p style="margin: 2px 0 0 0; color: var(--text-muted); font-size: 0.8rem;">Xem trình diễn liên hoàn tất cả các vùng nguyên liệu & sản phẩm OCOP đạt sao trên bản đồ</p>
+                            </div>
+                        </div>
+                        <button type="button" onclick="window.openOcopFullHeritageStory()" style="background: linear-gradient(135deg, #d97706 0%, #059669 100%); border: none; color: #ffffff; padding: 9px 18px; border-radius: 10px; font-weight: 800; font-size: 0.85rem; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(217, 119, 6, 0.4); transition: all 0.2s;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
+                            <span>🌾 Xem Story Tất Cả OCOP</span> ➔
+                        </button>
+                    </div>
                 </div>
             @elseif($selectedCatSlug === 'traditional-market')
                 <div class="traditional-market-hero-box">
@@ -2627,9 +2641,11 @@
                         : '';
 
                     const isEduMarker = (catSlug === 'smart-education-map' || (window.STORYTELLING_SCHOOLS && window.STORYTELLING_SCHOOLS[eat.slug]));
+                    const isOcopMarker = (catSlug === 'dong-anh-market' || (window.STORYTELLING_OCOP && window.STORYTELLING_OCOP[eat.slug]));
+                    
                     const storyBtn = isEduMarker 
                         ? `<button onclick="event.stopPropagation(); window.openSchoolStoryteller('${eat.slug}', '/dia-diem/${eat.slug}'); return false;" class="btn-secondary" style="padding: 4px 10px; font-size: 0.75rem; border-radius: 6px; font-family: var(--font-heading); background: rgba(99, 102, 241, 0.12); border: 1px solid rgba(99, 102, 241, 0.3); color: #4f46e5; display: inline-flex; align-items: center; gap: 4px; cursor: pointer; transition: all 0.2s; font-weight: 700;" onmouseover="this.style.background='rgba(99, 102, 241, 0.2)'" onmouseout="this.style.background='rgba(99, 102, 241, 0.12)'">📖 Story</button>` 
-                        : '';
+                        : (isOcopMarker ? `<button onclick="event.stopPropagation(); window.openOcopStoryteller('${eat.slug}'); return false;" class="btn-secondary" style="padding: 4px 10px; font-size: 0.75rem; border-radius: 6px; font-family: var(--font-heading); background: rgba(217, 119, 6, 0.15); border: 1px solid rgba(251, 191, 36, 0.4); color: #d97706; display: inline-flex; align-items: center; gap: 4px; cursor: pointer; transition: all 0.2s; font-weight: 700;" onmouseover="this.style.background='rgba(217, 119, 6, 0.25)'" onmouseout="this.style.background='rgba(217, 119, 6, 0.15)'">🌾 Story</button>` : '');
 
                     const popupContent = `
                         <div class="map-popup-card">
