@@ -62,37 +62,23 @@ class OcopAnimationController {
         const sloganOverlay = document.getElementById('ocopSloganOverlay');
         const sloganTextEl = document.getElementById('ocopSloganText');
 
-        if (!sloganOverlay || !sloganTextEl) return;
+        if (!sloganOverlay) return;
 
         sloganOverlay.style.display = 'flex';
         sloganOverlay.style.opacity = '1';
 
-        // Display slogans sequentially
-        for (let i = 0; i < this.slogans.length; i++) {
-            sloganTextEl.innerText = this.slogans[i];
-            
-            await new Promise(r => {
-                gsap.fromTo(sloganTextEl,
-                    { opacity: 0, scale: 0.8, y: 20 },
-                    { 
-                        opacity: 1, scale: 1, y: 0, duration: 0.8, ease: 'power3.out',
-                        onComplete: () => {
-                            setTimeout(() => {
-                                gsap.to(sloganTextEl, { opacity: 0, scale: 1.15, duration: 0.5, onComplete: r });
-                            }, 1200);
-                        }
-                    }
-                );
-            });
+        // Hide slogan text element to bypass the slogan chain completely
+        if (sloganTextEl) {
+            sloganTextEl.style.display = 'none';
         }
 
-        // Show Grand Finale Stats Badge Overlay Card
+        // Show Grand Finale Stats Badge Overlay Card directly
         const finaleCard = document.getElementById('ocopFinaleStatsCard');
         if (finaleCard) {
             finaleCard.style.display = 'block';
             gsap.fromTo(finaleCard,
                 { opacity: 0, scale: 0.8, y: 40 },
-                { opacity: 1, scale: 1, y: 0, duration: 1.0, ease: 'back.out(1.4)' }
+                { opacity: 1, scale: 1, y: 0, duration: 0.8, ease: 'back.out(1.4)' }
             );
         }
     }
