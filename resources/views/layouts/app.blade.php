@@ -2128,7 +2128,7 @@
     @include('partials.ocop-storytelling-modal')
     <script src="{{ asset('js/ocop-official-data.js') }}?v={{ file_exists(public_path('js/ocop-official-data.js')) ? filemtime(public_path('js/ocop-official-data.js')) : time() }}"></script>
     <script>
-        window.DB_OCOP_PRODUCTS = window.OFFICIAL_OCOP_PRODUCTS;
+        window.DB_OCOP_PRODUCTS = (window.OCOP_PRODUCTS && window.OCOP_PRODUCTS.length > 0) ? window.OCOP_PRODUCTS : window.OFFICIAL_OCOP_PRODUCTS;
     </script>
     <script src="{{ asset('js/ocop-story-data.js') }}?v={{ file_exists(public_path('js/ocop-story-data.js')) ? filemtime(public_path('js/ocop-story-data.js')) : time() }}"></script>
     <script src="{{ asset('js/ocop-story/camera-controller.js') }}?v={{ file_exists(public_path('js/ocop-story/camera-controller.js')) ? filemtime(public_path('js/ocop-story/camera-controller.js')) : time() }}"></script>
