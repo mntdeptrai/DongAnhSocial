@@ -16,14 +16,37 @@ class OcopMarkerController {
     }
 
     clearAll() {
-        if (this.activeFocusMarker && this.map) {
+        if (!this.map) return;
+
+        // 1. Remove active focus marker
+        if (this.activeFocusMarker) {
             this.map.removeLayer(this.activeFocusMarker);
             this.activeFocusMarker = null;
         }
-        this.daPinMarkers.forEach(m => this.map && this.map.removeLayer(m));
-        this.outlineMarkers.forEach(m => this.map && this.map.removeLayer(m));
+
+        // 2. Remove all tracked markers
+        this.daPinMarkers.forEach(m => m && this.map.removeLayer(m));
+        this.outlineMarkers.forEach(m => m && this.map.removeLayer(m));
         this.daPinMarkers = [];
         this.outlineMarkers = [];
+
+        // 3. Bulletproof clean: search all map layers for any leftover OCOP storytelling elements
+        this.map.eachLayer(layer => {
+            if (layer instanceof L.Marker) {
+                const options = layer.options || {};
+                const icon = options.icon || {};
+                const className = icon.options ? icon.options.className : '';
+                if (
+                    className && 
+                    (className.includes('ocop-da-pin-div') || 
+                     className.includes('ocop-da-outline-div') || 
+                     className.includes('ocop-active-focus-div') || 
+                     className.includes('ocop-da-marker'))
+                ) {
+                    this.map.removeLayer(layer);
+                }
+            }
+        });
     }
 
     /**
@@ -92,6 +115,12 @@ class OcopMarkerController {
         // Hide/Remove outline dot at this index if present
         if (this.outlineMarkers[index] && this.map) {
             this.map.removeLayer(this.outlineMarkers[index]);
+        }
+
+        // Remove any existing settled pin marker at this index to prevent duplication
+        if (this.daPinMarkers[index] && this.map) {
+            this.map.removeLayer(this.daPinMarkers[index]);
+            this.daPinMarkers[index] = null;
         }
 
         const pinHtml = `
