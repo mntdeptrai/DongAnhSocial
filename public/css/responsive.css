@@ -105,7 +105,7 @@
 }
 
 /* 📱 Detail Page Layout Responsive Overrides */
-@media (max-width: 1200px) {
+@media (max-width: 991px) {
     .detail-grid {
         grid-template-columns: minmax(0, 1fr) !important;
         gap: 24px !important;
@@ -194,7 +194,7 @@
 }
 
 /* Responsive adjustments from original file */
-@media (max-width: 1200px) {
+@media (max-width: 991px) {
     .split-screen {
         flex-direction: column-reverse;
         height: auto;
@@ -258,7 +258,7 @@
 }
 
 /* 📱 Responsive overrides for Food Tour Layout */
-@media (max-width: 1200px) {
+@media (max-width: 991px) {
     .tour-layout {
         grid-template-columns: 1fr !important;
         grid-template-rows: 1fr 420px !important;
@@ -452,5 +452,113 @@
     .trust-tab-buttons {
         overflow-x: auto !important;
         -webkit-overflow-scrolling: touch !important;
+    }
+}
+
+/* ==========================================================================
+   💻 LAPTOP SCREEN LAYOUT & HEADER SCALE-DOWN OPTIMIZATION (992px - 1199px)
+   ========================================================================== */
+@media (min-width: 992px) and (max-width: 1199px) {
+    .nav-wrapper {
+        gap: clamp(6px, 1.2vw, 10px) !important;
+        padding: 0 12px !important;
+    }
+
+    .main-nav-container {
+        margin-left: 0 !important;
+    }
+
+    .nav-menu {
+        gap: clamp(0px, 0.2vw, 2px) !important;
+    }
+
+    .nav-link {
+        font-size: 0.72rem !important;
+        padding: 5px 8px !important;
+        border-radius: 14px !important;
+    }
+
+    .user-actions {
+        gap: 6px !important;
+    }
+
+    .user-actions span {
+        font-size: 0.75rem !important;
+    }
+
+    .user-actions a,
+    .user-actions button {
+        padding: 5px 10px !important;
+        font-size: 0.75rem !important;
+        border-radius: 14px !important;
+    }
+
+    .logo {
+        font-size: 1.05rem !important;
+    }
+
+    /* 💻 Keep Split Map/List Layout side-by-side but optimized for laptop width */
+    .split-screen {
+        display: flex !important;
+        flex-direction: row !important;
+        height: calc(100vh - var(--header-height)) !important;
+        overflow: hidden !important;
+    }
+
+    .split-list {
+        width: 40% !important;
+        padding: 16px !important;
+        overflow-y: auto !important;
+    }
+
+    .split-map-container {
+        width: 60% !important;
+        height: 100% !important;
+        border-left: 1px solid var(--border-glow) !important;
+        border-bottom: none !important;
+    }
+
+    /* 💻 Keep Detail Page Grid Layout side-by-side but optimized for laptop width */
+    .detail-grid {
+        display: grid !important;
+        grid-template-columns: 2.7fr 1.3fr !important;
+        gap: 20px !important;
+        padding: 24px 0 !important;
+    }
+}
+
+/* ==========================================================================
+   📱 4-SCREEN CONTENT GRID SYSTEMS (Mobile, Tablet, Laptop, Desktop)
+   ========================================================================== */
+
+/* Mobile Layout Content Grid Systems (< 768px) */
+@media (max-width: 767px) {
+    .card-grid, .grid-4-col, .eatery-grid, .product-grid, .checkin-grid, .stats-grid {
+        grid-template-columns: 1fr !important;
+        gap: 16px !important;
+    }
+}
+
+/* Tablet Layout Content Grid Systems (768px - 991px) */
+@media (min-width: 768px) and (max-width: 991px) {
+    .card-grid, .grid-4-col, .eatery-grid, .product-grid, .checkin-grid, .stats-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 16px !important;
+    }
+}
+
+/* Laptop Layout Content Grid Systems (992px - 1199px) */
+@media (min-width: 992px) and (max-width: 1199px) {
+    .card-grid, .grid-4-col, .eatery-grid, .product-grid, .checkin-grid, .stats-grid {
+        grid-template-columns: repeat(3, 1fr) !important;
+        gap: 18px !important;
+    }
+}
+
+/* Desktop Layout Content Grid Systems (>= 1200px) */
+@media (min-width: 1200px) {
+    .card-grid, .grid-4-col, .eatery-grid, .product-grid, .checkin-grid, .stats-grid {
+        grid-template-columns: repeat(4, 1fr) !important;
+        gap: 24px !important;
     }
 }

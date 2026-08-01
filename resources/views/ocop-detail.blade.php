@@ -338,6 +338,203 @@
         0% { height: 6px; }
         100% { height: 24px; }
     }
+
+    /* OCOP Certificate Banner & Info styling */
+    .ocop-cert-banner {
+        background: linear-gradient(135deg, #fffbeb 0%, #f0fdf4 100%);
+        border: 1.5px solid #fde68a;
+        border-radius: 24px;
+        padding: 24px;
+        margin-bottom: 32px;
+        display: flex;
+        gap: 20px;
+        align-items: center;
+        justify-content: space-between;
+        box-shadow: 0 8px 25px rgba(245, 158, 11, 0.05);
+    }
+
+    .ocop-cert-info {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        flex: 1;
+        min-width: 280px;
+    }
+
+    .ocop-cert-icon {
+        width: 56px;
+        height: 56px;
+        border-radius: 16px;
+        background: #fef3c7;
+        border: 1px solid #fde68a;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;
+        cursor: pointer;
+        flex-shrink: 0;
+    }
+
+    .ocop-cert-text {
+        flex: 1;
+        min-width: 0; /* Allows content wrapping instead of collapsing */
+    }
+
+    .ocop-cert-label {
+        font-size: 0.78rem;
+        font-weight: 800;
+        color: #d97706;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        display: block;
+    }
+
+    .ocop-cert-title {
+        font-size: 1.15rem;
+        font-weight: 800;
+        color: #0f172a;
+        margin: 2px 0 0 0;
+        font-family: var(--font-heading);
+    }
+
+    .ocop-cert-actions {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .ocop-qcvn-badge {
+        background: #f0fdf4;
+        border: 1.5px solid #bbf7d0;
+        color: #166534;
+        font-weight: 800;
+        font-size: 0.88rem;
+        padding: 8px 16px;
+        border-radius: 16px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        white-space: nowrap;
+    }
+
+    .btn-view-ocop-cert {
+        background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+        color: #ffffff;
+        font-weight: 800;
+        font-size: 0.9rem;
+        padding: 10px 20px;
+        border-radius: 16px;
+        border: none;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        box-shadow: 0 4px 15px rgba(217, 119, 6, 0.3);
+        transition: transform 0.2s, box-shadow 0.2s;
+        white-space: nowrap;
+    }
+
+    .btn-view-ocop-cert:hover {
+        transform: scale(1.04);
+        box-shadow: 0 6px 20px rgba(217, 119, 6, 0.45);
+    }
+
+    /* Main Hero columns */
+    .ocop-hero-body {
+        position: relative;
+        z-index: 2;
+        display: flex;
+        gap: 36px;
+        flex-wrap: wrap;
+        align-items: stretch;
+    }
+
+    .ocop-hero-image-col {
+        flex: 0 0 380px;
+        width: 380px;
+        max-width: 100%;
+    }
+
+    .ocop-hero-info-col {
+        flex: 1;
+        min-width: 320px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+    .ocop-badge-label {
+        position: absolute;
+        top: 16px;
+        left: 16px;
+        background: linear-gradient(135deg, #059669, #10b981);
+        color: #ffffff;
+        font-size: 0.75rem;
+        font-weight: 800;
+        padding: 6px 14px;
+        border-radius: 20px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        letter-spacing: 0.5px;
+    }
+
+    /* Modal Footer */
+    .ocop-modal-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        font-family: var(--font-body, sans-serif);
+        padding: 0 10px;
+    }
+
+    /* Mobile overrides */
+    @media (max-width: 767px) {
+        .ocop-cert-banner {
+            flex-direction: column;
+            align-items: stretch;
+            padding: 20px;
+            gap: 16px;
+        }
+
+        .ocop-cert-info {
+            min-width: 0;
+        }
+
+        .ocop-cert-actions {
+            justify-content: flex-start;
+            width: 100%;
+        }
+
+        .btn-view-ocop-cert, .ocop-qcvn-badge {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .ocop-hero-body {
+            gap: 20px;
+        }
+
+        .ocop-hero-image-col {
+            flex: 0 0 100%;
+            width: 100%;
+        }
+
+        .product-showcase-img-box {
+            height: 280px;
+        }
+
+        .ocop-hero-info-col {
+            min-width: 100%;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .ocop-modal-footer {
+            flex-direction: column-reverse;
+            align-items: center;
+            gap: 20px;
+        }
+    }
 </style>
 
 <div class="container" style="padding-top: 28px; padding-bottom: 70px;">
@@ -355,20 +552,20 @@
     <div class="ocop-hero-card">
         <div class="ocop-pattern-overlay"></div>
 
-        <div style="position: relative; z-index: 2; display: flex; gap: 36px; flex-wrap: wrap; align-items: stretch;">
+        <div class="ocop-hero-body">
             
             <!-- Left: High-Res Product Image Showcase -->
-            <div style="flex: 0 0 380px; min-width: 300px;">
+            <div class="ocop-hero-image-col">
                 <div class="product-showcase-img-box">
                     <img src="{{ $product->image_path ?: ($eatery?->image_path ?: 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=800&q=80') }}" alt="{{ $product->name }}">
-                    <span style="position: absolute; top: 16px; left: 16px; background: linear-gradient(135deg, #059669, #10b981); color: #ffffff; font-size: 0.75rem; font-weight: 800; padding: 6px 14px; border-radius: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); letter-spacing: 0.5px;">
+                    <span class="ocop-badge-label">
                         🌾 SẢN PHẨM OCOP CHỨNG NHẬN
                     </span>
                 </div>
             </div>
 
             <!-- Right: Product Info & Producer -->
-            <div style="flex: 1; min-width: 320px; display: flex; flex-direction: column; justify-content: space-between;">
+            <div class="ocop-hero-info-col">
                 <div>
                     <!-- Badges & Stars -->
                     <div style="display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 14px; flex-wrap: wrap;">
@@ -470,27 +667,27 @@
     </div>
 
     <!-- TOP HIGHLIGHT: CERTIFICATE & ORIGIN BANNER -->
-    <div style="background: linear-gradient(135deg, #fffbeb 0%, #f0fdf4 100%); border: 1.5px solid #fde68a; border-radius: 24px; padding: 24px; margin-bottom: 32px; display: flex; gap: 20px; flex-wrap: wrap; align-items: center; justify-content: space-between; box-shadow: 0 8px 25px rgba(245, 158, 11, 0.05);">
-        <div style="display: flex; align-items: center; gap: 16px; flex: 1; min-width: 280px;">
-            <div style="width: 56px; height: 56px; border-radius: 16px; background: #fef3c7; border: 1px solid #fde68a; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; cursor: pointer;" onclick="openOcopCertModal()" title="Bấm để xem Giấy Chứng Nhận OCOP">
+    <div class="ocop-cert-banner">
+        <div class="ocop-cert-info">
+            <div class="ocop-cert-icon" onclick="openOcopCertModal()" title="Bấm để xem Giấy Chứng Nhận OCOP">
                 📜
             </div>
-            <div>
-                <span style="font-size: 0.78rem; font-weight: 800; color: #d97706; text-transform: uppercase; letter-spacing: 1px;">CHỨNG NHẬN CÔNG NHẬN SẢN PHẨM OCOP:</span>
-                <h4 style="font-size: 1.15rem; font-weight: 800; color: #0f172a; margin: 2px 0 0 0; font-family: var(--font-heading);">
+            <div class="ocop-cert-text">
+                <span class="ocop-cert-label">CHỨNG NHẬN CÔNG NHẬN SẢN PHẨM OCOP:</span>
+                <h4 class="ocop-cert-title">
                     {{ $decisionStr ?: ('Chứng nhận đạt phân hạng ' . ($product->star_rating ?: 'OCOP 3-5 sao') . ' UBND Thành Phố Hà Nội') }}
                 </h4>
             </div>
         </div>
 
-        <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
+        <div class="ocop-cert-actions">
             @if($qcvnStr)
-                <span style="background: #f0fdf4; border: 1.5px solid #bbf7d0; color: #166534; font-weight: 800; font-size: 0.88rem; padding: 8px 16px; border-radius: 16px; display: inline-flex; align-items: center; gap: 6px;">
+                <span class="ocop-qcvn-badge">
                     🛡️ BỘ Y TẾ: {{ $qcvnStr }}
                 </span>
             @endif
             
-            <button onclick="openOcopCertModal()" style="background: linear-gradient(135deg, #d97706 0%, #b45309 100%); color: #ffffff; font-weight: 800; font-size: 0.9rem; padding: 10px 20px; border-radius: 16px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 15px rgba(217, 119, 6, 0.3); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.04)'" onmouseout="this.style.transform='scale(1)'">
+            <button onclick="openOcopCertModal()" class="btn-view-ocop-cert">
                 📜 XEM GIẤY CHỨNG NHẬN OCOP ➔
             </button>
         </div>
@@ -528,7 +725,7 @@
             </div>
 
             <!-- Seal & Signature Footer -->
-            <div style="display: flex; justify-content: space-between; align-items: flex-end; font-family: var(--font-body, sans-serif); padding: 0 10px;">
+            <div class="ocop-modal-footer">
                 <div style="text-align: center;">
                     <div style="width: 70px; height: 70px; border-radius: 50%; background: #fef3c7; border: 2px solid #d97706; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: bold; color: #92400e; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
                         QR VERIFIED
