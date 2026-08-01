@@ -438,6 +438,28 @@ class OcopStoryteller {
     async triggerDominoLedEffect() {
         if (this.speechSynth) this.speechSynth.cancel();
 
+        // Morph/recreate pins at the ĐA letter constellation coordinates for the Grand Finale
+        if (this.map && this.currentProducts) {
+            if (this.activeFocusMarker) {
+                this.map.removeLayer(this.activeFocusMarker);
+                this.activeFocusMarker = null;
+            }
+            this.daPinMarkers.forEach(m => m && this.map.removeLayer(m));
+            this.daPinMarkers = [];
+
+            const daCoords = this.generateDaCoordinates(this.currentProducts.length);
+            daCoords.forEach((coord, index) => {
+                const pinIcon = L.divIcon({
+                    className: 'ocop-da-marker',
+                    html: `<div id="daPin_${index}" style="background: linear-gradient(135deg, #d97706, #059669); color: #ffffff; font-weight: 800; font-size: 11px; width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid #ffffff; box-shadow: 0 4px 12px rgba(0,0,0,0.4);">${index + 1}</div>`,
+                    iconSize: [26, 26],
+                    iconAnchor: [13, 13]
+                });
+                const pinMarker = L.marker([coord.lat, coord.lng], { icon: pinIcon }).addTo(this.map);
+                this.daPinMarkers.push(pinMarker);
+            });
+        }
+
         // 1. Zoom out map to show full "ĐA" letter logo
         if (this.map) {
             this.map.flyTo([21.135, 105.868], 12.5, {

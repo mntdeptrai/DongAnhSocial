@@ -314,6 +314,7 @@ class OcopStoryController {
 
         // Step 3: Grand Finale - Zoom out to see GIANT "ĐA" shape, Domino LED Wave & Slogan Chain Overlay
         if (!this.isSkipped && session === this.sessionId) {
+            this.markerCtrl.morphToDaLetters(this.products.length);
             await this.cameraCtrl.flyToTarget(21.135, 105.868, 11.2, 2.5);
             await this.markerCtrl.triggerDominoLedEffect();
             await new Promise(r => setTimeout(r, 1000));

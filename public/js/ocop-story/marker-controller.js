@@ -112,6 +112,43 @@ class OcopMarkerController {
     }
 
     /**
+     * Clear all current pins and render the complete "ĐA" letter constellation
+     */
+    morphToDaLetters(totalCount = 33) {
+        if (!this.map) return;
+
+        // 1. Clear all active focus and existing pins
+        if (this.activeFocusMarker) {
+            this.map.removeLayer(this.activeFocusMarker);
+            this.activeFocusMarker = null;
+        }
+        this.daPinMarkers.forEach(m => m && this.map.removeLayer(m));
+        this.outlineMarkers.forEach(m => m && this.map.removeLayer(m));
+        this.daPinMarkers = [];
+        this.outlineMarkers = [];
+
+        // 2. Generate ĐA letter coordinates
+        const daCoords = this.generateDaCoordinates(totalCount);
+
+        // 3. Render all 33 pins forming the letters Đ and A
+        daCoords.forEach((coord, index) => {
+            const pinHtml = `
+                <div id="daPin_${index}" class="ocop-da-pin-node">
+                    <span>${index + 1}</span>
+                </div>
+            `;
+            const icon = L.divIcon({
+                className: 'ocop-da-pin-div',
+                html: pinHtml,
+                iconSize: [30, 30],
+                iconAnchor: [15, 15]
+            });
+            const marker = L.marker([coord.lat, coord.lng], { icon }).addTo(this.map);
+            this.daPinMarkers[index] = marker;
+        });
+    }
+
+    /**
      * Domino LED Light-Up Wave Effect across all "ĐA" pins
      */
     async triggerDominoLedEffect() {
