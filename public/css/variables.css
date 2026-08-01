@@ -24,8 +24,8 @@
     --text-muted: #94a3b8;
     --text-dark: #090e11;
     
-    /* Typography - Youthful, Dynamic & Premium Fonts (Outfit + Plus Jakarta Sans + Lexend) */
-    --font-heading: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+    /* Typography - Youthful, Dynamic & Premium Fonts (Plus Jakarta Sans + Lexend) */
+    --font-heading: 'Plus Jakarta Sans', 'Lexend', sans-serif;
     --font-body: 'Plus Jakarta Sans', 'Lexend', sans-serif;
     --font-mono: SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
     
