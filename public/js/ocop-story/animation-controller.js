@@ -73,7 +73,7 @@ class OcopAnimationController {
             sloganTextEl.style.display = 'none';
         }
 
-        // Run high-speed Memory Flashback (Tua ký ức) if we have products
+        // Run high-speed Memory Flashback (Tua ký ức) with shooting-photo animation
         if (prods && prods.length > 0 && flashbackContainer && flashbackImage && flashbackTitle && flashbackBadge) {
             // Show flashback container with fade-in and scale-in
             flashbackContainer.style.display = 'flex';
@@ -83,21 +83,73 @@ class OcopAnimationController {
                 { opacity: 1, scale: 1, duration: 0.4, ease: 'power2.out' }
             );
 
+            // Get target frame viewport rectangle once
+            const targetEl = document.querySelector('.flashback-frame');
+            const targetRect = targetEl ? targetEl.getBoundingClientRect() : { left: window.innerWidth / 2 - 140, top: window.innerHeight / 2 - 140 };
+
             // Rapid loop through all products
             for (let i = 0; i < prods.length; i++) {
                 const p = prods[i];
-                flashbackImage.src = p.image || '';
-                flashbackTitle.innerText = p.name || '';
-                flashbackBadge.innerText = p.star_rating || 'OCOP 4 SAO';
+                const pinEl = document.getElementById(`daPin_${i}`);
 
-                // High-speed projector flash effect
-                gsap.fromTo(flashbackImage,
-                    { scale: 0.9, filter: 'brightness(1.5) contrast(1.2)' },
-                    { scale: 1, filter: 'brightness(1) contrast(1)', duration: 0.06, ease: 'power1.out' }
-                );
+                if (pinEl && targetEl) {
+                    const pinRect = pinEl.getBoundingClientRect();
 
-                await new Promise(r => setTimeout(r, 65)); // 65ms per image (extremely fast cinematic feel)
+                    // Create temporary flying photo element
+                    const flyer = document.createElement('div');
+                    flyer.className = 'ocop-flying-photo';
+                    flyer.style.position = 'absolute';
+                    flyer.style.left = `${pinRect.left}px`;
+                    flyer.style.top = `${pinRect.top}px`;
+                    flyer.style.width = '34px';
+                    flyer.style.height = '34px';
+                    flyer.style.borderRadius = '50%';
+                    flyer.style.border = '2.5px solid #D4A017';
+                    flyer.style.backgroundImage = `url('${p.image}')`;
+                    flyer.style.backgroundSize = 'cover';
+                    flyer.style.backgroundPosition = 'center';
+                    flyer.style.zIndex = '99999';
+                    flyer.style.pointerEvents = 'none';
+                    flyer.style.boxShadow = '0 0 15px #D4A017';
+
+                    sloganOverlay.appendChild(flyer);
+
+                    // Animate flyer from pin position to central frame asynchronously
+                    gsap.to(flyer, {
+                        left: targetRect.left,
+                        top: targetRect.top,
+                        width: 280,
+                        height: 280,
+                        borderRadius: '20px',
+                        opacity: 0.95,
+                        duration: 0.38,
+                        ease: 'power2.out',
+                        onComplete: () => {
+                            flashbackImage.src = p.image || '';
+                            flashbackTitle.innerText = p.name || '';
+                            flashbackBadge.innerText = p.star_rating || 'OCOP 4 SAO';
+
+                            // High-speed projector flash effect
+                            gsap.fromTo(flashbackImage,
+                                { scale: 0.95, filter: 'brightness(1.5) contrast(1.2)' },
+                                { scale: 1, filter: 'brightness(1) contrast(1)', duration: 0.08, ease: 'power1.out' }
+                            );
+
+                            flyer.remove();
+                        }
+                    });
+                } else {
+                    // Fallback if elements are missing
+                    flashbackImage.src = p.image || '';
+                    flashbackTitle.innerText = p.name || '';
+                    flashbackBadge.innerText = p.star_rating || 'OCOP 4 SAO';
+                }
+
+                await new Promise(r => setTimeout(r, 75)); // 75ms spacing between photo launches
             }
+
+            // Wait for the final flyers to land (380ms flight duration + 100ms safety)
+            await new Promise(r => setTimeout(r, 480));
 
             // Fade out flashback container smoothly
             await new Promise(resolve => {
