@@ -715,3 +715,22 @@
 .ocop-btn-outline:hover {
     background: rgba(15, 94, 74, 0.1);
 }
+
+/* Image Pin LED Domino glowing animations without breaking background-image */
+.ocop-da-pin-node.image-pin.led-domino-active, 
+.ocop-da-pin-node.image-pin.led-active {
+    animation: ledImagePinPulse 0.9s ease-in-out infinite alternate !important;
+    z-index: 99999 !important;
+    border-color: #F0C24B !important;
+}
+
+@keyframes ledImagePinPulse {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 0 12px #D4A017, 0 0 25px rgba(15, 94, 74, 0.6);
+    }
+    100% {
+        transform: scale(1.4);
+        box-shadow: 0 0 35px #D4A017, 0 0 70px #F0C24B, 0 0 90px rgba(15, 94, 74, 0.9);
+    }
+}

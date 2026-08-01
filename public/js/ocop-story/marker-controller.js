@@ -141,10 +141,10 @@ class OcopMarkerController {
     }
 
     /**
-     * Clear all current pins and render the complete "ĐA" letter constellation
+     * Clear all current pins and render the complete "ĐA" letter constellation with product images
      */
-    morphToDaLetters(totalCount = 33) {
-        if (!this.map) return;
+    morphToDaLetters(prods) {
+        if (!this.map || !prods) return;
 
         // 1. Clear all active focus and existing pins
         if (this.activeFocusMarker) {
@@ -157,20 +157,22 @@ class OcopMarkerController {
         this.outlineMarkers = [];
 
         // 2. Generate ĐA letter coordinates
-        const daCoords = this.generateDaCoordinates(totalCount);
+        const daCoords = this.generateDaCoordinates(prods.length);
 
-        // 3. Render all 33 pins forming the letters Đ and A
+        // 3. Render all pins forming the letters Đ and A with product image backgrounds
         daCoords.forEach((coord, index) => {
+            const p = prods[index] || {};
+            const imgUrl = p.image || 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=800&q=80';
             const pinHtml = `
-                <div id="daPin_${index}" class="ocop-da-pin-node" style="transform: scale(0); opacity: 0;">
-                    <span>${index + 1}</span>
+                <div id="daPin_${index}" class="ocop-da-pin-node image-pin" style="background-image: url('${imgUrl}'); background-size: cover; background-position: center; border: 2.5px solid #D4A017; transform: scale(0); opacity: 0; width: 34px; height: 34px; border-radius: 50%; box-shadow: 0 0 15px rgba(212, 160, 23, 0.8); position: relative;">
+                    <span style="position: absolute; top: -6px; right: -6px; background: #0f766e; color: white; font-size: 8px; font-weight: 900; padding: 1px 4px; border-radius: 10px; border: 1.5px solid #D4A017; box-shadow: 0 2px 6px rgba(0,0,0,0.3); z-index: 10;">${index + 1}</span>
                 </div>
             `;
             const icon = L.divIcon({
                 className: 'ocop-da-pin-div',
                 html: pinHtml,
-                iconSize: [30, 30],
-                iconAnchor: [15, 15]
+                iconSize: [34, 34],
+                iconAnchor: [17, 17]
             });
             const marker = L.marker([coord.lat, coord.lng], { icon }).addTo(this.map);
             this.daPinMarkers[index] = marker;
@@ -179,18 +181,18 @@ class OcopMarkerController {
         // 4. GSAP Stagger Drop-in Animation for the ĐA pins
         setTimeout(() => {
             gsap.fromTo(".ocop-da-pin-node", 
-                { scale: 0, opacity: 0, y: -60, rotation: -90 },
+                { scale: 0, opacity: 0, y: -80, rotation: -180 },
                 { 
                     scale: 1, 
                     opacity: 1, 
                     y: 0, 
                     rotation: 0, 
-                    duration: 0.9, 
+                    duration: 1.0, 
                     stagger: {
-                        amount: 1.2,
+                        amount: 1.5,
                         from: "start"
                     },
-                    ease: "back.out(1.6)"
+                    ease: "back.out(1.5)"
                 }
             );
         }, 100);

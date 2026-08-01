@@ -316,16 +316,20 @@ class OcopStoryController {
             i++;
         }
 
-        // Step 3: Grand Finale - Zoom out to see GIANT "ĐA" shape & Domino LED Wave (Outro removed)
+        // Step 3: Grand Finale - Zoom out to see GIANT "ĐA" shape, Domino LED Wave & Play Outro
         if (!this.isSkipped && session === this.sessionId) {
             // Update skip button to Close
             const skipBtn = document.querySelector('.story-btn-skip');
             if (skipBtn) {
                 skipBtn.innerHTML = '<span>❌</span> Đóng';
             }
-            this.markerCtrl.morphToDaLetters(this.products.length);
+            this.markerCtrl.morphToDaLetters(this.products);
             await this.cameraCtrl.flyToTarget(21.135, 105.868, 11.2, 2.5);
             await this.markerCtrl.triggerDominoLedEffect();
+            await new Promise(r => setTimeout(r, 1200));
+            if (!this.isSkipped && session === this.sessionId) {
+                await this.animCtrl.playSloganChainAndFinale();
+            }
         }
     }
 }
