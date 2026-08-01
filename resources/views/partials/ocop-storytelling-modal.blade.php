@@ -16,7 +16,9 @@
                 <div class="ocop-intro-tag">🌾 HÀNH TRÌNH ĐIỆN ẢNH OCOP CAO CẤP</div>
             </div>
             <h1 id="ocopIntroMainTitle" class="ocop-intro-main-title">
-                HÀNH TRÌNH DI SẢN<br>OCOP ĐÔNG ANH
+                <span class="phrase-block">HÀNH TRÌNH</span>
+                <span class="phrase-block">NÔNG SẢN SỐ</span><br class="desktop-br">
+                <span class="phrase-block highlight-gold">OCOP ĐÔNG ANH</span>
             </h1>
             <div style="width: 140px; height: 3px; background: linear-gradient(90deg, transparent, #D4A017, transparent); margin: 18px auto;"></div>
             <p id="ocopIntroCountText" class="ocop-intro-sub-title">
@@ -30,7 +32,7 @@
         <div class="story-header-branding">
             <div class="story-header-logo" style="background: rgba(212, 160, 23, 0.2); border: 1.5px solid #D4A017; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem;">🌾</div>
             <div class="story-header-text">
-                <h1>HÀNH TRÌNH DI SẢN OCOP ĐÔNG ANH</h1>
+                <h1>HÀNH TRÌNH NÔNG SẢN SỐ - OCOP ĐÔNG ANH</h1>
                 <p id="ocopPhaseLabel">CHẶNG PHIM OCOP CAO CẤP</p>
             </div>
         </div>
@@ -148,7 +150,7 @@
         <div id="ocopFinaleStatsCard" class="ocop-finale-stats-card" style="display: none;">
             <div style="font-size: 3.5rem; margin-bottom: 10px; filter: drop-shadow(0 0 15px rgba(212, 160, 23, 0.6));">✨🌾✨</div>
             <h2 class="ocop-finale-title">
-                ĐÔNG ANH<br><span style="color: #D4A017;">TINH HOA NÔNG SẢN SỐ & DI SẢN OCOP</span>
+                ĐÔNG ANH<br><span style="color: #D4A017;">TINH HOA NÔNG SẢN SỐ</span>
             </h2>
             <div style="width: 140px; height: 3px; background: linear-gradient(90deg, transparent, #0F5E4A, transparent); margin: 16px auto 20px auto;"></div>
             <p style="font-size: 1.08rem; color: #173B32; margin-bottom: 24px; font-weight: 700; line-height: 1.6;">

@@ -261,12 +261,12 @@ class OcopAnimationController {
         const markerPoints = [];
         let isLoopAnimating = true;
 
-        // Render Loop for Canvas Orbs & Dissolve Particles
+        // High-Performance 60 FPS / 120 FPS Render Loop for Canvas Orbs & Particles
         function renderCanvasLoop() {
             if (!ctx || !isLoopAnimating) return;
             ctx.clearRect(0, 0, screenW, screenH);
 
-            // 1. Draw Active Dissolve Particles (10-15 gold particles per marker, 150ms)
+            // 1. Draw Active Dissolve Gold Dust Particles (Ultra Lightweight 60 FPS)
             for (let pIdx = activeParticles.length - 1; pIdx >= 0; pIdx--) {
                 const part = activeParticles[pIdx];
                 part.x += part.vx;
@@ -278,16 +278,13 @@ class OcopAnimationController {
                     continue;
                 }
 
-                ctx.save();
                 ctx.globalAlpha = part.alpha;
                 ctx.fillStyle = '#FFD54F';
-                ctx.shadowBlur = 10;
-                ctx.shadowColor = '#FFD54F';
                 ctx.beginPath();
                 ctx.arc(part.x, part.y, part.size, 0, Math.PI * 2);
                 ctx.fill();
-                ctx.restore();
             }
+            ctx.globalAlpha = 1.0;
 
             // 2. Draw Active Bezier Energy Orbs (~8px glowing head + motion blur tail)
             for (let oIdx = activeOrbs.length - 1; oIdx >= 0; oIdx--) {
@@ -304,30 +301,27 @@ class OcopAnimationController {
                     const prevX = invPrevT * invPrevT * cx + 2 * invPrevT * prevT * orb.controlX + prevT * prevT * orb.targetX;
                     const prevY = invPrevT * invPrevT * cy + 2 * invPrevT * prevT * orb.controlY + prevT * prevT * orb.targetY;
 
-                    ctx.save();
                     const grad = ctx.createLinearGradient(prevX, prevY, curX, curY);
                     grad.addColorStop(0, 'rgba(255, 213, 79, 0)');
                     grad.addColorStop(1, '#FFD54F');
                     ctx.strokeStyle = grad;
-                    ctx.lineWidth = 3.5;
-                    ctx.shadowBlur = 15;
-                    ctx.shadowColor = '#FFD54F';
+                    ctx.lineWidth = 3.0;
                     ctx.beginPath();
                     ctx.moveTo(prevX, prevY);
                     ctx.lineTo(curX, curY);
                     ctx.stroke();
-                    ctx.restore();
                 }
 
-                // Glowing Energy Orb Head (~8px)
-                ctx.save();
-                ctx.fillStyle = '#FFFFFF';
-                ctx.shadowBlur = 18;
-                ctx.shadowColor = '#FFD54F';
+                // Glowing Energy Orb Head (Concentric High-Speed Glow)
+                ctx.fillStyle = 'rgba(255, 213, 79, 0.45)';
                 ctx.beginPath();
-                ctx.arc(curX, curY, 4, 0, Math.PI * 2);
+                ctx.arc(curX, curY, 6, 0, Math.PI * 2);
                 ctx.fill();
-                ctx.restore();
+
+                ctx.fillStyle = '#FFFFFF';
+                ctx.beginPath();
+                ctx.arc(curX, curY, 3, 0, Math.PI * 2);
+                ctx.fill();
 
                 if (t >= 1) {
                     activeOrbs.splice(oIdx, 1);
@@ -472,12 +466,9 @@ class OcopAnimationController {
                 onUpdate: () => {
                     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
-                    // 1. Constellation Web Lines between all markers
-                    ctx.save();
+                    // 1. High-Speed Constellation Web Lines between all markers
                     ctx.strokeStyle = `rgba(255, 213, 79, ${obj.alpha * 0.75})`;
-                    ctx.lineWidth = 2.0;
-                    ctx.shadowBlur = 15;
-                    ctx.shadowColor = '#FFD54F';
+                    ctx.lineWidth = 1.8;
 
                     for (let i = 0; i < points.length; i++) {
                         const p1 = points[i];
@@ -494,19 +485,15 @@ class OcopAnimationController {
                         ctx.lineTo(p3.x, p3.y);
                         ctx.stroke();
                     }
-                    ctx.restore();
 
                     // 2. Imploding Ring back to center
-                    ctx.save();
-                    ctx.beginPath();
-                    ctx.arc(cx, cy, obj.ringR, 0, Math.PI * 2);
-                    ctx.strokeStyle = '#FFD54F';
-                    ctx.lineWidth = 3.5;
-                    ctx.globalAlpha = obj.alpha;
-                    ctx.shadowBlur = 25;
-                    ctx.shadowColor = '#FFD54F';
-                    ctx.stroke();
-                    ctx.restore();
+                    if (obj.ringR > 0) {
+                        ctx.beginPath();
+                        ctx.arc(cx, cy, obj.ringR, 0, Math.PI * 2);
+                        ctx.strokeStyle = `rgba(255, 213, 79, ${obj.alpha})`;
+                        ctx.lineWidth = 3.0;
+                        ctx.stroke();
+                    }
                 },
                 onComplete: () => {
                     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
@@ -525,7 +512,7 @@ class OcopAnimationController {
             if (!sloganTextEl) return resolve();
 
             sloganTextEl.innerHTML = `
-                <div style="font-size: 0.82rem; color: #FFD54F; text-transform: uppercase; letter-spacing: 2px; font-weight: 800; margin-bottom: 4px;">🌾 HÀNH TRÌNH DI SẢN</div>
+                <div style="font-size: 0.82rem; color: #FFD54F; text-transform: uppercase; letter-spacing: 2px; font-weight: 800; margin-bottom: 4px;">🌾 HÀNH TRÌNH NÔNG SẢN SỐ</div>
                 <div style="font-size: 1.45rem; color: #FFFFFF; font-weight: 900; letter-spacing: 0.5px;">ĐÔNG ANH • TINH HOA LAN TỎA</div>
             `;
             sloganTextEl.style.display = 'block';
