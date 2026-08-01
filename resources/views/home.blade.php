@@ -3692,6 +3692,8 @@
                     'timeline' => $p->timeline,
                     'fun_fact' => $p->fun_fact,
                     'slug' => $eat ? $eat->slug : '',
+                    'lat' => $p->latitude ? (float)$p->latitude : ($eat && $eat->latitude ? (float)$eat->latitude : null),
+                    'lng' => $p->longitude ? (float)$p->longitude : ($eat && $eat->longitude ? (float)$eat->longitude : null),
                 ];
             }
         } catch(\Exception $e) {}

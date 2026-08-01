@@ -187,12 +187,19 @@ class OcopStoryController {
 
         this.products = prods;
 
-        // Use real coordinates of the products to prevent jumping, falling back to DA coordinates if empty
+        // Compute artistic "ĐA" letter constellation coordinates & preserve real geographic coordinates
         const generatedCoords = this.markerCtrl.generateDaCoordinates(prods.length);
         const daCoords = [];
         prods.forEach((p, idx) => {
-            p.daLat = p.lat || generatedCoords[idx].lat;
-            p.daLng = p.lng || generatedCoords[idx].lng;
+            const officialMatch = (window.OFFICIAL_OCOP_PRODUCTS && window.OFFICIAL_OCOP_PRODUCTS[idx]) ? window.OFFICIAL_OCOP_PRODUCTS[idx] : null;
+            
+            const rawLat = p.lat || (officialMatch ? officialMatch.lat : null);
+            const rawLng = p.lng || (officialMatch ? officialMatch.lng : null);
+
+            p.realLat = (rawLat && !isNaN(rawLat)) ? parseFloat(rawLat) : generatedCoords[idx].lat;
+            p.realLng = (rawLng && !isNaN(rawLng)) ? parseFloat(rawLng) : generatedCoords[idx].lng;
+            p.daLat = generatedCoords[idx].lat;
+            p.daLng = generatedCoords[idx].lng;
             daCoords.push({ lat: p.daLat, lng: p.daLng });
         });
 
@@ -206,6 +213,12 @@ class OcopStoryController {
             modal.style.display = 'block';
             modal.classList.add('active');
         }
+
+        // Clean previous replay cards and overlays
+        const dominoContainer = document.getElementById('ocopDominoCardsContainer');
+        if (dominoContainer) dominoContainer.innerHTML = '';
+        const sloganOverlay = document.getElementById('ocopSloganOverlay');
+        if (sloganOverlay) sloganOverlay.style.display = 'none';
 
         // Render Left Sidebar List
         this.renderLeftSidebarList(prods);
@@ -242,10 +255,7 @@ class OcopStoryController {
             }
         }
 
-        // Render faint glowing outline dots for "ĐA" shape on map
-        this.markerCtrl.renderDaOutlineGrid(daCoords);
-
-        // Step 1: Cinematic Intro & Countdown 3-2-1
+        // Step 1: Cinematic Intro Screen
         await this.animCtrl.playCinematicIntro(prods.length);
         if (this.isSkipped || session !== this.sessionId) return;
 
@@ -267,8 +277,8 @@ class OcopStoryController {
             this.highlightSidebarItem(i);
 
             const p = prods[i];
-            const curLat = p.daLat;
-            const curLng = p.daLng;
+            const curLat = p.realLat || p.lat;
+            const curLng = p.realLng || p.lng;
 
             // Draw GPS line
             if (prevLat && prevLng) {
@@ -301,15 +311,13 @@ class OcopStoryController {
             // If user jumped to another product during display time, loop immediately
             if (this.jumpRequestedIndex !== -1) {
                 await this.cardCtrl.slideOutCard();
-                this.markerCtrl.settleDaPin(curLat, curLng, i, prods.length);
                 prevLat = curLat;
                 prevLng = curLng;
                 continue;
             }
 
-            // Slide out Card & settle pin on "ĐA" grid
+            // Slide out Card cleanly
             await this.cardCtrl.slideOutCard();
-            this.markerCtrl.settleDaPin(curLat, curLng, i, prods.length);
 
             prevLat = curLat;
             prevLng = curLng;
