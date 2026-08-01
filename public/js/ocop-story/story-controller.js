@@ -107,7 +107,7 @@ class OcopStoryController {
                 <div class="item-num">${idx + 1}</div>
                 <div class="item-info">
                     <div class="item-name">${p.name}</div>
-                    <div class="item-sub">${p.star_rating || 'OCOP 4 Sao'} • ${p.eatery_name}</div>
+                    <div class="item-sub">${p.star_rating || 'OCOP 4 Sao'} • ${p.seller_name || p.eatery_name || 'Cơ sở sản xuất Đông Anh'}</div>
                 </div>
             </div>
         `).join('');
