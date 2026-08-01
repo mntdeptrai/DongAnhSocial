@@ -64,10 +64,10 @@
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
             <!-- Email -->
             <div class="admin-form-group">
-                <label class="admin-form-label" style="font-weight: 700; font-size: 0.82rem; margin-bottom: 8px; display: block; color: var(--admin-text-main);">Email <span style="color: var(--admin-danger);">*</span></label>
+                <label class="admin-form-label" style="font-weight: 700; font-size: 0.82rem; margin-bottom: 8px; display: block; color: var(--admin-text-main);">Email <span style="color: var(--admin-text-muted); font-weight: normal;">(Không bắt buộc)</span></label>
                 <div style="position: relative;">
                     <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--admin-text-muted);">✉️</span>
-                    <input type="email" name="email" required value="{{ old('email', $user->email) }}" class="admin-form-input" placeholder="email@example.com" style="padding-left: 38px; border-radius: 10px; height: 42px;">
+                    <input type="email" name="email" value="{{ old('email', $user->email) }}" class="admin-form-input" placeholder="email@example.com" style="padding-left: 38px; border-radius: 10px; height: 42px;">
                 </div>
             </div>
 

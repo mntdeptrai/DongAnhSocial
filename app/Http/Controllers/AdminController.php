@@ -1500,7 +1500,7 @@ class AdminController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'username' => ['required', 'string', 'max:50', 'unique:users', 'regex:/^[a-zA-Z0-9_.-]+$/'],
-            'email' => 'required|string|email|max:255|unique:users',
+            'email' => 'nullable|string|email|max:255|unique:users',
             'password' => 'required|string|min:6',
             'role' => 'required|string|in:' . $allowedRoles,
             'phone' => ['nullable', 'string', 'regex:/^0[0-9]{9}$/'],
@@ -1681,7 +1681,7 @@ class AdminController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'username' => ['required', 'string', 'max:50', 'unique:users,username,' . $id, 'regex:/^[a-zA-Z0-9_.-]+$/'],
-            'email' => 'required|string|email|max:255|unique:users,email,' . $id,
+            'email' => 'nullable|string|email|max:255|unique:users,email,' . $id,
             'role' => 'required|string|in:' . $allowedRoles,
             'phone' => ['nullable', 'string', 'regex:/^0[0-9]{9}$/'],
             'avatar' => 'nullable|string|max:10',
