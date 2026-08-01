@@ -46,7 +46,15 @@
                     setTimeout(() => c.remove(), 300);
                 }
             }
-            document.addEventListener('DOMContentLoaded', showMgrToast);
+            window.addEventListener('pageshow', function (e) {
+                const c = document.getElementById('mgr-toast-container');
+                const isBackNav = e.persisted || (window.performance && window.performance.getEntriesByType && window.performance.getEntriesByType('navigation')[0]?.type === 'back_forward');
+                if (isBackNav) {
+                    if (c) c.remove();
+                } else {
+                    showMgrToast();
+                }
+            });
         </script>
     @endif
 

@@ -236,6 +236,9 @@ class VendorController extends Controller
 
         DB::connection('mysql_market')->table('ocop_products')->where('eatery_id', $eateryId)->update($ocopUpdate);
 
+        // Xóa sạch Cache ứng dụng để dữ liệu gian hàng mới lập tức hiển thị khắp hệ thống & bản đồ
+        \Illuminate\Support\Facades\Cache::flush();
+
         return redirect()->back()->with('success', '🎉 Đã cập nhật Hồ Sơ Di Sản & Thuyết Minh OCOP thành công! Tất cả thông tin đã được phát hành trực tiếp lên bản đồ.');
     }
 
@@ -308,6 +311,8 @@ class VendorController extends Controller
             'updated_at' => now(),
         ]);
 
+        \Illuminate\Support\Facades\Cache::flush();
+
         return redirect()->back()->with('success', 'Đã thêm sản phẩm mới thành công!');
     }
 
@@ -362,6 +367,8 @@ class VendorController extends Controller
 
         DB::connection('mysql_market')->table('ocop_products')->where('id', $id)->update($updateData);
 
+        \Illuminate\Support\Facades\Cache::flush();
+
         return redirect()->back()->with('success', 'Đã cập nhật sản phẩm OCOP thành công!');
     }
 
@@ -373,6 +380,8 @@ class VendorController extends Controller
         $this->verifyVendor();
 
         DB::connection('mysql_market')->table('ocop_products')->where('id', $id)->delete();
+
+        \Illuminate\Support\Facades\Cache::flush();
 
         return redirect()->back()->with('success', 'Đã xóa sản phẩm khỏi gian hàng!');
     }

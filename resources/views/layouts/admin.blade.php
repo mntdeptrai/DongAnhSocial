@@ -69,8 +69,15 @@
                 }
             }
 
-            // Gọi chạy ngay khi DOM load
-            document.addEventListener('DOMContentLoaded', showAdminToast);
+            window.addEventListener('pageshow', function (e) {
+                const container = document.getElementById('admin-toast-container');
+                const isBackNav = e.persisted || (window.performance && window.performance.getEntriesByType && window.performance.getEntriesByType('navigation')[0]?.type === 'back_forward');
+                if (isBackNav) {
+                    if (container) container.remove();
+                } else {
+                    showAdminToast();
+                }
+            });
         </script>
     @endif
 
