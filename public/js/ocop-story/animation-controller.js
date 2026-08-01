@@ -35,17 +35,17 @@ class OcopAnimationController {
         if (titleEl) {
             gsap.fromTo(titleEl, 
                 { opacity: 0, y: 30, scale: 0.9 },
-                { opacity: 1, y: 0, scale: 1, duration: 1.0, ease: 'power3.out' }
+                { opacity: 1, y: 0, scale: 1, duration: 0.6, ease: 'power3.out' }
             );
         }
 
-        await new Promise(r => setTimeout(r, 1800));
+        await new Promise(r => setTimeout(r, 1000));
 
         // 2. Fade out Intro Overlay cleanly
         return new Promise(resolve => {
             gsap.to(introOverlay, {
                 opacity: 0,
-                duration: 0.8,
+                duration: 0.4,
                 ease: 'power2.inOut',
                 onComplete: () => {
                     introOverlay.style.display = 'none';

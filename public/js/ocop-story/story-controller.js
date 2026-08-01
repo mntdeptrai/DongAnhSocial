@@ -275,8 +275,8 @@ class OcopStoryController {
                 this.cameraCtrl.drawGpsRoute(prevLat, prevLng, curLat, curLng);
             }
 
-            // Flycam animation (1.8s)
-            await this.cameraCtrl.flyToTarget(curLat, curLng, 14.5, 1.8);
+            // Flycam animation (1.0s)
+            await this.cameraCtrl.flyToTarget(curLat, curLng, 14.5, 1.0);
             if (this.isSkipped || session !== this.sessionId) break;
 
             // Focus Marker Glow/Pulse
@@ -286,9 +286,9 @@ class OcopStoryController {
             await this.cardCtrl.slideInCard(p, i, prods.length);
             if (this.isSkipped || session !== this.sessionId) break;
 
-            // Display time (3.2s or wait if paused)
+            // Display time (1.3s or wait if paused)
             let elapsed = 0;
-            const displayTime = 3200;
+            const displayTime = 1300;
             while (elapsed < displayTime && !this.isSkipped && session === this.sessionId && this.jumpRequestedIndex === -1) {
                 await new Promise(r => setTimeout(r, 100));
                 if (!this.isPaused) {
