@@ -273,6 +273,10 @@ class OcopStoryteller {
 
         const modal = document.getElementById('ocopStorytellingModal');
         if (modal) {
+            const skipBtn = document.querySelector('.story-btn-skip');
+            if (skipBtn) {
+                skipBtn.innerHTML = '<span>⏭️</span> Bỏ qua phim';
+            }
             modal.style.display = 'block';
             modal.classList.add('active');
         }
@@ -460,7 +464,11 @@ class OcopStoryteller {
             });
         }
 
-        // 1. Zoom out map to show full "ĐA" letter logo
+        // 1. Zoom out map to show full "ĐA" letter logo & update button text to Close
+        const skipBtn = document.querySelector('.story-btn-skip');
+        if (skipBtn) {
+            skipBtn.innerHTML = '<span>❌</span> Đóng';
+        }
         if (this.map) {
             this.map.flyTo([21.135, 105.868], 12.5, {
                 duration: 2.2,
@@ -472,7 +480,7 @@ class OcopStoryteller {
         this.speakNarrative(cleanNarrative);
         this.typeWriter('ocopNarrativeText', cleanNarrative);
 
-        // 2. Domino LED wave animation: Pin by pin activation
+        // 2. Domino LED wave animation: Pin by pin activation (Outro removed)
         for (let i = 0; i < this.daPinMarkers.length; i++) {
             if (this.isSkipped) break;
             const el = document.getElementById(`daPin_${i}`);
@@ -480,14 +488,6 @@ class OcopStoryteller {
                 el.classList.add('led-active');
             }
             await new Promise(r => setTimeout(r, 120)); // Fast domino delay
-        }
-
-        await new Promise(r => setTimeout(r, 1500));
-
-        // 3. Show Grand Finale Pop-up Announcement Card
-        const finaleOverlay = document.getElementById('ocopGrandFinaleOverlay');
-        if (finaleOverlay && !this.isSkipped) {
-            finaleOverlay.classList.add('active');
         }
     }
 

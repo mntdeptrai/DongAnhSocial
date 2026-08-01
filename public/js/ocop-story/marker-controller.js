@@ -133,7 +133,7 @@ class OcopMarkerController {
         // 3. Render all 33 pins forming the letters Đ and A
         daCoords.forEach((coord, index) => {
             const pinHtml = `
-                <div id="daPin_${index}" class="ocop-da-pin-node">
+                <div id="daPin_${index}" class="ocop-da-pin-node" style="transform: scale(0); opacity: 0;">
                     <span>${index + 1}</span>
                 </div>
             `;
@@ -146,6 +146,25 @@ class OcopMarkerController {
             const marker = L.marker([coord.lat, coord.lng], { icon }).addTo(this.map);
             this.daPinMarkers[index] = marker;
         });
+
+        // 4. GSAP Stagger Drop-in Animation for the ĐA pins
+        setTimeout(() => {
+            gsap.fromTo(".ocop-da-pin-node", 
+                { scale: 0, opacity: 0, y: -60, rotation: -90 },
+                { 
+                    scale: 1, 
+                    opacity: 1, 
+                    y: 0, 
+                    rotation: 0, 
+                    duration: 0.9, 
+                    stagger: {
+                        amount: 1.2,
+                        from: "start"
+                    },
+                    ease: "back.out(1.6)"
+                }
+            );
+        }, 100);
     }
 
     /**

@@ -196,7 +196,11 @@ class OcopStoryController {
             daCoords.push({ lat: p.daLat, lng: p.daLng });
         });
 
-        // Open Modal
+        // Open Modal and reset skip button text
+        const skipBtn = document.querySelector('.story-btn-skip');
+        if (skipBtn) {
+            skipBtn.innerHTML = '<span>⏭️</span> Bỏ qua phim';
+        }
         const modal = document.getElementById('ocopStorytellingModal');
         if (modal) {
             modal.style.display = 'block';
@@ -312,13 +316,16 @@ class OcopStoryController {
             i++;
         }
 
-        // Step 3: Grand Finale - Zoom out to see GIANT "ĐA" shape, Domino LED Wave & Slogan Chain Overlay
+        // Step 3: Grand Finale - Zoom out to see GIANT "ĐA" shape & Domino LED Wave (Outro removed)
         if (!this.isSkipped && session === this.sessionId) {
+            // Update skip button to Close
+            const skipBtn = document.querySelector('.story-btn-skip');
+            if (skipBtn) {
+                skipBtn.innerHTML = '<span>❌</span> Đóng';
+            }
             this.markerCtrl.morphToDaLetters(this.products.length);
             await this.cameraCtrl.flyToTarget(21.135, 105.868, 11.2, 2.5);
             await this.markerCtrl.triggerDominoLedEffect();
-            await new Promise(r => setTimeout(r, 1000));
-            await this.animCtrl.playSloganChainAndFinale();
         }
     }
 }
