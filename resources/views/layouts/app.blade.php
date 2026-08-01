@@ -208,15 +208,50 @@
             <div class="nav-collapse main-nav-container" id="navCollapse">
                 <nav>
                 <ul class="nav-menu">
-                    <li><a href="/" class="nav-link {{ request()->is('/') && !request()->has('cat') ? 'active' : '' }}">Trang chủ</a></li>
-                    <li><a href="/tim-kiem" class="nav-link {{ request()->is('tim-kiem*') ? 'active' : '' }}">Bản đồ & Tìm kiếm</a></li>
-                    <li><a href="/food-tours" class="nav-link {{ request()->is('food-tours*') || (request()->is('food-tour*') && !request()->is('food-tour/tu-tay-lam-dac-san-co-loa*')) ? 'active' : '' }}">Food Tour</a></li>
-                    <li><a href="/exp-corner" class="nav-link {{ request()->is('exp-corner*') || request()->is('food-tour/tu-tay-lam-dac-san-co-loa*') ? 'active' : '' }}">Góc trải nghiệm thực tế</a></li>
-                    <li><a href="/checkin" class="nav-link {{ request()->is('checkin*') ? 'active' : '' }}">Góc Check-in</a></li>
+                    <li>
+                        <a href="/" class="nav-link {{ request()->is('/') && !request()->has('cat') ? 'active' : '' }}">
+                            <span><span class="nav-icon">🏠</span>Trang chủ</span>
+                            <span class="nav-arrow">➔</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/tim-kiem" class="nav-link {{ request()->is('tim-kiem*') ? 'active' : '' }}">
+                            <span><span class="nav-icon">🗺️</span>Bản đồ & Tìm kiếm</span>
+                            <span class="nav-arrow">➔</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/food-tours" class="nav-link {{ request()->is('food-tours*') || (request()->is('food-tour*') && !request()->is('food-tour/tu-tay-lam-dac-san-co-loa*')) ? 'active' : '' }}">
+                            <span><span class="nav-icon">🍜</span>Food Tour</span>
+                            <span class="nav-arrow">➔</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/exp-corner" class="nav-link {{ request()->is('exp-corner*') || request()->is('food-tour/tu-tay-lam-dac-san-co-loa*') ? 'active' : '' }}">
+                            <span><span class="nav-icon">🏺</span>Góc trải nghiệm thực tế</span>
+                            <span class="nav-arrow">➔</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/checkin" class="nav-link {{ request()->is('checkin*') ? 'active' : '' }}">
+                            <span><span class="nav-icon">📸</span>Góc Check-in</span>
+                            <span class="nav-arrow">➔</span>
+                        </a>
+                    </li>
                     @if(session()->has('user_id'))
-                        <li><a href="/social" class="nav-link {{ request()->is('social*') ? 'active' : '' }}">💬 Kết nối bạn bè</a></li>
+                        <li>
+                            <a href="/social" class="nav-link {{ request()->is('social*') ? 'active' : '' }}">
+                                <span><span class="nav-icon">💬</span>Kết nối bạn bè</span>
+                                <span class="nav-arrow">➔</span>
+                            </a>
+                        </li>
                     @endif
-                    <li><a href="#" onclick="openGuideModal(event)" class="nav-link">Giới thiệu & Hướng dẫn</a></li>
+                    <li>
+                        <a href="#" onclick="openGuideModal(event)" class="nav-link">
+                            <span><span class="nav-icon">📖</span>Giới thiệu & Hướng dẫn</span>
+                            <span class="nav-arrow">➔</span>
+                        </a>
+                    </li>
                 </ul>
                 </nav>
             
@@ -229,7 +264,8 @@
                                 ->count();
                         @endphp
                         
-                        <!-- Nút Chat (Messenger Dropdown) -->
+                        <div class="header-actions-group">
+                            <!-- Nút Chat (Messenger Dropdown) -->
                         <div class="chat-dropdown" x-data="{ 
                             open: false, 
                             chats: [], 
@@ -428,6 +464,7 @@
                                 </div>
                             </div>
                         </div>
+                        </div> <!-- End header-actions-group -->
 
                         <div class="profile-dropdown" x-data="{ open: false }" @click.outside="open = false">
                             <button @click="open = !open" class="profile-trigger-btn">
@@ -439,6 +476,9 @@
                                         <span style="font-size: 1.2rem;">{{ $navUser->avatar ?? '👤' }}</span>
                                     @endif
                                 </div>
+                                <span class="profile-mobile-name">
+                                    {{ session('user_name') ?: ($navUser ? $navUser->name : 'Tài khoản') }}
+                                </span>
                                 <div class="profile-chevron-badge">
                                     <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
                                         <path d="M6 9l6 6 6-6"></path>

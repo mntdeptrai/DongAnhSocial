@@ -330,5 +330,173 @@ body {
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15) !important;
 }
 
+/* ==========================================================================
+   📱 MOBILE DRAWER NAVIGATION & ACCOUNT PANEL RE-LAYOUT
+   ========================================================================== */
+
+/* 1. Nav Links Styling with Icons & Arrows */
+.nav-link {
+    background: rgba(14, 165, 233, 0.03) !important;
+    border: 1px solid rgba(14, 165, 233, 0.08) !important;
+    border-radius: var(--radius-inner-mobile, 14px) !important;
+    padding: 12px 16px !important;
+    font-size: 0.98rem !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    transition: all 0.25s var(--ease-spring) !important;
+}
+
+.nav-link:active {
+    background: rgba(14, 165, 233, 0.08) !important;
+    transform: scale(0.98) !important;
+}
+
+.nav-link.active {
+    background: var(--primary-grad) !important;
+    border-color: transparent !important;
+    color: #ffffff !important;
+    box-shadow: 0 6px 16px -4px rgba(14, 165, 233, 0.3) !important;
+}
+
+.nav-link .nav-icon {
+    display: inline-block !important;
+    margin-right: 10px !important;
+    font-size: 1.15rem !important;
+    vertical-align: middle !important;
+}
+
+.nav-link .nav-arrow {
+    display: inline-block !important;
+    font-size: 0.82rem !important;
+    opacity: 0.5 !important;
+    transition: transform 0.25s var(--ease-spring) !important;
+}
+
+.nav-link.active .nav-arrow {
+    opacity: 0.9 !important;
+    transform: translateX(2px) !important;
+}
+
+/* Hide navigation icons & arrows on desktop */
+@media (min-width: 992px) {
+    .nav-icon, .nav-arrow, .profile-mobile-name {
+        display: none !important;
+    }
+}
+
+/* 2. Logged-in Header Actions Group Row */
+.header-actions-group {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 20px !important;
+    width: 100% !important;
+    padding: 16px 0 !important;
+    border-top: 1px dashed rgba(14, 165, 233, 0.15) !important;
+    margin-top: 12px !important;
+}
+
+/* Restore circular styling for action buttons inside the group on mobile */
+.header-actions-group .header-action-btn {
+    width: 48px !important;
+    height: 48px !important;
+    border-radius: 50% !important;
+    background: rgba(14, 165, 233, 0.08) !important;
+    border: 1px solid rgba(14, 165, 233, 0.15) !important;
+    color: var(--primary) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 !important;
+    box-shadow: 0 4px 12px rgba(14, 165, 233, 0.1) !important;
+    transition: all 0.2s ease !important;
+    position: relative !important;
+}
+
+.header-actions-group .header-action-btn:active {
+    transform: scale(0.9) !important;
+    background: rgba(14, 165, 233, 0.15) !important;
+}
+
+.header-actions-group .header-action-btn svg {
+    width: 22px !important;
+    height: 22px !important;
+}
+
+/* Full Width Overlay Dropdowns on Mobile to prevent clipping */
+.chat-dropdown-menu,
+.notif-dropdown-menu {
+    position: fixed !important;
+    top: var(--header-height, 64px) !important;
+    left: 12px !important;
+    right: 12px !important;
+    width: calc(100% - 24px) !important;
+    max-width: none !important;
+    margin-top: 4px !important;
+    border-radius: 16px !important;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15) !important;
+    z-index: 10002 !important;
+}
+
+/* 3. Profile Dropdown & Info Card styling on Mobile */
+.user-actions .profile-dropdown {
+    width: 100% !important;
+    margin-top: 8px !important;
+    position: relative !important;
+}
+
+.user-actions .profile-trigger-btn {
+    width: 100% !important;
+    background: linear-gradient(135deg, rgba(14, 165, 233, 0.04) 0%, rgba(16, 185, 129, 0.04) 100%) !important;
+    border: 1px solid rgba(14, 165, 233, 0.15) !important;
+    padding: 12px 16px !important;
+    border-radius: 16px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 8px !important;
+    box-sizing: border-box !important;
+    position: relative !important;
+    height: auto !important;
+}
+
+.user-actions .profile-avatar-container {
+    width: 38px !important;
+    height: 38px !important;
+    border-color: var(--primary) !important;
+    flex-shrink: 0 !important;
+}
+
+.user-actions .profile-mobile-name {
+    display: block !important;
+    font-size: 0.92rem !important;
+    font-weight: 700 !important;
+    color: var(--text-main) !important;
+    margin-left: 4px !important;
+    text-align: left !important;
+}
+
+.user-actions .profile-chevron-badge {
+    position: absolute !important;
+    right: 16px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+}
+
+/* Make profile dropdown list scroll inside flow instead of absolute float */
+.user-actions .profile-dropdown-menu {
+    position: static !important;
+    width: 100% !important;
+    margin-top: 8px !important;
+    box-shadow: none !important;
+    border: 1px solid rgba(14, 165, 233, 0.12) !important;
+    background: rgba(14, 165, 233, 0.02) !important;
+    border-radius: 14px !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
 
 
