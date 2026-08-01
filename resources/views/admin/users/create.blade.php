@@ -216,7 +216,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 // Cập nhật tiêu đề nhãn tùy theo vai trò
                 if (role === 'manager') {
-                    originalLabel.innerHTML = '🏪 Chợ truyền thống & OCOP liên kết (Dành cho Manager) <span style="color: var(--admin-danger);">*</span>';
+                    originalLabel.innerHTML = '🏪 Chợ truyền thống liên kết (Dành cho Manager) <span style="color: var(--admin-danger);">*</span>';
                 } else if (role === 'principal') {
                     originalLabel.innerHTML = '🏫 Trường học liên kết (Dành cho Principal) <span style="color: var(--admin-danger);">*</span>';
                 } else {
@@ -230,14 +230,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 const filtered = originalOptions.filter(opt => {
                     if (opt.value === '') return true; // Luôn giữ placeholder
                     if (role === 'manager') {
-                        return opt.category === 'dong-anh-market' || opt.category === 'traditional-market';
+                        return opt.category === 'traditional-market';
                     }
                     if (role === 'principal') {
                         return opt.category === 'smart-education-map';
                     }
                     if (role === 'seller') {
-                        // Seller: hiển thị các cơ sở ăn uống, lưu trú, y tế... (trừ chợ, OCOP và trường học)
-                        return opt.category !== 'dong-anh-market' && opt.category !== 'traditional-market' && opt.category !== 'smart-education-map';
+                        // Seller: hiển thị tất cả cơ sở (bao gồm OCOP), trừ chợ truyền thống và trường học
+                        return opt.category !== 'traditional-market' && opt.category !== 'smart-education-map';
                     }
                     return false;
                 });
