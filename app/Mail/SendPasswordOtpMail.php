@@ -29,7 +29,14 @@ class SendPasswordOtpMail extends Mailable
      */
     public function envelope(): Envelope
     {
+        $fromAddress = config('mail.from.address') ?: 'no-reply@donganh.gov.vn';
+        $fromName = config('mail.from.name') ?: 'DongAnh Discovery';
+
         return new Envelope(
+            from: new \Illuminate\Mail\Mailables\Address($fromAddress, $fromName),
+            replyTo: [
+                new \Illuminate\Mail\Mailables\Address($fromAddress, $fromName),
+            ],
             subject: 'Mã xác thực OTP thay đổi mật khẩu - DongAnh Discovery',
         );
     }

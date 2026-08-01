@@ -6,7 +6,76 @@
 <!-- Tối ưu hóa SEO Meta Description -->
 @section('meta_description', 'Khám phá sản phẩm OCOP ' . $product->name . ' thuộc ' . ($eatery ? $eatery->name : 'Đông Anh') . ', địa chỉ: ' . ($eatery ? $eatery->address : 'Đông Anh, Hà Nội') . '. Xem thông số kỹ thuật, chứng nhận QCVN, thành phần và hotline đặt mua.')
 
+<!-- Tối ưu hóa SEO Từ Khóa Tìm Kiếm Google (Keywords) -->
+@section('meta_keywords', $product->name . ', Sản phẩm OCOP ' . $product->name . ', OCOP ' . ($product->star_rating ? $product->star_rating . ' sao' : 'Đông Anh') . ', đặc sản OCOP Đông Anh, ' . $product->name . ' Hà Nội, mua ' . $product->name . ', giá ' . $product->name . ', ' . ($eatery ? $eatery->name : 'Đông Anh'))
+
 @section('og_image', $product->image_path ?: ($eatery?->image_path ?: 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=800&q=80'))
+@section('og_type', 'product')
+@section('canonical_url', route('ocop.product.show', $product->id))
+
+<!-- Structured Data JSON-LD cho Google Rich Snippets & Search Indexing -->
+@push('head')
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org/",
+  "@type": "Product",
+  "name": "{{ addslashes($product->name) }}",
+  "image": [
+    "{{ $product->image_path ? asset($product->image_path) : 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=800&q=80' }}"
+  ],
+  "description": "{{ addslashes(preg_replace('/\s+/', ' ', strip_tags($product->description ?: ($product->story ?: 'Sản phẩm OCOP đạt chứng nhận cấp quốc gia tại Đông Anh, Hà Nội')))) }}",
+  "brand": {
+    "@type": "Brand",
+    "name": "{{ addslashes($eatery ? $eatery->name : 'Đông Anh OCOP') }}"
+  },
+  "offers": {
+    "@type": "Offer",
+    "url": "{{ route('ocop.product.show', $product->id) }}",
+    "priceCurrency": "VND",
+    "price": "{{ (int)preg_replace('/[^0-9]/', '', (string)$product->price) ?: 0 }}",
+    "priceValidUntil": "{{ date('Y-12-31', strtotime('+1 year')) }}",
+    "itemCondition": "https://schema.org/NewCondition",
+    "availability": "https://schema.org/InStock",
+    "seller": {
+      "@type": "Organization",
+      "name": "{{ addslashes($eatery ? $eatery->name : 'Đông Anh OCOP') }}"
+    }
+  }
+  @if($product->star_rating)
+  ,
+  "aggregateRating": {
+    "@type": "AggregateRating",
+    "ratingValue": "{{ $product->star_rating }}",
+    "reviewCount": "10",
+    "bestRating": "5",
+    "worstRating": "1"
+  }
+  @endif
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [{
+    "@type": "ListItem",
+    "position": 1,
+    "name": "Trang chủ",
+    "item": "{{ url('/') }}"
+  },{
+    "@type": "ListItem",
+    "position": 2,
+    "name": "Sản phẩm OCOP Đông Anh",
+    "item": "{{ url('/') }}#ocop"
+  },{
+    "@type": "ListItem",
+    "position": 3,
+    "name": "{{ addslashes($product->name) }}"
+  }]
+}
+</script>
+@endpush
 
 @section('content')
 

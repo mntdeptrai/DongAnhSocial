@@ -176,13 +176,14 @@ class AuthController extends Controller
             'email.email' => 'Địa chỉ email không đúng định dạng!',
         ]);
 
-        // Bảo mật: Nếu email đã tồn tại, trả về thông báo trung tính để tránh email enumeration
-        // Không tiết lộ email có tồn tại hay không cho kẻ tấn công
-        if (User::where('email', $request->email)->exists()) {
+        $email = trim(strtolower($request->email));
+
+        // Kiểm tra email đã được đăng ký tài khoản hay chưa
+        if (User::where('email', $email)->exists()) {
             return response()->json([
-                'success' => true,
-                'message' => 'Nếu địa chỉ email hợp lệ, mã OTP sẽ được gửi đến email của bạn trong vài giây.'
-            ]);
+                'success' => false,
+                'message' => 'Địa chỉ email này đã được đăng ký tài khoản! Vui lòng Đăng nhập hoặc sử dụng tính năng Quên mật khẩu.'
+            ], 422);
         }
 
         // Tạo mã OTP ngẫu nhiên 6 chữ số (dùng random_int bảo mật)
@@ -191,22 +192,24 @@ class AuthController extends Controller
         try {
             // Lưu OTP vào DB với thời hạn là 4 phút
             PasswordOtp::create([
-                'email' => $request->email,
+                'email' => $email,
                 'otp' => $otpCode,
                 'expires_at' => now()->addMinutes(4),
             ]);
 
             // Gửi mail OTP
-            Mail::to($request->email)->send(new SendRegisterOtpMail($otpCode, 4));
+            Mail::to($email)->send(new SendRegisterOtpMail($otpCode, 4));
 
             return response()->json([
                 'success' => true,
-                'message' => 'Nếu địa chỉ email hợp lệ, mã OTP sẽ được gửi đến email của bạn trong vài giây.'
+                'message' => 'Mã OTP đã được gửi thành công đến email của bạn! Vui lòng kiểm tra hòm thư.'
             ]);
         } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error("Lỗi gửi mail OTP đăng ký cho {$email}: " . $e->getMessage());
+
             return response()->json([
                 'success' => false,
-                'message' => 'Đã có lỗi xảy ra khi gửi mail. Vui lòng thử lại.'
+                'message' => 'Đã có lỗi xảy ra khi gửi mail: ' . $e->getMessage()
             ], 500);
         }
     }

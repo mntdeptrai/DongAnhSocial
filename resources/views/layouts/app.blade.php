@@ -38,6 +38,8 @@
     <meta name="twitter:description" content="@yield('meta_description', 'Khám phá trường học, ăn uống, y tế, chợ OCOP tại Xã Đông Anh.')">
     <meta name="twitter:image" content="@yield('og_image', 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=800&q=80')">
     
+    @stack('head')
+    
     <!-- Leaflet.js Map Assets -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     
