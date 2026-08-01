@@ -1015,6 +1015,28 @@
         overflow: hidden !important;
     }
 
+    /* 1. Intro Screen Mobile Styling */
+    .story-overlay-modal.ocop-theme .ocop-intro-tag {
+        font-size: 0.68rem !important;
+        padding: 5px 14px !important;
+        letter-spacing: 1.5px !important;
+    }
+
+    .story-overlay-modal.ocop-theme .ocop-intro-main-title {
+        font-size: clamp(1.45rem, 6.5vw, 2.4rem) !important;
+        line-height: 1.25 !important;
+        letter-spacing: 0.5px !important;
+        padding: 0 10px !important;
+        word-break: normal !important;
+        overflow-wrap: break-word !important;
+    }
+
+    .story-overlay-modal.ocop-theme .ocop-intro-sub-title {
+        font-size: 0.95rem !important;
+        padding: 0 16px !important;
+        line-height: 1.4 !important;
+    }
+
     /* 2. Top bar alignment */
     .story-overlay-modal.ocop-theme .ocop-slogan-text-display {
         top: 110px !important;

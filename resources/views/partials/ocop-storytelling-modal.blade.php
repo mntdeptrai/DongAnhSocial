@@ -16,7 +16,7 @@
                 <div class="ocop-intro-tag">🌾 HÀNH TRÌNH ĐIỆN ẢNH OCOP CAO CẤP</div>
             </div>
             <h1 id="ocopIntroMainTitle" class="ocop-intro-main-title">
-                HÀNH TRÌNH DI SẢN<br><span style="white-space: nowrap;">OCOP ĐÔNG ANH</span>
+                HÀNH TRÌNH DI SẢN<br>OCOP ĐÔNG ANH
             </h1>
             <div style="width: 140px; height: 3px; background: linear-gradient(90deg, transparent, #D4A017, transparent); margin: 18px auto;"></div>
             <p id="ocopIntroCountText" class="ocop-intro-sub-title">
