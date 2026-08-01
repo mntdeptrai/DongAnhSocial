@@ -61,7 +61,7 @@
         <div id="ocopProgressCounterWrap" class="ocop-progress-counter-badge" style="margin-bottom: 12px; justify-content: center;">
             <span class="counter-label">TIẾN TRÌNH:</span>
             <div id="ocopProgressCounterText" class="counter-val">
-                <span style="color: #F0C24B; font-weight: 900;">01</span> / <span style="color: #D6EED8;">25</span>
+                <span style="color: #F0C24B; font-weight: 900;">01</span> / <span style="color: #D6EED8;">33</span>
             </div>
         </div>
 
