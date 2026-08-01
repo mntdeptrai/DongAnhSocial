@@ -3667,7 +3667,13 @@
     @php
         $allOcopProductsData = [];
         try {
-            $allOcopList = \App\Models\OcopProduct::with('eatery.commune')->get();
+            $allOcopList = \App\Models\OcopProduct::whereNotNull('star_rating')
+                ->where('star_rating', '!=', '')
+                ->whereHas('eatery.category', function($q) {
+                    $q->where('slug', 'dong-anh-market');
+                })
+                ->with('eatery.commune')
+                ->get();
             foreach ($allOcopList as $p) {
                 $eat = $p->eatery;
                 $allOcopProductsData[] = [
