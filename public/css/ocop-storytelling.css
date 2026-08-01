@@ -58,8 +58,13 @@
 }
 
 @keyframes floatIcon {
-    0% { transform: translateY(0) scale(1); }
-    100% { transform: translateY(-10px) scale(1.08); }
+    0% {
+        transform: translateY(0) scale(1);
+    }
+
+    100% {
+        transform: translateY(-10px) scale(1.08);
+    }
 }
 
 .ocop-intro-tag {
@@ -326,8 +331,15 @@
 }
 
 @keyframes haloPulse {
-    0% { transform: scale(0.9); opacity: 0.6; }
-    100% { transform: scale(1.35); opacity: 1; }
+    0% {
+        transform: scale(0.9);
+        opacity: 0.6;
+    }
+
+    100% {
+        transform: scale(1.35);
+        opacity: 1;
+    }
 }
 
 .ocop-marker-ripple {
@@ -339,8 +351,15 @@
 }
 
 @keyframes rippleExpand {
-    0% { transform: scale(1); opacity: 1; }
-    100% { transform: scale(2.3); opacity: 0; }
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    100% {
+        transform: scale(2.3);
+        opacity: 0;
+    }
 }
 
 .ocop-marker-card {
@@ -357,11 +376,25 @@
 }
 
 @keyframes markerPulseLoop {
-    0% { transform: scale(1); }
-    25% { transform: scale(1.35); }
-    50% { transform: scale(1.15); }
-    75% { transform: scale(1.30); }
-    100% { transform: scale(1); }
+    0% {
+        transform: scale(1);
+    }
+
+    25% {
+        transform: scale(1.35);
+    }
+
+    50% {
+        transform: scale(1.15);
+    }
+
+    75% {
+        transform: scale(1.30);
+    }
+
+    100% {
+        transform: scale(1);
+    }
 }
 
 .ocop-marker-img {
@@ -412,8 +445,15 @@
 }
 
 @keyframes pinPop {
-    0% { transform: scale(0); opacity: 0; }
-    100% { transform: scale(1); opacity: 1; }
+    0% {
+        transform: scale(0);
+        opacity: 0;
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
 }
 
 .ocop-da-pin-node.led-domino-active {
@@ -428,6 +468,7 @@
         box-shadow: 0 0 12px #D4A017, 0 0 25px #0F5E4A;
         border-color: #ffffff;
     }
+
     100% {
         transform: scale(1.5);
         background: linear-gradient(135deg, #F0C24B, #D4A017);
@@ -458,6 +499,7 @@
 .story-overlay-modal.ocop-theme .story-glass-card.ocop-cinematic-card::-webkit-scrollbar {
     width: 5px;
 }
+
 .story-overlay-modal.ocop-theme .story-glass-card.ocop-cinematic-card::-webkit-scrollbar-thumb {
     background: #D4A017;
     border-radius: 4px;
@@ -494,8 +536,13 @@
 }
 
 @keyframes shineSweep {
-    0% { left: -150%; }
-    100% { left: 150%; }
+    0% {
+        left: -150%;
+    }
+
+    100% {
+        left: 150%;
+    }
 }
 
 /* Card Titles & Details */
@@ -665,7 +712,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.06);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
 }
 
 .stat-pill .num {
@@ -717,7 +764,7 @@
 }
 
 /* Image Pin LED Domino glowing animations without breaking background-image */
-.ocop-da-pin-node.image-pin.led-domino-active, 
+.ocop-da-pin-node.image-pin.led-domino-active,
 .ocop-da-pin-node.image-pin.led-active {
     animation: ledImagePinPulse 0.9s ease-in-out infinite alternate !important;
     z-index: 99999 !important;
@@ -729,6 +776,7 @@
         transform: scale(1);
         box-shadow: 0 0 12px #D4A017, 0 0 25px rgba(15, 94, 74, 0.6);
     }
+
     100% {
         transform: scale(1.4);
         box-shadow: 0 0 35px #D4A017, 0 0 70px #F0C24B, 0 0 90px rgba(15, 94, 74, 0.9);
@@ -739,6 +787,7 @@
    MOBILE RESPONSIVE OVERRIDES FOR OCOP STORYTELLING MODAL (<768px)
    ========================================================================== */
 @media screen and (max-width: 768px) {
+
     /* 1. Modal container full screen */
     .story-overlay-modal.ocop-theme {
         width: 100vw !important;
@@ -755,7 +804,8 @@
         right: 6px !important;
         padding: 6px 10px !important;
         border-radius: 16px !important;
-        background: #0B4637 !important; /* Premium Forest Green dark background */
+        background: #0B4637 !important;
+        /* Premium Forest Green dark background */
         border: 1.5px solid #E6D8A8 !important;
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4) !important;
         z-index: 99995 !important;
@@ -816,11 +866,13 @@
     }
 
     .story-overlay-modal.ocop-theme .ocop-sidebar-controls {
-        display: none !important; /* Hide controls inside sidebar, use top controls if any, or next/prev */
+        display: none !important;
+        /* Hide controls inside sidebar, use top controls if any, or next/prev */
     }
 
     .story-overlay-modal.ocop-theme .story-timeline-sidebar div[style*="text-transform: uppercase"] {
-        display: none !important; /* Hide title 'Danh sách sản phẩm' */
+        display: none !important;
+        /* Hide title 'Danh sách sản phẩm' */
     }
 
     .story-overlay-modal.ocop-theme .story-timeline-list {
@@ -899,7 +951,8 @@
     }
 
     .story-overlay-modal.ocop-theme .ocop-timeline-item .item-sub {
-        display: none !important; /* Hide sub labels to save screen real estate */
+        display: none !important;
+        /* Hide sub labels to save screen real estate */
     }
 
     /* 4. Transform Slide-in Card to Bottom Sheet */

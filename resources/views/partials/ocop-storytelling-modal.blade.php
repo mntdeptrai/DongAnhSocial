@@ -160,14 +160,6 @@
                     <span class="num">33</span>
                     <span class="lbl">Sản Phẩm OCOP</span>
                 </div>
-                <div class="stat-pill">
-                    <span class="num">17</span>
-                    <span class="lbl">Xã & Làng Nghề</span>
-                </div>
-                <div class="stat-pill">
-                    <span class="num">1</span>
-                    <span class="lbl">Hành Trình Di Sản</span>
-                </div>
             </div>
 
             <div style="margin-top: 30px; display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;">
