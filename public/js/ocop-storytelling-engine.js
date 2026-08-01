@@ -260,11 +260,13 @@ class OcopStoryteller {
             ];
         }
 
-        // Generate "ĐA" map coordinates for each product
-        const daCoords = this.generateDaCoordinates(products.length);
+        // Use real coordinates of the products to prevent jumping, falling back to DA coordinates if empty
+        const generatedCoords = this.generateDaCoordinates(products.length);
+        const daCoords = [];
         products.forEach((p, idx) => {
-            p.daLat = daCoords[idx].lat;
-            p.daLng = daCoords[idx].lng;
+            p.daLat = p.lat || generatedCoords[idx].lat;
+            p.daLng = p.lng || generatedCoords[idx].lng;
+            daCoords.push({ lat: p.daLat, lng: p.daLng });
         });
 
         this.currentProducts = products;
