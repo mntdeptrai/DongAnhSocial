@@ -1,8 +1,11 @@
-name: Production CD Deployment
+# Production CD Deployment Workflow
+# Chú ý: Workflow này tạm thời được tắt cho đến khi bạn sẵn sàng đưa Server VPS lên Production.
+# Để bật lại: Bỏ comment phần `on: push:` ở bên dưới khi đã thiết lập SSH Secrets trên GitHub.
+
+name: Production CD Deployment (Disabled until Production release)
 
 on:
-  push:
-    branches: [ main ]
+  workflow_dispatch: # Chỉ cho phép kích hoạt thủ công khi cần
 
 jobs:
   deploy-to-server:
