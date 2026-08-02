@@ -122,8 +122,8 @@ class _RoadTripPainter extends CustomPainter {
 
     // 1. Draw Background Clouds moving slowly
     final cloudPaint = Paint()
-      color = const Color(0xFFE2E8F0)
-      style = PaintingStyle.fill;
+      ..color = const Color(0xFFE2E8F0)
+      ..style = PaintingStyle.fill;
 
     for (int i = 0; i < 3; i++) {
       double cloudX = ((i * 90) - (progress * 50)) % (w + 40) - 20;
@@ -135,8 +135,8 @@ class _RoadTripPainter extends CustomPainter {
 
     // 2. Draw Trees / Silhouettes in background moving medium speed
     final treePaint = Paint()
-      color = const Color(0xFFCBD5E1)
-      style = PaintingStyle.fill;
+      ..color = const Color(0xFFCBD5E1)
+      ..style = PaintingStyle.fill;
 
     for (int i = 0; i < 4; i++) {
       double treeX = ((i * 70) - (progress * 110)) % (w + 40) - 20;
@@ -149,8 +149,8 @@ class _RoadTripPainter extends CustomPainter {
 
     // 3. Draw Road Base
     final roadPaint = Paint()
-      color = const Color(0xFF334155)
-      style = PaintingStyle.fill;
+      ..color = const Color(0xFF334155)
+      ..style = PaintingStyle.fill;
     canvas.drawRRect(
       RRect.fromRectAndRadius(Rect.fromLTWH(0, h - 24, w, 18), const Radius.circular(8)),
       roadPaint,
@@ -158,9 +158,9 @@ class _RoadTripPainter extends CustomPainter {
 
     // Animated Dashed Lane Line
     final dashPaint = Paint()
-      color = const Color(0xFFF59E0B) // Golden Amber road dash
-      strokeWidth = 3
-      strokeCap = StrokeCap.round;
+      ..color = const Color(0xFFF59E0B) // Golden Amber road dash
+      ..strokeWidth = 3
+      ..strokeCap = StrokeCap.round;
 
     double dashOffset = (progress * 40) % 24;
     for (double x = -dashOffset; x < w; x += 24) {
@@ -176,12 +176,12 @@ class _RoadTripPainter extends CustomPainter {
 
     // 5. Draw Scooter Wheels with rotation
     final wheelPaint = Paint()
-      color = const Color(0xFF1E293B)
-      style = PaintingStyle.fill;
+      ..color = const Color(0xFF1E293B)
+      ..style = PaintingStyle.fill;
     final rimPaint = Paint()
-      color = const Color(0xFF94A3B8)
-      style = PaintingStyle.stroke
-      strokeWidth = 2.5;
+      ..color = const Color(0xFF94A3B8)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.5;
 
     final double wheelRadius = 9;
     final Offset frontWheel = Offset(scooterX + 44, scooterY + 12);
@@ -210,8 +210,8 @@ class _RoadTripPainter extends CustomPainter {
 
     // 6. Draw Vintage Vespa / Scooter Body
     final bodyPaint = Paint()
-      color = primaryColor
-      style = PaintingStyle.fill;
+      ..color = primaryColor
+      ..style = PaintingStyle.fill;
 
     // Main fender & floorboard
     final bodyPath = Path()
@@ -266,9 +266,9 @@ class _RoadTripPainter extends CustomPainter {
 
     // 8. Draw Wind / Exhaust Particles behind
     final windPaint = Paint()
-      color = primaryColor.withValues(alpha: 0.35)
-      strokeWidth = 2.0
-      strokeCap = StrokeCap.round;
+      ..color = primaryColor.withValues(alpha: 0.35)
+      ..strokeWidth = 2.0
+      ..strokeCap = StrokeCap.round;
 
     for (int i = 0; i < 3; i++) {
       double pX = (scooterX - 10) - ((progress * 40 + i * 15) % 30);
@@ -319,9 +319,9 @@ class _RoadTripPainter extends CustomPainter {
     if (isWaving) {
       double waveAngle = math.sin(armProgress * math.pi * 6) * 0.4;
       final armPaint = Paint()
-        color = const Color(0xFFFED7AA)
-        strokeWidth = 3
-        strokeCap = StrokeCap.round;
+        ..color = const Color(0xFFFED7AA)
+        ..strokeWidth = 3
+        ..strokeCap = StrokeCap.round;
 
       Offset armStart = Offset(center.dx - 2, center.dy + 4);
       Offset armEnd = Offset(

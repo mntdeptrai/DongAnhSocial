@@ -25,8 +25,48 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
   String _searchQuery = '';
   String _selectedFilter = 'Tất cả';
 
-  // Synchronized Cart State
-  final Map<String, Map<String, dynamic>> _cartItems = {};
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+    _fetchFoodData();
+    _fetchMarketData();
+    _fetchCartData();
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _fetchCartData() async {
+    try {
+      final res = await ApiService.getCart();
+      if (res is Map && res['success'] == true && res['data'] is List) {
+        final List items = res['data'];
+        final Map<String, Map<String, dynamic>> loadedCart = {};
+        for (var item in items) {
+          final String key = 'api_${item['id']}';
+          loadedCart[key] = {
+            'id': item['id'],
+            'name': item['name'] ?? 'Sản phẩm OCOP',
+            'price': double.tryParse(item['price']?.toString() ?? '0') ?? 0.0,
+            'quantity': item['quantity'] ?? 1,
+            'subtitle': item['eatery_name'] ?? 'Gian hàng chợ',
+            'image': item['image'],
+            'checked': true,
+          };
+        }
+        if (mounted && loadedCart.isNotEmpty) {
+          setState(() {
+            _cartItems.clear();
+            _cartItems.addAll(loadedCart);
+          });
+        }
+      }
+    } catch (_) {}
+  }
 
   Future<void> _fetchFoodData() async {
     setState(() => _isLoadingFood = true);

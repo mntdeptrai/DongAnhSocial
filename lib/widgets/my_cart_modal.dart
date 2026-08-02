@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import 'custom_loader.dart';
 import 'squircle_helper.dart';
 
 class MyCartModal extends StatefulWidget {
