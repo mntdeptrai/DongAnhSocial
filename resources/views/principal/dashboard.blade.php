@@ -716,7 +716,11 @@
                                 <div>
                                     <div class="sch-post-meta">
                                         <span>⏳ {{ $p->duration ?: 'Liên tục' }}</span>
-                                        <span>💰 {{ $p->tuition_fee ? number_format($p->tuition_fee) . 'đ' : 'Miễn phí' }}</span>
+                                        @php
+                                            $rawFee = $p->tuition_fee;
+                                            $cleanFee = is_numeric($rawFee) ? (float)$rawFee : (is_numeric(str_replace(['.', ','], '', $rawFee ?? '')) ? (float)str_replace(['.', ','], '', $rawFee) : null);
+                                        @endphp
+                                        <span>💰 {{ $cleanFee !== null ? number_format($cleanFee, 0, ',', '.') . 'đ' : ($rawFee ?: 'Miễn phí') }}</span>
                                     </div>
                                     <div class="sch-post-actions">
                                         <button onclick="openEditPostModal({{ json_encode($p) }})" class="sch-btn sch-btn-accent sch-btn-sm flex-grow-1">

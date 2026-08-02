@@ -92,23 +92,25 @@
                         <p class="text-secondary small mb-3" style="font-family: 'Be Vietnam Pro', sans-serif;">📍 {{ $sch->address ?: 'Xã Đông Anh, Hà Nội' }}</p>
                     </div>
                     
-                    <div class="d-flex justify-content-between align-items-center pt-3 border-top mt-2" style="border-color: #f1f5f9 !important;">
-                        @if(count($sch->merged_components) > 0)
-                            <span class="badge bg-primary bg-opacity-10 text-primary border border-primary-subtle px-3 py-2" style="font-size: 0.78rem; border-radius: 12px; font-weight: 600; font-family: 'Be Vietnam Pro', sans-serif;">
-                                🔗 {{ count($sch->merged_components) }} trường sáp nhập
-                            </span>
-                        @else
-                            <span class="badge bg-light text-secondary border px-3 py-2" style="font-size: 0.78rem; border-radius: 12px; font-weight: 600; font-family: 'Be Vietnam Pro', sans-serif;">
-                                📍 1 điểm trường độc lập
-                            </span>
-                        @endif
+                    <div class="pt-3 border-top mt-2" style="border-color: #f1f5f9 !important;">
+                        <div class="d-flex justify-content-between align-items-center mb-2.5">
+                            @if(count($sch->merged_components) > 0)
+                                <span class="badge bg-primary bg-opacity-10 text-primary border border-primary-subtle px-3 py-1.5" style="font-size: 0.76rem; border-radius: 9999px; font-weight: 600; font-family: 'Be Vietnam Pro', sans-serif;">
+                                    🔗 {{ count($sch->merged_components) }} trường sáp nhập
+                                </span>
+                            @else
+                                <span class="badge bg-light text-secondary border px-3 py-1.5" style="font-size: 0.76rem; border-radius: 9999px; font-weight: 600; font-family: 'Be Vietnam Pro', sans-serif;">
+                                    📍 1 điểm trường độc lập
+                                </span>
+                            @endif
+                        </div>
 
                         <div class="d-flex gap-2">
-                            <a href="/principal/schools/{{ $sch->id }}/dashboard" class="btn btn-sm btn-success px-3 shadow-sm" style="background: #10b981; border: none; font-size: 0.82rem; padding: 7px 14px; border-radius: 14px; font-weight: 600; font-family: 'Be Vietnam Pro', sans-serif;">
-                                📊 Dashboard
+                            <a href="/principal/schools/{{ $sch->id }}/dashboard" class="btn btn-sm btn-success flex-grow-1 shadow-sm" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: none; font-size: 0.82rem; padding: 8px 12px; border-radius: 9999px; font-weight: 600; font-family: 'Be Vietnam Pro', sans-serif; display: inline-flex; align-items: center; justify-content: center; gap: 6px; color: #ffffff;">
+                                <span>📊</span> Dashboard
                             </a>
-                            <a href="{{ $editUrl }}" class="btn btn-sm btn-light border px-3 shadow-sm" style="font-size: 0.82rem; padding: 7px 14px; border-radius: 14px; font-weight: 600; color: #475569; background: #f8fafc; font-family: 'Be Vietnam Pro', sans-serif;">
-                                ⚙️ Cấu hình
+                            <a href="{{ $editUrl }}" class="btn btn-sm btn-light border flex-grow-1 shadow-sm" style="font-size: 0.82rem; padding: 8px 12px; border-radius: 9999px; font-weight: 600; color: #475569; background: #ffffff; border-color: #e2e8f0 !important; font-family: 'Be Vietnam Pro', sans-serif; display: inline-flex; align-items: center; justify-content: center; gap: 6px;">
+                                <span>⚙️</span> Cấu hình
                             </a>
                         </div>
                     </div>
