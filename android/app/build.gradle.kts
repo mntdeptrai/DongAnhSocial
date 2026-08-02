@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "com.donganh.social"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 35
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -18,10 +18,9 @@ android {
     defaultConfig {
         // Application ID được gán cho Firebase package name
         applicationId = "com.donganh.social"
-        // You can update the following values to match your application needs.
-        // Android 8.0 Oreo (API Level 26) minimum OS requirement
-        minSdk = 26
-        targetSdk = flutter.targetSdkVersion
+        // Android 15 (API Level 35) target OS requirement
+        minSdk = 35
+        targetSdk = 35
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }

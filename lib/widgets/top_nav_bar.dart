@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import '../widgets/squircle_helper.dart';
 
 class TopNavBar extends StatelessWidget implements PreferredSizeWidget {
