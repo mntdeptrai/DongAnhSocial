@@ -127,11 +127,13 @@
 }
 
 .tour-card-title {
-    font-size: 1.3rem;
-    font-weight: 800;
+    font-family: var(--font-heading);
+    font-size: 1.15rem;
+    font-weight: 700;
     color: var(--text-main);
-    margin-bottom: 12px;
-    line-height: 1.4;
+    margin-bottom: 10px;
+    line-height: 1.35;
+    letter-spacing: -0.015em;
 }
 
 .tour-card-desc {

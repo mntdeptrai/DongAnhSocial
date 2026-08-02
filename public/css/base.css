@@ -211,3 +211,12 @@ a {
     margin: 0 auto;
     padding: 0 24px;
 }
+
+/* Universal Soft Squircle & Modern Rounding Rules */
+.card, .tour-card, .eatery-card, .school-admin-card, .vendor-card, .stalls-card, .ocop-card {
+    border-radius: 24px !important;
+}
+
+.badge, .tag-badge, .tag-badge-accent, .btn-primary, .btn-secondary, .btn-success {
+    border-radius: 14px !important;
+}

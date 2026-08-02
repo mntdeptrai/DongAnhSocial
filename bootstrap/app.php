@@ -16,7 +16,6 @@ return Application::configure(basePath: dirname(__DIR__))
         // Áp dụng CheckUserStatus cho toàn bộ web routes
         $middleware->web(append: [
             \App\Http\Middleware\CheckUserStatus::class,
-            \App\Http\Middleware\HandleInertiaRequests::class,
         ]);
 
         // Thêm session & cookie middleware vào API group

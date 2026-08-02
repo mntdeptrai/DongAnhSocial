@@ -7,6 +7,10 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (!DB::getSchemaBuilder()->hasTable('ocop_products')) {
+            return;
+        }
+
         // 1. Sao lưu bảng ocop_products cũ nếu chưa có
         if (!DB::getSchemaBuilder()->hasTable('ocop_products_backup')) {
             DB::statement("CREATE TABLE ocop_products_backup AS SELECT * FROM ocop_products");
