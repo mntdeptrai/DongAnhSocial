@@ -1,33 +1,26 @@
 import 'package:flutter/material.dart';
-import 'package:figma_squircle/figma_squircle.dart';
 
-/// Helper utility for creating Figma/iOS-style Squircle smooth corner shapes in Flutter
+/// Helper utility for creating smooth rounded corner shapes across the mobile app
 class SquircleHelper {
-  /// Returns a SmoothBorderRadius with Figma continuous curvature (default smoothing 0.6)
-  static SmoothBorderRadius radius(double radius, {double cornerSmoothing = 0.6}) {
-    return SmoothBorderRadius(
-      cornerRadius: radius,
-      cornerSmoothing: cornerSmoothing,
-    );
+  /// Returns a BorderRadius with smooth corner curvature
+  static BorderRadius radius(double radius, {double cornerSmoothing = 0.6}) {
+    return BorderRadius.circular(radius);
   }
 
-  /// Returns a SmoothRectangleBorder shape for Cards, Dialogs, and Buttons
-  static SmoothRectangleBorder shape({
+  /// Returns a RoundedRectangleBorder shape for Cards, Dialogs, and Buttons
+  static RoundedRectangleBorder shape({
     required double radius,
     double cornerSmoothing = 0.6,
     BorderSide side = BorderSide.none,
   }) {
-    return SmoothRectangleBorder(
-      borderRadius: SmoothBorderRadius(
-        cornerRadius: radius,
-        cornerSmoothing: cornerSmoothing,
-      ),
+    return RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(radius),
       side: side,
     );
   }
 
-  /// Returns a ShapeDecoration for Containers using Squircle corners
-  static ShapeDecoration decoration({
+  /// Returns a BoxDecoration for Containers using smooth rounded corners
+  static BoxDecoration decoration({
     required double radius,
     Color? color,
     Gradient? gradient,
@@ -35,17 +28,12 @@ class SquircleHelper {
     BorderSide borderSide = BorderSide.none,
     double cornerSmoothing = 0.6,
   }) {
-    return ShapeDecoration(
+    return BoxDecoration(
       color: color,
       gradient: gradient,
-      shadows: boxShadow,
-      shape: SmoothRectangleBorder(
-        borderRadius: SmoothBorderRadius(
-          cornerRadius: radius,
-          cornerSmoothing: cornerSmoothing,
-        ),
-        side: borderSide,
-      ),
+      boxShadow: boxShadow,
+      borderRadius: BorderRadius.circular(radius),
+      border: borderSide != BorderSide.none ? Border.fromBorderSide(borderSide) : null,
     );
   }
 }

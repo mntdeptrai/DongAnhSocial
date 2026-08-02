@@ -1,0 +1,249 @@
+/* ==========================================================================
+   Facebook-Style School Newsfeed & Multi-Photo Grid System
+   ========================================================================== */
+
+.fb-feed-container {
+    max-width: 680px;
+    margin: 0 auto;
+}
+
+/* 1. Quick Facebook Post Creator Trigger Box */
+.fb-create-post-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 20px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 24px -6px rgba(15, 23, 42, 0.05);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.fb-user-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #e2e8f0;
+    flex-shrink: 0;
+}
+
+.fb-create-trigger-input {
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    border-radius: 9999px;
+    padding: 12px 20px;
+    color: #64748b;
+    font-size: 0.95rem;
+    font-family: 'Be Vietnam Pro', sans-serif;
+    flex-grow: 1;
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+
+.fb-create-trigger-input:hover {
+    background: #e2e8f0;
+    color: #334155;
+}
+
+/* 2. Facebook Post Card */
+.fb-post-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 20px;
+    margin-bottom: 24px;
+    box-shadow: 0 10px 30px -8px rgba(15, 23, 42, 0.06);
+    overflow: hidden;
+}
+
+.fb-post-header {
+    padding: 18px 20px 12px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.fb-post-author-box {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.fb-post-author-name {
+    font-weight: 700;
+    color: #0f172a;
+    font-size: 1.02rem;
+    line-height: 1.25;
+    font-family: 'Be Vietnam Pro', sans-serif;
+    margin-bottom: 2px;
+}
+
+.fb-post-subtext {
+    font-size: 0.78rem;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'Be Vietnam Pro', sans-serif;
+}
+
+.fb-post-text {
+    padding: 0 20px 14px 20px;
+    font-size: 0.98rem;
+    line-height: 1.6;
+    color: #1e293b;
+    font-family: 'Be Vietnam Pro', sans-serif;
+    white-space: pre-line;
+}
+
+/* 3. Facebook Multi-Photo Grid System (1, 2, 3, 4+ photos with +N overlay) */
+.fb-photo-grid {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+    background: #000000;
+    cursor: pointer;
+}
+
+/* Grid 1 Image */
+.fb-grid-1 {
+    display: block;
+    max-height: 520px;
+    overflow: hidden;
+}
+.fb-grid-1 img {
+    width: 100%;
+    height: auto;
+    max-height: 520px;
+    object-fit: cover;
+    display: block;
+}
+
+/* Grid 2 Images */
+.fb-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3px;
+    height: 380px;
+}
+.fb-grid-2 img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Grid 3 Images (1 Left Hero + 2 Right Stacked) */
+.fb-grid-3 {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 3px;
+    height: 420px;
+}
+.fb-grid-3-col-right {
+    display: grid;
+    grid-template-rows: 1fr 1fr;
+    gap: 3px;
+}
+.fb-grid-3 img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Grid 4+ Images (1 Left Hero + 3 Right Grid with +N Overlay) */
+.fb-grid-4 {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 3px;
+    height: 440px;
+}
+.fb-grid-4-col-right {
+    display: grid;
+    grid-template-rows: repeat(3, 1fr);
+    gap: 3px;
+}
+.fb-grid-4 img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.fb-photo-thumb-box {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+.fb-photo-thumb-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.fb-photo-more-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.58);
+    backdrop-filter: blur(2px);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.2rem;
+    font-weight: 800;
+    font-family: 'Be Vietnam Pro', sans-serif;
+    letter-spacing: -0.02em;
+    user-select: none;
+}
+
+/* 4. Facebook Footer Actions Bar */
+.fb-post-stats {
+    padding: 10px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.82rem;
+    color: #64748b;
+    border-bottom: 1px solid #f1f5f9;
+    font-family: 'Be Vietnam Pro', sans-serif;
+}
+
+.fb-post-actions {
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    gap: 6px;
+}
+
+.fb-action-btn {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 9px 14px;
+    border-radius: 9999px;
+    border: none;
+    background: transparent;
+    color: #475569;
+    font-weight: 600;
+    font-size: 0.88rem;
+    font-family: 'Be Vietnam Pro', sans-serif;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.fb-action-btn:hover {
+    background: #f1f5f9;
+    color: #4f46e5;
+}
+
+.fb-action-btn.active {
+    color: #4f46e5;
+    background: rgba(79, 70, 229, 0.08);
+}

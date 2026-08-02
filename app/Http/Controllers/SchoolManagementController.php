@@ -276,9 +276,84 @@ class SchoolManagementController extends Controller
             abort(403, 'Bạn không có quyền quản trị trường học này!');
         }
 
-        // Lấy các bài viết, ảnh, và video liên kết với trường học
-        $posts = $school->educationPrograms()->orderBy('created_at', 'desc')->get();
-        $photos = $school->photos()->orderBy('sort_order')->get();
+        // Collect all pre-stored photos (main photo + merged component school photos)
+        $preStoredPhotos = [];
+        if ($school->image_path) {
+            $preStoredPhotos[] = $school->image_path;
+        }
+
+        $components = $school->merged_components;
+        if (!empty($components) && is_array($components)) {
+            foreach ($components as $comp) {
+                if (!empty($comp['photo']) && !in_array($comp['photo'], $preStoredPhotos)) {
+                    $preStoredPhotos[] = $comp['photo'];
+                }
+            }
+        }
+
+        // 1. Sync photos into eatery_photos table if empty
+        $existingPhotos = \App\Models\EateryPhoto::on('mysql_education')->where('eatery_id', $school->id)->orderBy('sort_order')->get();
+        if ($existingPhotos->isEmpty()) {
+            $existingPhotos = \App\Models\EateryPhoto::on('mysql')->where('eatery_id', $school->id)->orderBy('sort_order')->get();
+        }
+
+        if ($existingPhotos->isEmpty() && !empty($preStoredPhotos)) {
+            foreach ($preStoredPhotos as $idx => $pUrl) {
+                try {
+                    \App\Models\EateryPhoto::on('mysql_education')->create([
+                        'eatery_id' => $school->id,
+                        'image_path' => $pUrl,
+                        'caption' => 'Hình ảnh cơ sở vật chất & điểm trường - ' . $school->standardized_name,
+                        'sort_order' => $idx + 1,
+                    ]);
+                } catch (\Exception $e) {
+                    try {
+                        \App\Models\EateryPhoto::on('mysql')->create([
+                            'eatery_id' => $school->id,
+                            'image_path' => $pUrl,
+                            'caption' => 'Hình ảnh cơ sở vật chất & điểm trường - ' . $school->standardized_name,
+                            'sort_order' => $idx + 1,
+                        ]);
+                    } catch (\Exception $e2) {}
+                }
+            }
+            $photos = \App\Models\EateryPhoto::on('mysql_education')->where('eatery_id', $school->id)->orderBy('sort_order')->get();
+            if ($photos->isEmpty()) {
+                $photos = \App\Models\EateryPhoto::on('mysql')->where('eatery_id', $school->id)->orderBy('sort_order')->get();
+            }
+        } else {
+            $photos = $existingPhotos;
+        }
+
+        // 2. Auto-create initial Facebook multi-photo post if posts are empty
+        $posts = \App\Models\EducationProgram::on('mysql_education')->where('eatery_id', $school->id)->orderBy('created_at', 'desc')->get();
+        if ($posts->isEmpty()) {
+            $posts = \App\Models\EducationProgram::on('mysql')->where('eatery_id', $school->id)->orderBy('created_at', 'desc')->get();
+        }
+
+        if ($posts->isEmpty() && !empty($preStoredPhotos)) {
+            $postData = [
+                'eatery_id' => $school->id,
+                'name' => 'CHÀO ĐÓN NĂM HỌC MỚI TẠI ' . mb_strtoupper($school->standardized_name),
+                'description' => "🌸 CHÀO ĐÓN CÁC BÉ TRỞ LẠI TRƯỜNG – SẴN SÀNG CHO MỘT HÀNH TRÌNH MỚI TẠI " . mb_strtoupper($school->standardized_name) . " 🌸\n\nSau những ngày nghỉ hè tràn ngập niềm vui bên gia đình, không khí tại " . $school->standardized_name . " đã sẵn sàng đón chào các con học sinh trở lại trường với môi trường học tập khang trang, các góc trải nghiệm sáng tạo và các hoạt động giáo dục vô cùng hấp dẫn!",
+                'image_path' => $preStoredPhotos[0],
+                'images' => $preStoredPhotos,
+                'likes_count' => 68,
+                'shares_count' => 12,
+            ];
+            try {
+                \App\Models\EducationProgram::on('mysql_education')->create($postData);
+            } catch (\Exception $e) {
+                try {
+                    \App\Models\EducationProgram::on('mysql')->create($postData);
+                } catch (\Exception $e2) {}
+            }
+            $posts = \App\Models\EducationProgram::on('mysql_education')->where('eatery_id', $school->id)->orderBy('created_at', 'desc')->get();
+            if ($posts->isEmpty()) {
+                $posts = \App\Models\EducationProgram::on('mysql')->where('eatery_id', $school->id)->orderBy('created_at', 'desc')->get();
+            }
+        }
+
         $videos = $school->reviewVideos()->orderBy('created_at', 'desc')->get();
 
         return view('principal.dashboard', compact('school', 'posts', 'photos', 'videos'));
@@ -299,6 +374,7 @@ class SchoolManagementController extends Controller
             'duration' => 'nullable|string|max:255',
             'tuition_fee' => 'nullable|numeric',
             'image' => 'nullable|image|max:5120',
+            'images.*' => 'nullable|image|max:5120',
         ]);
 
         $school = Eatery::on('mysql_education')->find($request->eatery_id);
@@ -310,21 +386,45 @@ class SchoolManagementController extends Controller
             abort(403, 'Quyền truy cập bị từ chối!');
         }
 
+        $uploadedImages = [];
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $file) {
+                $path = R2Helper::upload($file, 'education');
+                if ($path) {
+                    $uploadedImages[] = $path;
+                }
+            }
+        }
+
         $imagePath = null;
         if ($request->hasFile('image')) {
             $imagePath = R2Helper::upload($request->file('image'), 'education');
+            if ($imagePath && empty($uploadedImages)) {
+                $uploadedImages[] = $imagePath;
+            }
         }
 
-        \App\Models\EducationProgram::create([
+        if (empty($imagePath) && !empty($uploadedImages)) {
+            $imagePath = $uploadedImages[0];
+        }
+
+        $postData = [
             'eatery_id' => $school->id,
             'name' => $request->name,
             'description' => $request->description,
             'duration' => $request->duration,
             'tuition_fee' => $request->tuition_fee,
             'image_path' => $imagePath,
-        ]);
+            'images' => $uploadedImages,
+        ];
 
-        return redirect()->back()->with('success', 'Đăng bài viết hoạt động thành công!');
+        try {
+            \App\Models\EducationProgram::on('mysql_education')->create($postData);
+        } catch (\Exception $e) {
+            \App\Models\EducationProgram::on('mysql')->create($postData);
+        }
+
+        return redirect()->back()->with('success', 'Đăng bài viết mới thành công!');
     }
 
     /**
@@ -352,6 +452,7 @@ class SchoolManagementController extends Controller
             'duration' => 'nullable|string|max:255',
             'tuition_fee' => 'nullable|numeric',
             'image' => 'nullable|image|max:5120',
+            'images.*' => 'nullable|image|max:5120',
         ]);
 
         $post->name = $request->name;
@@ -359,11 +460,34 @@ class SchoolManagementController extends Controller
         $post->duration = $request->duration;
         $post->tuition_fee = $request->tuition_fee;
 
+        $existingImages = is_array($post->images) ? $post->images : [];
+
+        if ($request->hasFile('images')) {
+            $newImages = [];
+            foreach ($request->file('images') as $file) {
+                $path = R2Helper::upload($file, 'education');
+                if ($path) {
+                    $newImages[] = $path;
+                }
+            }
+            if (!empty($newImages)) {
+                $existingImages = array_merge($existingImages, $newImages);
+            }
+        }
+
         if ($request->hasFile('image')) {
             $imagePath = R2Helper::upload($request->file('image'), 'education');
             if ($imagePath) {
                 $post->image_path = $imagePath;
+                if (!in_array($imagePath, $existingImages)) {
+                    array_unshift($existingImages, $imagePath);
+                }
             }
+        }
+
+        $post->images = $existingImages;
+        if (!empty($existingImages)) {
+            $post->image_path = $existingImages[0];
         }
 
         $post->save();

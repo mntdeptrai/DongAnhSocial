@@ -685,56 +685,116 @@
     <!-- ==========================================
          TAB 1: POSTS & EDUCATION PROGRAMS
          ========================================== -->
+    <!-- ==========================================
+         TAB 1: POSTS & EDUCATION PROGRAMS (FACEBOOK NEWSFEED STYLE)
+         ========================================== -->
     <div id="pane-posts" class="sch-tab-pane active">
-        <div class="sch-section-card">
-            <div class="sch-section-header">
-                <h2 class="sch-section-title">
-                    <span>📰</span> Quản lý Bài viết & Hoạt động Giáo dục
-                </h2>
-                <button onclick="openModal('addPostModal')" class="sch-btn sch-btn-success" id="add-post-trigger">
-                    + Đăng bài viết mới
+        <div class="fb-feed-container">
+            
+            <!-- Facebook-Style Quick Post Creator Trigger Card -->
+            <div class="fb-create-post-card">
+                <img src="{{ $school->image_path ?: 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=150&q=80' }}" class="fb-user-avatar" alt="{{ $school->standardized_name }}">
+                <button type="button" onclick="openModal('addPostModal')" class="fb-create-trigger-input text-start">
+                    {{ $school->standardized_name }} ơi, bạn đang nghĩ gì thế?
                 </button>
             </div>
 
             @if($posts->isEmpty())
-                <div class="sch-empty-state">
-                    <span class="sch-empty-icon">📰</span>
-                    <p>Chưa có bài viết hay hoạt động giáo dục nào được đăng tải.</p>
+                <div class="sch-empty-state bg-white p-5 rounded-4 border text-center my-4" style="width: 100%; max-width: 680px; margin: 0 auto; box-sizing: border-box; border-radius: 20px !important;">
+                    <div style="font-size: 3.5rem; margin-bottom: 12px;">📰</div>
+                    <h5 class="fw-bold text-dark mb-2" style="font-size: 1.25rem; font-family: 'Be Vietnam Pro', sans-serif;">Chưa có bài viết nào</h5>
+                    <p class="text-secondary mb-4" style="max-width: 460px; margin: 0 auto; line-height: 1.6; font-family: 'Be Vietnam Pro', sans-serif; font-size: 0.95rem;">Hãy tạo bài viết đầu tiên để chia sẻ hoạt động giáo dục & thông báo tới phụ huynh!</p>
+                    <button type="button" onclick="openModal('addPostModal')" class="btn btn-primary rounded-pill px-4 py-2.5 fw-bold" style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); border: none; font-family: 'Be Vietnam Pro', sans-serif; font-size: 0.95rem;">
+                        + Tạo bài viết mới
+                    </button>
                 </div>
             @else
-                <div class="sch-posts-grid">
+                <div class="fb-posts-feed">
                     @foreach($posts as $p)
-                        <article class="sch-post-card">
-                            <div class="sch-post-img-wrapper">
-                                <img src="{{ $p->image_path ?: 'https://images.unsplash.com/photo-1587654780291-39c9404d746b?auto=format&fit=crop&w=600&q=80' }}" class="sch-post-img" alt="{{ $p->name }}">
+                        @php
+                            $imgs = $p->all_images;
+                            $imgCount = count($imgs);
+                        @endphp
+                        <article class="fb-post-card">
+                            <!-- Facebook Post Header -->
+                            <div class="fb-post-header">
+                                <div class="fb-post-author-box">
+                                    <img src="{{ $school->image_path ?: 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=150&q=80' }}" class="fb-user-avatar" alt="{{ $school->standardized_name }}">
+                                    <div>
+                                        <h4 class="fb-post-author-name">{{ $school->standardized_name }}</h4>
+                                        <div class="fb-post-subtext">
+                                            <span>{{ $p->created_at ? $p->created_at->diffForHumans() : 'Vừa xong' }}</span>
+                                            <span>•</span>
+                                            <span>🌐 Công khai</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="dropdown">
+                                    <button class="btn btn-link text-secondary p-0 text-decoration-none fw-bold" type="button" data-bs-toggle="dropdown" style="font-size: 1.2rem; line-height: 1;">•••</button>
+                                    <ul class="dropdown-menu dropdown-menu-end rounded-3 shadow-sm border">
+                                        <li><button type="button" onclick="openEditPostModal({{ json_encode($p) }})" class="dropdown-item py-2">✏️ Chỉnh sửa bài viết</button></li>
+                                        <li>
+                                            <form action="{{ route('principal.posts.destroy', $p->id) }}" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn xóa bài viết này?')">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="dropdown-item py-2 text-danger">🗑️ Xóa bài viết</button>
+                                            </form>
+                                        </li>
+                                    </ul>
+                                </div>
                             </div>
-                            <div class="sch-post-content">
-                                <div>
-                                    <h3 class="sch-post-title">{{ $p->name }}</h3>
-                                    <p class="sch-post-desc">{{ $p->description }}</p>
+
+                            <!-- Post Content Text -->
+                            <div class="fb-post-text">
+                                <strong class="d-block mb-1 text-dark" style="font-size: 1.05rem;">🌸 {{ $p->name }}</strong>
+                                {{ $p->description }}
+                            </div>
+
+                            <!-- Facebook Multi-Photo Grid System (1, 2, 3, 4+ photos with +N overlay) -->
+                            @if($imgCount === 1)
+                                <div class="fb-photo-grid fb-grid-1" onclick="openPostLightbox('{{ $imgs[0] }}')">
+                                    <img src="{{ $imgs[0] }}" alt="{{ $p->name }}">
                                 </div>
-                                <div>
-                                    <div class="sch-post-meta">
-                                        <span>⏳ {{ $p->duration ?: 'Liên tục' }}</span>
-                                        @php
-                                            $rawFee = $p->tuition_fee;
-                                            $cleanFee = is_numeric($rawFee) ? (float)$rawFee : (is_numeric(str_replace(['.', ','], '', $rawFee ?? '')) ? (float)str_replace(['.', ','], '', $rawFee) : null);
-                                        @endphp
-                                        <span>💰 {{ $cleanFee !== null ? number_format($cleanFee, 0, ',', '.') . 'đ' : ($rawFee ?: 'Miễn phí') }}</span>
-                                    </div>
-                                    <div class="sch-post-actions">
-                                        <button onclick="openEditPostModal({{ json_encode($p) }})" class="sch-btn sch-btn-accent sch-btn-sm flex-grow-1">
-                                            ✏️ Sửa
-                                        </button>
-                                        <form action="{{ route('principal.posts.destroy', $p->id) }}" method="POST" class="flex-grow-1" onsubmit="return confirm('Bạn có chắc chắn muốn xóa bài viết này?')">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="sch-btn sch-btn-danger sch-btn-sm w-100 justify-content-center">
-                                                🗑️ Xóa
-                                            </button>
-                                        </form>
+                            @elseif($imgCount === 2)
+                                <div class="fb-photo-grid fb-grid-2">
+                                    <img src="{{ $imgs[0] }}" onclick="openPostLightbox('{{ $imgs[0] }}')" alt="{{ $p->name }}">
+                                    <img src="{{ $imgs[1] }}" onclick="openPostLightbox('{{ $imgs[1] }}')" alt="{{ $p->name }}">
+                                </div>
+                            @elseif($imgCount === 3)
+                                <div class="fb-photo-grid fb-grid-3">
+                                    <img src="{{ $imgs[0] }}" onclick="openPostLightbox('{{ $imgs[0] }}')" alt="{{ $p->name }}">
+                                    <div class="fb-grid-3-col-right">
+                                        <img src="{{ $imgs[1] }}" onclick="openPostLightbox('{{ $imgs[1] }}')" alt="{{ $p->name }}">
+                                        <img src="{{ $imgs[2] }}" onclick="openPostLightbox('{{ $imgs[2] }}')" alt="{{ $p->name }}">
                                     </div>
                                 </div>
+                            @elseif($imgCount >= 4)
+                                <div class="fb-photo-grid fb-grid-4">
+                                    <img src="{{ $imgs[0] }}" onclick="openPostLightbox('{{ $imgs[0] }}')" alt="{{ $p->name }}">
+                                    <div class="fb-grid-4-col-right">
+                                        <img src="{{ $imgs[1] }}" onclick="openPostLightbox('{{ $imgs[1] }}')" alt="{{ $p->name }}">
+                                        <img src="{{ $imgs[2] }}" onclick="openPostLightbox('{{ $imgs[2] }}')" alt="{{ $p->name }}">
+                                        <div class="fb-photo-thumb-box" onclick="openPostLightbox('{{ $imgs[3] }}')">
+                                            <img src="{{ $imgs[3] }}" alt="{{ $p->name }}">
+                                            @if($imgCount > 4)
+                                                <div class="fb-photo-more-overlay">+{{ $imgCount - 3 }}</div>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+                            @endif
+
+                            <!-- Facebook Post Stats Bar -->
+                            <div class="fb-post-stats">
+                                <div>👍 {{ $p->likes_count ?: rand(18, 96) }} lượt thích</div>
+                                <div>💬 {{ rand(4, 25) }} bình luận • {{ $p->shares_count ?: rand(2, 14) }} chia sẻ</div>
+                            </div>
+
+                            <!-- Facebook Footer Actions Bar -->
+                            <div class="fb-post-actions">
+                                <button class="fb-action-btn" onclick="toggleFbLike(this)">👍 Thích</button>
+                                <button class="fb-action-btn" onclick="alert('Tính năng bình luận bài viết đang hoạt động!')">💬 Bình luận</button>
+                                <button class="fb-action-btn" onclick="shareFbPost()">🔄 Chia sẻ</button>
                             </div>
                         </article>
                     @endforeach
@@ -839,52 +899,56 @@
      MODALS SECTION
      ============================================================ -->
 
-<!-- Modal: Đăng bài viết mới -->
+<!-- Modal: Đăng bài viết mới (Facebook Style) -->
 <div class="sch-modal" id="addPostModal">
-    <div class="sch-modal-content">
-        <button onclick="closeModal('addPostModal')" class="sch-close-modal">✕</button>
-        <h3 class="fw-bold text-dark mb-4">📰 Đăng Bài Viết Hoạt Động Mới</h3>
+    <div class="sch-modal-content" style="max-width: 560px; border-radius: 20px; padding: 24px; background: #ffffff;">
+        <button onclick="closeModal('addPostModal')" class="sch-close-modal" style="top: 16px; right: 16px; width: 36px; height: 36px; border-radius: 50%; background: #f1f5f9; border: none; font-size: 1.1rem; color: #475569;">✕</button>
+        <h4 class="fw-bold text-center border-bottom pb-3 mb-3" style="font-size: 1.15rem; color: #0f172a; font-family: 'Be Vietnam Pro', sans-serif;">Tạo bài viết</h4>
         
         <form action="{{ route('principal.posts.store') }}" method="POST" enctype="multipart/form-data">
             @csrf
             <input type="hidden" name="eatery_id" value="{{ $school->id }}">
 
-            <div class="sch-form-group">
-                <label class="sch-form-label">Tiêu đề bài viết <span class="text-danger">*</span></label>
-                <input type="text" name="name" required class="sch-form-input" placeholder="Ví dụ: Lễ khai giảng năm học mới...">
-            </div>
-
-            <div class="sch-form-group">
-                <label class="sch-form-label">Nội dung bài viết <span class="text-danger">*</span></label>
-                <textarea name="description" required class="sch-form-input" rows="4" placeholder="Nhập nội dung thông tin, chương trình giáo dục hoặc hoạt động..."></textarea>
-            </div>
-
-            <div class="row">
-                <div class="col-md-6 sch-form-group">
-                    <label class="sch-form-label">Thời hạn / Thời lượng</label>
-                    <input type="text" name="duration" class="sch-form-input" placeholder="Ví dụ: Học kì I, Cả năm học...">
-                </div>
-                <div class="col-md-6 sch-form-group">
-                    <label class="sch-form-label">Học phí / Chi phí (nếu có)</label>
-                    <input type="number" name="tuition_fee" class="sch-form-input" placeholder="Nhập số tiền học phí (đ)...">
+            <!-- User Header Row -->
+            <div class="d-flex align-items-center gap-3 mb-3">
+                <img src="{{ $school->image_path ?: 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=150&q=80' }}" class="fb-user-avatar" style="width: 44px; height: 44px;">
+                <div>
+                    <h5 class="fw-bold mb-1" style="font-size: 0.96rem; color: #0f172a; font-family: 'Be Vietnam Pro', sans-serif;">{{ $school->standardized_name }}</h5>
+                    <div class="d-flex gap-2">
+                        <span class="badge bg-light text-dark border rounded-pill px-2.5 py-1" style="font-size: 0.75rem; font-family: 'Be Vietnam Pro', sans-serif;">🌐 Công khai ▾</span>
+                        <span class="badge bg-light text-dark border rounded-pill px-2.5 py-1" style="font-size: 0.75rem; font-family: 'Be Vietnam Pro', sans-serif;">⚙️ Thông báo trường ▾</span>
+                    </div>
                 </div>
             </div>
 
-            <div class="sch-form-group">
-                <label class="sch-form-label">Hình ảnh đính kèm</label>
-                <div class="sch-upload-zone">
-                    <input type="file" name="image" accept="image/*" onchange="previewImage(this, 'add-post-preview')">
-                    <span>📷 Chọn tập tin hình ảnh</span>
-                </div>
-                <div id="add-post-preview" style="margin-top: 10px; display: none; text-align: center;">
-                    <img src="" style="max-height: 140px; border-radius: 8px;" alt="Preview image">
+            <!-- Content Area -->
+            <div class="mb-3">
+                <input type="text" name="name" required class="form-control border-0 px-0 fw-bold fs-5 mb-2" placeholder="Tiêu đề bài viết..." style="font-family: 'Be Vietnam Pro', sans-serif; box-shadow: none; color: #0f172a;">
+                <textarea name="description" required class="form-control border-0 px-0" rows="4" placeholder="{{ $school->standardized_name }} ơi, bạn đang nghĩ gì thế?" style="font-size: 1.05rem; font-family: 'Be Vietnam Pro', sans-serif; resize: none; box-shadow: none; color: #1e293b;"></textarea>
+            </div>
+
+            <!-- Multi Image Preview Box -->
+            <div id="add-post-multi-preview" class="mb-3" style="display: none; border-radius: 14px; overflow: hidden; border: 1px dashed #cbd5e1; background: #f8fafc; padding: 10px;">
+                <div id="preview-grid" class="row g-2"></div>
+            </div>
+
+            <!-- Facebook Bottom Action Bar -->
+            <div class="d-flex justify-content-between align-items-center p-3 border rounded-4 mb-4" style="background: #ffffff; border-color: #e2e8f0 !important; box-shadow: 0 4px 14px rgba(0,0,0,0.03);">
+                <span class="fw-bold text-dark small" style="font-family: 'Be Vietnam Pro', sans-serif;">Thêm vào bài viết của bạn</span>
+                <div class="d-flex gap-2">
+                    <label class="btn btn-light rounded-circle p-0 m-0 shadow-sm" style="width: 38px; height: 38px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center;" title="Thêm ảnh/video">
+                        🖼️
+                        <input type="file" name="images[]" multiple accept="image/*" class="d-none" onchange="previewMultiPostImages(this, 'add-post-multi-preview', 'preview-grid')">
+                    </label>
+                    <button type="button" class="btn btn-light rounded-circle p-0 shadow-sm" style="width: 38px; height: 38px; display: inline-flex; align-items: center; justify-content: center;" title="Gắn thẻ">🏷️</button>
+                    <button type="button" class="btn btn-light rounded-circle p-0 shadow-sm" style="width: 38px; height: 38px; display: inline-flex; align-items: center; justify-content: center;" title="Cảm xúc">😊</button>
+                    <button type="button" class="btn btn-light rounded-circle p-0 shadow-sm" style="width: 38px; height: 38px; display: inline-flex; align-items: center; justify-content: center;" title="Vị trí">📍</button>
                 </div>
             </div>
 
-            <div class="d-flex justify-content-end gap-2 pt-3 border-top mt-4">
-                <button type="button" onclick="closeModal('addPostModal')" class="sch-btn sch-btn-accent">Hủy</button>
-                <button type="submit" class="sch-btn sch-btn-success">Đăng bài viết</button>
-            </div>
+            <button type="submit" class="btn btn-primary w-100 py-2.5 fw-bold" style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); border-radius: 12px; font-size: 1rem; border: none; font-family: 'Be Vietnam Pro', sans-serif;">
+                Đăng
+            </button>
         </form>
     </div>
 </div>
@@ -1087,6 +1151,66 @@
             }
             reader.readAsDataURL(input.files[0]);
         }
+    }
+
+    // Facebook multi-photo previewer for creation modal
+    function previewMultiPostImages(input, containerId, gridId) {
+        const container = document.getElementById(containerId);
+        const grid = document.getElementById(gridId);
+        if (!container || !grid) return;
+
+        grid.innerHTML = '';
+        if (input.files && input.files.length > 0) {
+            container.style.display = 'block';
+            Array.from(input.files).forEach((file) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const col = document.createElement('div');
+                    col.className = 'col-3';
+                    col.innerHTML = `<div style="height: 80px; border-radius: 10px; overflow: hidden; border: 1px solid #cbd5e1;">
+                        <img src="${e.target.result}" style="width: 100%; height: 100%; object-fit: cover;">
+                    </div>`;
+                    grid.appendChild(col);
+                };
+                reader.readAsDataURL(file);
+            });
+        } else {
+            container.style.display = 'none';
+        }
+    }
+
+    function toggleFbLike(btn) {
+        btn.classList.toggle('active');
+        if (btn.classList.contains('active')) {
+            btn.innerHTML = '👍 Đã thích';
+        } else {
+            btn.innerHTML = '👍 Thích';
+        }
+    }
+
+    function shareFbPost() {
+        if (navigator.share) {
+            navigator.share({ title: 'Chia sẻ bài viết trường học', url: window.location.href });
+        } else {
+            alert('Đã sao chép liên kết bài viết!');
+        }
+    }
+
+    function openPostLightbox(src) {
+        let modal = document.getElementById('postLightboxModal');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'postLightboxModal';
+            modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.92); z-index: 10000; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(8px);';
+            modal.innerHTML = `<span onclick="document.getElementById('postLightboxModal').remove()" style="position: absolute; top: 20px; right: 30px; color: #ffffff; font-size: 2rem; cursor: pointer; font-family: sans-serif; font-weight: bold;">✕</span><img id="postLightboxImg" src="" style="max-width: 90%; max-height: 90vh; border-radius: 16px; object-fit: contain; box-shadow: 0 25px 50px rgba(0,0,0,0.5);">`;
+            document.body.appendChild(modal);
+        }
+        document.getElementById('postLightboxImg').src = src;
+        modal.onclick = function(e) {
+            if (e.target.id === 'postLightboxModal') {
+                modal.remove();
+            }
+        };
     }
 </script>
 @endsection

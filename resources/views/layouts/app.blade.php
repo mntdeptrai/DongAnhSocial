@@ -85,6 +85,7 @@
     <link rel="stylesheet" href="{{ asset('css/storytelling.css') }}?v={{ file_exists(public_path('css/storytelling.css')) ? filemtime(public_path('css/storytelling.css')) : time() }}">
     <link rel="stylesheet" href="{{ asset('css/storytelling-mobile.css') }}?v={{ file_exists(public_path('css/storytelling-mobile.css')) ? filemtime(public_path('css/storytelling-mobile.css')) : time() }}">
     <link rel="stylesheet" href="{{ asset('css/ocop-storytelling.css') }}?v={{ file_exists(public_path('css/ocop-storytelling.css')) ? filemtime(public_path('css/ocop-storytelling.css')) : time() }}">
+    <link rel="stylesheet" href="{{ asset('css/facebook-feed.css') }}?v={{ file_exists(public_path('css/facebook-feed.css')) ? filemtime(public_path('css/facebook-feed.css')) : '1.0.0' }}">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
     
     <!-- Dynamic Schema.org JSON-LD Structured Data for Google Indexing -->

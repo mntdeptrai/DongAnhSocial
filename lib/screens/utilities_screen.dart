@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../widgets/custom_loader.dart';
-import '../widgets/my_cart_modal.dart';
 import '../widgets/squircle_helper.dart';
 import 'eatery_detail_screen.dart';
 

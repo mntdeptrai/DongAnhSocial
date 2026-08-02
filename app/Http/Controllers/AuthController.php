@@ -236,12 +236,36 @@ class AuthController extends Controller
             return redirect('/auth/login');
         }
         
-        // Lấy danh sách lộ trình do người dùng tự xây dựng
-        $tours = \App\Models\FoodTour::where('user_id', $user->id)
-            ->orderBy('created_at', 'desc')
-            ->get();
+        $tours = collect();
+        $school = null;
+        $posts = collect();
+
+        if ($user->isPrincipal() || $user->role === 'principal') {
+            $school = \App\Models\Eatery::on('mysql_education')->where('user_id', $user->id)->first();
+            if (!$school) {
+                $school = \App\Models\Eatery::on('mysql')->where('user_id', $user->id)->first();
+            }
+
+            if ($school) {
+                $posts = \App\Models\EducationProgram::on('mysql_education')
+                    ->where('eatery_id', $school->id)
+                    ->orderBy('created_at', 'desc')
+                    ->get();
+                if ($posts->isEmpty()) {
+                    $posts = \App\Models\EducationProgram::on('mysql')
+                        ->where('eatery_id', $school->id)
+                        ->orderBy('created_at', 'desc')
+                        ->get();
+                }
+            }
+        } else {
+            // Lấy danh sách lộ trình do người dùng tự xây dựng
+            $tours = \App\Models\FoodTour::where('user_id', $user->id)
+                ->orderBy('created_at', 'desc')
+                ->get();
+        }
             
-        return view('auth.profile', compact('user', 'tours'));
+        return view('auth.profile', compact('user', 'tours', 'school', 'posts'));
     }
 
     /**

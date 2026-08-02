@@ -13,9 +13,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        // Áp dụng CheckUserStatus cho toàn bộ web routes
+        // Áp dụng CheckUserStatus & HandleInertiaRequests cho toàn bộ web routes
         $middleware->web(append: [
             \App\Http\Middleware\CheckUserStatus::class,
+            \App\Http\Middleware\HandleInertiaRequests::class,
         ]);
 
         // Thêm session & cookie middleware vào API group

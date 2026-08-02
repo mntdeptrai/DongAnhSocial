@@ -4,8 +4,9 @@ import axios from 'axios';
 import Pusher from 'pusher-js';
 
 export default function SocialHub() {
-    const { auth, friends: initialFriends, pendingReceived: initialPendingReceived, pendingSent: initialPendingSent, suggestions: initialSuggestions, myFoodTours = [] } = usePage().props;
-    const currentUser = auth.user;
+    const pageProps = usePage().props || {};
+    const { auth = {}, friends: initialFriends = [], pendingReceived: initialPendingReceived = [], pendingSent: initialPendingSent = [], suggestions: initialSuggestions = [], myFoodTours = [] } = pageProps;
+    const currentUser = auth?.user || null;
 
     const [friends, setFriends] = useState(initialFriends || []);
     const [pendingReceived, setPendingReceived] = useState(initialPendingReceived || []);
