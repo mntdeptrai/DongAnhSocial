@@ -18,8 +18,8 @@ android {
     defaultConfig {
         // Application ID được gán cho Firebase package name
         applicationId = "com.donganh.social"
-        // Android 15 (API Level 35) target OS requirement
-        minSdk = 35
+        // Target Android 15 (API 35) features while supporting Android 8.0+
+        minSdk = 26
         targetSdk = 35
         versionCode = flutter.versionCode
         versionName = flutter.versionName
