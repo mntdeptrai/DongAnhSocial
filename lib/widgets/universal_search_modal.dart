@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import 'custom_loader.dart';
 import '../screens/chat_screen.dart';
 import '../screens/eatery_detail_screen.dart';
 
@@ -218,7 +219,11 @@ class _UniversalSearchModalState extends State<UniversalSearchModal> {
           // Search Results Area
           Expanded(
             child: _isLoading
-                ? const Center(child: CircularProgressIndicator(color: Color(0xFF0EA5E9)))
+                ? const CustomPulseLoader(
+                    message: 'Đang tìm kiếm dữ liệu...',
+                    icon: Icons.search_rounded,
+                    primaryColor: Color(0xFF0EA5E9),
+                  )
                 : ListView(
                     padding: const EdgeInsets.all(16),
                     children: [

@@ -4,6 +4,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:camera/camera.dart';
 import 'package:geolocator/geolocator.dart';
 import '../services/api_service.dart';
+import '../widgets/custom_loader.dart';
+import '../widgets/squircle_helper.dart';
 
 class FeedScreen extends StatefulWidget {
   const FeedScreen({super.key});
@@ -165,45 +167,6 @@ class FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
     }
   }
 
-  final List<Map<String, dynamic>> _defaultFeedPosts = [
-    {
-      'id': 1,
-      'guest_name': 'Hồng Ngọc • Du khách',
-      'user_avatar': 'https://i.pravatar.cc/150?img=5',
-      'eatery_name': 'Bún chả Cổ Loa Truyền Thống',
-      'eatery_address': 'Khu di sản Cổ Loa, Đông Anh',
-      'rating': 5,
-      'comment': 'Nước chấm vừa vị, thịt nướng thơm nức mũi! Check-in tại Cổ Loa không thể bỏ qua món này 🍲✨',
-      'image_url': 'https://images.unsplash.com/photo-1541832676-9b763b0239ab?w=600&q=80',
-      'created_at_human': '15 phút trước',
-      'likes': 42,
-    },
-    {
-      'id': 2,
-      'guest_name': 'Minh Đức • Cư dân Đông Anh',
-      'user_avatar': 'https://i.pravatar.cc/150?img=12',
-      'eatery_name': 'HTX Nông Nghiệp Dược Liệu KOVI',
-      'eatery_address': 'Thôn Lộc Hà, Mai Lâm, Đông Anh',
-      'rating': 5,
-      'comment': 'Sản phẩm OCOP 5 sao nguyên chất, uống trà ngon tuyệt vời! Đạt chuẩn vệ sinh an toàn thực phẩm 🌿🏆',
-      'image_url': 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=600&q=80',
-      'created_at_human': '1 giờ trước',
-      'likes': 89,
-    },
-    {
-      'id': 3,
-      'guest_name': 'Thanh Hương • Khách du lịch',
-      'user_avatar': 'https://i.pravatar.cc/150?img=25',
-      'eatery_name': 'HKD Thảo Loan - Tương Nếp Cổ Loa',
-      'eatery_address': 'Xã Xuân Canh, Đông Anh',
-      'rating': 5,
-      'comment': 'Tương nếp cái hoa vàng chuẩn vị xưa. Mua về làm quà cho gia đình ai cũng thích ❤️',
-      'image_url': 'https://images.unsplash.com/photo-1615485290382-441e4d049cb5?w=600&q=80',
-      'created_at_human': '3 giờ trước',
-      'likes': 65,
-    },
-  ];
-
   Future<void> _loadFeed() async {
     setState(() {
       _isLoading = true;
@@ -212,14 +175,15 @@ class FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
       final items = await ApiService.getFeed();
       if (mounted) {
         setState(() {
-          _feedItems = (items is List && items.isNotEmpty) ? items : _defaultFeedPosts;
+          _feedItems = (items is List) ? List<dynamic>.from(items) : [];
           _isLoading = false;
         });
       }
-    } catch (_) {
+    } catch (e) {
+      debugPrint('Feed API fetch error: $e');
       if (mounted) {
         setState(() {
-          _feedItems = _defaultFeedPosts;
+          _feedItems = [];
           _isLoading = false;
         });
       }
@@ -231,14 +195,16 @@ class FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
       final eateries = await ApiService.getAllEateries();
       if (mounted) {
         setState(() {
-          _eateries = (eateries is List && eateries.isNotEmpty) ? eateries : _defaultFeedPosts;
+          _eateries = (eateries is List) ? List<dynamic>.from(eateries) : [];
           if (_eateries.isNotEmpty) {
             _selectedEateryId = _eateries[0]['id'];
           }
         });
         _autoDetectCurrentLocationAndSelectEatery();
       }
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('Eateries API fetch error: $e');
+    }
   }
 
   Future<void> _autoDetectCurrentLocationAndSelectEatery() async {
@@ -553,7 +519,11 @@ class FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
       ),
       backgroundColor: const Color(0xFF0F172A), // Dark mode background for TikTok feel
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: Color(0xFF0EA5E9)))
+          ? const CustomPulseLoader(
+              message: 'Đang tải khoảnh khắc check-in...',
+              icon: Icons.photo_camera_rounded,
+              primaryColor: Color(0xFF0EA5E9),
+            )
           : LayoutBuilder(
               builder: (context, constraints) {
                 final height = constraints.maxHeight;
@@ -589,9 +559,9 @@ class FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
       child: Card(
         elevation: 6,
         shadowColor: const Color(0xFF0EA5E9).withOpacity(0.25),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(22),
-          side: BorderSide(color: const Color(0xFF0EA5E9).withOpacity(0.2), width: 1.2),
+        shape: SquircleHelper.shape(
+          radius: 22,
+          side: BorderSide(color: const Color(0xFF0EA5E9).withValues(alpha: 0.2), width: 1.2),
         ),
         color: const Color(0xFF1E293B), // Dark card for camera page
         child: Padding(

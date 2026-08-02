@@ -167,6 +167,88 @@
                     </div>
                 </div>
                 
+                <!-- Checkbox đồng ý Điều khoản & Thu thập thông tin -->
+                <div style="margin-bottom: 20px;" x-data="{ openTermsModal: false }">
+                    <label style="display: flex; align-items: flex-start; gap: 10px; font-size: 0.83rem; color: var(--text-muted); cursor: pointer; user-select: none; line-height: 1.5;">
+                        <input type="checkbox" name="agree_terms" required style="width: 17px; height: 17px; margin-top: 2px; accent-color: var(--primary); cursor: pointer; flex-shrink: 0;">
+                        <span>
+                            Tôi đã đọc, hiểu rõ và đồng ý với 
+                            <a href="javascript:void(0)" @click.prevent="openTermsModal = true" style="color: var(--primary); font-weight: 700; text-decoration: underline;">
+                                Điều khoản dịch vụ
+                            </a> 
+                            và 
+                            <a href="javascript:void(0)" @click.prevent="openTermsModal = true" style="color: var(--primary); font-weight: 700; text-decoration: underline;">
+                                Chính sách thu thập thông tin
+                            </a> 
+                            của Bản đồ số Khám phá Đông Anh.
+                        </span>
+                    </label>
+
+                    <!-- Modal Chi Tiết Điều Khoản & Thu Thập Thông Tin -->
+                    <div x-show="openTermsModal" 
+                         x-transition:enter="transition ease-out duration-200"
+                         x-transition:enter-start="opacity-0"
+                         x-transition:enter-end="opacity-100"
+                         x-transition:leave="transition ease-in duration-150"
+                         x-transition:leave-start="opacity-100"
+                         x-transition:leave-end="opacity-0"
+                         style="position: fixed; inset: 0; z-index: 99999; display: flex; align-items: center; justify-content: center; background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(8px); padding: 20px;"
+                         @keydown.escape.window="openTermsModal = false"
+                         x-cloak>
+                         
+                        <div @click.outside="openTermsModal = false"
+                             style="background: var(--bg-surface, #ffffff); border: 1.5px solid var(--border-glow); width: 100%; max-width: 650px; max-height: 85vh; border-radius: 20px; box-shadow: var(--shadow-overlay, 0 25px 50px -12px rgba(0,0,0,0.5)); display: flex; flex-direction: column; overflow: hidden; color: var(--text-main);">
+                             
+                            <!-- Header Modal -->
+                            <div style="padding: 18px 24px; border-bottom: 1px solid var(--border-glow); display: flex; align-items: center; justify-content: space-between; background: rgba(14, 165, 233, 0.06);">
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <span style="font-size: 1.3rem;">📜</span>
+                                    <h3 style="font-size: 1.1rem; font-weight: 800; font-family: var(--font-heading); margin: 0; color: var(--text-main);">
+                                        Điều Khoản Dịch Vụ & Bảo Mật Thông Tin
+                                    </h3>
+                                </div>
+                                <button type="button" @click="openTermsModal = false" style="background: transparent; border: none; font-size: 1.4rem; cursor: pointer; color: var(--text-muted); padding: 0 4px; line-height: 1;">&times;</button>
+                            </div>
+                            
+                            <!-- Nội dung chi tiết Điều khoản -->
+                            <div style="padding: 24px; overflow-y: auto; font-size: 0.86rem; line-height: 1.65; color: var(--text-muted); flex: 1;">
+                                <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--text-main); margin-bottom: 8px;">1. Mục Đích Thu Thập Thông Tin Cá Nhân</h4>
+                                <p style="margin-bottom: 14px;">Bản đồ số Khám phá Đông Anh thu thập các thông tin cá nhân cơ bản (Họ tên, Email, Số điện thoại, Vai trò tài khoản) phục vụ các mục đích sau:</p>
+                                <ul style="margin: 0 0 16px 20px; padding: 0; list-style-type: disc;">
+                                    <li style="margin-bottom: 6px;">Xác thực danh tính và gửi mã bảo mật OTP qua Email nhằm bảo vệ tài khoản chính chủ.</li>
+                                    <li style="margin-bottom: 6px;">Cho phép thành viên gửi đánh giá, tải ảnh check-in trải nghiệm các địa điểm văn hóa, ẩm thực, Food Tour trên địa bàn Xã Đông Anh.</li>
+                                    <li style="margin-bottom: 6px;">Hỗ trợ các chủ gian hàng/cơ sở kinh doanh tiếp nhận mã thanh toán VietQR và cập nhật danh mục sản phẩm OCOP chính thức.</li>
+                                </ul>
+
+                                <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--text-main); margin-bottom: 8px;">2. Phạm Vi Thu Thập & Lưu Trữ Dữ Liệu</h4>
+                                <ul style="margin: 0 0 16px 20px; padding: 0; list-style-type: disc;">
+                                    <li style="margin-bottom: 6px;"><strong>Thông tin tài khoản:</strong> Họ và tên, Email, Số điện thoại, Tên đăng nhập và Mật khẩu (đã mã hóa bảo mật 1 chiều Bcrypt/Argon2).</li>
+                                    <li style="margin-bottom: 6px;"><strong>Dữ liệu định vị & Tương tác:</strong> Vị trí GPS (khi người dùng cho phép trên trình duyệt để tìm kiếm địa điểm xung quanh) và nội dung bình luận công khai.</li>
+                                </ul>
+
+                                <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--text-main); margin-bottom: 8px;">3. Cam Kết Bảo Mật Thông Tin Người Dùng</h4>
+                                <p style="margin-bottom: 14px;">Hệ thống cam kết tuyệt đối không bán, chia sẻ hoặc tiết lộ thông tin cá nhân của bạn cho bên thứ ba vì mục đích thương mại. Mọi thông tin được bảo mật trên máy chủ và tuân thủ các quy định hiện hành về bảo vệ dữ liệu cá nhân.</p>
+
+                                <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--text-main); margin-bottom: 8px;">4. Quy Định Sử Dụng & Trách Nhiệm Thành Viên</h4>
+                                <ul style="margin: 0 0 16px 20px; padding: 0; list-style-type: disc;">
+                                    <li style="margin-bottom: 6px;">Không đăng tải văn hóa phẩm độc hại, nội dung vi phạm pháp luật, thông tin sai sự thật về các cơ sở kinh doanh, điểm đến trên địa bàn.</li>
+                                    <li style="margin-bottom: 6px;">Tự quản lý và bảo mật thông tin đăng nhập cá nhân. Nối lại với ban quản trị nếu phát hiện nghi vấn truy cập trái phép.</li>
+                                </ul>
+
+                                <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--text-main); margin-bottom: 8px;">5. Quyền Của Người Dùng Đối Với Dữ Liệu</h4>
+                                <p style="margin-bottom: 0;">Bạn có quyền truy cập, cập nhật thông tin cá nhân hoặc gửi yêu cầu xóa tài khoản/dữ liệu khỏi hệ thống bất kỳ lúc nào thông qua trang Quản lý tài khoản hoặc liên hệ Ban quản trị.</p>
+                            </div>
+                            
+                            <!-- Footer Modal -->
+                            <div style="padding: 14px 24px; border-top: 1px solid var(--border-glow); display: flex; justify-content: flex-end; background: rgba(14, 165, 233, 0.03);">
+                                <button type="button" @click="openTermsModal = false" class="btn-primary" style="padding: 8px 24px; font-size: 0.85rem; border-radius: 10px; font-weight: 700;">
+                                    Đã hiểu & Đóng
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
                 <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; padding: 12px 0; font-size: 1rem; margin-bottom: 20px;">
                     Đăng ký tài khoản
                 </button>

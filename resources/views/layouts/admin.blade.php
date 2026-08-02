@@ -230,5 +230,97 @@
         });
     </script>
     @endif
+    <div id="universal-toast-container" style="position: fixed; top: 24px; right: 24px; z-index: 999999; display: flex; flex-direction: column; gap: 12px; max-width: 420px; width: calc(100% - 48px); pointer-events: none;"></div>
+
+    <script>
+    (function() {
+        window.showToast = function(message, type = 'info', title = null) {
+            let cleanMsg = message || '';
+            if (typeof cleanMsg !== 'string') {
+                try { cleanMsg = JSON.stringify(cleanMsg); } catch (_) { cleanMsg = String(cleanMsg); }
+            }
+
+            if (cleanMsg.includes('SQLSTATE') || cleanMsg.includes('QueryException') || cleanMsg.includes('PDOException') || cleanMsg.includes('Database:') || cleanMsg.includes('Connection: mysql')) {
+                cleanMsg = 'Đã xảy ra lỗi khi thao tác dữ liệu. Vui lòng kiểm tra lại thông tin hoặc thử lại sau.';
+                type = 'error';
+                title = title || 'Lỗi thao tác';
+            }
+
+            const container = document.getElementById('universal-toast-container');
+            if (!container) return;
+
+            const config = {
+                success: { bg: 'rgba(15, 23, 42, 0.94)', border: 'rgba(16, 185, 129, 0.4)', icon: '✅', iconBg: 'rgba(16, 185, 129, 0.18)', color: '#34d399', title: title || 'Thành công' },
+                error: { bg: 'rgba(15, 23, 42, 0.94)', border: 'rgba(239, 68, 68, 0.4)', icon: '⚠️', iconBg: 'rgba(239, 68, 68, 0.18)', color: '#f87171', title: title || 'Có lỗi xảy ra' },
+                warning: { bg: 'rgba(15, 23, 42, 0.94)', border: 'rgba(245, 158, 11, 0.4)', icon: '⚡', iconBg: 'rgba(245, 158, 11, 0.18)', color: '#fbbf24', title: title || 'Lưu ý' },
+                info: { bg: 'rgba(15, 23, 42, 0.94)', border: 'rgba(14, 165, 233, 0.4)', icon: 'ℹ️', iconBg: 'rgba(14, 165, 233, 0.18)', color: '#38bdf8', title: title || 'Thông báo' }
+            };
+
+            const t = config[type] || config.info;
+            const toastEl = document.createElement('div');
+            toastEl.style.cssText = `
+                background: ${t.bg};
+                backdrop-filter: blur(16px);
+                -webkit-backdrop-filter: blur(16px);
+                border: 1.5px solid ${t.border};
+                color: #ffffff;
+                padding: 14px 18px;
+                border-radius: 16px;
+                corner-shape: squircle;
+                -webkit-corner-shape: squircle;
+                box-shadow: 0 20px 40px -10px rgba(0,0,0,0.5);
+                display: flex;
+                align-items: flex-start;
+                gap: 12px;
+                pointer-events: auto;
+                transform: translateX(120%);
+                opacity: 0;
+                transition: all 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                font-family: var(--admin-font, 'Plus Jakarta Sans', sans-serif);
+            `;
+
+            toastEl.innerHTML = `
+                <div style="background: ${t.iconBg}; width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0;">
+                    ${t.icon}
+                </div>
+                <div style="flex: 1; min-width: 0;">
+                    <div style="font-weight: 800; font-size: 0.88rem; color: ${t.color}; margin-bottom: 2px;">${t.title}</div>
+                    <div style="font-size: 0.83rem; color: rgba(255,255,255,0.9); line-height: 1.45; word-break: break-word;">${cleanMsg}</div>
+                </div>
+                <button type="button" style="background: transparent; border: none; color: rgba(255,255,255,0.5); font-size: 1.2rem; cursor: pointer; padding: 0 2px; line-height: 1; transition: color 0.2s;" onmouseover="this.style.color='#ffffff'" onmouseout="this.style.color='rgba(255,255,255,0.5)'">&times;</button>
+            `;
+
+            const closeBtn = toastEl.querySelector('button');
+            const dismiss = () => {
+                toastEl.style.transform = 'translateX(120%)';
+                toastEl.style.opacity = '0';
+                setTimeout(() => toastEl.remove(), 350);
+            };
+            closeBtn.onclick = dismiss;
+
+            container.appendChild(toastEl);
+            requestAnimationFrame(() => {
+                toastEl.style.transform = 'translateX(0)';
+                toastEl.style.opacity = '1';
+            });
+
+            setTimeout(dismiss, 4500);
+        };
+
+        window.alert = function(msg) {
+            window.showToast(msg, 'info');
+        };
+
+        @if(session('success'))
+            window.showToast(@json(session('success')), 'success');
+        @endif
+        @if(session('error'))
+            window.showToast(@json(session('error')), 'error');
+        @endif
+        @if(session('warning'))
+            window.showToast(@json(session('warning')), 'warning');
+        @endif
+    })();
+    </script>
 </body>
 </html>

@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import '../widgets/custom_loader.dart';
 
 class ManagerDashboardScreen extends StatefulWidget {
   final VoidCallback? onBack;
@@ -209,7 +209,11 @@ class _ManagerDashboardScreenState extends State<ManagerDashboardScreen> with Si
         ),
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: indigoTheme))
+          ? const CustomPulseLoader(
+              message: 'Đang tải Ban Quản Lý Chợ & ATTP...',
+              icon: Icons.admin_panel_settings_rounded,
+              primaryColor: Color(0xFF4F46E5),
+            )
           : TabBarView(
               controller: _tabController,
               children: [

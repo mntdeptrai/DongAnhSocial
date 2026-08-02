@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import '../widgets/custom_loader.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -84,7 +84,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         ],
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const CustomPulseLoader(
+              message: 'Đang làm mới thông báo hệ thống...',
+              icon: Icons.notifications_active_rounded,
+              primaryColor: Color(0xFF6366F1),
+            )
           : _notifications.isEmpty
               ? Center(
                   child: Column(

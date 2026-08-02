@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import '../widgets/custom_loader.dart';
 
 class MyOrdersScreen extends StatefulWidget {
   const MyOrdersScreen({super.key});
@@ -432,7 +432,11 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> with SingleTickerProvid
         onRefresh: _fetchOrders,
         color: primaryColor,
         child: _isLoading
-            ? const Center(child: CircularProgressIndicator(color: primaryColor))
+            ? const CustomPulseLoader(
+                message: 'Đang tải lịch sử đơn hàng...',
+                icon: Icons.receipt_long_rounded,
+                primaryColor: primaryColor,
+              )
             : _orders.isEmpty
                 ? _buildEmptyState()
                 : ListView.builder(

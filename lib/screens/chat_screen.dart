@@ -1,6 +1,6 @@
 import 'dart:async';
-import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import '../widgets/custom_loader.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -136,7 +136,11 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       ),
       backgroundColor: const Color(0xFFF8FAFC),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: Color(0xFF0EA5E9)))
+          ? const CustomPulseLoader(
+              message: 'Đang mở hộp thoại trò chuyện...',
+              icon: Icons.chat_bubble_outline_rounded,
+              primaryColor: Color(0xFF0EA5E9),
+            )
           : _friends.isEmpty
               ? Center(
                   child: Column(

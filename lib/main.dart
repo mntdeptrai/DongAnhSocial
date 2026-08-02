@@ -20,6 +20,7 @@ import 'widgets/role_menu_drawer.dart';
 import 'widgets/top_nav_bar.dart';
 import 'widgets/universal_search_modal.dart';
 import 'widgets/my_cart_modal.dart';
+import 'widgets/squircle_helper.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -106,8 +107,8 @@ class MyApp extends StatelessWidget {
         cardTheme: CardThemeData(
           elevation: 0,
           color: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(22),
+          shape: SquircleHelper.shape(
+            radius: 22,
             side: const BorderSide(color: Color(0x1F0EA5E9), width: 1),
           ),
         ),

@@ -130,8 +130,16 @@ class ApiService {
     }
   }
 
-  /// POST /auth/register — Đăng ký tài khoản mới
-  static Future<Map<String, dynamic>> register(String name, String email, String password) async {
+  /// POST /auth/register — Đăng ký tài khoản mới đầy đủ các trường
+  static Future<Map<String, dynamic>> register({
+    required String name,
+    required String email,
+    required String password,
+    String? username,
+    String? phone,
+    String role = 'user',
+    bool agreeTerms = true,
+  }) async {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/auth/register'),
@@ -141,6 +149,10 @@ class ApiService {
           'email': email,
           'password': password,
           'password_confirmation': password,
+          if (username != null && username.isNotEmpty) 'username': username,
+          if (phone != null && phone.isNotEmpty) 'phone': phone,
+          'role': role,
+          'agree_terms': agreeTerms ? 1 : 0,
         }),
       );
 

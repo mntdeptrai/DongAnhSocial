@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import '../widgets/custom_loader.dart';
 import '../widgets/my_cart_modal.dart';
+import '../widgets/squircle_helper.dart';
 import 'eatery_detail_screen.dart';
 
 class UtilitiesScreen extends StatefulWidget {
@@ -26,170 +28,21 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
   // Synchronized Cart State
   final Map<String, Map<String, dynamic>> _cartItems = {};
 
-  // Curated Featured Showcase Data for Dong Anh Specialties (Fallback Hydration)
-  final List<Map<String, dynamic>> _defaultSpecialties = [
-    {
-      'id': 101,
-      'name': 'Bún chả Cổ Loa Truyền Thống',
-      'address': 'Cổ Loa, Huyện Đông Anh, Hà Nội',
-      'rating': 4.9,
-      'reviews_count': 128,
-      'image': 'https://images.unsplash.com/photo-1541832676-9b763b0239ab?w=600&q=80',
-      'category': 'Ẩm thực Cổ Loa',
-      'price_range': '35.000đ - 60.000đ',
-      'is_verified': true,
-      'discount': 'Giảm 10%',
-      'distance': '0.8 km',
-    },
-    {
-      'id': 102,
-      'name': 'HTX Nông Nghiệp Dược Liệu KOVI',
-      'address': 'Thôn Lộc Hà, Xã Mai Lâm, Đông Anh',
-      'rating': 5.0,
-      'reviews_count': 96,
-      'image': 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=600&q=80',
-      'category': 'OCOP 5 Sao',
-      'price_range': '50.000đ - 250.000đ',
-      'is_verified': true,
-      'discount': 'OCOP Chuẩn',
-      'distance': '1.5 km',
-    },
-    {
-      'id': 103,
-      'name': 'HKD Thảo Loan - Tương Nếp Cổ Loa',
-      'address': 'Xã Xuân Canh, Huyện Đông Anh',
-      'rating': 4.8,
-      'reviews_count': 74,
-      'image': 'https://images.unsplash.com/photo-1615485290382-441e4d049cb5?w=600&q=80',
-      'category': 'Đặc sản Nông sản',
-      'price_range': '45.000đ - 120.000đ',
-      'is_verified': true,
-      'discount': 'Freeship 2km',
-      'distance': '2.1 km',
-    },
-    {
-      'id': 104,
-      'name': 'Bánh Chưng Nếp Tranh Khúc',
-      'address': 'Xã Dục Tú, Huyện Đông Anh',
-      'rating': 4.9,
-      'reviews_count': 210,
-      'image': 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=600&q=80',
-      'category': 'Truyền thống OCOP',
-      'price_range': '60.000đ - 150.000đ',
-      'is_verified': true,
-      'discount': 'Đặc sản Tết',
-      'distance': '3.2 km',
-    },
-  ];
-
-  final List<Map<String, dynamic>> _defaultOcopProducts = [
-    {
-      'id': 201,
-      'name': 'Gạo Nếp Cái Hoa Vàng Cổ Loa (Túi 5kg)',
-      'price': 180000,
-      'price_formatted': '180.000đ',
-      'image': 'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=600&q=80',
-      'seller_name': 'HTX Nông Nghiệp Cổ Loa',
-      'ocop_star': '🏆 OCOP 5 SAO',
-      'in_stock': true,
-      'rating': 5.0,
-      'unit': 'Túi 5kg',
-    },
-    {
-      'id': 202,
-      'name': 'Trà Hữu Cơ KOVI Đông Anh (Hộp 200g)',
-      'price': 125000,
-      'price_formatted': '125.000đ',
-      'image': 'https://images.unsplash.com/photo-1597481499750-3e6b22637e12?w=600&q=80',
-      'seller_name': 'HTX Dược Liệu KOVI',
-      'ocop_star': '🏆 OCOP 4 SAO',
-      'in_stock': true,
-      'rating': 4.9,
-      'unit': 'Hộp 200g',
-    },
-    {
-      'id': 203,
-      'name': 'Bún Tươi Khô Uy Nỗ Đóng Gói (Gói 1kg)',
-      'price': 35000,
-      'price_formatted': '35.000đ',
-      'image': 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=600&q=80',
-      'seller_name': 'Cơ sở sản xuất Uy Nỗ',
-      'ocop_star': '🏆 OCOP 3 SAO',
-      'in_stock': true,
-      'rating': 4.8,
-      'unit': 'Gói 1kg',
-    },
-    {
-      'id': 204,
-      'name': 'Tương Nếp Truyền Thống Nếp Cái (Chai 500ml)',
-      'price': 45000,
-      'price_formatted': '45.000đ',
-      'image': 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=600&q=80',
-      'seller_name': 'HKD Thảo Loan',
-      'ocop_star': '🏆 OCOP 4 SAO',
-      'in_stock': true,
-      'rating': 4.9,
-      'unit': 'Chai 500ml',
-    },
-  ];
-
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 2, vsync: this);
-    _fetchFoodData();
-    _fetchMarketData();
-    _fetchCartData();
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _fetchCartData() async {
-    try {
-      final res = await ApiService.getCart();
-      if (res is Map && res['success'] == true && res['data'] is List) {
-        final List items = res['data'];
-        final Map<String, Map<String, dynamic>> loadedCart = {};
-        for (var item in items) {
-          final String key = 'api_${item['id']}';
-          loadedCart[key] = {
-            'id': item['id'],
-            'name': item['name'] ?? 'Sản phẩm OCOP',
-            'price': double.tryParse(item['price']?.toString() ?? '0') ?? 0.0,
-            'quantity': item['quantity'] ?? 1,
-            'subtitle': item['eatery_name'] ?? 'Gian hàng chợ',
-            'image': item['image'],
-            'checked': true,
-          };
-        }
-        if (mounted && loadedCart.isNotEmpty) {
-          setState(() {
-            _cartItems.clear();
-            _cartItems.addAll(loadedCart);
-          });
-        }
-      }
-    } catch (_) {}
-  }
-
   Future<void> _fetchFoodData() async {
     setState(() => _isLoadingFood = true);
     try {
       final res = await ApiService.getAllEateries();
       if (mounted) {
         setState(() {
-          _foodEateries = (res is List && res.isNotEmpty) ? res : _defaultSpecialties;
+          _foodEateries = (res is List) ? List<dynamic>.from(res) : [];
           _isLoadingFood = false;
         });
       }
-    } catch (_) {
+    } catch (e) {
+      debugPrint('_fetchFoodData API error: $e');
       if (mounted) {
         setState(() {
-          _foodEateries = _defaultSpecialties;
+          _foodEateries = [];
           _isLoadingFood = false;
         });
       }
@@ -204,16 +57,17 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
 
       if (mounted) {
         setState(() {
-          _marketEateries = (markets is List && markets.isNotEmpty) ? markets : _defaultSpecialties;
-          _marketProducts = (products is List && products.isNotEmpty) ? products : _defaultOcopProducts;
+          _marketEateries = (markets is List) ? List<dynamic>.from(markets) : [];
+          _marketProducts = (products is List) ? List<dynamic>.from(products) : [];
           _isLoadingMarket = false;
         });
       }
-    } catch (_) {
+    } catch (e) {
+      debugPrint('_fetchMarketData API error: $e');
       if (mounted) {
         setState(() {
-          _marketEateries = _defaultSpecialties;
-          _marketProducts = _defaultOcopProducts;
+          _marketEateries = [];
+          _marketProducts = [];
           _isLoadingMarket = false;
         });
       }
@@ -471,7 +325,11 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
 
   Widget _buildFoodTabContent(List<dynamic> eateries, Color primaryColor) {
     if (_isLoadingFood) {
-      return const Center(child: CircularProgressIndicator(color: Color(0xFF0EA5E9)));
+      return const CustomPulseLoader(
+        message: 'Đang tải danh sách Ẩm thực Cổ Loa...',
+        icon: Icons.restaurant_menu_rounded,
+        primaryColor: Color(0xFF0EA5E9),
+      );
     }
 
     return ListView(
@@ -540,7 +398,7 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
   Widget _buildEateryCard(Map<String, dynamic> item) {
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      shape: SquircleHelper.shape(radius: 20),
       elevation: 2,
       child: InkWell(
         onTap: () {
@@ -557,7 +415,7 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
             ),
           );
         },
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: SquircleHelper.radius(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -717,7 +575,11 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
 
   Widget _buildMarketTabContent(List<dynamic> products, Color primaryColor) {
     if (_isLoadingMarket) {
-      return const Center(child: CircularProgressIndicator(color: Color(0xFF0EA5E9)));
+      return const CustomPulseLoader(
+        message: 'Đang kết nối Chợ Số OCOP 4.0...',
+        icon: Icons.storefront_rounded,
+        primaryColor: Color(0xFF059669),
+      );
     }
 
     return ListView(

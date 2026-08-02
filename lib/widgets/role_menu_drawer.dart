@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../screens/my_orders_screen.dart';
 import '../screens/admin_dashboard_screen.dart';
+import 'squircle_helper.dart';
 
 class RoleMenuDrawer extends StatelessWidget {
   final String activeRole;
@@ -321,10 +322,10 @@ class RoleMenuDrawer extends StatelessWidget {
     required VoidCallback onTap,
   }) {
     return Container(
-      decoration: BoxDecoration(
+      decoration: SquircleHelper.decoration(
+        radius: 16,
         color: color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color, width: 1.5),
+        borderSide: BorderSide(color: color, width: 1.5),
       ),
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -356,10 +357,10 @@ class RoleMenuDrawer extends StatelessWidget {
   }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
-      decoration: BoxDecoration(
+      decoration: SquircleHelper.decoration(
+        radius: 14,
         color: Colors.grey.shade50,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.grey.shade200),
+        borderSide: BorderSide(color: Colors.grey.shade200),
       ),
       child: ListTile(
         dense: true,

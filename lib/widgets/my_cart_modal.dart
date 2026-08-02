@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import 'squircle_helper.dart';
 
 class MyCartModal extends StatefulWidget {
   final VoidCallback? onCartUpdated;
@@ -221,7 +222,11 @@ class _MyCartModalState extends State<MyCartModal> {
           // Main Cart Body
           Expanded(
             child: _isLoading
-                ? const Center(child: CircularProgressIndicator(color: Color(0xFF0EA5E9)))
+                ? const CustomPulseLoader(
+                    message: 'Đang kết nối giỏ hàng...',
+                    icon: Icons.shopping_bag_rounded,
+                    primaryColor: Color(0xFF0EA5E9),
+                  )
                 : _cartItems.isEmpty
                     ? Center(
                         child: Column(
@@ -504,7 +509,7 @@ class _MyCartModalState extends State<MyCartModal> {
                     backgroundColor: const Color(0xFFEE4D2D),
                     foregroundColor: Colors.white,
                     elevation: 4,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                    shape: SquircleHelper.shape(radius: 24),
                   ),
                 ),
               ),

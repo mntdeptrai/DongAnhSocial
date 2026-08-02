@@ -32,5 +32,57 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        // 🛡️ SECURITY AUDIT FIX: Intercept Database Query Exceptions & PDO Errors
+        // Prevents raw SQL, table names, host IPs & internal schema from leaking to users
+        $exceptions->render(function (\Illuminate\Database\QueryException $e, $request) {
+            \Illuminate\Support\Facades\Log::error('Database Query Error: ' . $e->getMessage(), [
+                'sql' => $e->getSql(),
+                'url' => $request->fullUrl(),
+            ]);
+
+            $friendlyMessage = 'Đã xảy ra lỗi khi thao tác dữ liệu. Vui lòng kiểm tra lại thông tin nhập hoặc thử lại sau.';
+
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $friendlyMessage,
+                ], 500);
+            }
+
+            return back()->with('error', $friendlyMessage);
+        });
+
+        $exceptions->render(function (\PDOException $e, $request) {
+            \Illuminate\Support\Facades\Log::error('PDO Exception: ' . $e->getMessage());
+
+            $friendlyMessage = 'Lỗi kết nối cơ sở dữ liệu. Vui lòng thử lại sau.';
+
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $friendlyMessage,
+                ], 500);
+            }
+
+            return back()->with('error', $friendlyMessage);
+        });
+
+        // Intercept uncaught exceptions when debug mode is disabled
+        $exceptions->render(function (\Throwable $e, $request) {
+            if (!config('app.debug')) {
+                \Illuminate\Support\Facades\Log::error('Unhandled Exception: ' . $e->getMessage(), [
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine(),
+                ]);
+
+                $friendlyMessage = 'Hệ thống đã ghi nhận sự cố. Vui lòng thử lại sau.';
+
+                if ($request->expectsJson() || $request->ajax()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => $friendlyMessage,
+                    ], 500);
+                }
+            }
+        });
     })->create();

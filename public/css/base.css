@@ -1,9 +1,49 @@
-* {
+*, ::before, ::after {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
     scrollbar-width: thin;
     scrollbar-color: var(--scrollbar-thumb, rgba(255, 255, 255, 0.1)) transparent;
+    corner-shape: squircle;
+    -webkit-corner-shape: squircle;
+    corner-smoothing: 1;
+    -webkit-corner-smoothing: 1;
+}
+
+/* Lisse Squircle Utility Classes & Helpers */
+.lisse-squircle, .squircle, [data-squircle] {
+    corner-shape: squircle !important;
+    -webkit-corner-shape: squircle !important;
+    corner-smoothing: 1 !important;
+    -webkit-corner-smoothing: 1 !important;
+}
+
+.squircle-sm {
+    border-radius: 8px;
+    corner-shape: squircle;
+    -webkit-corner-shape: squircle;
+    corner-smoothing: 1;
+}
+
+.squircle-md {
+    border-radius: 14px;
+    corner-shape: squircle;
+    -webkit-corner-shape: squircle;
+    corner-smoothing: 1;
+}
+
+.squircle-lg {
+    border-radius: 20px;
+    corner-shape: squircle;
+    -webkit-corner-shape: squircle;
+    corner-smoothing: 1;
+}
+
+.squircle-xl {
+    border-radius: 28px;
+    corner-shape: squircle;
+    -webkit-corner-shape: squircle;
+    corner-smoothing: 1;
 }
 
 /* CHIẾN LƯỢC ĐÚNG:

@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import '../widgets/custom_loader.dart';
 
 class SellerDashboardScreen extends StatefulWidget {
   final VoidCallback? onBack;
@@ -255,7 +255,11 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> with Sing
         ),
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: emeraldColor))
+          ? const CustomPulseLoader(
+              message: 'Đang tải dữ liệu Kênh Chủ Gian Hàng...',
+              icon: Icons.storefront_rounded,
+              primaryColor: Color(0xFF059669),
+            )
           : TabBarView(
               controller: _tabController,
               children: [

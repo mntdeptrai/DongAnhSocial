@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import '../widgets/custom_loader.dart';
 
 class MyCheckinsScreen extends StatefulWidget {
   const MyCheckinsScreen({super.key});
@@ -65,7 +65,11 @@ class _MyCheckinsScreenState extends State<MyCheckinsScreen> {
       ),
       backgroundColor: const Color(0xFFF8FAFC),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: Color(0xFF0EA5E9)))
+          ? const CustomPulseLoader(
+              message: 'Đang kết nối nhật ký check-in...',
+              icon: Icons.add_location_alt_rounded,
+              primaryColor: Color(0xFF0EA5E9),
+            )
           : _myCheckins.isEmpty
               ? Center(
                   child: Padding(

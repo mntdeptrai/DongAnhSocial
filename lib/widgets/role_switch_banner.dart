@@ -1,5 +1,4 @@
-import 'package:flutter/material.dart';
-import '../services/api_service.dart';
+import '../widgets/squircle_helper.dart';
 
 class RoleSwitchBanner extends StatelessWidget {
   final String activeRole;
@@ -15,7 +14,6 @@ class RoleSwitchBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     final userRole = ApiService.currentUser?['role'] ?? 'user';
 
-    // Build available roles based on user permissions
     final List<Map<String, dynamic>> availableRoles = [
       {
         'id': 'user',
@@ -57,10 +55,10 @@ class RoleSwitchBanner extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
+      decoration: SquircleHelper.decoration(
+        radius: 16,
         color: Colors.grey.shade100,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade200),
+        borderSide: BorderSide(color: Colors.grey.shade200),
       ),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
@@ -77,12 +75,12 @@ class RoleSwitchBanner extends StatelessWidget {
                   color: Colors.transparent,
                   child: InkWell(
                     onTap: () => onRoleChanged(r['id']),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: SquircleHelper.radius(12),
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                      decoration: BoxDecoration(
+                      decoration: SquircleHelper.decoration(
+                        radius: 12,
                         color: isSelected ? roleColor : Colors.transparent,
-                        borderRadius: BorderRadius.circular(12),
                         boxShadow: isSelected
                             ? [
                                 BoxShadow(

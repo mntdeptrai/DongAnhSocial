@@ -35,7 +35,15 @@
 }
 
 /* Basic Reset */
-* { margin: 0; padding: 0; box-sizing: border-box; }
+*, ::before, ::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    corner-shape: squircle;
+    -webkit-corner-shape: squircle;
+    corner-smoothing: 1;
+    -webkit-corner-smoothing: 1;
+}
 
 body {
     font-family: var(--slr-font);

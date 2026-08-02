@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import '../widgets/custom_loader.dart';
 import 'map_screen.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
@@ -574,7 +574,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
         ),
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: crimsonColor))
+          ? const CustomPulseLoader(
+              message: 'Đang tải dữ liệu Quản trị Admin...',
+              icon: Icons.shield_rounded,
+              primaryColor: Color(0xFFDC2626),
+            )
           : TabBarView(
               controller: _tabController,
               children: [

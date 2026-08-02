@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../services/api_service.dart';
+import '../widgets/custom_loader.dart';
 
 class EateryDetailScreen extends StatefulWidget {
   final String categorySlug;
@@ -385,7 +386,11 @@ class _EateryDetailScreenState extends State<EateryDetailScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       body: _isLoading && eatery == null
-          ? const Center(child: CircularProgressIndicator(color: Color(0xFF0EA5E9)))
+          ? const CustomPulseLoader(
+              message: 'Đang tải thông tin địa điểm...',
+              icon: Icons.store_rounded,
+              primaryColor: Color(0xFF0EA5E9),
+            )
           : eatery == null
               ? Scaffold(
                   appBar: AppBar(title: const Text('Chi tiết địa điểm')),

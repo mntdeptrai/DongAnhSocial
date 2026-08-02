@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import '../widgets/squircle_helper.dart';
 
 class TopNavBar extends StatelessWidget implements PreferredSizeWidget {
   final int currentIndex;
@@ -32,18 +32,11 @@ class TopNavBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFFF0FDFA), // Sleek light seafoam mist background
-        border: const Border(
+      decoration: const BoxDecoration(
+        color: Color(0xFFF0FDFA),
+        border: Border(
           bottom: BorderSide(color: Color(0x1F0EA5E9), width: 1.0),
         ),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF06B6D4).withValues(alpha: 0.06),
-            blurRadius: 12,
-            offset: const Offset(0, 3),
-          ),
-        ],
       ),
       child: SafeArea(
         bottom: false,
@@ -55,16 +48,16 @@ class TopNavBar extends StatelessWidget implements PreferredSizeWidget {
               padding: const EdgeInsets.symmetric(horizontal: 14),
               child: Row(
                 children: [
-                  // Menu drawer button with light double bezel
+                  // Menu drawer button with Squircle smooth corners
                   InkWell(
                     onTap: onMenuTap ?? () => Scaffold.of(context).openDrawer(),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: SquircleHelper.radius(12),
                     child: Container(
                       padding: const EdgeInsets.all(8.0),
-                      decoration: BoxDecoration(
+                      decoration: SquircleHelper.decoration(
+                        radius: 12,
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFF0EA5E9).withValues(alpha: 0.18)),
+                        borderSide: BorderSide(color: const Color(0xFF0EA5E9).withValues(alpha: 0.18)),
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withValues(alpha: 0.04),
@@ -156,10 +149,10 @@ class TopNavBar extends StatelessWidget implements PreferredSizeWidget {
           Container(
             width: 38,
             height: 38,
-            decoration: BoxDecoration(
+            decoration: SquircleHelper.decoration(
+              radius: 12,
               color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFF0EA5E9).withValues(alpha: 0.18)),
+              borderSide: BorderSide(color: const Color(0xFF0EA5E9).withValues(alpha: 0.18)),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.04),
@@ -179,10 +172,10 @@ class TopNavBar extends StatelessWidget implements PreferredSizeWidget {
               child: IgnorePointer(
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                  decoration: BoxDecoration(
+                  decoration: SquircleHelper.decoration(
+                    radius: 10,
                     color: const Color(0xFFEF4444),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: const Color(0xFFF0FDFA), width: 1.5),
+                    borderSide: const BorderSide(color: Color(0xFFF0FDFA), width: 1.5),
                   ),
                   constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
                   child: Center(
@@ -213,15 +206,15 @@ class TopNavBar extends StatelessWidget implements PreferredSizeWidget {
     return Expanded(
       child: InkWell(
         onTap: () => onTabSelected(index),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: SquircleHelper.radius(12),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 250),
           curve: Curves.fastOutSlowIn,
           margin: const EdgeInsets.symmetric(horizontal: 2),
-          decoration: BoxDecoration(
+          decoration: SquircleHelper.decoration(
+            radius: 12,
             color: isSelected ? const Color(0xFF0EA5E9).withValues(alpha: 0.14) : Colors.transparent,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
+            borderSide: BorderSide(
               color: isSelected ? const Color(0xFF0EA5E9).withValues(alpha: 0.35) : Colors.transparent,
               width: 1.0,
             ),

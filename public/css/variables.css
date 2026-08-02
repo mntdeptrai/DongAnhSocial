@@ -44,6 +44,10 @@
     --shadow-bezel: 0 12px 32px -8px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.12);
     --border-bezel: 1px solid rgba(255, 255, 255, 0.1);
 
+    /* Lisse Squircle Smooth Corner Tokens */
+    --squircle-smoothing: 1;
+    --corner-shape: squircle;
+
     /* Shadow and Glow system */
     --shadow-main: 0 10px 40px -10px rgba(0, 0, 0, 0.5);
     --shadow-hover: 0 20px 40px -10px rgba(14, 165, 233, 0.25);
