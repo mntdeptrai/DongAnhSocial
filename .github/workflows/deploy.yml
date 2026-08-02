@@ -1,0 +1,30 @@
+name: Production CD Deployment
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy-to-server:
+    name: Deploy Laravel Web to Production VPS
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: SSH and Deploy to Server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          passphrase: ${{ secrets.SSH_PASSPHRASE }}
+          port: ${{ secrets.SSH_PORT || 22 }}
+          script: |
+            cd /var/www/DongAnhSocial
+            git pull origin main
+            composer install --no-dev --optimize-autoloader
+            php artisan migrate --force
+            php artisan config:cache
+            php artisan route:cache
+            php artisan view:cache
+            php artisan queue:restart
+            sudo systemctl restart php8.2-fpm
