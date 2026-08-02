@@ -37,6 +37,10 @@ android {
         }
     }
 
+    kotlinOptions {
+        jvmTarget = "17"
+    }
+
     packaging {
         jniLibs {
             keepDebugSymbols.add("**/*.so")
@@ -45,12 +49,6 @@ android {
         resources {
             excludes.add("META-INF/*")
         }
-    }
-}
-
-kotlin {
-    compilerOptions {
-        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
     }
 }
 
