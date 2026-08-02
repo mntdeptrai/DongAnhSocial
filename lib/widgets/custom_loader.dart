@@ -26,7 +26,6 @@ class CustomPulseLoader extends StatelessWidget {
     );
   }
 }
-}
 
 /// 🌊 Sleek 3-Dot Bouncing Wave animation for CTA Buttons
 class ButtonDotsLoader extends StatefulWidget {

@@ -25,6 +25,9 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
   String _searchQuery = '';
   String _selectedFilter = 'Tất cả';
 
+  // Synchronized Cart State
+  final Map<String, Map<String, dynamic>> _cartItems = {};
+
   @override
   void initState() {
     super.initState();
