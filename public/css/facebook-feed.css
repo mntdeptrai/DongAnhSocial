@@ -88,12 +88,31 @@
     font-family: 'Be Vietnam Pro', sans-serif;
 }
 
+.fb-post-card {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow-x: hidden;
+}
+
 .fb-post-text {
     padding: 0 20px 14px 20px;
     font-size: 0.98rem;
     line-height: 1.6;
     color: #1e293b;
     font-family: 'Be Vietnam Pro', sans-serif;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    box-sizing: border-box;
+    max-width: 100%;
+}
+
+.fb-post-text strong,
+.fb-post-text p,
+.fb-post-text div,
+.fb-post-author-name {
+    word-break: break-word;
+    overflow-wrap: anywhere;
 }
 
 .fb-post-text-body {
@@ -700,5 +719,37 @@
 .fb-comment-send-btn:hover {
     background: #1d4ed8;
     transform: scale(1.05);
+}
+
+/* Mobile Responsive Optimization for Post Feed */
+@media (max-width: 768px) {
+    .fb-post-card {
+        border-radius: 16px !important;
+        margin-bottom: 16px !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    .fb-post-header {
+        padding: 14px 14px 10px 14px !important;
+    }
+
+    .fb-post-text {
+        padding: 0 14px 12px 14px !important;
+        font-size: 0.94rem !important;
+        word-break: break-word !important;
+        overflow-wrap: anywhere !important;
+        box-sizing: border-box !important;
+    }
+
+    .fb-post-text strong,
+    .fb-post-text p,
+    .fb-post-text div,
+    .fb-post-author-name {
+        word-break: break-word !important;
+        overflow-wrap: anywhere !important;
+        white-space: normal !important;
+    }
 }
 

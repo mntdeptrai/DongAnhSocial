@@ -209,6 +209,13 @@ class HomeController extends Controller
         $data = \App\Domain\Checkin\CheckinData::fromRequest($request);
         $checkinService->createCheckin($data);
 
+        $authUser = Auth::user();
+        if ($authUser) {
+            try {
+                \App\Services\NotificationService::notifyNewPost($authUser, '', $request->input('comment') ?? 'Check-in mới', (int)$eateryId);
+            } catch (\Exception $e) {}
+        }
+
         return redirect()->route('checkin.feed')->with('success', 'Check-in của bạn đã được đăng thành công! 🎉');
     }
 

@@ -325,8 +325,7 @@
                                  x-transition:leave-start="opacity-100 transform scale-100"
                                  x-transition:leave-end="opacity-0 transform scale-95"
                                  class="chat-dropdown-menu" 
-                                 style="position: absolute; right: -50px; top: 100%; margin-top: 10px; width: 340px; background: var(--bg-card, #ffffff); border: 1px solid var(--border-glow, rgba(0,0,0,0.08)); border-radius: 20px; box-shadow: 0 12px 40px rgba(0,0,0,0.15); z-index: 10000; overflow: hidden; text-align: left; display: none;"
-                                 :style="open ? 'display: flex; flex-direction: column;' : 'display: none;'">
+                                 style="position: absolute; right: 0; top: 100%; margin-top: 10px; width: 340px; background: var(--bg-card, #ffffff); border: 1px solid var(--border-glow, rgba(0,0,0,0.08)); border-radius: 20px; box-shadow: 0 12px 40px rgba(0,0,0,0.15); z-index: 10000; overflow: hidden; text-align: left; display: flex; flex-direction: column;">
                                 
                                 <div style="padding: 16px 18px; border-bottom: 1px solid rgba(0,0,0,0.06); display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.015);">
                                     <h4 style="margin: 0; font-size: 1.05rem; font-weight: 800; color: var(--text-main, #1e293b); font-family: var(--font-heading);">Đoạn chat</h4>
@@ -438,8 +437,7 @@
                                  x-transition:leave-start="opacity-100 transform scale-100"
                                  x-transition:leave-end="opacity-0 transform scale-95"
                                  class="notif-dropdown-menu" 
-                                 style="position: absolute; right: -40px; top: 100%; margin-top: 10px; width: 340px; background: var(--bg-card, #ffffff); border: 1px solid var(--border-glow, rgba(0,0,0,0.08)); border-radius: 20px; box-shadow: 0 12px 40px rgba(0,0,0,0.15); z-index: 10000; overflow: hidden; text-align: left; display: none;"
-                                 :style="open ? 'display: flex; flex-direction: column;' : 'display: none;'">
+                                 style="position: absolute; right: 0; top: 100%; margin-top: 10px; width: 340px; background: var(--bg-card, #ffffff); border: 1px solid var(--border-glow, rgba(0,0,0,0.08)); border-radius: 20px; box-shadow: 0 12px 40px rgba(0,0,0,0.15); z-index: 10000; overflow: hidden; text-align: left; display: flex; flex-direction: column;">
                                 
                                 <div style="padding: 16px 18px; border-bottom: 1px solid rgba(0,0,0,0.06); display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.015);">
                                     <h4 style="margin: 0; font-size: 1.05rem; font-weight: 800; color: var(--text-main, #1e293b); font-family: var(--font-heading);">Thông báo</h4>
@@ -503,7 +501,7 @@
                                     </svg>
                                 </div>
                             </button>
-                            <div x-cloak x-show="open" x-transition class="profile-dropdown-menu" style="display: none;" :style="open ? 'display: flex; flex-direction: column;' : 'display: none;'">
+                            <div x-cloak x-show="open" x-transition class="profile-dropdown-menu">
                                 @php
                                     $effectiveRole = session('user_role') ?: (Auth::check() ? Auth::user()->role : 'user');
                                 @endphp

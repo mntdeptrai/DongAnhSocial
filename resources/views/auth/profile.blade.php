@@ -732,10 +732,16 @@
         <div class="pro-header-card">
             <!-- Cover Image -->
             <div class="pro-cover-box">
-                <img src="{{ optional($school)->image_path ?: 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=1600&q=80' }}" class="pro-cover-img" alt="Cover">
-                <button type="button" class="pro-cover-btn">
-                    📷 Đổi ảnh bìa
-                </button>
+                @php
+                    $coverSrc = optional($school)->image_path ?: 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=1600&q=80';
+                @endphp
+                <img src="{{ $coverSrc }}" class="pro-cover-img" id="pro-cover-img-el" alt="Cover" style="cursor: pointer;" onclick="openSingleImageLightbox(this.src, '🖼️ Ảnh bìa - {{ addslashes(optional($school)->standardized_name ?: $user->name) }}')">
+                @if($isOwner)
+                    <label class="pro-cover-btn" style="cursor: pointer;" onclick="event.stopPropagation();">
+                        📷 Đổi ảnh bìa
+                        <input type="file" id="cover-file-input" accept="image/*" style="display: none;" onchange="handleCoverSelect(this)">
+                    </label>
+                @endif
             </div>
 
             <!-- Profile Info Bar -->
@@ -744,14 +750,25 @@
                     <!-- Left: Avatar & Text Details -->
                     <div class="pro-left-details">
                         <div class="pro-avatar-box">
-                            @if($user->avatar && str_starts_with($user->avatar, 'avatars/'))
-                                <img src="{{ rtrim(env('R2_PUBLIC_URL'), '/') . '/' . $user->avatar }}" class="pro-avatar-img" alt="{{ $user->name }}">
-                            @elseif(optional($school)->image_path)
-                                <img src="{{ optional($school)->image_path }}" class="pro-avatar-img" alt="{{ $user->name }}">
+                            @php
+                                $avatarSrc = '';
+                                if ($user->avatar && str_starts_with($user->avatar, 'avatars/')) {
+                                    $avatarSrc = rtrim(env('R2_PUBLIC_URL'), '/') . '/' . $user->avatar;
+                                } elseif (optional($school)->image_path) {
+                                    $avatarSrc = optional($school)->image_path;
+                                }
+                            @endphp
+                            @if($avatarSrc)
+                                <img src="{{ $avatarSrc }}" class="pro-avatar-img" id="pro-avatar-img-el" alt="{{ $user->name }}" style="cursor: pointer;" onclick="openSingleImageLightbox(this.src, '🧑 Ảnh đại diện - {{ addslashes(optional($school)->standardized_name ?: $user->name) }}')">
                             @else
                                 <div style="width:100%;height:100%;background:#e2e8f0;display:flex;align-items:center;justify-content:center;font-size:3rem;border-radius:20px;">👤</div>
                             @endif
-                            <div class="pro-avatar-badge" title="Đổi ảnh đại diện">📷</div>
+                            @if($isOwner)
+                                <label class="pro-avatar-badge" title="Đổi ảnh đại diện" style="cursor: pointer;" onclick="event.stopPropagation();">
+                                    📷
+                                    <input type="file" id="avatar-file-input" accept="image/*" style="display: none;" onchange="handleAvatarSelect(this)">
+                                </label>
+                            @endif
                         </div>
 
                         <div>
@@ -785,9 +802,23 @@
                         </div>
                     </div>
 
-                    <!-- Right: Action Buttons Group (Cho người xem tương tác trang) -->
+                    <!-- Right: Action Buttons Group (Phân biệt rõ Chủ sở hữu & Người xem) -->
                     <div class="pro-actions-group">
-                        @if(!$isOwner)
+                        @if($isOwner)
+                            <!-- Dành riêng cho Chính Chủ Tài Khoản (Owner View) -->
+                            <button type="button" @click="showEditModal = true" class="pro-btn-primary">
+                                ✏️ Chỉnh sửa hồ sơ
+                            </button>
+
+                            <button type="button" @click="showPasswordModal = true" class="pro-btn-outline">
+                                🔑 Đổi mật khẩu
+                            </button>
+
+                            <button type="button" onclick="shareProfilePage()" class="pro-btn-outline">
+                                📤 Chia sẻ
+                            </button>
+                        @else
+                            <!-- Dành cho Khách & Người xem khác ghé thăm (Viewer / Guest View) -->
                             <!-- 1. Nút Thêm bạn bè (Friendship Button) -->
                             <div id="friend-btn-wrapper" style="display: inline-flex;">
                                 @if($friendshipStatus === 'none')
@@ -819,43 +850,42 @@
                                 <span id="follow-icon">{{ $isFollowing ? '✓' : '🔔' }}</span> 
                                 <span id="follow-text">{{ $isFollowing ? 'Đang theo dõi' : 'Theo dõi' }}</span>
                             </button>
-                        @endif
 
-                        @if($school)
-                            @php
-                                $uId = \Illuminate\Support\Facades\Auth::id() ?? session('user_id');
-                                $sId = session()->getId();
-                                $eateryLiked = \App\Models\CheckinReaction::where('reactionable_type', 'eatery')
-                                    ->where('reactionable_id', $school->id)
-                                    ->where(function($q) use ($uId, $sId) {
-                                        if ($uId) { $q->where('user_id', $uId); } else { $q->where('session_id', $sId); }
-                                    })->exists();
+                            <!-- 3. Nút Thả tim (nếu là trang Trường học / Cơ sở) -->
+                            @if($school)
+                                @php
+                                    $uId = \Illuminate\Support\Facades\Auth::id() ?? session('user_id');
+                                    $sId = session()->getId();
+                                    $eateryLiked = \App\Models\CheckinReaction::where('reactionable_type', 'eatery')
+                                        ->where('reactionable_id', $school->id)
+                                        ->where(function($q) use ($uId, $sId) {
+                                            if ($uId) { $q->where('user_id', $uId); } else { $q->where('session_id', $sId); }
+                                        })->exists();
 
-                                $eateryLikesCount = \App\Models\CheckinReaction::where('reactionable_type', 'eatery')
-                                    ->where('reactionable_id', $school->id)
-                                    ->count();
-                            @endphp
-                            <button type="button" class="pro-btn-primary" 
-                                    id="eatery-heart-btn-{{ $school->id }}" 
-                                    onclick="togglePlaceHeart(this, {{ $school->id }})" 
-                                    style="{{ $eateryLiked ? 'background: #ef4444 !important; color: #ffffff !important;' : 'background: #f1f5f9; color: #0f172a;' }}">
-                                ❤️ <span id="eatery-heart-text-{{ $school->id }}">{{ $eateryLiked ? 'Đã thả tim' : 'Thả tim' }} ({{ $eateryLikesCount }})</span>
+                                    $eateryLikesCount = \App\Models\CheckinReaction::where('reactionable_type', 'eatery')
+                                        ->where('reactionable_id', $school->id)
+                                        ->count();
+                                @endphp
+                                <button type="button" class="pro-btn-primary" 
+                                        id="eatery-heart-btn-{{ $school->id }}" 
+                                        onclick="togglePlaceHeart(this, {{ $school->id }})" 
+                                        style="{{ $eateryLiked ? 'background: #ef4444 !important; color: #ffffff !important;' : 'background: #f1f5f9; color: #0f172a;' }}">
+                                    ❤️ <span id="eatery-heart-text-{{ $school->id }}">{{ $eateryLiked ? 'Đã thả tim' : 'Thả tim' }} ({{ $eateryLikesCount }})</span>
+                                </button>
+                            @endif
+
+                            <!-- 4. Nút Nhắn tin -->
+                            <button type="button" class="pro-btn-outline" 
+                                    onclick="openDirectMessage({{ $user->id }}, '{{ addslashes(optional($school)->standardized_name ?: $user->name) }}', '{{ optional($school)->image_path ?: '' }}')">
+                                💬 Nhắn tin
+                            </button>
+
+                            <!-- 5. Nút Chia sẻ -->
+                            <button type="button" class="pro-btn-outline" 
+                                    onclick="shareProfilePage()">
+                                📤 Chia sẻ
                             </button>
                         @endif
-
-                        <button type="button" class="pro-btn-outline" 
-                                onclick="openDirectMessage({{ $user->id }}, '{{ addslashes(optional($school)->standardized_name ?: $user->name) }}', '{{ optional($school)->image_path ?: '' }}')">
-                            💬 Nhắn tin
-                        </button>
-
-                        <button type="button" class="pro-btn-outline" 
-                                onclick="shareProfilePage()">
-                            📤 Chia sẻ
-                        </button>
-
-                        <button type="button" @click="showEditModal = true" class="pro-btn-icon-only" title="Chỉnh sửa tài khoản / Cài đặt">
-                            ⚙️
-                        </button>
                     </div>
                 </div>
 
@@ -921,12 +951,8 @@
                         </li>
                     </ul>
 
-                    @if($school)
-                        <a href="{{ route('principal.schools.edit', $school->slug ?: $school->id) }}" class="pro-btn-orange">
-                            ✏️ Cập nhật thông tin
-                        </a>
-                    @else
-                        <button type="button" @click="showEditModal = true" class="pro-btn-orange">
+                    @if($isOwner)
+                        <button type="button" @click="showEditModal = true" class="pro-btn-orange" style="width: 100%; border: none; cursor: pointer;">
                             ✏️ Cập nhật thông tin
                         </button>
                     @endif
@@ -1054,13 +1080,13 @@
                                 $imgs = $p->all_images;
                                 $imgCount = count($imgs);
                             @endphp
-                            <article class="fb-post-card mb-4" style="background: #ffffff; border-radius: 20px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.05);">
+                            <article class="fb-post-card mb-4" style="background: #ffffff; border-radius: 20px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.05); width: 100%; max-width: 100%; box-sizing: border-box;">
                                 <!-- Facebook Post Header -->
-                                <div class="fb-post-header">
+                                <div class="fb-post-header" style="box-sizing: border-box; width: 100%;">
                                     <div class="fb-post-author-box">
                                         <img src="{{ optional($school)->image_path ?: 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=150&q=80' }}" class="fb-user-avatar" alt="{{ optional($school)->standardized_name }}">
                                         <div>
-                                            <h4 class="fb-post-author-name">{{ optional($school)->standardized_name ?: $user->name }}</h4>
+                                            <h4 class="fb-post-author-name" style="word-break: break-word; overflow-wrap: anywhere;">{{ optional($school)->standardized_name ?: $user->name }}</h4>
                                             <div class="fb-post-subtext">
                                                 <span>{{ $p->created_at ? $p->created_at->diffForHumans() : 'Vừa xong' }}</span>
                                                 <span>•</span>
@@ -1071,9 +1097,9 @@
                                 </div>
 
                                 <!-- Post Content Text -->
-                                <div class="fb-post-text">
-                                    <strong class="d-block mb-1 text-dark" style="font-size: 1.05rem;">🌸 {{ $p->name }}</strong>
-                                    {!! \App\Helpers\TextHelper::linkify($p->description) !!}
+                                <div class="fb-post-text" style="word-break: break-word; overflow-wrap: anywhere; max-width: 100%; box-sizing: border-box;">
+                                    <strong class="d-block mb-1 text-dark" style="font-size: 1.05rem; word-break: break-word; overflow-wrap: anywhere; line-height: 1.45;">🌸 {{ $p->name }}</strong>
+                                    <div style="word-break: break-word; overflow-wrap: anywhere; line-height: 1.6;">{!! \App\Helpers\TextHelper::linkify($p->description) !!}</div>
                                 </div>
 
                                 <!-- Facebook Multi-Photo Grid System (1, 2, 3, 4, 5+ photos) -->
@@ -1158,7 +1184,7 @@
                                 <p style="margin-top: 6px; font-size: 0.85rem;">Hình ảnh từ các bài viết hoặc ảnh tải lên sẽ tự động hiển thị tại đây.</p>
                             </div>
                         @else
-                            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 14px;">
+                            <div id="photos-gallery-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 14px;">
                                 @foreach($allPhotoUrls as $index => $imgUrl)
                                     <div style="position: relative; border-radius: 14px; overflow: hidden; aspect-ratio: 1; background: #f1f5f9; cursor: pointer; border: 1px solid #e2e8f0; transition: transform 0.2s, box-shadow 0.2s;"
                                          onclick="openPostLightboxGallery({{ json_encode($allPhotoUrls->toArray()) }}, {{ $index }})"
@@ -1356,32 +1382,79 @@
 
     </div>
 
-    <!-- ====== EDIT PROFILE MODAL ====== -->
+    <!-- ====== IMAGE PREVIEW & CONFIRMATION MODAL ====== -->
+    <div id="imagePreviewModal" style="display: none;" class="pf-modal-overlay">
+        <div class="pf-modal-box" style="max-width: 520px; text-align: center;">
+            <button type="button" onclick="closeImagePreviewModal()" class="pf-modal-close">✕</button>
+            <div style="margin-bottom: 16px;">
+                <h3 id="previewModalTitle" style="font-size: 1.25rem; font-weight: 800; color: #0f172a; margin-bottom: 4px;">🖼️ Xem trước hình ảnh</h3>
+                <p id="previewModalSub" style="font-size: 0.85rem; color: #64748b; margin: 0;">Xem trước hình ảnh trước khi cập nhật chính thức lên trang cá nhân</p>
+            </div>
+
+            <!-- Image Preview Box -->
+            <div id="previewFrameWrap" style="width: 100%; border-radius: 16px; overflow: hidden; background: #f1f5f9; border: 2px dashed #cbd5e1; margin-bottom: 20px; display: flex; align-items: center; justify-content: center; position: relative;">
+                <img id="previewModalImg" src="" style="width: 100%; height: 100%; object-fit: cover; display: block;">
+            </div>
+
+            <!-- Action Buttons -->
+            <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                <button type="button" onclick="closeImagePreviewModal()" class="pro-btn-outline" style="border-radius: 12px; padding: 10px 22px; cursor: pointer;">
+                    ✕ Hủy bỏ
+                </button>
+                <button type="button" id="confirmUploadBtn" onclick="confirmImageUpload()" class="pro-btn-primary" style="border-radius: 12px; padding: 10px 24px; cursor: pointer;">
+                    💾 Cập nhật ảnh
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ====== EDIT PROFILE & PLACE MODAL ====== -->
     <div x-show="showEditModal" x-transition.opacity style="display:none;" class="pf-modal-overlay">
-        <div @click.outside="showEditModal = false" x-show="showEditModal" x-transition.scale class="pf-modal-box">
+        <div @click.outside="showEditModal = false" x-show="showEditModal" x-transition.scale class="pf-modal-box" style="max-width: 520px; max-height: 90vh; overflow-y: auto;">
             <button type="button" @click="showEditModal = false" class="pf-modal-close">✕</button>
             <div style="margin-bottom: 20px;">
-                <h3 style="font-size: 1.2rem; font-weight: 800; color: #0f172a; margin-bottom: 4px;">📝 Chỉnh sửa thông tin cá nhân</h3>
-                <p style="font-size: 0.85rem; color: #64748b; margin: 0;">Cập nhật họ tên, email và số điện thoại của bạn.</p>
+                <h3 style="font-size: 1.2rem; font-weight: 800; color: #0f172a; margin-bottom: 4px;">📝 Cập nhật thông tin địa điểm</h3>
+                <p style="font-size: 0.85rem; color: #64748b; margin: 0;">Chỉnh sửa trực tiếp các thông tin hiển thị tại bảng Thông tin địa điểm.</p>
             </div>
             <form action="/profile" method="POST">
                 @csrf
                 @method('PUT')
+
                 <div class="pf-form-group">
-                    <label class="pf-form-label">Họ và tên</label>
-                    <input type="text" name="name" required class="pf-form-input" value="{{ $user->name }}" placeholder="Nguyễn Văn A">
+                    <label class="pf-form-label">🏫 Tên cơ sở / Họ tên</label>
+                    <input type="text" name="name" required class="pf-form-input" value="{{ $user->name }}" placeholder="Ví dụ: Trường Mầm non Phúc Lộc">
                 </div>
+
                 <div class="pf-form-group">
-                    <label class="pf-form-label">Email</label>
-                    <input type="email" name="email" required class="pf-form-input" value="{{ $user->email }}" placeholder="email@example.com">
+                    <label class="pf-form-label">📍 Địa chỉ</label>
+                    <input type="text" name="address" class="pf-form-input" value="{{ optional($school)->address ?: 'Thôn Hùng Sơn, Xã Đông Anh' }}" placeholder="Ví dụ: Thôn Hùng Sơn, Xã Đông Anh, Hà Nội">
                 </div>
-                <div class="pf-form-group">
-                    <label class="pf-form-label">Số điện thoại</label>
-                    <input type="text" name="phone" required class="pf-form-input" value="{{ $user->phone }}" placeholder="0912 345 678">
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div class="pf-form-group">
+                        <label class="pf-form-label">📞 Điện thoại</label>
+                        <input type="text" name="phone" class="pf-form-input" value="{{ optional($school)->phone ?: ($user->phone ?: '') }}" placeholder="02438830001">
+                    </div>
+                    <div class="pf-form-group">
+                        <label class="pf-form-label">🌐 Website</label>
+                        <input type="text" name="website" class="pf-form-input" value="{{ optional($school)->website ?: 'phucloc.edu.vn' }}" placeholder="phucloc.edu.vn">
+                    </div>
                 </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div class="pf-form-group">
+                        <label class="pf-form-label">🕒 Giờ mở cửa</label>
+                        <input type="text" name="opening_hours" class="pf-form-input" value="{{ optional($school)->opening_hours ?: '07:00 – 17:30' }}" placeholder="07:00 – 17:30">
+                    </div>
+                    <div class="pf-form-group">
+                        <label class="pf-form-label">✉️ Email liên hệ</label>
+                        <input type="email" name="email" required class="pf-form-input" value="{{ $user->email }}" placeholder="email@example.com">
+                    </div>
+                </div>
+
                 <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
-                    <button type="button" @click="showEditModal = false" class="pro-btn-outline" style="border-radius: 12px; padding: 8px 20px;">Hủy</button>
-                    <button type="submit" class="pro-btn-primary" style="border-radius: 12px; padding: 8px 20px;">💾 Lưu thay đổi</button>
+                    <button type="button" @click="showEditModal = false" class="pro-btn-outline" style="border-radius: 12px; padding: 10px 22px;">Hủy</button>
+                    <button type="submit" class="pro-btn-primary" style="border-radius: 12px; padding: 10px 22px;">💾 Lưu cập nhật</button>
                 </div>
             </form>
         </div>
@@ -1497,6 +1570,15 @@
 
     let currentGalleryImages = [];
     let currentGalleryIndex = 0;
+
+    function openSingleImageLightbox(imgUrl, titleText) {
+        if (!imgUrl) return;
+        openPostLightboxGallery([imgUrl], 0);
+        const counterEl = document.getElementById('postLightboxCounter');
+        if (counterEl && titleText) {
+            counterEl.innerHTML = titleText;
+        }
+    }
 
     function openPostLightboxGallery(images, startIndex = 0) {
         if (!Array.isArray(images) || images.length === 0) return;
@@ -2139,6 +2221,138 @@
         } else {
             fallbackCopyUrl(shareUrl);
         }
+    }
+
+    let currentPreviewType = null;
+    let selectedImageFile = null;
+    let activeFileInputEl = null;
+
+    function handleAvatarSelect(input) {
+        if (!input.files || !input.files[0]) return;
+        const file = input.files[0];
+        selectedImageFile = file;
+        activeFileInputEl = input;
+        currentPreviewType = 'avatar';
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const previewImg = document.getElementById('previewModalImg');
+            const wrap = document.getElementById('previewFrameWrap');
+            const title = document.getElementById('previewModalTitle');
+            const sub = document.getElementById('previewModalSub');
+
+            if (title) title.innerHTML = '🧑 Xem trước ảnh đại diện';
+            if (sub) sub.innerHTML = 'Kiểm tra ảnh đại diện mới trước khi cập nhật chính thức.';
+            if (previewImg) previewImg.src = e.target.result;
+            if (wrap) {
+                wrap.style.width = '180px';
+                wrap.style.height = '180px';
+                wrap.style.borderRadius = '50%';
+                wrap.style.margin = '0 auto 20px auto';
+                wrap.style.boxShadow = '0 10px 25px rgba(0,0,0,0.15)';
+            }
+
+            const modal = document.getElementById('imagePreviewModal');
+            if (modal) modal.style.display = 'flex';
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function handleCoverSelect(input) {
+        if (!input.files || !input.files[0]) return;
+        const file = input.files[0];
+        selectedImageFile = file;
+        activeFileInputEl = input;
+        currentPreviewType = 'cover';
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const previewImg = document.getElementById('previewModalImg');
+            const wrap = document.getElementById('previewFrameWrap');
+            const title = document.getElementById('previewModalTitle');
+            const sub = document.getElementById('previewModalSub');
+
+            if (title) title.innerHTML = '🖼️ Xem trước ảnh bìa';
+            if (sub) sub.innerHTML = 'Kiểm tra ảnh bìa mới trước khi đăng tải lên địa điểm / trang cá nhân.';
+            if (previewImg) previewImg.src = e.target.result;
+            if (wrap) {
+                wrap.style.width = '100%';
+                wrap.style.height = '230px';
+                wrap.style.borderRadius = '16px';
+                wrap.style.margin = '0 0 20px 0';
+                wrap.style.boxShadow = 'none';
+            }
+
+            const modal = document.getElementById('imagePreviewModal');
+            if (modal) modal.style.display = 'flex';
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function closeImagePreviewModal() {
+        const modal = document.getElementById('imagePreviewModal');
+        if (modal) modal.style.display = 'none';
+        if (activeFileInputEl) {
+            activeFileInputEl.value = '';
+        }
+        selectedImageFile = null;
+        currentPreviewType = null;
+        activeFileInputEl = null;
+    }
+
+    function confirmImageUpload() {
+        if (!selectedImageFile || !currentPreviewType) {
+            closeImagePreviewModal();
+            return;
+        }
+
+        const formData = new FormData();
+        const endpoint = currentPreviewType === 'avatar' ? '/profile/avatar' : '/profile/cover';
+        const fileFieldName = currentPreviewType === 'avatar' ? 'avatar' : 'cover';
+
+        formData.append(fileFieldName, selectedImageFile);
+        formData.append('_token', '{{ csrf_token() }}');
+
+        const btn = document.getElementById('confirmUploadBtn');
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '⏳ Đang lưu...';
+        }
+
+        showToastNotification(currentPreviewType === 'avatar' ? '⌛ Đang cập nhật ảnh đại diện...' : '⌛ Đang cập nhật ảnh bìa...');
+
+        fetch(endpoint, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json'
+            },
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = '💾 Cập nhật ảnh';
+            }
+            if (data.success) {
+                showToastNotification('✅ ' + data.message);
+                closeImagePreviewModal();
+                setTimeout(() => {
+                    window.location.reload();
+                }, 500);
+            } else {
+                showToastNotification('❌ ' + (data.message || 'Không thể cập nhật hình ảnh.'));
+            }
+        })
+        .catch(err => {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = '💾 Cập nhật ảnh';
+            }
+            console.error('Image upload error:', err);
+            showToastNotification('❌ Có lỗi xảy ra khi cập nhật hình ảnh!');
+        });
     }
 
     function showToastNotification(msg) {

@@ -78,6 +78,7 @@ Route::middleware(['auth'])->group(function () {
     // Quản lý thông tin tài khoản cá nhân & Lộ trình của tôi
     Route::put('/profile', [AuthController::class, 'updateProfile'])->name('profile.update');
     Route::post('/profile/avatar', [AuthController::class, 'updateAvatar'])->name('profile.avatar');
+    Route::post('/profile/cover', [AuthController::class, 'updateCoverPhoto'])->name('profile.cover');
     Route::put('/profile/password', [AuthController::class, 'changePassword'])->name('profile.password');
     Route::post('/profile/password/send-otp', [AuthController::class, 'sendOtp'])->name('profile.password.send-otp')->middleware('throttle:5,1');
     Route::post('/user/heartbeat', [AuthController::class, 'heartbeat'])->name('user.heartbeat');

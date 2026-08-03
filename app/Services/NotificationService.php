@@ -261,6 +261,91 @@ class NotificationService
                 }
             }
 
+            // ========================================================
+            // G. THÔNG BÁO BÀI VIẾT MỚI TỪ BẠN BÈ VÀ NGƯỜI THEO DÕI
+            // ========================================================
+            $friendIds = DB::table('friendships')
+                ->where('status', 'accepted')
+                ->where(function($q) use ($userId) {
+                    $q->where('user_id', $userId)->orWhere('friend_id', $userId);
+                })
+                ->get()
+                ->map(function($f) use ($userId) {
+                    return $f->user_id == $userId ? $f->friend_id : $f->user_id;
+                })
+                ->toArray();
+
+            $followedUserIds = DB::table('follows')
+                ->where('user_id', $userId)
+                ->pluck('followed_id')
+                ->filter()
+                ->toArray();
+
+            $followedEateryIds = DB::table('follows')
+                ->where('user_id', $userId)
+                ->pluck('eatery_id')
+                ->filter()
+                ->toArray();
+
+            $targetUserIds = array_unique(array_merge($friendIds, $followedUserIds));
+
+            if (!empty($targetUserIds) || !empty($followedEateryIds)) {
+                // Tải bài viết từ EducationProgram / Post
+                $newEduPosts = DB::table('education_programs')
+                    ->where(function($q) use ($targetUserIds, $followedEateryIds) {
+                        if (!empty($followedEateryIds)) {
+                            $q->orWhereIn('eatery_id', $followedEateryIds);
+                        }
+                    })
+                    ->latest()
+                    ->take(10)
+                    ->get();
+
+                foreach ($newEduPosts as $ep) {
+                    $eatery = Eatery::find($ep->eatery_id);
+                    $authorName = $eatery ? $eatery->standardized_name : 'Một trang bạn theo dõi';
+                    $snippet = Str::limit($ep->name ?: $ep->description, 50);
+
+                    $notifications[] = [
+                        'id'        => 'new_edu_' . $ep->id . '_' . strtotime($ep->created_at),
+                        'title'     => '📣 Bài viết mới từ ' . $authorName,
+                        'body'      => "{$authorName} vừa đăng bài viết mới: \"{$snippet}\"",
+                        'time'      => Carbon::parse($ep->created_at)->diffForHumans(),
+                        'time_ts'   => strtotime($ep->created_at),
+                        'type'      => 'new_post',
+                        'icon'      => 'article',
+                        'is_read'   => false,
+                        'post_id'   => $ep->id,
+                    ];
+                }
+
+                // Tải checkin mới từ bạn bè
+                if (!empty($targetUserIds)) {
+                    $newCheckins = Checkin::whereIn('user_id', $targetUserIds)
+                        ->latest()
+                        ->take(10)
+                        ->get();
+
+                    foreach ($newCheckins as $chk) {
+                        $author = User::find($chk->user_id);
+                        $authorName = $author ? $author->name : 'Một người bạn';
+                        $snippet = Str::limit($chk->content ?: ($chk->caption ?: 'bài viết mới'), 50);
+
+                        $notifications[] = [
+                            'id'        => 'new_chk_' . $chk->id . '_' . strtotime($chk->created_at),
+                            'title'     => '📝 Bài viết mới từ ' . $authorName,
+                            'body'      => "{$authorName} vừa chia sẻ một bài viết mới: \"{$snippet}\"",
+                            'time'      => Carbon::parse($chk->created_at)->diffForHumans(),
+                            'time_ts'   => strtotime($chk->created_at),
+                            'type'      => 'new_post',
+                            'icon'      => 'article',
+                            'is_read'   => false,
+                            'post_id'   => $chk->id,
+                        ];
+                    }
+                }
+            }
+
             // Sắp xếp lại theo mốc thời gian mới nhất xếp trên cùng
             usort($notifications, function($a, $b) {
                 return ($b['time_ts'] ?? 0) <=> ($a['time_ts'] ?? 0);
@@ -271,6 +356,63 @@ class NotificationService
         }
 
         return $notifications;
+    }
+
+    /**
+     * Bắn thông báo đẩy (FCM) & tự động ghi nhận bài viết mới cho bạn bè & người theo dõi
+     */
+    public static function notifyNewPost($authorUser, string $postTitle = '', string $postContent = '', ?int $eateryId = null): void
+    {
+        try {
+            if (!$authorUser) return;
+
+            // 1. Lấy danh sách ID bạn bè
+            $friendIds = DB::table('friendships')
+                ->where('status', 'accepted')
+                ->where(function($q) use ($authorUser) {
+                    $q->where('user_id', $authorUser->id)->orWhere('friend_id', $authorUser->id);
+                })
+                ->get()
+                ->map(function($f) use ($authorUser) {
+                    return $f->user_id == $authorUser->id ? $f->friend_id : $f->user_id;
+                })
+                ->toArray();
+
+            // 2. Lấy danh sách ID người theo dõi (followers)
+            $followerQuery = DB::table('follows')
+                ->where('followed_id', $authorUser->id);
+            
+            if ($eateryId) {
+                $followerQuery->orWhere('eatery_id', $eateryId);
+            }
+            
+            $followerIds = $followerQuery->pluck('user_id')->toArray();
+
+            // 3. Tổng hợp danh sách người nhận (không bao gồm chính tác giả)
+            $recipientIds = array_unique(array_filter(array_merge($friendIds, $followerIds)));
+            $recipientIds = array_diff($recipientIds, [$authorUser->id]);
+
+            if (empty($recipientIds)) return;
+
+            $recipients = User::whereIn('id', $recipientIds)->get();
+            $authorName = $authorUser->name;
+            $snippet = Str::limit($postTitle ?: $postContent, 55);
+
+            $title = "📣 Bài viết mới từ {$authorName}";
+            $body  = "{$authorName} vừa đăng bài viết mới: \"{$snippet}\"";
+
+            foreach ($recipients as $recipient) {
+                // Bắn FCM Push Notification ngay lập tức nếu người dùng có fcm_token
+                if (!empty($recipient->fcm_token)) {
+                    FcmService::sendNotification($recipient->fcm_token, $title, $body, [
+                        'type'        => 'new_post',
+                        'author_name' => $authorName,
+                    ]);
+                }
+            }
+        } catch (\Throwable $e) {
+            \Log::error('notifyNewPost Exception: ' . $e->getMessage());
+        }
     }
 
     /**

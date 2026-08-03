@@ -153,6 +153,13 @@ class CheckinApiController extends Controller
 
         $checkin = $checkinService->createCheckin($data);
 
+        // Tự động gửi thông báo đẩy cho tất cả Bạn bè & Followers ngay lập tức
+        if ($user) {
+            try {
+                \App\Services\NotificationService::notifyNewPost($user, '', $request->input('comment') ?? 'Check-in mới', (int)$request->input('eatery_id'));
+            } catch (\Exception $e) {}
+        }
+
         return response()->json([
             'success' => true,
             'message' => 'Check-in của bạn đã được đăng thành công!',

@@ -383,7 +383,7 @@ class AuthController extends Controller
     }
 
     /**
-     * Cập nhật thông tin tài khoản cá nhân
+     * Cập nhật thông tin tài khoản cá nhân & Thông tin địa điểm
      */
     public function updateProfile(Request $request)
     {
@@ -394,27 +394,46 @@ class AuthController extends Controller
         }
 
         $request->validate([
-            'name' => 'required|string|max:50',
+            'name'  => 'required|string|max:100',
             'email' => 'required|string|email|max:100|unique:users,email,' . $user->id,
-            'phone' => 'required|string|max:15',
+            'phone' => 'nullable|string|max:25',
+            'address' => 'nullable|string|max:255',
+            'website' => 'nullable|string|max:255',
+            'opening_hours' => 'nullable|string|max:100',
         ], [
             'email.unique' => 'Email này đã tồn tại trên hệ thống!',
-            'phone.required' => 'Vui lòng cung cấp số điện thoại liên hệ!',
         ]);
 
         $user->name = $request->name;
         $user->email = $request->email;
-        $user->phone = $request->phone;
+        if ($request->filled('phone')) {
+            $user->phone = $request->phone;
+        }
         $user->save();
+
+        // Cập nhật thông tin địa điểm / cơ sở nếu tài khoản có liên kết với Eatery ($school)
+        $school = \App\Models\Eatery::on('mysql_education')->where('user_id', $user->id)->first();
+        if (!$school) {
+            $school = \App\Models\Eatery::on('mysql')->where('user_id', $user->id)->first();
+        }
+
+        if ($school) {
+            if ($request->has('name')) $school->name = $request->name;
+            if ($request->has('address')) $school->address = $request->address;
+            if ($request->has('phone')) $school->phone = $request->phone;
+            if ($request->has('website')) $school->website = $request->website;
+            if ($request->has('opening_hours')) $school->opening_hours = $request->opening_hours;
+            $school->save();
+        }
 
         // Cập nhật thông tin vào session
         session(['user_name' => $user->name]);
 
-        return redirect()->back()->with('success', 'Cập nhật thông tin tài khoản thành công!');
+        return redirect()->back()->with('success', 'Cập nhật thông tin địa điểm và tài khoản thành công!');
     }
 
     /**
-     * Cập nhật ảnh đại diện (avatar) của người dùng — lưu lên Cloudflare R2
+     * Cập nhật ảnh đại diện (avatar) của người dùng
      */
     public function updateAvatar(Request $request)
     {
@@ -425,32 +444,105 @@ class AuthController extends Controller
         }
 
         $request->validate([
-            'avatar' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:3072',
+            'avatar' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
         ], [
             'avatar.required' => 'Vui lòng chọn ảnh đại diện!',
             'avatar.image'    => 'File phải là hình ảnh!',
             'avatar.mimes'    => 'Chỉ chấp nhận định dạng: jpeg, png, jpg, gif, webp',
-            'avatar.max'      => 'Kích thước ảnh tối đa là 3MB!',
+            'avatar.max'      => 'Kích thước ảnh tối đa là 5MB!',
         ]);
 
-        // Xóa ảnh cũ trên R2 nếu là file path (không phải emoji)
-        if ($user->avatar && str_starts_with($user->avatar, 'avatars/')) {
-            \Storage::disk('r2')->delete($user->avatar);
+        try {
+            // Xóa ảnh cũ trên R2 nếu là file path
+            if ($user->avatar && str_starts_with($user->avatar, 'avatars/')) {
+                try { \Storage::disk('r2')->delete($user->avatar); } catch (\Exception $e) {}
+            }
+            $path = $request->file('avatar')->store('avatars', 'r2');
+            $publicUrl = rtrim(env('R2_PUBLIC_URL'), '/') . '/' . $path;
+        } catch (\Exception $e) {
+            $path = $request->file('avatar')->store('avatars', 'public');
+            $publicUrl = asset('storage/' . $path);
         }
 
-        // Lưu ảnh mới lên Cloudflare R2 (thư mục avatars/, công khai)
-        $path = $request->file('avatar')->store('avatars', 'r2');
-
-        // URL công khai = R2_PUBLIC_URL + path
-        $publicUrl = rtrim(env('R2_PUBLIC_URL'), '/') . '/' . $path;
-
-        $user->avatar = $path;   // lưu path để xóa sau này
+        $user->avatar = $path;
         $user->save();
+
+        // Đồng bộ lưu ảnh đại diện mới vào Thư viện ảnh (EateryPhoto / Gallery)
+        $school = \App\Models\Eatery::on('mysql_education')->where('user_id', $user->id)->first();
+        if (!$school) {
+            $school = \App\Models\Eatery::on('mysql')->where('user_id', $user->id)->first();
+        }
+        if ($school) {
+            try {
+                \App\Models\EateryPhoto::create([
+                    'eatery_id'  => $school->id,
+                    'image_path' => $publicUrl,
+                    'caption'    => 'Ảnh đại diện - ' . $user->name,
+                    'sort_order' => 1,
+                ]);
+            } catch (\Exception $e) {}
+        }
 
         return response()->json([
             'success'    => true,
             'message'    => 'Cập nhật ảnh đại diện thành công!',
             'avatar_url' => $publicUrl,
+        ]);
+    }
+
+    /**
+     * Cập nhật ảnh bìa (cover photo) của địa điểm / người dùng
+     */
+    public function updateCoverPhoto(Request $request)
+    {
+        $userId = session('user_id') ?: Auth::id();
+        $user = User::find($userId);
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'Chưa đăng nhập!'], 401);
+        }
+
+        $request->validate([
+            'cover' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
+        ], [
+            'cover.required' => 'Vui lòng chọn ảnh bìa!',
+            'cover.image'    => 'File phải là hình ảnh!',
+            'cover.mimes'    => 'Chỉ chấp nhận định dạng: jpeg, png, jpg, gif, webp',
+            'cover.max'      => 'Kích thước ảnh tối đa là 5MB!',
+        ]);
+
+        try {
+            $path = $request->file('cover')->store('covers', 'r2');
+            $publicUrl = rtrim(env('R2_PUBLIC_URL'), '/') . '/' . $path;
+        } catch (\Exception $e) {
+            $path = $request->file('cover')->store('covers', 'public');
+            $publicUrl = asset('storage/' . $path);
+        }
+
+        // Cập nhật ảnh bìa cho trường học / địa điểm liên kết nếu có
+        $school = \App\Models\Eatery::on('mysql_education')->where('user_id', $user->id)->first();
+        if (!$school) {
+            $school = \App\Models\Eatery::on('mysql')->where('user_id', $user->id)->first();
+        }
+
+        if ($school) {
+            $school->image_path = $publicUrl;
+            $school->save();
+
+            // Đồng bộ lưu ảnh bìa mới vào Thư viện ảnh (EateryPhoto / Gallery)
+            try {
+                \App\Models\EateryPhoto::create([
+                    'eatery_id'  => $school->id,
+                    'image_path' => $publicUrl,
+                    'caption'    => 'Ảnh bìa - ' . $user->name,
+                    'sort_order' => 0,
+                ]);
+            } catch (\Exception $e) {}
+        }
+
+        return response()->json([
+            'success'   => true,
+            'message'   => 'Cập nhật ảnh bìa thành công!',
+            'cover_url' => $publicUrl,
         ]);
     }
 

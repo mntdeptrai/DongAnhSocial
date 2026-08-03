@@ -508,6 +508,11 @@ class SchoolManagementController extends Controller
             $post = \App\Models\EducationProgram::on('mysql')->create($postData);
         }
 
+        // Tự động gửi thông báo đến tất cả Bạn bè & Followers ngay lập tức
+        try {
+            \App\Services\NotificationService::notifyNewPost($user, $request->name ?? '', $request->description ?? '', $school->id ?? null);
+        } catch (\Exception $e) {}
+
         if ($request->wantsJson() || $request->ajax() || $request->header('X-Requested-With') === 'XMLHttpRequest') {
             $post->all_images = $post->all_images;
             $post->formatted_created_at = 'Vừa xong';
