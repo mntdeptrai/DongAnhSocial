@@ -52,11 +52,11 @@
 
     foreach ($groupedStalls as $name => $stallProducts) {
         $first = $stallProducts->first();
-        $desc = $first->description;
+        $desc = $first->description ?? '';
         
-        $hasQr = str_contains($desc, 'Hỗ trợ thanh toán VietQR') && !str_contains($desc, 'ngân hàng tiền mặt');
-        $hasBank = str_contains($desc, 'ngân hàng') && !str_contains($desc, 'ngân hàng tiền mặt');
-        $hasSmartphone = str_contains($desc, 'Có sử dụng smartphone');
+        $hasQr = (!empty($first->qr_code_path) || str_contains($desc, 'Hỗ trợ thanh toán VietQR')) && !str_contains($desc, 'ngân hàng tiền mặt');
+        $hasBank = (!empty($first->bank_account) || !empty($first->bank_name) || str_contains($desc, 'ngân hàng')) && !str_contains($desc, 'ngân hàng tiền mặt');
+        $hasSmartphone = (!empty($first->seller_phone) || str_contains($desc, 'Có sử dụng smartphone') || str_contains($desc, 'Có sử dụng điện thoại thông minh'));
         
         if ($hasQr) $stallsWithQr++;
         if ($hasBank) $stallsWithBank++;
@@ -1825,6 +1825,83 @@
             </div>
         </div>
     </div>
+
+    <!-- DYNAMIC CHART.JS SCRIPT -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof Chart === 'undefined') return;
+
+            // 1. Category Pie Chart
+            const catCanvas = document.getElementById('categoryPieChart');
+            if (catCanvas) {
+                new Chart(catCanvas.getContext('2d'), {
+                    type: 'pie',
+                    data: {
+                        labels: {!! json_encode(array_keys($categoriesCount)) !!},
+                        datasets: [{
+                            data: {!! json_encode(array_values($categoriesCount)) !!},
+                            backgroundColor: ['#10B981', '#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6']
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false }
+                });
+            }
+
+            // 2. VietQR Doughnut Chart
+            const qrCanvas = document.getElementById('qrDoughnutChart');
+            if (qrCanvas) {
+                new Chart(qrCanvas.getContext('2d'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Có VietQR', 'Chưa tạo QR'],
+                        datasets: [{
+                            data: [{{ $stallsWithQr }}, {{ max(0, $totalStalls - $stallsWithQr) }}],
+                            backgroundColor: ['#10B981', '#E2E8F0']
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false }
+                });
+            }
+
+            // 3. Smart & Bank Doughnut Chart
+            const smartCanvas = document.getElementById('smartDoughnutChart');
+            if (smartCanvas) {
+                new Chart(smartCanvas.getContext('2d'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Có TK Ngân Hàng', 'Có Smartphone', 'Tiền mặt'],
+                        datasets: [{
+                            data: [{{ $stallsWithBank }}, {{ $stallsWithSmartphone }}, {{ max(0, $totalStalls - $stallsWithBank) }}],
+                            backgroundColor: ['#0EA5E9', '#3B82F6', '#CBD5E1']
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false }
+                });
+            }
+
+            // 4. Origin Bar Chart
+            const originCanvas = document.getElementById('originBarChart');
+            if (originCanvas) {
+                new Chart(originCanvas.getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: {!! json_encode(array_keys($originsCount)) !!},
+                        datasets: [{
+                            label: 'Số lượng sản phẩm theo nguồn gốc',
+                            data: {!! json_encode(array_values($originsCount)) !!},
+                            backgroundColor: '#10B981',
+                            borderRadius: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: { y: { beginAtZero: true } }
+                    }
+                });
+            }
+        });
+    </script>
 
     <!-- XIII. CARD CHUYỂN ĐỔI SỐ & XIV. CARD HẠ TẦNG -->
     <div class="bottom-double-grid">
