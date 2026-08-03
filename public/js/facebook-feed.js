@@ -71,6 +71,52 @@ function initPostTextExpanders(target) {
     });
 }
 
+
+function shareFbPost(postId) {
+    const shareUrl = window.location.href;
+    if (navigator.share) {
+        navigator.share({
+            title: 'Chia sẻ bài viết',
+            text: 'Xem bài viết này trên Đông Anh Social',
+            url: shareUrl
+        }).catch(() => {});
+    } else if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(shareUrl).then(() => {
+            if (typeof showToastNotification === 'function') {
+                showToastNotification('🔄 Đã sao chép liên kết bài viết vào khay nhớ tạm!');
+            } else if (typeof window.showToast === 'function') {
+                window.showToast('🔄 Đã sao chép liên kết bài viết!', 'success');
+            } else {
+                alert('Đã sao chép liên kết bài viết!');
+            }
+        }).catch(() => {
+            fallbackCopyPostUrl(shareUrl);
+        });
+    } else {
+        fallbackCopyPostUrl(shareUrl);
+    }
+}
+
+function fallbackCopyPostUrl(text) {
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    document.body.appendChild(textArea);
+    textArea.select();
+    try {
+        document.execCommand('copy');
+        if (typeof showToastNotification === 'function') {
+            showToastNotification('🔄 Đã sao chép liên kết bài viết!');
+        } else if (typeof window.showToast === 'function') {
+            window.showToast('🔄 Đã sao chép liên kết bài viết!', 'success');
+        } else {
+            alert('Đã sao chép liên kết bài viết!');
+        }
+    } catch (err) {
+        alert('Liên kết bài viết: ' + text);
+    }
+    document.body.removeChild(textArea);
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     initPostTextExpanders();
 });

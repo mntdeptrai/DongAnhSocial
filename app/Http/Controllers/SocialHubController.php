@@ -196,9 +196,15 @@ class SocialHubController extends Controller
 
         try {
             $data = FriendshipData::fromRequest($request);
-            $this->socialService->sendFriendRequest($data);
+            $friendship = $this->socialService->sendFriendRequest($data);
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json(['success' => true, 'message' => 'Đã gửi lời mời kết bạn.', 'friendship_id' => $friendship->id]);
+            }
             return back()->with('success', 'Đã gửi lời mời kết bạn.');
         } catch (\Exception $e) {
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json(['success' => false, 'message' => $e->getMessage()], 400);
+            }
             return back()->with('error', $e->getMessage());
         }
     }
@@ -206,12 +212,18 @@ class SocialHubController extends Controller
     /**
      * Đồng ý lời mời kết bạn
      */
-    public function acceptFriendRequest($id)
+    public function acceptFriendRequest(Request $request, $id)
     {
         try {
             $this->socialService->acceptFriendRequest((int)$id, (int)Auth::id());
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json(['success' => true, 'message' => 'Đã đồng ý kết bạn.']);
+            }
             return back()->with('success', 'Đã đồng ý kết bạn.');
         } catch (\Exception $e) {
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json(['success' => false, 'message' => $e->getMessage()], 400);
+            }
             return back()->with('error', $e->getMessage());
         }
     }
@@ -219,12 +231,18 @@ class SocialHubController extends Controller
     /**
      * Từ chối / Hủy lời mời kết bạn
      */
-    public function declineFriendRequest($id)
+    public function declineFriendRequest(Request $request, $id)
     {
         try {
             $this->socialService->declineFriendRequest((int)$id, (int)Auth::id());
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json(['success' => true, 'message' => 'Đã hủy yêu cầu hoặc xóa kết bạn.']);
+            }
             return back()->with('success', 'Đã hủy yêu cầu hoặc xóa kết bạn.');
         } catch (\Exception $e) {
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json(['success' => false, 'message' => $e->getMessage()], 400);
+            }
             return back()->with('error', $e->getMessage());
         }
     }

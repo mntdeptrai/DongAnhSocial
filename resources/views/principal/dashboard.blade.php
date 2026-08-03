@@ -1216,7 +1216,7 @@
                                         <button type="button" onclick="openEditPostModal({{ json_encode($p) }})" class="fb-post-dropdown-item">
                                             <span>✏️</span> <span>Chỉnh sửa bài viết</span>
                                         </button>
-                                        <form action="{{ route('principal.posts.destroy', $p->id) }}" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn xóa bài viết này?')">
+                                        <form action="{{ route('principal.posts.destroy', $p->id) }}" method="POST" onsubmit="return showCustomConfirm(event, this, 'Xóa bài viết', 'Bạn có chắc chắn muốn xóa bài viết này không? Hành động này không thể hoàn tác!', true)">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="fb-post-dropdown-item danger">
@@ -1506,7 +1506,7 @@
                                         <button type="button" onclick="openPostLightbox('{{ $ph->image_path }}')" class="sch-btn sch-btn-sm sch-btn-accent flex-grow-1 justify-content-center">
                                             🔍 Phóng to
                                         </button>
-                                        <form action="{{ route('principal.photos.destroy', $ph->id) }}" method="POST" onsubmit="return confirm('Bạn có chắc muốn xóa ảnh này khỏi thư viện?')">
+                                        <form action="{{ route('principal.photos.destroy', $ph->id) }}" method="POST" onsubmit="return showCustomConfirm(event, this, 'Xóa ảnh thư viện', 'Bạn có chắc chắn muốn xóa ảnh này khỏi thư viện nhà trường?', true)">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="sch-btn sch-btn-danger sch-btn-sm justify-content-center" title="Xóa ảnh">
@@ -1558,7 +1558,7 @@
                                 <h3 class="fw-bold text-dark fs-6 mb-3" style="line-height: 1.4; height: 40px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
                                     {{ $vid->title }}
                                 </h3>
-                                <form action="{{ route('principal.videos.destroy', $vid->id) }}" method="POST" onsubmit="return confirm('Bạn có chắc muốn xóa video này?')">
+                                <form action="{{ route('principal.videos.destroy', $vid->id) }}" method="POST" onsubmit="return showCustomConfirm(event, this, 'Xóa video giới thiệu', 'Bạn có chắc chắn muốn xóa video này khỏi danh sách?', true)">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="sch-btn sch-btn-danger sch-btn-sm w-100 justify-content-center">

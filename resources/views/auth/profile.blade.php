@@ -680,6 +680,49 @@
             $studentsCount = optional($school)->total_students ?: ($mergedSchool['total_students'] ?? (count($mergedComp) > 0 ? array_sum(array_column($mergedComp, 'students')) : null));
             $foundedYr = optional($school)->founded_year ?: ($mergedSchool['founded_year'] ?? null);
             $awardsCount = optional($school)->awards_count ?: ($mergedSchool['awards_count'] ?? null);
+
+            $allPhotoUrls = collect();
+            if (isset($photos) && $photos->count() > 0) {
+                foreach ($photos as $ph) {
+                    if (!empty($ph->photo_url)) $allPhotoUrls->push($ph->photo_url);
+                    elseif (!empty($ph->image_path)) $allPhotoUrls->push($ph->image_path);
+                }
+            }
+            if (isset($posts) && $posts->count() > 0) {
+                foreach ($posts as $p) {
+                    if (!empty($p->all_images)) {
+                        foreach ($p->all_images as $img) {
+                            $allPhotoUrls->push($img);
+                        }
+                    }
+                }
+            }
+            $allPhotoUrls = $allPhotoUrls->unique()->filter()->values();
+
+            $currentUserId = \Illuminate\Support\Facades\Auth::id() ?? session('user_id');
+            $isOwner = $currentUserId && ($currentUserId == $user->id);
+
+            $friendshipStatus = 'none';
+            $friendshipId = null;
+            $isFollowing = false;
+
+            if ($currentUserId && !$isOwner) {
+                $friendship = \App\Models\Friendship::where(function($q) use ($currentUserId, $user) {
+                    $q->where('user_id', $currentUserId)->where('friend_id', $user->id);
+                })->orWhere(function($q) use ($currentUserId, $user) {
+                    $q->where('user_id', $user->id)->where('friend_id', $currentUserId);
+                })->first();
+
+                if ($friendship) {
+                    $friendshipId = $friendship->id;
+                    if ($friendship->status === 'accepted') {
+                        $friendshipStatus = 'accepted';
+                        $isFollowing = true;
+                    } elseif ($friendship->status === 'pending') {
+                        $friendshipStatus = ($friendship->user_id == $currentUserId) ? 'pending_sent' : 'pending_received';
+                    }
+                }
+            }
         @endphp
 
         <!-- ==========================================================
@@ -741,8 +784,42 @@
                         </div>
                     </div>
 
-                    <!-- Right: Action Buttons Group -->
+                    <!-- Right: Action Buttons Group (Cho người xem tương tác trang) -->
                     <div class="pro-actions-group">
+                        @if(!$isOwner)
+                            <!-- 1. Nút Thêm bạn bè (Friendship Button) -->
+                            <div id="friend-btn-wrapper" style="display: inline-flex;">
+                                @if($friendshipStatus === 'none')
+                                    <button type="button" class="pro-btn-primary" id="friend-btn" onclick="sendFriendRequest({{ $user->id }})">
+                                        ➕ Thêm bạn bè
+                                    </button>
+                                @elseif($friendshipStatus === 'pending_sent')
+                                    <button type="button" class="pro-btn-outline" id="friend-btn" onclick="cancelFriendRequest({{ $friendshipId }}, {{ $user->id }})">
+                                        ⏳ Đã gửi lời mời
+                                    </button>
+                                @elseif($friendshipStatus === 'pending_received')
+                                    <button type="button" class="pro-btn-primary" id="friend-btn" style="background: #059669; color: #ffffff;" onclick="acceptFriendRequest({{ $friendshipId }})">
+                                        ✅ Chấp nhận lời mời
+                                    </button>
+                                @elseif($friendshipStatus === 'accepted')
+                                    <button type="button" class="pro-btn-outline" id="friend-btn" style="background: #ecfdf5; border-color: #10b981; color: #047857;" onclick="unfriendUser({{ $friendshipId }}, {{ $user->id }})">
+                                        👥 Bạn bè ✓
+                                    </button>
+                                @endif
+                            </div>
+
+                            <!-- 2. Nút Theo dõi (Follow Button) -->
+                            <button type="button" 
+                                    class="{{ $isFollowing ? 'pro-btn-outline' : 'pro-btn-primary' }}" 
+                                    id="follow-btn" 
+                                    data-following="{{ $isFollowing ? 'true' : 'false' }}"
+                                    style="{{ $isFollowing ? 'background: #f1f5f9; color: #475569;' : '' }}"
+                                    onclick="toggleFollowUser(this, {{ $user->id }})">
+                                <span id="follow-icon">{{ $isFollowing ? '✓' : '🔔' }}</span> 
+                                <span id="follow-text">{{ $isFollowing ? 'Đang theo dõi' : 'Theo dõi' }}</span>
+                            </button>
+                        @endif
+
                         @if($school)
                             @php
                                 $uId = \Illuminate\Support\Facades\Auth::id() ?? session('user_id');
@@ -764,16 +841,25 @@
                                 ❤️ <span id="eatery-heart-text-{{ $school->id }}">{{ $eateryLiked ? 'Đã thả tim' : 'Thả tim' }} ({{ $eateryLikesCount }})</span>
                             </button>
                         @endif
-                        <a href="#" class="pro-btn-primary">
-                            🔖 Lưu địa điểm
-                        </a>
-                        <button type="button" class="pro-btn-outline">
+
+                        <button type="button" class="pro-btn-primary" 
+                                id="bookmark-btn" 
+                                data-saved="false" 
+                                onclick="toggleBookmarkProfile(this)">
+                            🔖 <span id="bookmark-text">Lưu địa điểm</span>
+                        </button>
+
+                        <button type="button" class="pro-btn-outline" 
+                                onclick="openDirectMessage({{ $user->id }}, '{{ addslashes(optional($school)->standardized_name ?: $user->name) }}', '{{ optional($school)->image_path ?: '' }}')">
                             💬 Nhắn tin
                         </button>
-                        <button type="button" class="pro-btn-outline">
+
+                        <button type="button" class="pro-btn-outline" 
+                                onclick="shareProfilePage()">
                             📤 Chia sẻ
                         </button>
-                        <button type="button" @click="showEditModal = true" class="pro-btn-icon-only" title="Chỉnh sửa tài khoản">
+
+                        <button type="button" @click="showEditModal = true" class="pro-btn-icon-only" title="Chỉnh sửa tài khoản / Cài đặt">
                             ⚙️
                         </button>
                     </div>
@@ -781,11 +867,11 @@
 
                 <!-- Tab Navigation Bar -->
                 <div class="pro-tabs-bar">
-                    <button class="pro-tab-item active" @click="activeTab = 'overview'">Tổng quan</button>
-                    <button class="pro-tab-item" @click="activeTab = 'posts'">Bài viết ({{ $posts->count() }})</button>
-                    <button class="pro-tab-item" @click="activeTab = 'photos'">Thư viện ảnh ({{ $photos->count() }})</button>
-                    <button class="pro-tab-item" @click="activeTab = 'about'">Giới thiệu</button>
-                    <button class="pro-tab-item" @click="activeTab = 'reviews'">Đánh giá ({{ $totalRev }})</button>
+                    <button type="button" class="pro-tab-item" :class="{ 'active': activeTab === 'overview' }" @click="activeTab = 'overview'">Tổng quan</button>
+                    <button type="button" class="pro-tab-item" :class="{ 'active': activeTab === 'posts' }" @click="activeTab = 'posts'">Bài viết ({{ $posts->count() }})</button>
+                    <button type="button" class="pro-tab-item" :class="{ 'active': activeTab === 'photos' }" @click="activeTab = 'photos'">Thư viện ảnh ({{ $allPhotoUrls->count() }})</button>
+                    <button type="button" class="pro-tab-item" :class="{ 'active': activeTab === 'about' }" @click="activeTab = 'about'">Giới thiệu</button>
+                    <button type="button" class="pro-tab-item" :class="{ 'active': activeTab === 'reviews' }" @click="activeTab = 'reviews'">Đánh giá ({{ $totalRev }})</button>
                 </div>
             </div>
         </div>
@@ -908,187 +994,395 @@
 
             <!-- RIGHT MAIN COLUMN -->
             <div>
-                <!-- 1. Mini Top Key Stat Cards (4 Cards Grid) -->
-                <div class="pro-mini-stats-grid">
-                    <div class="pro-mini-stat-card">
-                        <div class="pro-mini-stat-icon">📅</div>
-                        <div class="pro-mini-stat-val">{{ $foundedYr ?: 'Chưa cập nhật' }}</div>
-                        <div class="pro-mini-stat-lbl">Thành lập</div>
+                <!-- ================= TAB 1: OVERVIEW & TAB 2: POSTS ================= -->
+                <div x-show="activeTab === 'overview' || activeTab === 'posts'">
+                    <!-- 1. Mini Top Key Stat Cards (4 Cards Grid - Only on Overview) -->
+                    <div class="pro-mini-stats-grid" x-show="activeTab === 'overview'">
+                        <div class="pro-mini-stat-card">
+                            <div class="pro-mini-stat-icon">📅</div>
+                            <div class="pro-mini-stat-val">{{ $foundedYr ?: 'Chưa cập nhật' }}</div>
+                            <div class="pro-mini-stat-lbl">Thành lập</div>
+                        </div>
+                        <div class="pro-mini-stat-card">
+                            <div class="pro-mini-stat-icon">👩‍🏫</div>
+                            <div class="pro-mini-stat-val">{{ $staffCount !== null ? $staffCount . ' người' : 'Chưa cập nhật' }}</div>
+                            <div class="pro-mini-stat-lbl">Giáo viên</div>
+                        </div>
+                        <div class="pro-mini-stat-card">
+                            <div class="pro-mini-stat-icon">🎒</div>
+                            <div class="pro-mini-stat-val">{{ $studentsCount !== null ? $studentsCount . ' bé' : 'Chưa cập nhật' }}</div>
+                            <div class="pro-mini-stat-lbl">Học sinh</div>
+                        </div>
+                        <div class="pro-mini-stat-card">
+                            <div class="pro-mini-stat-icon">🏆</div>
+                            <div class="pro-mini-stat-val">{{ $awardsCount !== null ? $awardsCount . ' danh hiệu' : 'Chưa cập nhật' }}</div>
+                            <div class="pro-mini-stat-lbl">Giải thưởng</div>
+                        </div>
                     </div>
-                    <div class="pro-mini-stat-card">
-                        <div class="pro-mini-stat-icon">👩‍🏫</div>
-                        <div class="pro-mini-stat-val">{{ $staffCount !== null ? $staffCount . ' người' : 'Chưa cập nhật' }}</div>
-                        <div class="pro-mini-stat-lbl">Giáo viên</div>
-                    </div>
-                    <div class="pro-mini-stat-card">
-                        <div class="pro-mini-stat-icon">🎒</div>
-                        <div class="pro-mini-stat-val">{{ $studentsCount !== null ? $studentsCount . ' bé' : 'Chưa cập nhật' }}</div>
-                        <div class="pro-mini-stat-lbl">Học sinh</div>
-                    </div>
-                    <div class="pro-mini-stat-card">
-                        <div class="pro-mini-stat-icon">🏆</div>
-                        <div class="pro-mini-stat-val">{{ $awardsCount !== null ? $awardsCount . ' danh hiệu' : 'Chưa cập nhật' }}</div>
-                        <div class="pro-mini-stat-lbl">Giải thưởng</div>
-                    </div>
-                </div>
 
-                <!-- 2. Post Creator Card Trigger -->
-                <div class="pro-creator-card">
-                    <div class="pro-creator-top">
-                        <img src="{{ optional($school)->image_path ?: 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=150&q=80' }}" class="pro-creator-avatar" alt="Avatar">
-                        @if($school)
-                            <button type="button" onclick="openModal('addPostModal')" class="pro-creator-input" style="text-align: left; background: #f1f5f9; border: none; outline: none; cursor: pointer; width: 100%;">
-                                Chia sẻ điều gì đó về địa điểm này...
-                            </button>
-                        @else
-                            <button type="button" @click="showEditModal = true" class="pro-creator-input">
-                                Chia sẻ điều gì đó về địa điểm này...
-                            </button>
-                        @endif
+                    <!-- 2. Post Creator Card Trigger -->
+                    <div class="pro-creator-card">
+                        <div class="pro-creator-top">
+                            <img src="{{ optional($school)->image_path ?: 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=150&q=80' }}" class="pro-creator-avatar" alt="Avatar">
+                            @if($school)
+                                <button type="button" onclick="openModal('addPostModal')" class="pro-creator-input" style="text-align: left; background: #f1f5f9; border: none; outline: none; cursor: pointer; width: 100%;">
+                                    Chia sẻ điều gì đó về địa điểm này...
+                                </button>
+                            @else
+                                <button type="button" @click="showEditModal = true" class="pro-creator-input">
+                                    Chia sẻ điều gì đó về địa điểm này...
+                                </button>
+                            @endif
+                        </div>
+                        <div class="pro-creator-actions">
+                            <button type="button" @if($school) onclick="openModal('addPostModal')" @else @click="showEditModal = true" @endif class="pro-creator-btn">🖼️ Ảnh & Video</button>
+                            <button type="button" @if($school) onclick="openModal('addPostModal')" @else @click="showEditModal = true" @endif class="pro-creator-btn">😃 Cảm xúc</button>
+                            <button type="button" @if($school) onclick="openModal('addPostModal')" @else @click="showEditModal = true" @endif class="pro-creator-btn">🎈 Check-in</button>
+                            <button type="button" @if($school) onclick="openModal('addPostModal')" @else @click="showEditModal = true" @endif class="pro-creator-btn">📅 Sự kiện</button>
+                        </div>
                     </div>
-                    <div class="pro-creator-actions">
-                        <button type="button" @if($school) onclick="openModal('addPostModal')" @else @click="showEditModal = true" @endif class="pro-creator-btn">🖼️ Ảnh & Video</button>
-                        <button type="button" @if($school) onclick="openModal('addPostModal')" @else @click="showEditModal = true" @endif class="pro-creator-btn">😃 Cảm xúc</button>
-                        <button type="button" @if($school) onclick="openModal('addPostModal')" @else @click="showEditModal = true" @endif class="pro-creator-btn">🎈 Check-in</button>
-                        <button type="button" @if($school) onclick="openModal('addPostModal')" @else @click="showEditModal = true" @endif class="pro-creator-btn">📅 Sự kiện</button>
-                    </div>
-                </div>
 
-                <!-- 3. Posts Stream (Pure Dynamic DB Items with Facebook Grid & Lightbox) -->
-                @if($posts->isEmpty())
-                    <div class="pro-empty-card">
-                        <div style="font-size: 3rem; margin-bottom: 12px;">📰</div>
-                        <h4 style="font-size: 1.1rem; font-weight: 800; color: #0f172a; margin-bottom: 6px;">Chưa có bài viết nào</h4>
-                        <p style="font-size: 0.88rem; color: #64748b; margin-bottom: 20px;">Đăng thông báo & hình ảnh hoạt động giáo dục nhà trường lên bảng tin!</p>
-                        @if($school)
-                            <button type="button" onclick="openModal('addPostModal')" class="pro-btn-primary" style="border-radius: 100px; cursor: pointer;">
-                                + Đăng bài viết mới
-                            </button>
-                        @endif
-                    </div>
-                @else
-                    @foreach($posts as $p)
-                        @php
-                            $imgs = $p->all_images;
-                            $imgCount = count($imgs);
-                        @endphp
-                        <article class="fb-post-card mb-4" style="background: #ffffff; border-radius: 20px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.05);">
-                            <!-- Facebook Post Header -->
-                            <div class="fb-post-header">
-                                <div class="fb-post-author-box">
-                                    <img src="{{ optional($school)->image_path ?: 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=150&q=80' }}" class="fb-user-avatar" alt="{{ optional($school)->standardized_name }}">
-                                    <div>
-                                        <h4 class="fb-post-author-name">{{ optional($school)->standardized_name ?: $user->name }}</h4>
-                                        <div class="fb-post-subtext">
-                                            <span>{{ $p->created_at ? $p->created_at->diffForHumans() : 'Vừa xong' }}</span>
-                                            <span>•</span>
-                                            <span>🌐 Công khai</span>
+                    <!-- 3. Posts Stream (Pure Dynamic DB Items with Facebook Grid & Lightbox) -->
+                    @if($posts->isEmpty())
+                        <div class="pro-empty-card">
+                            <div style="font-size: 3rem; margin-bottom: 12px;">📰</div>
+                            <h4 style="font-size: 1.1rem; font-weight: 800; color: #0f172a; margin-bottom: 6px;">Chưa có bài viết nào</h4>
+                            <p style="font-size: 0.88rem; color: #64748b; margin-bottom: 20px;">Đăng thông báo & hình ảnh hoạt động giáo dục nhà trường lên bảng tin!</p>
+                            @if($school)
+                                <button type="button" onclick="openModal('addPostModal')" class="pro-btn-primary" style="border-radius: 100px; cursor: pointer;">
+                                    + Đăng bài viết mới
+                                </button>
+                            @endif
+                        </div>
+                    @else
+                        @foreach($posts as $p)
+                            @php
+                                $imgs = $p->all_images;
+                                $imgCount = count($imgs);
+                            @endphp
+                            <article class="fb-post-card mb-4" style="background: #ffffff; border-radius: 20px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.05);">
+                                <!-- Facebook Post Header -->
+                                <div class="fb-post-header">
+                                    <div class="fb-post-author-box">
+                                        <img src="{{ optional($school)->image_path ?: 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=150&q=80' }}" class="fb-user-avatar" alt="{{ optional($school)->standardized_name }}">
+                                        <div>
+                                            <h4 class="fb-post-author-name">{{ optional($school)->standardized_name ?: $user->name }}</h4>
+                                            <div class="fb-post-subtext">
+                                                <span>{{ $p->created_at ? $p->created_at->diffForHumans() : 'Vừa xong' }}</span>
+                                                <span>•</span>
+                                                <span>🌐 Công khai</span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
 
-                            <!-- Post Content Text -->
-                            <div class="fb-post-text">
-                                <strong class="d-block mb-1 text-dark" style="font-size: 1.05rem;">🌸 {{ $p->name }}</strong>
-                                {!! \App\Helpers\TextHelper::linkify($p->description) !!}
-                            </div>
+                                <!-- Post Content Text -->
+                                <div class="fb-post-text">
+                                    <strong class="d-block mb-1 text-dark" style="font-size: 1.05rem;">🌸 {{ $p->name }}</strong>
+                                    {!! \App\Helpers\TextHelper::linkify($p->description) !!}
+                                </div>
 
-                            <!-- Facebook Multi-Photo Grid System (1, 2, 3, 4, 5+ photos) -->
-                            @if($imgCount === 1)
-                                <div class="fb-photo-grid fb-grid-1" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 0)">
-                                    <img src="{{ $imgs[0] }}" alt="{{ $p->name }}">
-                                </div>
-                            @elseif($imgCount === 2)
-                                <div class="fb-photo-grid fb-grid-2">
-                                    <img src="{{ $imgs[0] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 0)" alt="{{ $p->name }}">
-                                    <img src="{{ $imgs[1] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 1)" alt="{{ $p->name }}">
-                                </div>
-                            @elseif($imgCount === 3)
-                                <div class="fb-photo-grid fb-grid-3">
-                                    <img src="{{ $imgs[0] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 0)" alt="{{ $p->name }}">
-                                    <div class="fb-grid-3-col-right">
-                                        <img src="{{ $imgs[1] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 1)" alt="{{ $p->name }}">
-                                        <img src="{{ $imgs[2] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 2)" alt="{{ $p->name }}">
+                                <!-- Facebook Multi-Photo Grid System (1, 2, 3, 4, 5+ photos) -->
+                                @if($imgCount === 1)
+                                    <div class="fb-photo-grid fb-grid-1" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 0)">
+                                        <img src="{{ $imgs[0] }}" alt="{{ $p->name }}">
                                     </div>
-                                </div>
-                            @elseif($imgCount === 4)
-                                <div class="fb-photo-grid fb-grid-4">
-                                    <img src="{{ $imgs[0] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 0)" alt="{{ $p->name }}">
-                                    <div class="fb-grid-4-col-right">
-                                        <img src="{{ $imgs[1] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 1)" alt="{{ $p->name }}">
-                                        <img src="{{ $imgs[2] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 2)" alt="{{ $p->name }}">
-                                        <img src="{{ $imgs[3] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 3)" alt="{{ $p->name }}">
-                                    </div>
-                                </div>
-                            @elseif($imgCount >= 5)
-                                <div class="fb-photo-grid fb-grid-5">
-                                    <div class="fb-grid-5-row-top">
+                                @elseif($imgCount === 2)
+                                    <div class="fb-photo-grid fb-grid-2">
                                         <img src="{{ $imgs[0] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 0)" alt="{{ $p->name }}">
                                         <img src="{{ $imgs[1] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 1)" alt="{{ $p->name }}">
                                     </div>
-                                    <div class="fb-grid-5-row-bottom">
-                                        <img src="{{ $imgs[2] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 2)" alt="{{ $p->name }}">
-                                        <img src="{{ $imgs[3] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 3)" alt="{{ $p->name }}">
-                                        <div class="fb-photo-thumb-box" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 4)">
-                                            <img src="{{ $imgs[4] }}" alt="{{ $p->name }}">
-                                            @if($imgCount > 5)
-                                                <div class="fb-photo-more-overlay">+{{ $imgCount - 5 }}</div>
-                                            @endif
+                                @elseif($imgCount === 3)
+                                    <div class="fb-photo-grid fb-grid-3">
+                                        <img src="{{ $imgs[0] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 0)" alt="{{ $p->name }}">
+                                        <div class="fb-grid-3-col-right">
+                                            <img src="{{ $imgs[1] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 1)" alt="{{ $p->name }}">
+                                            <img src="{{ $imgs[2] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 2)" alt="{{ $p->name }}">
                                         </div>
                                     </div>
-                                </div>
-                            @endif
-
-                            <!-- Facebook Post Stats Bar -->
-                            <div class="fb-post-stats">
-                                <div id="post-likes-count-{{ $p->id }}">👍 {{ $p->real_likes_count ?? $p->likes_count ?? 0 }} lượt thích</div>
-                                <div>💬 {{ $p->real_comments_count ?? 0 }} bình luận • {{ $p->real_shares_count ?? 0 }} chia sẻ</div>
-                            </div>
-
-                            <!-- Facebook Footer Actions Bar -->
-                            <div class="fb-post-actions">
-                                <button class="fb-action-btn {{ ($p->is_liked ?? false) ? 'active' : '' }}" 
-                                        id="post-like-btn-{{ $p->id }}" 
-                                        onclick="togglePostLike(this, {{ $p->id }})"
-                                        style="{{ ($p->is_liked ?? false) ? 'color: #2563eb; font-weight: 700;' : '' }}">
-                                    👍 {{ ($p->is_liked ?? false) ? 'Đã thích' : 'Thích' }}
-                                </button>
-                                <button class="fb-action-btn" onclick="toggleComments({{ $p->id }}, this)">💬 Bình luận</button>
-                                <button class="fb-action-btn" onclick="shareFbPost({{ $p->id }})">🔄 Chia sẻ</button>
-                            </div>
-                        </article>
-                    @endforeach
-                @endif
-
-                <!-- 4. Featured Reviews Card (Pure Dynamic DB Reviews) -->
-                <div class="pro-card">
-                    <div class="pro-card-title" style="color: #0f172a;">
-                        <span>Đánh giá nổi bật</span>
-                        <a href="#" style="font-size: 0.8rem; color: #f59e0b; text-decoration: none; font-weight: 700;">Xem thêm</a>
-                    </div>
-                    @if($reviews->isEmpty())
-                        <div style="text-align: center; color: #64748b; font-size: 0.88rem; padding: 20px 0;">
-                            Chưa có nhận xét nào cho cơ sở này.
-                        </div>
-                    @else
-                        @foreach($reviews->take(3) as $rev)
-                            <div style="display: flex; align-items: flex-start; gap: 14px; margin-bottom: 16px;">
-                                <div style="width: 40px; height: 40px; border-radius: 50%; background: #2563eb; color: #ffffff; display: flex; align-items: center; justify-content: center; font-weight: 800; flex-shrink: 0;">
-                                    {{ mb_substr(optional($rev->user)->name ?: 'U', 0, 1) }}
-                                </div>
-                                <div>
-                                    <div style="font-size: 0.95rem; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 8px;">
-                                        {{ optional($rev->user)->name ?: 'Người dùng ẩn danh' }}
-                                        <span style="color: #f59e0b; font-size: 0.85rem;">{{ str_repeat('★', $rev->rating) }}</span>
+                                @elseif($imgCount === 4)
+                                    <div class="fb-photo-grid fb-grid-4">
+                                        <img src="{{ $imgs[0] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 0)" alt="{{ $p->name }}">
+                                        <div class="fb-grid-4-col-right">
+                                            <img src="{{ $imgs[1] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 1)" alt="{{ $p->name }}">
+                                            <img src="{{ $imgs[2] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 2)" alt="{{ $p->name }}">
+                                            <img src="{{ $imgs[3] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 3)" alt="{{ $p->name }}">
+                                        </div>
                                     </div>
-                                    <p style="font-size: 0.9rem; color: #475569; margin-top: 4px; margin-bottom: 0; line-height: 1.5;">
-                                        {{ $rev->comment }}
-                                    </p>
+                                @elseif($imgCount >= 5)
+                                    <div class="fb-photo-grid fb-grid-5">
+                                        <div class="fb-grid-5-row-top">
+                                            <img src="{{ $imgs[0] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 0)" alt="{{ $p->name }}">
+                                            <img src="{{ $imgs[1] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 1)" alt="{{ $p->name }}">
+                                        </div>
+                                        <div class="fb-grid-5-row-bottom">
+                                            <img src="{{ $imgs[2] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 2)" alt="{{ $p->name }}">
+                                            <img src="{{ $imgs[3] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 3)" alt="{{ $p->name }}">
+                                            <div class="fb-photo-thumb-box" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 4)">
+                                                <img src="{{ $imgs[4] }}" alt="{{ $p->name }}">
+                                                @if($imgCount > 5)
+                                                    <div class="fb-photo-more-overlay">+{{ $imgCount - 5 }}</div>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endif
+
+                                <!-- Facebook Post Stats Bar -->
+                                <div class="fb-post-stats">
+                                    <div id="post-likes-count-{{ $p->id }}">👍 {{ $p->real_likes_count ?? $p->likes_count ?? 0 }} lượt thích</div>
+                                    <div>💬 {{ $p->real_comments_count ?? 0 }} bình luận • {{ $p->real_shares_count ?? 0 }} chia sẻ</div>
                                 </div>
-                            </div>
+
+                                <!-- Facebook Footer Actions Bar -->
+                                <div class="fb-post-actions">
+                                    <button class="fb-action-btn {{ ($p->is_liked ?? false) ? 'active' : '' }}" 
+                                            id="post-like-btn-{{ $p->id }}" 
+                                            onclick="togglePostLike(this, {{ $p->id }})"
+                                            style="{{ ($p->is_liked ?? false) ? 'color: #2563eb; font-weight: 700;' : '' }}">
+                                        👍 {{ ($p->is_liked ?? false) ? 'Đã thích' : 'Thích' }}
+                                    </button>
+                                    <button class="fb-action-btn" onclick="toggleComments({{ $p->id }}, this)">💬 Bình luận</button>
+                                    <button class="fb-action-btn" onclick="shareFbPost({{ $p->id }})">🔄 Chia sẻ</button>
+                                </div>
+                            </article>
                         @endforeach
                     @endif
+
+                    <!-- 4. Featured Reviews Card (Only on Overview) -->
+                    <div class="pro-card" x-show="activeTab === 'overview'">
+                        <div class="pro-card-title" style="color: #0f172a;">
+                            <span>Đánh giá nổi bật</span>
+                            <button type="button" @click="activeTab = 'reviews'" style="font-size: 0.8rem; color: #f59e0b; background: none; border: none; font-weight: 700; cursor: pointer;">Xem tất cả ›</button>
+                        </div>
+                        @if($reviews->isEmpty())
+                            <div style="text-align: center; color: #64748b; font-size: 0.88rem; padding: 20px 0;">
+                                Chưa có nhận xét nào cho cơ sở này.
+                            </div>
+                        @else
+                            @foreach($reviews->take(3) as $rev)
+                                <div style="display: flex; align-items: flex-start; gap: 14px; margin-bottom: 16px;">
+                                    <div style="width: 40px; height: 40px; border-radius: 50%; background: #2563eb; color: #ffffff; display: flex; align-items: center; justify-content: center; font-weight: 800; flex-shrink: 0;">
+                                        {{ mb_substr(optional($rev->user)->name ?: 'U', 0, 1) }}
+                                    </div>
+                                    <div>
+                                        <div style="font-size: 0.95rem; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 8px;">
+                                            {{ optional($rev->user)->name ?: 'Người dùng ẩn danh' }}
+                                            <span style="color: #f59e0b; font-size: 0.85rem;">{{ str_repeat('★', $rev->rating) }}</span>
+                                        </div>
+                                        <p style="font-size: 0.9rem; color: #475569; margin-top: 4px; margin-bottom: 0; line-height: 1.5;">
+                                            {{ $rev->comment }}
+                                        </p>
+                                    </div>
+                                </div>
+                            @endforeach
+                        @endif
+                    </div>
+                </div>
+
+                <!-- ================= TAB 3: PHOTOS GALLERY ================= -->
+                <div x-show="activeTab === 'photos'" x-cloak style="display: none;">
+                    <div class="pro-card">
+                        <div class="pro-card-title" style="color: #0f172a; margin-bottom: 20px;">
+                            <span>📷 Thư viện ảnh ({{ $allPhotoUrls->count() }} hình ảnh)</span>
+                        </div>
+                        @if($allPhotoUrls->isEmpty())
+                            <div style="text-align: center; color: #64748b; font-size: 0.95rem; padding: 40px 20px;">
+                                <div style="font-size: 3rem; margin-bottom: 12px;">🖼️</div>
+                                <strong>Chưa có hình ảnh nào trong thư viện</strong>
+                                <p style="margin-top: 6px; font-size: 0.85rem;">Hình ảnh từ các bài viết hoặc ảnh tải lên sẽ tự động hiển thị tại đây.</p>
+                            </div>
+                        @else
+                            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 14px;">
+                                @foreach($allPhotoUrls as $index => $imgUrl)
+                                    <div style="position: relative; border-radius: 14px; overflow: hidden; aspect-ratio: 1; background: #f1f5f9; cursor: pointer; border: 1px solid #e2e8f0; transition: transform 0.2s, box-shadow 0.2s;"
+                                         onclick="openPostLightboxGallery({{ json_encode($allPhotoUrls->toArray()) }}, {{ $index }})"
+                                         onmouseover="this.style.transform='scale(1.03)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.15)';"
+                                         onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='none';">
+                                        <img src="{{ $imgUrl }}" style="width: 100%; height: 100%; object-fit: cover;" alt="Photo {{ $index + 1 }}">
+                                        <div style="position: absolute; inset: 0; background: rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; color: #ffffff; font-size: 1.5rem; opacity: 0; transition: opacity 0.2s;"
+                                             onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0'">
+                                            🔍
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endif
+                    </div>
+                </div>
+
+                <!-- ================= TAB 4: ABOUT / GIỚI THIỆU ================= -->
+                <div x-show="activeTab === 'about'" x-cloak style="display: none;">
+                    <div class="pro-card" style="margin-bottom: 20px;">
+                        <div class="pro-card-title" style="color: #0f172a; margin-bottom: 16px;">
+                            <span>🏫 Thông tin chi tiết địa điểm</span>
+                        </div>
+                        <ul class="pro-info-list" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
+                            <li class="pro-info-row">
+                                <span class="pro-info-icon">🏫</span>
+                                <div class="pro-info-text">
+                                    <span class="pro-info-lbl">Loại hình</span>
+                                    <span class="pro-info-val">{{ optional(optional($school)->category)->name ?: 'Trường mầm non' }}</span>
+                                </div>
+                            </li>
+                            <li class="pro-info-row">
+                                <span class="pro-info-icon">📍</span>
+                                <div class="pro-info-text">
+                                    <span class="pro-info-lbl">Địa chỉ</span>
+                                    <span class="pro-info-val">{{ optional($school)->address ?: 'Xã Đông Anh, Hà Nội' }}</span>
+                                </div>
+                            </li>
+                            <li class="pro-info-row">
+                                <span class="pro-info-icon">📞</span>
+                                <div class="pro-info-text">
+                                    <span class="pro-info-lbl">Điện thoại</span>
+                                    <span class="pro-info-val">{{ optional($school)->phone ?: ($user->phone ?: 'Chưa cập nhật') }}</span>
+                                </div>
+                            </li>
+                            <li class="pro-info-row">
+                                <span class="pro-info-icon">🌐</span>
+                                <div class="pro-info-text">
+                                    <span class="pro-info-lbl">Website</span>
+                                    <span class="pro-info-val" style="color: #2563eb;">{{ optional($school)->website ?: 'phucloc.edu.vn' }}</span>
+                                </div>
+                            </li>
+                            <li class="pro-info-row">
+                                <span class="pro-info-icon">🕒</span>
+                                <div class="pro-info-text">
+                                    <span class="pro-info-lbl">Giờ mở cửa</span>
+                                    <span class="pro-info-val">{{ optional($school)->opening_hours ?: '7:00 – 17:30' }}</span>
+                                </div>
+                            </li>
+                            <li class="pro-info-row">
+                                <span class="pro-info-icon">📍</span>
+                                <div class="pro-info-text">
+                                    <span class="pro-info-lbl">Khu vực</span>
+                                    <span class="pro-info-val">{{ optional($school)->commune ? optional($school)->commune->name : 'Đông Anh, Hà Nội' }}</span>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="pro-card" style="margin-bottom: 20px;">
+                        <div class="pro-card-title" style="color: #0f172a; margin-bottom: 16px;">
+                            <span>📊 Quy mô & Thành tựu</span>
+                        </div>
+                        <div class="pro-mini-stats-grid">
+                            <div class="pro-mini-stat-card">
+                                <div class="pro-mini-stat-icon">📅</div>
+                                <div class="pro-mini-stat-val">{{ $foundedYr ?: 'Chưa cập nhật' }}</div>
+                                <div class="pro-mini-stat-lbl">Năm thành lập</div>
+                            </div>
+                            <div class="pro-mini-stat-card">
+                                <div class="pro-mini-stat-icon">👩‍🏫</div>
+                                <div class="pro-mini-stat-val">{{ $staffCount !== null ? $staffCount . ' người' : 'Chưa cập nhật' }}</div>
+                                <div class="pro-mini-stat-lbl">Giáo viên</div>
+                            </div>
+                            <div class="pro-mini-stat-card">
+                                <div class="pro-mini-stat-icon">🎒</div>
+                                <div class="pro-mini-stat-val">{{ $studentsCount !== null ? $studentsCount . ' bé' : 'Chưa cập nhật' }}</div>
+                                <div class="pro-mini-stat-lbl">Học sinh</div>
+                            </div>
+                            <div class="pro-mini-stat-card">
+                                <div class="pro-mini-stat-icon">🏆</div>
+                                <div class="pro-mini-stat-val">{{ $awardsCount !== null ? $awardsCount . ' danh hiệu' : 'Chưa cập nhật' }}</div>
+                                <div class="pro-mini-stat-lbl">Giải thưởng</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    @if(optional($school)->description)
+                    <div class="pro-card">
+                        <div class="pro-card-title" style="color: #0f172a; margin-bottom: 12px;">
+                            <span>📝 Giới thiệu chi tiết</span>
+                        </div>
+                        <p style="font-size: 0.95rem; color: #334155; line-height: 1.7; margin: 0; white-space: pre-line;">
+                            {{ $school->description }}
+                        </p>
+                    </div>
+                    @endif
+                </div>
+
+                <!-- ================= TAB 5: REVIEWS / ĐÁNH GIÁ ================= -->
+                <div x-show="activeTab === 'reviews'" x-cloak style="display: none;">
+                    <div class="pro-card">
+                        <div class="pro-card-title" style="color: #0f172a; margin-bottom: 20px;">
+                            <span>⭐ Đánh giá từ phụ huynh & cộng đồng ({{ $totalRev }})</span>
+                        </div>
+
+                        <!-- Rating summary header -->
+                        <div style="display: flex; align-items: center; gap: 24px; padding: 20px; background: #f8fafc; border-radius: 16px; margin-bottom: 24px;">
+                            <div style="text-align: center; padding-right: 24px; border-right: 1px solid #e2e8f0;">
+                                <div style="font-size: 3rem; font-weight: 900; color: #0f172a; line-height: 1;">{{ number_format($avgScore, 1) }}</div>
+                                <div style="color: #f59e0b; font-size: 1.2rem; margin: 4px 0;">
+                                    @for($i=1; $i<=5; $i++)
+                                        {{ $i <= round($avgScore) ? '★' : '☆' }}
+                                    @endfor
+                                </div>
+                                <div style="font-size: 0.8rem; color: #64748b; font-weight: 600;">{{ $totalRev }} nhận xét</div>
+                            </div>
+                            <div style="flex: 1;">
+                                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
+                                    <span style="font-size: 0.82rem; font-weight: 700; color: #475569; width: 40px;">5 sao</span>
+                                    <div style="flex: 1; height: 8px; background: #e2e8f0; border-radius: 100px; overflow: hidden;">
+                                        <div style="height: 100%; background: #f59e0b; width: {{ $totalRev > 0 ? ($star5Count / $totalRev * 100) : 0 }}%;"></div>
+                                    </div>
+                                    <span style="font-size: 0.82rem; color: #64748b; font-weight: 600; width: 30px; text-align: right;">{{ $star5Count }}</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
+                                    <span style="font-size: 0.82rem; font-weight: 700; color: #475569; width: 40px;">4 sao</span>
+                                    <div style="flex: 1; height: 8px; background: #e2e8f0; border-radius: 100px; overflow: hidden;">
+                                        <div style="height: 100%; background: #f59e0b; width: {{ $totalRev > 0 ? ($star4Count / $totalRev * 100) : 0 }}%;"></div>
+                                    </div>
+                                    <span style="font-size: 0.82rem; color: #64748b; font-weight: 600; width: 30px; text-align: right;">{{ $star4Count }}</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <span style="font-size: 0.82rem; font-weight: 700; color: #475569; width: 40px;">3 sao</span>
+                                    <div style="flex: 1; height: 8px; background: #e2e8f0; border-radius: 100px; overflow: hidden;">
+                                        <div style="height: 100%; background: #f59e0b; width: {{ $totalRev > 0 ? ($star3Count / $totalRev * 100) : 0 }}%;"></div>
+                                    </div>
+                                    <span style="font-size: 0.82rem; color: #64748b; font-weight: 600; width: 30px; text-align: right;">{{ $star3Count }}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Reviews List -->
+                        @if($reviews->isEmpty())
+                            <div style="text-align: center; color: #64748b; font-size: 0.95rem; padding: 30px 20px;">
+                                <div style="font-size: 2.5rem; margin-bottom: 10px;">💬</div>
+                                <strong>Chưa có nhận xét nào cho địa điểm này</strong>
+                                <p style="margin-top: 4px; font-size: 0.85rem;">Các đánh giá từ phụ huynh và cộng đồng sẽ xuất hiện tại đây.</p>
+                            </div>
+                        @else
+                            <div style="display: flex; flex-direction: column; gap: 16px;">
+                                @foreach($reviews as $rev)
+                                    <div style="display: flex; align-items: flex-start; gap: 14px; padding-bottom: 16px; border-bottom: 1px solid #f1f5f9;">
+                                        <div style="width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, #2563eb, #1d4ed8); color: #ffffff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.1rem; flex-shrink: 0; box-shadow: 0 4px 10px rgba(37,99,235,0.2);">
+                                            {{ mb_substr(optional($rev->user)->name ?: 'U', 0, 1) }}
+                                        </div>
+                                        <div style="flex: 1;">
+                                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+                                                <div style="font-size: 0.98rem; font-weight: 800; color: #0f172a;">
+                                                    {{ optional($rev->user)->name ?: 'Người dùng ẩn danh' }}
+                                                </div>
+                                                <span style="font-size: 0.78rem; color: #94a3b8;">
+                                                    {{ $rev->created_at ? $rev->created_at->diffForHumans() : '' }}
+                                                </span>
+                                            </div>
+                                            <div style="color: #f59e0b; font-size: 0.88rem; margin-bottom: 6px;">
+                                                @for($s=1; $s<=5; $s++)
+                                                    {{ $s <= $rev->rating ? '★' : '☆' }}
+                                                @endfor
+                                            </div>
+                                            <p style="font-size: 0.92rem; color: #334155; margin: 0; line-height: 1.6;">
+                                                {{ $rev->comment }}
+                                            </p>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endif
+                    </div>
                 </div>
 
             </div>
@@ -1671,6 +1965,183 @@
         feedContainer.prepend(postCard);
         if (typeof initPostTextExpanders === 'function') {
             initPostTextExpanders(postCard);
+        }
+    }
+
+    function sendFriendRequest(targetUserId) {
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        fetch('/social/friends', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken || '',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({ friend_id: targetUserId })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                const wrapper = document.getElementById('friend-btn-wrapper');
+                if (wrapper) {
+                    wrapper.innerHTML = `<button type="button" class="pro-btn-outline" id="friend-btn" onclick="cancelFriendRequest(${data.friendship_id}, ${targetUserId})">⏳ Đã gửi lời mời</button>`;
+                }
+                showToastNotification('➕ Đã gửi lời mời kết bạn!');
+            } else {
+                showToastNotification(data.message || 'Không thể gửi lời mời kết bạn.');
+            }
+        })
+        .catch(err => {
+            console.error('Friend request error:', err);
+        });
+    }
+
+    function acceptFriendRequest(friendshipId) {
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        fetch(`/social/friends/${friendshipId}/accept`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken || '',
+                'Accept': 'application/json'
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                const wrapper = document.getElementById('friend-btn-wrapper');
+                if (wrapper) {
+                    wrapper.innerHTML = `<button type="button" class="pro-btn-outline" id="friend-btn" style="background: #ecfdf5; border-color: #10b981; color: #047857;" onclick="unfriendUser(${friendshipId})">👥 Bạn bè ✓</button>`;
+                }
+                showToastNotification('✅ Đã chấp nhận lời mời kết bạn!');
+            }
+        });
+    }
+
+    function cancelFriendRequest(friendshipId, targetUserId) {
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        fetch(`/social/friends/${friendshipId}/decline`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken || '',
+                'Accept': 'application/json'
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                const wrapper = document.getElementById('friend-btn-wrapper');
+                if (wrapper) {
+                    wrapper.innerHTML = `<button type="button" class="pro-btn-primary" id="friend-btn" onclick="sendFriendRequest(${targetUserId})">➕ Thêm bạn bè</button>`;
+                }
+                showToastNotification('Đã hủy lời mời kết bạn.');
+            }
+        });
+    }
+
+    function unfriendUser(friendshipId, targetUserId) {
+        showConfirmModal({
+            title: 'Hủy kết bạn',
+            message: 'Bạn có chắc chắn muốn hủy kết bạn với người dùng này không?',
+            isDanger: true,
+            onConfirm: () => cancelFriendRequest(friendshipId, targetUserId)
+        });
+    }
+
+    function toggleFollowUser(btn, targetUserId) {
+        const isFollowing = btn.getAttribute('data-following') === 'true';
+        const iconEl = document.getElementById('follow-icon');
+        const textEl = document.getElementById('follow-text');
+
+        if (isFollowing) {
+            btn.setAttribute('data-following', 'false');
+            btn.className = 'pro-btn-primary';
+            btn.style.background = '#2563eb';
+            btn.style.color = '#ffffff';
+            if (iconEl) iconEl.textContent = '🔔';
+            if (textEl) textEl.textContent = 'Theo dõi';
+            showToastNotification('Đã bỏ theo dõi trang cá nhân này.');
+        } else {
+            btn.setAttribute('data-following', 'true');
+            btn.className = 'pro-btn-outline';
+            btn.style.background = '#f1f5f9';
+            btn.style.color = '#475569';
+            if (iconEl) iconEl.textContent = '✓';
+            if (textEl) textEl.textContent = 'Đang theo dõi';
+            showToastNotification('🔔 Bạn đã theo dõi trang cá nhân này!');
+        }
+    }
+
+    function openDirectMessage(userId, userName, userAvatar) {
+        if (window.Alpine && Alpine.store && Alpine.store('chatStore')) {
+            Alpine.store('chatStore').openChat(userId, userName, userAvatar, userAvatar, true);
+        } else {
+            showToastNotification('💬 Đang kết nối kênh tin nhắn với ' + userName + '...');
+        }
+    }
+
+    function toggleBookmarkProfile(btn) {
+        const isSaved = btn.getAttribute('data-saved') === 'true';
+        const textEl = document.getElementById('bookmark-text') || btn;
+        if (isSaved) {
+            btn.setAttribute('data-saved', 'false');
+            btn.style.background = '#2563eb';
+            btn.style.color = '#ffffff';
+            if (textEl) textEl.textContent = 'Lưu địa điểm';
+            showToastNotification('Đã bỏ lưu địa điểm khỏi danh sách.');
+        } else {
+            btn.setAttribute('data-saved', 'true');
+            btn.style.background = '#059669';
+            btn.style.color = '#ffffff';
+            if (textEl) textEl.textContent = 'Đã lưu địa điểm';
+            showToastNotification('🔖 Đã lưu địa điểm này vào danh sách yêu thích của bạn!');
+        }
+    }
+
+    function shareProfilePage() {
+        const currentUrl = window.location.href;
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(currentUrl).then(() => {
+                showToastNotification('🔗 Đã sao chép liên kết trang cá nhân vào khay nhớ tạm!');
+            }).catch(() => {
+                fallbackCopyUrl(currentUrl);
+            });
+        } else {
+            fallbackCopyUrl(currentUrl);
+        }
+    }
+
+    function fallbackCopyUrl(text) {
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        document.body.appendChild(textArea);
+        textArea.select();
+        try {
+            document.execCommand('copy');
+            showToastNotification('🔗 Đã sao chép liên kết trang cá nhân!');
+        } catch (err) {
+            alert('Liên kết trang: ' + text);
+        }
+        document.body.removeChild(textArea);
+    }
+
+    function shareFbPost(postId) {
+        const shareUrl = window.location.href;
+        if (navigator.share) {
+            navigator.share({
+                title: 'Chia sẻ bài viết',
+                text: 'Xem bài viết này trên Đông Anh Social',
+                url: shareUrl
+            }).catch(() => {});
+        } else if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(shareUrl).then(() => {
+                showToastNotification('🔄 Đã sao chép liên kết bài viết vào khay nhớ tạm!');
+            }).catch(() => {
+                fallbackCopyUrl(shareUrl);
+            });
+        } else {
+            fallbackCopyUrl(shareUrl);
         }
     }
 
