@@ -172,11 +172,24 @@ class User extends Authenticatable
     public function getStall()
     {
         if ($this->stall_id) {
-            return \Illuminate\Support\Facades\DB::connection('mysql_market')
-                ->table('ocop_products')
+            $stall = \Illuminate\Support\Facades\DB::table('ocop_products')
                 ->where('id', $this->stall_id)
                 ->first();
+            if ($stall) return $stall;
         }
+
+        $stall = \Illuminate\Support\Facades\DB::table('ocop_products')
+            ->where('user_id', $this->id)
+            ->first();
+        if ($stall) return $stall;
+
+        if (!empty($this->phone)) {
+            $stall = \Illuminate\Support\Facades\DB::table('ocop_products')
+                ->where('seller_phone', $this->phone)
+                ->first();
+            if ($stall) return $stall;
+        }
+
         return null;
     }
 
