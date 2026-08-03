@@ -103,36 +103,92 @@ class EateryController extends Controller
             ->latest()
             ->get();
 
+        // Lấy thông tin tài khoản cá nhân & bài viết mới nhất từ Hiệu trưởng/Nhà trường liên kết
+        $principalUser = null;
+        if ($eatery->user_id) {
+            $principalUser = \App\Models\User::find($eatery->user_id);
+        } else {
+            $principalUser = \App\Models\User::where('eatery_id', $eatery->id)->first();
+        }
+
+        $principalPosts = \App\Models\EducationProgram::on('mysql_education')
+            ->where('eatery_id', $eatery->id)
+            ->orderBy('created_at', 'desc')
+            ->get();
+        if ($principalPosts->isEmpty()) {
+            $principalPosts = \App\Models\EducationProgram::on('mysql')
+                ->where('eatery_id', $eatery->id)
+                ->orderBy('created_at', 'desc')
+                ->get();
+        }
+
+        $currentUserId = \Illuminate\Support\Facades\Auth::id() ?? session('user_id');
+        $currentSessionId = session()->getId();
+        $postIds = $principalPosts->pluck('id')->toArray();
+
+        if (!empty($postIds)) {
+            $realLikesMap = \App\Models\CheckinReaction::where('reactionable_type', 'post')
+                ->whereIn('reactionable_id', $postIds)
+                ->selectRaw('reactionable_id, count(*) as total')
+                ->groupBy('reactionable_id')
+                ->pluck('total', 'reactionable_id')
+                ->toArray();
+
+            $uQuery = \App\Models\CheckinReaction::where('reactionable_type', 'post')
+                ->whereIn('reactionable_id', $postIds);
+            if ($currentUserId) {
+                $uQuery->where('user_id', $currentUserId);
+            } else {
+                $uQuery->where('session_id', $currentSessionId);
+            }
+            $userLikedMap = $uQuery->pluck('reactionable_id')->toArray();
+
+            $realCommentsMap = \App\Models\Comment::where('commentable_type', 'post')
+                ->whereIn('commentable_id', $postIds)
+                ->selectRaw('commentable_id, count(*) as total')
+                ->groupBy('commentable_id')
+                ->pluck('total', 'commentable_id')
+                ->toArray();
+
+            foreach ($principalPosts as $p) {
+                $p->real_likes_count = (int) ($realLikesMap[$p->id] ?? $p->likes_count ?? 0);
+                $p->is_liked = in_array($p->id, $userLikedMap);
+                $p->real_comments_count = (int) ($realCommentsMap[$p->id] ?? 0);
+                $p->real_shares_count = (int) ($p->shares_count ?? 0);
+            }
+        }
+
         // Mã hóa Schema dữ liệu có cấu trúc sang định dạng thẻ script JSON-LD
         $jsonLd = '<script type="application/ld+json">' . PHP_EOL . 
                   json_encode($schemaData, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT) . PHP_EOL . 
                   '</script>';
         
         $categorySlug = $eatery->category->slug;
+        $viewData = compact('eatery', 'jsonLd', 'checkinPhotos', 'checkinReviews', 'principalPosts', 'principalUser');
 
         if ($categorySlug === 'traditional-market') {
-            return view('detail-market', compact('eatery', 'jsonLd', 'checkinPhotos', 'checkinReviews'));
+            return view('detail-market', $viewData);
         }
         if ($categorySlug === 'dong-anh-market') {
-            return view('detail-ocop', compact('eatery', 'jsonLd', 'checkinPhotos', 'checkinReviews'));
+            return view('detail-ocop', $viewData);
         }
         if ($categorySlug === 'stay-in-dong-anh') {
-            return view('detail-stay', compact('eatery', 'jsonLd', 'checkinPhotos', 'checkinReviews'));
+            return view('detail-stay', $viewData);
         }
         if ($categorySlug === 'wellness-care') {
-            return view('detail-wellness', compact('eatery', 'jsonLd', 'checkinPhotos', 'checkinReviews'));
+            return view('detail-wellness', $viewData);
         }
         if ($categorySlug === 'smart-education-map') {
-            return view('detail-education', compact('eatery', 'jsonLd', 'checkinPhotos', 'checkinReviews'));
+            return view('detail-education', $viewData);
         }
         if ($categorySlug === 'discover-dong-anh-community-culture-hub' || $categorySlug === 'hanh-trinh-di-san') {
-            return view('detail-culture', compact('eatery', 'jsonLd', 'checkinPhotos', 'checkinReviews'));
+            return view('detail-culture', $viewData);
         }
         if ($categorySlug === 'dong-anh-food-map') {
-            return view('detail-food', compact('eatery', 'jsonLd', 'checkinPhotos', 'checkinReviews'));
+            return view('detail-food', $viewData);
         }
         
-        return view('detail', compact('eatery', 'jsonLd', 'checkinPhotos', 'checkinReviews'));
+        return view('detail', $viewData);
     }
 
     public function storeReview(Request $request, $id)

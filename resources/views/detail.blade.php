@@ -1349,6 +1349,83 @@
                 </div>
             </div>
             
+            <!-- BÀI VIẾT & HOẠT ĐỘNG MỚI NHẤT TỪ CƠ SỞ / HIỆU TRƯỞNG -->
+            @if(isset($principalPosts) && $principalPosts->isNotEmpty())
+            <div class="detail-section glass-panel" style="padding: 28px; margin-bottom: 24px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+                    <h2 class="section-title" style="margin: 0; font-size: 1.35rem; font-weight: 800; color: var(--text-main, #0f172a); display: flex; align-items: center; gap: 10px;">
+                        <span>📰</span> Bài viết & Hoạt động mới nhất từ cơ sở
+                    </h2>
+                    @if(isset($principalUser) && $principalUser)
+                        <a href="/profile/{{ optional($eatery)->slug ?: ($principalUser->username ?: \Illuminate\Support\Str::slug($principalUser->name)) }}" 
+                           style="font-size: 0.88rem; font-weight: 700; color: #2563eb; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; background: #eff6ff; padding: 6px 14px; border-radius: 20px; transition: background 0.2s;">
+                            Trang cá nhân cơ sở ›
+                        </a>
+                    @endif
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 20px;">
+                    @foreach($principalPosts->take(5) as $p)
+                        @php
+                            $imgs = [];
+                            if (!empty($p->image_url)) {
+                                $imgs[] = $p->image_url;
+                            }
+                            if (!empty($p->additional_images) && is_array($p->additional_images)) {
+                                $imgs = array_merge($imgs, $p->additional_images);
+                            } elseif (!empty($p->additional_images) && is_string($p->additional_images)) {
+                                $decoded = json_decode($p->additional_images, true);
+                                if (is_array($decoded)) {
+                                    $imgs = array_merge($imgs, $decoded);
+                                }
+                            }
+                            $imgs = array_unique(array_filter($imgs));
+                        @endphp
+                        <article class="fb-post-card" style="background: var(--bg-card, #ffffff); border-radius: 16px; border: 1px solid var(--border-glow, rgba(0,0,0,0.08)); padding: 20px; box-shadow: 0 4px 16px rgba(0,0,0,0.03);">
+                            <!-- Author Header -->
+                            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                                <img src="{{ optional($principalUser)->avatar_url ?: ($eatery->image_path ?: 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=1200&q=80') }}" 
+                                     alt="avatar" style="width: 44px; height: 44px; border-radius: 50%; object-fit: cover; border: 2px solid #ffffff; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+                                <div>
+                                    <div style="font-weight: 800; font-size: 0.98rem; color: var(--text-main, #0f172a);">
+                                        {{ optional($principalUser)->name ?: $eatery->name }}
+                                    </div>
+                                    <div style="font-size: 0.78rem; color: var(--text-muted, #64748b);">
+                                        {{ $p->created_at ? $p->created_at->diffForHumans() : 'Vừa xong' }} • 🌐 Công khai
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Text content -->
+                            <div style="font-size: 0.95rem; color: var(--text-main, #1e293b); line-height: 1.6; margin-bottom: 14px;">
+                                <strong style="display: block; font-size: 1.08rem; margin-bottom: 6px; color: var(--text-main, #0f172a);">🌸 {{ $p->name }}</strong>
+                                {!! nl2br(e($p->description)) !!}
+                            </div>
+
+                            <!-- Images grid -->
+                            @if(!empty($imgs))
+                                <div style="display: grid; grid-template-columns: repeat({{ min(count($imgs), 3) }}, 1fr); gap: 6px; border-radius: 12px; overflow: hidden; margin-bottom: 14px;">
+                                    @foreach(array_slice($imgs, 0, 3) as $idx => $img)
+                                        <img src="{{ $img }}" alt="photo" style="width: 100%; height: 220px; object-fit: cover; cursor: pointer; transition: transform 0.2s;" onclick="openPostLightbox('{{ $img }}')">
+                                    @endforeach
+                                </div>
+                            @endif
+
+                            <!-- Actions -->
+                            <div style="display: flex; gap: 10px; border-top: 1px solid var(--border-glow, rgba(0,0,0,0.06)); padding-top: 12px; margin-top: 12px;">
+                                <button type="button" class="fb-action-btn" onclick="togglePostLike(this, {{ $p->id }})" style="padding: 8px 16px; font-size: 0.88rem; background: rgba(0,0,0,0.03); border: none; border-radius: 10px; font-weight: 700; color: var(--text-main, #475569); cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                                    👍 Thích ({{ $p->real_likes_count ?? 0 }})
+                                </button>
+                                <button type="button" class="fb-action-btn" onclick="shareFbPost({{ $p->id }}, {{ json_encode($p->name) }}, {{ json_encode($imgs) }})" style="padding: 8px 16px; font-size: 0.88rem; background: rgba(0,0,0,0.03); border: none; border-radius: 10px; font-weight: 700; color: var(--text-main, #475569); cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                                    🔄 Chia sẻ
+                                </button>
+                            </div>
+                        </article>
+                    @endforeach
+                </div>
+            </div>
+            @endif
+
             <!-- Đánh giá bình luận -->
             <div class="detail-section glass-panel" style="padding: 28px;">
                 <h2 class="section-title" id="reviewsSection">
