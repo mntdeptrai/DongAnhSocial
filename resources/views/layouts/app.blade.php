@@ -74,6 +74,7 @@
     
     <!-- Custom Theme Styling -->
     <link rel="stylesheet" href="{{ asset('css/app.css') }}?v={{ time() }}">
+    <link rel="stylesheet" href="{{ asset('css/4-screen-responsive.css') }}?v={{ time() }}">
     
     <!-- Mobile Native Overrides (Only load for mobile and tablet screens) -->
     <link rel="stylesheet" media="screen and (max-width: 991px)" href="{{ asset('css/mobile-native.css') }}?v={{ file_exists(public_path('css/mobile-native.css')) ? filemtime(public_path('css/mobile-native.css')) : '1.0.0' }}">
@@ -475,7 +476,7 @@
                         </div> <!-- End header-actions-group -->
 
                         <div class="profile-dropdown" x-data="{ open: false }" @click.outside="open = false">
-                            <button @click="open = !open" class="profile-trigger-btn">
+                            <button @click="open = !open" class="profile-trigger-btn" title="Tài khoản">
                                 @php $navUser = Auth::user() ?? \App\Models\User::find(session('user_id')); @endphp
                                 <div class="profile-avatar-container">
                                     @if($navUser && $navUser->avatar && str_starts_with($navUser->avatar, 'avatars/'))
@@ -484,9 +485,6 @@
                                         <span style="font-size: 1.2rem;">{{ $navUser->avatar ?? '👤' }}</span>
                                     @endif
                                 </div>
-                                <span class="profile-mobile-name">
-                                    {{ session('user_name') ?: ($navUser ? $navUser->name : 'Tài khoản') }}
-                                </span>
                                 <div class="profile-chevron-badge">
                                     <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
                                         <path d="M6 9l6 6 6-6"></path>
@@ -560,7 +558,7 @@
     </header>
 
     <!-- Main Content Slot -->
-    <main>
+    <main style="min-height: 65vh; padding-bottom: 60px;">
         @yield('content')
     </main>
 

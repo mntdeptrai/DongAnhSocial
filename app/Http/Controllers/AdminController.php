@@ -1426,9 +1426,9 @@ class AdminController extends Controller
         if ($request->has('search') && $request->search != '') {
             $search = $request->search;
             $query->where(function($q) use ($search) {
-                $q->where('name', 'like', '%' . $search . '%')
-                  ->orWhere('email', 'like', '%' . $search . '%')
-                  ->orWhere('phone', 'like', '%' . $search . '%');
+                $q->where('phone', $search)
+                  ->orWhere('email', $search)
+                  ->orWhere('name', 'like', $search . '%');
             });
         }
 
@@ -2104,19 +2104,16 @@ class AdminController extends Controller
         if ($request->has('search') && $request->search != '') {
             $search = $request->search;
             $query->where(function($q) use ($search) {
-                $q->where('stall_name', 'like', "%{$search}%")
-                  ->orWhere('seller_name', 'like', "%{$search}%")
-                  ->orWhere('seller_phone', 'like', "%{$search}%")
-                  ->orWhere('name', 'like', "%{$search}%");
+                $q->where('seller_phone', $search)
+                  ->orWhere('stall_name', 'like', "{$search}%")
+                  ->orWhere('name', 'like', "{$search}%")
+                  ->orWhere('seller_name', 'like', "{$search}%");
             });
         }
 
         if ($request->has('category') && $request->category != '') {
             $catFilter = $request->category;
-            $query->where(function($q) use ($catFilter) {
-                $q->where('stall_name', 'like', "%{$catFilter}%")
-                  ->orWhere('name', 'like', "%{$catFilter}%");
-            });
+            $query->where('stall_name', 'like', "{$catFilter}%");
         }
 
         $rawProducts = $query->orderBy('id', 'desc')->get();

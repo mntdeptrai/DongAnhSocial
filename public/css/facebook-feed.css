@@ -169,6 +169,41 @@
     object-fit: cover;
 }
 
+/* Grid 5+ Images (Facebook Standard 2 Top + 3 Bottom Grid Layout) */
+.fb-grid-5 {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    height: 440px;
+    background: #000000;
+}
+
+.fb-grid-5-row-top {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3px;
+    height: 58%;
+}
+
+.fb-grid-5-row-top img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.fb-grid-5-row-bottom {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 3px;
+    height: 42%;
+}
+
+.fb-grid-5-row-bottom img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
 .fb-photo-thumb-box {
     position: relative;
     width: 100%;
@@ -247,3 +282,390 @@
     color: #4f46e5;
     background: rgba(79, 70, 229, 0.08);
 }
+
+/* 5. Facebook Style Create Post Modal CSS */
+.sch-modal {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    inset: 0 !important;
+    z-index: 11000 !important;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(15, 23, 42, 0.65) !important;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    padding: 24px 16px;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+}
+
+.sch-modal.show {
+    display: flex !important;
+    animation: modalFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.96);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.fb-modal-box {
+    background: #ffffff;
+    width: 100%;
+    max-width: 540px;
+    border-radius: 20px;
+    padding: 20px 24px;
+    box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.35);
+    position: relative;
+    max-height: 90vh;
+    overflow-y: auto;
+    margin: auto;
+    border: 1px solid #e2e8f0;
+    font-family: 'Be Vietnam Pro', sans-serif;
+}
+
+.sch-close-modal {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #f1f5f9;
+    border: none;
+    font-size: 1.1rem;
+    color: #475569;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer !important;
+    z-index: 10 !important;
+    transition: all 0.2s ease;
+}
+
+.sch-close-modal:hover {
+    background: #ef4444 !important;
+    color: #ffffff !important;
+}
+
+.fb-modal-header {
+    text-align: center;
+    padding-bottom: 14px;
+    border-bottom: 1px solid #e2e8f0;
+    margin-bottom: 16px;
+    position: relative;
+}
+
+.fb-modal-title {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 0;
+    font-family: 'Be Vietnam Pro', sans-serif;
+}
+
+.fb-modal-user-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.fb-modal-user-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #e2e8f0;
+}
+
+.fb-modal-user-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.fb-modal-user-name {
+    font-size: 0.98rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0;
+    font-family: 'Be Vietnam Pro', sans-serif;
+}
+
+.fb-modal-badges {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.fb-modal-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #f1f5f9;
+    color: #475569;
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.fb-modal-body {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.fb-modal-title-input {
+    width: 100%;
+    border: 1px solid #cbd5e1;
+    border-radius: 12px;
+    padding: 10px 14px;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #0f172a;
+    outline: none;
+    transition: border-color 0.2s;
+    background: #ffffff;
+    font-family: 'Be Vietnam Pro', sans-serif;
+}
+
+.fb-modal-title-input:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.fb-modal-title-input::placeholder {
+    color: #94a3b8;
+    font-weight: 500;
+}
+
+.fb-modal-textarea {
+    width: 100%;
+    border: 1px solid #cbd5e1;
+    border-radius: 12px;
+    padding: 12px 14px;
+    font-size: 0.95rem;
+    color: #0f172a;
+    outline: none;
+    resize: vertical;
+    min-height: 110px;
+    transition: border-color 0.2s;
+    background: #ffffff;
+    font-family: 'Be Vietnam Pro', sans-serif;
+    line-height: 1.5;
+}
+
+.fb-modal-textarea:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.fb-modal-textarea::placeholder {
+    color: #94a3b8;
+}
+
+.fb-modal-action-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    border: 1px solid #cbd5e1;
+    border-radius: 14px;
+    margin-bottom: 16px;
+    background: #ffffff;
+}
+
+.fb-modal-action-label {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #0f172a;
+    font-family: 'Be Vietnam Pro', sans-serif;
+}
+
+.fb-modal-action-buttons {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.fb-modal-action-btn {
+    position: relative;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    border: none;
+    background: #f1f5f9;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.fb-modal-action-btn:hover {
+    background: #e2e8f0;
+}
+
+.fb-modal-file-input {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+}
+
+.fb-modal-submit-btn {
+    width: 100%;
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    color: #ffffff;
+    border: none;
+    border-radius: 12px;
+    padding: 12px;
+    font-size: 1rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    font-family: 'Be Vietnam Pro', sans-serif;
+}
+
+.fb-modal-submit-btn:hover {
+    opacity: 0.95;
+    transform: translateY(-1px);
+}
+
+.fb-modal-submit-btn:active {
+    transform: translateY(0);
+}
+
+/* ============================================================
+   5. Facebook Post Comments Section
+   ============================================================ */
+.fb-comments-section {
+    border-top: 1px solid #e2e8f0;
+    padding: 12px 16px 16px 16px;
+    background: #f8fafc;
+    display: none;
+    border-bottom-left-radius: 20px;
+    border-bottom-right-radius: 20px;
+}
+
+.fb-comments-section.show {
+    display: block;
+    animation: modalFadeIn 0.25s ease;
+}
+
+.fb-comments-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 12px;
+    max-height: 380px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.fb-comment-item {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+}
+
+.fb-comment-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.fb-comment-bubble {
+    background: #f1f5f9;
+    border-radius: 18px;
+    padding: 8px 14px;
+    max-width: 85%;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+}
+
+.fb-comment-author {
+    font-weight: 700;
+    font-size: 0.84rem;
+    color: #0f172a;
+    margin-bottom: 2px;
+}
+
+.fb-comment-text {
+    font-size: 0.88rem;
+    color: #334155;
+    word-break: break-word;
+    line-height: 1.4;
+}
+
+.fb-comment-meta {
+    font-size: 0.72rem;
+    color: #94a3b8;
+    margin-top: 3px;
+    padding-left: 44px;
+}
+
+.fb-comment-input-box {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-top: 8px;
+}
+
+.fb-comment-input {
+    flex: 1;
+    background: #ffffff;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 20px;
+    padding: 8px 16px;
+    font-size: 0.88rem;
+    color: #0f172a;
+    outline: none;
+    transition: all 0.2s ease;
+}
+
+.fb-comment-input:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.fb-comment-send-btn {
+    background: #2563eb;
+    color: #ffffff;
+    border: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.fb-comment-send-btn:hover {
+    background: #1d4ed8;
+    transform: scale(1.05);
+}
+

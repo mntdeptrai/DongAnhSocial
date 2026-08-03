@@ -51,5 +51,10 @@ class AppServiceProvider extends ServiceProvider
         \App\Models\FoodSupplyContract::observe(\App\Observers\TrustHubObserver::class);
         \App\Models\PurchaseInvoice::observe(\App\Observers\TrustHubObserver::class);
         \App\Models\Comment::observe(\App\Observers\CommentObserver::class);
+
+        // Đăng ký Blade Directive @linkify cho tự động nhận diện URL, Email, Phone
+        \Illuminate\Support\Facades\Blade::directive('linkify', function ($expression) {
+            return "<?php echo \App\Helpers\TextHelper::linkify($expression); ?>";
+        });
     }
 }

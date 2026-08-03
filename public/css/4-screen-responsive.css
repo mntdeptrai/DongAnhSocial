@@ -1,0 +1,221 @@
+/* ==========================================================================
+   4-TIER BREAKPOINT RESPONSIVE SYSTEM (RELATIVE RESPONSIVE DESIGN)
+   Tier 1: Desktop Large (>= 1200px)
+   Tier 2: Laptop / Standard Desktop (992px - 1199px)
+   Tier 3: Tablet (768px - 991px)
+   Tier 4: Mobile (< 768px)
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   TIER 1: Desktop Large (>= 1200px)
+   -------------------------------------------------------------------------- */
+@media (min-width: 1200px) {
+    .container, .sch-container, .detail-container, .pf-container {
+        max-width: 1280px !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+        padding-left: 24px !important;
+        padding-right: 24px !important;
+    }
+    .sch-stats-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+        gap: 24px !important;
+    }
+}
+
+/* --------------------------------------------------------------------------
+   TIER 2: Laptop / Standard Desktop (992px - 1199px)
+   -------------------------------------------------------------------------- */
+@media (max-width: 1199px) and (min-width: 992px) {
+    .container, .sch-container, .detail-container, .pf-container {
+        max-width: 100% !important;
+        padding-left: 20px !important;
+        padding-right: 20px !important;
+    }
+    
+    /* Header nav font & padding compacting to prevent avatar cut-off */
+    .glass-nav .nav-menu {
+        gap: 4px !important;
+    }
+    .glass-nav .nav-link {
+        padding: 6px 10px !important;
+        font-size: 0.82rem !important;
+    }
+    .glass-nav .logo {
+        font-size: 1.05rem !important;
+    }
+    .user-actions {
+        gap: 6px !important;
+    }
+
+    .sch-hero {
+        padding: 24px !important;
+        gap: 16px !important;
+    }
+    .sch-hero-title {
+        font-size: 1.6rem !important;
+    }
+    .sch-stats-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+        gap: 16px !important;
+    }
+}
+
+/* --------------------------------------------------------------------------
+   TIER 3: Tablet (768px - 991px)
+   -------------------------------------------------------------------------- */
+@media (max-width: 991px) and (min-width: 768px) {
+    .container, .sch-container, .detail-container, .pf-container {
+        max-width: 100% !important;
+        padding-left: 16px !important;
+        padding-right: 16px !important;
+    }
+
+    .sch-hero {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        padding: 24px !important;
+        gap: 16px !important;
+        border-radius: 20px !important;
+    }
+    .sch-hero-content {
+        width: 100% !important;
+    }
+    .sch-hero-title {
+        font-size: 1.5rem !important;
+    }
+    .sch-hero .d-flex {
+        width: 100% !important;
+    }
+    .sch-hero .sch-btn {
+        flex: 1 !important;
+        text-align: center !important;
+        justify-content: center !important;
+    }
+
+    .sch-stats-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+        gap: 14px !important;
+    }
+    .sch-stat-card {
+        padding: 16px !important;
+        gap: 12px !important;
+        border-radius: 16px !important;
+    }
+    .sch-stat-icon {
+        width: 44px !important;
+        height: 44px !important;
+        font-size: 1.25rem !important;
+    }
+    .sch-stat-value {
+        font-size: 1.4rem !important;
+    }
+
+    .sch-tabs-container {
+        overflow-x: auto !important;
+        flex-wrap: nowrap !important;
+        -webkit-overflow-scrolling: touch !important;
+        padding: 6px !important;
+    }
+    .sch-tab-btn {
+        min-width: max-content !important;
+        padding: 10px 16px !important;
+        font-size: 0.85rem !important;
+    }
+}
+
+/* --------------------------------------------------------------------------
+   TIER 4: Mobile (< 768px)
+   -------------------------------------------------------------------------- */
+@media (max-width: 767px) {
+    .container, .sch-container, .detail-container, .pf-container {
+        width: 100% !important;
+        max-width: 100% !important;
+        padding-left: 12px !important;
+        padding-right: 12px !important;
+    }
+
+    .sch-hero {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        padding: 20px 16px !important;
+        border-radius: 18px !important;
+        gap: 16px !important;
+        margin-bottom: 20px !important;
+    }
+    .sch-hero-content {
+        width: 100% !important;
+    }
+    .sch-hero-tag {
+        font-size: 0.72rem !important;
+        padding: 4px 12px !important;
+    }
+    .sch-hero-title {
+        font-size: 1.3rem !important;
+        line-height: 1.3 !important;
+    }
+    .sch-hero-desc {
+        font-size: 0.82rem !important;
+        line-height: 1.4 !important;
+    }
+    .sch-hero .d-flex {
+        flex-direction: column !important;
+        width: 100% !important;
+        gap: 10px !important;
+    }
+    .sch-hero .sch-btn {
+        width: 100% !important;
+        justify-content: center !important;
+        padding: 12px 20px !important;
+        font-size: 0.9rem !important;
+    }
+
+    .sch-stats-grid {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+        margin-bottom: 20px !important;
+    }
+    .sch-stat-card {
+        padding: 16px !important;
+        border-radius: 16px !important;
+        gap: 14px !important;
+    }
+
+    .sch-tabs-container {
+        display: flex !important;
+        overflow-x: auto !important;
+        flex-wrap: nowrap !important;
+        -webkit-overflow-scrolling: touch !important;
+        gap: 6px !important;
+        padding: 6px !important;
+        margin-bottom: 20px !important;
+        border-radius: 14px !important;
+    }
+    .sch-tab-btn {
+        flex: 0 0 auto !important;
+        min-width: auto !important;
+        padding: 10px 14px !important;
+        font-size: 0.82rem !important;
+        white-space: nowrap !important;
+    }
+
+    .fb-feed-container {
+        max-width: 100% !important;
+        padding: 0 !important;
+    }
+    .fb-create-post-card {
+        padding: 12px !important;
+        gap: 10px !important;
+        border-radius: 16px !important;
+    }
+    .fb-create-trigger-input {
+        font-size: 0.85rem !important;
+        padding: 10px 14px !important;
+    }
+
+    /* Prevent modal overflow on mobile */
+    .modal-dialog {
+        margin: 10px auto !important;
+        max-width: 95% !important;
+    }
+}

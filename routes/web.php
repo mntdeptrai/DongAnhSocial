@@ -55,6 +55,11 @@ Route::get('/sitemap.xml', [HomeController::class, 'sitemap'])->name('sitemap');
 Route::get('/api/videos', [HomeController::class, 'getVideos'])->name('api.videos');
 Route::post('/api/videos/{id}/like', [HomeController::class, 'likeVideo'])->name('api.videos.like');
 
+// API Reactions & Comments (Like bài viết, Thả tim địa điểm & Bình luận chuẩn DB Real)
+Route::post('/api/reactions/toggle', [HomeController::class, 'toggleReaction'])->name('api.reactions.toggle');
+Route::get('/api/comments', [HomeController::class, 'getComments'])->name('api.comments.index');
+Route::post('/api/comments', [HomeController::class, 'storeComment'])->name('api.comments.store');
+
 // --- FOOD TOUR JOURNEY ROUTES (Trải nghiệm hành trình ẩm thực) ---
 Route::get('/food-tours', [FoodTourController::class, 'index'])->name('food-tours.index');
 Route::get('/exp-corner', [FoodTourController::class, 'cookingIndex'])->name('cooking-tours.index');
@@ -94,6 +99,7 @@ Route::middleware(['auth'])->group(function () {
         ->name('api.food-tours.generate-ai');
 
     // --- PRINCIPAL SCHOOL MANAGEMENT ROUTES (Quản lý trường học dành cho Hiệu Trưởng) ---
+    Route::get('/principal/dashboard', [SchoolManagementController::class, 'dashboardRedirect'])->name('principal.dashboard');
     Route::get('/principal/schools', [SchoolManagementController::class, 'index'])->name('principal.schools.index');
     Route::get('/principal/schools/{id}/dashboard', [SchoolManagementController::class, 'dashboard'])->name('principal.schools.dashboard');
     Route::get('/principal/schools/{id}/edit', [SchoolManagementController::class, 'edit'])->name('principal.schools.edit');

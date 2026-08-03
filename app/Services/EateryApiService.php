@@ -346,9 +346,9 @@ class EateryApiService
 
             $query->where(function($q) use ($keywords) {
                 foreach ($keywords as $kw) {
-                    $q->orWhere('name', 'like', "%{$kw}%")
-                      ->orWhere('description', 'like', "%{$kw}%")
-                      ->orWhere('address', 'like', "%{$kw}%");
+                    $q->orWhere('slug', 'like', "{$kw}%")
+                      ->orWhere('name', 'like', "{$kw}%")
+                      ->orWhere('address', 'like', "{$kw}%");
                 }
             });
         }

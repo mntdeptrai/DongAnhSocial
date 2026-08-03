@@ -3,6 +3,7 @@
 @section('title', 'Bảng Điều Hành - ' . $school->standardized_name)
 
 @section('content')
+<link rel="stylesheet" href="{{ asset('css/facebook-feed.css') }}?v={{ time() }}">
 <style>
     :root {
         --sch-primary: #4f46e5;
@@ -366,6 +367,117 @@
         white-space: nowrap;
     }
 
+    /* Photo Gallery Filters & Badges */
+    .sch-photo-filters {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-bottom: 24px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .sch-photo-filter-pill {
+        background: #f1f5f9;
+        color: #475569;
+        border: 1px solid #cbd5e1;
+        padding: 8px 18px;
+        border-radius: 100px;
+        font-size: 0.88rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-family: 'Be Vietnam Pro', sans-serif;
+    }
+
+    .sch-photo-filter-pill:hover {
+        background: #e2e8f0;
+        color: #0f172a;
+    }
+
+    .sch-photo-filter-pill.active {
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        color: #ffffff;
+        border-color: #2563eb;
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+    }
+
+    .sch-photo-group-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 14px;
+        padding-bottom: 8px;
+        border-bottom: 2px dashed #f1f5f9;
+    }
+
+    .sch-photo-group-title {
+        font-size: 1.05rem;
+        font-weight: 800;
+        color: #0f172a;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-family: 'Be Vietnam Pro', sans-serif;
+    }
+
+    .sch-photo-group-count {
+        font-size: 0.8rem;
+        font-weight: 700;
+        background: #eff6ff;
+        color: #2563eb;
+        padding: 2px 10px;
+        border-radius: 12px;
+    }
+
+    .sch-photo-group-badge {
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: #64748b;
+        background: #f8fafc;
+        padding: 4px 12px;
+        border-radius: 20px;
+        border: 1px solid #e2e8f0;
+    }
+
+    .sch-photo-type-tag {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 0.72rem;
+        font-weight: 800;
+        color: #ffffff;
+        z-index: 2;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        backdrop-filter: blur(4px);
+    }
+
+    .sch-photo-type-tag.tag-post {
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    }
+
+    .sch-photo-type-tag.tag-cover {
+        background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+    }
+
+    .sch-photo-type-tag.tag-avatar {
+        background: linear-gradient(135deg, #7c3aed 0%, #8b5cf6 100%);
+    }
+
+    .sch-photo-type-tag.tag-upload {
+        background: linear-gradient(135deg, #d97706 0%, #f59e0b 100%);
+    }
+
+    .sch-photo-date {
+        color: #cbd5e1;
+        font-size: 0.75rem;
+        display: block;
+        margin-top: 2px;
+    }
+
     /* Video Galleries */
     .sch-video-grid {
         display: grid;
@@ -439,11 +551,13 @@
         justify-content: center;
         background: rgba(15, 23, 42, 0.6);
         backdrop-filter: blur(8px);
-        padding: 16px;
+        padding: 24px 16px;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch;
     }
 
     .sch-modal.show {
-        display: flex;
+        display: flex !important;
         animation: modalFadeIn 0.3s ease;
     }
 
@@ -455,8 +569,265 @@
         padding: 32px;
         box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
         position: relative;
-        max-height: 90vh;
-        overflow-y: auto;
+        max-height: 85vh !important;
+        overflow-y: auto !important;
+        margin: auto !important;
+    }
+
+    .fb-post-card {
+        overflow: visible !important;
+    }
+
+    /* Facebook Custom Post Options Dropdown */
+    .fb-post-options-container {
+        position: relative;
+    }
+
+    .fb-post-options-btn {
+        background: #f1f5f9;
+        border: none;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: #475569;
+        font-size: 1.1rem;
+        font-weight: 800;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .fb-post-options-btn:hover {
+        background: #e2e8f0;
+        color: #0f172a;
+    }
+
+    .fb-post-dropdown-menu {
+        position: absolute;
+        top: 100%;
+        right: 0;
+        margin-top: 6px;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        box-shadow: 0 10px 25px rgba(15, 23, 42, 0.15);
+        min-width: 200px;
+        z-index: 1000;
+        display: none;
+        overflow: hidden;
+        padding: 6px 0;
+        list-style: none !important;
+        margin-bottom: 0;
+    }
+
+    .fb-post-dropdown-menu.show {
+        display: block !important;
+        animation: dropFadeIn 0.2s ease;
+    }
+
+    @keyframes dropFadeIn {
+        from { opacity: 0; transform: translateY(-6px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .fb-post-dropdown-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        width: 100%;
+        padding: 10px 16px;
+        font-size: 0.88rem;
+        font-weight: 700;
+        color: #334155;
+        background: transparent;
+        border: none;
+        text-align: left;
+        cursor: pointer;
+        transition: background 0.15s ease;
+        text-decoration: none;
+    }
+
+    .fb-post-dropdown-item:hover {
+        background: #f8fafc;
+        color: #0f172a;
+    }
+
+    .fb-post-dropdown-item.danger {
+        color: #ef4444;
+    }
+
+    .fb-post-dropdown-item.danger:hover {
+        background: #fef2f2;
+        color: #dc2626;
+    }
+
+    .fb-modal-header {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding-bottom: 14px !important;
+        border-bottom: 1px solid #e2e8f0 !important;
+        margin-bottom: 16px !important;
+        position: relative !important;
+    }
+
+    .fb-modal-title {
+        font-size: 1.15rem !important;
+        font-weight: 800 !important;
+        color: #0f172a !important;
+        margin: 0 !important;
+        text-align: center !important;
+    }
+
+    .fb-modal-user-row {
+        display: flex !important;
+        align-items: center !important;
+        gap: 12px !important;
+        margin-bottom: 16px !important;
+    }
+
+    .fb-modal-user-avatar {
+        width: 44px !important;
+        height: 44px !important;
+        border-radius: 50% !important;
+        object-fit: cover !important;
+        border: 2px solid #e2e8f0 !important;
+        flex-shrink: 0 !important;
+    }
+
+    .fb-modal-user-info {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 4px !important;
+    }
+
+    .fb-modal-user-name {
+        font-size: 0.96rem !important;
+        font-weight: 800 !important;
+        color: #0f172a !important;
+        margin: 0 !important;
+    }
+
+    .fb-modal-badges {
+        display: flex !important;
+        gap: 6px !important;
+    }
+
+    .fb-modal-badge {
+        background: #f1f5f9 !important;
+        border: 1px solid #cbd5e1 !important;
+        border-radius: 999px !important;
+        padding: 2px 10px !important;
+        font-size: 0.75rem !important;
+        font-weight: 600 !important;
+        color: #334155 !important;
+    }
+
+    .fb-modal-body {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 12px !important;
+        margin-bottom: 16px !important;
+    }
+
+    .fb-modal-title-input {
+        width: 100% !important;
+        border: none !important;
+        outline: none !important;
+        font-size: 1.15rem !important;
+        font-weight: 800 !important;
+        color: #0f172a !important;
+        padding: 4px 0 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+    }
+
+    .fb-modal-textarea {
+        width: 100% !important;
+        border: none !important;
+        outline: none !important;
+        font-size: 1.05rem !important;
+        color: #1e293b !important;
+        padding: 4px 0 !important;
+        background: transparent !important;
+        resize: none !important;
+        min-height: 120px !important;
+        box-shadow: none !important;
+    }
+
+    .fb-modal-action-bar {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        padding: 12px 16px !important;
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 16px !important;
+        background: #ffffff !important;
+        box-shadow: 0 4px 14px rgba(0,0,0,0.03) !important;
+        margin-bottom: 16px !important;
+        box-sizing: border-box !important;
+        width: 100% !important;
+    }
+
+    .fb-modal-action-label {
+        font-size: 0.88rem !important;
+        font-weight: 700 !important;
+        color: #1e293b !important;
+        white-space: nowrap !important;
+    }
+
+    .fb-modal-action-buttons {
+        display: flex !important;
+        align-items: center !important;
+        gap: 8px !important;
+    }
+
+    .fb-modal-action-btn {
+        width: 38px !important;
+        height: 38px !important;
+        border-radius: 50% !important;
+        background: #f1f5f9 !important;
+        border: 1px solid #e2e8f0 !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        cursor: pointer !important;
+        font-size: 1.1rem !important;
+        transition: all 0.2s ease !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    .fb-modal-action-btn:hover {
+        background: #e2e8f0 !important;
+        transform: scale(1.05) !important;
+    }
+
+    .fb-modal-file-input {
+        display: none !important;
+    }
+
+    .fb-modal-submit-btn {
+        width: 100% !important;
+        padding: 12px !important;
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+        color: #ffffff !important;
+        font-weight: 800 !important;
+        font-size: 1rem !important;
+        border: none !important;
+        border-radius: 12px !important;
+        cursor: pointer !important;
+        box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35) !important;
+        transition: all 0.2s ease !important;
+        display: block !important;
+        text-align: center !important;
+    }
+
+    .fb-modal-submit-btn:hover {
+        background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%) !important;
+        transform: translateY(-1px) !important;
     }
 
     @keyframes modalFadeIn {
@@ -481,6 +852,7 @@
         cursor: pointer;
         color: var(--sch-text-muted);
         transition: all 0.2s;
+        z-index: 10;
     }
 
     .sch-close-modal:hover {
@@ -597,9 +969,17 @@
     }
 
     .sch-empty-state {
+        background: #ffffff;
+        border: 1px solid var(--sch-border);
+        border-radius: 20px;
+        padding: 48px 24px;
         text-align: center;
-        padding: 48px 0;
         color: var(--sch-text-muted);
+        box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.05);
+        margin: 24px auto 48px auto;
+        width: 100%;
+        max-width: 680px;
+        box-sizing: border-box;
     }
 
     .sch-empty-icon {
@@ -628,18 +1008,116 @@
                 📍 Địa chỉ: {{ $school->address ?: 'Xã Đông Anh, Hà Nội' }} | 📞 Điện thoại: {{ $school->phone ?: 'Chưa cập nhật' }}
             </p>
         </div>
-        <div class="d-flex gap-2 flex-wrap">
+        <div class="d-flex gap-2 flex-wrap align-items-center">
+            @php
+                $uId = \Illuminate\Support\Facades\Auth::id() ?? session('user_id');
+                $sId = session()->getId();
+                $eateryLiked = \App\Models\CheckinReaction::where('reactionable_type', 'eatery')
+                    ->where('reactionable_id', $school->id)
+                    ->where(function($q) use ($uId, $sId) {
+                        if ($uId) { $q->where('user_id', $uId); } else { $q->where('session_id', $sId); }
+                    })->exists();
+
+                $eateryLikesCount = \App\Models\CheckinReaction::where('reactionable_type', 'eatery')
+                    ->where('reactionable_id', $school->id)
+                    ->count();
+            @endphp
+
+            <button type="button" class="sch-btn {{ $eateryLiked ? 'sch-btn-primary' : 'sch-btn-accent' }}" 
+                    id="eatery-heart-btn-{{ $school->id }}" 
+                    onclick="togglePlaceHeart(this, {{ $school->id }})" 
+                    style="border-radius: 100px; {{ $eateryLiked ? 'background: #ef4444 !important; color: #ffffff !important;' : '' }}">
+                ❤️ <span id="eatery-heart-text-{{ $school->id }}">{{ $eateryLiked ? 'Đã thả tim' : 'Thả tim địa điểm' }} ({{ $eateryLikesCount }})</span>
+            </button>
+
             <a href="/principal/schools" class="sch-btn sch-btn-accent" style="border-radius: 100px;">
                 ⬅️ DS Trường học
             </a>
-            <a href="{{ route('principal.schools.edit', $school->id) }}" class="sch-btn sch-btn-primary" style="border-radius: 100px; background: #6366f1;">
+            <a href="{{ route('principal.schools.edit', $school->slug ?: $school->id) }}" class="sch-btn sch-btn-primary" style="border-radius: 100px; background: #f59e0b; color: #ffffff;">
+                ✏️ Cập nhật chỉ số & thông tin trường
+            </a>
+            <a href="{{ route('principal.schools.edit', $school->slug ?: $school->id) }}" class="sch-btn sch-btn-primary" style="border-radius: 100px; background: #6366f1;">
                 ⚙️ Điểm trường sáp nhập
             </a>
         </div>
     </header>
 
-    <!-- Bento Stats -->
+    @php
+        $storyData = $storyData ?? ($school->storytelling_data ?? []);
+        $mergedSchool = $storyData['mergedSchool'] ?? [];
+        $mergedComponents = $school->merged_components ?? [];
+
+        $foundedYr = $mergedSchool['founded_year'] ?? ($school->founded_year ?? null);
+
+        $calcStaff = count($mergedComponents) > 0 ? array_sum(array_column($mergedComponents, 'staff')) : null;
+        $totalStaff = $mergedSchool['total_staff'] ?? ($school->total_teachers ?? ($calcStaff ?: null));
+
+        $calcStudents = count($mergedComponents) > 0 ? array_sum(array_column($mergedComponents, 'students')) : null;
+        $totalStudents = $mergedSchool['total_students'] ?? ($school->total_students ?? ($calcStudents ?: null));
+
+        $awardsCount = $mergedSchool['awards_count'] ?? ($school->awards_count ?? null);
+
+        // Tính tổng số ảnh trong Thư viện (Bài viết + Ảnh bìa/cơ sở + Ảnh đại diện + Ảnh tải lên)
+        $allPostPhotosCount = 0;
+        foreach ($posts as $p) {
+            $pImgs = $p->all_images;
+            if (is_array($pImgs)) {
+                $allPostPhotosCount += count(array_filter($pImgs));
+            }
+        }
+        $avatarPhotoCount = $school->image_path ? 1 : 0;
+        $coverPhotosCount = 0;
+        foreach ($mergedComponents as $c) {
+            if (!empty($c['photo'])) $coverPhotosCount++;
+        }
+        if ($coverPhotosCount === 0) {
+            $coverPhotosCount = count($storyData['photos'] ?? []);
+        }
+        $totalGalleryPhotosCount = $allPostPhotosCount + $avatarPhotoCount + $coverPhotosCount + $photos->count();
+    @endphp
+
+    <!-- Bento Stats Grid (Unified 7 Cards Grid) -->
     <section class="sch-stats-grid">
+        <div class="sch-stat-card">
+            <div class="sch-stat-icon" style="background: rgba(245, 158, 11, 0.1); color: #d97706;">
+                📅
+            </div>
+            <div class="sch-stat-info">
+                <div class="sch-stat-value">{{ $foundedYr ?: 'Chưa cập nhật' }}</div>
+                <div class="sch-stat-label">Năm thành lập</div>
+            </div>
+        </div>
+
+        <div class="sch-stat-card">
+            <div class="sch-stat-icon" style="background: rgba(37, 99, 235, 0.1); color: #2563eb;">
+                👩‍🏫
+            </div>
+            <div class="sch-stat-info">
+                <div class="sch-stat-value">{{ $totalStaff !== null ? $totalStaff . ' người' : 'Chưa cập nhật' }}</div>
+                <div class="sch-stat-label">Giáo viên & CBGVNV</div>
+            </div>
+        </div>
+
+        <div class="sch-stat-card">
+            <div class="sch-stat-icon" style="background: rgba(16, 185, 129, 0.1); color: #10b981;">
+                🎒
+            </div>
+            <div class="sch-stat-info">
+                <div class="sch-stat-value">{{ $totalStudents !== null ? $totalStudents . ' bé' : 'Chưa cập nhật' }}</div>
+                <div class="sch-stat-label">Học sinh nhà trường</div>
+            </div>
+        </div>
+
+        <div class="sch-stat-card">
+            <div class="sch-stat-icon" style="background: rgba(236, 72, 153, 0.1); color: #ec4899;">
+                🏆
+            </div>
+            <div class="sch-stat-info">
+                <div class="sch-stat-value">{{ $awardsCount !== null ? $awardsCount . ' danh hiệu' : 'Chưa cập nhật' }}</div>
+                <div class="sch-stat-label">Giải thưởng & Thành tích</div>
+            </div>
+        </div>
+
         <div class="sch-stat-card">
             <div class="sch-stat-icon" style="background: rgba(79, 70, 229, 0.1); color: var(--sch-primary);">
                 📰
@@ -649,15 +1127,17 @@
                 <div class="sch-stat-label">Bài viết / Hoạt động</div>
             </div>
         </div>
+
         <div class="sch-stat-card">
             <div class="sch-stat-icon" style="background: rgba(16, 185, 129, 0.1); color: var(--sch-success);">
                 🖼️
             </div>
             <div class="sch-stat-info">
-                <div class="sch-stat-value">{{ $photos->count() }}</div>
+                <div class="sch-stat-value">{{ $totalGalleryPhotosCount }}</div>
                 <div class="sch-stat-label">Hình ảnh thư viện</div>
             </div>
         </div>
+
         <div class="sch-stat-card">
             <div class="sch-stat-icon" style="background: rgba(239, 68, 68, 0.1); color: var(--sch-danger);">
                 📹
@@ -672,13 +1152,13 @@
     <!-- Tabs Navigation -->
     <nav class="sch-tabs-container">
         <button onclick="switchTab('posts')" id="tab-btn-posts" class="sch-tab-btn active">
-            📰 Bài viết / Hoạt động
+            📰 Bài viết / Hoạt động ({{ $posts->count() }})
         </button>
         <button onclick="switchTab('photos')" id="tab-btn-photos" class="sch-tab-btn">
-            🖼️ Thư viện hình ảnh
+            🖼️ Thư viện hình ảnh ({{ $totalGalleryPhotosCount }})
         </button>
         <button onclick="switchTab('videos')" id="tab-btn-videos" class="sch-tab-btn">
-            📹 Video giới thiệu
+            📹 Video giới thiệu ({{ $videos->count() }})
         </button>
     </nav>
 
@@ -700,7 +1180,7 @@
             </div>
 
             @if($posts->isEmpty())
-                <div class="sch-empty-state bg-white p-5 rounded-4 border text-center my-4" style="width: 100%; max-width: 680px; margin: 0 auto; box-sizing: border-box; border-radius: 20px !important;">
+                <div class="sch-empty-state">
                     <div style="font-size: 3.5rem; margin-bottom: 12px;">📰</div>
                     <h5 class="fw-bold text-dark mb-2" style="font-size: 1.25rem; font-family: 'Be Vietnam Pro', sans-serif;">Chưa có bài viết nào</h5>
                     <p class="text-secondary mb-4" style="max-width: 460px; margin: 0 auto; line-height: 1.6; font-family: 'Be Vietnam Pro', sans-serif; font-size: 0.95rem;">Hãy tạo bài viết đầu tiên để chia sẻ hoạt động giáo dục & thông báo tới phụ huynh!</p>
@@ -729,55 +1209,69 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="dropdown">
-                                    <button class="btn btn-link text-secondary p-0 text-decoration-none fw-bold" type="button" data-bs-toggle="dropdown" style="font-size: 1.2rem; line-height: 1;">•••</button>
-                                    <ul class="dropdown-menu dropdown-menu-end rounded-3 shadow-sm border">
-                                        <li><button type="button" onclick="openEditPostModal({{ json_encode($p) }})" class="dropdown-item py-2">✏️ Chỉnh sửa bài viết</button></li>
-                                        <li>
-                                            <form action="{{ route('principal.posts.destroy', $p->id) }}" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn xóa bài viết này?')">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="dropdown-item py-2 text-danger">🗑️ Xóa bài viết</button>
-                                            </form>
-                                        </li>
-                                    </ul>
+                                <div class="fb-post-options-container">
+                                    <button class="fb-post-options-btn" type="button" onclick="togglePostOptionsDropdown(event, 'postMenu-{{ $p->id }}')">•••</button>
+                                    <div class="fb-post-dropdown-menu" id="postMenu-{{ $p->id }}">
+                                        <button type="button" onclick="openEditPostModal({{ json_encode($p) }})" class="fb-post-dropdown-item">
+                                            <span>✏️</span> <span>Chỉnh sửa bài viết</span>
+                                        </button>
+                                        <form action="{{ route('principal.posts.destroy', $p->id) }}" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn xóa bài viết này?')">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="fb-post-dropdown-item danger">
+                                                <span>🗑️</span> <span>Xóa bài viết</span>
+                                            </button>
+                                        </form>
+                                    </div>
                                 </div>
                             </div>
 
                             <!-- Post Content Text -->
                             <div class="fb-post-text">
                                 <strong class="d-block mb-1 text-dark" style="font-size: 1.05rem;">🌸 {{ $p->name }}</strong>
-                                {{ $p->description }}
+                                {!! \App\Helpers\TextHelper::linkify($p->description) !!}
                             </div>
 
                             <!-- Facebook Multi-Photo Grid System (1, 2, 3, 4+ photos with +N overlay) -->
                             @if($imgCount === 1)
-                                <div class="fb-photo-grid fb-grid-1" onclick="openPostLightbox('{{ $imgs[0] }}')">
+                                <div class="fb-photo-grid fb-grid-1" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 0)">
                                     <img src="{{ $imgs[0] }}" alt="{{ $p->name }}">
                                 </div>
                             @elseif($imgCount === 2)
                                 <div class="fb-photo-grid fb-grid-2">
-                                    <img src="{{ $imgs[0] }}" onclick="openPostLightbox('{{ $imgs[0] }}')" alt="{{ $p->name }}">
-                                    <img src="{{ $imgs[1] }}" onclick="openPostLightbox('{{ $imgs[1] }}')" alt="{{ $p->name }}">
+                                    <img src="{{ $imgs[0] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 0)" alt="{{ $p->name }}">
+                                    <img src="{{ $imgs[1] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 1)" alt="{{ $p->name }}">
                                 </div>
                             @elseif($imgCount === 3)
                                 <div class="fb-photo-grid fb-grid-3">
-                                    <img src="{{ $imgs[0] }}" onclick="openPostLightbox('{{ $imgs[0] }}')" alt="{{ $p->name }}">
+                                    <img src="{{ $imgs[0] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 0)" alt="{{ $p->name }}">
                                     <div class="fb-grid-3-col-right">
-                                        <img src="{{ $imgs[1] }}" onclick="openPostLightbox('{{ $imgs[1] }}')" alt="{{ $p->name }}">
-                                        <img src="{{ $imgs[2] }}" onclick="openPostLightbox('{{ $imgs[2] }}')" alt="{{ $p->name }}">
+                                        <img src="{{ $imgs[1] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 1)" alt="{{ $p->name }}">
+                                        <img src="{{ $imgs[2] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 2)" alt="{{ $p->name }}">
                                     </div>
                                 </div>
-                            @elseif($imgCount >= 4)
+                            @elseif($imgCount === 4)
                                 <div class="fb-photo-grid fb-grid-4">
-                                    <img src="{{ $imgs[0] }}" onclick="openPostLightbox('{{ $imgs[0] }}')" alt="{{ $p->name }}">
+                                    <img src="{{ $imgs[0] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 0)" alt="{{ $p->name }}">
                                     <div class="fb-grid-4-col-right">
-                                        <img src="{{ $imgs[1] }}" onclick="openPostLightbox('{{ $imgs[1] }}')" alt="{{ $p->name }}">
-                                        <img src="{{ $imgs[2] }}" onclick="openPostLightbox('{{ $imgs[2] }}')" alt="{{ $p->name }}">
-                                        <div class="fb-photo-thumb-box" onclick="openPostLightbox('{{ $imgs[3] }}')">
-                                            <img src="{{ $imgs[3] }}" alt="{{ $p->name }}">
-                                            @if($imgCount > 4)
-                                                <div class="fb-photo-more-overlay">+{{ $imgCount - 3 }}</div>
+                                        <img src="{{ $imgs[1] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 1)" alt="{{ $p->name }}">
+                                        <img src="{{ $imgs[2] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 2)" alt="{{ $p->name }}">
+                                        <img src="{{ $imgs[3] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 3)" alt="{{ $p->name }}">
+                                    </div>
+                                </div>
+                            @elseif($imgCount >= 5)
+                                <div class="fb-photo-grid fb-grid-5">
+                                    <div class="fb-grid-5-row-top">
+                                        <img src="{{ $imgs[0] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 0)" alt="{{ $p->name }}">
+                                        <img src="{{ $imgs[1] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 1)" alt="{{ $p->name }}">
+                                    </div>
+                                    <div class="fb-grid-5-row-bottom">
+                                        <img src="{{ $imgs[2] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 2)" alt="{{ $p->name }}">
+                                        <img src="{{ $imgs[3] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 3)" alt="{{ $p->name }}">
+                                        <div class="fb-photo-thumb-box" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 4)">
+                                            <img src="{{ $imgs[4] }}" alt="{{ $p->name }}">
+                                            @if($imgCount > 5)
+                                                <div class="fb-photo-more-overlay">+{{ $imgCount - 5 }}</div>
                                             @endif
                                         </div>
                                     </div>
@@ -786,15 +1280,20 @@
 
                             <!-- Facebook Post Stats Bar -->
                             <div class="fb-post-stats">
-                                <div>👍 {{ $p->likes_count ?: rand(18, 96) }} lượt thích</div>
-                                <div>💬 {{ rand(4, 25) }} bình luận • {{ $p->shares_count ?: rand(2, 14) }} chia sẻ</div>
+                                <div id="post-likes-count-{{ $p->id }}">👍 {{ $p->real_likes_count ?? $p->likes_count ?? 0 }} lượt thích</div>
+                                <div>💬 {{ $p->real_comments_count ?? 0 }} bình luận • {{ $p->real_shares_count ?? 0 }} chia sẻ</div>
                             </div>
 
                             <!-- Facebook Footer Actions Bar -->
                             <div class="fb-post-actions">
-                                <button class="fb-action-btn" onclick="toggleFbLike(this)">👍 Thích</button>
-                                <button class="fb-action-btn" onclick="alert('Tính năng bình luận bài viết đang hoạt động!')">💬 Bình luận</button>
-                                <button class="fb-action-btn" onclick="shareFbPost()">🔄 Chia sẻ</button>
+                                <button class="fb-action-btn {{ ($p->is_liked ?? false) ? 'active' : '' }}" 
+                                        id="post-like-btn-{{ $p->id }}" 
+                                        onclick="togglePostLike(this, {{ $p->id }})"
+                                        style="{{ ($p->is_liked ?? false) ? 'color: #2563eb; font-weight: 700;' : '' }}">
+                                    👍 {{ ($p->is_liked ?? false) ? 'Đã thích' : 'Thích' }}
+                                </button>
+                                <button class="fb-action-btn" onclick="toggleComments({{ $p->id }}, this)">💬 Bình luận</button>
+                                <button class="fb-action-btn" onclick="shareFbPost({{ $p->id }})">🔄 Chia sẻ</button>
                             </div>
                         </article>
                     @endforeach
@@ -804,42 +1303,222 @@
     </div>
 
     <!-- ==========================================
-         TAB 2: PHOTO GALLERY
+         TAB 2: PHOTO GALLERY (CATEGORIZED & AUTO-UPDATED FROM POSTS)
          ========================================== -->
     <div id="pane-photos" class="sch-tab-pane">
+        @php
+            // 1. Collect post photos dynamically from all posts
+            $postPhotos = [];
+            foreach ($posts as $p) {
+                $pImgs = $p->all_images;
+                foreach ($pImgs as $imgUrl) {
+                    if (!empty($imgUrl)) {
+                        $postPhotos[] = [
+                            'url' => $imgUrl,
+                            'caption' => 'Bài viết: ' . ($p->name ?: 'Hoạt động trường học'),
+                            'date' => $p->created_at ? $p->created_at->diffForHumans() : 'Vừa xong',
+                            'post_id' => $p->id,
+                        ];
+                    }
+                }
+            }
+
+            // 2. Avatar photo
+            $avatarPhoto = $school->image_path ? [
+                'url' => $school->image_path,
+                'caption' => 'Ảnh đại diện chính - ' . $school->standardized_name
+            ] : null;
+
+            // 3. Cover & Campus photos
+            $coverPhotos = [];
+            $components = $school->merged_components ?? [];
+            if (!empty($components) && is_array($components)) {
+                foreach ($components as $comp) {
+                    if (!empty($comp['photo'])) {
+                        $coverPhotos[] = [
+                            'url' => $comp['photo'],
+                            'caption' => 'Ảnh điểm trường/bìa: ' . ($comp['name'] ?? $school->standardized_name)
+                        ];
+                    }
+                }
+            }
+
+            // 4. Manually uploaded photos
+            $uploadedPhotos = $photos;
+
+            $totalPhotosCount = count($postPhotos) + count($coverPhotos) + count($uploadedPhotos) + ($avatarPhoto ? 1 : 0);
+        @endphp
+
         <div class="sch-section-card">
             <div class="sch-section-header">
-                <h2 class="sch-section-title">
-                    <span>🖼️</span> Thư viện Hình ảnh Trường học
-                </h2>
+                <div>
+                    <h2 class="sch-section-title">
+                        <span>🖼️</span> Thư viện Hình ảnh Trường học
+                    </h2>
+                    <p class="text-secondary mb-0" style="font-size: 0.85rem;">Tự động cập nhật ảnh từ Bài viết, Ảnh bìa, Ảnh đại diện & Ảnh tải lên</p>
+                </div>
                 <button onclick="openModal('addPhotoModal')" class="sch-btn sch-btn-success" id="add-photo-trigger">
                     + Thêm hình ảnh mới
                 </button>
             </div>
 
-            @if($photos->isEmpty())
+            <!-- Group Filter Navigation Pills -->
+            <div class="sch-photo-filters">
+                <button type="button" onclick="filterPhotoCategory('all', this)" class="sch-photo-filter-pill active">
+                    ✨ Tất cả ({{ $totalPhotosCount }})
+                </button>
+                <button type="button" onclick="filterPhotoCategory('post', this)" class="sch-photo-filter-pill">
+                    🖼️ Ảnh bài viết ({{ count($postPhotos) }})
+                </button>
+                <button type="button" onclick="filterPhotoCategory('cover', this)" class="sch-photo-filter-pill">
+                    🏫 Ảnh bìa & Cơ sở ({{ count($coverPhotos) }})
+                </button>
+                @if($avatarPhoto)
+                <button type="button" onclick="filterPhotoCategory('avatar', this)" class="sch-photo-filter-pill">
+                    👤 Ảnh đại diện (1)
+                </button>
+                @endif
+                <button type="button" onclick="filterPhotoCategory('upload', this)" class="sch-photo-filter-pill">
+                    📷 Ảnh tải lên ({{ $uploadedPhotos->count() }})
+                </button>
+            </div>
+
+            @if($totalPhotosCount === 0)
                 <div class="sch-empty-state">
                     <span class="sch-empty-icon">🖼️</span>
                     <p>Chưa có hình ảnh nào trong thư viện ảnh trường học.</p>
+                    <button type="button" onclick="openModal('addPhotoModal')" class="btn btn-primary rounded-pill px-4 py-2 mt-2">
+                        + Thêm hình ảnh mới
+                    </button>
                 </div>
             @else
-                <div class="sch-photo-grid">
-                    @foreach($photos as $ph)
-                        <div class="sch-photo-card">
-                            <img src="{{ $ph->image_path }}" alt="{{ $ph->caption }}">
+                <!-- Group 1: Ảnh bài viết (Tự động cập nhật) -->
+                @if(!empty($postPhotos))
+                <div class="sch-photo-group-section mb-4" data-category="post">
+                    <div class="sch-photo-group-header">
+                        <h4 class="sch-photo-group-title">
+                            <span>🖼️</span> Ảnh bài viết
+                            <span class="sch-photo-group-count">{{ count($postPhotos) }} ảnh</span>
+                        </h4>
+                        <span class="sch-photo-group-badge">⚡ Tự động cập nhật từ các bài viết</span>
+                    </div>
+
+                    <div class="sch-photo-grid">
+                        @foreach($postPhotos as $pIdx => $item)
+                            <div class="sch-photo-card" onclick="openPostLightboxGallery({{ json_encode(array_column($postPhotos, 'url')) }}, {{ $pIdx }})">
+                                <img src="{{ $item['url'] }}" alt="{{ $item['caption'] }}" loading="lazy">
+                                <span class="sch-photo-type-tag tag-post">🖼️ Bài viết</span>
+                                <div class="sch-photo-overlay">
+                                    <p class="sch-photo-caption">{{ $item['caption'] }}</p>
+                                    @if($item['date'])
+                                        <span class="sch-photo-date">🕒 {{ $item['date'] }}</span>
+                                    @endif
+                                    <div class="mt-2">
+                                        <button type="button" class="sch-btn sch-btn-sm sch-btn-accent w-100 justify-content-center">
+                                            🔍 Xem ảnh lớn
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+                @endif
+
+                <!-- Group 2: Ảnh bìa & Cơ sở vật chất -->
+                @if(!empty($coverPhotos))
+                <div class="sch-photo-group-section mb-4" data-category="cover">
+                    <div class="sch-photo-group-header">
+                        <h4 class="sch-photo-group-title">
+                            <span>🏫</span> Ảnh bìa & Cơ sở vật chất
+                            <span class="sch-photo-group-count">{{ count($coverPhotos) }} ảnh</span>
+                        </h4>
+                        <span class="sch-photo-group-badge">Khuôn viên nhà trường</span>
+                    </div>
+
+                    <div class="sch-photo-grid">
+                        @foreach($coverPhotos as $cIdx => $cItem)
+                            <div class="sch-photo-card" onclick="openPostLightbox('{{ $cItem['url'] }}')">
+                                <img src="{{ $cItem['url'] }}" alt="{{ $cItem['caption'] }}" loading="lazy">
+                                <span class="sch-photo-type-tag tag-cover">🏫 Ảnh bìa</span>
+                                <div class="sch-photo-overlay">
+                                    <p class="sch-photo-caption">{{ $cItem['caption'] }}</p>
+                                    <div class="mt-2">
+                                        <button type="button" class="sch-btn sch-btn-sm sch-btn-accent w-100 justify-content-center">
+                                            🔍 Xem ảnh lớn
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+                @endif
+
+                <!-- Group 3: Ảnh đại diện -->
+                @if($avatarPhoto)
+                <div class="sch-photo-group-section mb-4" data-category="avatar">
+                    <div class="sch-photo-group-header">
+                        <h4 class="sch-photo-group-title">
+                            <span>👤</span> Ảnh đại diện nhà trường
+                            <span class="sch-photo-group-count">1 ảnh</span>
+                        </h4>
+                        <span class="sch-photo-group-badge">Logo / Avatar chính</span>
+                    </div>
+
+                    <div class="sch-photo-grid">
+                        <div class="sch-photo-card" onclick="openPostLightbox('{{ $avatarPhoto['url'] }}')">
+                            <img src="{{ $avatarPhoto['url'] }}" alt="{{ $avatarPhoto['caption'] }}" loading="lazy">
+                            <span class="sch-photo-type-tag tag-avatar">👤 Ảnh đại diện</span>
                             <div class="sch-photo-overlay">
-                                <p class="sch-photo-caption">{{ $ph->caption ?: 'Ảnh trường học' }}</p>
-                                <form action="{{ route('principal.photos.destroy', $ph->id) }}" method="POST" onsubmit="return confirm('Bạn có chắc muốn xóa ảnh này khỏi thư viện?')">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="sch-btn sch-btn-danger sch-btn-sm w-100 justify-content-center">
-                                        🗑️ Xóa ảnh
+                                <p class="sch-photo-caption">{{ $avatarPhoto['caption'] }}</p>
+                                <div class="mt-2">
+                                    <button type="button" class="sch-btn sch-btn-sm sch-btn-accent w-100 justify-content-center">
+                                        🔍 Xem ảnh lớn
                                     </button>
-                                </form>
+                                </div>
                             </div>
                         </div>
-                    @endforeach
+                    </div>
                 </div>
+                @endif
+
+                <!-- Group 4: Thư viện ảnh đã tải lên thủ công -->
+                @if($uploadedPhotos->isNotEmpty())
+                <div class="sch-photo-group-section mb-4" data-category="upload">
+                    <div class="sch-photo-group-header">
+                        <h4 class="sch-photo-group-title">
+                            <span>📷</span> Thư viện ảnh tải lên thủ công
+                            <span class="sch-photo-group-count">{{ $uploadedPhotos->count() }} ảnh</span>
+                        </h4>
+                        <span class="sch-photo-group-badge">Ảnh quản trị viên tải lên</span>
+                    </div>
+
+                    <div class="sch-photo-grid">
+                        @foreach($uploadedPhotos as $ph)
+                            <div class="sch-photo-card">
+                                <img src="{{ $ph->image_path }}" alt="{{ $ph->caption }}" loading="lazy">
+                                <span class="sch-photo-type-tag tag-upload">📷 Ảnh tải lên</span>
+                                <div class="sch-photo-overlay">
+                                    <p class="sch-photo-caption">{{ $ph->caption ?: 'Ảnh thư viện nhà trường' }}</p>
+                                    <div class="d-flex gap-2 w-100 mt-2">
+                                        <button type="button" onclick="openPostLightbox('{{ $ph->image_path }}')" class="sch-btn sch-btn-sm sch-btn-accent flex-grow-1 justify-content-center">
+                                            🔍 Phóng to
+                                        </button>
+                                        <form action="{{ route('principal.photos.destroy', $ph->id) }}" method="POST" onsubmit="return confirm('Bạn có chắc muốn xóa ảnh này khỏi thư viện?')">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="sch-btn sch-btn-danger sch-btn-sm justify-content-center" title="Xóa ảnh">
+                                                🗑️
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+                @endif
             @endif
         </div>
     </div>
@@ -900,53 +1579,55 @@
      ============================================================ -->
 
 <!-- Modal: Đăng bài viết mới (Facebook Style) -->
-<div class="sch-modal" id="addPostModal">
-    <div class="sch-modal-content" style="max-width: 560px; border-radius: 20px; padding: 24px; background: #ffffff;">
-        <button onclick="closeModal('addPostModal')" class="sch-close-modal" style="top: 16px; right: 16px; width: 36px; height: 36px; border-radius: 50%; background: #f1f5f9; border: none; font-size: 1.1rem; color: #475569;">✕</button>
-        <h4 class="fw-bold text-center border-bottom pb-3 mb-3" style="font-size: 1.15rem; color: #0f172a; font-family: 'Be Vietnam Pro', sans-serif;">Tạo bài viết</h4>
+<div class="sch-modal" id="addPostModal" onclick="if(event.target === this) closeModal('addPostModal')">
+    <div class="fb-modal-box">
+        <button type="button" onclick="closeModal('addPostModal')" class="sch-close-modal" style="top: 16px; right: 16px; width: 36px; height: 36px; border-radius: 50%; background: #f1f5f9; border: none; font-size: 1.1rem; color: #475569; position: absolute; z-index: 10; cursor: pointer;">✕</button>
+        <div class="fb-modal-header">
+            <h4 class="fb-modal-title">Tạo bài viết</h4>
+        </div>
         
-        <form action="{{ route('principal.posts.store') }}" method="POST" enctype="multipart/form-data">
+        <form action="{{ route('principal.posts.store') }}" method="POST" enctype="multipart/form-data" onsubmit="handleRealtimePostSubmit(event, this)">
             @csrf
             <input type="hidden" name="eatery_id" value="{{ $school->id }}">
 
             <!-- User Header Row -->
-            <div class="d-flex align-items-center gap-3 mb-3">
-                <img src="{{ $school->image_path ?: 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=150&q=80' }}" class="fb-user-avatar" style="width: 44px; height: 44px;">
-                <div>
-                    <h5 class="fw-bold mb-1" style="font-size: 0.96rem; color: #0f172a; font-family: 'Be Vietnam Pro', sans-serif;">{{ $school->standardized_name }}</h5>
-                    <div class="d-flex gap-2">
-                        <span class="badge bg-light text-dark border rounded-pill px-2.5 py-1" style="font-size: 0.75rem; font-family: 'Be Vietnam Pro', sans-serif;">🌐 Công khai ▾</span>
-                        <span class="badge bg-light text-dark border rounded-pill px-2.5 py-1" style="font-size: 0.75rem; font-family: 'Be Vietnam Pro', sans-serif;">⚙️ Thông báo trường ▾</span>
+            <div class="fb-modal-user-row">
+                <img src="{{ $school->image_path ?: 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=150&q=80' }}" class="fb-modal-user-avatar">
+                <div class="fb-modal-user-info">
+                    <h5 class="fb-modal-user-name">{{ $school->standardized_name }}</h5>
+                    <div class="fb-modal-badges">
+                        <span class="fb-modal-badge">🌐 Công khai ▾</span>
+                        <span class="fb-modal-badge">⚙️ Thông báo trường ▾</span>
                     </div>
                 </div>
             </div>
 
             <!-- Content Area -->
-            <div class="mb-3">
-                <input type="text" name="name" required class="form-control border-0 px-0 fw-bold fs-5 mb-2" placeholder="Tiêu đề bài viết..." style="font-family: 'Be Vietnam Pro', sans-serif; box-shadow: none; color: #0f172a;">
-                <textarea name="description" required class="form-control border-0 px-0" rows="4" placeholder="{{ $school->standardized_name }} ơi, bạn đang nghĩ gì thế?" style="font-size: 1.05rem; font-family: 'Be Vietnam Pro', sans-serif; resize: none; box-shadow: none; color: #1e293b;"></textarea>
+            <div class="fb-modal-body">
+                <input type="text" name="name" required class="fb-modal-title-input" placeholder="Tiêu đề bài viết...">
+                <textarea name="description" required class="fb-modal-textarea" rows="4" placeholder="{{ $school->standardized_name }} ơi, bạn đang nghĩ gì thế?"></textarea>
             </div>
 
             <!-- Multi Image Preview Box -->
-            <div id="add-post-multi-preview" class="mb-3" style="display: none; border-radius: 14px; overflow: hidden; border: 1px dashed #cbd5e1; background: #f8fafc; padding: 10px;">
+            <div id="add-post-multi-preview" style="display: none; border-radius: 14px; overflow: hidden; border: 1px dashed #cbd5e1; background: #f8fafc; padding: 10px; margin-bottom: 16px;">
                 <div id="preview-grid" class="row g-2"></div>
             </div>
 
             <!-- Facebook Bottom Action Bar -->
-            <div class="d-flex justify-content-between align-items-center p-3 border rounded-4 mb-4" style="background: #ffffff; border-color: #e2e8f0 !important; box-shadow: 0 4px 14px rgba(0,0,0,0.03);">
-                <span class="fw-bold text-dark small" style="font-family: 'Be Vietnam Pro', sans-serif;">Thêm vào bài viết của bạn</span>
-                <div class="d-flex gap-2">
-                    <label class="btn btn-light rounded-circle p-0 m-0 shadow-sm" style="width: 38px; height: 38px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center;" title="Thêm ảnh/video">
+            <div class="fb-modal-action-bar">
+                <span class="fb-modal-action-label">Thêm vào bài viết của bạn</span>
+                <div class="fb-modal-action-buttons">
+                    <label class="fb-modal-action-btn" title="Thêm ảnh/video">
                         🖼️
-                        <input type="file" name="images[]" multiple accept="image/*" class="d-none" onchange="previewMultiPostImages(this, 'add-post-multi-preview', 'preview-grid')">
+                        <input type="file" name="images[]" multiple accept="image/*" class="fb-modal-file-input" onchange="previewMultiPostImages(this, 'add-post-multi-preview', 'preview-grid')">
                     </label>
-                    <button type="button" class="btn btn-light rounded-circle p-0 shadow-sm" style="width: 38px; height: 38px; display: inline-flex; align-items: center; justify-content: center;" title="Gắn thẻ">🏷️</button>
-                    <button type="button" class="btn btn-light rounded-circle p-0 shadow-sm" style="width: 38px; height: 38px; display: inline-flex; align-items: center; justify-content: center;" title="Cảm xúc">😊</button>
-                    <button type="button" class="btn btn-light rounded-circle p-0 shadow-sm" style="width: 38px; height: 38px; display: inline-flex; align-items: center; justify-content: center;" title="Vị trí">📍</button>
+                    <button type="button" class="fb-modal-action-btn" title="Gắn thẻ">🏷️</button>
+                    <button type="button" class="fb-modal-action-btn" title="Cảm xúc">😊</button>
+                    <button type="button" class="fb-modal-action-btn" title="Vị trí">📍</button>
                 </div>
             </div>
 
-            <button type="submit" class="btn btn-primary w-100 py-2.5 fw-bold" style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); border-radius: 12px; font-size: 1rem; border: none; font-family: 'Be Vietnam Pro', sans-serif;">
+            <button type="submit" class="fb-modal-submit-btn">
                 Đăng
             </button>
         </form>
@@ -954,9 +1635,9 @@
 </div>
 
 <!-- Modal: Chỉnh sửa bài viết -->
-<div class="sch-modal" id="editPostModal">
+<div class="sch-modal" id="editPostModal" onclick="if(event.target === this) closeModal('editPostModal')">
     <div class="sch-modal-content">
-        <button onclick="closeModal('editPostModal')" class="sch-close-modal">✕</button>
+        <button type="button" onclick="closeModal('editPostModal')" class="sch-close-modal">✕</button>
         <h3 class="fw-bold text-dark mb-4">✏️ Chỉnh Sửa Bài Viết Hoạt Động</h3>
         
         <form id="editPostForm" action="" method="POST" enctype="multipart/form-data">
@@ -1002,9 +1683,9 @@
 </div>
 
 <!-- Modal: Thêm hình ảnh mới -->
-<div class="sch-modal" id="addPhotoModal">
+<div class="sch-modal" id="addPhotoModal" onclick="if(event.target === this) closeModal('addPhotoModal')">
     <div class="sch-modal-content">
-        <button onclick="closeModal('addPhotoModal')" class="sch-close-modal">✕</button>
+        <button type="button" onclick="closeModal('addPhotoModal')" class="sch-close-modal">✕</button>
         <h3 class="fw-bold text-dark mb-4">🖼️ Thêm Ảnh Vào Thư Viện</h3>
         
         <form action="{{ route('principal.photos.store') }}" method="POST" enctype="multipart/form-data">
@@ -1036,9 +1717,9 @@
 </div>
 
 <!-- Modal: Thêm video giới thiệu mới -->
-<div class="sch-modal" id="addVideoModal">
+<div class="sch-modal" id="addVideoModal" onclick="if(event.target === this) closeModal('addVideoModal')">
     <div class="sch-modal-content">
-        <button onclick="closeModal('addVideoModal')" class="sch-close-modal">✕</button>
+        <button type="button" onclick="closeModal('addVideoModal')" class="sch-close-modal">✕</button>
         <h3 class="fw-bold text-dark mb-4">📹 Thêm Video Giới Thiệu Trường</h3>
         
         <form action="{{ route('principal.videos.store') }}" method="POST" enctype="multipart/form-data">
@@ -1104,6 +1785,7 @@
         const modal = document.getElementById(modalId);
         if (modal) {
             modal.classList.add('show');
+            modal.style.display = 'flex';
         }
     }
 
@@ -1111,6 +1793,7 @@
         const modal = document.getElementById(modalId);
         if (modal) {
             modal.classList.remove('show');
+            modal.style.display = 'none';
         }
     }
 
@@ -1162,12 +1845,19 @@
         grid.innerHTML = '';
         if (input.files && input.files.length > 0) {
             container.style.display = 'block';
+            
+            // Header showing count of selected files
+            const countHeader = document.createElement('div');
+            countHeader.style.cssText = 'font-size: 0.85rem; font-weight: 700; color: #2563eb; margin-bottom: 8px; width: 100%; font-family: "Be Vietnam Pro", sans-serif;';
+            countHeader.innerHTML = `📸 Đã chọn ${input.files.length} hình ảnh`;
+            grid.appendChild(countHeader);
+
             Array.from(input.files).forEach((file) => {
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     const col = document.createElement('div');
                     col.className = 'col-3';
-                    col.innerHTML = `<div style="height: 80px; border-radius: 10px; overflow: hidden; border: 1px solid #cbd5e1;">
+                    col.innerHTML = `<div style="height: 75px; border-radius: 10px; overflow: hidden; border: 1px solid #cbd5e1; position: relative;">
                         <img src="${e.target.result}" style="width: 100%; height: 100%; object-fit: cover;">
                     </div>`;
                     grid.appendChild(col);
@@ -1179,13 +1869,82 @@
         }
     }
 
-    function toggleFbLike(btn) {
-        btn.classList.toggle('active');
-        if (btn.classList.contains('active')) {
-            btn.innerHTML = '👍 Đã thích';
-        } else {
-            btn.innerHTML = '👍 Thích';
-        }
+    function togglePostLike(btn, postId) {
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+
+        fetch('/api/reactions/toggle', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken || '',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                id: postId,
+                type: 'post',
+                emoji: '👍'
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                if (data.liked) {
+                    btn.classList.add('active');
+                    btn.style.color = '#2563eb';
+                    btn.style.fontWeight = '700';
+                    btn.innerHTML = '👍 Đã thích';
+                } else {
+                    btn.classList.remove('active');
+                    btn.style.color = '';
+                    btn.style.fontWeight = '';
+                    btn.innerHTML = '👍 Thích';
+                }
+                
+                const statsEl = document.getElementById(`post-likes-count-${postId}`);
+                if (statsEl) {
+                    statsEl.innerHTML = `👍 ${data.likes_count} lượt thích`;
+                }
+            }
+        })
+        .catch(err => {
+            console.error('Lỗi tương tác bài viết:', err);
+        });
+    }
+
+    function togglePlaceHeart(btn, eateryId) {
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+
+        fetch('/api/reactions/toggle', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken || '',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                id: eateryId,
+                type: 'eatery',
+                emoji: '❤️'
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                const textEl = document.getElementById(`eatery-heart-text-${eateryId}`);
+                if (data.liked) {
+                    btn.style.background = '#ef4444';
+                    btn.style.color = '#ffffff';
+                    if (textEl) textEl.textContent = `Đã thả tim (${data.likes_count})`;
+                } else {
+                    btn.style.background = '';
+                    btn.style.color = '';
+                    if (textEl) textEl.textContent = `Thả tim địa điểm (${data.likes_count})`;
+                }
+            }
+        })
+        .catch(err => {
+            console.error('Lỗi thả tim địa điểm:', err);
+        });
     }
 
     function shareFbPost() {
@@ -1196,21 +1955,438 @@
         }
     }
 
-    function openPostLightbox(src) {
+    // Toggle & Fetch Realtime Facebook Post Comments
+    function toggleComments(postId, btnEl) {
+        let commentBox = document.getElementById(`fb-comments-box-${postId}`);
+        
+        if (!commentBox) {
+            let postCard = btnEl ? btnEl.closest('.fb-post-card') : null;
+            if (!postCard) {
+                postCard = document.getElementById(`post-like-btn-${postId}`)?.closest('.fb-post-card');
+            }
+            if (!postCard) return;
+
+            commentBox = document.createElement('div');
+            commentBox.id = `fb-comments-box-${postId}`;
+            commentBox.className = 'fb-comments-section show';
+            
+            const currentUserAvatar = document.querySelector('.fb-modal-user-avatar')?.src || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=100&q=80';
+
+            commentBox.innerHTML = `
+                <div class="fb-comments-list" id="fb-comments-list-${postId}">
+                    <div style="font-size: 0.85rem; color: #94a3b8; text-align: center; padding: 10px;">⏳ Đang tải bình luận...</div>
+                </div>
+                <form class="fb-comment-input-box" onsubmit="submitPostComment(event, ${postId})">
+                    <img src="${currentUserAvatar}" class="fb-comment-avatar">
+                    <input type="text" id="fb-comment-input-${postId}" required class="fb-comment-input" placeholder="Viết bình luận công khai...">
+                    <button type="submit" class="fb-comment-send-btn" title="Gửi bình luận">➤</button>
+                </form>
+            `;
+
+            postCard.appendChild(commentBox);
+
+            fetch(`/api/comments?id=${postId}&type=post`)
+                .then(res => res.json())
+                .then(data => {
+                    const listEl = document.getElementById(`fb-comments-list-${postId}`);
+                    if (!listEl) return;
+                    
+                    if (data.success && data.comments.length > 0) {
+                        listEl.innerHTML = '';
+                        data.comments.forEach(c => {
+                            listEl.appendChild(createCommentItemElement(c));
+                        });
+                    } else {
+                        listEl.innerHTML = `<div class="text-center py-2 text-muted" style="font-size: 0.85rem;" id="no-comments-msg-${postId}">Chưa có bình luận nào. Hãy là người đầu tiên bình luận!</div>`;
+                    }
+                })
+                .catch(err => console.error('Lỗi tải bình luận:', err));
+        } else {
+            commentBox.classList.toggle('show');
+        }
+    }
+
+    function submitPostComment(e, postId) {
+        e.preventDefault();
+        const inputEl = document.getElementById(`fb-comment-input-${postId}`);
+        if (!inputEl || !inputEl.value.trim()) return;
+
+        const content = inputEl.value.trim();
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+
+        inputEl.disabled = true;
+
+        fetch('/api/comments', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken || '',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                id: postId,
+                type: 'post',
+                content: content
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            inputEl.disabled = false;
+            inputEl.value = '';
+
+            if (data.success) {
+                const listEl = document.getElementById(`fb-comments-list-${postId}`);
+                const noMsg = document.getElementById(`no-comments-msg-${postId}`);
+                if (noMsg) noMsg.remove();
+
+                if (listEl && data.comment) {
+                    listEl.appendChild(createCommentItemElement(data.comment));
+                    listEl.scrollTop = listEl.scrollHeight;
+                }
+
+                const postCard = document.getElementById(`post-like-btn-${postId}`)?.closest('.fb-post-card');
+                const statsDivs = postCard?.querySelectorAll('.fb-post-stats div');
+                if (statsDivs && statsDivs.length >= 2 && data.total_comments !== undefined) {
+                    const rightStat = statsDivs[1];
+                    const parts = rightStat.textContent.split('•');
+                    const sharesPart = parts.length > 1 ? parts[1] : ' 0 chia sẻ';
+                    rightStat.innerHTML = `💬 ${data.total_comments} bình luận •${sharesPart}`;
+                }
+            }
+        })
+        .catch(err => {
+            inputEl.disabled = false;
+            console.error('Lỗi gửi bình luận:', err);
+        });
+    }
+
+    function createCommentItemElement(c) {
+        const item = document.createElement('div');
+        item.className = 'fb-comment-item animate__animated animate__fadeIn';
+        item.innerHTML = `
+            <img src="${c.author_avatar}" class="fb-comment-avatar" alt="${c.author_name}">
+            <div>
+                <div class="fb-comment-bubble">
+                    <div class="fb-comment-author">${c.author_name}</div>
+                    <div class="fb-comment-text">${escapeHtml(c.content)}</div>
+                </div>
+                <div class="fb-comment-meta">
+                    <span>${c.created_at_human}</span>
+                </div>
+            </div>
+        `;
+        return item;
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+    }
+
+    let currentGalleryImages = [];
+    let currentGalleryIndex = 0;
+
+    function openPostLightboxGallery(images, startIndex = 0) {
+        if (!Array.isArray(images) || images.length === 0) return;
+        currentGalleryImages = images;
+        currentGalleryIndex = startIndex;
+
         let modal = document.getElementById('postLightboxModal');
         if (!modal) {
             modal = document.createElement('div');
             modal.id = 'postLightboxModal';
-            modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.92); z-index: 10000; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(8px);';
-            modal.innerHTML = `<span onclick="document.getElementById('postLightboxModal').remove()" style="position: absolute; top: 20px; right: 30px; color: #ffffff; font-size: 2rem; cursor: pointer; font-family: sans-serif; font-weight: bold;">✕</span><img id="postLightboxImg" src="" style="max-width: 90%; max-height: 90vh; border-radius: 16px; object-fit: contain; box-shadow: 0 25px 50px rgba(0,0,0,0.5);">`;
+            modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.94); z-index: 10000; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(10px); flex-direction: column;';
+            
+            modal.innerHTML = `
+                <button onclick="closePostLightbox()" style="position: absolute; top: 20px; right: 25px; color: #ffffff; font-size: 2.2rem; cursor: pointer; background: none; border: none; font-weight: bold; z-index: 10001; line-height: 1;">✕</button>
+                <div id="postLightboxCounter" style="position: absolute; top: 24px; left: 30px; color: #ffffff; font-size: 0.95rem; font-weight: 700; font-family: 'Be Vietnam Pro', sans-serif; background: rgba(255,255,255,0.18); padding: 6px 16px; border-radius: 20px; backdrop-filter: blur(4px);"></div>
+                
+                <button id="postLightboxPrevBtn" onclick="navigateLightboxGallery(-1)" style="position: absolute; left: 20px; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.2); color: white; border: none; width: 48px; height: 48px; border-radius: 50%; font-size: 1.5rem; cursor: pointer; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px); transition: all 0.2s;" onhover="this.style.background='rgba(255,255,255,0.4)'">❮</button>
+
+                <img id="postLightboxImg" src="" style="max-width: 88vw; max-height: 82vh; border-radius: 12px; object-fit: contain; box-shadow: 0 25px 50px rgba(0,0,0,0.6); transition: opacity 0.15s ease-in-out;">
+
+                <button id="postLightboxNextBtn" onclick="navigateLightboxGallery(1)" style="position: absolute; right: 20px; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.2); color: white; border: none; width: 48px; height: 48px; border-radius: 50%; font-size: 1.5rem; cursor: pointer; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px); transition: all 0.2s;">❯</button>
+            `;
             document.body.appendChild(modal);
+
+            document.addEventListener('keydown', function(e) {
+                const m = document.getElementById('postLightboxModal');
+                if (!m || m.style.display === 'none') return;
+                if (e.key === 'ArrowLeft') navigateLightboxGallery(-1);
+                else if (e.key === 'ArrowRight') navigateLightboxGallery(1);
+                else if (e.key === 'Escape') closePostLightbox();
+            });
         }
-        document.getElementById('postLightboxImg').src = src;
-        modal.onclick = function(e) {
-            if (e.target.id === 'postLightboxModal') {
-                modal.remove();
+
+        updateLightboxView();
+        modal.style.display = 'flex';
+    }
+
+    function updateLightboxView() {
+        const imgEl = document.getElementById('postLightboxImg');
+        const counterEl = document.getElementById('postLightboxCounter');
+        const prevBtn = document.getElementById('postLightboxPrevBtn');
+        const nextBtn = document.getElementById('postLightboxNextBtn');
+
+        if (!imgEl) return;
+
+        imgEl.src = currentGalleryImages[currentGalleryIndex];
+        if (counterEl) {
+            counterEl.textContent = `Ảnh ${currentGalleryIndex + 1} / ${currentGalleryImages.length}`;
+        }
+
+        if (prevBtn) prevBtn.style.display = currentGalleryImages.length > 1 ? 'flex' : 'none';
+        if (nextBtn) nextBtn.style.display = currentGalleryImages.length > 1 ? 'flex' : 'none';
+    }
+
+    function navigateLightboxGallery(direction) {
+        if (!currentGalleryImages.length) return;
+        currentGalleryIndex = (currentGalleryIndex + direction + currentGalleryImages.length) % currentGalleryImages.length;
+        updateLightboxView();
+    }
+
+    function closePostLightbox() {
+        const modal = document.getElementById('postLightboxModal');
+        if (modal) {
+            modal.style.display = 'none';
+        }
+    }
+
+    function openPostLightbox(src) {
+        openPostLightboxGallery([src], 0);
+    }
+
+    function togglePostOptionsDropdown(event, menuId) {
+        event.stopPropagation();
+        const menu = document.getElementById(menuId);
+        const isShown = menu ? menu.classList.contains('show') : false;
+        
+        // Close all open menus first
+        document.querySelectorAll('.fb-post-dropdown-menu').forEach(m => m.classList.remove('show'));
+        
+        if (menu && !isShown) {
+            menu.classList.add('show');
+        }
+    }
+
+    // Close options dropdown when clicking outside
+    document.addEventListener('click', function() {
+        document.querySelectorAll('.fb-post-dropdown-menu').forEach(m => m.classList.remove('show'));
+    });
+
+    // Category filter for Photo Gallery
+    function filterPhotoCategory(category, btnEl) {
+        document.querySelectorAll('.sch-photo-filter-pill').forEach(b => b.classList.remove('active'));
+        if (btnEl) btnEl.classList.add('active');
+
+        document.querySelectorAll('.sch-photo-group-section').forEach(sec => {
+            if (category === 'all' || sec.getAttribute('data-category') === category) {
+                sec.style.display = 'block';
+            } else {
+                sec.style.display = 'none';
             }
-        };
+        });
+    }
+
+    // Realtime Post Submission without page refresh
+    function handleRealtimePostSubmit(e, form) {
+        e.preventDefault();
+        
+        const submitBtn = form.querySelector('.fb-modal-submit-btn');
+        const originalBtnText = submitBtn ? submitBtn.innerHTML : 'Đăng';
+        
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '🚀 Đang đăng bài...';
+        }
+
+        const formData = new FormData(form);
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+
+        fetch(form.action, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': csrfToken || '',
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            },
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtnText;
+            }
+
+            if (data.success) {
+                // Close modal
+                closeModal('addPostModal');
+                
+                // Reset form inputs & image preview
+                form.reset();
+                const previewBox = document.getElementById('add-post-multi-preview');
+                const previewGrid = document.getElementById('preview-grid');
+                if (previewBox) previewBox.style.display = 'none';
+                if (previewGrid) previewGrid.innerHTML = '';
+
+                // Insert new post realtime into feed
+                if (data.post) {
+                    renderNewPostRealtime(data.post, data.school);
+                }
+
+                // Show Toast Alert
+                showToastNotification('✅ Đăng bài viết mới thành công!');
+            } else {
+                alert(data.message || 'Có lỗi xảy ra khi đăng bài viết!');
+            }
+        })
+        .catch(err => {
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtnText;
+            }
+            console.error('Lỗi realtime post:', err);
+            form.submit();
+        });
+    }
+
+    function renderNewPostRealtime(post, school) {
+        let feedContainer = document.querySelector('.fb-posts-feed');
+        const emptyState = document.querySelector('.sch-empty-state');
+        
+        if (!feedContainer && emptyState) {
+            const parent = emptyState.parentElement;
+            emptyState.remove();
+            feedContainer = document.createElement('div');
+            feedContainer.className = 'fb-posts-feed';
+            parent.appendChild(feedContainer);
+        }
+
+        if (!feedContainer) return;
+
+        const imgs = post.all_images || (post.images ? post.images : (post.image_path ? [post.image_path] : []));
+        const imgCount = imgs.length;
+
+        let photoGridHtml = '';
+        if (imgCount === 1) {
+            photoGridHtml = `<div class="fb-photo-grid fb-grid-1" onclick="openPostLightboxGallery(${JSON.stringify(imgs)}, 0)">
+                <img src="${imgs[0]}" alt="${post.name}">
+            </div>`;
+        } else if (imgCount === 2) {
+            photoGridHtml = `<div class="fb-photo-grid fb-grid-2">
+                <img src="${imgs[0]}" onclick="openPostLightboxGallery(${JSON.stringify(imgs)}, 0)" alt="${post.name}">
+                <img src="${imgs[1]}" onclick="openPostLightboxGallery(${JSON.stringify(imgs)}, 1)" alt="${post.name}">
+            </div>`;
+        } else if (imgCount === 3) {
+            photoGridHtml = `<div class="fb-photo-grid fb-grid-3">
+                <img src="${imgs[0]}" onclick="openPostLightboxGallery(${JSON.stringify(imgs)}, 0)" alt="${post.name}">
+                <div class="fb-grid-3-col-right">
+                    <img src="${imgs[1]}" onclick="openPostLightboxGallery(${JSON.stringify(imgs)}, 1)" alt="${post.name}">
+                    <img src="${imgs[2]}" onclick="openPostLightboxGallery(${JSON.stringify(imgs)}, 2)" alt="${post.name}">
+                </div>
+            </div>`;
+        } else if (imgCount === 4) {
+            photoGridHtml = `<div class="fb-photo-grid fb-grid-4">
+                <img src="${imgs[0]}" onclick="openPostLightboxGallery(${JSON.stringify(imgs)}, 0)" alt="${post.name}">
+                <div class="fb-grid-4-col-right">
+                    <img src="${imgs[1]}" onclick="openPostLightboxGallery(${JSON.stringify(imgs)}, 1)" alt="${post.name}">
+                    <img src="${imgs[2]}" onclick="openPostLightboxGallery(${JSON.stringify(imgs)}, 2)" alt="${post.name}">
+                    <img src="${imgs[3]}" onclick="openPostLightboxGallery(${JSON.stringify(imgs)}, 3)" alt="${post.name}">
+                </div>
+            </div>`;
+        } else if (imgCount >= 5) {
+            photoGridHtml = `<div class="fb-photo-grid fb-grid-5">
+                <div class="fb-grid-5-row-top">
+                    <img src="${imgs[0]}" onclick="openPostLightboxGallery(${JSON.stringify(imgs)}, 0)" alt="${post.name}">
+                    <img src="${imgs[1]}" onclick="openPostLightboxGallery(${JSON.stringify(imgs)}, 1)" alt="${post.name}">
+                </div>
+                <div class="fb-grid-5-row-bottom">
+                    <img src="${imgs[2]}" onclick="openPostLightboxGallery(${JSON.stringify(imgs)}, 2)" alt="${post.name}">
+                    <img src="${imgs[3]}" onclick="openPostLightboxGallery(${JSON.stringify(imgs)}, 3)" alt="${post.name}">
+                    <div class="fb-photo-thumb-box" onclick="openPostLightboxGallery(${JSON.stringify(imgs)}, 4)">
+                        <img src="${imgs[4]}" alt="${post.name}">
+                        ${imgCount > 5 ? `<div class="fb-photo-more-overlay">+${imgCount - 5}</div>` : ''}
+                    </div>
+                </div>
+            </div>`;
+        }
+
+        const postCard = document.createElement('article');
+        postCard.className = 'fb-post-card animate__animated animate__fadeInDown';
+        postCard.style.animationDuration = '0.4s';
+        postCard.innerHTML = `
+            <div class="fb-post-header">
+                <div class="fb-post-author-box">
+                    <img src="${school ? school.image_path : ''}" class="fb-user-avatar" alt="${school ? school.name : ''}">
+                    <div>
+                        <h4 class="fb-post-author-name">${school ? school.name : ''}</h4>
+                        <div class="fb-post-subtext">
+                            <span>Vừa xong</span>
+                            <span>•</span>
+                            <span>🌐 Công khai</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="fb-post-text">
+                <strong class="d-block mb-1 text-dark" style="font-size: 1.05rem;">🌸 ${post.name}</strong>
+                ${post.description ? post.description.replace(/\n/g, '<br>') : ''}
+            </div>
+            ${photoGridHtml}
+            <div class="fb-post-stats">
+                <div id="post-likes-count-${post.id}">👍 0 lượt thích</div>
+                <div>💬 0 bình luận • 0 chia sẻ</div>
+            </div>
+            <div class="fb-post-actions">
+                <button class="fb-action-btn" id="post-like-btn-${post.id}" onclick="togglePostLike(this, ${post.id})">👍 Thích</button>
+                <button class="fb-action-btn" onclick="alert('Tính năng bình luận bài viết đang được kết nối dữ liệu thực!')">💬 Bình luận</button>
+                <button class="fb-action-btn" onclick="shareFbPost(${post.id})">🔄 Chia sẻ</button>
+            </div>
+        `;
+
+        feedContainer.prepend(postCard);
+
+        if (imgs.length > 0) {
+            prependPostPhotosToGallery(imgs, post.name);
+        }
+    }
+
+    function prependPostPhotosToGallery(images, postTitle) {
+        const postPhotoGrid = document.querySelector('.sch-photo-group-section[data-category="post"] .sch-photo-grid');
+        if (!postPhotoGrid) return;
+
+        images.forEach((url) => {
+            const card = document.createElement('div');
+            card.className = 'sch-photo-card animate__animated animate__fadeIn';
+            card.onclick = function() { openPostLightbox(url); };
+            card.innerHTML = `
+                <img src="${url}" alt="${postTitle}" loading="lazy">
+                <span class="sch-photo-type-tag tag-post">🖼️ Bài viết</span>
+                <div class="sch-photo-overlay">
+                    <p class="sch-photo-caption">Bài viết: ${postTitle}</p>
+                    <span class="sch-photo-date">🕒 Vừa xong</span>
+                    <div class="mt-2">
+                        <button type="button" class="sch-btn sch-btn-sm sch-btn-accent w-100 justify-content-center">
+                            🔍 Xem ảnh lớn
+                        </button>
+                    </div>
+                </div>
+            `;
+            postPhotoGrid.prepend(card);
+        });
+    }
+
+    function showToastNotification(msg) {
+        const toast = document.createElement('div');
+        toast.style.cssText = 'position: fixed; bottom: 25px; right: 25px; background: #065f46; color: #ffffff; padding: 14px 22px; border-radius: 14px; font-weight: 700; font-size: 0.95rem; font-family: "Be Vietnam Pro", sans-serif; box-shadow: 0 10px 30px rgba(0,0,0,0.2); z-index: 99999; animation: modalFadeIn 0.3s ease; display: flex; align-items: center; gap: 8px;';
+        toast.innerHTML = msg;
+        document.body.appendChild(toast);
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transition = 'opacity 0.3s';
+            setTimeout(() => toast.remove(), 300);
+        }, 3500);
     }
 </script>
 @endsection

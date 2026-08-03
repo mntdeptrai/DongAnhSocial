@@ -334,11 +334,11 @@ class CheckoutController extends Controller
             $query->where(function($q) use ($search, $searchId) {
                 if ($searchId > 0) {
                     $q->where('id', $searchId);
+                } else {
+                    $q->whereHas('items', function($subQuery) use ($search) {
+                        $subQuery->where('name', 'like', "{$search}%");
+                    });
                 }
-                $q->orWhere('id', 'like', "%{$search}%");
-                $q->orWhereHas('items', function($subQuery) use ($search) {
-                    $subQuery->where('name', 'like', "%{$search}%");
-                });
             });
         }
 

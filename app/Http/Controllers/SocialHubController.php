@@ -87,9 +87,9 @@ class SocialHubController extends Controller
         // Tìm 15 user trước (sử dụng index users_name_index hoặc users_email_unique)
         $users = User::where('id', '!=', $user->id)
             ->where(function ($q) use ($query) {
-                $q->where('name', 'like', "%{$query}%")
-                  ->orWhere('username', 'like', "%{$query}%")
-                  ->orWhere('email', 'like', "%{$query}%");
+                $q->where('email', $query)
+                  ->orWhere('username', 'like', "{$query}%")
+                  ->orWhere('name', 'like', "{$query}%");
             })
             ->limit(15)
             ->get();

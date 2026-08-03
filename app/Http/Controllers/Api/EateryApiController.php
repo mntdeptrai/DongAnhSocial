@@ -170,9 +170,9 @@ class EateryApiController extends Controller
         if ($request->query('q')) {
             $keyword = $request->query('q');
             $query->where(function($q) use ($keyword) {
-                $q->where('name', 'like', "%{$keyword}%")
-                  ->orWhere('description', 'like', "%{$keyword}%")
-                  ->orWhere('address', 'like', "%{$keyword}%");
+                $q->where('slug', 'like', "{$keyword}%")
+                  ->orWhere('name', 'like', "{$keyword}%")
+                  ->orWhere('address', 'like', "{$keyword}%");
             });
         }
 

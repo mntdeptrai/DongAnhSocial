@@ -65,32 +65,28 @@ class SearchController extends Controller
         $query = Eatery::query();
 
         if ($cat === 'truong-hoc') {
-            $query->where(function($b) {
-                $b->where('name', 'LIKE', '%Trường%')
-                  ->orWhere('name', 'LIKE', '%Mầm non%')
-                  ->orWhere('name', 'LIKE', '%Tiểu học%')
-                  ->orWhere('name', 'LIKE', '%THCS%');
+            $query->whereHas('category', function($c) {
+                $c->where('slug', 'smart-education-map');
             });
-        } elseif ($cat === 'food') {
-            $query->where('name', 'NOT LIKE', '%Trường%')
-                  ->where('name', 'NOT LIKE', '%Mầm non%')
-                  ->where('name', 'NOT LIKE', '%Tiểu học%')
-                  ->where('name', 'NOT LIKE', '%THCS%');
         } elseif ($cat === 'y-te') {
-            $query->where(function($b) {
-                $b->where('name', 'LIKE', '%Bệnh viện%')
-                  ->orWhere('name', 'LIKE', '%Y tế%')
-                  ->orWhere('name', 'LIKE', '%VNVC%');
+            $query->whereHas('category', function($c) {
+                $c->where('slug', 'co-so-y-te-benh-vien');
             });
         } elseif ($cat === 'cho') {
-            $query->where('name', 'LIKE', '%Chợ%');
+            $query->whereHas('category', function($c) {
+                $c->whereIn('slug', ['cho-truyen-thong', 'market', 'traditional-market', 'ocop-products']);
+            });
+        } elseif ($cat === 'food') {
+            $query->whereHas('category', function($c) {
+                $c->whereNotIn('slug', ['smart-education-map', 'co-so-y-te-benh-vien']);
+            });
         }
 
         if ($q) {
             $query->where(function($b) use ($q) {
-                $b->where('name', 'LIKE', "%{$q}%")
-                  ->orWhere('address', 'LIKE', "%{$q}%")
-                  ->orWhere('slug', 'LIKE', "%{$q}%");
+                $b->where('slug', 'LIKE', "{$q}%")
+                  ->orWhere('name', 'LIKE', "{$q}%")
+                  ->orWhere('address', 'LIKE', "{$q}%");
             });
         }
 

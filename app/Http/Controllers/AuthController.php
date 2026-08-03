@@ -264,8 +264,63 @@ class AuthController extends Controller
                 ->orderBy('created_at', 'desc')
                 ->get();
         }
-            
-        return view('auth.profile', compact('user', 'tours', 'school', 'posts'));
+
+        // Lấy số lượng theo dõi & bạn bè thực tế từ DB
+        $followersCount = \App\Models\Friendship::where('friend_id', $user->id)->where('status', 'accepted')->count();
+        $followingCount = \App\Models\Friendship::where('user_id', $user->id)->where('status', 'accepted')->count();
+
+        $reviews = collect();
+        $photos = collect();
+        $videos = collect();
+
+        if ($school) {
+            $reviews = \App\Models\Review::where('eatery_id', $school->id)->latest()->get();
+            $photos = \App\Models\EateryPhoto::where('eatery_id', $school->id)->get();
+            $videos = \App\Models\ReviewVideo::where('eatery_id', $school->id)->get();
+        }
+
+        // Attach real reaction & comment metrics (no mockdata)
+        $currentUserId = \Illuminate\Support\Facades\Auth::id() ?? session('user_id');
+        $currentSessionId = session()->getId();
+        $postIds = $posts->pluck('id')->toArray();
+
+        $realLikesMap = [];
+        $userLikedMap = [];
+        $realCommentsMap = [];
+
+        if (!empty($postIds)) {
+            $realLikesMap = \App\Models\CheckinReaction::where('reactionable_type', 'post')
+                ->whereIn('reactionable_id', $postIds)
+                ->selectRaw('reactionable_id, count(*) as total')
+                ->groupBy('reactionable_id')
+                ->pluck('total', 'reactionable_id')
+                ->toArray();
+
+            $uQuery = \App\Models\CheckinReaction::where('reactionable_type', 'post')
+                ->whereIn('reactionable_id', $postIds);
+            if ($currentUserId) {
+                $uQuery->where('user_id', $currentUserId);
+            } else {
+                $uQuery->where('session_id', $currentSessionId);
+            }
+            $userLikedMap = $uQuery->pluck('reactionable_id')->toArray();
+
+            $realCommentsMap = \App\Models\Comment::where('commentable_type', 'post')
+                ->whereIn('commentable_id', $postIds)
+                ->selectRaw('commentable_id, count(*) as total')
+                ->groupBy('commentable_id')
+                ->pluck('total', 'commentable_id')
+                ->toArray();
+        }
+
+        foreach ($posts as $p) {
+            $p->real_likes_count = (int) ($realLikesMap[$p->id] ?? $p->likes_count ?? 0);
+            $p->is_liked = in_array($p->id, $userLikedMap);
+            $p->real_comments_count = (int) ($realCommentsMap[$p->id] ?? 0);
+            $p->real_shares_count = (int) ($p->shares_count ?? 0);
+        }
+
+        return view('auth.profile', compact('user', 'tours', 'school', 'posts', 'followersCount', 'followingCount', 'reviews', 'photos', 'videos'));
     }
 
     /**

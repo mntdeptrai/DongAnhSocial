@@ -20,6 +20,8 @@
     
     <!-- Dedicated Admin Stylesheet -->
     <link rel="stylesheet" href="{{ asset('css/admin.css') }}?v={{ file_exists(public_path('css/admin.css')) ? filemtime(public_path('css/admin.css')) : '1.0.0' }}">
+    <!-- 4-Screen Breakpoint Relative Responsive System -->
+    <link rel="stylesheet" href="{{ asset('css/4-screen-responsive.css') }}?v={{ time() }}">
     <!-- Facebook Multi-Photo Feed Stylesheet -->
     <link rel="stylesheet" href="{{ asset('css/facebook-feed.css') }}?v={{ file_exists(public_path('css/facebook-feed.css')) ? filemtime(public_path('css/facebook-feed.css')) : '1.0.0' }}">
 </head>

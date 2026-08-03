@@ -395,5 +395,165 @@ class HomeController extends Controller
         $str = preg_replace("/(Đ)/", "D", $str);
         return $str;
     }
+
+    /**
+     * Tương tác Like / Thả tim chuẩn DB Real (Bài viết & Địa điểm checkin)
+     * Mỗi tài khoản / session chỉ được Like / Thả tim 1 lần per item
+     */
+    public function toggleReaction(Request $request)
+    {
+        $request->validate([
+            'id'    => 'required|integer',
+            'type'  => 'required|string|in:post,eatery,checkin,diary',
+            'emoji' => 'nullable|string|max:10',
+        ]);
+
+        $id = (int) $request->input('id');
+        $type = $request->input('type');
+        $emoji = $request->input('emoji', '👍');
+
+        $userId = \Illuminate\Support\Facades\Auth::id() ?? session('user_id');
+        $sessionId = session()->getId();
+
+        $query = \App\Models\CheckinReaction::where('reactionable_type', $type)
+            ->where('reactionable_id', $id);
+
+        if ($userId) {
+            $query->where('user_id', $userId);
+        } else {
+            $query->where('session_id', $sessionId);
+        }
+
+        $existing = $query->first();
+        $isLiked = false;
+
+        if ($existing) {
+            // Đã like -> Bỏ thích (Unlike)
+            $existing->delete();
+            $isLiked = false;
+        } else {
+            // Chưa like -> Tạo 1 lượt thích duy nhất cho tài khoản
+            \App\Models\CheckinReaction::create([
+                'reactionable_type' => $type,
+                'reactionable_id'   => $id,
+                'user_id'           => $userId,
+                'session_id'        => $sessionId,
+                'emoji'             => $emoji,
+            ]);
+            $isLiked = true;
+        }
+
+        // Đếm chính xác lượt thích từ bảng DB
+        $realLikesCount = \App\Models\CheckinReaction::where('reactionable_type', $type)
+            ->where('reactionable_id', $id)
+            ->count();
+
+        // Cập nhật lại số lượng cho EducationProgram nếu type là post
+        if ($type === 'post') {
+            try {
+                \App\Models\EducationProgram::on('mysql_education')->where('id', $id)->update(['likes_count' => $realLikesCount]);
+            } catch (\Exception $e) {}
+            try {
+                \App\Models\EducationProgram::on('mysql')->where('id', $id)->update(['likes_count' => $realLikesCount]);
+            } catch (\Exception $e) {}
+        }
+
+        return response()->json([
+            'success'     => true,
+            'liked'       => $isLiked,
+            'likes_count' => $realLikesCount,
+            'message'     => $isLiked ? 'Đã thích' : 'Đã bỏ thích'
+        ]);
+    }
+
+    /**
+     * Lấy danh sách bình luận thực tế từ DB
+     */
+    public function getComments(Request $request)
+    {
+        $request->validate([
+            'id'   => 'required|integer',
+            'type' => 'required|string|in:post,eatery,checkin,diary'
+        ]);
+
+        $comments = \App\Models\Comment::with('user')
+            ->where('commentable_type', $request->type)
+            ->where('commentable_id', $request->id)
+            ->orderBy('created_at', 'asc')
+            ->get()
+            ->map(function($c) {
+                $avatar = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=100&q=80';
+                if ($c->user) {
+                    if ($c->user->avatar && str_starts_with($c->user->avatar, 'avatars/')) {
+                        $avatar = rtrim(env('R2_PUBLIC_URL'), '/') . '/' . $c->user->avatar;
+                    } elseif ($c->user->avatar) {
+                        $avatar = $c->user->avatar;
+                    }
+                }
+                return [
+                    'id'               => $c->id,
+                    'user_id'          => $c->user_id,
+                    'author_name'      => $c->display_name,
+                    'author_avatar'    => $avatar,
+                    'content'          => $c->content,
+                    'created_at_human' => $c->created_at ? $c->created_at->diffForHumans() : 'Vừa xong'
+                ];
+            });
+
+        return response()->json([
+            'success'  => true,
+            'count'    => $comments->count(),
+            'comments' => $comments
+        ]);
+    }
+
+    /**
+     * Lưu bình luận thực tế mới vào DB
+     */
+    public function storeComment(Request $request)
+    {
+        $request->validate([
+            'id'      => 'required|integer',
+            'type'    => 'required|string|in:post,eatery,checkin,diary',
+            'content' => 'required|string|max:1000'
+        ]);
+
+        $userId = \Illuminate\Support\Facades\Auth::id() ?? session('user_id');
+        $user = $userId ? \App\Models\User::find($userId) : null;
+        $guestName = $user ? null : ($request->input('guest_name') ?? 'Khách vãng lai');
+
+        $comment = \App\Models\Comment::create([
+            'user_id'          => $userId,
+            'guest_name'       => $guestName,
+            'commentable_id'   => (int) $request->input('id'),
+            'commentable_type' => $request->input('type'),
+            'content'          => $request->input('content')
+        ]);
+
+        $totalCommentsCount = \App\Models\Comment::where('commentable_type', $request->input('type'))
+            ->where('commentable_id', $request->input('id'))
+            ->count();
+
+        $avatar = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=100&q=80';
+        if ($user) {
+            if ($user->avatar && str_starts_with($user->avatar, 'avatars/')) {
+                $avatar = rtrim(env('R2_PUBLIC_URL'), '/') . '/' . $user->avatar;
+            } elseif ($user->avatar) {
+                $avatar = $user->avatar;
+            }
+        }
+
+        return response()->json([
+            'success'        => true,
+            'total_comments' => $totalCommentsCount,
+            'comment'        => [
+                'id'               => $comment->id,
+                'author_name'      => $comment->display_name,
+                'author_avatar'    => $avatar,
+                'content'          => $comment->content,
+                'created_at_human' => 'Vừa xong'
+            ]
+        ]);
+    }
 }
 

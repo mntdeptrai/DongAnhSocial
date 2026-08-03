@@ -23,6 +23,45 @@ class SchoolManagementController extends Controller
     }
 
     /**
+     * Tìm thông tin trường học bằng ID hoặc Slug
+     */
+    private function findSchool($idOrSlug)
+    {
+        if (is_numeric($idOrSlug)) {
+            $school = Eatery::on('mysql_education')->find($idOrSlug);
+            if (!$school) {
+                $school = Eatery::on('mysql')->find($idOrSlug);
+            }
+        } else {
+            $school = Eatery::on('mysql_education')->where('slug', $idOrSlug)->first();
+            if (!$school) {
+                $school = Eatery::on('mysql')->where('slug', $idOrSlug)->first();
+            }
+        }
+        return $school;
+    }
+
+    /**
+     * Redirect Hiệu Trưởng trực tiếp vào Dashboard trường mình quản lý
+     */
+    public function dashboardRedirect()
+    {
+        $this->verifyPrincipalOrAdmin();
+        $user = Auth::user();
+
+        $school = Eatery::on('mysql_education')->where('user_id', $user->id)->first();
+        if (!$school) {
+            $school = Eatery::on('mysql')->where('user_id', $user->id)->first();
+        }
+
+        if ($school) {
+            return redirect()->route('principal.schools.dashboard', $school->slug ?: $school->id);
+        }
+
+        return redirect()->route('principal.schools.index');
+    }
+
+    /**
      * Danh sách các trường học thuộc quyền quản lý của Hiệu trưởng / Admin
      */
     public function index()
@@ -63,7 +102,7 @@ class SchoolManagementController extends Controller
 
             // Nếu Hiệu trưởng đã được phân công 1 trường, chuyển thẳng vào trang dashboard trường đó
             if ($schools->count() === 1) {
-                return redirect()->route('principal.schools.dashboard', $schools->first()->id);
+                return redirect()->route('principal.schools.dashboard', $schools->first()->slug ?: $schools->first()->id);
             }
         }
 
@@ -78,10 +117,7 @@ class SchoolManagementController extends Controller
         $this->verifyPrincipalOrAdmin();
         $user = Auth::user();
 
-        $school = Eatery::on('mysql_education')->find($id);
-        if (!$school) {
-            $school = Eatery::on('mysql')->find($id);
-        }
+        $school = $this->findSchool($id);
 
         if (!$school) {
             return redirect()->route(request()->is('admin*') ? 'admin.schools.index' : 'principal.schools.index')->with('error', 'Không tìm thấy thông tin trường học!');
@@ -106,13 +142,7 @@ class SchoolManagementController extends Controller
         $this->verifyPrincipalOrAdmin();
         $user = Auth::user();
 
-        $school = Eatery::on('mysql_education')->find($id);
-        $conn = 'mysql_education';
-        if (!$school) {
-            $school = Eatery::on('mysql')->find($id);
-            $conn = 'mysql';
-        }
-
+        $school = $this->findSchool($id);
         if (!$school) {
             return redirect()->back()->with('error', 'Không tìm thấy thông tin trường học!');
         }
@@ -147,6 +177,9 @@ class SchoolManagementController extends Controller
         $school->name = $stdName;
         $school->phone = $request->input('phone', $school->phone);
         $school->address = $request->input('address', $school->address);
+        if ($request->has('opening_hours')) {
+            $school->opening_hours = $request->input('opening_hours');
+        }
 
         // Upload ảnh đại diện trường nếu có file mới được chọn
         if ($request->hasFile('image')) {
@@ -168,49 +201,77 @@ class SchoolManagementController extends Controller
         $totalArea = 0;
         $locations = [];
 
+        $existingComponents = $existingData['components'] ?? [];
+
         if ($request->has('components') && is_array($request->input('components'))) {
             foreach ($request->input('components') as $index => $comp) {
-                $compName = VietnameseSeoHelper::standardizeSchoolName($comp['name'] ?? '');
+                $oldComp = $existingComponents[$index] ?? [];
                 
-                $photoUrl = $comp['existing_photo'] ?? 'https://images.unsplash.com/photo-1587654780291-39c9404d746b?auto=format&fit=crop&w=600&q=80';
-                if ($request->hasFile("components.{$index}.photo_file")) {
-                    $uploaded = R2Helper::upload($request->file("components.{$index}.photo_file"), 'education');
-                    if ($uploaded) {
-                        $photoUrl = $uploaded;
+                if ($user->isAdmin()) {
+                    // Admin có toàn quyền chỉnh sửa toàn bộ thuộc tính
+                    $compName = VietnameseSeoHelper::standardizeSchoolName($comp['name'] ?? '');
+                    $compAddress = $comp['address'] ?? '';
+                    $compPrincipal = $comp['principal'] ?? '';
+                    $compPhone = $comp['phone'] ?? '';
+                    $gmapLink = $comp['gmap_link'] ?? '';
+                    $latVal = (float)($comp['lat'] ?? $school->latitude);
+                    $lngVal = (float)($comp['lng'] ?? $school->longitude);
+
+                    $photoUrl = $comp['existing_photo'] ?? ($oldComp['photo'] ?? 'https://images.unsplash.com/photo-1587654780291-39c9404d746b?auto=format&fit=crop&w=600&q=80');
+                    if ($request->hasFile("components.{$index}.photo_file")) {
+                        $uploaded = R2Helper::upload($request->file("components.{$index}.photo_file"), 'education');
+                        if ($uploaded) {
+                            $photoUrl = $uploaded;
+                        }
                     }
+                } else {
+                    // Hiệu trưởng CHỈ ĐƯỢC CHỈNH SỬA số lượng Lớp, Học sinh, CBGVNV, Diện tích.
+                    // Các thông tin Cố định (Tên, Địa chỉ, Đại diện, Bản đồ, Ảnh) được giữ nguyên từ hệ thống
+                    $compName = $oldComp['name'] ?? VietnameseSeoHelper::standardizeSchoolName($comp['name'] ?? '');
+                    $compAddress = $oldComp['address'] ?? ($comp['address'] ?? '');
+                    $compPrincipal = $oldComp['principal'] ?? ($comp['principal'] ?? '');
+                    $compPhone = $oldComp['phone'] ?? ($comp['phone'] ?? '');
+                    $gmapLink = $oldComp['gmap_link'] ?? ($comp['gmap_link'] ?? '');
+                    $latVal = (float)($oldComp['lat'] ?? $school->latitude);
+                    $lngVal = (float)($oldComp['lng'] ?? $school->longitude);
+                    $photoUrl = $oldComp['photo'] ?? ($comp['existing_photo'] ?? 'https://images.unsplash.com/photo-1587654780291-39c9404d746b?auto=format&fit=crop&w=600&q=80');
                 }
 
-                $latVal = (float)($comp['lat'] ?? $school->latitude);
-                $lngVal = (float)($comp['lng'] ?? $school->longitude);
-                $gmapLink = $comp['gmap_link'] ?? '';
                 if (empty($gmapLink) && $latVal && $lngVal) {
                     $gmapLink = "https://www.google.com/maps?q={$latVal},{$lngVal}";
                 }
 
-                $classesVal = (int)($comp['classes'] ?? 0);
-                $studentsVal = (int)($comp['students'] ?? 0);
-                $staffVal = (int)($comp['staff'] ?? 0);
-                $areaVal = (float)($comp['area'] ?? 0);
+                if ($user->isAdmin()) {
+                    // Admin có quyền sửa toàn bộ bao gồm cả Tổng diện tích đất
+                    $areaVal = (float)($comp['area'] ?? ($oldComp['area'] ?? 0));
+                } else {
+                    // Hiệu trưởng KHÔNG ĐƯỢC PHÉP sửa Tổng diện tích đất (chỉ Admin mới được sửa)
+                    $areaVal = (float)($oldComp['area'] ?? 0);
+                }
+
+                $classesVal = (int)($comp['classes'] ?? ($oldComp['classes'] ?? 0));
+                $studentsVal = (int)($comp['students'] ?? ($oldComp['students'] ?? 0));
+                $staffVal = (int)($comp['staff'] ?? ($oldComp['staff'] ?? 0));
 
                 $totalClasses += $classesVal;
                 $totalStudents += $studentsVal;
                 $totalStaff += $staffVal;
                 $totalArea += $areaVal;
 
-                if (!empty($comp['address'])) {
+                if (!empty($compAddress)) {
                     $locations[] = [
                         'label' => 'Địa điểm ' . ($index + 1),
                         'name' => $compName,
-                        'address' => $comp['address'],
+                        'address' => $compAddress,
                         'gmap_link' => $gmapLink
                     ];
                 }
 
                 $components[] = [
                     'name' => $compName,
-                    'address' => $comp['address'] ?? '',
-                    'principal' => $comp['principal'] ?? '',
-                    'phone' => $comp['phone'] ?? '',
+                    'address' => $compAddress,
+                    'principal' => $compPrincipal,
+                    'phone' => $compPhone,
                     'classes' => $classesVal,
                     'students' => $studentsVal,
                     'staff' => $staffVal,
@@ -227,12 +288,19 @@ class SchoolManagementController extends Controller
         $mergedSchoolData['name'] = $stdName;
         $mergedSchoolData['address'] = $school->address;
         $mergedSchoolData['phone'] = $school->phone;
+        $mergedSchoolData['opening_hours'] = $school->opening_hours;
         $mergedSchoolData['photo'] = $school->image_path ?: ($mergedSchoolData['photo'] ?? '');
         $mergedSchoolData['lat'] = (float)$school->latitude;
         $mergedSchoolData['lng'] = (float)$school->longitude;
         $mergedSchoolData['total_classes'] = $totalClasses;
-        $mergedSchoolData['total_students'] = $totalStudents;
-        $mergedSchoolData['total_staff'] = $totalStaff;
+
+        // Cập nhật các chỉ số trường học
+        $mergedSchoolData['founded_year'] = $request->filled('founded_year') ? (int)$request->input('founded_year') : ($mergedSchoolData['founded_year'] ?? 2008);
+        $mergedSchoolData['total_staff'] = $request->filled('total_teachers') ? (int)$request->input('total_teachers') : ($totalStaff ?: ($mergedSchoolData['total_staff'] ?? 63));
+        $mergedSchoolData['total_students'] = $request->filled('total_students') ? (int)$request->input('total_students') : ($totalStudents ?: ($mergedSchoolData['total_students'] ?? 759));
+        $mergedSchoolData['awards_count'] = $request->filled('awards_count') ? (int)$request->input('awards_count') : ($mergedSchoolData['awards_count'] ?? 12);
+        $mergedSchoolData['website'] = $request->input('website', $mergedSchoolData['website'] ?? 'phucloc.edu.vn');
+
         $mergedSchoolData['total_area'] = $totalArea;
         $mergedSchoolData['locations'] = $locations;
 
@@ -262,10 +330,7 @@ class SchoolManagementController extends Controller
         $this->verifyPrincipalOrAdmin();
         $user = Auth::user();
 
-        $school = Eatery::on('mysql_education')->find($id);
-        if (!$school) {
-            $school = Eatery::on('mysql')->find($id);
-        }
+        $school = $this->findSchool($id);
 
         if (!$school) {
             return redirect()->route('principal.schools.index')->with('error', 'Không tìm thấy thông tin trường học!');
@@ -325,38 +390,57 @@ class SchoolManagementController extends Controller
             $photos = $existingPhotos;
         }
 
-        // 2. Auto-create initial Facebook multi-photo post if posts are empty
+        // 2. Fetch Facebook posts
         $posts = \App\Models\EducationProgram::on('mysql_education')->where('eatery_id', $school->id)->orderBy('created_at', 'desc')->get();
         if ($posts->isEmpty()) {
             $posts = \App\Models\EducationProgram::on('mysql')->where('eatery_id', $school->id)->orderBy('created_at', 'desc')->get();
         }
 
-        if ($posts->isEmpty() && !empty($preStoredPhotos)) {
-            $postData = [
-                'eatery_id' => $school->id,
-                'name' => 'CHÀO ĐÓN NĂM HỌC MỚI TẠI ' . mb_strtoupper($school->standardized_name),
-                'description' => "🌸 CHÀO ĐÓN CÁC BÉ TRỞ LẠI TRƯỜNG – SẴN SÀNG CHO MỘT HÀNH TRÌNH MỚI TẠI " . mb_strtoupper($school->standardized_name) . " 🌸\n\nSau những ngày nghỉ hè tràn ngập niềm vui bên gia đình, không khí tại " . $school->standardized_name . " đã sẵn sàng đón chào các con học sinh trở lại trường với môi trường học tập khang trang, các góc trải nghiệm sáng tạo và các hoạt động giáo dục vô cùng hấp dẫn!",
-                'image_path' => $preStoredPhotos[0],
-                'images' => $preStoredPhotos,
-                'likes_count' => 68,
-                'shares_count' => 12,
-            ];
-            try {
-                \App\Models\EducationProgram::on('mysql_education')->create($postData);
-            } catch (\Exception $e) {
-                try {
-                    \App\Models\EducationProgram::on('mysql')->create($postData);
-                } catch (\Exception $e2) {}
+        // Attach real reaction & comment metrics (no mockdata)
+        $currentUserId = \Illuminate\Support\Facades\Auth::id() ?? session('user_id');
+        $currentSessionId = session()->getId();
+        $postIds = $posts->pluck('id')->toArray();
+
+        $realLikesMap = [];
+        $userLikedMap = [];
+        $realCommentsMap = [];
+
+        if (!empty($postIds)) {
+            $realLikesMap = \App\Models\CheckinReaction::where('reactionable_type', 'post')
+                ->whereIn('reactionable_id', $postIds)
+                ->selectRaw('reactionable_id, count(*) as total')
+                ->groupBy('reactionable_id')
+                ->pluck('total', 'reactionable_id')
+                ->toArray();
+
+            $uQuery = \App\Models\CheckinReaction::where('reactionable_type', 'post')
+                ->whereIn('reactionable_id', $postIds);
+            if ($currentUserId) {
+                $uQuery->where('user_id', $currentUserId);
+            } else {
+                $uQuery->where('session_id', $currentSessionId);
             }
-            $posts = \App\Models\EducationProgram::on('mysql_education')->where('eatery_id', $school->id)->orderBy('created_at', 'desc')->get();
-            if ($posts->isEmpty()) {
-                $posts = \App\Models\EducationProgram::on('mysql')->where('eatery_id', $school->id)->orderBy('created_at', 'desc')->get();
-            }
+            $userLikedMap = $uQuery->pluck('reactionable_id')->toArray();
+
+            $realCommentsMap = \App\Models\Comment::where('commentable_type', 'post')
+                ->whereIn('commentable_id', $postIds)
+                ->selectRaw('commentable_id, count(*) as total')
+                ->groupBy('commentable_id')
+                ->pluck('total', 'commentable_id')
+                ->toArray();
+        }
+
+        foreach ($posts as $p) {
+            $p->real_likes_count = (int) ($realLikesMap[$p->id] ?? $p->likes_count ?? 0);
+            $p->is_liked = in_array($p->id, $userLikedMap);
+            $p->real_comments_count = (int) ($realCommentsMap[$p->id] ?? 0);
+            $p->real_shares_count = (int) ($p->shares_count ?? 0);
         }
 
         $videos = $school->reviewVideos()->orderBy('created_at', 'desc')->get();
+        $storyData = $school->storytelling_data ?? [];
 
-        return view('principal.dashboard', compact('school', 'posts', 'photos', 'videos'));
+        return view('principal.dashboard', compact('school', 'posts', 'photos', 'videos', 'storyData'));
     }
 
     /**
@@ -369,12 +453,12 @@ class SchoolManagementController extends Controller
 
         $request->validate([
             'eatery_id' => 'required|integer',
-            'name' => 'required|string|max:255',
+            'name' => 'required|string|max:1000',
             'description' => 'required|string',
             'duration' => 'nullable|string|max:255',
             'tuition_fee' => 'nullable|numeric',
-            'image' => 'nullable|image|max:5120',
-            'images.*' => 'nullable|image|max:5120',
+            'image' => 'nullable|image|max:512000',
+            'images.*' => 'nullable|image|max:512000',
         ]);
 
         $school = Eatery::on('mysql_education')->find($request->eatery_id);
@@ -419,9 +503,29 @@ class SchoolManagementController extends Controller
         ];
 
         try {
-            \App\Models\EducationProgram::on('mysql_education')->create($postData);
+            $post = \App\Models\EducationProgram::on('mysql_education')->create($postData);
         } catch (\Exception $e) {
-            \App\Models\EducationProgram::on('mysql')->create($postData);
+            $post = \App\Models\EducationProgram::on('mysql')->create($postData);
+        }
+
+        if ($request->wantsJson() || $request->ajax() || $request->header('X-Requested-With') === 'XMLHttpRequest') {
+            $post->all_images = $post->all_images;
+            $post->formatted_created_at = 'Vừa xong';
+            $post->real_likes_count = 0;
+            $post->is_liked = false;
+            $post->real_comments_count = 0;
+            $post->real_shares_count = 0;
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Đăng bài viết mới thành công!',
+                'post' => $post,
+                'school' => [
+                    'id' => $school->id,
+                    'name' => $school->standardized_name,
+                    'image_path' => $school->image_path ?: 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=150&q=80',
+                ]
+            ]);
         }
 
         return redirect()->back()->with('success', 'Đăng bài viết mới thành công!');
@@ -447,12 +551,12 @@ class SchoolManagementController extends Controller
         }
 
         $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => 'required|string|max:1000',
             'description' => 'required|string',
             'duration' => 'nullable|string|max:255',
             'tuition_fee' => 'nullable|numeric',
-            'image' => 'nullable|image|max:5120',
-            'images.*' => 'nullable|image|max:5120',
+            'image' => 'nullable|image|max:512000',
+            'images.*' => 'nullable|image|max:512000',
         ]);
 
         $post->name = $request->name;
@@ -503,7 +607,14 @@ class SchoolManagementController extends Controller
         $this->verifyPrincipalOrAdmin();
         $user = Auth::user();
 
-        $post = \App\Models\EducationProgram::findOrFail($id);
+        $post = \App\Models\EducationProgram::on('mysql_education')->find($id);
+        if (!$post) {
+            $post = \App\Models\EducationProgram::on('mysql')->find($id);
+        }
+
+        if (!$post) {
+            return redirect()->back()->with('error', 'Không tìm thấy bài viết cần xóa!');
+        }
         
         $school = Eatery::on('mysql_education')->find($post->eatery_id);
         if (!$school) {

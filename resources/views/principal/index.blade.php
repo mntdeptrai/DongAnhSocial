@@ -76,7 +76,7 @@
             } else {
                 $schoolTag = '📍 Xã Đông Anh';
             }
-            $editUrl = request()->is('admin*') ? route('admin.schools.edit', $sch->id) : route('principal.schools.edit', $sch->id);
+            $editUrl = request()->is('admin*') ? route('admin.schools.edit', $sch->id) : route('principal.schools.edit', $sch->slug ?: $sch->id);
         @endphp
         <div class="col-md-6 col-lg-4">
             <div class="school-admin-card">
@@ -106,7 +106,7 @@
                         </div>
 
                         <div class="d-flex gap-2">
-                            <a href="/principal/schools/{{ $sch->id }}/dashboard" class="btn btn-sm btn-success flex-grow-1 shadow-sm" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: none; font-size: 0.82rem; padding: 8px 12px; border-radius: 9999px; font-weight: 600; font-family: 'Be Vietnam Pro', sans-serif; display: inline-flex; align-items: center; justify-content: center; gap: 6px; color: #ffffff;">
+                            <a href="{{ route('principal.schools.dashboard', $sch->slug ?: $sch->id) }}" class="btn btn-sm btn-success flex-grow-1 shadow-sm" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: none; font-size: 0.82rem; padding: 8px 12px; border-radius: 9999px; font-weight: 600; font-family: 'Be Vietnam Pro', sans-serif; display: inline-flex; align-items: center; justify-content: center; gap: 6px; color: #ffffff;">
                                 <span>📊</span> Dashboard
                             </a>
                             <a href="{{ $editUrl }}" class="btn btn-sm btn-light border flex-grow-1 shadow-sm" style="font-size: 0.82rem; padding: 8px 12px; border-radius: 9999px; font-weight: 600; color: #475569; background: #ffffff; border-color: #e2e8f0 !important; font-family: 'Be Vietnam Pro', sans-serif; display: inline-flex; align-items: center; justify-content: center; gap: 6px;">

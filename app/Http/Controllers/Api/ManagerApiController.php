@@ -21,7 +21,7 @@ class ManagerApiController extends Controller
     {
         $stalls = Eatery::on('mysql_market')
             ->whereHas('category', function($q) {
-                $q->where('slug', 'like', '%market%')->orWhere('slug', 'like', '%ocop%');
+                $q->whereIn('slug', ['traditional-market', 'market', 'ocop-products', 'cho-truyen-thong', 'san-pham-ocop', 'ocop']);
             })
             ->select('id', 'name', 'address', 'phone', 'rating', 'status', 'user_id', 'created_at', 'category_id')
             ->latest()
