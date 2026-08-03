@@ -30,6 +30,11 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => \App\Http\Middleware\CheckRole::class,
             'tenant.auth' => \App\Http\Middleware\TenantAuthMiddleware::class,
         ]);
+
+        // 🛡️ Ngoại lệ CSRF cho đăng xuất để tránh lỗi 419 Page Expired khi Session hết hạn
+        $middleware->validateCsrfTokens(except: [
+            'auth/logout',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         // 🛡️ SECURITY AUDIT FIX: Intercept Database Query Exceptions & PDO Errors
