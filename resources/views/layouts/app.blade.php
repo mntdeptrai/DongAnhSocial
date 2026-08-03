@@ -2466,67 +2466,76 @@
     <!-- ==========================================================
          DONGANH SOCIAL IN-APP SHARE MODAL
          ========================================================== -->
+    <!-- ==========================================================
+         DONGANH SOCIAL IN-APP SHARE MODAL (LIGHT & FRESH THEME)
+         ========================================================== -->
     <style>
         .dash-share-overlay {
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(10px);
+            background: rgba(15, 23, 42, 0.45); backdrop-filter: blur(8px);
             z-index: 999999; display: flex; align-items: flex-end; justify-content: center; padding: 16px;
         }
         @media (min-width: 640px) {
             .dash-share-overlay { align-items: center; }
         }
         .dash-share-box {
-            background: #1e293b; color: #f8fafc; border-radius: 24px; padding: 24px; width: 100%; max-width: 480px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); position: relative; font-family: 'Be Vietnam Pro', sans-serif;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: #ffffff; color: #0f172a; border-radius: 24px; padding: 24px; width: 100%; max-width: 480px;
+            box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.25); position: relative; font-family: 'Be Vietnam Pro', sans-serif;
+            border: 1px solid rgba(0, 0, 0, 0.08);
         }
         .dash-share-close {
-            position: absolute; top: 16px; right: 16px; background: rgba(255, 255, 255, 0.1); border: none;
+            position: absolute; top: 16px; right: 16px; background: #f1f5f9; border: none;
             width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            font-weight: 800; color: #94a3b8; cursor: pointer; transition: all 0.15s;
+            font-weight: 800; color: #64748b; cursor: pointer; transition: all 0.15s;
         }
-        .dash-share-close:hover { background: rgba(255, 255, 255, 0.2); color: #ffffff; }
-        .dash-share-title { font-size: 1.1rem; font-weight: 800; color: #ffffff; margin-bottom: 20px; text-align: center; }
-        .dash-share-subtitle { font-size: 0.82rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; }
+        .dash-share-close:hover { background: #e2e8f0; color: #0f172a; }
+        .dash-share-title { font-size: 1.15rem; font-weight: 800; color: #0f172a; margin-bottom: 20px; text-align: center; }
+        .dash-share-subtitle { font-size: 0.8rem; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; }
         
         .dash-friends-scroll {
-            display: flex; gap: 14px; overflow-x: auto; padding-bottom: 12px; margin-bottom: 20px;
-            scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.2) transparent;
+            display: flex; gap: 14px; overflow-x: auto; padding-bottom: 12px; margin-bottom: 16px;
+            scrollbar-width: thin; scrollbar-color: #cbd5e1 transparent;
         }
         .dash-friend-item {
             display: flex; flex-direction: column; align-items: center; gap: 6px; width: 72px; flex-shrink: 0;
             cursor: pointer; background: transparent; border: none; padding: 0; color: inherit;
         }
         .dash-friend-avatar-wrap {
-            position: relative; width: 56px; height: 56px; border-radius: 50%; background: #334155;
+            position: relative; width: 56px; height: 56px; border-radius: 50%; background: #f1f5f9;
             display: flex; align-items: center; justify-content: center; transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.06);
         }
         .dash-friend-item:hover .dash-friend-avatar-wrap {
-            transform: scale(1.08); box-shadow: 0 0 12px rgba(59, 130, 246, 0.5);
+            transform: scale(1.08); box-shadow: 0 6px 16px rgba(37, 99, 235, 0.25);
         }
         .dash-friend-avatar-wrap img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
         .dash-friend-avatar-wrap span { font-size: 1.6rem; }
         .dash-friend-online {
             position: absolute; bottom: 2px; right: 2px; width: 12px; height: 12px; border-radius: 50%;
-            background: #10b981; border: 2px solid #1e293b;
+            background: #10b981; border: 2.5px solid #ffffff;
         }
         .dash-friend-name {
-            font-size: 0.75rem; font-weight: 600; color: #cbd5e1; text-align: center;
+            font-size: 0.76rem; font-weight: 600; color: #334155; text-align: center;
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%;
         }
 
-        .dash-share-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+        .dash-share-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
         .dash-grid-btn {
             display: flex; flex-direction: column; align-items: center; gap: 8px; background: transparent; border: none;
-            color: #cbd5e1; cursor: pointer; padding: 8px; border-radius: 16px; transition: background 0.15s;
+            color: #334155; cursor: pointer; padding: 8px 4px; border-radius: 16px; transition: all 0.15s;
         }
-        .dash-grid-btn:hover { background: rgba(255, 255, 255, 0.08); color: #ffffff; }
+        .dash-grid-btn:hover { background: #f8fafc; color: #0f172a; }
         .dash-grid-icon-box {
-            width: 52px; height: 52px; border-radius: 50%; background: #334155; display: flex;
-            align-items: center; justify-content: center; font-size: 1.4rem; transition: transform 0.2s;
+            width: 52px; height: 52px; border-radius: 20px; background: #f1f5f9; display: flex;
+            align-items: center; justify-content: center; font-size: 1.4rem; transition: all 0.2s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
         }
-        .dash-grid-btn:hover .dash-grid-icon-box { transform: scale(1.1); background: #2563eb; }
-        .dash-grid-label { font-size: 0.78rem; font-weight: 600; text-align: center; line-height: 1.2; }
+        .dash-grid-btn:hover .dash-grid-icon-box { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(37, 99, 235, 0.2); }
+        .dash-grid-btn.feed .dash-grid-icon-box { background: #eff6ff; color: #2563eb; }
+        .dash-grid-btn.link .dash-grid-icon-box { background: #ecfdf5; color: #10b981; }
+        .dash-grid-btn.external .dash-grid-icon-box { background: #fef3c7; color: #d97706; }
+        .dash-grid-btn.chat .dash-grid-icon-box { background: #f0f9ff; color: #0284c7; }
+        .dash-grid-label { font-size: 0.78rem; font-weight: 700; text-align: center; line-height: 1.25; color: #1e293b; }
     </style>
 
     <div id="dongAnhShareModal" style="display:none; opacity:0; transition: opacity 0.25s ease;" class="dash-share-overlay">
@@ -2537,27 +2546,27 @@
             <!-- Section 1: Send via Direct Chat -->
             <div class="dash-share-subtitle">Gửi trực tiếp cho bạn bè</div>
             <div id="dashShareFriendsList" class="dash-friends-scroll">
-                <div style="font-size: 0.82rem; color: #94a3b8; padding: 10px;">Đang tải danh sách bạn bè...</div>
+                <div style="font-size: 0.84rem; color: #64748b; padding: 10px 0;">Đang tải danh sách bạn bè...</div>
             </div>
 
-            <hr style="border: none; border-top: 1px solid rgba(255,255,255,0.08); margin: 8px 0 16px 0;">
+            <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 4px 0 16px 0;">
 
             <!-- Section 2: Share options -->
             <div class="dash-share-subtitle">Chia sẻ lên hệ sinh thái</div>
             <div class="dash-share-grid">
-                <button type="button" class="dash-grid-btn" onclick="shareToInternalFeed()">
+                <button type="button" class="dash-grid-btn feed" onclick="shareToInternalFeed()">
                     <div class="dash-grid-icon-box">📰</div>
                     <span class="dash-grid-label">Bảng tin cá nhân</span>
                 </button>
-                <button type="button" class="dash-grid-btn" onclick="copySharePostLink()">
+                <button type="button" class="dash-grid-btn link" onclick="copySharePostLink()">
                     <div class="dash-grid-icon-box">🔗</div>
                     <span class="dash-grid-label">Sao chép liên kết</span>
                 </button>
-                <button type="button" class="dash-grid-btn" onclick="triggerExternalShare()">
+                <button type="button" class="dash-grid-btn external" onclick="triggerExternalShare()">
                     <div class="dash-grid-icon-box">🌐</div>
                     <span class="dash-grid-label">Ứng dụng khác</span>
                 </button>
-                <button type="button" class="dash-grid-btn" onclick="openDirectMessageList()">
+                <button type="button" class="dash-grid-btn chat" onclick="openDirectMessageList()">
                     <div class="dash-grid-icon-box">💬</div>
                     <span class="dash-grid-label">Đông Anh Chat</span>
                 </button>
