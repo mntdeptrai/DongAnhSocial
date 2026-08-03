@@ -843,13 +843,6 @@
                             </button>
                         @endif
 
-                        <button type="button" class="pro-btn-primary" 
-                                id="bookmark-btn" 
-                                data-saved="false" 
-                                onclick="toggleBookmarkProfile(this)">
-                            🔖 <span id="bookmark-text">Lưu địa điểm</span>
-                        </button>
-
                         <button type="button" class="pro-btn-outline" 
                                 onclick="openDirectMessage({{ $user->id }}, '{{ addslashes(optional($school)->standardized_name ?: $user->name) }}', '{{ optional($school)->image_path ?: '' }}')">
                             💬 Nhắn tin
@@ -2079,24 +2072,6 @@
             Alpine.store('chatStore').openChat(userId, userName, userAvatar, userAvatar, true);
         } else {
             showToastNotification('💬 Đang kết nối kênh tin nhắn với ' + userName + '...');
-        }
-    }
-
-    function toggleBookmarkProfile(btn) {
-        const isSaved = btn.getAttribute('data-saved') === 'true';
-        const textEl = document.getElementById('bookmark-text') || btn;
-        if (isSaved) {
-            btn.setAttribute('data-saved', 'false');
-            btn.style.background = '#2563eb';
-            btn.style.color = '#ffffff';
-            if (textEl) textEl.textContent = 'Lưu địa điểm';
-            showToastNotification('Đã bỏ lưu địa điểm khỏi danh sách.');
-        } else {
-            btn.setAttribute('data-saved', 'true');
-            btn.style.background = '#059669';
-            btn.style.color = '#ffffff';
-            if (textEl) textEl.textContent = 'Đã lưu địa điểm';
-            showToastNotification('🔖 Đã lưu địa điểm này vào danh sách yêu thích của bạn!');
         }
     }
 
