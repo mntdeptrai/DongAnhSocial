@@ -1143,35 +1143,6 @@
                         @endforeach
                     @endif
 
-                    <!-- 4. Featured Reviews Card (Only on Overview) -->
-                    <div class="pro-card" x-show="activeTab === 'overview'">
-                        <div class="pro-card-title" style="color: #0f172a;">
-                            <span>Đánh giá nổi bật</span>
-                            <button type="button" @click="activeTab = 'reviews'" style="font-size: 0.8rem; color: #f59e0b; background: none; border: none; font-weight: 700; cursor: pointer;">Xem tất cả ›</button>
-                        </div>
-                        @if($reviews->isEmpty())
-                            <div style="text-align: center; color: #64748b; font-size: 0.88rem; padding: 20px 0;">
-                                Chưa có nhận xét nào cho cơ sở này.
-                            </div>
-                        @else
-                            @foreach($reviews->take(3) as $rev)
-                                <div style="display: flex; align-items: flex-start; gap: 14px; margin-bottom: 16px;">
-                                    <div style="width: 40px; height: 40px; border-radius: 50%; background: #2563eb; color: #ffffff; display: flex; align-items: center; justify-content: center; font-weight: 800; flex-shrink: 0;">
-                                        {{ mb_substr(optional($rev->user)->name ?: 'U', 0, 1) }}
-                                    </div>
-                                    <div>
-                                        <div style="font-size: 0.95rem; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 8px;">
-                                            {{ optional($rev->user)->name ?: 'Người dùng ẩn danh' }}
-                                            <span style="color: #f59e0b; font-size: 0.85rem;">{{ str_repeat('★', $rev->rating) }}</span>
-                                        </div>
-                                        <p style="font-size: 0.9rem; color: #475569; margin-top: 4px; margin-bottom: 0; line-height: 1.5;">
-                                            {{ $rev->comment }}
-                                        </p>
-                                    </div>
-                                </div>
-                            @endforeach
-                        @endif
-                    </div>
                 </div>
 
                 <!-- ================= TAB 3: PHOTOS GALLERY ================= -->
