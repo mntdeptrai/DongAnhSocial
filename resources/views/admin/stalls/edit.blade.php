@@ -102,21 +102,136 @@
             <!-- Ngân hàng -->
             <div class="admin-form-group">
                 <label class="admin-form-label" style="font-weight: 700; font-size: 0.82rem; margin-bottom: 8px; display: block; color: var(--admin-text-main);">Ngân Hàng Thụ Hưởng</label>
-                <div style="position: relative;">
-                    <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--admin-text-muted);">🏦</span>
-                    <select name="bank_name" class="admin-form-input" style="padding-left: 38px; border-radius: 10px; height: 42px; font-size: 0.86rem;">
-                        <option value="">-- Chọn Ngân Hàng --</option>
-                        <option value="MBBank" {{ old('bank_name', $stall->bank_name ?? 'MBBank') === 'MBBank' ? 'selected' : '' }}>MBBank (Ngân hàng Quân Đội)</option>
-                        <option value="Vietcombank" {{ old('bank_name', $stall->bank_name ?? '') === 'Vietcombank' ? 'selected' : '' }}>Vietcombank (VCB)</option>
-                        <option value="Agribank" {{ old('bank_name', $stall->bank_name ?? '') === 'Agribank' ? 'selected' : '' }}>Agribank (Nông nghiệp & PTNT)</option>
-                        <option value="Techcombank" {{ old('bank_name', $stall->bank_name ?? '') === 'Techcombank' ? 'selected' : '' }}>Techcombank (TCB)</option>
-                        <option value="BIDV" {{ old('bank_name', $stall->bank_name ?? '') === 'BIDV' ? 'selected' : '' }}>BIDV (Đầu tư & Phát triển)</option>
-                        <option value="VPBank" {{ old('bank_name', $stall->bank_name ?? '') === 'VPBank' ? 'selected' : '' }}>VPBank (Thịnh Vượng)</option>
-                        <option value="VietinBank" {{ old('bank_name', $stall->bank_name ?? '') === 'VietinBank' ? 'selected' : '' }}>VietinBank (Công Thương)</option>
-                        <option value="TPBank" {{ old('bank_name', $stall->bank_name ?? '') === 'TPBank' ? 'selected' : '' }}>TPBank (Tiên Phong)</option>
-                        <option value="Sacombank" {{ old('bank_name', $stall->bank_name ?? '') === 'Sacombank' ? 'selected' : '' }}>Sacombank</option>
-                    </select>
+                @php
+                    $adminBanks = [
+                        'MBBank'         => 'MBBank (NH Quân Đội)',
+                        'VietinBank'     => 'VietinBank (NH Công Thương)',
+                        'Vietcombank'    => 'Vietcombank (NH Ngoại Thương - VCB)',
+                        'Agribank'       => 'Agribank (NH Nông Nghiệp & PTNT)',
+                        'BIDV'           => 'BIDV (NH Đầu Tư & Phát Triển)',
+                        'Techcombank'    => 'Techcombank (NH Kỹ Thương - TCB)',
+                        'VPBank'         => 'VPBank (NH Việt Nam Thịnh Vượng)',
+                        'TPBank'         => 'TPBank (NH Tiên Phong)',
+                        'ACB'            => 'ACB (NH Á Châu)',
+                        'Sacombank'      => 'Sacombank (NH Sài Gòn Thương Tín)',
+                        'MSB'            => 'MSB (NH Hàng Hải)',
+                        'VIB'            => 'VIB (NH Quốc Tế)',
+                        'HDBank'         => 'HDBank (NH Phát Triển TP.HCM)',
+                        'LPBank'         => 'LPBank (LienVietPostBank)',
+                        'SHB'            => 'SHB (NH Sài Gòn - Hà Nội)',
+                        'SeABank'        => 'SeABank (NH Đông Nam Á)',
+                        'ABBANK'         => 'ABBANK (NH An Bình)',
+                        'PVcomBank'      => 'PVcomBank (NH Đại Chúng)',
+                        'Eximbank'       => 'Eximbank (NH Xuất Nhập Khẩu)',
+                        'OCB'            => 'OCB (NH Phương Đông)',
+                        'SCB'            => 'SCB (NH Sài Gòn)',
+                        'BacABank'       => 'BacABank (NH Bắc Á)',
+                        'DongABank'      => 'DongABank (NH Đông Á)',
+                        'BaoVietBank'    => 'BaoVietBank (NH Bảo Việt)',
+                        'NCB'            => 'NCB (NH Quốc Dân)',
+                        'Oceanbank'      => 'Oceanbank (NH Đại Dương)',
+                        'GPBank'         => 'GPBank (NH Dầu Khí Toàn Cầu)',
+                        'KienLongBank'   => 'KienLongBank (NH Kiên Long)',
+                        'VietBank'       => 'VietBank (NH Việt Nam Thương Tín)',
+                        'NamABank'       => 'NamABank (NH Nam Á)',
+                        'SaigonBank'     => 'SaigonBank (NH Sài Gòn Công Thương)',
+                        'PGBank'         => 'PGBank (NH Thịnh Vượng & Phát Triển)',
+                        'BVBank'         => 'BVBank (NH Bản Việt)',
+                        'PublicBank'     => 'PublicBank (Public Bank Việt Nam)',
+                        'ShinhanBank'    => 'ShinhanBank (NH Shinhan Việt Nam)',
+                        'WooriBank'      => 'WooriBank (NH Woori Việt Nam)',
+                        'UOB'            => 'UOB (NH United Overseas Bank)',
+                        'HSBC'           => 'HSBC (NH HSBC Việt Nam)',
+                        'Cake'           => 'Cake by VPBank (NH Số Cake)',
+                        'Timo'           => 'Timo (NH Số Timo)',
+                        'ViettelMoney'   => 'Viettel Money',
+                        'VNPTMoney'      => 'VNPT Money'
+                    ];
+                    $selectedAdminBank = old('bank_name', $stall->bank_name ?? '');
+                    $selectedAdminLabel = isset($adminBanks[$selectedAdminBank]) ? $adminBanks[$selectedAdminBank] : $selectedAdminBank;
+                @endphp
+
+                <div class="admin-bank-wrapper" style="position: relative;">
+                    <input type="hidden" name="bank_name" id="admin_bank_hidden_edit" value="{{ $selectedAdminBank }}">
+                    <div style="position: relative;">
+                        <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--admin-text-muted); z-index: 2;">🏦</span>
+                        <input type="text" id="admin_bank_input_edit" class="admin-form-input" style="padding-left: 38px; padding-right: 36px; border-radius: 10px; height: 42px; font-size: 0.86rem;" 
+                               placeholder="🔍 Gõ tìm kiếm hoặc chọn ngân hàng..." 
+                               value="{{ $selectedAdminLabel }}" 
+                               autocomplete="off">
+                        <span id="admin_clear_bank_btn_edit" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #94a3b8; font-weight: bold; z-index: 2; display: {{ !empty($selectedAdminBank) ? 'inline' : 'none' }};">✕</span>
+                    </div>
+
+                    <div id="admin_bank_dropdown_edit" style="position: absolute; top: calc(100% + 4px); left: 0; right: 0; max-height: 240px; overflow-y: auto; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 10px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.15); z-index: 9999; display: none;">
+                        <div class="admin-bank-opt-edit" data-value="" data-label="" style="padding: 10px 14px; cursor: pointer; border-bottom: 1px solid #f1f5f9; color: #64748b; font-size: 0.84rem; font-weight: 700;">
+                            -- Chưa sử dụng ngân hàng / Tiền mặt --
+                        </div>
+                        @foreach($adminBanks as $code => $label)
+                            <div class="admin-bank-opt-edit" data-value="{{ $code }}" data-label="{{ $label }}" style="padding: 10px 14px; cursor: pointer; border-bottom: 1px solid #f8fafc; font-size: 0.84rem; color: #0f172a;">
+                                🏦 <strong>{{ $code }}</strong> — {{ $label }}
+                            </div>
+                        @endforeach
+                    </div>
                 </div>
+
+                <script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                        const input = document.getElementById('admin_bank_input_edit');
+                        const hidden = document.getElementById('admin_bank_hidden_edit');
+                        const dropdown = document.getElementById('admin_bank_dropdown_edit');
+                        const clearBtn = document.getElementById('admin_clear_bank_btn_edit');
+                        const items = dropdown.querySelectorAll('.admin-bank-opt-edit');
+
+                        function filterAdminEditBanks() {
+                            const q = input.value.trim().toLowerCase();
+                            items.forEach(item => {
+                                const val = (item.getAttribute('data-value') || '').toLowerCase();
+                                const lbl = (item.getAttribute('data-label') || '').toLowerCase();
+                                if (!q || val.includes(q) || lbl.includes(q)) {
+                                    item.style.display = 'block';
+                                } else {
+                                    item.style.display = 'none';
+                                }
+                            });
+                            dropdown.style.display = 'block';
+                            clearBtn.style.display = input.value ? 'inline' : 'none';
+                        }
+
+                        input.addEventListener('focus', filterAdminEditBanks);
+                        input.addEventListener('input', function() {
+                            filterAdminEditBanks();
+                            hidden.value = input.value.trim();
+                        });
+
+                        items.forEach(item => {
+                            item.addEventListener('click', function(e) {
+                                e.stopPropagation();
+                                const val = item.getAttribute('data-value');
+                                const lbl = item.getAttribute('data-label');
+                                hidden.value = val;
+                                input.value = lbl || val;
+                                dropdown.style.display = 'none';
+                                clearBtn.style.display = input.value ? 'inline' : 'none';
+                            });
+                            item.addEventListener('mouseenter', function() { this.style.background = '#f1f5f9'; });
+                            item.addEventListener('mouseleave', function() { this.style.background = '#ffffff'; });
+                        });
+
+                        clearBtn.addEventListener('click', function(e) {
+                            e.stopPropagation();
+                            input.value = '';
+                            hidden.value = '';
+                            clearBtn.style.display = 'none';
+                            filterAdminEditBanks();
+                        });
+
+                        document.addEventListener('click', function(e) {
+                            if (!input.contains(e.target) && !dropdown.contains(e.target)) {
+                                dropdown.style.display = 'none';
+                            }
+                        });
+                    });
+                </script>
             </div>
 
             <!-- Số tài khoản -->

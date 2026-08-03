@@ -160,6 +160,8 @@ Route::get('/auth/logout', [AuthController::class, 'logout'])->name('logout.get'
 // --- STALL VENDOR SIDE ROUTES (Kênh Điều Hành Chủ Gian Hàng Số) ---
 Route::prefix('seller')->middleware(['auth', 'role:seller,admin', 'tenant.auth'])->group(function () {
     Route::get('/dashboard', [VendorController::class, 'dashboard'])->name('seller.dashboard');
+    Route::get('/profile', [VendorController::class, 'showProfile'])->name('seller.profile');
+    Route::post('/profile', [VendorController::class, 'updateProfile'])->name('seller.profile.update');
     Route::post('/dossier', [VendorController::class, 'updateDossier'])->name('seller.dossier.update');
     Route::get('/products', [VendorController::class, 'products'])->name('seller.products.index');
     Route::post('/products', [VendorController::class, 'storeProduct'])->name('seller.products.store');

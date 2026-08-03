@@ -87,6 +87,9 @@
             <a href="/seller/dashboard" class="slr-menu-item {{ request()->is('seller/dashboard') ? 'active' : '' }}">
                 <span>📊</span> Tổng Quan Gian Hàng
             </a>
+            <a href="/seller/profile" class="slr-menu-item {{ request()->is('seller/profile') ? 'active' : '' }}">
+                <span>⚙️</span> Cấu Hình Gian Hàng & VietQR
+            </a>
             <a href="/seller/products" class="slr-menu-item {{ request()->is('seller/products*') ? 'active' : '' }}">
                 <span>📦</span> Sản Phẩm & Thực Đơn
             </a>

@@ -506,4 +506,118 @@ class VendorController extends Controller
             'count'     => $rawOrders->count(),
         ]);
     }
+
+    /**
+     * Giao diện Cấu Hình & Cập Nhật Thông Tin Gian Hàng / Thanh Toán VietQR 4.0
+     * GET /seller/profile
+     */
+    public function showProfile()
+    {
+        $this->verifyVendor();
+        $context = $this->getVendorStallContext();
+        
+        $primaryProduct = $context['primaryProduct'];
+        $user = Auth::user();
+
+        return view('seller.profile', array_merge($context, [
+            'user' => $user,
+            'primaryProduct' => $primaryProduct
+        ]));
+    }
+
+    /**
+     * Xử lý Cập Nhật Thông Tin Gian Hàng, SĐT/Zalo, Ngân Hàng & Mã VietQR 4.0
+     * POST /seller/profile
+     */
+    public function updateProfile(Request $request)
+    {
+        $this->verifyVendor();
+        $context = $this->getVendorStallContext();
+        $user = Auth::user();
+        $db = DB::connection('mysql_market');
+
+        $request->validate([
+            'seller_name'  => 'required|string|max:255',
+            'seller_phone' => 'required|string|max:50',
+            'stall_name'   => 'nullable|string|max:255',
+            'bank_name'    => 'nullable|string|max:100',
+            'bank_account' => 'nullable|string|max:100',
+            'bank_holder'  => 'nullable|string|max:255',
+            'origin'       => 'nullable|string|max:500',
+            'attp'         => 'nullable|string|max:255',
+            'description'  => 'nullable|string|max:1000',
+        ]);
+
+        $sellerName  = trim($request->input('seller_name'));
+        $sellerPhone = trim($request->input('seller_phone'));
+        $stallName   = trim($request->input('stall_name')) ?: $context['stallName'];
+        $bankName    = trim($request->input('bank_name'));
+        $bankAccount = trim($request->input('bank_account'));
+        $bankHolder  = trim($request->input('bank_holder'));
+        $origin      = trim($request->input('origin'));
+        $attp        = trim($request->input('attp'));
+        $description = trim($request->input('description'));
+
+        // Xử lý tạo URL VietQR Napas247 tự động nếu có thông tin tài khoản
+        $qrCodeUrl = null;
+        if (!empty($bankName) && !empty($bankAccount)) {
+            $holderUpper = mb_strtoupper($bankHolder ?: $sellerName, 'UTF-8');
+            $addInfo = "TT " . Str::slug($stallName, ' ');
+            $qrCodeUrl = "https://img.vietqr.io/image/{$bankName}-{$bankAccount}-compact.png?accountName=" . urlencode($holderUpper) . "&addInfo=" . urlencode($addInfo);
+        }
+
+        // 1. Cập nhật thông tin trên bảng User hiện tại
+        if ($user) {
+            $userUpdate = ['name' => $sellerName, 'phone' => $sellerPhone, 'updated_at' => now()];
+            DB::table('users')->where('id', $user->id)->update($userUpdate);
+        }
+
+        // 2. Cập nhật sản phẩm đại diện gian hàng (ocop_products)
+        $productQuery = $db->table('ocop_products')->where('eatery_id', $context['eateryId']);
+        if ($user) {
+            $productQuery->where(function($q) use ($user, $sellerPhone, $context) {
+                $q->where('user_id', $user->id)
+                  ->orWhere('seller_phone', $sellerPhone)
+                  ->orWhere('stall_name', $context['stallName']);
+            });
+        } else {
+            $productQuery->where('stall_name', $context['stallName']);
+        }
+
+        $ocopData = [
+            'stall_name'   => $stallName,
+            'seller_name'  => $sellerName,
+            'seller_phone' => $sellerPhone,
+            'bank_name'    => $bankName ?: null,
+            'bank_account' => $bankAccount ?: null,
+            'bank_holder'  => $bankHolder ?: null,
+            'qr_code_path' => $qrCodeUrl,
+            'updated_at'   => now(),
+        ];
+
+        // Tạo chuỗi mô tả kết hợp đầy đủ Nguồn gốc & ATTP
+        if (!empty($origin) || !empty($attp) || !empty($description)) {
+            $descParts = [];
+            if (!empty($origin)) {
+                $descParts[] = "Nguồn gốc: " . $origin;
+            }
+            if (!empty($attp)) {
+                $descParts[] = "Cam kết ATTP: " . $attp;
+            }
+            if (!empty($description)) {
+                $descParts[] = $description;
+            }
+            $ocopData['description'] = implode('. ', $descParts);
+        }
+
+        $productQuery->update($ocopData);
+
+        // Cập nhật lại session thông tin người dùng
+        session(['stall_name' => $stallName, 'user_name' => $sellerName]);
+
+        // Xóa sạch Cache để thay đổi lập tức có hiệu lực công khai
+        \Illuminate\Support\Facades\Cache::flush();
+
+        return redirect()->back()->with('success', '🎉 Đã cập nhật thành công Cấu hình Gian hàng & Thanh toán VietQR! Thông tin mới đã được cập nhật trực tiếp trên bản đồ & gian hàng công khai.');
+    }
 }
