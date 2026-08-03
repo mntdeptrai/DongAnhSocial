@@ -540,6 +540,10 @@ class VendorController extends Controller
             'seller_name'  => 'required|string|max:255',
             'seller_phone' => 'required|string|max:50',
             'stall_name'   => 'nullable|string|max:255',
+            'address'      => 'nullable|string|max:500',
+            'map_link'     => 'nullable|string|max:1000',
+            'latitude'     => 'nullable|numeric',
+            'longitude'    => 'nullable|numeric',
             'bank_name'    => 'nullable|string|max:100',
             'bank_account' => 'nullable|string|max:100',
             'bank_holder'  => 'nullable|string|max:255',
@@ -551,6 +555,20 @@ class VendorController extends Controller
         $sellerName  = trim($request->input('seller_name'));
         $sellerPhone = trim($request->input('seller_phone'));
         $stallName   = trim($request->input('stall_name')) ?: $context['stallName'];
+        $address     = trim($request->input('address'));
+        $mapLink     = trim($request->input('map_link'));
+        $latitude    = $request->input('latitude') !== null && $request->input('latitude') !== '' ? (float)$request->input('latitude') : null;
+        $longitude   = $request->input('longitude') !== null && $request->input('longitude') !== '' ? (float)$request->input('longitude') : null;
+
+        // Tự động phân tích & giải mã link Google Maps ra Tọa độ Lat, Lng
+        if (!empty($mapLink)) {
+            list($autoLat, $autoLng) = $this->parseGoogleMapsUrl($mapLink);
+            if ($autoLat !== null && $autoLng !== null) {
+                $latitude = $autoLat;
+                $longitude = $autoLng;
+            }
+        }
+
         $bankName    = trim($request->input('bank_name'));
         $bankAccount = trim($request->input('bank_account'));
         $bankHolder  = trim($request->input('bank_holder'));
@@ -588,6 +606,10 @@ class VendorController extends Controller
             'stall_name'   => $stallName,
             'seller_name'  => $sellerName,
             'seller_phone' => $sellerPhone,
+            'address'      => $address ?: null,
+            'map_link'     => $mapLink ?: null,
+            'latitude'     => $latitude,
+            'longitude'    => $longitude,
             'bank_name'    => $bankName ?: null,
             'bank_account' => $bankAccount ?: null,
             'bank_holder'  => $bankHolder ?: null,
@@ -619,5 +641,38 @@ class VendorController extends Controller
         \Illuminate\Support\Facades\Cache::flush();
 
         return redirect()->back()->with('success', '🎉 Đã cập nhật thành công Cấu hình Gian hàng & Thanh toán VietQR! Thông tin mới đã được cập nhật trực tiếp trên bản đồ & gian hàng công khai.');
+    }
+
+    /**
+     * Tự động giải mã Link Google Maps để trích xuất tọa độ Vĩ độ (Lat) & Kinh độ (Lng)
+     */
+    private function parseGoogleMapsUrl($url)
+    {
+        if (empty($url)) return [null, null];
+
+        if (str_contains($url, 'maps.app.goo.gl') || str_contains($url, 'goo.gl/maps')) {
+            $headers = @get_headers($url, 1);
+            if (isset($headers['Location'])) {
+                $url = is_array($headers['Location']) ? (is_array(end($headers['Location'])) ? end(end($headers['Location'])) : end($headers['Location'])) : $headers['Location'];
+            }
+        }
+
+        if (preg_match('/@(-?\d+\.\d+),(-?\d+\.\d+)/', $url, $m)) {
+            return [(float)$m[1], (float)$m[2]];
+        }
+
+        if (preg_match('/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/', $url, $m)) {
+            return [(float)$m[1], (float)$m[2]];
+        }
+
+        if (preg_match('/[?&](?:q|ll)=(-?\d+\.\d+),(-?\d+\.\d+)/', $url, $m)) {
+            return [(float)$m[1], (float)$m[2]];
+        }
+
+        if (preg_match('/^(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)$/', trim($url), $m)) {
+            return [(float)$m[1], (float)$m[2]];
+        }
+
+        return [null, null];
     }
 }

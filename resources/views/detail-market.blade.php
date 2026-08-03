@@ -3723,6 +3723,15 @@
         });
     }
 
+    document.addEventListener('DOMContentLoaded', function() {
+        initSatelliteMap();
+        setTimeout(function() {
+            if (mainMap) {
+                mainMap.invalidateSize();
+            }
+        }, 500);
+    });
+
     function highlightBlockOnMap(blockLetter) {
         let lat, lng;
         if (blockLetter === 'A') {

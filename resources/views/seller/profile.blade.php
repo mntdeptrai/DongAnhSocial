@@ -180,6 +180,75 @@
                 <label class="slr-label">Chợ Trực Thuộc</label>
                 <input type="text" class="slr-input" value="{{ $market ? $market->name : 'Chợ Truyền Thống Số' }}" readonly style="background: #f1f5f9; color: #64748b; cursor: not-allowed;">
             </div>
+
+            <!-- ĐỊA CHỈ CHI TIẾT & VỊ TRÍ PHÂN KHU HÀNG (HIỂN THỊ MAP) -->
+            <div class="slr-form-group" style="grid-column: span 2;">
+                <label class="slr-label">📍 Địa Chỉ Chi Tiết / Số Sạp & Vị Trí Phân Khu (Hiển thị trên Bản Đồ Số)</label>
+                <input type="text" name="address" class="slr-input" value="{{ old('address', $primaryProduct->address ?? '') }}" placeholder="Ví dụ: Sạp 102, Khối A (Khu Ẩm Thực) - Chợ Mạch Tràng">
+                <div style="font-size: 0.78rem; color: #0284c7; margin-top: 5px; font-weight: 600;">
+                    🗺️ Địa chỉ này sẽ định vị chính xác vị trí gian hàng của bạn trên Bản Đồ Số & thẻ thông tin công khai.
+                </div>
+            </div>
+
+            <!-- LIÊN KẾT GOOGLE MAPS VỊ TRÍ GIAN HÀNG & NÚT GPS -->
+            <div class="slr-form-group" style="grid-column: span 2;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
+                    <label class="slr-label" style="margin: 0;">🗺️ Vị Trí Bản Đồ Gian Hàng (Link Google Maps / Định vị GPS)</label>
+                    <button type="button" onclick="getCurrentGpsLocation()" style="background: linear-gradient(135deg, #0ea5e9, #0284c7); color: white; border: none; padding: 7px 16px; border-radius: 10px; font-weight: 800; font-size: 0.8rem; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(14,165,233,0.3); transition: all 0.2s;" onmouseover="this.style.transform='translateY(-1px)';" onmouseout="this.style.transform='none';">
+                        <i class="bi bi-geo-alt-fill"></i> 📍 Bấm để tự động lấy vị trí GPS hiện tại
+                    </button>
+                </div>
+                <div style="position: relative;">
+                    <input type="text" name="map_link" id="slrMapLink" class="slr-input" value="{{ old('map_link', $primaryProduct->map_link ?? '') }}" placeholder="Dán link Google Maps vào đây HOẶC bấm nút 'Lấy vị trí GPS hiện tại' ở trên...">
+                    <input type="hidden" name="latitude" id="slrLatitude" value="{{ old('latitude', $primaryProduct->latitude ?? '') }}">
+                    <input type="hidden" name="longitude" id="slrLongitude" value="{{ old('longitude', $primaryProduct->longitude ?? '') }}">
+                </div>
+                <div id="gpsStatusMessage" style="font-size: 0.78rem; color: #059669; margin-top: 6px; font-weight: 600;">
+                    ✨ <strong>Mẹo</strong>: Khi bạn đang ở quầy sạp, hãy bấm nút <strong>"📍 Lấy vị trí GPS hiện tại"</strong> ở trên để trình duyệt tự động quét vị trí & định vị sạp hàng của bạn chuẩn xác 100%!
+                </div>
+            </div>
+
+            <script>
+                function getCurrentGpsLocation() {
+                    const statusMsg = document.getElementById('gpsStatusMessage');
+                    const mapInput = document.getElementById('slrMapLink');
+                    const latInput = document.getElementById('slrLatitude');
+                    const lngInput = document.getElementById('slrLongitude');
+
+                    if (!navigator.geolocation) {
+                        alert('Trình duyệt của bạn không hỗ trợ định vị GPS.');
+                        return;
+                    }
+
+                    statusMsg.innerHTML = '<span style="color: #0284c7; font-weight: 700;"><i class="bi bi-arrow-repeat spin"></i> ⏳ Đang kết nối vệ tinh GPS để xác định vị trí sạp hàng... Vui lòng chọn "Cho phép (Allow)" khi được hỏi quyền vị trí.</span>';
+
+                    navigator.geolocation.getCurrentPosition(
+                        function(position) {
+                            const lat = position.coords.latitude;
+                            const lng = position.coords.longitude;
+                            const generatedUrl = `https://www.google.com/maps?q=${lat},${lng}`;
+                            
+                            mapInput.value = generatedUrl;
+                            if (latInput) latInput.value = lat;
+                            if (lngInput) lngInput.value = lng;
+
+                            statusMsg.innerHTML = `<span style="color: #10B981; font-weight: 800;">✅ ĐÃ LẤY VỊ TRÍ GPS THÀNH CÔNG! (Tọa độ: ${lat.toFixed(6)}, ${lng.toFixed(6)}). Hãy bấm "LƯU CẤU HÌNH GIAN HÀNG & VIETQR" ở cuối trang để hoàn tất.</span>`;
+                        },
+                        function(error) {
+                            let errText = 'Không thể lấy vị trí GPS.';
+                            if (error.code === error.PERMISSION_DENIED) {
+                                errText = 'Bạn đã từ chối quyền truy cập vị trí. Vui lòng cho phép quyền vị trí (Location Access) trong trình duyệt và bấm lại.';
+                            } else if (error.code === error.POSITION_UNAVAILABLE) {
+                                errText = 'Tín hiệu GPS không khả dụng.';
+                            } else if (error.code === error.TIMEOUT) {
+                                errText = 'Quá thời gian chờ định vị GPS.';
+                            }
+                            statusMsg.innerHTML = `<span style="color: #EF4444; font-weight: 700;">❌ ${errText}</span>`;
+                        },
+                        { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
+                    );
+                }
+            </script>
         </div>
     </div>
 
