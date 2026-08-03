@@ -29,14 +29,14 @@
     <meta property="og:title" content="@yield('title', 'Khám phá Xã Đông Anh - Tra Cứu Địa Điểm, Trường Học, Ăn Uống, Y Tế, Chợ OCOP')">
     <meta property="og:description" content="@yield('meta_description', 'Khám phá Xã Đông Anh - Tra cứu chính xác trường học, bệnh viện, nhà hàng quán ăn, đặc sản OCOP, chợ truyền thống tại Xã Đông Anh, Hà Nội.')">
     <meta property="og:url" content="@yield('canonical_url', request()->url())">
-    <meta property="og:image" content="@yield('og_image', 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=800&q=80')">
+    <meta property="og:image" content="@yield('og_image', 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=1200&q=80')">
     <meta property="og:type" content="@yield('og_type', 'website')">
 
     <!-- Twitter Card Meta Tags -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="@yield('title', 'Khám phá Xã Đông Anh')">
     <meta name="twitter:description" content="@yield('meta_description', 'Khám phá trường học, ăn uống, y tế, chợ OCOP tại Xã Đông Anh.')">
-    <meta name="twitter:image" content="@yield('og_image', 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=800&q=80')">
+    <meta name="twitter:image" content="@yield('og_image', 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=1200&q=80')">
     
     @stack('head')
     

@@ -1,6 +1,7 @@
 @extends('layouts.app')
 
 @section('title', 'Trang Cá Nhân & Quản Lý Trường - ' . (optional($school)->standardized_name ?: $user->name))
+@section('og_image', optional($school)->image_path ?: 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=1200&q=80')
 
 @section('content')
 <link rel="stylesheet" href="{{ asset('css/facebook-feed.css') }}?v={{ time() }}">
