@@ -64,6 +64,9 @@ Route::post('/api/comments', [HomeController::class, 'storeComment'])->name('api
 Route::get('/food-tours', [FoodTourController::class, 'index'])->name('food-tours.index');
 Route::get('/exp-corner', [FoodTourController::class, 'cookingIndex'])->name('cooking-tours.index');
 
+// Xem trang cá nhân công khai (Khách không đăng nhập vẫn xem được)
+Route::get('/profile/{identifier?}', [AuthController::class, 'profile'])->name('profile');
+
 Route::middleware(['auth'])->group(function () {
     Route::get('/food-tours/create', [FoodTourController::class, 'create'])->name('food-tours.create');
     Route::post('/food-tours', [FoodTourController::class, 'store'])->name('food-tours.store');
@@ -73,7 +76,6 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/food-tour/{slug}/share', [FoodTourController::class, 'share'])->name('food-tours.share');
     
     // Quản lý thông tin tài khoản cá nhân & Lộ trình của tôi
-    Route::get('/profile/{identifier?}', [AuthController::class, 'profile'])->name('profile');
     Route::put('/profile', [AuthController::class, 'updateProfile'])->name('profile.update');
     Route::post('/profile/avatar', [AuthController::class, 'updateAvatar'])->name('profile.avatar');
     Route::put('/profile/password', [AuthController::class, 'changePassword'])->name('profile.password');

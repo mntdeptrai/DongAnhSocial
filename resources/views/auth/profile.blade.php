@@ -1607,6 +1607,7 @@
     }
 
     function togglePlaceHeart(btn, eateryId) {
+        if (typeof checkAuthGuard === 'function' && !checkAuthGuard('thả tim địa điểm')) return;
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
 
         fetch('/api/reactions/toggle', {
@@ -1933,7 +1934,21 @@
         }
     }
 
+    const IS_USER_LOGGED_IN = @json(!!$currentUserId);
+
+    function checkAuthGuard(actionName) {
+        if (!IS_USER_LOGGED_IN) {
+            showToastNotification('🔒 Vui lòng đăng nhập để ' + actionName + '!');
+            setTimeout(() => {
+                window.location.href = '/auth/login?redirect=' + encodeURIComponent(window.location.pathname);
+            }, 1200);
+            return false;
+        }
+        return true;
+    }
+
     function sendFriendRequest(targetUserId) {
+        if (!checkAuthGuard('gửi lời mời kết bạn')) return;
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
         fetch('/social/friends', {
             method: 'POST',
@@ -1962,6 +1977,7 @@
     }
 
     function acceptFriendRequest(friendshipId) {
+        if (!checkAuthGuard('chấp nhận lời mời kết bạn')) return;
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
         fetch(`/social/friends/${friendshipId}/accept`, {
             method: 'POST',
@@ -1984,6 +2000,7 @@
     }
 
     function cancelFriendRequest(friendshipId, targetUserId) {
+        if (!checkAuthGuard('hủy kết bạn')) return;
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
         fetch(`/social/friends/${friendshipId}/decline`, {
             method: 'POST',
@@ -2006,6 +2023,7 @@
     }
 
     function unfriendUser(friendshipId, targetUserId) {
+        if (!checkAuthGuard('hủy kết bạn')) return;
         showConfirmModal({
             title: 'Hủy kết bạn',
             message: 'Bạn có chắc chắn muốn hủy kết bạn với người dùng này không?',
@@ -2015,6 +2033,7 @@
     }
 
     function toggleFollowUser(btn, targetUserId) {
+        if (!checkAuthGuard('theo dõi người dùng')) return;
         const isFollowing = btn.getAttribute('data-following') === 'true';
         const iconEl = document.getElementById('follow-icon');
         const textEl = document.getElementById('follow-text');
@@ -2039,6 +2058,7 @@
     }
 
     function openDirectMessage(userId, userName, userAvatar) {
+        if (!checkAuthGuard('gửi tin nhắn')) return;
         if (window.Alpine && Alpine.store && Alpine.store('chatStore')) {
             Alpine.store('chatStore').openChat(userId, userName, userAvatar, userAvatar, true);
         } else {
