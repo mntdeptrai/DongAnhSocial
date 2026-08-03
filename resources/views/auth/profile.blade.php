@@ -2101,7 +2101,8 @@
     }
 
     function shareProfilePage() {
-        const profileUrl = window.location.origin + '/profile/{{ $user->id }}';
+        const profileSlug = @json(optional($school)->slug ?: ($user->username ?: \Illuminate\Support\Str::slug($user->name)));
+        const profileUrl = window.location.origin + '/profile/' + profileSlug;
         if (navigator.clipboard && window.isSecureContext) {
             navigator.clipboard.writeText(profileUrl).then(() => {
                 showToastNotification('🔗 Đã sao chép liên kết trang cá nhân vào khay nhớ tạm!');

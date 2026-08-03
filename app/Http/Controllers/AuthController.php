@@ -228,19 +228,47 @@ class AuthController extends Controller
     /**
      * Hiển thị trang Hồ sơ cá nhân (Profile Dashboard)
      */
-    public function profile(\Illuminate\Http\Request $request, $id = null)
+    public function profile(\Illuminate\Http\Request $request, $identifier = null)
     {
         $currentUserId = session('user_id') ?: Auth::id();
-        $targetUserId = $id ?: $request->query('user_id') ?: $request->query('id');
-        $userId = $targetUserId ?: $currentUserId;
+        $user = null;
 
-        if (!$userId) {
-            return redirect('/auth/login');
+        if ($identifier) {
+            // 1. Tìm theo username
+            $user = User::where('username', $identifier)->first();
+
+            // 2. Nếu không tìm thấy theo username, tìm trường học/cơ sở theo slug
+            if (!$user) {
+                $schoolBySlug = \App\Models\Eatery::where('slug', $identifier)->first();
+                if ($schoolBySlug && $schoolBySlug->user_id) {
+                    $user = User::find($schoolBySlug->user_id);
+                }
+            }
+
+            // 3. Tìm theo slug tên người dùng (VD: /profile/tuan-anh)
+            if (!$user) {
+                $allUsers = User::all();
+                foreach ($allUsers as $u) {
+                    if (\Illuminate\Support\Str::slug($u->name) === $identifier || \Illuminate\Support\Str::slug($u->username ?? '') === $identifier) {
+                        $user = $u;
+                        break;
+                    }
+                }
+            }
+
+            // 4. Fallback tìm theo ID nếu tham số truyền vào là số (cho tương thích cũ)
+            if (!$user && is_numeric($identifier)) {
+                $user = User::find($identifier);
+            }
         }
-        
-        $user = User::find($userId);
+
+        // Nếu không có identifier hoặc truy cập trang cá nhân của mình
         if (!$user) {
-            abort(404, 'Không tìm thấy thông tin tài khoản người dùng.');
+            $user = $currentUserId ? User::find($currentUserId) : null;
+        }
+
+        if (!$user) {
+            return redirect('/auth/login');
         }
         
         $tours = collect();
