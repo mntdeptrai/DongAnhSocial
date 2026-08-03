@@ -357,7 +357,8 @@
             @endif
 
         <!-- COLLAPSIBLE AI PLANNER PANEL (Alpine.js transition) -->
-        <div x-show="aiPlannerOpen" 
+        <div x-cloak
+             x-show="aiPlannerOpen" 
              x-transition:enter="transition ease-out duration-350 transform"
              x-transition:enter-start="opacity-0 -translate-y-4"
              x-transition:enter-end="opacity-100 translate-y-0"
