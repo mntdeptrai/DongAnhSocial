@@ -4,6 +4,7 @@
 
 @section('content')
 <link rel="stylesheet" href="{{ asset('css/facebook-feed.css') }}?v={{ time() }}">
+<script src="{{ asset('js/facebook-feed.js') }}?v={{ time() }}"></script>
 <style>
     :root {
         --sch-primary: #4f46e5;
@@ -2346,6 +2347,9 @@
         `;
 
         feedContainer.prepend(postCard);
+        if (typeof initPostTextExpanders === 'function') {
+            initPostTextExpanders(postCard);
+        }
 
         if (imgs.length > 0) {
             prependPostPhotosToGallery(imgs, post.name);

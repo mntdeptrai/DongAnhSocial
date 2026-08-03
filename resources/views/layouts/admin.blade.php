@@ -24,6 +24,7 @@
     <link rel="stylesheet" href="{{ asset('css/4-screen-responsive.css') }}?v={{ time() }}">
     <!-- Facebook Multi-Photo Feed Stylesheet -->
     <link rel="stylesheet" href="{{ asset('css/facebook-feed.css') }}?v={{ file_exists(public_path('css/facebook-feed.css')) ? filemtime(public_path('css/facebook-feed.css')) : '1.0.0' }}">
+    <script src="{{ asset('js/facebook-feed.js') }}?v={{ file_exists(public_path('js/facebook-feed.js')) ? filemtime(public_path('js/facebook-feed.js')) : '1.0.0' }}"></script>
 </head>
 <body>
 

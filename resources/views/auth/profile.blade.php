@@ -4,6 +4,7 @@
 
 @section('content')
 <link rel="stylesheet" href="{{ asset('css/facebook-feed.css') }}?v={{ time() }}">
+<script src="{{ asset('js/facebook-feed.js') }}?v={{ time() }}"></script>
 <script>
     function profileData() {
         return {
@@ -1668,6 +1669,9 @@
         `;
 
         feedContainer.prepend(postCard);
+        if (typeof initPostTextExpanders === 'function') {
+            initPostTextExpanders(postCard);
+        }
     }
 
     function showToastNotification(msg) {
