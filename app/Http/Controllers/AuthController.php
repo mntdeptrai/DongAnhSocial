@@ -228,12 +228,19 @@ class AuthController extends Controller
     /**
      * Hiển thị trang Hồ sơ cá nhân (Profile Dashboard)
      */
-    public function profile()
+    public function profile(\Illuminate\Http\Request $request, $id = null)
     {
-        $userId = session('user_id') ?: Auth::id();
+        $currentUserId = session('user_id') ?: Auth::id();
+        $targetUserId = $id ?: $request->query('user_id') ?: $request->query('id');
+        $userId = $targetUserId ?: $currentUserId;
+
+        if (!$userId) {
+            return redirect('/auth/login');
+        }
+        
         $user = User::find($userId);
         if (!$user) {
-            return redirect('/auth/login');
+            abort(404, 'Không tìm thấy thông tin tài khoản người dùng.');
         }
         
         $tours = collect();

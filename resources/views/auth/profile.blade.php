@@ -2101,15 +2101,15 @@
     }
 
     function shareProfilePage() {
-        const currentUrl = window.location.href;
+        const profileUrl = window.location.origin + '/profile/{{ $user->id }}';
         if (navigator.clipboard && window.isSecureContext) {
-            navigator.clipboard.writeText(currentUrl).then(() => {
+            navigator.clipboard.writeText(profileUrl).then(() => {
                 showToastNotification('🔗 Đã sao chép liên kết trang cá nhân vào khay nhớ tạm!');
             }).catch(() => {
-                fallbackCopyUrl(currentUrl);
+                fallbackCopyUrl(profileUrl);
             });
         } else {
-            fallbackCopyUrl(currentUrl);
+            fallbackCopyUrl(profileUrl);
         }
     }
 
