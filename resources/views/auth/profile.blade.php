@@ -1144,7 +1144,7 @@
                                         👍 {{ ($p->is_liked ?? false) ? 'Đã thích' : 'Thích' }}
                                     </button>
                                     <button class="fb-action-btn" onclick="toggleComments({{ $p->id }}, this)">💬 Bình luận</button>
-                                    <button class="fb-action-btn" onclick="shareFbPost({{ $p->id }})">🔄 Chia sẻ</button>
+                                    <button class="fb-action-btn" onclick="shareFbPost({{ $p->id }}, {{ json_encode($p->name) }}, {{ json_encode($imgs) }})">🔄 Chia sẻ</button>
                                 </div>
                             </article>
                         @endforeach
@@ -1959,7 +1959,7 @@
             <div class="fb-post-actions">
                 <button class="fb-action-btn" id="post-like-btn-${post.id}" onclick="togglePostLike(this, ${post.id})">👍 Thích</button>
                 <button class="fb-action-btn" onclick="alert('Tính năng bình luận bài viết đang được kết nối dữ liệu thực!')">💬 Bình luận</button>
-                <button class="fb-action-btn" onclick="shareFbPost(${post.id})">🔄 Chia sẻ</button>
+                <button class="fb-action-btn" onclick="shareFbPost(${post.id}, ${JSON.stringify(post.name)}, ${JSON.stringify(imgs)})">🔄 Chia sẻ</button>
             </div>
         `;
 
@@ -2127,15 +2127,43 @@
         document.body.removeChild(textArea);
     }
 
-    function shareFbPost(postId) {
+    async function shareFbPost(postId, postTitle, postImages) {
         const shareUrl = window.location.href;
+        const titleText = postTitle ? ('Bài viết: ' + postTitle) : 'Chia sẻ bài viết';
+        
         if (navigator.share) {
-            navigator.share({
-                title: 'Chia sẻ bài viết',
-                text: 'Xem bài viết này trên Đông Anh Social',
+            const shareData = {
+                title: titleText,
+                text: postTitle ? (postTitle + ' — DongAnh Social') : 'Xem bài viết này trên DongAnh Social',
                 url: shareUrl
-            }).catch(() => {});
-        } else if (navigator.clipboard && window.isSecureContext) {
+            };
+
+            let imagesArray = [];
+            if (Array.isArray(postImages)) {
+                imagesArray = postImages;
+            } else if (typeof postImages === 'string' && postImages.startsWith('[')) {
+                try { imagesArray = JSON.parse(postImages); } catch(e) {}
+            }
+
+            if (imagesArray.length > 0 && imagesArray[0]) {
+                try {
+                    const firstImgUrl = imagesArray[0];
+                    const res = await fetch(firstImgUrl);
+                    const blob = await res.blob();
+                    const file = new File([blob], 'post-image.jpg', { type: blob.type || 'image/jpeg' });
+                    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                        shareData.files = [file];
+                    }
+                } catch (err) {
+                    console.log('Non-critical share image fetch:', err);
+                }
+            }
+
+            navigator.share(shareData).catch(() => {});
+            return;
+        }
+
+        if (navigator.clipboard && window.isSecureContext) {
             navigator.clipboard.writeText(shareUrl).then(() => {
                 showToastNotification('🔄 Đã sao chép liên kết bài viết vào khay nhớ tạm!');
             }).catch(() => {

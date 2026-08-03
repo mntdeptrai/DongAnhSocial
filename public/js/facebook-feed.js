@@ -72,15 +72,44 @@ function initPostTextExpanders(target) {
 }
 
 
-function shareFbPost(postId) {
+async function shareFbPost(postId, postTitle, postImages) {
     const shareUrl = window.location.href;
+    const titleText = postTitle ? ('Bài viết: ' + postTitle) : 'Chia sẻ bài viết';
+    
     if (navigator.share) {
-        navigator.share({
-            title: 'Chia sẻ bài viết',
-            text: 'Xem bài viết này trên Đông Anh Social',
+        const shareData = {
+            title: titleText,
+            text: postTitle ? (postTitle + ' — DongAnh Social') : 'Xem bài viết này trên DongAnh Social',
             url: shareUrl
-        }).catch(() => {});
-    } else if (navigator.clipboard && window.isSecureContext) {
+        };
+
+        let imagesArray = [];
+        if (Array.isArray(postImages)) {
+            imagesArray = postImages;
+        } else if (typeof postImages === 'string' && postImages.startsWith('[')) {
+            try { imagesArray = JSON.parse(postImages); } catch(e) {}
+        }
+
+        // If post has images, attach 1st image file so OS share preview shows the post image
+        if (imagesArray.length > 0 && imagesArray[0]) {
+            try {
+                const firstImgUrl = imagesArray[0];
+                const res = await fetch(firstImgUrl);
+                const blob = await res.blob();
+                const file = new File([blob], 'post-image.jpg', { type: blob.type || 'image/jpeg' });
+                if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                    shareData.files = [file];
+                }
+            } catch (err) {
+                console.log('Non-critical share image fetch:', err);
+            }
+        }
+
+        navigator.share(shareData).catch(() => {});
+        return;
+    }
+
+    if (navigator.clipboard && window.isSecureContext) {
         navigator.clipboard.writeText(shareUrl).then(() => {
             if (typeof showToastNotification === 'function') {
                 showToastNotification('🔄 Đã sao chép liên kết bài viết vào khay nhớ tạm!');
