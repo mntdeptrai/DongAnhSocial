@@ -240,8 +240,25 @@ class AuthController extends Controller
             // 2. Nếu không tìm thấy theo username, tìm trường học/cơ sở theo slug
             if (!$user) {
                 $schoolBySlug = \App\Models\Eatery::where('slug', $identifier)->first();
-                if ($schoolBySlug && $schoolBySlug->user_id) {
-                    $user = User::find($schoolBySlug->user_id);
+                if (!$schoolBySlug) {
+                    try {
+                        $schoolBySlug = \App\Models\Eatery::on('mysql_education')->where('slug', $identifier)->first();
+                    } catch (\Exception $e) {}
+                }
+
+                if ($schoolBySlug) {
+                    $school = $schoolBySlug;
+                    if ($schoolBySlug->user_id) {
+                        $user = User::find($schoolBySlug->user_id);
+                    }
+                    if (!$user) {
+                        $user = new User([
+                            'name' => $schoolBySlug->name,
+                            'username' => $schoolBySlug->slug,
+                            'role' => 'principal',
+                        ]);
+                        $user->id = $schoolBySlug->user_id ?: 0;
+                    }
                 }
             }
 
@@ -268,17 +285,24 @@ class AuthController extends Controller
         }
 
         if (!$user) {
+            if ($identifier) {
+                abort(404, 'Trang cá nhân hoặc cơ sở không tồn tại.');
+            }
             return redirect('/auth/login');
         }
         
         $tours = collect();
-        $school = null;
+        if (!isset($school) || !$school) {
+            $school = null;
+        }
         $posts = collect();
 
         if ($user->isPrincipal() || $user->role === 'principal') {
-            $school = \App\Models\Eatery::on('mysql_education')->where('user_id', $user->id)->first();
             if (!$school) {
-                $school = \App\Models\Eatery::on('mysql')->where('user_id', $user->id)->first();
+                $school = \App\Models\Eatery::on('mysql_education')->where('user_id', $user->id)->first();
+                if (!$school) {
+                    $school = \App\Models\Eatery::on('mysql')->where('user_id', $user->id)->first();
+                }
             }
 
             if ($school) {
