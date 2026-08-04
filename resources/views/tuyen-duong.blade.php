@@ -740,7 +740,8 @@
                 { id: 'dong-anh-cum-3', name: 'Đông Anh (Cụm 3)', routeName: 'Quốc Lộ 3 (Cụm 3)', color: '#10B981' },
                 { id: 'duc-noi', name: 'Dục Nội', routeName: 'Đường Cổ Vân', color: '#EAB308' },
                 { id: 'viet-hung', name: 'Việt Hùng', routeName: 'Tuyến Việt Hùng', color: '#3B82F6' },
-                { id: 'cao-lo', name: 'Đường Cao Lỗ', routeName: 'Đường Cao Lỗ (Hùng Sơn)', color: '#EC4899' }
+                { id: 'cao-lo', name: 'Đường Cao Lỗ', routeName: 'Đường Cao Lỗ (Hùng Sơn)', color: '#EC4899' },
+                { id: 'xuan-canh', name: 'Xuân Canh', routeName: 'Tuyến Đường 4.0 Xuân Canh', color: '#8B5CF6' }
             ],
 
             routes: @json($dbRoutes ?? []).length > 0 ? @json($dbRoutes) : [
@@ -773,15 +774,16 @@
                 {
                     id: 'route-co-van',
                     name: 'Tuyến 3: Đường Cổ Vân (Dục Nội)',
-                    length: '1.0km',
+                    length: '0.8km',
                     color: '#EAB308',
                     villages: ['duc-noi'],
                     animClass: 'route-path-animated-3',
                     pathCoords: [
-                        [21.1408, 105.8635],
-                        [21.1395, 105.8650],
-                        [21.1388, 105.8660],
-                        [21.1380, 105.8675]
+                        [21.1424, 105.8742],
+                        [21.1418, 105.8758],
+                        [21.1413, 105.8770],
+                        [21.1407, 105.8782],
+                        [21.1400, 105.8793]
                     ]
                 },
                 {
@@ -792,9 +794,9 @@
                     villages: ['viet-hung'],
                     animClass: 'route-path-animated-1',
                     pathCoords: [
-                        [21.1435, 105.8675],
-                        [21.1390, 105.8675],
-                        [21.1345, 105.8675]
+                        [21.1435, 105.8790],
+                        [21.1390, 105.8790],
+                        [21.1345, 105.8790]
                     ]
                 },
                 {
@@ -824,7 +826,7 @@
                     const routeMap = {};
                     this.routes.forEach(r => { routeMap[r.id] = r.pathCoords; });
 
-                    const locsByVillage = { 'phu-loc': [], 'dong-anh-cum-3': [], 'duc-noi': [], 'viet-hung': [], 'cao-lo': [] };
+                    const locsByVillage = { 'phu-loc': [], 'dong-anh-cum-3': [], 'duc-noi': [], 'viet-hung': [], 'cao-lo': [], 'xuan-canh': [] };
                     this.locations.forEach(loc => { if (locsByVillage[loc.village]) locsByVillage[loc.village].push(loc); });
 
                     function getPointOnPath(coords, t) {
@@ -845,7 +847,8 @@
                         'dong-anh-cum-3': 'route-ql3',
                         'duc-noi': 'route-co-van',
                         'viet-hung': 'route-viet-hung',
-                        'cao-lo': 'route-cao-lo'
+                        'cao-lo': 'route-cao-lo',
+                        'xuan-canh': 'route-xuan-canh'
                     };
 
                     Object.keys(locsByVillage).forEach(vKey => {
@@ -986,7 +989,8 @@
                             'route-ql3': 'dong-anh-cum-3',
                             'route-co-van': 'duc-noi',
                             'route-viet-hung': 'viet-hung',
-                            'route-cao-lo': 'cao-lo'
+                            'route-cao-lo': 'cao-lo',
+                            'route-xuan-canh': 'xuan-canh'
                         };
 
                         const targetVillage = routeVillageMap[routeId];
@@ -1154,7 +1158,8 @@
                         'dong-anh-cum-3': 'route-ql3',
                         'duc-noi': 'route-co-van',
                         'viet-hung': 'route-viet-hung',
-                        'cao-lo': 'route-cao-lo'
+                        'cao-lo': 'route-cao-lo',
+                        'xuan-canh': 'route-xuan-canh'
                     };
                     const rKey = villageToRouteKey[this.activeVillage];
                     const line = this.polylinesMap[rKey];

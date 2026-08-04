@@ -1,0 +1,45 @@
+,,,,,,,,,,
+THỐNG KÊ THÔNG TIN CÁC HỘ KINH DOANH TẠI CHỢ,,,,,,,,,,
+,TỔNG QUAN VỀ CHỢ,Có/Không,,,,,,,,
+,Mạng wifi miễn phí tại chợ,Không,,,,,,,,
+,Camera giám sát tại chợ,Không,,,,,,,,
+,Bảng thông tin tại Chợ,Không,,,,,,,,
+,Ban quản lý chợ,Không,,,,,,,,
+,"Có Bản đồ vị trí từng hộ bán
+ tại chợ chưA","Có vị trí nhưng chưa 
+có trên bản đồ",,,,,,,,
+STT,"HỌ VÀ TÊN 
+CÁ NHÂN, TỔ CHỨC KINH DOANH TẠI CHỢ","MẶT HÀNG 
+BUÔN BÁN
+(Ghi cụ thể từng mặt hàng) ","NIÊM YẾT GIÁ
+(Ghi tương xứng giá của tưng mặt hàng so với bên mặt hàng)","NGUỒN GỐC XUẤT XỨ CÁC MẶT HÀNG 
+(Nhập từ đâu 
+hay Tự sản xuất?)","SỐ TÀI KHOẢN 
+NGÂN HÀNG, NGÂN HÀNG GÌ","Có sử dụng mã QR để thanh toán tại cửa hàng 
+(Lấy luôn mã để cập nhật trên dữ liệu số)","SỐ ĐIÊN THOẠI 
+CỦA CHỦ CỬA HÀNG BUÔN BÁN","Có sử dụng
+ điện thoại thông minh","Giấy CN
+ ATTP","Có bán hàng 
+trên nền tảng xã hội/ sàn thương mại điện tử nào không?"
+1,Đào Thị Huệ,Bán hoa quả ở chợ,,"Vừa sản xuất từ vườn nhà 
+vừa nhập từ chợ đầu mối","Techcombank
+Số TK: 7619766888",,,Có,Không,Không
+2,Mai Thị Huyền,Bán hàng mã,,"Vừa tự làm tại nhà và 
+vừa nhập từ xưởng sản xuất","Vpbank
+Số tk: 0973602622",,0343275668,Có,Không,Không
+3,Nguyễn Thị Hà,Bán bánh cuốn ,,Làm bánh tại chỗ,"Techcombank
+Số TK: 19051143579012",,,,Không,Không
+4,Vũ Thị Tình,"Bán xôi, cháo ",,Làm ăn tại chỗ ,"Mbbank
+Số tk: 2101019686666",,,Có,Không,Không
+5,Đào Duy Hữu,Bán thịt lợn,,Mua của nhân dân và nhập của lò xưởng,"Mbbank
+Số tk: 0395328938",,0395328938,Có,Có,Không
+6,Lê Thị Phương,"Bán thịt lợn, thịt gà",,Mua nhập hàng từ xưởng lò mổ,"Techcombank
+Số tk: 19035708243018",,0399224059,Có,Có,Không
+7,Nguyễn Thị Ngọc Anh,Bán thịt lợn,,Nhập hàng từ lò mổ,"Agribank
+Số tk: 3140205081553",,0328670432,Có,Có,Không
+8,Nguyễn Thị Thoan,Bán hải sản tôm cua ốc,,Nhập hàng từ chợ đầu mối,"Mbbank
+Số tk: 00830038888",,0382299688,Có,Không,Không
+9,Đào Thị Lan Hương,Bán bánh mỳ,,Nhập từ lò bánh mỳ,"Hiện đang làm 
+tài khoản ngân hàng",,0329296532,Có,Không,Không
+10,Nguyễn Thị Hoa,Bán rau củ quả,,Nhập hàng từ chợ đầu mối,"Vietcombank
+Số tk : 1033474255",,0979783923,Có,Không,Không

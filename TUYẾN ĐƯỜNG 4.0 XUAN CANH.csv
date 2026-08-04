@@ -1,0 +1,32 @@
+,,,,,,,,,,
+THỐNG KÊ THÔNG TIN CÁC HỘ KINH DOANH TẠI TUYẾN ĐƯỜNG 4.0,,,,,,,,,,
+,TỔNG QUAN VỀ TUYẾN ĐƯỜNG,,,,,,,,,
+,Tên tuyến đường,Xuân Canh,,,,,,,,
+,Điểm đầu - điểm cuối,Dốc bà Tộ - Tạp hoá nhà cô Diệp ,,,,,,,,
+,Bảng thông tin tại tuyến đường (có/chưa),Chưa,,,,,,,,
+,Ban quản lý tuyến đường (Có/chưa),Chưa,,,,,,,,
+,"Có Bản đồ vị trí từng hộ bán
+ tại tuyến đường chưa? ",Chưa,,,,,,,,
+STT,"HỌ VÀ TÊN 
+CÁ NHÂN, TỔ CHỨC KINH DOANH TẠI TUYẾN ĐƯỜNG ","MẶT HÀNG 
+BUÔN BÁN
+(Ghi cụ thể từng mặt hàng) ","NIÊM YẾT GIÁ
+(Ghi tương xứng giá của tưng mặt hàng so với bên mặt hàng)","NGUỒN GỐC XUẤT XỨ CÁC MẶT HÀNG 
+(Nhập từ đâu 
+hay Tự sản xuất?)","SỐ TÀI KHOẢN 
+NGÂN HÀNG, NGÂN HÀNG GÌ","Có sử dụng mã QR để thanh toán tại cửa hàng 
+(Lấy luôn mã để cập nhật trên dữ liệu số)","SỐ ĐIÊN THOẠI 
+CỦA CHỦ CỬA HÀNG BUÔN BÁN","Có sử dụng
+ điện thoại thông minh","Giấy CN
+ ATTP","Có bán hàng 
+trên nền tảng xã hội/ sàn thương mại điện tử nào không?"
+1,Lê Thị Diệp,Hàng tạp hoá,,Nhập hàng từ công ty,"Techcombank
+Số tk: 19038393052013",,0388345695,Có ,,Không
+2,Trương Hữu Sơn,Hàng tạp hoá,,Nhập hàng từ công ty,"BIDV
+Số tk: 21410002728254",,0983467066,Có,,Không
+3,Nguyễn Thị Xuân,Hàng tạp hoá,,Nhập hàng từ công ty,"Mbbank
+Số tk: 0964761655",,0384545761,Có,,Không
+4,Nguyễn Thị Hải Yến,Cửa hàng cắt tóc,,"Cửa hàng dịch vụ cắt tóc, tự làm tự cửa hàng","Mbbank
+Số tk:  0972353250",,0972353250,Có,,Không
+5,Mai Thị Huyền,Cửa hàng bán đồ mã,,Bán hàng mã các loại,"Vpbank
+Số tk: 0973602622",,0343275668,Có,,Không
