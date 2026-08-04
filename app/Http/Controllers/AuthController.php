@@ -404,32 +404,78 @@ class AuthController extends Controller
             'email.unique' => 'Email này đã tồn tại trên hệ thống!',
         ]);
 
+        $oldPhone = $user->phone;
         $user->name = $request->name;
         $user->email = $request->email;
         if ($request->filled('phone')) {
             $user->phone = $request->phone;
         }
+        if ($request->filled('bank_account')) {
+            $user->bank_account = $request->bank_account;
+        }
+        if ($request->filled('bank_name')) {
+            $user->bank_name = $request->bank_name;
+        }
         $user->save();
 
-        // Cập nhật thông tin địa điểm / cơ sở nếu tài khoản có liên kết với Eatery ($school)
-        $school = \App\Models\Eatery::on('mysql_education')->where('user_id', $user->id)->first();
-        if (!$school) {
-            $school = \App\Models\Eatery::on('mysql')->where('user_id', $user->id)->first();
+        // 1. Cập nhật đồng bộ toàn bộ Gian hàng / Địa điểm thuộc sở hữu của User này trên mọi Database connections
+        $dbConnections = ['mysql', 'mysql_market', 'mysql_education', 'mysql_stay', 'mysql_wellness'];
+        foreach ($dbConnections as $conn) {
+            try {
+                $eateries = \App\Models\Eatery::on($conn)->where('user_id', $user->id)->get();
+                foreach ($eateries as $e) {
+                    if ($request->has('address') && $request->filled('address')) $e->address = $request->address;
+                    if ($request->has('phone') && $request->filled('phone')) $e->phone = $request->phone;
+                    if ($request->has('website')) $e->website = $request->website;
+                    if ($request->has('opening_hours')) $e->opening_hours = $request->opening_hours;
+                    if ($request->filled('bank_account')) $e->bank_account = $request->bank_account;
+                    if ($request->filled('bank_name')) $e->bank_name = $request->bank_name;
+                    $e->save();
+                }
+            } catch (\Exception $ex) {
+                // Ignore if connection not configured
+            }
         }
 
-        if ($school) {
-            if ($request->has('name')) $school->name = $request->name;
-            if ($request->has('address')) $school->address = $request->address;
-            if ($request->has('phone')) $school->phone = $request->phone;
-            if ($request->has('website')) $school->website = $request->website;
-            if ($request->has('opening_hours')) $school->opening_hours = $request->opening_hours;
-            $school->save();
-        }
+        // 2. Cập nhật đồng bộ Hộ kinh doanh Tuyến đường 4.0 (RouteBusiness)
+        try {
+            $query = \App\Models\RouteBusiness::where('user_id', $user->id);
+            if (!empty($oldPhone)) {
+                $cleanOld = preg_replace('/[^0-9]/', '', $oldPhone);
+                if (!empty($cleanOld)) {
+                    $query->orWhereRaw("REPLACE(REPLACE(REPLACE(phone, ' ', ''), '-', ''), '.', '') LIKE ?", ["%{$cleanOld}%"]);
+                }
+            }
+            $linkedRouteBusinesses = $query->get();
+
+            foreach ($linkedRouteBusinesses as $rb) {
+                $rb->user_id = $user->id;
+                $rb->owner = $user->name;
+                if ($request->filled('phone')) $rb->phone = $user->phone;
+                if ($request->filled('bank_account')) $rb->bank_account = $user->bank_account;
+                if ($request->filled('bank_name')) $rb->bank_name = $user->bank_name;
+                $rb->save();
+            }
+        } catch (\Exception $ex) {}
+
+        // 3. Cập nhật sản phẩm & thông tin người bán gian hàng chợ (ocop_products)
+        try {
+            \Illuminate\Support\Facades\DB::connection('mysql_market')
+                ->table('ocop_products')
+                ->where('user_id', $user->id)
+                ->update([
+                    'seller_name'  => $user->name,
+                    'seller_phone' => $user->phone,
+                    'bank_account' => $user->bank_account,
+                    'bank_name'    => $user->bank_name,
+                    'updated_at'   => now(),
+                ]);
+        } catch (\Exception $ex) {}
 
         // Cập nhật thông tin vào session
         session(['user_name' => $user->name]);
 
-        return redirect()->back()->with('success', 'Cập nhật thông tin địa điểm và tài khoản thành công!');
+        return redirect()->back()->with('success', 'Cập nhật thông tin cá nhân và thông tin gian hàng liên kết thành công!');
     }
 
     /**
@@ -780,11 +826,17 @@ class AuthController extends Controller
     {
         $userId = session('user_id') ?: Auth::id();
         if ($userId) {
-            $user = User::find($userId);
-            if ($user) {
-                $user->update([
-                    'last_active_at' => now(),
-                ]);
+            try {
+                if (\Illuminate\Support\Facades\Schema::hasColumn('users', 'last_active_at')) {
+                    $user = User::find($userId);
+                    if ($user) {
+                        $user->update([
+                            'last_active_at' => now(),
+                        ]);
+                    }
+                }
+            } catch (\Throwable $e) {
+                // Ignore missing table column error
             }
         }
         return response()->json(['status' => 'success']);

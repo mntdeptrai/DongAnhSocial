@@ -586,8 +586,28 @@ class VendorController extends Controller
 
         // 1. Cập nhật thông tin trên bảng User hiện tại
         if ($user) {
-            $userUpdate = ['name' => $sellerName, 'phone' => $sellerPhone, 'updated_at' => now()];
+            $userUpdate = [
+                'name' => $sellerName, 
+                'phone' => $sellerPhone,
+                'bank_account' => $bankAccount ?: null,
+                'bank_name' => $bankName ?: null,
+                'updated_at' => now()
+            ];
             DB::table('users')->where('id', $user->id)->update($userUpdate);
+
+            // Cập nhật đồng bộ Hộ kinh doanh Tuyến đường 4.0 (RouteBusiness)
+            try {
+                \App\Models\RouteBusiness::where('user_id', $user->id)
+                    ->orWhere('phone', $sellerPhone)
+                    ->update([
+                        'user_id' => $user->id,
+                        'owner' => $sellerName,
+                        'phone' => $sellerPhone,
+                        'bank_account' => $bankAccount ?: null,
+                        'bank_name' => $bankName ?: null,
+                        'updated_at' => now(),
+                    ]);
+            } catch (\Exception $ex) {}
         }
 
         // 2. Cập nhật sản phẩm đại diện gian hàng (ocop_products)

@@ -72,6 +72,47 @@ class HomeController extends Controller
                          ->header('Content-Type', 'text/xml');
     }
 
+    /**
+     * Trang Bản đồ Tuyến đường số 4.0 - Xã Đông Anh
+     */
+    public function tuyenDuong40()
+    {
+        $dbRoutes = \App\Models\DigitalRoute::all()->map(function($r) {
+            return [
+                'id' => $r->route_key,
+                'name' => $r->name,
+                'length' => $r->length,
+                'color' => $r->color,
+                'villages' => [$r->village_key],
+                'animClass' => $r->anim_class,
+                'pathCoords' => $r->path_coords,
+            ];
+        });
+
+        $dbLocations = \App\Models\RouteBusiness::all()->map(function($b) {
+            return [
+                'id' => $b->id,
+                'name' => $b->name,
+                'owner' => $b->owner,
+                'village' => $b->village_key,
+                'villageName' => $b->village_name,
+                'type' => $b->type,
+                'rating' => (float)$b->rating,
+                'address' => $b->address,
+                'phone' => $b->phone,
+                'bankAccount' => $b->bank_account,
+                'bank' => $b->bank_name,
+                'open' => (bool)$b->is_open,
+                'menu' => $b->menu ?? [],
+                'image' => $b->image_url,
+                'lat' => (float)$b->lat,
+                'lng' => (float)$b->lng,
+            ];
+        });
+
+        return view('tuyen-duong', compact('dbRoutes', 'dbLocations'));
+    }
+
     public function getVideos()
     {
         $videos = EateryApiService::getVideos()->map(function($vid) {

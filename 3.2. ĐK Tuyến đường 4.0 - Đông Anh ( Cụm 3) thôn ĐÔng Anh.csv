@@ -1,0 +1,76 @@
+,,,,,,,,,,
+THỐNG KÊ THÔNG TIN CÁC HỘ KINH DOANH TẠI TUYẾN ĐƯỜNG 4.0,,,,,,,,,,
+,TỔNG QUAN VỀ TUYẾN ĐƯỜNG,,,,,,,,,
+,Tên tuyến đường,Quốc lộ 3,,,,,,,,
+,Điểm đầu - điểm cuối,Tây QL 3 Từ đường chợ Trung tâm- Bãi than ,,,,,,,,
+,Bảng thông tin tại tuyến đường (có/chưa),,,,,,,,,
+,Ban quản lý tuyến đường (Có/chưa),,,,,,,,,
+,"Có Bản đồ vị trí từng hộ bán
+ tại tuyến đường chưa? ",,,,,,,,,
+STT,"HỌ VÀ TÊN 
+CÁ NHÂN, TỔ CHỨC KINH DOANH TẠI TUYẾN ĐƯỜNG ","MẶT HÀNG 
+BUÔN BÁN
+(Ghi cụ thể từng mặt hàng) ","NIÊM YẾT GIÁ
+(Ghi tương xứng giá của tưng mặt hàng so với bên mặt hàng)","NGUỒN GỐC XUẤT XỨ CÁC MẶT HÀNG 
+(Nhập từ đâu 
+hay Tự sản xuất?)","SỐ TÀI KHOẢN 
+NGÂN HÀNG, NGÂN HÀNG GÌ","Có sử dụng mã QR để thanh toán tại cửa hàng 
+(Lấy luôn mã để cập nhật trên dữ liệu số)","SỐ ĐIÊN THOẠI 
+CỦA CHỦ CỬA HÀNG BUÔN BÁN","Có sử dụng
+ điện thoại thông minh","Giấy CN
+ ATTP","Có bán hàng 
+trên nền tảng xã hội/ sàn thương mại điện tử nào không?"
+1,Đỗ Minh Tuấn,Điện tử điện lạnh,,Hàng chính hãng,2812195899- MB,"Có sử dụng mã QR để thanh toán tại cửa hàng 
+(Lấy luôn mã để cập nhật trên dữ liệu số)",0987987272,"Có sử dụng
+ điện thoại thông minh",,không
+2,Chu văn Châu,Dán đề can,,Đề can,8844532936- BIDV,"Có sử dụng mã QR để thanh toán tại cửa hàng 
+(Lấy luôn mã để cập nhật trên dữ liệu số)",0983731243,"Có sử dụng
+ điện thoại thông minh",,không
+3,Hoàng Thị Thu Hà,Nội thất,có,Chính hãng,19033095542014- Teckcombank,"Có sử dụng mã QR để thanh toán tại cửa hàng 
+(Lấy luôn mã để cập nhật trên dữ liệu số)",0982395197,"Có sử dụng
+ điện thoại thông minh",,không
+4,Phan Thị Thu Trang,Nội thất,không,Chính hãng,19036732871018- Teckcombank,,0915344122,"Có sử dụng
+ điện thoại thông minh",,không
+5,Nguyễn Thị Thu,Ăn uống,không,,,,,"Có sử dụng
+ điện thoại thông minh",,
+6,Hoàng Thị Xuyên,Chăn ga gối đệm,không,Chính hãng,8600580999- BIDV,"Có sử dụng mã QR để thanh toán tại cửa hàng 
+(Lấy luôn mã để cập nhật trên dữ liệu số)",0915384100,"Có sử dụng
+ điện thoại thông minh",,không
+7,Nguyễn Xuân Lâm,"Giầy, dép, túi ",có,Công ty- Việt Nam,0986676805 - MB,"Có sử dụng mã QR để thanh toán tại cửa hàng 
+(Lấy luôn mã để cập nhật trên dữ liệu số)",0986676805,"Có sử dụng
+ điện thoại thông minh",,không
+8,Bùi Thị Châm,Nội thất,không,Chính hãng,53040117-- VP Bank,"Có sử dụng mã QR để thanh toán tại cửa hàng 
+(Lấy luôn mã để cập nhật trên dữ liệu số)",0976149380,"Có sử dụng
+ điện thoại thông minh",,không
+9,Nguyễn Doãn Đạt,Nội thất ô tô,không,Chính hãng,225588599- VP Bank,"Có sử dụng mã QR để thanh toán tại cửa hàng 
+(Lấy luôn mã để cập nhật trên dữ liệu số)",0976262543,"Có sử dụng
+ điện thoại thông minh",,không
+10,Nguyễn Văn Đức,Phở,không,,19034876799013 - Teckcombank,"Có sử dụng mã QR để thanh toán tại cửa hàng 
+(Lấy luôn mã để cập nhật trên dữ liệu số)",0902982326,,có Tháng 9/2021,không
+11,Công ty Đức Cường,Thiết bị điện,không,Chính hãng,0311100998888 - MB,"Có sử dụng mã QR để thanh toán tại cửa hàng 
+(Lấy luôn mã để cập nhật trên dữ liệu số)",0974330955,"Có sử dụng
+ điện thoại thông minh",,không
+12,Lê Phương Thảo,Dầy dép thể thao,không,Chính hãng,2027131012- VietcomBank,"Có sử dụng mã QR để thanh toán tại cửa hàng 
+(Lấy luôn mã để cập nhật trên dữ liệu số)",0397947165,"Có sử dụng
+ điện thoại thông minh",,không
+13,Công ty Nam Hải,Nội thất,có,Nhập hàng,2140496962- BIDV,"Có sử dụng mã QR để thanh toán tại cửa hàng 
+(Lấy luôn mã để cập nhật trên dữ liệu số)",0989059699,"Có sử dụng
+ điện thoại thông minh",,không
+14,Trương Văn Thành,Nội thất,không,Nhập hàng,060316153429- VPBank,"Có sử dụng mã QR để thanh toán tại cửa hàng 
+(Lấy luôn mã để cập nhật trên dữ liệu số)",0853287888,"Có sử dụng
+ điện thoại thông minh",,không
+15,Đỗ Bá Phương,Nội thất,không,Hàng nhập,8606882666- BIDV,"Có sử dụng mã QR để thanh toán tại cửa hàng 
+(Lấy luôn mã để cập nhật trên dữ liệu số)",0983346126,"Có sử dụng
+ điện thoại thông minh",,không
+16,Đào Thị Minh Thư,Nội thất,không,Hàng nhập,571349752- VPBank,"Có sử dụng mã QR để thanh toán tại cửa hàng 
+(Lấy luôn mã để cập nhật trên dữ liệu số)",0987805118,"Có sử dụng
+ điện thoại thông minh",,không
+17,Đặng Bá Huy,Phở,không,không,19037131028018-Teckcombank,"Có sử dụng mã QR để thanh toán tại cửa hàng 
+(Lấy luôn mã để cập nhật trên dữ liệu số)",0948022005,"Có sử dụng
+ điện thoại thông minh",có,không
+18,Lê Quốc Quân,Chăn ga gối đệm,có,Chính hãng,0961000016673 -Vietcombank,"Có sử dụng mã QR để thanh toán tại cửa hàng 
+(Lấy luôn mã để cập nhật trên dữ liệu số)",0357274664,"Có sử dụng
+ điện thoại thông minh",,không
+19,Công ty Tràng Thị,Điện dân dụng,có,Chính hãng,50530100454-Sacombank,"Có sử dụng mã QR để thanh toán tại cửa hàng 
+(Lấy luôn mã để cập nhật trên dữ liệu số)",0976173907,"Có sử dụng
+ điện thoại thông minh",,không

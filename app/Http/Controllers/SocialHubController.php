@@ -197,12 +197,14 @@ class SocialHubController extends Controller
         try {
             $data = FriendshipData::fromRequest($request);
             $friendship = $this->socialService->sendFriendRequest($data);
-            if ($request->expectsJson() || $request->ajax()) {
+            $isPureJson = !$request->header('X-Inertia') && ($request->expectsJson() || $request->ajax());
+            if ($isPureJson) {
                 return response()->json(['success' => true, 'message' => 'Đã gửi lời mời kết bạn.', 'friendship_id' => $friendship->id]);
             }
             return back()->with('success', 'Đã gửi lời mời kết bạn.');
         } catch (\Exception $e) {
-            if ($request->expectsJson() || $request->ajax()) {
+            $isPureJson = !$request->header('X-Inertia') && ($request->expectsJson() || $request->ajax());
+            if ($isPureJson) {
                 return response()->json(['success' => false, 'message' => $e->getMessage()], 400);
             }
             return back()->with('error', $e->getMessage());
@@ -216,12 +218,14 @@ class SocialHubController extends Controller
     {
         try {
             $this->socialService->acceptFriendRequest((int)$id, (int)Auth::id());
-            if ($request->expectsJson() || $request->ajax()) {
+            $isPureJson = !$request->header('X-Inertia') && ($request->expectsJson() || $request->ajax());
+            if ($isPureJson) {
                 return response()->json(['success' => true, 'message' => 'Đã đồng ý kết bạn.']);
             }
             return back()->with('success', 'Đã đồng ý kết bạn.');
         } catch (\Exception $e) {
-            if ($request->expectsJson() || $request->ajax()) {
+            $isPureJson = !$request->header('X-Inertia') && ($request->expectsJson() || $request->ajax());
+            if ($isPureJson) {
                 return response()->json(['success' => false, 'message' => $e->getMessage()], 400);
             }
             return back()->with('error', $e->getMessage());
@@ -235,12 +239,14 @@ class SocialHubController extends Controller
     {
         try {
             $this->socialService->declineFriendRequest((int)$id, (int)Auth::id());
-            if ($request->expectsJson() || $request->ajax()) {
+            $isPureJson = !$request->header('X-Inertia') && ($request->expectsJson() || $request->ajax());
+            if ($isPureJson) {
                 return response()->json(['success' => true, 'message' => 'Đã hủy yêu cầu hoặc xóa kết bạn.']);
             }
             return back()->with('success', 'Đã hủy yêu cầu hoặc xóa kết bạn.');
         } catch (\Exception $e) {
-            if ($request->expectsJson() || $request->ajax()) {
+            $isPureJson = !$request->header('X-Inertia') && ($request->expectsJson() || $request->ajax());
+            if ($isPureJson) {
                 return response()->json(['success' => false, 'message' => $e->getMessage()], 400);
             }
             return back()->with('error', $e->getMessage());

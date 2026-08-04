@@ -1745,11 +1745,12 @@
                 <span class="cat-title-vi">Tất cả địa điểm</span>
             </span>
         </a>
-        <a href="/checkin" class="category-card glass-panel checkin-highlight-card">
-            <span class="cat-icon">📸</span>
+        <a href="/tuyen-duong-40" class="category-card glass-panel tuyen-duong-highlight-card" style="background: linear-gradient(135deg, #059669 0%, #10b981 100%) !important; color: #ffffff !important; border: 1.5px solid #34d399 !important; position: relative;">
+            <span class="badge-tag" style="position: absolute; top: 6px; right: 6px; background: #fbbf24; color: #78350f; font-size: 0.65rem; font-weight: 900; padding: 2px 7px; border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.25); letter-spacing: 0.5px; z-index: 2;">LIVE 4.0</span>
+            <span class="cat-icon">🛣️</span>
             <span class="cat-name">
-                <span class="cat-title-en">Check-in Feed</span>
-                <span class="cat-title-vi">Cộng đồng Check-in</span>
+                <span class="cat-title-en" style="color: #ffffff !important; font-weight: 800; text-shadow: 0 1px 2px rgba(0,0,0,0.3); background: none !important; -webkit-text-fill-color: #ffffff !important;">TUYẾN ĐƯỜNG 4.0</span>
+                <span class="cat-title-vi" style="color: rgba(255,255,255,0.95) !important; font-weight: 600;">Bản đồ tuyến đường số</span>
             </span>
         </a>
         @foreach($categories as $cat)
@@ -2817,7 +2818,8 @@
         const catCards = document.querySelectorAll('.category-card');
         catCards.forEach(card => {
             card.addEventListener('click', function(e) {
-                if (this.getAttribute('target') === '_blank' || this.getAttribute('href') === '/checkin') {
+                const hrefAttr = this.getAttribute('href') || '';
+                if (this.getAttribute('target') === '_blank' || hrefAttr === '/checkin' || hrefAttr.startsWith('/tuyen-duong')) {
                     return; // Let the link navigate normally!
                 }
                 e.preventDefault();
