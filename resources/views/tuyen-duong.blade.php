@@ -1038,40 +1038,6 @@
                                     if (coords.length > 0) {
                                         glowLine.setLatLngs(coords);
                                         mainLine.setLatLngs(coords);
-
-                                        // Re-snap markers on this route directly onto OSRM street curves
-                                        const routeVillageMap = {
-                                            'route-phu-loc': 'phu-loc',
-                                            'route-ql3': 'dong-anh-cum-3',
-                                            'route-co-van': 'duc-noi',
-                                            'route-viet-hung': 'viet-hung',
-                                            'route-cao-lo': 'cao-lo'
-                                        };
-
-                                        const targetVillage = routeVillageMap[r.id];
-                                        const routeLocs = this.locations.filter(loc => loc.village === targetVillage);
-
-                                        if (routeLocs.length > 0) {
-                                            routeLocs.forEach((loc, idx) => {
-                                                const t = routeLocs.length > 1 ? (idx / (routeLocs.length - 1)) : 0.5;
-                                                const totalSegs = coords.length - 1;
-                                                const scaledT = t * totalSegs;
-                                                const segIdx = Math.floor(scaledT);
-                                                const segFrac = scaledT - segIdx;
-                                                const p1 = coords[Math.min(segIdx, totalSegs)];
-                                                const p2 = coords[Math.min(segIdx + 1, totalSegs)];
-                                                const newLat = p1[0] + (p2[0] - p1[0]) * segFrac;
-                                                const newLng = p1[1] + (p2[1] - p1[1]) * segFrac;
-
-                                                loc.lat = newLat;
-                                                loc.lng = newLng;
-
-                                                const m = this.markersMap[loc.id];
-                                                if (m) {
-                                                    m.setLatLng([newLat, newLng]);
-                                                }
-                                            });
-                                        }
                                     }
                                 }
                             })
