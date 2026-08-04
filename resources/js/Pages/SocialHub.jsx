@@ -29,6 +29,16 @@ export default function SocialHub() {
     const [nearbyError, setNearbyError] = useState('');
     const [activeTab, setActiveTab] = useState('friends'); // 'friends', 'requests', 'suggestions', 'nearby', 'search'
 
+    // Toast Notification State
+    const [toast, setToast] = useState(null); // { message: '', type: 'success' | 'error' | 'info' }
+
+    const showToast = (message, type = 'success') => {
+        setToast({ message, type });
+        setTimeout(() => {
+            setToast(null);
+        }, 4000);
+    };
+
     // Search states
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState([]);
@@ -142,7 +152,7 @@ export default function SocialHub() {
                 axios.get(`/social/messages/${currentActiveFriend.id}`);
             } else {
                 // Otherwise, show notification/badge or alert
-                alert(`🔔 Tin nhắn mới từ ${data.sender.name}: "${data.message}"`);
+                showToast(`🔔 Tin nhắn mới từ ${data.sender.name}: "${data.message}"`, 'info');
             }
         });
 
@@ -158,7 +168,7 @@ export default function SocialHub() {
                     sender: data.sender
                 }];
             });
-            alert(`🔔 Bạn nhận được lời mời kết bạn mới từ ${data.sender.name}!`);
+            showToast(`🔔 Bạn nhận được lời mời kết bạn mới từ ${data.sender.name}!`, 'info');
         });
 
         // Lắng nghe sự kiện lời mời kết bạn của mình được chấp nhận
@@ -170,7 +180,7 @@ export default function SocialHub() {
                 if (prev.some(f => f.id === data.friend.id)) return prev;
                 return [...prev, data.friend];
             });
-            alert(`🎉 ${data.friend.name} đã chấp nhận lời mời kết bạn của bạn!`);
+            showToast(`🎉 ${data.friend.name} đã chấp nhận lời mời kết bạn của bạn!`, 'success');
         });
 
         echoRef.current = pusher;
@@ -359,7 +369,7 @@ export default function SocialHub() {
                 handleClearFile();
             }
         } catch (err) {
-            alert(err.response?.data?.message || err.message || "Không thể gửi tin nhắn.");
+            showToast(err.response?.data?.message || err.message || "Không thể gửi tin nhắn.", 'error');
             setNewMessageText(tempText); // restore text if failed
         } finally {
             setIsSending(false);
@@ -373,7 +383,7 @@ export default function SocialHub() {
 
         // Check size limit: 500MB
         if (file.size > 500 * 1024 * 1024) {
-            alert("Kích thước tệp không được vượt quá 500MB.");
+            showToast("Kích thước tệp không được vượt quá 500MB.", 'error');
             return;
         }
 
@@ -406,7 +416,7 @@ export default function SocialHub() {
             }
         })
         .catch(err => {
-            alert(err.response?.data?.message || "Không thể chia sẻ lộ trình.");
+            showToast(err.response?.data?.message || "Không thể chia sẻ lộ trình.", 'error');
         })
         .finally(() => {
             setIsSending(false);
@@ -1623,6 +1633,33 @@ export default function SocialHub() {
                             <button onClick={() => setIsGuideOpen(false)} className="btn-primary" style={{ fontSize: '0.85rem', padding: '8px 20px', borderRadius: '8px', cursor: 'pointer' }}>Đã hiểu</button>
                         </div>
                     </div>
+                </div>
+            )}
+
+            {/* Global Toast Notification */}
+            {toast && (
+                <div style={{
+                    position: 'fixed',
+                    bottom: '28px',
+                    right: '28px',
+                    zIndex: 9999999,
+                    background: toast.type === 'error' ? '#ef4444' : (toast.type === 'info' ? '#2563eb' : '#10b981'),
+                    color: '#ffffff',
+                    padding: '14px 22px',
+                    borderRadius: '16px',
+                    boxShadow: '0 20px 40px -10px rgba(0,0,0,0.4)',
+                    display: 'flex',
+                    align-items: 'center',
+                    gap: '12px',
+                    fontFamily: "'Plus Jakarta Sans', sans-serif",
+                    fontSize: '0.9rem',
+                    fontWeight: '700',
+                    backdropFilter: 'blur(10px)',
+                    transition: 'all 0.3s ease'
+                }}>
+                    <span style={{ fontSize: '1.2rem' }}>{toast.type === 'error' ? '❌' : (toast.type === 'info' ? '🔔' : '✅')}</span>
+                    <span>{toast.message}</span>
+                    <button type="button" onClick={() => setToast(null)} style={{ background: 'transparent', border: 'none', color: '#ffffff', opacity: 0.8, cursor: 'pointer', marginLeft: '12px', fontSize: '1.2rem', padding: '0 4px' }}>&times;</button>
                 </div>
             )}
 
