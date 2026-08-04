@@ -1723,6 +1723,10 @@ class AdminController extends Controller
             'stall_id' => $stallId,
         ];
 
+        if ($role === 'admin') {
+            $data['is_verified'] = $request->has('is_verified');
+        }
+
         if ($request->filled('password')) {
             $data['password'] = \Illuminate\Support\Facades\Hash::make($request->password);
         }

@@ -198,13 +198,19 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        width: 22px;
-        height: 22px;
-        background: #f59e0b;
+        width: 24px;
+        height: 24px;
+        background: linear-gradient(135deg, #fef08a 0%, #f59e0b 50%, #b45309 100%);
         color: #ffffff;
         border-radius: 50%;
-        font-size: 0.72rem;
+        font-size: 0.8rem;
         font-weight: 800;
+        box-shadow: 0 3px 8px rgba(245, 158, 11, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.8);
+        border: 1.5px solid #ffffff;
+        transition: transform 0.2s ease;
+    }
+    .pro-verify-badge:hover {
+        transform: scale(1.15) rotate(10deg);
     }
 
     .pro-subtitle {
@@ -777,7 +783,9 @@
                         <div>
                             <h1 class="pro-name-title">
                                 {{ optional($school)->standardized_name ?: $user->name }}
-                                <span class="pro-verify-badge" title="Tài khoản đã xác minh">✓</span>
+                                @if($user->is_verified)
+                                    <span class="pro-verify-badge" title="Tài khoản xịn đã xác minh bởi Admin ⭐">⭐</span>
+                                @endif
                             </h1>
                             <div class="pro-subtitle">
                                 {{ optional(optional($school)->category)->name ?: 'Trường mầm non' }} · {{ optional($school)->commune ? optional($school)->commune->name : 'Đông Anh, Hà Nội' }}

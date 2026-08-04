@@ -33,6 +33,7 @@ class User extends Authenticatable
         'last_active_at',
         'eatery_id',
         'stall_id',
+        'is_verified',
     ];
 
     /**
@@ -68,6 +69,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'last_active_at' => 'datetime',
+            'is_verified' => 'boolean',
         ];
     }
 

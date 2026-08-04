@@ -140,6 +140,19 @@
             </div>
         </div>
 
+        @if(session('user_role') === 'admin')
+            <!-- Đánh dấu Tài khoản xịn (Xác minh VIP ⭐ - Chỉ Admin) -->
+            <div class="admin-form-group" style="margin-bottom: 24px; background: #fffbeb; border: 1.5px solid #fef3c7; padding: 14px 18px; border-radius: 14px;">
+                <label class="admin-form-label" style="font-weight: 800; font-size: 0.88rem; color: #b45309; display: flex; align-items: center; gap: 10px; cursor: pointer; margin: 0;">
+                    <input type="checkbox" name="is_verified" value="1" {{ old('is_verified', $user->is_verified) ? 'checked' : '' }} style="width: 18px; height: 18px; accent-color: #f59e0b; cursor: pointer;">
+                    🌟 Đánh dấu Tài khoản xịn (Tích Ngôi sao 3D VIP ⭐)
+                </label>
+                <div style="font-size: 0.78rem; color: #d97706; margin-top: 6px; margin-left: 28px; line-height: 1.4;">
+                    Chỉ Quản trị viên (Admin) mới có quyền tích chọn mục này để xác minh <strong>Biểu tượng Ngôi sao 3D Vàng ⭐</strong> tài khoản xịn cho người dùng.
+                </div>
+            </div>
+        @endif
+
         @if(session('user_role') === 'manager' || (isset($stalls) && count($stalls) > 0))
             <!-- Gian Hàng Chợ Số liên kết (Dành cho Manager quản lý tiểu thương) -->
             <div id="stall_selection_group" class="admin-form-group" style="margin-bottom: 28px;">

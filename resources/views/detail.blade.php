@@ -1419,8 +1419,11 @@
                                 <img src="{{ optional($principalUser)->avatar_url ?: ($eatery->image_path ?: 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=1200&q=80') }}" 
                                      alt="avatar" style="width: 44px; height: 44px; border-radius: 50%; object-fit: cover; border: 2px solid #ffffff; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
                                 <div>
-                                    <div style="font-weight: 800; font-size: 0.98rem; color: var(--text-main, #0f172a);">
+                                    <div style="font-weight: 800; font-size: 0.98rem; color: var(--text-main, #0f172a); display: flex; align-items: center; gap: 6px;">
                                         {{ optional($principalUser)->name ?: $eatery->name }}
+                                        @if(optional($principalUser)->is_verified)
+                                            <span title="Tài khoản xịn đã xác minh bởi Admin ⭐" style="display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; background: linear-gradient(135deg, #fef08a 0%, #f59e0b 50%, #b45309 100%); color: #ffffff; border-radius: 50%; font-size: 0.65rem; border: 1px solid #ffffff; box-shadow: 0 2px 6px rgba(245, 158, 11, 0.3);">⭐</span>
+                                        @endif
                                     </div>
                                     <div style="font-size: 0.78rem; color: var(--text-muted, #64748b);">
                                         {{ $p->created_at ? $p->created_at->diffForHumans() : 'Vừa xong' }} • 🌐 Công khai
