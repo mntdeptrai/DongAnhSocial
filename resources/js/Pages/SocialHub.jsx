@@ -465,11 +465,25 @@ export default function SocialHub() {
     };
 
     // Friend Request Actions
-    const sendFriendRequest = (friendId) => {
+    const sendFriendRequest = (friendId, targetUser = null) => {
+        // Optimistic Real-time UI Update
+        const userToAdd = targetUser || suggestions.find(u => u.id === friendId) || nearbyUsers.find(u => u.id === friendId) || searchResults.find(u => u.id === friendId);
+        
+        // Remove from suggestions & search
+        setSuggestions(prev => prev.filter(u => u.id !== friendId));
+        setSearchResults(prev => prev.filter(u => u.id !== friendId));
+
+        // Add to pendingSent
+        if (userToAdd) {
+            setPendingSent(prev => {
+                if (prev.some(r => (r.friend_id || r.id) === friendId)) return prev;
+                return [...prev, { id: Date.now(), friend_id: friendId, friend: userToAdd, receiver: userToAdd }];
+            });
+        }
+
         router.post('/social/friends', { friend_id: friendId }, {
             preserveScroll: true,
             onSuccess: () => {
-                // Update lists
                 showToast("➕ Đã gửi lời mời kết bạn thành công!", 'success');
             },
             onError: (errs) => {
@@ -478,20 +492,41 @@ export default function SocialHub() {
         });
     };
 
-    const acceptFriendRequest = (friendshipId) => {
+    const acceptFriendRequest = (friendshipId, requestItem = null) => {
+        // Optimistic Real-time UI Update
+        const item = requestItem || pendingReceived.find(r => r.id === friendshipId);
+        if (item) {
+            const newFriend = item.sender || item.user || item;
+            setFriends(prev => {
+                if (prev.some(f => f.id === newFriend.id)) return prev;
+                return [...prev, newFriend];
+            });
+            setPendingReceived(prev => prev.filter(r => r.id !== friendshipId));
+        }
+
         router.post(`/social/friends/${friendshipId}/accept`, {}, {
             preserveScroll: true,
             onSuccess: () => {
-                // Refresh data
+                showToast("🎉 Đã đồng ý lời mời kết bạn!", 'success');
+            },
+            onError: (errs) => {
+                showToast(Object.values(errs)[0] || "Không thể đồng ý lời mời", 'error');
             }
         });
     };
 
     const declineFriendRequest = (friendshipId) => {
+        // Optimistic Real-time UI Update
+        setPendingReceived(prev => prev.filter(r => r.id !== friendshipId));
+        setPendingSent(prev => prev.filter(r => (r.id === friendshipId || r.friend_id === friendshipId)));
+
         router.post(`/social/friends/${friendshipId}/decline`, {}, {
             preserveScroll: true,
             onSuccess: () => {
-                // Refresh data
+                showToast("Đã hủy lời mời kết bạn.", 'info');
+            },
+            onError: (errs) => {
+                showToast(Object.values(errs)[0] || "Không thể xử lý yêu cầu", 'error');
             }
         });
     };
