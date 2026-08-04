@@ -1649,7 +1649,7 @@ export default function SocialHub() {
                     borderRadius: '16px',
                     boxShadow: '0 20px 40px -10px rgba(0,0,0,0.4)',
                     display: 'flex',
-                    align-items: 'center',
+                    alignItems: 'center',
                     gap: '12px',
                     fontFamily: "'Plus Jakarta Sans', sans-serif",
                     fontSize: '0.9rem',
