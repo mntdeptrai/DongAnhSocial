@@ -442,7 +442,7 @@
         <button type="button" @click="toggleMobileView('list')" 
                 :style="mobileView === 'list' ? 'background: #059669; color: #ffffff;' : 'background: rgba(255,255,255,0.08); color: #94a3b8;'"
                 style="flex: 1; padding: 8px 12px; border: none; border-radius: 10px; font-size: 0.8rem; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; transition: all 0.2s;">
-            <span>📋 Danh sách (57 hộ)</span>
+            <span x-text="`📋 Danh sách (${filteredLocations().length} hộ)`">📋 Danh sách</span>
         </button>
     </div>
 
@@ -465,7 +465,7 @@
                         <h1 style="font-size: 1.05rem; font-weight: 900; color: #0f172a; margin: 0; font-family: 'Be Vietnam Pro', sans-serif; letter-spacing: -0.2px;">
                             TUYẾN ĐƯỜNG 4.0 <span style="font-size: 0.75rem; font-weight: 700; color: #059669; background: #ecfdf5; padding: 2px 8px; border-radius: 10px; margin-left: 4px;">ĐÔNG ANH</span>
                         </h1>
-                        <p style="font-size: 0.72rem; color: #64748b; margin: 0;">Bản đồ số 57 hộ kinh doanh & tuyến đường thông minh</p>
+                        <p style="font-size: 0.72rem; color: #64748b; margin: 0;">Bản đồ số <span x-text="locations.length">72</span> hộ kinh doanh & tuyến đường thông minh</p>
                     </div>
                 </div>
 
@@ -1027,9 +1027,8 @@
 
                     // Fetch OSRM Real-world Street Routing Geometry
                     if (r.pathCoords && r.pathCoords.length >= 2) {
-                        const start = r.pathCoords[0];
-                        const end = r.pathCoords[r.pathCoords.length - 1];
-                        const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${start[1]},${start[0]};${end[1]},${end[0]}?overview=full&geometries=geojson`;
+                        const waypointsStr = r.pathCoords.map(c => `${c[1]},${c[0]}`).join(';');
+                        const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${waypointsStr}?overview=full&geometries=geojson`;
 
                         fetch(osrmUrl)
                             .then(res => res.json())
@@ -1045,7 +1044,8 @@
                                             'route-phu-loc': 'phu-loc',
                                             'route-ql3': 'dong-anh-cum-3',
                                             'route-co-van': 'duc-noi',
-                                            'route-viet-hung': 'viet-hung'
+                                            'route-viet-hung': 'viet-hung',
+                                            'route-cao-lo': 'cao-lo'
                                         };
 
                                         const targetVillage = routeVillageMap[r.id];
