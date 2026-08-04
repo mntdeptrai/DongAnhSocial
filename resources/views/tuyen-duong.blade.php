@@ -370,19 +370,19 @@
                 </div>
             </div>
 
-            <!-- Village Filter Chips Section -->
+            <!-- Route Filter Chips Section -->
             <div style="padding: 10px 16px; background: #fafafa; border-bottom: 1px solid #f1f5f9;">
                 <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
-                    <span style="font-size: 0.72rem; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Lọc theo thôn thực tế</span>
+                    <span style="font-size: 0.72rem; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Lọc theo tuyến đường 4.0</span>
                     <button type="button" @click="resetFilters()" style="font-size: 0.72rem; color: #059669; background: none; border: none; font-weight: 700; cursor: pointer;">Đặt lại tất cả</button>
                 </div>
                 <div style="display: flex; flex-wrap: wrap; gap: 6px;">
                     <button type="button" @click="setVillage('all')" class="village-pill-btn v-all" :class="{ 'active': activeVillage === 'all' }">
-                        Tất cả thôn
+                        Tất cả tuyến đường
                     </button>
                     <template x-for="v in villages" :key="v.id">
                         <button type="button" @click="setVillage(v.id)" class="village-pill-btn" :class="[`v-${v.id}`, activeVillage === v.id ? 'active' : '']">
-                            <span x-text="v.name"></span>
+                            <span x-text="v.routeName || v.name"></span>
                         </button>
                     </template>
                 </div>
@@ -601,10 +601,10 @@
             ],
 
             villages: [
-                { id: 'phu-loc', name: 'Phúc Lộc', color: '#F97316' },
-                { id: 'dong-anh-cum-3', name: 'Đông Anh (Cụm 3)', color: '#10B981' },
-                { id: 'duc-noi', name: 'Dục Nội', color: '#EAB308' },
-                { id: 'viet-hung', name: 'Việt Hùng', color: '#3B82F6' }
+                { id: 'phu-loc', name: 'Phúc Lộc', routeName: 'Đường Phúc Lộc', color: '#F97316' },
+                { id: 'dong-anh-cum-3', name: 'Đông Anh (Cụm 3)', routeName: 'Quốc Lộ 3 (Cụm 3)', color: '#10B981' },
+                { id: 'duc-noi', name: 'Dục Nội', routeName: 'Đường Cổ Vân', color: '#EAB308' },
+                { id: 'viet-hung', name: 'Việt Hùng', routeName: 'Tuyến Việt Hùng', color: '#3B82F6' }
             ],
 
             routes: @json($dbRoutes ?? []).length > 0 ? @json($dbRoutes) : [
