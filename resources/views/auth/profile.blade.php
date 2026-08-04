@@ -721,6 +721,9 @@
                         $isFollowing = true;
                     } elseif ($friendship->status === 'pending') {
                         $friendshipStatus = ($friendship->user_id == $currentUserId) ? 'pending_sent' : 'pending_received';
+                        if ($friendship->user_id == $currentUserId) {
+                            $isFollowing = true;
+                        }
                     }
                 }
             }
@@ -2047,6 +2050,17 @@
                 const wrapper = document.getElementById('friend-btn-wrapper');
                 if (wrapper) {
                     wrapper.innerHTML = `<button type="button" class="pro-btn-outline" id="friend-btn" onclick="cancelFriendRequest(${data.friendship_id}, ${targetUserId})">⏳ Đã gửi lời mời</button>`;
+                }
+                const followBtn = document.getElementById('follow-btn');
+                if (followBtn && followBtn.getAttribute('data-following') !== 'true') {
+                    followBtn.setAttribute('data-following', 'true');
+                    followBtn.className = 'pro-btn-outline';
+                    followBtn.style.background = '#f1f5f9';
+                    followBtn.style.color = '#475569';
+                    const iconEl = document.getElementById('follow-icon');
+                    const textEl = document.getElementById('follow-text');
+                    if (iconEl) iconEl.textContent = '✓';
+                    if (textEl) textEl.textContent = 'Đang theo dõi';
                 }
                 showToastNotification('➕ Đã gửi lời mời kết bạn!');
             } else {
