@@ -470,7 +470,10 @@ export default function SocialHub() {
             preserveScroll: true,
             onSuccess: () => {
                 // Update lists
-                alert("Đã gửi lời mời kết bạn!");
+                showToast("➕ Đã gửi lời mời kết bạn thành công!", 'success');
+            },
+            onError: (errs) => {
+                showToast(Object.values(errs)[0] || "Không thể gửi lời mời kết bạn", 'error');
             }
         });
     };
