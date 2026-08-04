@@ -516,18 +516,14 @@
             </div>
 
             <!-- Quick Stats Summary inside Sidebar -->
-            <div style="padding: 8px 16px; background: #f8fafc; border-bottom: 1px solid #f1f5f9; display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;">
+            <div style="padding: 8px 16px; background: #f8fafc; border-bottom: 1px solid #f1f5f9; display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;">
                 <div style="background: #ffffff; padding: 6px 4px; border-radius: 10px; border: 1px solid #e2e8f0; text-align: center;">
                     <span style="font-size: 0.92rem; font-weight: 900; color: #059669; display: block; font-family: 'Be Vietnam Pro', sans-serif;">4</span>
-                    <span style="font-size: 0.65rem; color: #64748b; font-weight: 700;">🛣️ Tuyến 4.0</span>
-                </div>
-                <div style="background: #ffffff; padding: 6px 4px; border-radius: 10px; border: 1px solid #e2e8f0; text-align: center;">
-                    <span style="font-size: 0.92rem; font-weight: 900; color: #14b8a6; display: block; font-family: 'Be Vietnam Pro', sans-serif;">4</span>
-                    <span style="font-size: 0.65rem; color: #64748b; font-weight: 700;">🏡 Thôn kết nối</span>
+                    <span style="font-size: 0.68rem; color: #64748b; font-weight: 700;">🛣️ Tuyến 4.0</span>
                 </div>
                 <div style="background: #ffffff; padding: 6px 4px; border-radius: 10px; border: 1px solid #e2e8f0; text-align: center;">
                     <span style="font-size: 0.92rem; font-weight: 900; color: #2563eb; display: block; font-family: 'Be Vietnam Pro', sans-serif;">57</span>
-                    <span style="font-size: 0.65rem; color: #64748b; font-weight: 700;">🏪 Hộ kinh doanh</span>
+                    <span style="font-size: 0.68rem; color: #64748b; font-weight: 700;">🏪 Hộ kinh doanh</span>
                 </div>
             </div>
 
