@@ -1083,31 +1083,11 @@
                         });
                     };
 
-                    // Initial snap with pathCoords
+                    // Render clean main street pathCoords directly & snap store markers
                     if (r.pathCoords && r.pathCoords.length >= 2) {
                         glowLine.setLatLngs(r.pathCoords);
                         mainLine.setLatLngs(r.pathCoords);
                         snapRouteStores(r.id, r.pathCoords);
-
-                        // Fetch real-world street curves (foot profile follows street contours naturally without vehicle alley detours)
-                        const waypointsStr = r.pathCoords.map(c => `${c[1]},${c[0]}`).join(';');
-                        const osrmUrl = `https://router.project-osrm.org/route/v1/foot/${waypointsStr}?overview=full&geometries=geojson&continue_straight=true`;
-
-                        fetch(osrmUrl)
-                            .then(res => res.json())
-                            .then(data => {
-                                if (data && data.routes && data.routes.length > 0 && data.routes[0].geometry) {
-                                    const coords = data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
-                                    if (coords.length > 0) {
-                                        glowLine.setLatLngs(coords);
-                                        mainLine.setLatLngs(coords);
-                                        snapRouteStores(r.id, coords);
-                                    }
-                                }
-                            })
-                            .catch(() => {
-                                // Keep pathCoords fallback
-                            });
                     }
                 });
             },
