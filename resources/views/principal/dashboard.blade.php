@@ -1610,8 +1610,8 @@
             </div>
 
             <!-- Multi Image Preview Box -->
-            <div id="add-post-multi-preview" style="display: none; border-radius: 14px; overflow: hidden; border: 1px dashed #cbd5e1; background: #f8fafc; padding: 10px; margin-bottom: 16px;">
-                <div id="preview-grid" class="row g-2"></div>
+            <div id="add-post-multi-preview" style="display: none; border-radius: 14px; overflow: hidden; margin-bottom: 16px; position: relative;">
+                <div id="preview-grid" style="width: 100%;"></div>
             </div>
 
             <!-- Facebook Bottom Action Bar -->
@@ -1837,37 +1837,120 @@
         }
     }
 
-    // Facebook multi-photo previewer for creation modal
+    function clearMultiPostPreview(containerId, gridId) {
+        const container = document.getElementById(containerId);
+        const grid = document.getElementById(gridId);
+        if (grid) grid.innerHTML = '';
+        if (container) container.style.display = 'none';
+        const fileInputs = document.querySelectorAll('input[type="file"][name="images[]"]');
+        fileInputs.forEach(input => { input.value = ''; });
+    }
+
+    // Facebook multi-photo collage previewer for creation modal
     function previewMultiPostImages(input, containerId, gridId) {
         const container = document.getElementById(containerId);
         const grid = document.getElementById(gridId);
         if (!container || !grid) return;
 
-        grid.innerHTML = '';
-        if (input.files && input.files.length > 0) {
-            container.style.display = 'block';
-            
-            // Header showing count of selected files
-            const countHeader = document.createElement('div');
-            countHeader.style.cssText = 'font-size: 0.85rem; font-weight: 700; color: #2563eb; margin-bottom: 8px; width: 100%; font-family: "Be Vietnam Pro", sans-serif;';
-            countHeader.innerHTML = `📸 Đã chọn ${input.files.length} hình ảnh`;
-            grid.appendChild(countHeader);
-
-            Array.from(input.files).forEach((file) => {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const col = document.createElement('div');
-                    col.className = 'col-3';
-                    col.innerHTML = `<div style="height: 75px; border-radius: 10px; overflow: hidden; border: 1px solid #cbd5e1; position: relative;">
-                        <img src="${e.target.result}" style="width: 100%; height: 100%; object-fit: cover;">
-                    </div>`;
-                    grid.appendChild(col);
-                };
-                reader.readAsDataURL(file);
-            });
-        } else {
+        if (!input.files || input.files.length === 0) {
             container.style.display = 'none';
+            grid.innerHTML = '';
+            return;
         }
+
+        container.style.display = 'block';
+        grid.innerHTML = '';
+
+        const files = Array.from(input.files);
+        const total = files.length;
+        let loadedCount = 0;
+        const imageUrls = new Array(total);
+
+        files.forEach((file, index) => {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                imageUrls[index] = e.target.result;
+                loadedCount++;
+                if (loadedCount === total) {
+                    renderFbCollagePreview(grid, imageUrls, containerId);
+                }
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    function renderFbCollagePreview(grid, imageUrls, containerId) {
+        const total = imageUrls.length;
+        grid.innerHTML = '';
+
+        const wrapper = document.createElement('div');
+        wrapper.style.cssText = 'position: relative; width: 100%; border-radius: 14px; overflow: hidden; background: #0f172a; font-family: "Be Vietnam Pro", sans-serif; border: 1px solid #cbd5e1;';
+
+        const topBar = document.createElement('div');
+        topBar.style.cssText = 'position: absolute; top: 12px; left: 12px; right: 12px; display: flex; justify-content: space-between; align-items: center; z-index: 30; pointer-events: none;';
+        topBar.innerHTML = `
+            <button type="button" style="pointer-events: auto; background: #ffffff; color: #0f172a; border: none; padding: 7px 14px; border-radius: 20px; font-size: 0.8rem; font-weight: 800; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); cursor: pointer;">
+                ✏️ Chỉnh sửa tất cả
+            </button>
+            <button type="button" onclick="clearMultiPostPreview('${containerId}', '${grid.id}')" style="pointer-events: auto; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(4px); color: #ffffff; border: 1px solid rgba(255,255,255,0.2); width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1rem; font-weight: 900; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+                ✕
+            </button>
+        `;
+        wrapper.appendChild(topBar);
+
+        const flexGrid = document.createElement('div');
+        flexGrid.style.cssText = 'display: flex; gap: 2px; width: 100%; height: 380px; background: #0f172a;';
+
+        if (total === 1) {
+            flexGrid.style.height = '320px';
+            flexGrid.innerHTML = `<div style="width: 100%; height: 100%; overflow: hidden;"><img src="${imageUrls[0]}" style="width: 100%; height: 100%; object-fit: cover;"></div>`;
+        } else if (total === 2) {
+            flexGrid.style.height = '340px';
+            flexGrid.innerHTML = `
+                <div style="flex: 1; height: 100%; overflow: hidden;"><img src="${imageUrls[0]}" style="width: 100%; height: 100%; object-fit: cover;"></div>
+                <div style="flex: 1; height: 100%; overflow: hidden;"><img src="${imageUrls[1]}" style="width: 100%; height: 100%; object-fit: cover;"></div>
+            `;
+        } else if (total === 3) {
+            flexGrid.style.height = '360px';
+            flexGrid.innerHTML = `
+                <div style="flex: 1; height: 100%; overflow: hidden;"><img src="${imageUrls[0]}" style="width: 100%; height: 100%; object-fit: cover;"></div>
+                <div style="flex: 1; height: 100%; display: flex; flex-direction: column; gap: 2px;">
+                    <div style="flex: 1; overflow: hidden;"><img src="${imageUrls[1]}" style="width: 100%; height: 100%; object-fit: cover;"></div>
+                    <div style="flex: 1; overflow: hidden;"><img src="${imageUrls[2]}" style="width: 100%; height: 100%; object-fit: cover;"></div>
+                </div>
+            `;
+        } else if (total === 4) {
+            flexGrid.style.height = '380px';
+            flexGrid.innerHTML = `
+                <div style="flex: 1.1; height: 100%; overflow: hidden;"><img src="${imageUrls[0]}" style="width: 100%; height: 100%; object-fit: cover;"></div>
+                <div style="flex: 1; height: 100%; display: flex; flex-direction: column; gap: 2px;">
+                    <div style="flex: 1; overflow: hidden;"><img src="${imageUrls[1]}" style="width: 100%; height: 100%; object-fit: cover;"></div>
+                    <div style="flex: 1; overflow: hidden;"><img src="${imageUrls[2]}" style="width: 100%; height: 100%; object-fit: cover;"></div>
+                    <div style="flex: 1; overflow: hidden;"><img src="${imageUrls[3]}" style="width: 100%; height: 100%; object-fit: cover;"></div>
+                </div>
+            `;
+        } else {
+            flexGrid.style.height = '390px';
+            const extraCount = total - 4;
+
+            flexGrid.innerHTML = `
+                <div style="flex: 1; height: 100%; display: flex; flex-direction: column; gap: 2px;">
+                    <div style="flex: 1; overflow: hidden;"><img src="${imageUrls[0]}" style="width: 100%; height: 100%; object-fit: cover;"></div>
+                    <div style="flex: 1; overflow: hidden;"><img src="${imageUrls[1]}" style="width: 100%; height: 100%; object-fit: cover;"></div>
+                </div>
+                <div style="flex: 1; height: 100%; display: flex; flex-direction: column; gap: 2px;">
+                    <div style="flex: 1; overflow: hidden;"><img src="${imageUrls[2]}" style="width: 100%; height: 100%; object-fit: cover;"></div>
+                    <div style="flex: 1; overflow: hidden;"><img src="${imageUrls[3]}" style="width: 100%; height: 100%; object-fit: cover;"></div>
+                    <div style="flex: 1; overflow: hidden; position: relative;">
+                        <img src="${imageUrls[4]}" style="width: 100%; height: 100%; object-fit: cover;">
+                        <div style="position: absolute; inset: 0; background: rgba(0, 0, 0, 0.45); backdrop-filter: blur(1px); display: flex; align-items: center; justify-content: center; color: #ffffff; font-size: 1.8rem; font-weight: 900; font-family: 'Be Vietnam Pro', sans-serif; letter-spacing: -0.5px;">+${extraCount}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        wrapper.appendChild(flexGrid);
+        grid.appendChild(wrapper);
     }
 
     function togglePostLike(btn, postId) {

@@ -25,7 +25,10 @@ class SocialHubController extends Controller
      */
     public function index()
     {
-        $user = Auth::user();
+        $user = Auth::user() ?? User::find(session('user_id'));
+        if (!$user) {
+            return redirect()->route('login');
+        }
 
         // 1. Danh sách bạn bè (Đã đồng ý kết bạn ở cả 2 hướng)
         $sentFriendIds = Friendship::where('user_id', $user->id)

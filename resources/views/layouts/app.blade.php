@@ -403,17 +403,18 @@
                             open: false, 
                             items: [],
                             loading: false,
+                            init() {
+                                this.fetchNotifications();
+                            },
                             fetchNotifications() {
-                                if (this.items.length === 0) {
-                                    this.loading = true;
-                                    fetch('/api/user-notifications')
-                                        .then(res => res.json())
-                                        .then(data => {
-                                            this.items = data;
-                                            this.loading = false;
-                                        })
-                                        .catch(() => { this.loading = false; });
-                                }
+                                this.loading = true;
+                                fetch('/api/user-notifications')
+                                    .then(res => res.json())
+                                    .then(data => {
+                                        this.items = data;
+                                        this.loading = false;
+                                    })
+                                    .catch(() => { this.loading = false; });
                             }
                         }" @click.outside="open = false" style="position: relative; display: flex; align-items: center;">
                             

@@ -1307,18 +1307,50 @@
                     @foreach($principalPosts->take(5) as $p)
                         @php
                             $imgs = [];
-                            if (!empty($p->image_url)) {
-                                $imgs[] = $p->image_url;
+                            if (!empty($p->all_images) && is_array($p->all_images)) {
+                                $imgs = $p->all_images;
                             }
-                            if (!empty($p->additional_images) && is_array($p->additional_images)) {
-                                $imgs = array_merge($imgs, $p->additional_images);
-                            } elseif (!empty($p->additional_images) && is_string($p->additional_images)) {
-                                $decoded = json_decode($p->additional_images, true);
-                                if (is_array($decoded)) {
-                                    $imgs = array_merge($imgs, $decoded);
+                            if (empty($imgs)) {
+                                if (!empty($p->images) && is_array($p->images)) {
+                                    $imgs = array_values(array_filter($p->images));
+                                } elseif (!empty($p->images) && is_string($p->images)) {
+                                    $decoded = json_decode($p->images, true);
+                                    if (is_array($decoded)) {
+                                        $imgs = array_values(array_filter($decoded));
+                                    }
                                 }
                             }
-                            $imgs = array_unique(array_filter($imgs));
+                            if (empty($imgs)) {
+                                foreach (['image_path', 'image_url', 'image'] as $singleField) {
+                                    if (!empty($p->$singleField)) {
+                                        $imgs[] = $p->$singleField;
+                                    }
+                                }
+                                foreach (['additional_images'] as $multiField) {
+                                    if (!empty($p->$multiField)) {
+                                        $val = $p->$multiField;
+                                        if (is_array($val)) {
+                                            $imgs = array_merge($imgs, $val);
+                                        } elseif (is_string($val)) {
+                                            $decoded = json_decode($val, true);
+                                            if (is_array($decoded)) {
+                                                $imgs = array_merge($imgs, $decoded);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            $imgs = array_values(array_unique(array_filter(array_map(function($img) {
+                                if (!$img) return null;
+                                if (str_starts_with($img, 'http://') || str_starts_with($img, 'https://')) {
+                                    return $img;
+                                }
+                                return asset($img);
+                            }, $imgs))));
+                            $imgCount = count($imgs);
+                            $desc = $p->description ?? '';
+                            $linkifiedHtml = nl2br(\App\Helpers\TextHelper::linkify($desc));
+                            $isLong = mb_strlen($desc) > 200 || substr_count($desc, "\n") >= 4;
                         @endphp
                         <article class="fb-post-card" style="background: var(--bg-card, #ffffff); border-radius: 16px; border: 1px solid var(--border-glow, rgba(0,0,0,0.08)); padding: 20px; box-shadow: 0 4px 16px rgba(0,0,0,0.03);">
                             <!-- Author Header -->
@@ -1335,18 +1367,66 @@
                                 </div>
                             </div>
 
-                            <!-- Text content -->
-                            <div style="font-size: 0.95rem; color: var(--text-main, #1e293b); line-height: 1.6; margin-bottom: 14px;">
+                            <!-- Text content with Auto-linkify & See More toggle -->
+                            <div style="font-size: 0.95rem; color: var(--text-main, #1e293b); line-height: 1.6; margin-bottom: 14px;" x-data="{ expanded: false }">
                                 <strong style="display: block; font-size: 1.08rem; margin-bottom: 6px; color: var(--text-main, #0f172a);">🌸 {{ $p->name }}</strong>
-                                {!! nl2br(e($p->description)) !!}
+                                @if($isLong)
+                                    <div class="fb-post-text-body" :class="expanded ? '' : 'collapsed'" style="word-break: break-word; overflow-wrap: anywhere;">
+                                        {!! $linkifiedHtml !!}
+                                    </div>
+                                    <button type="button" class="fb-post-toggle-btn" @click="expanded = !expanded">
+                                        <span x-text="expanded ? 'Ẩn bớt ▲' : '...Xem thêm ▼'"></span>
+                                    </button>
+                                @else
+                                    <div class="fb-post-text-body" style="word-break: break-word; overflow-wrap: anywhere;">
+                                        {!! $linkifiedHtml !!}
+                                    </div>
+                                @endif
                             </div>
 
-                            <!-- Images grid -->
-                            @if(!empty($imgs))
-                                <div style="display: grid; grid-template-columns: repeat({{ min(count($imgs), 3) }}, 1fr); gap: 6px; border-radius: 12px; overflow: hidden; margin-bottom: 14px;">
-                                    @foreach(array_slice($imgs, 0, 3) as $idx => $img)
-                                        <img src="{{ $img }}" alt="photo" style="width: 100%; height: 220px; object-fit: cover; cursor: pointer; transition: transform 0.2s;" onclick="openPostLightbox('{{ $img }}')">
-                                    @endforeach
+                            <!-- Facebook Multi-Photo Grid -->
+                            @if($imgCount === 1)
+                                <div class="fb-photo-grid fb-grid-1" style="border-radius: 12px; margin-bottom: 14px;" onclick="openPostLightbox('{{ $imgs[0] }}')">
+                                    <img src="{{ $imgs[0] }}" alt="{{ $p->name }}">
+                                </div>
+                            @elseif($imgCount === 2)
+                                <div class="fb-photo-grid fb-grid-2" style="border-radius: 12px; margin-bottom: 14px;">
+                                    <img src="{{ $imgs[0] }}" onclick="openPostLightbox('{{ $imgs[0] }}')" alt="{{ $p->name }}">
+                                    <img src="{{ $imgs[1] }}" onclick="openPostLightbox('{{ $imgs[1] }}')" alt="{{ $p->name }}">
+                                </div>
+                            @elseif($imgCount === 3)
+                                <div class="fb-photo-grid fb-grid-3" style="border-radius: 12px; margin-bottom: 14px;">
+                                    <img src="{{ $imgs[0] }}" onclick="openPostLightbox('{{ $imgs[0] }}')" alt="{{ $p->name }}">
+                                    <div class="fb-grid-3-col-right">
+                                        <img src="{{ $imgs[1] }}" onclick="openPostLightbox('{{ $imgs[1] }}')" alt="{{ $p->name }}">
+                                        <img src="{{ $imgs[2] }}" onclick="openPostLightbox('{{ $imgs[2] }}')" alt="{{ $p->name }}">
+                                    </div>
+                                </div>
+                            @elseif($imgCount === 4)
+                                <div class="fb-photo-grid fb-grid-4" style="border-radius: 12px; margin-bottom: 14px;">
+                                    <img src="{{ $imgs[0] }}" onclick="openPostLightbox('{{ $imgs[0] }}')" alt="{{ $p->name }}">
+                                    <div class="fb-grid-4-col-right">
+                                        <img src="{{ $imgs[1] }}" onclick="openPostLightbox('{{ $imgs[1] }}')" alt="{{ $p->name }}">
+                                        <img src="{{ $imgs[2] }}" onclick="openPostLightbox('{{ $imgs[2] }}')" alt="{{ $p->name }}">
+                                        <img src="{{ $imgs[3] }}" onclick="openPostLightbox('{{ $imgs[3] }}')" alt="{{ $p->name }}">
+                                    </div>
+                                </div>
+                            @elseif($imgCount >= 5)
+                                <div class="fb-photo-grid fb-grid-5" style="border-radius: 12px; margin-bottom: 14px;">
+                                    <div class="fb-grid-5-row-top">
+                                        <img src="{{ $imgs[0] }}" onclick="openPostLightbox('{{ $imgs[0] }}')" alt="{{ $p->name }}">
+                                        <img src="{{ $imgs[1] }}" onclick="openPostLightbox('{{ $imgs[1] }}')" alt="{{ $p->name }}">
+                                    </div>
+                                    <div class="fb-grid-5-row-bottom">
+                                        <img src="{{ $imgs[2] }}" onclick="openPostLightbox('{{ $imgs[2] }}')" alt="{{ $p->name }}">
+                                        <img src="{{ $imgs[3] }}" onclick="openPostLightbox('{{ $imgs[3] }}')" alt="{{ $p->name }}">
+                                        <div class="fb-photo-thumb-box" onclick="openPostLightbox('{{ $imgs[4] }}')">
+                                            <img src="{{ $imgs[4] }}" alt="{{ $p->name }}">
+                                            @if($imgCount > 5)
+                                                <div class="fb-photo-more-overlay">+{{ $imgCount - 5 }}</div>
+                                            @endif
+                                        </div>
+                                    </div>
                                 </div>
                             @endif
 

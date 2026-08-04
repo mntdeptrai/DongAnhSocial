@@ -12,6 +12,13 @@ export default function SocialHub() {
     const [pendingReceived, setPendingReceived] = useState(initialPendingReceived || []);
     const [pendingSent, setPendingSent] = useState(initialPendingSent || []);
     const [suggestions, setSuggestions] = useState(initialSuggestions || []);
+
+    useEffect(() => {
+        setFriends(initialFriends || []);
+        setPendingReceived(initialPendingReceived || []);
+        setPendingSent(initialPendingSent || []);
+        setSuggestions(initialSuggestions || []);
+    }, [initialFriends, initialPendingReceived, initialPendingSent, initialSuggestions]);
     
     const [activeFriend, setActiveFriend] = useState(null);
     const [messages, setMessages] = useState([]);
