@@ -481,32 +481,37 @@
                            onblur="this.style.borderColor='#e2e8f0'; this.style.background='#f8fafc'; this.style.boxShadow='none';">
                 </div>
 
-                <!-- Category Chips -->
-                <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-                    <template x-for="cat in categories" :key="cat.id">
-                        <button type="button" class="filter-chip-btn" :class="{ 'active': activeCategory === cat.id }" @click="activeCategory = cat.id; updateMapMarkers();">
-                            <span x-text="cat.icon"></span>
-                            <span x-text="cat.label"></span>
-                        </button>
-                    </template>
-                </div>
-            </div>
+                <!-- Dual Dropdown Selectors Section -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px;">
+                    <!-- Dropdown 1: Ngành hàng / Danh mục -->
+                    <div>
+                        <label style="font-size: 0.68rem; font-weight: 800; color: #64748b; text-transform: uppercase; display: block; margin-bottom: 4px;">Ngành hàng</label>
+                        <select x-model="activeCategory" @change="updateMapMarkers()" 
+                                style="width: 100%; padding: 8px 10px; background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 12px; font-size: 0.78rem; font-weight: 700; color: #0f172a; outline: none; cursor: pointer; transition: all 0.2s;"
+                                onfocus="this.style.borderColor='#10b981'; this.style.background='#ffffff';"
+                                onblur="this.style.borderColor='#cbd5e1'; this.style.background='#f8fafc';">
+                            <template x-for="cat in categories" :key="cat.id">
+                                <option :value="cat.id" x-text="`${cat.icon} ${cat.label}`"></option>
+                            </template>
+                        </select>
+                    </div>
 
-            <!-- Route Filter Chips Section -->
-            <div style="padding: 10px 16px; background: #fafafa; border-bottom: 1px solid #f1f5f9;">
-                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
-                    <span style="font-size: 0.72rem; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Lọc theo tuyến đường 4.0</span>
-                    <button type="button" @click="resetFilters()" style="font-size: 0.72rem; color: #059669; background: none; border: none; font-weight: 700; cursor: pointer;">Đặt lại tất cả</button>
-                </div>
-                <div style="display: flex; flex-wrap: wrap; gap: 6px;">
-                    <button type="button" @click="setVillage('all')" class="village-pill-btn v-all" :class="{ 'active': activeVillage === 'all' }">
-                        Tất cả tuyến đường
-                    </button>
-                    <template x-for="v in villages" :key="v.id">
-                        <button type="button" @click="setVillage(v.id)" class="village-pill-btn" :class="[`v-${v.id}`, activeVillage === v.id ? 'active' : '']">
-                            <span x-text="v.routeName || v.name"></span>
-                        </button>
-                    </template>
+                    <!-- Dropdown 2: Tuyến đường 4.0 -->
+                    <div>
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+                            <label style="font-size: 0.68rem; font-weight: 800; color: #64748b; text-transform: uppercase;">Tuyến đường</label>
+                            <button type="button" @click="resetFilters()" style="font-size: 0.65rem; color: #059669; background: none; border: none; font-weight: 800; cursor: pointer; padding: 0;">Đặt lại</button>
+                        </div>
+                        <select x-model="activeVillage" @change="setVillage(activeVillage)" 
+                                style="width: 100%; padding: 8px 10px; background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 12px; font-size: 0.78rem; font-weight: 700; color: #0f172a; outline: none; cursor: pointer; transition: all 0.2s;"
+                                onfocus="this.style.borderColor='#10b981'; this.style.background='#ffffff';"
+                                onblur="this.style.borderColor='#cbd5e1'; this.style.background='#f8fafc';">
+                            <option value="all">🛣️ Tất cả tuyến đường</option>
+                            <template x-for="v in villages" :key="v.id">
+                                <option :value="v.id" x-text="`📍 ${v.routeName || v.name}`"></option>
+                            </template>
+                        </select>
+                    </div>
                 </div>
             </div>
 
