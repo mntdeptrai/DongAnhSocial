@@ -752,9 +752,9 @@
                     villages: ['phu-loc'],
                     animClass: 'route-path-animated-1',
                     pathCoords: [
-                        [21.1370, 105.8360],
-                        [21.1390, 105.8390],
-                        [21.1415, 105.8430]
+                        [21.1335, 105.8460],
+                        [21.1365, 105.8462],
+                        [21.1397, 105.8465]
                     ]
                 },
                 {
@@ -765,105 +765,56 @@
                     villages: ['dong-anh-cum-3'],
                     animClass: 'route-path-animated-2',
                     pathCoords: [
-                        [21.1420, 105.8440],
-                        [21.1360, 105.8470],
-                        [21.1300, 105.8495]
+                        [21.1460, 105.8430],
+                        [21.1396, 105.8435],
+                        [21.1330, 105.8440]
                     ]
                 },
                 {
                     id: 'route-co-van',
                     name: 'Tuyến 3: Đường Cổ Vân (Dục Nội)',
-                    length: '0.6km',
+                    length: '1.0km',
                     color: '#EAB308',
                     villages: ['duc-noi'],
                     animClass: 'route-path-animated-3',
                     pathCoords: [
-                        [21.1448, 105.8640],
-                        [21.1455, 105.8670],
-                        [21.1462, 105.8700]
+                        [21.1408, 105.8635],
+                        [21.1395, 105.8650],
+                        [21.1388, 105.8660],
+                        [21.1380, 105.8675]
                     ]
                 },
                 {
                     id: 'route-viet-hung',
                     name: 'Tuyến 4: Tuyến Việt Hùng (Việt Hùng)',
-                    length: '0.8km',
+                    length: '1.2km',
                     color: '#3B82F6',
                     villages: ['viet-hung'],
                     animClass: 'route-path-animated-1',
                     pathCoords: [
-                        [21.1465, 105.8705],
-                        [21.1490, 105.8720],
-                        [21.1515, 105.8735]
+                        [21.1435, 105.8675],
+                        [21.1390, 105.8675],
+                        [21.1345, 105.8675]
+                    ]
+                },
+                {
+                    id: 'route-cao-lo',
+                    name: 'Tuyến 5: Đường Cao Lỗ (Ngã tư QL3 - Hùng Sơn)',
+                    length: '1.1km',
+                    color: '#EC4899',
+                    villages: ['cao-lo'],
+                    animClass: 'route-path-animated-2',
+                    pathCoords: [
+                        [21.1408, 105.8435],
+                        [21.14085, 105.8460],
+                        [21.1409, 105.8485],
+                        [21.14095, 105.8510],
+                        [21.1410, 105.8530]
                     ]
                 }
             ],
 
-            locations: @json($dbLocations ?? []).length > 0 ? @json($dbLocations) : [
-                // CSV 3.1: Đường Phúc Lộc (Thôn Phúc Lộc - 24 hộ)
-                { id: 1, name: 'Kính thuốc Hồng Thái', owner: 'Hồng Thái', village: 'phu-loc', villageName: 'Thôn Phúc Lộc', type: 'y-te', rating: 4.8, address: 'Đường Phúc Lộc, Thôn Phúc Lộc, Đông Anh', phone: '0988364444', bankAccount: '8877923955', bank: 'BIDV', open: true, menu: ['Kính mắt các loại'], image: 'https://images.unsplash.com/photo-1591076482161-42ce6da69f67?w=420&h=230&fit=crop&auto=format', lat: 21.1350, lng: 105.8320 },
-                { id: 2, name: 'Thẩm mỹ Karena', owner: 'Nguyễn Văn Phòng', village: 'phu-loc', villageName: 'Thôn Phúc Lộc', type: 'y-te', rating: 4.7, address: 'Đường Phúc Lộc, Thôn Phúc Lộc, Đông Anh', phone: '0988364445', bankAccount: '2170034293', bank: 'BIDV', open: true, menu: ['Chăm sóc da các loại'], image: 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=420&h=230&fit=crop&auto=format', lat: 21.1355, lng: 105.8330 },
-                { id: 3, name: 'Quán ăn sáng Nguyễn Thị Huệ', owner: 'Nguyễn Thị Huệ', village: 'phu-loc', villageName: 'Thôn Phúc Lộc', type: 'quan-an', rating: 4.9, address: 'Đường Phúc Lộc, Thôn Phúc Lộc, Đông Anh', phone: '0988364446', bankAccount: '22993399999', bank: 'MB Bank', open: true, menu: ['Bún ngan', 'Miến gà', 'Bún gà ta'], image: 'https://images.unsplash.com/photo-1597345637412-9fd611e758f3?w=420&h=230&fit=crop&auto=format', lat: 21.1360, lng: 105.8340 },
-                { id: 4, name: 'CT TNHH ĐTXD TM&DV ĐA', owner: 'Trương Văn Lân', village: 'phu-loc', villageName: 'Thôn Phúc Lộc', type: 'dich-vu', rating: 4.5, address: 'Đường Phúc Lộc, Thôn Phúc Lộc, Đông Anh', phone: '0988364447', bankAccount: '23656971', bank: 'ACB', open: true, menu: ['In ấn quảng cáo', 'Photocopy dịch thuật'], image: 'https://images.unsplash.com/photo-1562654501-a0ccc0fc3fb1?w=420&h=230&fit=crop&auto=format', lat: 21.1365, lng: 105.8350 },
-                { id: 5, name: 'Cửa hàng Đông Đô', owner: 'Trần Thị Thảo', village: 'phu-loc', villageName: 'Thôn Phúc Lộc', type: 'tap-hoa', rating: 4.6, address: 'Đường Phúc Lộc, Thôn Phúc Lộc, Đông Anh', phone: '0988364448', bankAccount: '0972511711', bank: 'BIDV', open: true, menu: ['Tạp hóa', 'Văn phòng phẩm'], image: 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?w=420&h=230&fit=crop&auto=format', lat: 21.1370, lng: 105.8360 },
-                { id: 6, name: 'Quán Cà Phê Howse', owner: 'Nguyễn Tuấn Anh', village: 'phu-loc', villageName: 'Thôn Phúc Lộc', type: 'quan-an', rating: 4.9, address: 'Đường Phúc Lộc, Thôn Phúc Lộc, Đông Anh', phone: '0988364449', bankAccount: '0880105359999', bank: 'MB Bank', open: true, menu: ['Cà phê muối', 'Trà hoa quả', 'Nước giải khát'], image: 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=420&h=230&fit=crop&auto=format', lat: 21.1375, lng: 105.8370 },
-                { id: 7, name: 'HC Mobile', owner: 'Dương Quý Hợi', village: 'phu-loc', villageName: 'Thôn Phúc Lộc', type: 'dich-vu', rating: 4.8, address: 'Đường Phúc Lộc, Thôn Phúc Lộc, Đông Anh', phone: '0911571983', bankAccount: '19033822650021', bank: 'Techcombank', open: true, menu: ['Mua bán điện thoại', 'Sửa chữa ép kính'], image: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=420&h=230&fit=crop&auto=format', lat: 21.1380, lng: 105.8380 },
-                { id: 8, name: 'Thanh Mai HSK', owner: 'Đỗ Thị Hường', village: 'phu-loc', villageName: 'Thôn Phúc Lộc', type: 'dich-vu', rating: 4.9, address: 'Đường Phúc Lộc, Thôn Phúc Lộc, Đông Anh', phone: '0965522035', bankAccount: '020110732008', bank: 'Sacombank', open: true, menu: ['Dạy tiếng Trung HSK', 'Luyện thi chứng chỉ'], image: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=420&h=230&fit=crop&auto=format', lat: 21.1385, lng: 105.8390 },
-                { id: 9, name: 'Cửa hàng Xuân Nguyễn', owner: 'Ngô Thanh Xuân', village: 'phu-loc', villageName: 'Thôn Phúc Lộc', type: 'thoi-trang', rating: 4.6, address: 'Đường Phúc Lộc, Thôn Phúc Lộc, Đông Anh', phone: '0949906689', bankAccount: '0949906689', bank: 'MB Bank', open: true, menu: ['Quần áo trẻ em', 'Thời trang bé trai bé gái'], image: 'https://images.unsplash.com/photo-1622290291468-a28f7a7dc6a8?w=420&h=230&fit=crop&auto=format', lat: 21.1390, lng: 105.8400 },
-                { id: 10, name: 'Dâu Tây Shop', owner: 'Nguyễn Thanh Thùy', village: 'phu-loc', villageName: 'Thôn Phúc Lộc', type: 'thoi-trang', rating: 4.7, address: 'Đường Phúc Lộc, Thôn Phúc Lộc, Đông Anh', phone: '0986068246', bankAccount: '0986068246', bank: 'BIDV', open: true, menu: ['Quần áo thời trang nữ', 'Váy đầm hot trend'], image: 'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?w=420&h=230&fit=crop&auto=format', lat: 21.1395, lng: 105.8410 },
-                { id: 11, name: 'Trung Tâm Viettel Đông Anh', owner: 'Nguyễn Chí Hiếu', village: 'phu-loc', villageName: 'Thôn Phúc Lộc', type: 'dich-vu', rating: 4.8, address: 'Đường Phúc Lộc, Thôn Phúc Lộc, Đông Anh', phone: '0987783898', bankAccount: '0001232184569', bank: 'MB Bank', open: true, menu: ['Dịch vụ viễn thông', 'Đăng ký SIM 4G/5G', 'Internet cáp quang'], image: 'https://images.unsplash.com/photo-1556742049-0a670f4a4587?w=420&h=230&fit=crop&auto=format', lat: 21.1400, lng: 105.8420 },
-                { id: 12, name: 'Cửa hàng Đồ Điện Duyên', owner: 'Nguyễn Thị Duyên', village: 'phu-loc', villageName: 'Thôn Phúc Lộc', type: 'tap-hoa', rating: 4.5, address: 'Đường Phúc Lộc, Thôn Phúc Lộc, Đông Anh', phone: '0986460490', bankAccount: '8818039982', bank: 'BIDV', open: true, menu: ['Đồ điện gia dụng', 'Thiết bị chiếu sáng', 'Tạp hóa điện'], image: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=420&h=230&fit=crop&auto=format', lat: 21.1405, lng: 105.8430 },
-                { id: 13, name: 'Công ty Luật Minh Nghiêm', owner: 'Đinh Đức Duy', village: 'phu-loc', villageName: 'Thôn Phúc Lộc', type: 'dich-vu', rating: 4.9, address: 'Đường Phúc Lộc, Thôn Phúc Lộc, Đông Anh', phone: '0917768512', bankAccount: '451106868', bank: 'MB Bank', open: true, menu: ['Tư vấn pháp luật', 'Hồ sơ doanh nghiệp', 'Tranh tụng đất đai'], image: 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=420&h=230&fit=crop&auto=format', lat: 21.1410, lng: 105.8440 },
-                { id: 14, name: 'Quán Phở Gà Đạt', owner: 'Lê Quý Đạt', village: 'phu-loc', villageName: 'Thôn Phúc Lộc', type: 'quan-an', rating: 4.8, address: 'Đường Phúc Lộc, Thôn Phúc Lộc, Đông Anh', phone: '09694444186', bankAccount: '8836868686', bank: 'BIDV', open: true, menu: ['Phở gà ta đùi chặt', 'Bún gà đùi', 'Miến gà lá chanh'], image: 'https://images.unsplash.com/photo-1582878826629-29b7ad1cdc43?w=420&h=230&fit=crop&auto=format', lat: 21.1415, lng: 105.8450 },
-                { id: 15, name: 'Đồ Ăn Vặt Oanh Oanh', owner: 'Dương T Hồng Oanh', village: 'phu-loc', villageName: 'Thôn Phúc Lộc', type: 'quan-an', rating: 4.7, address: 'Đường Phúc Lộc, Thôn Phúc Lộc, Đông Anh', phone: '0968645654', bankAccount: '9886838888', bank: 'MB Bank', open: true, menu: ['Đồ ăn vặt học sinh', 'Trà sữa trâu châu', 'Nem chua rán'], image: 'https://images.unsplash.com/photo-1563805042-7684c019e1cb?w=420&h=230&fit=crop&auto=format', lat: 21.1420, lng: 105.8460 },
-                { id: 16, name: 'Cửa hàng Đồ Xe Máy Thắng', owner: 'Lê Trung Thắng', village: 'phu-loc', villageName: 'Thôn Phúc Lộc', type: 'dich-vu', rating: 4.6, address: 'Đường Phúc Lộc, Thôn Phúc Lộc, Đông Anh', phone: '0364100366', bankAccount: '1064232172', bank: 'Vietcombank', open: true, menu: ['Phụ tùng xe máy chính hãng', 'Sửa chữa bảo dưỡng xe'], image: 'https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=420&h=230&fit=crop&auto=format', lat: 21.1425, lng: 105.8470 },
-                { id: 17, name: 'Tu Mimi Beauty', owner: 'Dương Minh Tú', village: 'phu-loc', villageName: 'Thôn Phúc Lộc', type: 'y-te', rating: 4.8, address: 'Đường Phúc Lộc, Thôn Phúc Lộc, Đông Anh', phone: '0975320130', bankAccount: '2142654818', bank: 'BIDV', open: true, menu: ['Làm móng Nail Art', 'Nối mi tự nhiên'], image: 'https://images.unsplash.com/photo-1604654894610-df63bc536371?w=420&h=230&fit=crop&auto=format', lat: 21.1430, lng: 105.8480 },
-                { id: 18, name: 'Quán Giải Khát Huyện', owner: 'Phạm Quang Minh', village: 'phu-loc', villageName: 'Thôn Phúc Lộc', type: 'quan-an', rating: 4.5, address: 'Đường Phúc Lộc, Thôn Phúc Lộc, Đông Anh', phone: '0862874945', bankAccount: '1053307896', bank: 'Vietcombank', open: true, menu: ['Nước giải khát đóng chai', 'Nước dừa tươi', 'Sinh tố dầm'], image: 'https://images.unsplash.com/photo-1621263764928-df1444c5e859?w=420&h=230&fit=crop&auto=format', lat: 21.1435, lng: 105.8490 },
-                { id: 19, name: 'Gia Khánh AUTO', owner: 'Hoàng Ngọc Bình', village: 'phu-loc', villageName: 'Thôn Phúc Lộc', type: 'dich-vu', rating: 4.9, address: 'Đường Phúc Lộc, Thôn Phúc Lộc, Đông Anh', phone: '0898620898', bankAccount: '8845821677', bank: 'BIDV', open: true, menu: ['Rửa xe bọt tuyết', 'Chăm sóc nội thất ô tô'], image: 'https://images.unsplash.com/photo-1520340356584-f9917d1eea6f?w=420&h=230&fit=crop&auto=format', lat: 21.1440, lng: 105.8500 },
-                { id: 20, name: 'Bún Chả Bà Mai', owner: 'Nguyễn Văn Bình', village: 'phu-loc', villageName: 'Thôn Phúc Lộc', type: 'quan-an', rating: 4.9, address: 'Đường Phúc Lộc, Thôn Phúc Lộc, Đông Anh', phone: '0975525645', bankAccount: '2143888999', bank: 'BIDV', open: true, menu: ['Bún chả nướng than hoa', 'Nem hải sản rán'], image: 'https://images.unsplash.com/photo-1541544741938-0af808871cc0?w=420&h=230&fit=crop&auto=format', lat: 21.1445, lng: 105.8510 },
-                { id: 21, name: 'Sugy Tea & Cà Phê', owner: 'Mai Xuân Hải', village: 'phu-loc', villageName: 'Thôn Phúc Lộc', type: 'quan-an', rating: 4.8, address: 'Đường Phúc Lộc, Thôn Phúc Lộc, Đông Anh', phone: '0989653387', bankAccount: '36708888', bank: 'Vietinbank', open: true, menu: ['Trà San Tuyết cổ thụ', 'Cà phê phin truyền thống'], image: 'https://images.unsplash.com/photo-1576092768241-dec231879fc3?w=420&h=230&fit=crop&auto=format', lat: 21.1450, lng: 105.8520 },
-                { id: 22, name: 'Phở Tuấn Phố Cổ', owner: 'Hoàng Văn Lâm', village: 'phu-loc', villageName: 'Thôn Phúc Lộc', type: 'quan-an', rating: 4.8, address: 'Đường Phúc Lộc, Thôn Phúc Lộc, Đông Anh', phone: '0373237704', bankAccount: '26016868888', bank: 'Techcombank', open: true, menu: ['Phở bò tái chín', 'Phở sốt vang đặc biệt'], image: 'https://images.unsplash.com/photo-1594212699903-ec8a3eca50f6?w=420&h=230&fit=crop&auto=format', lat: 21.1455, lng: 105.8530 },
-                { id: 23, name: 'Trà Trái Cây 9', owner: 'Lý Văn Vượng', village: 'phu-loc', villageName: 'Thôn Phúc Lộc', type: 'quan-an', rating: 4.7, address: 'Đường Phúc Lộc, Thôn Phúc Lộc, Đông Anh', phone: '0987738683', bankAccount: '103871251181', bank: 'Vietinbank', open: true, menu: ['Trà trái cây nhiệt đới', 'Trà xoài mắng cầu tươi'], image: 'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?w=420&h=230&fit=crop&auto=format', lat: 21.1460, lng: 105.8540 },
-                { id: 24, name: 'NH Hải Sản Hoàng Quân', owner: 'Vũ Hoàng Giang', village: 'phu-loc', villageName: 'Thôn Phúc Lộc', type: 'nha-hang', rating: 4.9, address: 'Đường Phúc Lộc, Thôn Phúc Lộc, Đông Anh', phone: '0914470285', bankAccount: '3330914470285', bank: 'PG Bank', open: true, menu: ['Hải sản tươi sống bể cá', 'Cua Cà Mau hấp', 'Tôm hùm nướng'], image: 'https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?w=420&h=230&fit=crop&auto=format', lat: 21.1465, lng: 105.8550 },
-
-                // CSV 3.2: Quốc Lộ 3 (Thôn Đông Anh Cụm 3 - 19 hộ)
-                { id: 25, name: 'Điện Tử Đỗ Minh Tuấn', owner: 'Đỗ Minh Tuấn', village: 'dong-anh-cum-3', villageName: 'Thôn Đông Anh (Cụm 3)', type: 'dich-vu', rating: 4.7, address: 'Tây QL3, Thôn Đông Anh (Cụm 3), Đông Anh', phone: '0987987272', bankAccount: '2812195899', bank: 'MB Bank', open: true, menu: ['Sửa chữa điện tử', 'Bảo dưỡng điều hòa máy giặt'], image: 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=420&h=230&fit=crop&auto=format', lat: 21.1445, lng: 105.8405 },
-                { id: 26, name: 'Dán Đề Can Chu Văn Châu', owner: 'Chu Văn Châu', village: 'dong-anh-cum-3', villageName: 'Thôn Đông Anh (Cụm 3)', type: 'dich-vu', rating: 4.6, address: 'Tây QL3, Thôn Đông Anh (Cụm 3), Đông Anh', phone: '0983731243', bankAccount: '8844532936', bank: 'BIDV', open: true, menu: ['Dán đề can xe máy ô tô', 'Dán kính chống nóng'], image: 'https://images.unsplash.com/photo-1617814076367-b759c7d7e738?w=420&h=230&fit=crop&auto=format', lat: 21.1435, lng: 105.8415 },
-                { id: 27, name: 'Nội Thất Hoàng Thu Hà', owner: 'Hoàng Thị Thu Hà', village: 'dong-anh-cum-3', villageName: 'Thôn Đông Anh (Cụm 3)', type: 'thoi-trang', rating: 4.8, address: 'Tây QL3, Thôn Đông Anh (Cụm 3), Đông Anh', phone: '0982395197', bankAccount: '19033095542014', bank: 'Techcombank', open: true, menu: ['Nội thất gỗ cao cấp', 'Bàn ghế sofa phòng khách'], image: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=420&h=230&fit=crop&auto=format', lat: 21.1425, lng: 105.8425 },
-                { id: 28, name: 'Nội Thất Thu Trang', owner: 'Phan Thị Thu Trang', village: 'dong-anh-cum-3', villageName: 'Thôn Đông Anh (Cụm 3)', type: 'thoi-trang', rating: 4.7, address: 'Tây QL3, Thôn Đông Anh (Cụm 3), Đông Anh', phone: '0915344122', bankAccount: '19036732871018', bank: 'Techcombank', open: true, menu: ['Giường tủ hiện đại', 'Tủ bếp nhựa picomat'], image: 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=420&h=230&fit=crop&auto=format', lat: 21.1415, lng: 105.8435 },
-                { id: 29, name: 'Quán Ăn Nguyễn Thị Thu', owner: 'Nguyễn Thị Thu', village: 'dong-anh-cum-3', villageName: 'Thôn Đông Anh (Cụm 3)', type: 'quan-an', rating: 4.5, address: 'Tây QL3, Thôn Đông Anh (Cụm 3), Đông Anh', phone: '0900000000', bankAccount: '', bank: '', open: true, menu: ['Cơm bình dân', 'Món ăn gia đình'], image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=420&h=230&fit=crop&auto=format', lat: 21.1405, lng: 105.8445 },
-                { id: 30, name: 'Chăn Ga Gối Đệm Hoàng Xuyên', owner: 'Hoàng Thị Xuyên', village: 'dong-anh-cum-3', villageName: 'Thôn Đông Anh (Cụm 3)', type: 'thoi-trang', rating: 4.8, address: 'Tây QL3, Thôn Đông Anh (Cụm 3), Đông Anh', phone: '0915384100', bankAccount: '8600580999', bank: 'BIDV', open: true, menu: ['Chăn ga gối đệm sông Hồng', 'Đệm cao su thiên nhiên'], image: 'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=420&h=230&fit=crop&auto=format', lat: 21.1395, lng: 105.8455 },
-                { id: 31, name: 'Giầy Dép Túi Xách Xuân Lâm', owner: 'Nguyễn Xuân Lâm', village: 'dong-anh-cum-3', villageName: 'Thôn Đông Anh (Cụm 3)', type: 'thoi-trang', rating: 4.7, address: 'Tây QL3, Thôn Đông Anh (Cụm 3), Đông Anh', phone: '0986676805', bankAccount: '0986676805', bank: 'MB Bank', open: true, menu: ['Giày da nam nữ', 'Túi xách công sở Việt Nam'], image: 'https://images.unsplash.com/photo-1549298916-b41d501d3772?w=420&h=230&fit=crop&auto=format', lat: 21.1385, lng: 105.8465 },
-                { id: 32, name: 'Nội Thất Bùi Thị Châm', owner: 'Bùi Thị Châm', village: 'dong-anh-cum-3', villageName: 'Thôn Đông Anh (Cụm 3)', type: 'thoi-trang', rating: 4.6, address: 'Tây QL3, Thôn Đông Anh (Cụm 3), Đông Anh', phone: '0976149380', bankAccount: '53040117', bank: 'VPBank', open: true, menu: ['Nội thất gỗ công nghiệp', 'Kệ tivi phòng ngủ'], image: 'https://images.unsplash.com/photo-1538688525198-9b88f6f53126?w=420&h=230&fit=crop&auto=format', lat: 21.1375, lng: 105.8475 },
-                { id: 33, name: 'Nội Thất Ô Tô Nguyễn Doãn Đạt', owner: 'Nguyễn Doãn Đạt', village: 'dong-anh-cum-3', villageName: 'Thôn Đông Anh (Cụm 3)', type: 'dich-vu', rating: 4.9, address: 'Tây QL3, Thôn Đông Anh (Cụm 3), Đông Anh', phone: '0976262543', bankAccount: '225588599', bank: 'VPBank', open: true, menu: ['Bọc ghế da ô tô', 'Dán phim cách nhiệt 3M'], image: 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=420&h=230&fit=crop&auto=format', lat: 21.1365, lng: 105.8485 },
-                { id: 34, name: 'Quán Phở Nguyễn Văn Đức', owner: 'Nguyễn Văn Đức', village: 'dong-anh-cum-3', villageName: 'Thôn Đông Anh (Cụm 3)', type: 'quan-an', rating: 4.8, address: 'Tây QL3, Thôn Đông Anh (Cụm 3), Đông Anh', phone: '0902982326', bankAccount: '19034876799013', bank: 'Techcombank', open: true, menu: ['Phở bò tái gầu', 'Quẩy giòn tan'], image: 'https://images.unsplash.com/photo-1582878826629-29b7ad1cdc43?w=420&h=230&fit=crop&auto=format', lat: 21.1355, lng: 105.8495 },
-                { id: 35, name: 'Công Ty Thiết Bị Điện Đức Cường', owner: 'Đức Cường', village: 'dong-anh-cum-3', villageName: 'Thôn Đông Anh (Cụm 3)', type: 'dich-vu', rating: 4.8, address: 'Tây QL3, Thôn Đông Anh (Cụm 3), Đông Anh', phone: '0974330955', bankAccount: '0311100998888', bank: 'MB Bank', open: true, menu: ['Thiết bị điện công nghiệp', 'Dây cáp điện Cadivi'], image: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=420&h=230&fit=crop&auto=format', lat: 21.1345, lng: 105.8505 },
-                { id: 36, name: 'Giầy Dép Thể Thao Phương Thảo', owner: 'Lê Phương Thảo', village: 'dong-anh-cum-3', villageName: 'Thôn Đông Anh (Cụm 3)', type: 'thoi-trang', rating: 4.7, address: 'Tây QL3, Thôn Đông Anh (Cụm 3), Đông Anh', phone: '0397947165', bankAccount: '2027131012', bank: 'Vietcombank', open: true, menu: ['Giày thể thao Sneaker', 'Giày chạy bộ nam nữ'], image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=420&h=230&fit=crop&auto=format', lat: 21.1335, lng: 105.8515 },
-                { id: 37, name: 'Nội Thất Công Ty Nam Hải', owner: 'Nam Hải', village: 'dong-anh-cum-3', villageName: 'Thôn Đông Anh (Cụm 3)', type: 'thoi-trang', rating: 4.8, address: 'Tây QL3, Thôn Đông Anh (Cụm 3), Đông Anh', phone: '0989059699', bankAccount: '2140496962', bank: 'BIDV', open: true, menu: ['Nội thất văn phòng', 'Bàn làm việc giám đốc'], image: 'https://images.unsplash.com/photo-1524758631624-e2822e304c36?w=420&h=230&fit=crop&auto=format', lat: 21.1325, lng: 105.8525 },
-                { id: 38, name: 'Nội Thất Trương Văn Thành', owner: 'Trương Văn Thành', village: 'dong-anh-cum-3', villageName: 'Thôn Đông Anh (Cụm 3)', type: 'thoi-trang', rating: 4.6, address: 'Tây QL3, Thôn Đông Anh (Cụm 3), Đông Anh', phone: '0853287888', bankAccount: '060316153429', bank: 'VPBank', open: true, menu: ['Sofa góc chữ L', 'Bàn ăn thông minh'], image: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=420&h=230&fit=crop&auto=format', lat: 21.1315, lng: 105.8535 },
-                { id: 39, name: 'Nội Thất Đỗ Bá Phương', owner: 'Đỗ Bá Phương', village: 'dong-anh-cum-3', villageName: 'Thôn Đông Anh (Cụm 3)', type: 'thoi-trang', rating: 4.7, address: 'Tây QL3, Thôn Đông Anh (Cụm 3), Đông Anh', phone: '0983346126', bankAccount: '8606882666', bank: 'BIDV', open: true, menu: ['Tủ quần áo cánh kính', 'Kệ trang trí'], image: 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=420&h=230&fit=crop&auto=format', lat: 21.1305, lng: 105.8545 },
-                { id: 40, name: 'Nội Thất Minh Thư', owner: 'Đào Thị Minh Thư', village: 'dong-anh-cum-3', villageName: 'Thôn Đông Anh (Cụm 3)', type: 'thoi-trang', rating: 4.8, address: 'Tây QL3, Thôn Đông Anh (Cụm 3), Đông Anh', phone: '0987805118', bankAccount: '571349752', bank: 'VPBank', open: true, menu: ['Nội thất chung cư trọn gói', 'Bàn học trẻ em'], image: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?w=420&h=230&fit=crop&auto=format', lat: 21.1295, lng: 105.8555 },
-                { id: 41, name: 'Quán Phở Đặng Bá Huy', owner: 'Đặng Bá Huy', village: 'dong-anh-cum-3', villageName: 'Thôn Đông Anh (Cụm 3)', type: 'quan-an', rating: 4.9, address: 'Tây QL3, Thôn Đông Anh (Cụm 3), Đông Anh', phone: '0948022005', bankAccount: '19037131028018', bank: 'Techcombank', open: true, menu: ['Phở gia truyền Đông Anh', 'Quẩy giòn nóng'], image: 'https://images.unsplash.com/photo-1582878826629-29b7ad1cdc43?w=420&h=230&fit=crop&auto=format', lat: 21.1285, lng: 105.8565 },
-                { id: 42, name: 'Chăn Ga Gối Đệm Lê Quốc Quân', owner: 'Lê Quốc Quân', village: 'dong-anh-cum-3', villageName: 'Thôn Đông Anh (Cụm 3)', type: 'thoi-trang', rating: 4.7, address: 'Tây QL3, Thôn Đông Anh (Cụm 3), Đông Anh', phone: '0357274664', bankAccount: '0961000016673', bank: 'Vietcombank', open: true, menu: ['Chăn ga Hàn Quốc', 'Đệm bông ép Everon'], image: 'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=420&h=230&fit=crop&auto=format', lat: 21.1275, lng: 105.8575 },
-                { id: 43, name: 'Công Ty Điện Dân Dụng Tràng Thị', owner: 'Tràng Thị', village: 'dong-anh-cum-3', villageName: 'Thôn Đông Anh (Cụm 3)', type: 'dich-vu', rating: 4.8, address: 'Tây QL3, Thôn Đông Anh (Cụm 3), Đông Anh', phone: '0976173907', bankAccount: '50530100454', bank: 'Sacombank', open: true, menu: ['Điện gia dụng Pana', 'Công tắc ổ cắm Sino'], image: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=420&h=230&fit=crop&auto=format', lat: 21.1265, lng: 105.8585 },
-
-                // CSV 2: Đường Cổ Vân (Thôn Dục Nội - 11 hộ)
-                { id: 44, name: 'Quầy Thuốc Trung Hiếu 2', owner: 'Trung Hiếu', village: 'duc-noi', villageName: 'Thôn Dục Nội', type: 'y-te', rating: 4.9, address: 'Đường Cổ Vân, Thôn Dục Nội, Đông Anh', phone: '0975624998', bankAccount: '8807196124', bank: 'BIDV', open: true, menu: ['Thuốc tân dược', 'Dụng cụ y tế gia đình'], image: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=420&h=230&fit=crop&auto=format', lat: 21.1250, lng: 105.8600 },
-                { id: 45, name: 'Nhà Thuốc Hoàng Long', owner: 'Hoàng Long', village: 'duc-noi', villageName: 'Thôn Dục Nội', type: 'y-te', rating: 4.9, address: 'Đường Cổ Vân, Thôn Dục Nội, Đông Anh', phone: '0981872297', bankAccount: 'V3SM2024005860', bank: 'BIDV VietQR', open: true, menu: ['Bán lẻ thuốc chuẩn GPP', 'Mỹ phẩm chăm sóc sức khỏe'], image: 'https://images.unsplash.com/photo-1631549916768-4119b2e5f926?w=420&h=230&fit=crop&auto=format', lat: 21.1260, lng: 105.8610 },
-                { id: 46, name: 'Cửa Hàng Tạp Hóa Ngô Văn Linh', owner: 'Ngô Văn Linh', village: 'duc-noi', villageName: 'Thôn Dục Nội', type: 'tap-hoa', rating: 4.6, address: 'Đường Cổ Vân, Thôn Dục Nội, Đông Anh', phone: '0974915596', bankAccount: '19072079042015', bank: 'Techcombank', open: true, menu: ['Tạp hóa gia đình', 'Bánh kẹo sữa tươi'], image: 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?w=420&h=230&fit=crop&auto=format', lat: 21.1270, lng: 105.8620 },
-                { id: 47, name: 'Cửa Hàng Hàng Đa Dụng Nguyễn Công Lục', owner: 'Nguyễn Công Lục', village: 'duc-noi', villageName: 'Thôn Dục Nội', type: 'tap-hoa', rating: 4.7, address: 'Đường Cổ Vân, Thôn Dục Nội, Đông Anh', phone: '0989892424', bankAccount: '3156495', bank: 'MOMO', open: true, menu: ['Đồ dùng đa năng', 'Vật dụng tiện ích nhà bếp'], image: 'https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=420&h=230&fit=crop&auto=format', lat: 21.1280, lng: 105.8630 },
-                { id: 48, name: 'Giày Dép Linh Trang', owner: 'Linh Trang', village: 'duc-noi', villageName: 'Thôn Dục Nội', type: 'thoi-trang', rating: 4.8, address: 'Đường Cổ Vân, Thôn Dục Nội, Đông Anh', phone: '0966813762', bankAccount: '19032666997026', bank: 'Techcombank', open: true, menu: ['Giày dép thời trang', 'Sandal học sinh'], image: 'https://images.unsplash.com/photo-1549298916-b41d501d3772?w=420&h=230&fit=crop&auto=format', lat: 21.1290, lng: 105.8640 },
-                { id: 49, name: 'Cửa Hàng May Mặc Công Thị Mẫn', owner: 'Công Thị Mẫn', village: 'duc-noi', villageName: 'Thôn Dục Nội', type: 'thoi-trang', rating: 4.6, address: 'Đường Cổ Vân, Thôn Dục Nội, Đông Anh', phone: '0396882886', bankAccount: '8858480785', bank: 'BIDV', open: true, menu: ['Quần áo may mặc', 'Đồ da & giả da cao cấp'], image: 'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?w=420&h=230&fit=crop&auto=format', lat: 21.1300, lng: 105.8650 },
-                { id: 50, name: 'Tạp Hóa Nguyễn Công Đa', owner: 'Nguyễn Công Đa', village: 'duc-noi', villageName: 'Thôn Dục Nội', type: 'tap-hoa', rating: 4.5, address: 'Đường Cổ Vân, Thôn Dục Nội, Đông Anh', phone: '0972233572', bankAccount: '', bank: '', open: true, menu: ['Tạp hóa bánh kẹo', 'Nước giải khát'], image: 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?w=420&h=230&fit=crop&auto=format', lat: 21.1310, lng: 105.8660 },
-                { id: 51, name: 'Tạp Hóa Lân Tịnh', owner: 'Lân Tịnh', village: 'duc-noi', villageName: 'Thôn Dục Nội', type: 'tap-hoa', rating: 4.7, address: 'Đường Cổ Vân, Thôn Dục Nội, Đông Anh', phone: '0392031313', bankAccount: '2142773634', bank: 'BIDV', open: true, menu: ['Bánh kẹo nhập khẩu', 'Đồ khô gia đình'], image: 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?w=420&h=230&fit=crop&auto=format', lat: 21.1320, lng: 105.8670 },
-                { id: 52, name: 'Cửa Hàng Hanoximex Dục Nội', owner: 'Hanoximex', village: 'duc-noi', villageName: 'Thôn Dục Nội', type: 'thoi-trang', rating: 4.8, address: 'Đường Cổ Vân, Thôn Dục Nội, Đông Anh', phone: '0988158056', bankAccount: '', bank: '', open: true, menu: ['Thời trang dệt kim Hanoximex', 'Phụ kiện quần áo'], image: 'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?w=420&h=230&fit=crop&auto=format', lat: 21.1330, lng: 105.8680 },
-                { id: 53, name: 'Đồ Điện Nước Nguyễn Công Mạc', owner: 'Nguyễn Công Mạc', village: 'duc-noi', villageName: 'Thôn Dục Nội', type: 'dich-vu', rating: 4.7, address: 'Đường Cổ Vân, Thôn Dục Nội, Đông Anh', phone: '0346036574', bankAccount: '0385055346', bank: 'MB Bank', open: true, menu: ['Đồ điện nước gia đình', 'Ống nhựa Tiền Phong'], image: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=420&h=230&fit=crop&auto=format', lat: 21.1340, lng: 105.8690 },
-                { id: 54, name: 'Cửa Hàng Đồ Khô Vân Khoa', owner: 'Vân Khoa', village: 'duc-noi', villageName: 'Thôn Dục Nội', type: 'tap-hoa', rating: 4.8, address: 'Đường Cổ Vân, Thôn Dục Nội, Đông Anh', phone: '0358908488', bankAccount: '3099669', bank: 'MOMO', open: true, menu: ['Nấm hương mộc nhĩ khô', 'Miến riềng măng khô'], image: 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?w=420&h=230&fit=crop&auto=format', lat: 21.1350, lng: 105.8700 },
-
-                // CSV 1: Tuyến Đường Thôn Việt Hùng (Thôn Việt Hùng - 3 hộ)
-                { id: 55, name: 'Cửa Hàng Nông Sản Ngô Thế Long', owner: 'Ngô Thế Long', village: 'viet-hung', villageName: 'Thôn Việt Hùng', type: 'tap-hoa', rating: 4.9, address: 'Tuyến Việt Hùng, Thôn Việt Hùng, Đông Anh', phone: '0368794411', bankAccount: '0368794411', bank: 'Vietinbank', open: true, menu: ['Dưa cà muối sẵn (5k/túi)', 'Gia vị nấu ăn', 'Bánh kẹo & Sữa tươi'], image: 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=420&h=230&fit=crop&auto=format', lat: 21.1480, lng: 105.8620 },
-                { id: 56, name: 'Đại Lý Bia Nước Ngọt Đào Xuân Hải', owner: 'Đào Xuân Hải', village: 'viet-hung', villageName: 'Thôn Việt Hùng', type: 'tap-hoa', rating: 4.9, address: 'Tuyến Việt Hùng, Thôn Việt Hùng, Đông Anh', phone: '0983164384', bankAccount: '8821490906', bank: 'BIDV', open: true, menu: ['Bia hơi Hà Nội (26k/lít)', 'Bia lon Hà Nội & Sài Gòn', 'Nước ngọt & Bánh kẹo Thành Trung'], image: 'https://images.unsplash.com/photo-1527661591475-527312dd65f5?w=420&h=230&fit=crop&auto=format', lat: 21.1500, lng: 105.8650 },
-                { id: 57, name: 'Cửa Hàng Tổng Hợp Nguyễn Văn Nguyên', owner: 'Nguyễn Văn Nguyên', village: 'viet-hung', villageName: 'Thôn Việt Hùng', type: 'tap-hoa', rating: 4.9, address: 'Tuyến Việt Hùng, Thôn Việt Hùng, Đông Anh', phone: '0372314727', bankAccount: 'PMC.2609116300000024', bank: 'MOMO VietQR', open: true, menu: ['Bia hơi Hà Nội (26k/lít)', 'Dầu ăn (50k/lít)', 'Mỳ tôm & Bánh kẹo Hải Hà'], image: 'https://images.unsplash.com/photo-1604719312566-8912e9227c6a?w=420&h=230&fit=crop&auto=format', lat: 21.1520, lng: 105.8680 }
-            ],
+            locations: @json($dbLocations ?? []).length > 0 ? @json($dbLocations) : [],
 
             initMap() {
                 this.$nextTick(() => {
@@ -873,7 +824,7 @@
                     const routeMap = {};
                     this.routes.forEach(r => { routeMap[r.id] = r.pathCoords; });
 
-                    const locsByVillage = { 'phu-loc': [], 'dong-anh-cum-3': [], 'duc-noi': [], 'viet-hung': [] };
+                    const locsByVillage = { 'phu-loc': [], 'dong-anh-cum-3': [], 'duc-noi': [], 'viet-hung': [], 'cao-lo': [] };
                     this.locations.forEach(loc => { if (locsByVillage[loc.village]) locsByVillage[loc.village].push(loc); });
 
                     function getPointOnPath(coords, t) {
@@ -893,7 +844,8 @@
                         'phu-loc': 'route-phu-loc',
                         'dong-anh-cum-3': 'route-ql3',
                         'duc-noi': 'route-co-van',
-                        'viet-hung': 'route-viet-hung'
+                        'viet-hung': 'route-viet-hung',
+                        'cao-lo': 'route-cao-lo'
                     };
 
                     Object.keys(locsByVillage).forEach(vKey => {
