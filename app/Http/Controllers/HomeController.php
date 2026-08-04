@@ -90,15 +90,47 @@ class HomeController extends Controller
         });
 
         $dbLocations = \App\Models\RouteBusiness::all()->map(function($b) {
+            $vName = $b->village_name;
+            $vMap = [
+                'phu-loc' => 'Đường Phúc Lộc',
+                'dong-anh-cum-3' => 'Quốc Lộ 3',
+                'duc-noi' => 'Đường Cổ Vân',
+                'viet-hung' => 'Đường Việt Hùng',
+                'cao-lo' => 'Đường Cao Lỗ',
+                'xuan-canh' => 'Đường Xuân Canh',
+                'dan-di' => 'Đường Đản Dị',
+                'mai-lam' => 'Đường Dốc Vân',
+            ];
+            if (isset($vMap[$b->village_key])) {
+                $vName = $vMap[$b->village_key];
+            } else {
+                $vName = preg_replace('/^(Thôn|Thon)\s+/iu', 'Đường ', $vName);
+            }
+
+            $addr = $b->address;
+            if ($addr) {
+                $addr = preg_replace('/Thon Phuc Loc/i', '', $addr);
+                $addr = preg_replace('/Thon Dong Anh \(Cum 3\)/i', '', $addr);
+                $addr = preg_replace('/Thon Duc Noi/i', '', $addr);
+                $addr = preg_replace('/Thon Viet Hung/i', '', $addr);
+                $addr = preg_replace('/Thôn Xuân Canh/u', '', $addr);
+                $addr = preg_replace('/Thị trấn Đông Anh \(Đản Dị\)/u', '', $addr);
+                $addr = preg_replace('/Thôn Mai Lâm \(Dốc Vân\)/u', '', $addr);
+                $addr = preg_replace('/Thôn Mai Lâm/u', '', $addr);
+                $addr = preg_replace('/,?\s*(Thôn|Thon)\s+[^,]+/iu', '', $addr);
+                $addr = preg_replace('/\s*,\s*,+/', ',', $addr);
+                $addr = trim($addr, " \t\n\r\0\x0B,");
+            }
+
             return [
                 'id' => $b->id,
                 'name' => $b->name,
                 'owner' => $b->owner,
                 'village' => $b->village_key,
-                'villageName' => $b->village_name,
+                'villageName' => $vName,
                 'type' => $b->type,
                 'rating' => (float)$b->rating,
-                'address' => $b->address,
+                'address' => $addr,
                 'phone' => $b->phone,
                 'bankAccount' => $b->bank_account,
                 'bank' => $b->bank_name,

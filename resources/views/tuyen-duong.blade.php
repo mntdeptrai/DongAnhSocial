@@ -475,7 +475,7 @@
                         <circle cx="7" cy="7" r="5.5" stroke="#94a3b8" stroke-width="1.8"/>
                         <path d="M 11 11 L 15 15" stroke="#94a3b8" stroke-width="1.8" stroke-linecap="round"/>
                     </svg>
-                    <input type="text" x-model="search" @input="updateMapMarkers()" placeholder="Tìm tên chủ hộ, tên quán, mặt hàng, thôn..." 
+                    <input type="text" x-model="search" @input="updateMapMarkers()" placeholder="Tìm tên chủ hộ, tên quán, mặt hàng, đường..." 
                            style="width: 100%; padding: 10px 14px 10px 38px; background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 14px; font-size: 0.85rem; color: #0f172a; outline: none; transition: all 0.2s;"
                            onfocus="this.style.borderColor='#10b981'; this.style.background='#ffffff'; this.style.boxShadow='0 0 0 3px rgba(16,185,129,0.1)';" 
                            onblur="this.style.borderColor='#e2e8f0'; this.style.background='#f8fafc'; this.style.boxShadow='none';">
@@ -512,13 +512,13 @@
                                 onblur="this.style.borderColor='#cbd5e1'; this.style.background='#f8fafc';">
                             <option value="all">🛣️ Tất cả tuyến đường</option>
                             <option value="phu-loc">📍 Đường Phúc Lộc</option>
-                            <option value="dong-anh-cum-3">📍 Quốc Lộ 3 (Cụm 3)</option>
+                            <option value="dong-anh-cum-3">📍 Quốc Lộ 3</option>
                             <option value="duc-noi">📍 Đường Cổ Vân</option>
-                            <option value="viet-hung">📍 Tuyến Việt Hùng</option>
-                            <option value="cao-lo">📍 Đường Cao Lỗ (Hùng Sơn)</option>
-                            <option value="xuan-canh">📍 Tuyến 4.0 Xuân Canh</option>
-                            <option value="dan-di">📍 Tuyến 4.0 Đản Dị</option>
-                            <option value="mai-lam">📍 Tuyến 4.0 Dốc Vân (Mai Lâm)</option>
+                            <option value="viet-hung">📍 Đường Việt Hùng</option>
+                            <option value="cao-lo">📍 Đường Cao Lỗ</option>
+                            <option value="xuan-canh">📍 Đường Xuân Canh</option>
+                            <option value="dan-di">📍 Đường Đản Dị</option>
+                            <option value="mai-lam">📍 Đường Dốc Vân</option>
                         </select>
                     </div>
                 </div>
@@ -739,20 +739,20 @@
             ],
 
             villages: [
-                { id: 'phu-loc', name: 'Phúc Lộc', routeName: 'Đường Phúc Lộc', color: '#F97316' },
-                { id: 'dong-anh-cum-3', name: 'Đông Anh (Cụm 3)', routeName: 'Quốc Lộ 3 (Cụm 3)', color: '#10B981' },
-                { id: 'duc-noi', name: 'Dục Nội', routeName: 'Đường Cổ Vân', color: '#EAB308' },
-                { id: 'viet-hung', name: 'Việt Hùng', routeName: 'Tuyến Việt Hùng', color: '#3B82F6' },
-                { id: 'cao-lo', name: 'Đường Cao Lỗ', routeName: 'Đường Cao Lỗ (Hùng Sơn)', color: '#EC4899' },
-                { id: 'xuan-canh', name: 'Xuân Canh', routeName: 'Tuyến Đường 4.0 Xuân Canh', color: '#8B5CF6' },
-                { id: 'dan-di', name: 'Đản Dị', routeName: 'Tuyến Đường 4.0 Đản Dị', color: '#06B6D4' },
-                { id: 'mai-lam', name: 'Dốc Vân (Mai Lâm)', routeName: 'Tuyến Đường 4.0 Dốc Vân', color: '#10B981' }
+                { id: 'phu-loc', name: 'Đường Phúc Lộc', routeName: 'Đường Phúc Lộc', color: '#F97316' },
+                { id: 'dong-anh-cum-3', name: 'Quốc Lộ 3', routeName: 'Quốc Lộ 3', color: '#10B981' },
+                { id: 'duc-noi', name: 'Đường Cổ Vân', routeName: 'Đường Cổ Vân', color: '#EAB308' },
+                { id: 'viet-hung', name: 'Đường Việt Hùng', routeName: 'Đường Việt Hùng', color: '#3B82F6' },
+                { id: 'cao-lo', name: 'Đường Cao Lỗ', routeName: 'Đường Cao Lỗ', color: '#EC4899' },
+                { id: 'xuan-canh', name: 'Đường Xuân Canh', routeName: 'Đường Xuân Canh', color: '#8B5CF6' },
+                { id: 'dan-di', name: 'Đường Đản Dị', routeName: 'Đường Đản Dị', color: '#06B6D4' },
+                { id: 'mai-lam', name: 'Đường Dốc Vân', routeName: 'Đường Dốc Vân', color: '#10B981' }
             ],
 
             routes: @json($dbRoutes ?? []).length > 0 ? @json($dbRoutes) : [
                 {
                     id: 'route-phu-loc',
-                    name: 'Tuyến 1: Đường Phúc Lộc (Phúc Lộc)',
+                    name: 'Tuyến 1: Đường Phúc Lộc',
                     length: '1.2km',
                     color: '#F97316',
                     villages: ['phu-loc'],
@@ -765,7 +765,7 @@
                 },
                 {
                     id: 'route-ql3',
-                    name: 'Tuyến 2: Quốc Lộ 3 (Cụm 3)',
+                    name: 'Tuyến 2: Quốc Lộ 3',
                     length: '1.8km',
                     color: '#10B981',
                     villages: ['dong-anh-cum-3'],
@@ -778,7 +778,7 @@
                 },
                 {
                     id: 'route-co-van',
-                    name: 'Tuyến 3: Đường Cổ Vân (Dục Nội)',
+                    name: 'Tuyến 3: Đường Cổ Vân',
                     length: '0.8km',
                     color: '#EAB308',
                     villages: ['duc-noi'],
@@ -793,7 +793,7 @@
                 },
                 {
                     id: 'route-viet-hung',
-                    name: 'Tuyến 4: Tuyến Việt Hùng (Việt Hùng)',
+                    name: 'Tuyến 4: Đường Việt Hùng',
                     length: '1.2km',
                     color: '#3B82F6',
                     villages: ['viet-hung'],
@@ -806,7 +806,7 @@
                 },
                 {
                     id: 'route-cao-lo',
-                    name: 'Tuyến 5: Đường Cao Lỗ (Ngã tư QL3 - Hùng Sơn)',
+                    name: 'Tuyến 5: Đường Cao Lỗ',
                     length: '1.1km',
                     color: '#EC4899',
                     villages: ['cao-lo'],
@@ -821,7 +821,7 @@
                 },
                 {
                     id: 'route-xuan-canh',
-                    name: 'Tuyến 6: Tuyến Đường 4.0 Xuân Canh',
+                    name: 'Tuyến 6: Đường Xuân Canh',
                     length: '1.5km',
                     color: '#8B5CF6',
                     villages: ['xuan-canh'],
@@ -835,7 +835,7 @@
                 },
                 {
                     id: 'route-dan-di',
-                    name: 'Tuyến 7: Tuyến Đường 4.0 Đản Dị (Khối 4)',
+                    name: 'Tuyến 7: Đường Đản Dị',
                     length: '1.2km',
                     color: '#06B6D4',
                     villages: ['dan-di'],
@@ -848,7 +848,7 @@
                 },
                 {
                     id: 'route-doc-van',
-                    name: 'Tuyến 8: Tuyến Đường 4.0 Dốc Vân (Mai Lâm)',
+                    name: 'Tuyến 8: Đường Dốc Vân',
                     length: '2.1km',
                     color: '#10B981',
                     villages: ['mai-lam'],
@@ -861,7 +861,64 @@
                 }
             ],
 
-            locations: @json($dbLocations ?? []).length > 0 ? @json($dbLocations) : [],
+            locations: (@json($dbLocations ?? []).length > 0 ? @json($dbLocations) : []).map(loc => {
+                const villageNameMap = {
+                    'phu-loc': 'Đường Phúc Lộc',
+                    'dong-anh-cum-3': 'Quốc Lộ 3',
+                    'duc-noi': 'Đường Cổ Vân',
+                    'viet-hung': 'Đường Việt Hùng',
+                    'cao-lo': 'Đường Cao Lỗ',
+                    'xuan-canh': 'Đường Xuân Canh',
+                    'dan-di': 'Đường Đản Dị',
+                    'mai-lam': 'Đường Dốc Vân'
+                };
+
+                if (villageNameMap[loc.village]) {
+                    loc.villageName = villageNameMap[loc.village];
+                } else if (loc.villageName) {
+                    loc.villageName = String(loc.villageName)
+                        .replace(/Thon Phuc Loc/gi, 'Đường Phúc Lộc')
+                        .replace(/Thôn Phúc Lộc/gi, 'Đường Phúc Lộc')
+                        .replace(/Thon Dong Anh \(Cum 3\)/gi, 'Quốc Lộ 3')
+                        .replace(/Thon Duc Noi/gi, 'Đường Cổ Vân')
+                        .replace(/Thon Viet Hung/gi, 'Đường Việt Hùng')
+                        .replace(/Thôn Xuân Canh/gi, 'Đường Xuân Canh')
+                        .replace(/Thị trấn Đông Anh \(Đản Dị\)/gi, 'Đường Đản Dị')
+                        .replace(/Thôn Mai Lâm \(Dốc Vân\)/gi, 'Đường Dốc Vân')
+                        .replace(/^Thôn\s+/i, 'Đường ')
+                        .replace(/^Thon\s+/i, 'Duong ');
+                }
+
+                if (loc.address) {
+                    let addr = String(loc.address);
+                    addr = addr
+                        .replace(/,\s*Thon Phuc Loc/gi, '')
+                        .replace(/Thon Phuc Loc,\s*/gi, '')
+                        .replace(/Thon Phuc Loc/gi, '')
+                        .replace(/,\s*Thôn Phúc Lộc/gi, '')
+                        .replace(/Thôn Phúc Lộc,\s*/gi, '')
+                        .replace(/Thôn Phúc Lộc/gi, '')
+                        .replace(/,\s*Thon Dong Anh \(Cum 3\)/gi, '')
+                        .replace(/Thon Dong Anh \(Cum 3\),\s*/gi, '')
+                        .replace(/,\s*Thon Duc Noi/gi, '')
+                        .replace(/Thon Duc Noi,\s*/gi, '')
+                        .replace(/,\s*Thon Viet Hung/gi, '')
+                        .replace(/Thon Viet Hung,\s*/gi, '')
+                        .replace(/,\s*Thôn Xuân Canh/gi, '')
+                        .replace(/,\s*Thị trấn Đông Anh \(Đản Dị\)/gi, '')
+                        .replace(/,\s*Thôn Mai Lâm \(Dốc Vân\)/gi, '')
+                        .replace(/,\s*Thôn Mai Lâm/gi, '')
+                        .replace(/,?\s*(Thôn|Thon)\s+[^,]+/gi, '')
+                        .replace(/\s*,\s*,+/g, ',')
+                        .replace(/^\s*,\s*/, '')
+                        .replace(/\s*,\s*$/, '')
+                        .replace(/\s+/g, ' ')
+                        .trim();
+                    loc.address = addr;
+                }
+
+                return loc;
+            }),
 
             initMap() {
                 this.$nextTick(() => {
