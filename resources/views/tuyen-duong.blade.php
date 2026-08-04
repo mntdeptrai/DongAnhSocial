@@ -919,11 +919,11 @@
                     // Add Custom Zoom Control to top-left
                     L.control.zoom({ position: 'topleft' }).addTo(this.map);
 
-                    // Add High-Quality CartoDB Voyager Map Tiles
-                    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-                        attribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; OpenStreetMap',
-                        subdomains: 'abcd',
-                        maxZoom: 19
+                    // Add Official High-Definition Google Maps Tiles
+                    L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+                        maxZoom: 20,
+                        subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+                        attribution: '&copy; Google Maps'
                     }).addTo(this.map);
 
                     // Initialize Marker Cluster Group for high-density scalability
