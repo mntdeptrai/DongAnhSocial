@@ -87,9 +87,9 @@ class DigitalRouteSeeder extends Seeder
                 'color' => '#EC4899',
                 'anim_class' => 'route-path-animated-2',
                 'path_coords' => [
-                    [21.1396, 105.8435],
-                    [21.1398, 105.8480],
-                    [21.1402, 105.8530]
+                    [21.1408, 105.8435],
+                    [21.1409, 105.8480],
+                    [21.1410, 105.8530]
                 ]
             ]
         ];

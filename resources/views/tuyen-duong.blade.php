@@ -1025,6 +1025,69 @@
                     }).addTo(this.map);
                     this.polylinesMap[r.id] = mainLine;
 
+                    // Helper to snap store markers smoothly along the polyline
+                    const snapRouteStores = (routeId, lineCoords) => {
+                        if (!lineCoords || lineCoords.length < 2) return;
+
+                        const routeVillageMap = {
+                            'route-phu-loc': 'phu-loc',
+                            'route-ql3': 'dong-anh-cum-3',
+                            'route-co-van': 'duc-noi',
+                            'route-viet-hung': 'viet-hung',
+                            'route-cao-lo': 'cao-lo'
+                        };
+
+                        const targetVillage = routeVillageMap[routeId];
+                        if (!targetVillage) return;
+
+                        const routeLocs = this.locations.filter(loc => loc.village === targetVillage);
+                        if (routeLocs.length === 0) return;
+
+                        const dists = [0];
+                        for (let i = 1; i < lineCoords.length; i++) {
+                            const dLat = lineCoords[i][0] - lineCoords[i-1][0];
+                            const dLng = lineCoords[i][1] - lineCoords[i-1][1];
+                            dists.push(dists[i-1] + Math.sqrt(dLat * dLat + dLng * dLng));
+                        }
+                        const totalDist = dists[dists.length - 1];
+                        if (totalDist <= 0) return;
+
+                        const n = routeLocs.length;
+                        routeLocs.forEach((loc, idx) => {
+                            const frac = n > 1 ? (0.04 + (idx / (n - 1)) * 0.92) : 0.50;
+                            const targetD = frac * totalDist;
+
+                            let seg = 0;
+                            while (seg < dists.length - 2 && dists[seg + 1] < targetD) {
+                                seg++;
+                            }
+
+                            const segStartD = dists[seg];
+                            const segEndD = dists[seg + 1];
+                            const segLen = segEndD - segStartD;
+                            const segT = segLen > 0 ? (targetD - segStartD) / segLen : 0;
+
+                            const p1 = lineCoords[seg];
+                            const p2 = lineCoords[seg + 1];
+
+                            const snappedLat = p1[0] + (p2[0] - p1[0]) * segT;
+                            const snappedLng = p1[1] + (p2[1] - p1[1]) * segT;
+
+                            loc.lat = snappedLat;
+                            loc.lng = snappedLng;
+
+                            const m = this.markersMap[loc.id];
+                            if (m) {
+                                m.setLatLng([snappedLat, snappedLng]);
+                            }
+                        });
+                    };
+
+                    // Initial snap with fallback pathCoords
+                    if (r.pathCoords && r.pathCoords.length >= 2) {
+                        snapRouteStores(r.id, r.pathCoords);
+                    }
+
                     // Fetch OSRM Real-world Street Routing Geometry
                     if (r.pathCoords && r.pathCoords.length >= 2) {
                         const waypointsStr = r.pathCoords.map(c => `${c[1]},${c[0]}`).join(';');
@@ -1038,6 +1101,7 @@
                                     if (coords.length > 0) {
                                         glowLine.setLatLngs(coords);
                                         mainLine.setLatLngs(coords);
+                                        snapRouteStores(r.id, coords);
                                     }
                                 }
                             })
