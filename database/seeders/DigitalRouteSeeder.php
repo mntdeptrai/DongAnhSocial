@@ -5,6 +5,9 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use App\Models\DigitalRoute;
 use App\Models\RouteBusiness;
+use App\Models\User;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 
 class DigitalRouteSeeder extends Seeder
@@ -94,11 +97,57 @@ class DigitalRouteSeeder extends Seeder
                     [21.14095, 105.8510],
                     [21.1410, 105.8530]
                 ]
+            ],
+            [
+                'route_key'    => 'route-xuan-canh',
+                'name'         => 'Tuyến 6: Tuyến Đường 4.0 Xuân Canh',
+                'village_key'  => 'xuan-canh',
+                'village_name' => 'Thôn Xuân Canh',
+                'length'       => '1.5km',
+                'color'        => '#8B5CF6',
+                'anim_class'   => 'route-path-animated-3',
+                'path_coords'  => [
+                    [21.0850, 105.8600],
+                    [21.0862, 105.8615],
+                    [21.0871, 105.8628],
+                    [21.0880, 105.8640]
+                ]
+            ],
+            [
+                'route_key'    => 'route-dan-di',
+                'name'         => 'Tuyến 7: Tuyến Đường 4.0 Đản Dị (Khối 4)',
+                'village_key'  => 'dan-di',
+                'village_name' => 'Thị trấn Đông Anh (Đản Dị)',
+                'length'       => '1.2km',
+                'color'        => '#06B6D4',
+                'anim_class'   => 'route-path-animated-1',
+                'path_coords'  => [
+                    [21.1440, 105.8500],
+                    [21.1455, 105.8520],
+                    [21.1470, 105.8540]
+                ]
+            ],
+            [
+                'route_key'    => 'route-doc-van',
+                'name'         => 'Tuyến 8: Tuyến Đường 4.0 Dốc Vân (Thôn Mai Lâm)',
+                'village_key'  => 'mai-lam',
+                'village_name' => 'Thôn Mai Lâm (Dốc Vân)',
+                'length'       => '2.1km',
+                'color'        => '#10B981',
+                'anim_class'   => 'route-path-animated-2',
+                'path_coords'  => [
+                    [21.0720, 105.8750],
+                    [21.0735, 105.8770],
+                    [21.0750, 105.8790]
+                ]
             ]
         ];
 
         foreach ($routes as $r) {
-            DigitalRoute::create($r);
+            DigitalRoute::updateOrCreate(
+                ['route_key' => $r['route_key']],
+                $r
+            );
         }
 
         // 2. Seed 72 Household Businesses from 5 Datasets
@@ -183,11 +232,125 @@ class DigitalRouteSeeder extends Seeder
             ['route_key' => 'route-cao-lo', 'name' => 'Cafe 14/8', 'owner' => 'Le Van Kinh', 'village_key' => 'cao-lo', 'village_name' => 'Duong Cao Lo', 'type' => 'quan-an', 'rating' => 4.8, 'address' => 'Duong Cao Lo, Dong Anh', 'phone' => '0815622662', 'bank_account' => '0815622662', 'bank_name' => 'MB Bank', 'is_open' => true, 'menu' => ['Ca phe pha may', 'Nuoc ep trai cay tuoi'], 'image_url' => 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=420&h=230&fit=crop&auto=format', 'lat' => 21.1401, 'lng' => 105.8512],
             ['route_key' => 'route-cao-lo', 'name' => 'Quan Banh Trang Thit Heo Do Van Kien', 'owner' => 'Do Van Kien', 'village_key' => 'cao-lo', 'village_name' => 'Duong Cao Lo', 'type' => 'quan-an', 'rating' => 4.7, 'address' => 'Duong Cao Lo, Dong Anh', 'phone' => '0978023641', 'bank_account' => '97459999', 'bank_name' => 'MB Bank', 'is_open' => true, 'menu' => ['Banh trang cuon thit heo', 'Banh trang nuong Da Lat'], 'image_url' => 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=420&h=230&fit=crop&auto=format', 'lat' => 21.1402, 'lng' => 105.8519],
             ['route_key' => 'route-cao-lo', 'name' => 'Cua Hang Tap Hoa Do Thi Hoan', 'owner' => 'Do Thi Hoan', 'village_key' => 'cao-lo', 'village_name' => 'Duong Cao Lo', 'type' => 'tap-hoa', 'rating' => 4.6, 'address' => 'Duong Cao Lo, Dong Anh', 'phone' => '0362589506', 'bank_account' => '09999080876', 'bank_name' => 'MB Bank', 'is_open' => true, 'menu' => ['Tap hoa tong hop gia dinh', 'Banh keo & nuoc giai khat'], 'image_url' => 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?w=420&h=230&fit=crop&auto=format', 'lat' => 21.1402, 'lng' => 105.8525],
-            ['route_key' => 'route-cao-lo', 'name' => 'Cua Hang Rem Chan Ga Le Thi Yen', 'owner' => 'Lê Thị Yến', 'village_key' => 'cao-lo', 'village_name' => 'Duong Cao Lo', 'type' => 'thoi-trang', 'rating' => 4.8, 'address' => 'Duong Cao Lo, Dong Anh', 'phone' => '0912381877', 'bank_account' => '21410286279', 'bank_name' => 'BIDV', 'is_open' => true, 'menu' => ['Rem cua cao cap', 'Chan ga goi dem Song Hong'], 'image_url' => 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=420&h=230&fit=crop&auto=format', 'lat' => 21.1402, 'lng' => 105.8530]
+            ['route_key' => 'route-cao-lo', 'name' => 'Cua Hang Rem Chan Ga Le Thi Yen', 'owner' => 'Lê Thị Yến', 'village_key' => 'cao-lo', 'village_name' => 'Duong Cao Lo', 'type' => 'thoi-trang', 'rating' => 4.8, 'address' => 'Duong Cao Lo, Dong Anh', 'phone' => '0912381877', 'bank_account' => '21410286279', 'bank_name' => 'BIDV', 'is_open' => true, 'menu' => ['Rem cua cao cap', 'Chan ga goi dem Song Hong'], 'image_url' => 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=420&h=230&fit=crop&auto=format', 'lat' => 21.1402, 'lng' => 105.8530],
+
+            // -----------------------------------------------------------------
+            // TUYẾN 6: TUYẾN ĐƯỜNG 4.0 XUÂN CANH (5 hộ)
+            // -----------------------------------------------------------------
+            ['route_key' => 'route-xuan-canh', 'name' => 'Cửa Hàng Tạp Hóa Lê Thị Diệp', 'owner' => 'Lê Thị Diệp', 'village_key' => 'xuan-canh', 'village_name' => 'Thôn Xuân Canh', 'type' => 'tap-hoa', 'rating' => 4.8, 'address' => 'Đường Xuân Canh, Thôn Xuân Canh, Đông Anh, Hà Nội', 'phone' => '0388345695', 'bank_account' => '19038393052013', 'bank_name' => 'Techcombank', 'is_open' => true, 'menu' => ['Tạp hóa tổng hợp gia đình', 'Nước giải khát bánh kẹo'], 'image_url' => 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?w=420&h=230&fit=crop&auto=format', 'lat' => 21.0850, 'lng' => 105.8600],
+            ['route_key' => 'route-xuan-canh', 'name' => 'Tạp Hóa Trương Hữu Sơn', 'owner' => 'Trương Hữu Sơn', 'village_key' => 'xuan-canh', 'village_name' => 'Thôn Xuân Canh', 'type' => 'tap-hoa', 'rating' => 4.7, 'address' => 'Đường Xuân Canh, Thôn Xuân Canh, Đông Anh, Hà Nội', 'phone' => '0983467066', 'bank_account' => '21410002728254', 'bank_name' => 'BIDV', 'is_open' => true, 'menu' => ['Tạp hóa gia đình', 'Gia vị & đồ khô'], 'image_url' => 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=420&h=230&fit=crop&auto=format', 'lat' => 21.0858, 'lng' => 105.8610],
+            ['route_key' => 'route-xuan-canh', 'name' => 'Tạp Hóa Nguyễn Thị Xuân', 'owner' => 'Nguyễn Thị Xuân', 'village_key' => 'xuan-canh', 'village_name' => 'Thôn Xuân Canh', 'type' => 'tap-hoa', 'rating' => 4.6, 'address' => 'Đường Xuân Canh, Thôn Xuân Canh, Đông Anh, Hà Nội', 'phone' => '0384545761', 'bank_account' => '0964761655', 'bank_name' => 'MB Bank', 'is_open' => true, 'menu' => ['Nước giải khát bánh kẹo', 'Vật dụng thiết yếu'], 'image_url' => 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?w=420&h=230&fit=crop&auto=format', 'lat' => 21.0865, 'lng' => 105.8620],
+            ['route_key' => 'route-xuan-canh', 'name' => 'Cửa Hàng Cắt Tóc Hải Yến', 'owner' => 'Nguyễn Thị Hải Yến', 'village_key' => 'xuan-canh', 'village_name' => 'Thôn Xuân Canh', 'type' => 'dich-vu', 'rating' => 4.9, 'address' => 'Đường Xuân Canh, Thôn Xuân Canh, Đông Anh, Hà Nội', 'phone' => '0972353250', 'bank_account' => '0972353250', 'bank_name' => 'MB Bank', 'is_open' => true, 'menu' => ['Cắt tóc nam nữ', 'Uốn gội nhuộm tạo kiểu'], 'image_url' => 'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=420&h=230&fit=crop&auto=format', 'lat' => 21.0872, 'lng' => 105.8630],
+            ['route_key' => 'route-xuan-canh', 'name' => 'Cửa Hàng Đồ Mã Mai Thị Huyền', 'owner' => 'Mai Thị Huyền', 'village_key' => 'xuan-canh', 'village_name' => 'Thôn Xuân Canh', 'type' => 'thoi-trang', 'rating' => 4.7, 'address' => 'Đường Xuân Canh, Thôn Xuân Canh, Đông Anh, Hà Nội', 'phone' => '0343275668', 'bank_account' => '0973602622', 'bank_name' => 'VPBank', 'is_open' => true, 'menu' => ['Đồ mã lễ tết', 'Vàng mã hương trầm'], 'image_url' => 'https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=420&h=230&fit=crop&auto=format', 'lat' => 21.0880, 'lng' => 105.8640],
+
+            // -----------------------------------------------------------------
+            // TUYẾN 7: TUYẾN ĐƯỜNG 4.0 ĐẢN DỊ (8 hộ)
+            // -----------------------------------------------------------------
+            ['route_key' => 'route-dan-di', 'name' => 'Cửa Hàng Mũ Bảo Hiểm Hương Dung', 'owner' => 'Phan Thị Hương Dung', 'village_key' => 'dan-di', 'village_name' => 'Thị trấn Đông Anh (Đản Dị)', 'type' => 'dich-vu', 'rating' => 4.8, 'address' => 'Đường Đản Dị, Khối 4, Thị trấn Đông Anh, Hà Nội', 'phone' => '0986265089', 'bank_account' => '100886648700', 'bank_name' => 'Vietinbank', 'is_open' => true, 'menu' => ['Mũ bảo hiểm chính hãng', 'Kính chắn gió phụ kiện xe'], 'image_url' => 'https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=420&h=230&fit=crop&auto=format', 'lat' => 21.1440, 'lng' => 105.8500],
+            ['route_key' => 'route-dan-di', 'name' => 'Quán Ăn Sáng Thanh Duyên', 'owner' => 'Lê Thị Thanh Duyên', 'village_key' => 'dan-di', 'village_name' => 'Thị trấn Đông Anh (Đản Dị)', 'type' => 'quan-an', 'rating' => 4.9, 'address' => 'Đường Đản Dị, Khối 4, Thị trấn Đông Anh, Hà Nội', 'phone' => '0935914366', 'bank_account' => '1973198314', 'bank_name' => 'Techcombank', 'is_open' => true, 'menu' => ['Bún phở ăn sáng', 'Bánh mỳ xôi nóng'], 'image_url' => 'https://images.unsplash.com/photo-1597345637412-9fd611e758f3?w=420&h=230&fit=crop&auto=format', 'lat' => 21.1442, 'lng' => 105.8503],
+            ['route_key' => 'route-dan-di', 'name' => 'Quán Ăn Sáng Nguyễn Thị Thanh', 'owner' => 'Nguyễn Thị Thanh', 'village_key' => 'dan-di', 'village_name' => 'Thị trấn Đông Anh (Đản Dị)', 'type' => 'quan-an', 'rating' => 4.7, 'address' => 'Đường Đản Dị, Khối 4, Thị trấn Đông Anh, Hà Nội', 'phone' => '0335766384', 'bank_account' => '0335766384', 'bank_name' => 'MB Bank', 'is_open' => true, 'menu' => ['Bún bò huế bún riêu', 'Bún chả nướng'], 'image_url' => 'https://images.unsplash.com/photo-1597345637412-9fd611e758f3?w=420&h=230&fit=crop&auto=format', 'lat' => 21.1445, 'lng' => 105.8506],
+            ['route_key' => 'route-dan-di', 'name' => 'Quán Ăn Sáng Nguyễn Thị Huyền', 'owner' => 'Nguyễn Thị Huyền', 'village_key' => 'dan-di', 'village_name' => 'Thị trấn Đông Anh (Đản Dị)', 'type' => 'quan-an', 'rating' => 4.8, 'address' => 'Đường Đản Dị, Khối 4, Thị trấn Đông Anh, Hà Nội', 'phone' => '0328891629', 'bank_account' => '09235488843003', 'bank_name' => 'Techcombank', 'is_open' => true, 'menu' => ['Phở bò phở gà ta', 'Miến gà cháo lòng'], 'image_url' => 'https://images.unsplash.com/photo-1597345637412-9fd611e758f3?w=420&h=230&fit=crop&auto=format', 'lat' => 21.1448, 'lng' => 105.8510],
+            ['route_key' => 'route-dan-di', 'name' => 'Cửa Hàng Kim Khí Nguyễn Trọng Thành', 'owner' => 'Nguyễn Trọng Thành', 'village_key' => 'dan-di', 'village_name' => 'Thị trấn Đông Anh (Đản Dị)', 'type' => 'dich-vu', 'rating' => 4.8, 'address' => 'Đường Đản Dị, Khối 4, Thị trấn Đông Anh, Hà Nội', 'phone' => '0963287314', 'bank_account' => '8855283037', 'bank_name' => 'BIDV', 'is_open' => true, 'menu' => ['Ốc vít kim khí xây dựng', 'Vật tư cơ khí gia đình'], 'image_url' => 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=420&h=230&fit=crop&auto=format', 'lat' => 21.1451, 'lng' => 105.8514],
+            ['route_key' => 'route-dan-di', 'name' => 'Tạp Hóa Nguyễn Thị Nguyên', 'owner' => 'Nguyễn Thị Nguyên', 'village_key' => 'dan-di', 'village_name' => 'Thị trấn Đông Anh (Đản Dị)', 'type' => 'tap-hoa', 'rating' => 4.6, 'address' => 'Đường Đản Dị, Khối 4, Thị trấn Đông Anh, Hà Nội', 'phone' => '0368879888', 'bank_account' => '10683555', 'bank_name' => 'Vietinbank', 'is_open' => true, 'menu' => ['Bánh kẹo đường sữa', 'Nước giải khát tạp hóa'], 'image_url' => 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?w=420&h=230&fit=crop&auto=format', 'lat' => 21.1454, 'lng' => 105.8518],
+            ['route_key' => 'route-dan-di', 'name' => 'Cửa Hàng Nước Giải Khát Đinh Thị Oanh', 'owner' => 'Đinh Thị Oanh', 'village_key' => 'dan-di', 'village_name' => 'Thị trấn Đông Anh (Đản Dị)', 'type' => 'quan-an', 'rating' => 4.7, 'address' => 'Đường Đản Dị, Khối 4, Thị trấn Đông Anh, Hà Nội', 'phone' => '0862089997', 'bank_account' => '0862089997', 'bank_name' => 'VPBank', 'is_open' => true, 'menu' => ['Nước giải khát pha chế', 'Trà chanh sinh tố'], 'image_url' => 'https://images.unsplash.com/photo-1621263764928-df1444c5e859?w=420&h=230&fit=crop&auto=format', 'lat' => 21.1457, 'lng' => 105.8522],
+            ['route_key' => 'route-dan-di', 'name' => 'Quán Ăn Sáng Nguyễn Thu Hương', 'owner' => 'Nguyễn Thu Hương', 'village_key' => 'dan-di', 'village_name' => 'Thị trấn Đông Anh (Đản Dị)', 'type' => 'quan-an', 'rating' => 4.9, 'address' => 'Đường Đản Dị, Khối 4, Thị trấn Đông Anh, Hà Nội', 'phone' => '0393879899', 'bank_account' => '91902744', 'bank_name' => 'Vietinbank', 'is_open' => true, 'menu' => ['Bún mọc bún sườn', 'Cháo ngan phở bò'], 'image_url' => 'https://images.unsplash.com/photo-1597345637412-9fd611e758f3?w=420&h=230&fit=crop&auto=format', 'lat' => 21.1460, 'lng' => 105.8526],
+
+            // -----------------------------------------------------------------
+            // TUYẾN 8: TUYẾN ĐƯỜNG 4.0 DỐC VÂN - THÔN MAI LÂM (37 hộ)
+            // -----------------------------------------------------------------
+            ['route_key' => 'route-doc-van', 'name' => 'Sửa Chữa Điện Thoại Đặng Văn Hưng', 'owner' => 'Đặng Văn Hưng', 'village_key' => 'mai-lam', 'village_name' => 'Thôn Mai Lâm (Dốc Vân)', 'type' => 'dich-vu', 'rating' => 4.8, 'address' => 'Tuyến đường Dốc Vân, Thôn Mai Lâm, Đông Anh, Hà Nội', 'phone' => '', 'bank_account' => '105002793411', 'bank_name' => 'Vietinbank', 'is_open' => true, 'menu' => ['Sửa chữa ép kính điện thoại', 'Phụ kiện tai nghe cáp sạc'], 'image_url' => 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=420&h=230&fit=crop&auto=format', 'lat' => 21.0720, 'lng' => 105.8750],
+            ['route_key' => 'route-doc-van', 'name' => 'Tạp Hóa Ngô Thị Bính', 'owner' => 'Ngô Thị Bính', 'village_key' => 'mai-lam', 'village_name' => 'Thôn Mai Lâm (Dốc Vân)', 'type' => 'tap-hoa', 'rating' => 4.7, 'address' => 'Tuyến đường Dốc Vân, Thôn Mai Lâm, Đông Anh, Hà Nội', 'phone' => '0947096456', 'bank_account' => '00914955684', 'bank_name' => 'TPBank', 'is_open' => true, 'menu' => ['Tạp hóa gia đình', 'Nước giải khát bánh kẹo'], 'image_url' => 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?w=420&h=230&fit=crop&auto=format', 'lat' => 21.0722, 'lng' => 105.8752],
+            ['route_key' => 'route-doc-van', 'name' => 'Cửa Hàng Cắt Tóc Phạm Thị Bích', 'owner' => 'Phạm Thị Bích', 'village_key' => 'mai-lam', 'village_name' => 'Thôn Mai Lâm (Dốc Vân)', 'type' => 'dich-vu', 'rating' => 4.8, 'address' => 'Tuyến đường Dốc Vân, Thôn Mai Lâm, Đông Anh, Hà Nội', 'phone' => '0986845138', 'bank_account' => '0986845135', 'bank_name' => 'Vietinbank', 'is_open' => true, 'menu' => ['Cắt tóc uốn gội thời trang', 'Chăm sóc tóc nam nữ'], 'image_url' => 'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=420&h=230&fit=crop&auto=format', 'lat' => 21.0724, 'lng' => 105.8754],
+            ['route_key' => 'route-doc-van', 'name' => 'Quán Ăn Nguyễn Thị Hồng Linh', 'owner' => 'Nguyễn Thị Hồng Linh', 'village_key' => 'mai-lam', 'village_name' => 'Thôn Mai Lâm (Dốc Vân)', 'type' => 'quan-an', 'rating' => 4.9, 'address' => 'Tuyến đường Dốc Vân, Thôn Mai Lâm, Đông Anh, Hà Nội', 'phone' => '0849652639', 'bank_account' => '109879533208', 'bank_name' => 'Vietinbank', 'is_open' => true, 'menu' => ['Bún phở cơm bình dân', 'Đồ ăn sáng nóng hổi'], 'image_url' => 'https://images.unsplash.com/photo-1597345637412-9fd611e758f3?w=420&h=230&fit=crop&auto=format', 'lat' => 21.0726, 'lng' => 105.8756],
+            ['route_key' => 'route-doc-van', 'name' => 'Quán Cà Phê Trịnh T. Thúy Hạnh', 'owner' => 'Trịnh T. Thúy Hạnh', 'village_key' => 'mai-lam', 'village_name' => 'Thôn Mai Lâm (Dốc Vân)', 'type' => 'quan-an', 'rating' => 4.9, 'address' => 'Tuyến đường Dốc Vân, Thôn Mai Lâm, Đông Anh, Hà Nội', 'phone' => '0935939889', 'bank_account' => '1913263301814', 'bank_name' => 'Techcombank', 'is_open' => true, 'menu' => ['Cà phê pha máy espresso', 'Trà hoa quả sinh tố'], 'image_url' => 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=420&h=230&fit=crop&auto=format', 'lat' => 21.0728, 'lng' => 105.8758],
+            ['route_key' => 'route-doc-van', 'name' => 'Tiệm Cắt Tóc Nguyễn Văn Đức', 'owner' => 'Nguyễn Văn Đức', 'village_key' => 'mai-lam', 'village_name' => 'Thôn Mai Lâm (Dốc Vân)', 'type' => 'dich-vu', 'rating' => 4.7, 'address' => 'Tuyến đường Dốc Vân, Thôn Mai Lâm, Đông Anh, Hà Nội', 'phone' => '0978759974', 'bank_account' => '21410002044251', 'bank_name' => 'BIDV', 'is_open' => true, 'menu' => ['Cắt tóc nam barber', 'Nhuộm tạo kiểu hot trend'], 'image_url' => 'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=420&h=230&fit=crop&auto=format', 'lat' => 21.0730, 'lng' => 105.8760],
+            ['route_key' => 'route-doc-van', 'name' => 'Tạp Hóa Nguyễn Thị Tuyết', 'owner' => 'Nguyễn Thị Tuyết', 'village_key' => 'mai-lam', 'village_name' => 'Thôn Mai Lâm (Dốc Vân)', 'type' => 'tap-hoa', 'rating' => 4.6, 'address' => 'Tuyến đường Dốc Vân, Thôn Mai Lâm, Đông Anh, Hà Nội', 'phone' => '0961502906', 'bank_account' => '033568424879', 'bank_name' => 'Techcombank', 'is_open' => true, 'menu' => ['Tạp hóa gia vị', 'Bánh kẹo đồ khô'], 'image_url' => 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?w=420&h=230&fit=crop&auto=format', 'lat' => 21.0732, 'lng' => 105.8762],
+            ['route_key' => 'route-doc-van', 'name' => 'Quán Hàng Ăn Nguyễn Thị Nụ', 'owner' => 'Nguyễn Thị Nụ', 'village_key' => 'mai-lam', 'village_name' => 'Thôn Mai Lâm (Dốc Vân)', 'type' => 'quan-an', 'rating' => 4.8, 'address' => 'Tuyến đường Dốc Vân, Thôn Mai Lâm, Đông Anh, Hà Nội', 'phone' => '0946359035', 'bank_account' => '194704070007266', 'bank_name' => 'HDBank', 'is_open' => true, 'menu' => ['Cơm bình dân', 'Các món xào nấu'], 'image_url' => 'https://images.unsplash.com/photo-1597345637412-9fd611e758f3?w=420&h=230&fit=crop&auto=format', 'lat' => 21.0734, 'lng' => 105.8764],
+            ['route_key' => 'route-doc-van', 'name' => 'Tiệm Bánh Mì Nguyễn Anh Văn', 'owner' => 'Nguyễn Anh Văn', 'village_key' => 'mai-lam', 'village_name' => 'Thôn Mai Lâm (Dốc Vân)', 'type' => 'quan-an', 'rating' => 4.9, 'address' => 'Tuyến đường Dốc Vân, Thôn Mai Lâm, Đông Anh, Hà Nội', 'phone' => '0869571635', 'bank_account' => '0986845138', 'bank_name' => 'MB Bank', 'is_open' => true, 'menu' => ['Bánh mì pate trứng nướng', 'Bánh mì chả ruốc'], 'image_url' => 'https://images.unsplash.com/photo-1509722747041-616f39b57569?w=420&h=230&fit=crop&auto=format', 'lat' => 21.0736, 'lng' => 105.8766],
+            ['route_key' => 'route-doc-van', 'name' => 'Tạp Hóa Hoàng Như Tình', 'owner' => 'Hoàng Như Tình', 'village_key' => 'mai-lam', 'village_name' => 'Thôn Mai Lâm (Dốc Vân)', 'type' => 'tap-hoa', 'rating' => 4.7, 'address' => 'Tuyến đường Dốc Vân, Thôn Mai Lâm, Đông Anh, Hà Nội', 'phone' => '0369258715', 'bank_account' => '89051326866', 'bank_name' => 'Techcombank', 'is_open' => true, 'menu' => ['Bánh kẹo nước ngọt', 'Đồ dùng gia đình'], 'image_url' => 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?w=420&h=230&fit=crop&auto=format', 'lat' => 21.0738, 'lng' => 105.8768],
+            ['route_key' => 'route-doc-van', 'name' => 'Quầy Thuốc Thái Thị Linh Hương', 'owner' => 'Thái Thị Linh Hương', 'village_key' => 'mai-lam', 'village_name' => 'Thôn Mai Lâm (Dốc Vân)', 'type' => 'y-te', 'rating' => 4.9, 'address' => 'Tuyến đường Dốc Vân, Thôn Mai Lâm, Đông Anh, Hà Nội', 'phone' => '0358617770', 'bank_account' => '104886656574', 'bank_name' => 'Vietinbank', 'is_open' => true, 'menu' => ['Thuốc tân dược chính hãng', 'Thực phẩm chức năng'], 'image_url' => 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=420&h=230&fit=crop&auto=format', 'lat' => 21.0740, 'lng' => 105.8770],
+            ['route_key' => 'route-doc-van', 'name' => 'Quán Hàng Ăn Lê Thị Nguyệt', 'owner' => 'Lê Thị Nguyệt', 'village_key' => 'mai-lam', 'village_name' => 'Thôn Mai Lâm (Dốc Vân)', 'type' => 'quan-an', 'rating' => 4.8, 'address' => 'Tuyến đường Dốc Vân, Thôn Mai Lâm, Đông Anh, Hà Nội', 'phone' => '0357362590', 'bank_account' => '3140205145923', 'bank_name' => 'Agribank', 'is_open' => true, 'menu' => ['Các món ăn sáng dân dã', 'Bún phở nóng hổi'], 'image_url' => 'https://images.unsplash.com/photo-1597345637412-9fd611e758f3?w=420&h=230&fit=crop&auto=format', 'lat' => 21.0742, 'lng' => 105.8772],
+            ['route_key' => 'route-doc-van', 'name' => 'Cửa Hàng Vàng Mã Nguyễn T. Bích Thủy', 'owner' => 'Nguyễn T. Bích Thủy', 'village_key' => 'mai-lam', 'village_name' => 'Thôn Mai Lâm (Dốc Vân)', 'type' => 'thoi-trang', 'rating' => 4.6, 'address' => 'Tuyến đường Dốc Vân, Thôn Mai Lâm, Đông Anh, Hà Nội', 'phone' => '0979822572', 'bank_account' => '1051014670099', 'bank_name' => 'ABBank', 'is_open' => true, 'menu' => ['Vàng mã đồ lễ tết', 'Hương trầm giấy tiền'], 'image_url' => 'https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=420&h=230&fit=crop&auto=format', 'lat' => 21.0744, 'lng' => 105.8774],
+            ['route_key' => 'route-doc-van', 'name' => 'Cửa Hàng Hoa Quả Nguyễn Thị Dự', 'owner' => 'Nguyễn Thị Dự', 'village_key' => 'mai-lam', 'village_name' => 'Thôn Mai Lâm (Dốc Vân)', 'type' => 'tap-hoa', 'rating' => 4.9, 'address' => 'Tuyến đường Dốc Vân, Thôn Mai Lâm, Đông Anh, Hà Nội', 'phone' => '0329363668', 'bank_account' => '0643551963', 'bank_name' => 'VPBank', 'is_open' => true, 'menu' => ['Hoa quả tươi các mùa', 'Trái cây nhập khẩu'], 'image_url' => 'https://images.unsplash.com/photo-1619566636858-adf3ef46400b?w=420&h=230&fit=crop&auto=format', 'lat' => 21.0746, 'lng' => 105.8776],
+            ['route_key' => 'route-doc-van', 'name' => 'Win Mart Dốc Vân', 'owner' => 'Lý Thị Thảo', 'village_key' => 'mai-lam', 'village_name' => 'Thôn Mai Lâm (Dốc Vân)', 'type' => 'tap-hoa', 'rating' => 4.9, 'address' => 'Tuyến đường Dốc Vân, Thôn Mai Lâm, Đông Anh, Hà Nội', 'phone' => '0374546711', 'bank_account' => '', 'bank_name' => '', 'is_open' => true, 'menu' => ['Bách hóa tổng hợp', 'Thực phẩm tiện ích'], 'image_url' => 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?w=420&h=230&fit=crop&auto=format', 'lat' => 21.0748, 'lng' => 105.8778],
+            ['route_key' => 'route-doc-van', 'name' => 'Cửa Hàng Vàng Mã Nguyễn Kim Thúy', 'owner' => 'Nguyễn Kim Thúy', 'village_key' => 'mai-lam', 'village_name' => 'Thôn Mai Lâm (Dốc Vân)', 'type' => 'thoi-trang', 'rating' => 4.7, 'address' => 'Tuyến đường Dốc Vân, Thôn Mai Lâm, Đông Anh, Hà Nội', 'phone' => '0356570885', 'bank_account' => '022357070', 'bank_name' => 'BVBank', 'is_open' => true, 'menu' => ['Đồ mã lễ nghi', 'Trầm hương giấy cúng'], 'image_url' => 'https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=420&h=230&fit=crop&auto=format', 'lat' => 21.0750, 'lng' => 105.8780],
+            ['route_key' => 'route-doc-van', 'name' => 'Cửa Hàng Gas Trần Quang Thuận', 'owner' => 'Trần Quang Thuận', 'village_key' => 'mai-lam', 'village_name' => 'Thôn Mai Lâm (Dốc Vân)', 'type' => 'dich-vu', 'rating' => 4.8, 'address' => 'Tuyến đường Dốc Vân, Thôn Mai Lâm, Đông Anh, Hà Nội', 'phone' => '0392312894', 'bank_account' => '101886854026', 'bank_name' => 'Vietinbank', 'is_open' => true, 'menu' => ['Gas Petro Petrolimex', 'Thay dây van gas an toàn'], 'image_url' => 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=420&h=230&fit=crop&auto=format', 'lat' => 21.0752, 'lng' => 105.8782],
+            ['route_key' => 'route-doc-van', 'name' => 'Cà Phê Hiếu Dốc Vân', 'owner' => 'Ngô T. Vân Anh', 'village_key' => 'mai-lam', 'village_name' => 'Thôn Mai Lâm (Dốc Vân)', 'type' => 'quan-an', 'rating' => 4.8, 'address' => 'Tuyến đường Dốc Vân, Thôn Mai Lâm, Đông Anh, Hà Nội', 'phone' => '0915578115', 'bank_account' => '0985391986', 'bank_name' => 'Vietinbank', 'is_open' => true, 'menu' => ['Cà phê phin truyền thống', 'Đồ uống sinh tố'], 'image_url' => 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=420&h=230&fit=crop&auto=format', 'lat' => 21.0754, 'lng' => 105.8784],
+            ['route_key' => 'route-doc-van', 'name' => 'Nhà Thuốc Long Châu Dốc Vân', 'owner' => 'Trần Hoàng Lan', 'village_key' => 'mai-lam', 'village_name' => 'Thôn Mai Lâm (Dốc Vân)', 'type' => 'y-te', 'rating' => 4.9, 'address' => 'Tuyến đường Dốc Vân, Thôn Mai Lâm, Đông Anh, Hà Nội', 'phone' => '0372618122', 'bank_account' => '', 'bank_name' => '', 'is_open' => true, 'menu' => ['Thuốc tân dược nhập khẩu', 'Dụng cụ y tế gia đình'], 'image_url' => 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=420&h=230&fit=crop&auto=format', 'lat' => 21.0756, 'lng' => 105.8786],
+            ['route_key' => 'route-doc-van', 'name' => 'Cửa Hàng Kem Nguyễn Thị Yến', 'owner' => 'Nguyễn Thị Yến', 'village_key' => 'mai-lam', 'village_name' => 'Thôn Mai Lâm (Dốc Vân)', 'type' => 'quan-an', 'rating' => 4.7, 'address' => 'Tuyến đường Dốc Vân, Thôn Mai Lâm, Đông Anh, Hà Nội', 'phone' => '0855898481', 'bank_account' => '260111810000024', 'bank_name' => 'MOMO', 'is_open' => true, 'menu' => ['Kem tươi các loại', 'Kem que kem hộp'], 'image_url' => 'https://images.unsplash.com/photo-1563805042-7684c019e1cb?w=420&h=230&fit=crop&auto=format', 'lat' => 21.0758, 'lng' => 105.8788],
+            ['route_key' => 'route-doc-van', 'name' => 'Tạp Hóa Nguyễn Xuân Quang', 'owner' => 'Nguyễn Xuân Quang', 'village_key' => 'mai-lam', 'village_name' => 'Thôn Mai Lâm (Dốc Vân)', 'type' => 'tap-hoa', 'rating' => 4.8, 'address' => 'Tuyến đường Dốc Vân, Thôn Mai Lâm, Đông Anh, Hà Nội', 'phone' => '0988624255', 'bank_account' => '621839991988', 'bank_name' => 'BIDV', 'is_open' => true, 'menu' => ['Tạp hóa gia đình', 'Vật dụng sinh hoạt'], 'image_url' => 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?w=420&h=230&fit=crop&auto=format', 'lat' => 21.0760, 'lng' => 105.8790],
+            ['route_key' => 'route-doc-van', 'name' => 'Cửa Hàng Bán Rau Nguyễn Thị Lán', 'owner' => 'Nguyễn Thị Lán', 'village_key' => 'mai-lam', 'village_name' => 'Thôn Mai Lâm (Dốc Vân)', 'type' => 'tap-hoa', 'rating' => 4.9, 'address' => 'Tuyến đường Dốc Vân, Thôn Mai Lâm, Đông Anh, Hà Nội', 'phone' => '0343551963', 'bank_account' => '0343551963', 'bank_name' => 'VPBank', 'is_open' => true, 'menu' => ['Rau củ quả tươi vườn nhà', 'Rau xanh theo mùa'], 'image_url' => 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=420&h=230&fit=crop&auto=format', 'lat' => 21.0762, 'lng' => 105.8792],
+            ['route_key' => 'route-doc-van', 'name' => 'Quán Ăn Tạ Tú Quần', 'owner' => 'Tạ Tú Quần', 'village_key' => 'mai-lam', 'village_name' => 'Thôn Mai Lâm (Dốc Vân)', 'type' => 'quan-an', 'rating' => 4.8, 'address' => 'Tuyến đường Dốc Vân, Thôn Mai Lâm, Đông Anh, Hà Nội', 'phone' => '0914955684', 'bank_account' => '00914955684', 'bank_name' => 'TPBank', 'is_open' => true, 'menu' => ['Cơm đĩa bún phở', 'Món ăn gia đình'], 'image_url' => 'https://images.unsplash.com/photo-1597345637412-9fd611e758f3?w=420&h=230&fit=crop&auto=format', 'lat' => 21.0764, 'lng' => 105.8794],
+            ['route_key' => 'route-doc-van', 'name' => 'Tạp Hóa Trịnh T. Ánh Tuyết', 'owner' => 'Trịnh T. Ánh Tuyết', 'village_key' => 'mai-lam', 'village_name' => 'Thôn Mai Lâm (Dốc Vân)', 'type' => 'tap-hoa', 'rating' => 4.6, 'address' => 'Tuyến đường Dốc Vân, Thôn Mai Lâm, Đông Anh, Hà Nội', 'phone' => '0372400567', 'bank_account' => '033568424879', 'bank_name' => 'Techcombank', 'is_open' => true, 'menu' => ['Đồ dùng gia đình', 'Bánh kẹo giải khát'], 'image_url' => 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?w=420&h=230&fit=crop&auto=format', 'lat' => 21.0766, 'lng' => 105.8796],
+            ['route_key' => 'route-doc-van', 'name' => 'Sửa Chữa Điện Thoại Dương Đức Tùng', 'owner' => 'Dương Đức Tùng', 'village_key' => 'mai-lam', 'village_name' => 'Thôn Mai Lâm (Dốc Vân)', 'type' => 'dich-vu', 'rating' => 4.9, 'address' => 'Tuyến đường Dốc Vân, Thôn Mai Lâm, Đông Anh, Hà Nội', 'phone' => '0968282180', 'bank_account' => '3198266666', 'bank_name' => 'MB Bank', 'is_open' => true, 'menu' => ['Sửa mainboard phần mềm', 'Thay pin màn hình'], 'image_url' => 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=420&h=230&fit=crop&auto=format', 'lat' => 21.0768, 'lng' => 105.8798],
+            ['route_key' => 'route-doc-van', 'name' => 'Cửa Hàng Hoa Quả Trần Thị Oanh', 'owner' => 'Trần Thị Oanh', 'village_key' => 'mai-lam', 'village_name' => 'Thôn Mai Lâm (Dốc Vân)', 'type' => 'tap-hoa', 'rating' => 4.8, 'address' => 'Tuyến đường Dốc Vân, Thôn Mai Lâm, Đông Anh, Hà Nội', 'phone' => '0862452648', 'bank_account' => '101886854026', 'bank_name' => 'Vietinbank', 'is_open' => true, 'menu' => ['Hoa quả tươi sạch', 'Trái cây cúng lễ'], 'image_url' => 'https://images.unsplash.com/photo-1619566636858-adf3ef46400b?w=420&h=230&fit=crop&auto=format', 'lat' => 21.0770, 'lng' => 105.8800],
+            ['route_key' => 'route-doc-van', 'name' => 'Quán Net Game Nguyễn Đức Thắng', 'owner' => 'Nguyễn Đức Thắng', 'village_key' => 'mai-lam', 'village_name' => 'Thôn Mai Lâm (Dốc Vân)', 'type' => 'dich-vu', 'rating' => 4.7, 'address' => 'Tuyến đường Dốc Vân, Thôn Mai Lâm, Đông Anh, Hà Nội', 'phone' => '0865018867', 'bank_account' => '01063115972599', 'bank_name' => 'Techcombank', 'is_open' => true, 'menu' => ['Dịch vụ internet game net', 'Đồ ăn giải khát'], 'image_url' => 'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=420&h=230&fit=crop&auto=format', 'lat' => 21.0772, 'lng' => 105.8802],
+            ['route_key' => 'route-doc-van', 'name' => 'Sửa Xe Máy Nguyễn Đình Quyết', 'owner' => 'Nguyễn Đình Quyết', 'village_key' => 'mai-lam', 'village_name' => 'Thôn Mai Lâm (Dốc Vân)', 'type' => 'dich-vu', 'rating' => 4.8, 'address' => 'Tuyến đường Dốc Vân, Thôn Mai Lâm, Đông Anh, Hà Nội', 'phone' => '0866121185', 'bank_account' => '107886472606', 'bank_name' => 'Vietinbank', 'is_open' => true, 'menu' => ['Sửa chữa thay dầu xe máy', 'Phụ tùng chính hãng'], 'image_url' => 'https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=420&h=230&fit=crop&auto=format', 'lat' => 21.0774, 'lng' => 105.8804],
+            ['route_key' => 'route-doc-van', 'name' => 'Tiệm Cắt Tóc Hoàng Ngọc Nam', 'owner' => 'Hoàng Ngọc Nam', 'village_key' => 'mai-lam', 'village_name' => 'Thôn Mai Lâm (Dốc Vân)', 'type' => 'dich-vu', 'rating' => 4.9, 'address' => 'Tuyến đường Dốc Vân, Thôn Mai Lâm, Đông Anh, Hà Nội', 'phone' => '0908301990', 'bank_account' => '9908301990', 'bank_name' => 'Techcombank', 'is_open' => true, 'menu' => ['Cắt tóc uốn ép nhuộm', 'Tạo kiểu phong cách'], 'image_url' => 'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=420&h=230&fit=crop&auto=format', 'lat' => 21.0776, 'lng' => 105.8806],
+            ['route_key' => 'route-doc-van', 'name' => 'Cơ Sở Xoa Bóp Bấm Huyệt Đào Quang Quyền', 'owner' => 'Đào Quang Quyền', 'village_key' => 'mai-lam', 'village_name' => 'Thôn Mai Lâm (Dốc Vân)', 'type' => 'y-te', 'rating' => 4.9, 'address' => 'Tuyến đường Dốc Vân, Thôn Mai Lâm, Đông Anh, Hà Nội', 'phone' => '0392112952', 'bank_account' => '103867662287', 'bank_name' => 'Vietinbank', 'is_open' => true, 'menu' => ['Xoa bóp bấm huyệt trị liệu', 'Phục hồi sức khỏe'], 'image_url' => 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=420&h=230&fit=crop&auto=format', 'lat' => 21.0778, 'lng' => 105.8808],
+            ['route_key' => 'route-doc-van', 'name' => 'Cửa Hàng Quần Áo Đặng Văn Cường', 'owner' => 'Đặng Văn Cường', 'village_key' => 'mai-lam', 'village_name' => 'Thôn Mai Lâm (Dốc Vân)', 'type' => 'thoi-trang', 'rating' => 4.7, 'address' => 'Tuyến đường Dốc Vân, Thôn Mai Lâm, Đông Anh, Hà Nội', 'phone' => '0989939307', 'bank_account' => '000000010632', 'bank_name' => 'Techcombank', 'is_open' => true, 'menu' => ['Thời trang nam nữ', 'Quần áo công sở'], 'image_url' => 'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?w=420&h=230&fit=crop&auto=format', 'lat' => 21.0780, 'lng' => 105.8810],
+            ['route_key' => 'route-doc-van', 'name' => 'Cửa Hàng Điện Thoại Trần Văn Tư', 'owner' => 'Trần Văn Tư', 'village_key' => 'mai-lam', 'village_name' => 'Thôn Mai Lâm (Dốc Vân)', 'type' => 'dich-vu', 'rating' => 4.8, 'address' => 'Tuyến đường Dốc Vân, Thôn Mai Lâm, Đông Anh, Hà Nội', 'phone' => '0961666289', 'bank_account' => '3210476666', 'bank_name' => 'Vietinbank', 'is_open' => true, 'menu' => ['Mua bán điện thoại cũ mới', 'Linh kiện cáp sạc'], 'image_url' => 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=420&h=230&fit=crop&auto=format', 'lat' => 21.0782, 'lng' => 105.8812],
+            ['route_key' => 'route-doc-van', 'name' => 'Cửa Hàng Gạo Đoàn Thị Hương', 'owner' => 'Đoàn Thị Hương', 'village_key' => 'mai-lam', 'village_name' => 'Thôn Mai Lâm (Dốc Vân)', 'type' => 'tap-hoa', 'rating' => 4.9, 'address' => 'Tuyến đường Dốc Vân, Thôn Mai Lâm, Đông Anh, Hà Nội', 'phone' => '0912633505', 'bank_account' => '107872741111', 'bank_name' => 'Vietinbank', 'is_open' => true, 'menu' => ['Gạo Tám Xoan ST25', 'Gạo nếp nương đậu xanh'], 'image_url' => 'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=420&h=230&fit=crop&auto=format', 'lat' => 21.0784, 'lng' => 105.8814],
+            ['route_key' => 'route-doc-van', 'name' => 'Cửa Hàng Hoa Quả Trần T. Hương Giang', 'owner' => 'Trần T. Hương Giang', 'village_key' => 'mai-lam', 'village_name' => 'Thôn Mai Lâm (Dốc Vân)', 'type' => 'tap-hoa', 'rating' => 4.8, 'address' => 'Tuyến đường Dốc Vân, Thôn Mai Lâm, Đông Anh, Hà Nội', 'phone' => '0382691915', 'bank_account' => '241219768', 'bank_name' => 'MB Bank', 'is_open' => true, 'menu' => ['Hoa quả nhập khẩu', 'Trái cây vườn nhà'], 'image_url' => 'https://images.unsplash.com/photo-1619566636858-adf3ef46400b?w=420&h=230&fit=crop&auto=format', 'lat' => 21.0786, 'lng' => 105.8816],
+            ['route_key' => 'route-doc-van', 'name' => 'Cửa Hàng Quần Áo Trần Thị Hạnh', 'owner' => 'Trần Thị Hạnh', 'village_key' => 'mai-lam', 'village_name' => 'Thôn Mai Lâm (Dốc Vân)', 'type' => 'thoi-trang', 'rating' => 4.7, 'address' => 'Tuyến đường Dốc Vân, Thôn Mai Lâm, Đông Anh, Hà Nội', 'phone' => '0902180196', 'bank_account' => '101886854026', 'bank_name' => 'Vietinbank', 'is_open' => true, 'menu' => ['Thời trang nữ đầm váy', 'Áo sơ mi quần tây'], 'image_url' => 'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?w=420&h=230&fit=crop&auto=format', 'lat' => 21.0788, 'lng' => 105.8818],
+            ['route_key' => 'route-doc-van', 'name' => 'Quán Hàng Ăn Trần Văn Thuận', 'owner' => 'Trần Văn Thuận', 'village_key' => 'mai-lam', 'village_name' => 'Thôn Mai Lâm (Dốc Vân)', 'type' => 'quan-an', 'rating' => 4.8, 'address' => 'Tuyến đường Dốc Vân, Thôn Mai Lâm, Đông Anh, Hà Nội', 'phone' => '0799054086', 'bank_account' => '109879533208', 'bank_name' => 'Vietinbank', 'is_open' => true, 'menu' => ['Cơm bình dân bún phở', 'Các món ăn nhậu gia đình'], 'image_url' => 'https://images.unsplash.com/photo-1597345637412-9fd611e758f3?w=420&h=230&fit=crop&auto=format', 'lat' => 21.0790, 'lng' => 105.8820],
+            ['route_key' => 'route-doc-van', 'name' => 'Quầy Thuốc Nguyễn Xuân Phương', 'owner' => 'Nguyễn Xuân Phương', 'village_key' => 'mai-lam', 'village_name' => 'Thôn Mai Lâm (Dốc Vân)', 'type' => 'y-te', 'rating' => 4.9, 'address' => 'Tuyến đường Dốc Vân, Thôn Mai Lâm, Đông Anh, Hà Nội', 'phone' => '0915522368', 'bank_account' => '1064999755', 'bank_name' => 'Vietinbank', 'is_open' => true, 'menu' => ['Thuốc tân dược tư vấn', 'Thiết bị y tế gia đình'], 'image_url' => 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=420&h=230&fit=crop&auto=format', 'lat' => 21.0792, 'lng' => 105.8822],
         ];
 
         foreach ($businesses as $b) {
-            RouteBusiness::create($b);
+            $rawPhone = preg_replace('/[^0-9]/', '', $b['phone'] ?? '');
+            if (!empty($rawPhone) && strlen($rawPhone) >= 8) {
+                $username = $rawPhone;
+                $phoneVal = $rawPhone;
+            } else {
+                $phoneVal = null;
+                $baseUser = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', Str::ascii($b['owner'] ?? $b['name'])));
+                if (empty($baseUser)) {
+                    $baseUser = 'cuahang' . rand(100, 999);
+                }
+                $username = $baseUser;
+                $counter = 1;
+                while (User::where('username', $username)->exists()) {
+                    $username = $baseUser . $counter;
+                    $counter++;
+                }
+            }
+
+            $user = User::where('username', $username)->first();
+            if (!$user && $phoneVal) {
+                $user = User::where('phone', $phoneVal)->first();
+            }
+
+            if (!$user) {
+                $user = User::create([
+                    'name'         => $b['owner'] ?? $b['name'],
+                    'username'     => $username,
+                    'email'        => null,
+                    'phone'        => $phoneVal,
+                    'password'     => Hash::make('12345678'),
+                    'role'         => 'seller',
+                    'status'       => 'active',
+                    'bank_account' => $b['bank_account'] ?? null,
+                    'bank_name'    => $b['bank_name'] ?? null,
+                ]);
+            } else {
+                $user->update([
+                    'name'         => $b['owner'] ?? $user->name,
+                    'username'     => $username,
+                    'phone'        => $phoneVal ?: $user->phone,
+                    'bank_account' => $b['bank_account'] ?? $user->bank_account,
+                    'bank_name'    => $b['bank_name'] ?? $user->bank_name,
+                    'role'         => 'seller',
+                ]);
+            }
+
+            $b['user_id'] = $user->id;
+            $b['phone']   = $phoneVal ?: ($b['phone'] ?? null);
+
+            RouteBusiness::updateOrCreate(
+                ['route_key' => $b['route_key'], 'name' => $b['name']],
+                $b
+            );
         }
     }
 }

@@ -516,6 +516,9 @@
                             <option value="duc-noi">📍 Đường Cổ Vân</option>
                             <option value="viet-hung">📍 Tuyến Việt Hùng</option>
                             <option value="cao-lo">📍 Đường Cao Lỗ (Hùng Sơn)</option>
+                            <option value="xuan-canh">📍 Tuyến 4.0 Xuân Canh</option>
+                            <option value="dan-di">📍 Tuyến 4.0 Đản Dị</option>
+                            <option value="mai-lam">📍 Tuyến 4.0 Dốc Vân (Mai Lâm)</option>
                         </select>
                     </div>
                 </div>
@@ -741,7 +744,9 @@
                 { id: 'duc-noi', name: 'Dục Nội', routeName: 'Đường Cổ Vân', color: '#EAB308' },
                 { id: 'viet-hung', name: 'Việt Hùng', routeName: 'Tuyến Việt Hùng', color: '#3B82F6' },
                 { id: 'cao-lo', name: 'Đường Cao Lỗ', routeName: 'Đường Cao Lỗ (Hùng Sơn)', color: '#EC4899' },
-                { id: 'xuan-canh', name: 'Xuân Canh', routeName: 'Tuyến Đường 4.0 Xuân Canh', color: '#8B5CF6' }
+                { id: 'xuan-canh', name: 'Xuân Canh', routeName: 'Tuyến Đường 4.0 Xuân Canh', color: '#8B5CF6' },
+                { id: 'dan-di', name: 'Đản Dị', routeName: 'Tuyến Đường 4.0 Đản Dị', color: '#06B6D4' },
+                { id: 'mai-lam', name: 'Dốc Vân (Mai Lâm)', routeName: 'Tuyến Đường 4.0 Dốc Vân', color: '#10B981' }
             ],
 
             routes: @json($dbRoutes ?? []).length > 0 ? @json($dbRoutes) : [
@@ -813,6 +818,46 @@
                         [21.14095, 105.8510],
                         [21.1410, 105.8530]
                     ]
+                },
+                {
+                    id: 'route-xuan-canh',
+                    name: 'Tuyến 6: Tuyến Đường 4.0 Xuân Canh',
+                    length: '1.5km',
+                    color: '#8B5CF6',
+                    villages: ['xuan-canh'],
+                    animClass: 'route-path-animated-3',
+                    pathCoords: [
+                        [21.0850, 105.8600],
+                        [21.0862, 105.8615],
+                        [21.0871, 105.8628],
+                        [21.0880, 105.8640]
+                    ]
+                },
+                {
+                    id: 'route-dan-di',
+                    name: 'Tuyến 7: Tuyến Đường 4.0 Đản Dị (Khối 4)',
+                    length: '1.2km',
+                    color: '#06B6D4',
+                    villages: ['dan-di'],
+                    animClass: 'route-path-animated-1',
+                    pathCoords: [
+                        [21.1440, 105.8500],
+                        [21.1455, 105.8520],
+                        [21.1470, 105.8540]
+                    ]
+                },
+                {
+                    id: 'route-doc-van',
+                    name: 'Tuyến 8: Tuyến Đường 4.0 Dốc Vân (Mai Lâm)',
+                    length: '2.1km',
+                    color: '#10B981',
+                    villages: ['mai-lam'],
+                    animClass: 'route-path-animated-2',
+                    pathCoords: [
+                        [21.0720, 105.8750],
+                        [21.0735, 105.8770],
+                        [21.0750, 105.8790]
+                    ]
                 }
             ],
 
@@ -826,7 +871,7 @@
                     const routeMap = {};
                     this.routes.forEach(r => { routeMap[r.id] = r.pathCoords; });
 
-                    const locsByVillage = { 'phu-loc': [], 'dong-anh-cum-3': [], 'duc-noi': [], 'viet-hung': [], 'cao-lo': [], 'xuan-canh': [] };
+                    const locsByVillage = { 'phu-loc': [], 'dong-anh-cum-3': [], 'duc-noi': [], 'viet-hung': [], 'cao-lo': [], 'xuan-canh': [], 'dan-di': [], 'mai-lam': [] };
                     this.locations.forEach(loc => { if (locsByVillage[loc.village]) locsByVillage[loc.village].push(loc); });
 
                     function getPointOnPath(coords, t) {
@@ -848,7 +893,9 @@
                         'duc-noi': 'route-co-van',
                         'viet-hung': 'route-viet-hung',
                         'cao-lo': 'route-cao-lo',
-                        'xuan-canh': 'route-xuan-canh'
+                        'xuan-canh': 'route-xuan-canh',
+                        'dan-di': 'route-dan-di',
+                        'mai-lam': 'route-doc-van'
                     };
 
                     Object.keys(locsByVillage).forEach(vKey => {
@@ -990,7 +1037,9 @@
                             'route-co-van': 'duc-noi',
                             'route-viet-hung': 'viet-hung',
                             'route-cao-lo': 'cao-lo',
-                            'route-xuan-canh': 'xuan-canh'
+                            'route-xuan-canh': 'xuan-canh',
+                            'route-dan-di': 'dan-di',
+                            'route-doc-van': 'mai-lam'
                         };
 
                         const targetVillage = routeVillageMap[routeId];
@@ -1159,13 +1208,15 @@
                         'duc-noi': 'route-co-van',
                         'viet-hung': 'route-viet-hung',
                         'cao-lo': 'route-cao-lo',
-                        'xuan-canh': 'route-xuan-canh'
+                        'xuan-canh': 'route-xuan-canh',
+                        'dan-di': 'route-dan-di',
+                        'mai-lam': 'route-doc-van'
                     };
                     const rKey = villageToRouteKey[this.activeVillage];
                     const line = this.polylinesMap[rKey];
                     if (line && this.map) {
                         try {
-                            this.map.fitBounds(line.getBounds(), { padding: [60, 60], maxZoom: 16, animate: true, duration: 1.2 });
+                            this.map.fitBounds(line.getBounds(), { padding: [80, 80], maxZoom: 16, animate: true, duration: 1.2 });
                         } catch (e) {}
                     }
                 } else {
@@ -1193,7 +1244,7 @@
             },
 
             updateMapState() {
-                // Update Route Visibility - HIDE non-selected routes completely
+                // Update Route Visibility - Highlight selected route and dim/hide others
                 this.routes.forEach(r => {
                     const glow = this.glowPolylinesMap[r.id];
                     const line = this.polylinesMap[r.id];
@@ -1205,8 +1256,16 @@
                     }
 
                     if (show) {
-                        glow.setStyle({ opacity: 0.3 });
-                        line.setStyle({ opacity: 0.95 });
+                        const isFocused = (this.activeVillage !== 'all' && r.villages.includes(this.activeVillage)) || (this.activeRouteId === r.id);
+                        if (isFocused) {
+                            glow.setStyle({ opacity: 0.5, weight: 18 });
+                            line.setStyle({ opacity: 1.0, weight: 8 });
+                            glow.bringToFront();
+                            line.bringToFront();
+                        } else {
+                            glow.setStyle({ opacity: 0.25, weight: 12 });
+                            line.setStyle({ opacity: 0.7, weight: 5 });
+                        }
                         if (!this.map.hasLayer(glow)) this.map.addLayer(glow);
                         if (!this.map.hasLayer(line)) this.map.addLayer(line);
                     } else {

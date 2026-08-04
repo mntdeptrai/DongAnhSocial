@@ -26,6 +26,7 @@
                                 @php 
                                     $stall = $user->getStall(); 
                                     $ownedEateries = $user->getOwnedEateries();
+                                    $routeBusinesses = $user->getRouteBusinesses();
                                 @endphp
                                 @if($stall)
                                     <div style="margin-top: 4px;">
@@ -40,6 +41,17 @@
                                                 🏢 {{ $oe['name'] }}
                                                 <small style="color: #6b7280; font-weight: normal; background: #f3f4f6; padding: 1px 6px; border-radius: 10px; font-size: 0.65rem;">
                                                     {{ $oe['type'] }}
+                                                </small>
+                                            </span>
+                                        @endforeach
+                                    </div>
+                                @elseif($routeBusinesses && $routeBusinesses->count() > 0)
+                                    <div style="margin-top: 6px; display: flex; flex-direction: column; gap: 4px;">
+                                        @foreach($routeBusinesses as $rb)
+                                            <span style="font-size: 0.76rem; color: #059669; display: inline-flex; align-items: center; gap: 4px; font-weight: 700;" title="Tuyến: {{ $rb->village_name }}">
+                                                🛣️ {{ $rb->name }}
+                                                <small style="color: #047857; font-weight: 700; background: #ecfdf5; padding: 1px 6px; border-radius: 10px; font-size: 0.65rem; border: 1px solid #a7f3d0;">
+                                                    Tuyến 4.0 ({{ $rb->village_name }})
                                                 </small>
                                             </span>
                                         @endforeach

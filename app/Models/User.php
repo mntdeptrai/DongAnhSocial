@@ -193,6 +193,23 @@ class User extends Authenticatable
         return null;
     }
 
+    /**
+     * Lấy các cơ sở kinh doanh trên Tuyến đường 4.0 mà Seller làm chủ
+     */
+    public function getRouteBusinesses()
+    {
+        if (\Illuminate\Support\Facades\Schema::hasTable('route_businesses')) {
+            $businesses = \App\Models\RouteBusiness::where('user_id', $this->id)->get();
+            if ($businesses->count() > 0) {
+                return $businesses;
+            }
+            if (!empty($this->phone)) {
+                return \App\Models\RouteBusiness::where('phone', $this->phone)->get();
+            }
+        }
+        return collect([]);
+    }
+
     public function sentRequests()
     {
         return $this->hasMany(Friendship::class, 'user_id');
