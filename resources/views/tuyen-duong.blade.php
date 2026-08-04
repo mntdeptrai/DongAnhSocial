@@ -302,33 +302,154 @@
         background: #ffffff !important;
     }
 
-    @media (max-width: 991px) {
+    /* ==========================================================================
+       RESPONSIVE DESIGN SYSTEM FOR 4 SCREEN BREAKPOINTS
+       ========================================================================== */
+
+    /* 1. Ultra & Large Desktop Screens (>= 1400px) */
+    @media (min-width: 1400px) {
+        .tuyen-duong-sidebar {
+            width: 410px !important;
+        }
+        .card-img-container {
+            width: 115px !important;
+            height: 98px !important;
+        }
+    }
+
+    /* 2. Standard Desktop & Laptop Screens (1024px - 1399px) */
+    @media (min-width: 1024px) and (max-width: 1399px) {
+        .tuyen-duong-sidebar {
+            width: 350px !important;
+        }
+        .card-img-container {
+            width: 96px !important;
+            height: 88px !important;
+        }
+    }
+
+    /* 3. Tablet / iPad Screens (768px - 1023px) */
+    @media (min-width: 768px) and (max-width: 1023px) {
         .tuyen-duong-app-root {
-            height: auto;
-            min-height: 100vh;
+            height: calc(100vh - 64px) !important;
+            overflow: hidden !important;
+        }
+        .tuyen-duong-layout {
+            position: relative !important;
+            flex-direction: row !important;
+        }
+        .tuyen-duong-sidebar {
+            position: absolute !important;
+            top: 0; left: 0;
+            width: 340px !important;
+            height: 100% !important;
+            z-index: 1000 !important;
+            box-shadow: 10px 0 30px rgba(0,0,0,0.18) !important;
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        }
+        .tuyen-duong-sidebar.tablet-collapsed {
+            transform: translateX(-100%) !important;
+        }
+        .tuyen-duong-map {
+            width: 100% !important;
+            height: 100% !important;
+        }
+        .tablet-toggle-sidebar-btn {
+            display: flex !important;
+        }
+    }
+
+    /* 4. Mobile Smartphone Screens (< 768px) */
+    @media (max-width: 767px) {
+        html, body {
+            height: auto !important;
+            overflow-x: hidden !important;
+            overflow-y: auto !important;
+        }
+        .tuyen-duong-app-root {
+            height: calc(100vh - 60px) !important;
+            min-height: 520px !important;
+            display: flex !important;
+            flex-direction: column !important;
+            overflow: hidden !important;
+        }
+        .mobile-switcher-bar {
+            display: flex !important;
+            position: sticky !important;
+            top: 0 !important;
+            z-index: 1000 !important;
         }
         .tuyen-duong-layout {
             flex-direction: column !important;
+            flex: 1 !important;
+            height: calc(100% - 44px) !important;
+            overflow: hidden !important;
         }
         .tuyen-duong-sidebar {
             width: 100% !important;
-            height: 480px !important;
+            height: 100% !important;
+            border-right: none !important;
+            display: flex !important;
+            flex-direction: column !important;
+            overflow: hidden !important;
+        }
+        .custom-scrollbar {
+            overflow-y: auto !important;
+            -webkit-overflow-scrolling: touch !important;
+            touch-action: pan-y !important;
         }
         .tuyen-duong-map {
-            height: 520px !important;
+            width: 100% !important;
+            height: 100% !important;
+            min-height: 480px !important;
+        }
+        .mobile-view-map .tuyen-duong-sidebar {
+            display: none !important;
+        }
+        .mobile-view-map .tuyen-duong-map {
+            display: block !important;
+        }
+        .mobile-view-list .tuyen-duong-sidebar {
+            display: flex !important;
+        }
+        .mobile-view-list .tuyen-duong-map {
+            display: none !important;
+        }
+        .filter-scroll-container {
+            overflow-x: auto !important;
+            white-space: nowrap !important;
+            -webkit-overflow-scrolling: touch !important;
+            padding-bottom: 2px !important;
+        }
+        .filter-scroll-container::-webkit-scrollbar {
+            display: none !important;
         }
     }
 </style>
 @endpush
 
 @section('content')
-<div class="tuyen-duong-app-root" x-data="tuyenDuongApp()" x-init="initMap()">
+<div class="tuyen-duong-app-root" x-data="tuyenDuongApp()" x-init="initMap()" :class="`mobile-view-${mobileView}`">
+
+    <!-- Mobile Screen View Switcher Bar (Visible on Smartphone screens < 768px) -->
+    <div class="mobile-switcher-bar" style="display: none; background: #0f172a; padding: 6px; border-bottom: 1px solid #1e293b; gap: 6px; z-index: 99;">
+        <button type="button" @click="toggleMobileView('map')" 
+                :style="mobileView === 'map' ? 'background: #059669; color: #ffffff;' : 'background: rgba(255,255,255,0.08); color: #94a3b8;'"
+                style="flex: 1; padding: 8px 12px; border: none; border-radius: 10px; font-size: 0.8rem; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; transition: all 0.2s;">
+            <span>🗺️ Bản đồ số 4.0</span>
+        </button>
+        <button type="button" @click="toggleMobileView('list')" 
+                :style="mobileView === 'list' ? 'background: #059669; color: #ffffff;' : 'background: rgba(255,255,255,0.08); color: #94a3b8;'"
+                style="flex: 1; padding: 8px 12px; border: none; border-radius: 10px; font-size: 0.8rem; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; transition: all 0.2s;">
+            <span>📋 Danh sách (57 hộ)</span>
+        </button>
+    </div>
 
     <!-- Main Layout Container (2 Columns) -->
     <div class="tuyen-duong-layout" style="display: flex; flex: 1; overflow: hidden; position: relative;">
         
         <!-- Left Sidebar: Control Panel & Location Cards -->
-        <aside class="tuyen-duong-sidebar" style="width: 380px; background: #ffffff; border-right: 1px solid #e2e8f0; display: flex; flex-direction: column; height: 100%; z-index: 10; flex-shrink: 0;">
+        <aside class="tuyen-duong-sidebar" :class="{ 'tablet-collapsed': !tabletSidebarOpen }" style="width: 380px; background: #ffffff; border-right: 1px solid #e2e8f0; display: flex; flex-direction: column; height: 100%; z-index: 10; flex-shrink: 0;">
             
             <!-- Sidebar Header & Search -->
             <div style="padding: 16px 16px 12px 16px; border-bottom: 1px solid #f1f5f9; background: #ffffff;">
@@ -464,6 +585,12 @@
             
             <!-- Real Leaflet Map Container -->
             <div id="tuyenDuongMap" style="width: 100%; height: 100%; z-index: 1;"></div>
+
+            <!-- Floating Tablet Sidebar Toggle Button (Visible on Tablet screens 768px-1023px) -->
+            <button type="button" class="tablet-toggle-sidebar-btn" @click="toggleTabletSidebar()" 
+                    style="display: none; position: absolute; top: 16px; left: 16px; z-index: 1001; background: #0f172a; color: #ffffff; border: none; padding: 9px 16px; border-radius: 24px; font-size: 0.8rem; font-weight: 800; cursor: pointer; align-items: center; gap: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.25);">
+                <span x-text="tabletSidebarOpen ? '◀ Ẩn bảng 57 hộ' : '📋 Hiện 57 hộ'"></span>
+            </button>
 
             <!-- Floating GPS Live Location Button -->
             <button type="button" @click="getUserLocation()" 
