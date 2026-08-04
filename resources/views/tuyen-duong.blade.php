@@ -490,9 +490,13 @@
                                 style="width: 100%; padding: 8px 10px; background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 12px; font-size: 0.78rem; font-weight: 700; color: #0f172a; outline: none; cursor: pointer; transition: all 0.2s;"
                                 onfocus="this.style.borderColor='#10b981'; this.style.background='#ffffff';"
                                 onblur="this.style.borderColor='#cbd5e1'; this.style.background='#f8fafc';">
-                            <template x-for="cat in categories" :key="cat.id">
-                                <option :value="cat.id" x-text="`${cat.icon} ${cat.label}`"></option>
-                            </template>
+                            <option value="all">🗺️ Tất cả ngành hàng</option>
+                            <option value="quan-an">🍜 Quán ăn & Phở</option>
+                            <option value="nha-hang">🍽️ Nhà hàng & Hải sản</option>
+                            <option value="tap-hoa">🛒 Tạp hóa & Bán lẻ</option>
+                            <option value="thoi-trang">👕 Thời trang & Đồ dùng</option>
+                            <option value="y-te">💊 Y tế & Thẩm mỹ</option>
+                            <option value="dich-vu">🔧 Dịch vụ & Kỹ thuật</option>
                         </select>
                     </div>
 
@@ -502,14 +506,16 @@
                             <label style="font-size: 0.68rem; font-weight: 800; color: #64748b; text-transform: uppercase;">Tuyến đường</label>
                             <button type="button" @click="resetFilters()" style="font-size: 0.65rem; color: #059669; background: none; border: none; font-weight: 800; cursor: pointer; padding: 0;">Đặt lại</button>
                         </div>
-                        <select x-model="activeVillage" @change="setVillage(activeVillage)" 
+                        <select x-model="activeVillage" @change="setVillage($event.target.value)" 
                                 style="width: 100%; padding: 8px 10px; background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 12px; font-size: 0.78rem; font-weight: 700; color: #0f172a; outline: none; cursor: pointer; transition: all 0.2s;"
                                 onfocus="this.style.borderColor='#10b981'; this.style.background='#ffffff';"
                                 onblur="this.style.borderColor='#cbd5e1'; this.style.background='#f8fafc';">
                             <option value="all">🛣️ Tất cả tuyến đường</option>
-                            <template x-for="v in villages" :key="v.id">
-                                <option :value="v.id" x-text="`📍 ${v.routeName || v.name}`"></option>
-                            </template>
+                            <option value="phu-loc">📍 Đường Phúc Lộc</option>
+                            <option value="dong-anh-cum-3">📍 Quốc Lộ 3 (Cụm 3)</option>
+                            <option value="duc-noi">📍 Đường Cổ Vân</option>
+                            <option value="viet-hung">📍 Tuyến Việt Hùng</option>
+                            <option value="cao-lo">📍 Đường Cao Lỗ (Hùng Sơn)</option>
                         </select>
                     </div>
                 </div>
@@ -1157,7 +1163,7 @@
             },
 
             setVillage(vId) {
-                this.activeVillage = (this.activeVillage === vId ? 'all' : vId);
+                this.activeVillage = vId;
                 this.updateMapState();
 
                 if (this.activeVillage !== 'all') {
@@ -1165,7 +1171,8 @@
                         'phu-loc': 'route-phu-loc',
                         'dong-anh-cum-3': 'route-ql3',
                         'duc-noi': 'route-co-van',
-                        'viet-hung': 'route-viet-hung'
+                        'viet-hung': 'route-viet-hung',
+                        'cao-lo': 'route-cao-lo'
                     };
                     const rKey = villageToRouteKey[this.activeVillage];
                     const line = this.polylinesMap[rKey];
