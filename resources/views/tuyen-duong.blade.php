@@ -367,11 +367,11 @@
             overflow-y: auto !important;
         }
         .tuyen-duong-app-root {
-            height: calc(100vh - 60px) !important;
-            min-height: 520px !important;
+            height: auto !important;
+            min-height: 100vh !important;
             display: flex !important;
             flex-direction: column !important;
-            overflow: hidden !important;
+            overflow: visible !important;
         }
         .mobile-switcher-bar {
             display: flex !important;
@@ -381,26 +381,27 @@
         }
         .tuyen-duong-layout {
             flex-direction: column !important;
-            flex: 1 !important;
-            height: calc(100% - 44px) !important;
-            overflow: hidden !important;
+            flex: none !important;
+            height: auto !important;
+            overflow: visible !important;
+            display: block !important;
         }
         .tuyen-duong-sidebar {
             width: 100% !important;
-            height: 100% !important;
+            height: auto !important;
             border-right: none !important;
             display: flex !important;
             flex-direction: column !important;
-            overflow: hidden !important;
+            overflow: visible !important;
         }
         .custom-scrollbar {
-            overflow-y: auto !important;
-            -webkit-overflow-scrolling: touch !important;
-            touch-action: pan-y !important;
+            overflow: visible !important;
+            max-height: none !important;
+            height: auto !important;
         }
         .tuyen-duong-map {
             width: 100% !important;
-            height: 100% !important;
+            height: calc(100vh - 120px) !important;
             min-height: 480px !important;
         }
         .mobile-view-map .tuyen-duong-sidebar {
