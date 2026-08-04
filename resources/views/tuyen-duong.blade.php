@@ -518,11 +518,11 @@
             <!-- Quick Stats Summary inside Sidebar -->
             <div style="padding: 8px 16px; background: #f8fafc; border-bottom: 1px solid #f1f5f9; display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;">
                 <div style="background: #ffffff; padding: 6px 4px; border-radius: 10px; border: 1px solid #e2e8f0; text-align: center;">
-                    <span style="font-size: 0.92rem; font-weight: 900; color: #059669; display: block; font-family: 'Be Vietnam Pro', sans-serif;">4</span>
+                    <span style="font-size: 0.92rem; font-weight: 900; color: #059669; display: block; font-family: 'Be Vietnam Pro', sans-serif;" x-text="villages.length">5</span>
                     <span style="font-size: 0.68rem; color: #64748b; font-weight: 700;">🛣️ Tuyến 4.0</span>
                 </div>
                 <div style="background: #ffffff; padding: 6px 4px; border-radius: 10px; border: 1px solid #e2e8f0; text-align: center;">
-                    <span style="font-size: 0.92rem; font-weight: 900; color: #2563eb; display: block; font-family: 'Be Vietnam Pro', sans-serif;">57</span>
+                    <span style="font-size: 0.92rem; font-weight: 900; color: #2563eb; display: block; font-family: 'Be Vietnam Pro', sans-serif;" x-text="locations.length">72</span>
                     <span style="font-size: 0.68rem; color: #64748b; font-weight: 700;">🏪 Hộ kinh doanh</span>
                 </div>
             </div>
@@ -733,7 +733,8 @@
                 { id: 'phu-loc', name: 'Phúc Lộc', routeName: 'Đường Phúc Lộc', color: '#F97316' },
                 { id: 'dong-anh-cum-3', name: 'Đông Anh (Cụm 3)', routeName: 'Quốc Lộ 3 (Cụm 3)', color: '#10B981' },
                 { id: 'duc-noi', name: 'Dục Nội', routeName: 'Đường Cổ Vân', color: '#EAB308' },
-                { id: 'viet-hung', name: 'Việt Hùng', routeName: 'Tuyến Việt Hùng', color: '#3B82F6' }
+                { id: 'viet-hung', name: 'Việt Hùng', routeName: 'Tuyến Việt Hùng', color: '#3B82F6' },
+                { id: 'cao-lo', name: 'Đường Cao Lỗ', routeName: 'Đường Cao Lỗ (Hùng Sơn)', color: '#EC4899' }
             ],
 
             routes: @json($dbRoutes ?? []).length > 0 ? @json($dbRoutes) : [
