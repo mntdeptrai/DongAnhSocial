@@ -1083,11 +1083,31 @@
                         });
                     };
 
-                    // Render clean main street pathCoords directly & snap store markers
+                    // Render initial polyline & fetch Google-Maps-style street routing curves
                     if (r.pathCoords && r.pathCoords.length >= 2) {
                         glowLine.setLatLngs(r.pathCoords);
                         mainLine.setLatLngs(r.pathCoords);
                         snapRouteStores(r.id, r.pathCoords);
+
+                        // Fetch detailed street geometry like Google Maps directions
+                        const waypointsStr = r.pathCoords.map(c => `${c[1]},${c[0]}`).join(';');
+                        const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${waypointsStr}?overview=full&geometries=geojson`;
+
+                        fetch(osrmUrl)
+                            .then(res => res.json())
+                            .then(data => {
+                                if (data && data.routes && data.routes.length > 0 && data.routes[0].geometry) {
+                                    const coords = data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
+                                    if (coords && coords.length > 0) {
+                                        glowLine.setLatLngs(coords);
+                                        mainLine.setLatLngs(coords);
+                                        snapRouteStores(r.id, coords);
+                                    }
+                                }
+                            })
+                            .catch(() => {
+                                // Keep fallback
+                            });
                     }
                 });
             },
