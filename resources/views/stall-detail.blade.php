@@ -715,13 +715,26 @@
 
 <div class="stall-page-wrapper">
 
-    {{-- Breadcrumb --}}
-    <nav class="stall-breadcrumb">
-        <a href="{{ route('home') }}"><i class="bi bi-house-fill"></i> Trang chủ</a>
-        <i class="bi bi-chevron-right"></i>
-        <a href="{{ route('eatery.show', $eatery->slug) }}">{{ $eatery->name }}</a>
-        <i class="bi bi-chevron-right"></i>
-        <span>{{ $stallName }}</span>
+    <!-- Harmonious Modern Breadcrumb Navigation -->
+    <nav class="integrated-breadcrumb-nav" aria-label="Breadcrumb">
+        <a href="/" class="breadcrumb-item-link">
+            <span style="font-size: 0.95rem;">🏠</span>
+            <span>Trang chủ</span>
+        </a>
+        <span class="breadcrumb-arrow">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </span>
+        <a href="{{ route('eatery.show', $eatery->slug) }}" class="breadcrumb-item-link">
+            <span style="font-size: 0.95rem;">🏛️</span>
+            <span>{{ $eatery->name }}</span>
+        </a>
+        <span class="breadcrumb-arrow">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </span>
+        <span class="breadcrumb-item-active">
+            <span style="font-size: 0.95rem;">🏪</span>
+            <span>{{ $stallName }}</span>
+        </span>
     </nav>
 
     {{-- Flash messages --}}

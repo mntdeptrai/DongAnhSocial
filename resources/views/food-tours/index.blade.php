@@ -305,6 +305,23 @@
         </div>
         
         <div class="container" style="max-width: 960px; position: relative; z-index: 2;">
+            <!-- Harmonious Modern Breadcrumb Navigation -->
+            <div style="display: flex; justify-content: center; width: 100%;">
+                <nav class="integrated-breadcrumb-nav" aria-label="Breadcrumb">
+                    <a href="/" class="breadcrumb-item-link">
+                        <span style="font-size: 0.95rem;">🏠</span>
+                        <span>Trang chủ</span>
+                    </a>
+                    <span class="breadcrumb-arrow">
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </span>
+                    <span class="breadcrumb-item-active">
+                        <span style="font-size: 0.95rem;">🗺️</span>
+                        <span>Hành trình Ẩm thực & Food Tour</span>
+                    </span>
+                </nav>
+            </div>
+
             <!-- Immersive Page Header with reveal animations -->
             <div class="reveal reveal-fade-up revealed" style="text-align: center;">
                 <div class="hero-slogan">

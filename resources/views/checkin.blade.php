@@ -11,6 +11,21 @@
 <div class="checkin-feed-container">
     <div style="width: 100%; display: flex; flex-direction: column; z-index: 2;">
         
+        <!-- Harmonious Modern Breadcrumb Navigation -->
+        <nav class="integrated-breadcrumb-nav" aria-label="Breadcrumb">
+            <a href="/" class="breadcrumb-item-link">
+                <span style="font-size: 0.95rem;">🏠</span>
+                <span>Trang chủ</span>
+            </a>
+            <span class="breadcrumb-arrow">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </span>
+            <span class="breadcrumb-item-active">
+                <span style="font-size: 0.95rem;">📸</span>
+                <span>Góc Check-in & Nhật Ký</span>
+            </span>
+        </nav>
+
         <!-- Page Header -->
         <div class="feed-header" style="margin-bottom: 20px;">
             <h1>📸 <span>Cộng đồng Check-in Đông Anh</span>

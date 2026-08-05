@@ -604,17 +604,82 @@
             gap: 20px;
         }
     }
+
+    /* Harmonious Integrated Breadcrumbs Design */
+    .integrated-breadcrumb-nav {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-wrap: wrap;
+        margin-bottom: 20px;
+        font-size: 0.88rem;
+        color: #475569;
+    }
+
+    .breadcrumb-item-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 5px 12px;
+        border-radius: 10px;
+        color: #475569 !important;
+        text-decoration: none;
+        font-weight: 600;
+        background: rgba(255, 255, 255, 0.7);
+        border: 1px solid rgba(226, 232, 240, 0.8);
+        transition: all 0.2s ease;
+    }
+
+    .breadcrumb-item-link:hover {
+        background: #ffffff;
+        color: #059669 !important;
+        border-color: #a7f3d0;
+        box-shadow: 0 2px 8px rgba(5, 150, 105, 0.08);
+        transform: translateY(-1px);
+    }
+
+    .breadcrumb-arrow {
+        color: #94a3b8;
+        display: inline-flex;
+        align-items: center;
+        padding: 0 2px;
+    }
+
+    .breadcrumb-item-active {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 5px 14px;
+        border-radius: 10px;
+        color: #047857;
+        font-weight: 700;
+        background: #dcfce7;
+        border: 1px solid #a7f3d0;
+    }
 </style>
 
 <div class="container" style="padding-top: 28px; padding-bottom: 70px;">
     
-    <!-- Breadcrumbs navigation -->
-    <nav style="margin-bottom: 24px; font-size: 0.9rem; color: #475569; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-        <a href="/" style="color: #475569; text-decoration: none;">🏠 Trang chủ</a>
-        <span>➔</span>
-        <a href="/?cat=dong-anh-market" style="color: #475569; text-decoration: none;">🌾 Nông Sản & Đặc Sản OCOP</a>
-        <span>➔</span>
-        <span style="color: #059669; font-weight: 800;">{{ $product->name }}</span>
+    <!-- Harmonious Modern Breadcrumb Navigation -->
+    <nav class="integrated-breadcrumb-nav" aria-label="Breadcrumb">
+        <a href="/" class="breadcrumb-item-link">
+            <span style="font-size: 0.95rem;">🏠</span>
+            <span>Trang chủ</span>
+        </a>
+        <span class="breadcrumb-arrow">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </span>
+        <a href="/?cat=dong-anh-market" class="breadcrumb-item-link">
+            <span style="font-size: 0.95rem;">🌾</span>
+            <span>Nông Sản & Đặc Sản OCOP</span>
+        </a>
+        <span class="breadcrumb-arrow">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </span>
+        <span class="breadcrumb-item-active">
+            <span style="font-size: 0.95rem;">✨</span>
+            <span>{{ $product->name }}</span>
+        </span>
     </nav>
 
     <!-- Main Product Hero Card -->
