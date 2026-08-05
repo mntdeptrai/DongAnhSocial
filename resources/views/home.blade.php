@@ -52,68 +52,223 @@
     padding: 70px 0 110px;
     background: linear-gradient(180deg, #7dd3fc 0%, #38bdf8 45%, #0ea5e9 85%, #0284c7 100%);
     min-height: 560px;
-    z-index: 999; /* Set to 999 to float suggestions above Leaflet map panes (max 700) while keeping it under the header (1000) */
+    perspective: 1200px;
+    transform-style: preserve-3d;
 }
 
-/* Clouds floating */
-.cloud-bg {
+/* ✈️ 3D REALISTIC AIRPLANE & JET CONTRAIL TRAIL */
+.hero-airplane-container {
     position: absolute;
-    background: rgba(255, 255, 255, 0.45);
-    backdrop-filter: blur(4px);
-    border-radius: 100px;
+    top: 45px;
+    left: -240px;
+    z-index: 10;
     pointer-events: none;
-    z-index: 1;
-    animation: drift 35s linear infinite;
+    will-change: transform;
+    animation: flightPath3D 26s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    transform-style: preserve-3d;
 }
-.cloud-bg::before, .cloud-bg::after {
-    content: '';
+
+.hero-airplane-svg-wrap {
+    position: relative;
+    width: 175px;
+    height: 98px;
+    filter: drop-shadow(0 26px 24px rgba(15, 23, 42, 0.38));
+    animation: airplaneBank3D 4s ease-in-out infinite alternate;
+}
+
+/* Contrail Jet Smoke Trail behind airplane */
+.jet-contrail-container {
     position: absolute;
-    background: rgba(255, 255, 255, 0.45);
-    border-radius: 50%;
+    top: 52px;
+    right: 148px;
+    display: flex;
+    align-items: center;
+    pointer-events: none;
 }
-.cloud-1 {
-    width: 200px;
-    height: 60px;
-    top: 15%;
-    left: -220px;
-    animation-duration: 40s;
-}
-.cloud-1::before { width: 80px; height: 80px; top: -40px; left: 30px; }
-.cloud-1::after { width: 100px; height: 100px; top: -50px; left: 80px; }
 
-.cloud-2 {
-    width: 140px;
-    height: 45px;
-    top: 32%;
-    left: -160px;
-    animation-duration: 28s;
-    animation-delay: 6s;
+.jet-contrail-line {
+    width: 220px;
+    height: 5px;
+    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.4) 40%, rgba(255, 255, 255, 0.95) 100%);
+    border-radius: 5px;
+    filter: blur(1.5px);
 }
-.cloud-2::before { width: 60px; height: 60px; top: -30px; left: 20px; }
-.cloud-2::after { width: 70px; height: 70px; top: -35px; left: 60px; }
 
-.cloud-3 {
-    width: 185px;
-    height: 55px;
+.jet-contrail-puff {
+    position: absolute;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.25) 70%, transparent 100%);
+    border-radius: 50% !important;
+    animation: puffExpand 2.2s ease-out infinite;
+}
+
+/* 💖 Heart Smoke Contrail Sky Overlay */
+.heart-contrail-sky-wrap {
+    position: absolute;
+    top: 5px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 92%;
+    max-width: 900px;
+    height: 320px;
+    pointer-events: none;
+    z-index: 5;
+}
+
+.heart-smoke-path {
+    stroke-dasharray: 1200;
+    stroke-dashoffset: 1200;
+    animation: drawHeartSmoke 22s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+@keyframes drawHeartSmoke {
+    0% { stroke-dashoffset: 1200; opacity: 0; }
+    12% { stroke-dashoffset: 1200; opacity: 0.95; }
+    70% { stroke-dashoffset: 0; opacity: 0.95; }
+    88% { opacity: 0.8; }
+    100% { stroke-dashoffset: 0; opacity: 0; }
+}
+
+@keyframes flightPath3D {
+    0% {
+        transform: translate3d(-200px, 110px, 40px) rotateX(10deg) rotateY(15deg) rotateZ(15deg) scale(0.7);
+        opacity: 0;
+    }
+    10% {
+        transform: translate3d(20vw, 85px, 80px) rotateX(5deg) rotateY(20deg) rotateZ(20deg) scale(0.85);
+        opacity: 1;
+    }
+    20% {
+        transform: translate3d(50vw, 65px, 120px) rotateX(15deg) rotateY(10deg) rotateZ(0deg) scale(1.0);
+    }
+    35% {
+        transform: translate3d(35vw, 15px, 140px) rotateX(10deg) rotateY(-15deg) rotateZ(-38deg) scale(1.12);
+    }
+    50% {
+        transform: translate3d(50vw, 170px, 150px) rotateX(-10deg) rotateY(20deg) rotateZ(48deg) scale(1.18);
+    }
+    65% {
+        transform: translate3d(65vw, 15px, 140px) rotateX(15deg) rotateY(25deg) rotateZ(35deg) scale(1.12);
+    }
+    80% {
+        transform: translate3d(50vw, 65px, 100px) rotateX(-5deg) rotateY(10deg) rotateZ(-15deg) scale(0.95);
+    }
+    100% {
+        transform: translate3d(calc(100vw + 250px), -40px, -20px) rotateX(10deg) rotateY(5deg) rotateZ(-10deg) scale(0.65);
+        opacity: 0;
+    }
+}
+
+@keyframes airplaneBank3D {
+    0% { transform: rotateX(0deg) rotateZ(0deg) translateY(0px); }
+    50% { transform: rotateX(6deg) rotateZ(4deg) translateY(-8px); }
+    100% { transform: rotateX(-4deg) rotateZ(-2deg) translateY(5px); }
+}
+
+@keyframes puffExpand {
+    0% { transform: scale(0.5); opacity: 0.8; }
+    100% { transform: scale(3.0); opacity: 0; }
+}
+
+/* ☁️ VOLUMETRIC 3D FLUFFY CLOUDS WITH MULTI-LAYER PARALLAX */
+.cloud-3d-wrap {
+    position: absolute;
+    pointer-events: none;
+    will-change: transform;
+    transform-style: preserve-3d;
+}
+
+.cloud-3d-svg {
+    filter: drop-shadow(0 16px 28px rgba(2, 132, 199, 0.25));
+    animation: cloudFloat3D 6s ease-in-out infinite alternate;
+}
+
+/* Clouds Layer 1 - Foreground Fast & Large */
+.cloud-layer-1 {
     top: 8%;
-    left: -200px;
-    animation-duration: 50s;
-    animation-delay: 15s;
-}
-.cloud-3::before { width: 70px; height: 70px; top: -35px; left: 25px; }
-.cloud-3::after { width: 90px; height: 90px; top: -45px; left: 70px; }
-
-@keyframes drift {
-    0% { transform: translateX(0); }
-    100% { transform: translateX(calc(100vw + 250px)); }
+    left: -240px;
+    z-index: 8;
+    animation: driftCloud1 32s linear infinite;
 }
 
-/* Bubbles rising */
+/* Clouds Layer 2 - Midground Soft */
+.cloud-layer-2 {
+    top: 32%;
+    left: -190px;
+    z-index: 3;
+    animation: driftCloud2 45s linear infinite;
+    animation-delay: 8s;
+}
+
+/* Clouds Layer 3 - Background Slow Misty */
+.cloud-layer-3 {
+    top: 4%;
+    left: -260px;
+    z-index: 1;
+    opacity: 0.7;
+    animation: driftCloud3 65s linear infinite;
+    animation-delay: 18s;
+}
+
+/* Cloud Layer 4 - Mid Right Floating */
+.cloud-layer-4 {
+    top: 22%;
+    right: -220px;
+    z-index: 4;
+    animation: driftCloud4 42s linear infinite;
+    animation-delay: 5s;
+}
+
+@keyframes driftCloud1 {
+    0% { transform: translate3d(0, 0, 50px) scale(1.1); }
+    100% { transform: translate3d(calc(100vw + 320px), 0, 50px) scale(1.1); }
+}
+
+@keyframes driftCloud2 {
+    0% { transform: translate3d(0, 0, 10px) scale(0.9); }
+    100% { transform: translate3d(calc(100vw + 270px), 0, 10px) scale(0.9); }
+}
+
+@keyframes driftCloud3 {
+    0% { transform: translate3d(0, 0, -60px) scale(0.75); }
+    100% { transform: translate3d(calc(100vw + 270px), 0, -60px) scale(0.75); }
+}
+
+@keyframes driftCloud4 {
+    0% { transform: translate3d(0, 0, 20px) scale(0.85); }
+    100% { transform: translate3d(calc(-100vw - 320px), 0, 20px) scale(0.85); }
+}
+
+@keyframes cloudFloat3D {
+    0% { transform: translateY(0px) rotateX(0deg); }
+    100% { transform: translateY(-14px) rotateX(5deg); }
+}
+
+/* 🎈 3D HOT AIR BALLOON IN BACKGROUND */
+.hot-air-balloon-3d {
+    position: absolute;
+    top: 35px;
+    right: 16%;
+    z-index: 2;
+    pointer-events: none;
+    will-change: transform;
+    animation: balloonSway3D 9s ease-in-out infinite alternate;
+    filter: drop-shadow(0 15px 22px rgba(15, 23, 42, 0.18));
+}
+
+@keyframes balloonSway3D {
+    0% { transform: translate3d(0, 0, -30px) rotate(-3deg); }
+    50% { transform: translate3d(18px, -22px, -20px) rotate(2deg); }
+    100% { transform: translate3d(-12px, -38px, -35px) rotate(-2deg); }
+}
+
+/* Bubbles rising - 100% Perfect 3D Spheres */
 .bubble-particle {
     position: absolute;
-    background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0.1) 70%);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.45) 35%, rgba(255, 255, 255, 0.12) 70%);
+    border: 1.5px solid rgba(255, 255, 255, 0.7);
+    box-shadow: inset -2px -2px 6px rgba(255, 255, 255, 0.6), 0 6px 12px rgba(0, 0, 0, 0.1);
+    border-radius: 50% !important;
+    aspect-ratio: 1 / 1 !important;
     pointer-events: none;
     z-index: 1;
     animation: rise 13s linear infinite;
@@ -1493,13 +1648,214 @@
         gap: 16px;
     }
 }
+
+/* Categories Slider Perfectly Centered & Anti-clipping */
+.categories-container-wrap {
+    width: 100% !important;
+    overflow-x: auto !important;
+    overflow-y: visible !important;
+    scroll-behavior: smooth !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+    margin-bottom: 24px;
+}
+.categories-container-wrap::-webkit-scrollbar {
+    display: none !important;
+}
+
+.categories-slider {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    justify-content: center !important;
+    align-items: stretch !important;
+    gap: 12px !important;
+    padding: 12px 28px 20px !important;
+    width: max-content !important;
+    min-width: 100% !important;
+    margin: 0 auto !important;
+    overflow: visible !important;
+}
 </style>
 
 <section class="custom-hero-banner">
-    <!-- Drift Clouds background -->
-    <div class="cloud-bg cloud-1"></div>
-    <div class="cloud-bg cloud-2"></div>
-    <div class="cloud-bg cloud-3"></div>
+    <!-- 💖 3D Heart Smoke Contrail Overlay -->
+    <div class="heart-contrail-sky-wrap">
+        <svg viewBox="0 0 800 350" preserveAspectRatio="none" style="width: 100%; height: 100%;">
+            <defs>
+                <filter id="glowSmoke" x="-20%" y="-20%" width="140%" height="140%">
+                    <feGaussianBlur stdDeviation="5" result="blur" />
+                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                </filter>
+                <linearGradient id="heartSmokeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="rgba(255, 255, 255, 0.95)"/>
+                    <stop offset="40%" stop-color="rgba(254, 205, 211, 0.9)"/>
+                    <stop offset="80%" stop-color="rgba(244, 63, 94, 0.75)"/>
+                    <stop offset="100%" stop-color="rgba(225, 29, 72, 0.4)"/>
+                </linearGradient>
+            </defs>
+            <path class="heart-smoke-path" d="M 400,65 C 400,65 280,5 280,75 C 280,145 400,240 400,240 C 400,240 520,145 520,75 C 520,5 400,65 400,65 Z" fill="none" stroke="url(#heartSmokeGrad)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" filter="url(#glowSmoke)"/>
+        </svg>
+    </div>
+
+    <!-- ✈️ 3D REALISTIC AIRPLANE & JET CONTRAIL TRAIL -->
+    <div class="hero-airplane-container">
+        <div class="jet-contrail-container">
+            <div class="jet-contrail-line"></div>
+            <div class="jet-contrail-puff" style="width: 14px; height: 14px; right: 10px;"></div>
+            <div class="jet-contrail-puff" style="width: 22px; height: 22px; right: 40px; animation-delay: 0.4s;"></div>
+            <div class="jet-contrail-puff" style="width: 32px; height: 32px; right: 80px; animation-delay: 0.8s;"></div>
+            <div class="jet-contrail-puff" style="width: 45px; height: 45px; right: 130px; animation-delay: 1.2s;"></div>
+        </div>
+        <div class="hero-airplane-svg-wrap">
+            <svg viewBox="0 0 320 180" style="width: 100%; height: 100%;">
+                <defs>
+                    <linearGradient id="fuselage3D" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stop-color="#ffffff"/>
+                        <stop offset="25%" stop-color="#f8fafc"/>
+                        <stop offset="55%" stop-color="#cbd5e1"/>
+                        <stop offset="85%" stop-color="#64748b"/>
+                        <stop offset="100%" stop-color="#334155"/>
+                    </linearGradient>
+                    <linearGradient id="fuselageGlint" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stop-color="rgba(255,255,255,0)"/>
+                        <stop offset="40%" stop-color="rgba(255,255,255,0.95)"/>
+                        <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+                    </linearGradient>
+                    <linearGradient id="mainWing3D" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#38bdf8"/>
+                        <stop offset="35%" stop-color="#0284c7"/>
+                        <stop offset="80%" stop-color="#0369a1"/>
+                        <stop offset="100%" stop-color="#075985"/>
+                    </linearGradient>
+                    <linearGradient id="farWing3D" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#0369a1"/>
+                        <stop offset="100%" stop-color="#0c4a6e"/>
+                    </linearGradient>
+                    <linearGradient id="tailFin3D" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#f43f5e"/>
+                        <stop offset="50%" stop-color="#e11d48"/>
+                        <stop offset="100%" stop-color="#9f1239"/>
+                    </linearGradient>
+                    <linearGradient id="cockpitGlass3D" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#38bdf8"/>
+                        <stop offset="50%" stop-color="#0284c7"/>
+                        <stop offset="100%" stop-color="#0f172a"/>
+                    </linearGradient>
+                    <linearGradient id="engineChrome" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stop-color="#cbd5e1"/>
+                        <stop offset="30%" stop-color="#ffffff"/>
+                        <stop offset="70%" stop-color="#64748b"/>
+                        <stop offset="100%" stop-color="#334155"/>
+                    </linearGradient>
+                </defs>
+
+                <!-- 1. FAR SIDE WING -->
+                <path d="M190,72 L130,22 C125,18 115,20 120,30 L160,70 Z" fill="url(#farWing3D)" />
+                <path d="M130,22 L126,10 L132,18 Z" fill="#0284c7" />
+
+                <!-- 2. TAIL ASSEMBLY -->
+                <path d="M45,70 L25,52 C22,49 18,51 22,56 L40,73 Z" fill="url(#farWing3D)" />
+                <path d="M60,68 L28,12 C24,5 12,8 18,22 L38,72 Z" fill="url(#tailFin3D)"/>
+                <path d="M30,28 L45,30 L38,55 L25,52 Z" fill="#ffffff" opacity="0.85"/>
+
+                <!-- 3. MAIN AIRPLANE FUSELAGE -->
+                <path d="M305,82 C318,87 312,94 290,98 C240,107 130,112 50,104 C30,102 12,96 18,88 C24,82 45,78 120,75 C210,72 292,77 305,82 Z" fill="url(#fuselage3D)"/>
+                <path d="M300,82 C285,78 200,74 120,76 C60,78 28,82 24,85 C32,82 70,78 140,77 C220,76 290,80 300,82 Z" fill="url(#fuselageGlint)"/>
+
+                <!-- Cockpit Windshield -->
+                <path d="M272,80 C286,82 294,86 288,90 C276,91 268,88 266,84 Z" fill="url(#cockpitGlass3D)"/>
+                <path d="M272,81 Q282,83 286,87" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="1"/>
+
+                <!-- Passenger Windows Line -->
+                <g fill="#1e293b" opacity="0.85">
+                    <rect x="250" y="86" width="3.5" height="5" rx="1.5"/>
+                    <rect x="240" y="86.5" width="3.5" height="5" rx="1.5"/>
+                    <rect x="230" y="87" width="3.5" height="5" rx="1.5"/>
+                    <rect x="220" y="87.5" width="3.5" height="5" rx="1.5"/>
+                    <rect x="210" y="88" width="3.5" height="5" rx="1.5"/>
+                    <rect x="200" y="88.5" width="3.5" height="5" rx="1.5"/>
+                    <rect x="190" y="89" width="3.5" height="5" rx="1.5"/>
+                    <rect x="180" y="89.5" width="3.5" height="5" rx="1.5"/>
+                    <rect x="170" y="90" width="3.5" height="5" rx="1.5"/>
+                    <rect x="160" y="90.5" width="3.5" height="5" rx="1.5"/>
+                    <rect x="150" y="91" width="3.5" height="5" rx="1.5"/>
+                    <rect x="140" y="91.5" width="3.5" height="5" rx="1.5"/>
+                    <rect x="130" y="92" width="3.5" height="5" rx="1.5"/>
+                    <rect x="120" y="92.5" width="3.5" height="5" rx="1.5"/>
+                    <rect x="110" y="93" width="3.5" height="5" rx="1.5"/>
+                    <rect x="100" y="93.5" width="3.5" height="5" rx="1.5"/>
+                </g>
+
+                <!-- 4. NEAR SIDE MAIN SWEPT WING -->
+                <path d="M165,92 L95,162 C88,169 74,166 78,154 L125,95 Z" fill="url(#mainWing3D)" />
+                <path d="M95,162 L88,176 C85,180 92,176 96,168 Z" fill="#0284c7" />
+
+                <!-- 5. TURBINE JET ENGINE -->
+                <path d="M138,98 L134,115 L142,115 L146,98 Z" fill="#475569" />
+                <rect x="120" y="112" width="42" height="20" rx="10" fill="url(#engineChrome)"/>
+                <ellipse cx="162" cy="122" rx="5" ry="10" fill="#0f172a"/>
+                <ellipse cx="162" cy="122" rx="2" ry="5" fill="#e2e8f0"/>
+                <ellipse cx="120" cy="122" rx="4" ry="9" fill="#f97316"/>
+            </svg>
+        </div>
+    </div>
+
+    <!-- ☁️ VOLUMETRIC 3D FLUFFY CLOUDS -->
+    <div class="cloud-3d-wrap cloud-layer-1">
+        <svg viewBox="0 0 240 120" width="220" height="110" class="cloud-3d-svg">
+            <defs>
+                <linearGradient id="cloudGrad1" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stop-color="#ffffff"/>
+                    <stop offset="70%" stop-color="#f1f5f9"/>
+                    <stop offset="100%" stop-color="#cbd5e1"/>
+                </linearGradient>
+            </defs>
+            <path d="M30,90 Q15,90 10,75 Q5,60 20,50 Q20,30 40,25 Q60,10 90,20 Q110,5 140,15 Q170,10 190,30 Q215,35 220,55 Q235,70 220,90 Q200,95 30,90 Z" fill="url(#cloudGrad1)"/>
+        </svg>
+    </div>
+
+    <div class="cloud-3d-wrap cloud-layer-2">
+        <svg viewBox="0 0 200 100" width="180" height="90" class="cloud-3d-svg">
+            <defs>
+                <linearGradient id="cloudGrad2" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stop-color="#ffffff"/>
+                    <stop offset="100%" stop-color="#e2e8f0"/>
+                </linearGradient>
+            </defs>
+            <path d="M25,80 Q10,80 8,65 Q5,50 18,42 Q20,25 38,20 Q55,8 80,16 Q98,5 120,12 Q145,8 160,25 Q180,30 185,48 Q198,60 185,80 Q170,83 25,80 Z" fill="url(#cloudGrad2)"/>
+        </svg>
+    </div>
+
+    <div class="cloud-3d-wrap cloud-layer-3">
+        <svg viewBox="0 0 260 130" width="240" height="120" class="cloud-3d-svg">
+            <path d="M35,95 Q15,95 12,78 Q8,60 22,50 Q25,30 48,24 Q70,8 100,18 Q125,5 155,14 Q185,8 205,30 Q230,35 238,58 Q255,75 238,95 Q215,98 35,95 Z" fill="#ffffff" opacity="0.85"/>
+        </svg>
+    </div>
+
+    <div class="cloud-3d-wrap cloud-layer-4">
+        <svg viewBox="0 0 190 95" width="170" height="85" class="cloud-3d-svg">
+            <path d="M20,75 Q8,75 6,60 Q4,48 16,40 Q18,24 35,18 Q50,6 75,14 Q92,4 112,10 Q135,6 148,22 Q168,28 172,44 Q185,55 172,75 Q158,78 20,75 Z" fill="#ffffff" opacity="0.9"/>
+        </svg>
+    </div>
+
+    <!-- 🎈 3D HOT AIR BALLOON -->
+    <div class="hot-air-balloon-3d">
+        <svg viewBox="0 0 100 140" width="65" height="90">
+            <defs>
+                <linearGradient id="balloonGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#f97316"/>
+                    <stop offset="33%" stop-color="#fbbf24"/>
+                    <stop offset="66%" stop-color="#10b981"/>
+                    <stop offset="100%" stop-color="#06b6d4"/>
+                </linearGradient>
+            </defs>
+            <path d="M50,10 C80,10 90,45 75,80 L60,95 L40,95 L25,80 C10,45 20,10 50,10 Z" fill="url(#balloonGrad)" stroke="#0f172a" stroke-width="2"/>
+            <path d="M50,10 C62,10 68,45 58,95 L42,95 C32,45 38,10 50,10 Z" fill="rgba(255,255,255,0.3)" opacity="0.8"/>
+            <line x1="42" y1="95" x2="44" y2="110" stroke="#0f172a" stroke-width="1.5"/>
+            <line x1="58" y1="95" x2="56" y2="110" stroke="#0f172a" stroke-width="1.5"/>
+            <rect x="42" y="110" width="16" height="14" rx="3" fill="#b45309" stroke="#0f172a" stroke-width="1.5"/>
+        </svg>
+    </div>
 
     <!-- Swaying Palm Leaves -->
     <div class="palm-leaf palm-leaf-top-right">
@@ -1726,7 +2082,7 @@
 </section>
 
 <!-- Categories Slider -->
-<div class="container" style="margin-bottom: 24px; max-width: 1400px;">
+<div class="categories-container-wrap">
     <div class="categories-slider">
         <a href="/" class="category-card glass-panel {{ !$selectedCatSlug ? 'active' : '' }}">
             <span class="cat-icon">🗺️</span>
