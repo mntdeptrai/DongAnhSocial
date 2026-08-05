@@ -278,7 +278,28 @@
 </style>
 
 <!-- Detail Header Info -->
-<div class="container" style="padding-top: 40px; margin-bottom: 24px;">
+<div class="container" style="padding-top: 20px; margin-bottom: 24px;">
+    <!-- Harmonious Modern Breadcrumb Navigation -->
+    <nav class="integrated-breadcrumb-nav" aria-label="Breadcrumb">
+        <a href="/" class="breadcrumb-item-link">
+            <span style="font-size: 0.95rem;">🏠</span>
+            <span>Trang chủ</span>
+        </a>
+        <span class="breadcrumb-arrow">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </span>
+        <a href="{{ url('/?cat=' . $eatery->category->slug) }}" class="breadcrumb-item-link">
+            <span style="font-size: 0.95rem;">{{ $eatery->category->icon ?: '📍' }}</span>
+            <span>{{ $eatery->category->name }}</span>
+        </a>
+        <span class="breadcrumb-arrow">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </span>
+        <span class="breadcrumb-item-active">
+            <span style="font-size: 0.95rem;">✨</span>
+            <span>{{ $eatery->name }}</span>
+        </span>
+    </nav>
     <div class="detail-header-wrapper">
         <div class="detail-header-left">
             <div class="detail-header-badges">

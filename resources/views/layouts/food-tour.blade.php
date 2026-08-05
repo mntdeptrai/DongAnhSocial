@@ -56,6 +56,60 @@
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
     <style>
+        /* Universal Integrated Breadcrumbs Component */
+        .integrated-breadcrumb-nav {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-top: 16px;
+            margin-bottom: 20px;
+            font-size: 0.88rem;
+            color: #475569;
+        }
+
+        .breadcrumb-item-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 12px;
+            border-radius: 10px;
+            color: #475569 !important;
+            text-decoration: none;
+            font-weight: 600;
+            background: rgba(255, 255, 255, 0.85);
+            border: 1px solid rgba(226, 232, 240, 0.9);
+            transition: all 0.2s ease;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+        }
+
+        .breadcrumb-item-link:hover {
+            background: #ffffff;
+            color: #059669 !important;
+            border-color: #a7f3d0;
+            box-shadow: 0 2px 8px rgba(5, 150, 105, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .breadcrumb-arrow {
+            color: #94a3b8;
+            display: inline-flex;
+            align-items: center;
+            padding: 0 2px;
+        }
+
+        .breadcrumb-item-active {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 14px;
+            border-radius: 10px;
+            color: #047857;
+            font-weight: 700;
+            background: #dcfce7;
+            border: 1px solid #a7f3d0;
+        }
+
         /* Modern Header Action Buttons */
         .header-action-btn {
             width: 36px;
