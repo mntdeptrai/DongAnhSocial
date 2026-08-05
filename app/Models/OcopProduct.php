@@ -15,6 +15,7 @@ class OcopProduct extends Model
         'seller_name',
         'seller_phone',
         'name',
+        'slug',
         'price',
         'unit',
         'description',

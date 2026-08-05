@@ -11,7 +11,7 @@
 
 @section('og_image', $product->image_path ?: ($eatery?->image_path ?: 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=800&q=80'))
 @section('og_type', 'product')
-@section('canonical_url', route('ocop.product.show', $product->id))
+@section('canonical_url', route('ocop.product.show', $product->slug ?: $product->id))
 
 <!-- Structured Data JSON-LD cho Google Rich Snippets & Search Indexing -->
 @push('head')
@@ -30,7 +30,7 @@
   },
   "offers": {
     "@@type": "Offer",
-    "url": "{{ route('ocop.product.show', $product->id) }}",
+    "url": "{{ route('ocop.product.show', $product->slug ?: $product->id) }}",
     "priceCurrency": "VND",
     "price": "{{ (int)preg_replace('/[^0-9]/', '', (string)$product->price) ?: 0 }}",
     "priceValidUntil": "{{ date('Y-12-31', strtotime('+1 year')) }}",
@@ -964,7 +964,7 @@
         
         <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px;">
             @foreach($relatedProducts as $rel)
-                <a href="{{ route('ocop.product.show', $rel->id) }}" style="text-decoration: none;">
+                <a href="{{ route('ocop.product.show', $rel->slug ?: $rel->id) }}" style="text-decoration: none;">
                     <div style="background: #ffffff; border-radius: 20px; border: 1px solid #e2e8f0; padding: 18px; height: 100%; display: flex; flex-direction: column; justify-content: space-between; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);" onmouseover="this.style.borderColor='#059669'; this.style.transform='translateY(-4px)'; this.style.boxShadow='0 12px 25px rgba(5, 150, 105, 0.12)';" onmouseout="this.style.borderColor='#e2e8f0'; this.style.transform='none'; this.style.boxShadow='0 4px 15px rgba(0, 0, 0, 0.03)';">
                         <div>
                             <div style="height: 180px; border-radius: 14px; overflow: hidden; margin-bottom: 14px; position: relative; border: 1px solid #f1f5f9;">

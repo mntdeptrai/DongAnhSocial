@@ -507,7 +507,7 @@ class AuthController extends Controller
             if (!empty($oldPhone)) {
                 $cleanOld = preg_replace('/[^0-9]/', '', $oldPhone);
                 if (!empty($cleanOld)) {
-                    $query->orWhereRaw("REPLACE(REPLACE(REPLACE(phone, ' ', ''), '-', ''), '.', '') LIKE ?", ["%{$cleanOld}%"]);
+                    $query->orWhere('phone', $oldPhone)->orWhere('phone', $cleanOld);
                 }
             }
             $linkedRouteBusinesses = $query->get();

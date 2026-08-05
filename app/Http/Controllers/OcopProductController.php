@@ -10,9 +10,25 @@ class OcopProductController extends Controller
     /**
      * Display the dedicated detail page for a specific OCOP product
      */
-    public function show($id)
+    public function show($slugOrId)
     {
-        $product = OcopProduct::with(['eatery.commune', 'eatery.category'])->findOrFail($id);
+        // 1. Tìm theo Slug sản phẩm (URL thân thiện SEO)
+        $product = OcopProduct::with(['eatery.commune', 'eatery.category'])
+            ->where('slug', $slugOrId)
+            ->first();
+
+        // 2. Nếu không thấy slug và tham số là ID số -> Tìm theo ID và chuyển hướng 301 về URL Slug chuẩn
+        if (!$product && is_numeric($slugOrId)) {
+            $product = OcopProduct::with(['eatery.commune', 'eatery.category'])->find($slugOrId);
+            if ($product && !empty($product->slug)) {
+                return redirect()->route('ocop.product.show', $product->slug, 301);
+            }
+        }
+
+        if (!$product) {
+            abort(404);
+        }
+
         $eatery = $product->eatery;
         
         // Get related OCOP products from the same seller or commune
