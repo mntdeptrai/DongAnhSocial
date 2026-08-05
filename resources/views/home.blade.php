@@ -1647,35 +1647,87 @@
 /* Categories Slider Horizontal Scroll Fix for Mobile & Desktop */
 .categories-container-wrap {
     width: 100% !important;
-    overflow-x: auto !important;
-    overflow-y: hidden !important;
-    scroll-behavior: smooth !important;
-    -webkit-overflow-scrolling: touch !important;
-    touch-action: pan-x pan-y !important;
-    scrollbar-width: none !important;
-    -ms-overflow-style: none !important;
-    margin-bottom: 24px;
-    cursor: grab;
-    user-select: none;
-}
-.categories-container-wrap:active {
-    cursor: grabbing;
-}
-.categories-container-wrap::-webkit-scrollbar {
-    display: none !important;
+    position: relative !important;
+    z-index: 10 !important;
+    margin: 16px 0 24px 0 !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
 }
 
 .categories-slider {
     display: flex !important;
     flex-wrap: nowrap !important;
     justify-content: flex-start !important;
-    align-items: stretch !important;
-    gap: 12px !important;
-    padding: 12px 20px 20px !important;
-    width: max-content !important;
-    min-width: 100% !important;
-    margin: 0 !important;
-    overflow: visible !important;
+    align-items: center !important;
+    gap: 10px !important;
+    padding: 12px 16px 16px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    overflow-x: auto !important;
+    overflow-y: visible !important;
+    scroll-behavior: smooth !important;
+    -webkit-overflow-scrolling: touch !important;
+    touch-action: pan-x pan-y !important;
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+    cursor: grab;
+}
+
+.categories-slider::-webkit-scrollbar {
+    display: none !important;
+}
+
+.category-card {
+    flex: 0 0 auto !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    padding: 9px 18px !important;
+    background: #ffffff !important;
+    border: 1.5px solid rgba(14, 165, 233, 0.25) !important;
+    border-radius: 9999px !important;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06) !important;
+    color: #0f172a !important;
+    text-decoration: none !important;
+    white-space: nowrap !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    min-height: 42px !important;
+}
+
+.category-card.active {
+    background: #0284c7 !important;
+    border-color: #0284c7 !important;
+    color: #ffffff !important;
+    box-shadow: 0 6px 18px rgba(2, 132, 199, 0.35) !important;
+}
+
+.category-card.active .cat-title-en,
+.category-card.active .cat-title-vi {
+    color: #ffffff !important;
+}
+
+.category-card .cat-name {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    text-align: left !important;
+    gap: 1px !important;
+}
+
+.category-card .cat-title-en {
+    color: #0f172a !important;
+    font-weight: 700 !important;
+    font-size: 0.82rem !important;
+    line-height: 1.2 !important;
+}
+
+.category-card .cat-title-vi {
+    color: #64748b !important;
+    font-weight: 500 !important;
+    font-size: 0.68rem !important;
+    line-height: 1.2 !important;
 }
 </style>
 
@@ -2907,21 +2959,21 @@
 
     // Hàm tự động cuộn thẻ danh mục được chọn vào chính giữa thanh trượt trơn tru (Google Maps/Airbnb Style)
     function centerActiveCategoryCard(cardElement) {
-        const container = document.querySelector('.categories-container-wrap') || document.querySelector('.categories-slider');
-        if (!container || !cardElement) return;
+        const slider = document.querySelector('.categories-slider') || document.querySelector('.categories-container-wrap');
+        if (!slider || !cardElement) return;
 
-        const containerWidth = container.clientWidth;
-        const containerRect = container.getBoundingClientRect();
+        const sliderWidth = slider.clientWidth;
+        const sliderRect = slider.getBoundingClientRect();
         const cardRect = cardElement.getBoundingClientRect();
         
         // Vị trí thực tế của thẻ so với điểm bắt đầu của nội dung trượt (kể cả khi đã cuộn)
-        const relativeLeft = cardRect.left - containerRect.left + container.scrollLeft;
+        const relativeLeft = cardRect.left - sliderRect.left + slider.scrollLeft;
         const cardWidth = cardElement.clientWidth;
 
         // Tính toán khoảng cách để đưa thẻ về giữa
-        const targetScrollLeft = relativeLeft - (containerWidth / 2) + (cardWidth / 2);
+        const targetScrollLeft = relativeLeft - (sliderWidth / 2) + (cardWidth / 2);
 
-        container.scrollTo({
+        slider.scrollTo({
             left: Math.max(0, targetScrollLeft),
             behavior: 'smooth'
         });
@@ -2929,32 +2981,32 @@
 
     document.addEventListener("DOMContentLoaded", function() {
         // 1. Kích hoạt cuộn bằng kéo chuột (Drag to scroll) cho máy tính & hỗ trợ vuốt chạm trên điện thoại
-        const catWrap = document.querySelector('.categories-container-wrap');
-        if (catWrap) {
+        const slider = document.querySelector('.categories-slider');
+        if (slider) {
             let isDown = false;
             let startX;
             let scrollLeft;
 
-            catWrap.addEventListener('mousedown', (e) => {
+            slider.addEventListener('mousedown', (e) => {
                 isDown = true;
-                catWrap.style.cursor = 'grabbing';
-                startX = e.pageX - catWrap.offsetLeft;
-                scrollLeft = catWrap.scrollLeft;
+                slider.style.cursor = 'grabbing';
+                startX = e.pageX - slider.offsetLeft;
+                scrollLeft = slider.scrollLeft;
             });
-            catWrap.addEventListener('mouseleave', () => {
+            slider.addEventListener('mouseleave', () => {
                 isDown = false;
-                catWrap.style.cursor = 'grab';
+                slider.style.cursor = 'grab';
             });
-            catWrap.addEventListener('mouseup', () => {
+            slider.addEventListener('mouseup', () => {
                 isDown = false;
-                catWrap.style.cursor = 'grab';
+                slider.style.cursor = 'grab';
             });
-            catWrap.addEventListener('mousemove', (e) => {
+            slider.addEventListener('mousemove', (e) => {
                 if (!isDown) return;
                 e.preventDefault();
-                const x = e.pageX - catWrap.offsetLeft;
+                const x = e.pageX - slider.offsetLeft;
                 const walk = (x - startX) * 1.8;
-                catWrap.scrollLeft = scrollLeft - walk;
+                slider.scrollLeft = scrollLeft - walk;
             });
         }
         // 2. Thiết lập bản đồ Leaflet tâm vị trí Đông Anh (xã Đông Anh)
