@@ -28,6 +28,10 @@
                     {{ $user->name }}
                     @if($user->role === 'admin')
                         <span class="admin-badge" style="background-color: rgba(255, 255, 255, 0.2); color: #ffffff; border-color: rgba(255,255,255,0.4); font-size: 0.72rem; font-weight: 700; padding: 3px 10px;">Admin</span>
+                    @elseif($user->role === 'principal')
+                        <span class="admin-badge" style="background-color: rgba(255, 255, 255, 0.2); color: #ffffff; border-color: rgba(255,255,255,0.4); font-size: 0.72rem; font-weight: 700; padding: 3px 10px;">Principal 🏫</span>
+                    @elseif($user->role === 'manager')
+                        <span class="admin-badge" style="background-color: rgba(255, 255, 255, 0.2); color: #ffffff; border-color: rgba(255,255,255,0.4); font-size: 0.72rem; font-weight: 700; padding: 3px 10px;">Manager 🏛️</span>
                     @elseif($user->role === 'seller')
                         <span class="admin-badge" style="background-color: rgba(255, 255, 255, 0.2); color: #ffffff; border-color: rgba(255,255,255,0.4); font-size: 0.72rem; font-weight: 700; padding: 3px 10px;">Seller</span>
                     @else

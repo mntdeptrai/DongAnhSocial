@@ -58,72 +58,75 @@
     </div>
 @endif
 
-<div class="row g-4">
-    @forelse($schools as $sch)
-        @php
-            $schoolTag = '🏫 Trường học';
-            $nameLower = mb_strtolower($sch->name);
-            if (str_contains($nameLower, 'mầm non')) {
-                $schoolTag = '🏫 Mầm non';
-            } elseif (str_contains($nameLower, 'tiểu học')) {
-                $schoolTag = '🏫 Tiểu học';
-            } elseif (str_contains($nameLower, 'thcs')) {
-                $schoolTag = '🏫 THCS';
-            } elseif (str_contains($nameLower, 'thpt')) {
-                $schoolTag = '🏫 THPT';
-            } elseif ($sch->commune && !str_contains($sch->commune->name, 'Tổ dân phố')) {
-                $schoolTag = '📍 ' . $sch->commune->name;
-            } else {
-                $schoolTag = '📍 Xã Đông Anh';
-            }
-            $editUrl = request()->is('admin*') ? route('admin.schools.edit', $sch->id) : route('principal.schools.edit', $sch->slug ?: $sch->id);
-        @endphp
-        <div class="col-md-6 col-lg-4">
-            <div class="school-admin-card">
-                <div class="school-card-img-box">
-                    <img src="{{ $sch->image_path ?: 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=600&q=80' }}" style="width: 100%; height: 100%; object-fit: cover;" alt="{{ $sch->standardized_name }}">
-                    <span style="position: absolute; top: 12px; left: 12px; background: rgba(79, 70, 229, 0.92); backdrop-filter: blur(8px); color: white; padding: 6px 14px; border-radius: 14px; font-size: 0.78rem; font-weight: 600; box-shadow: 0 4px 12px rgba(0,0,0,0.12); font-family: 'Be Vietnam Pro', sans-serif;">
-                        {{ $schoolTag }}
-                    </span>
-                </div>
-                <div class="p-3 d-flex flex-column justify-content-between flex-grow-1">
-                    <div>
-                        <h5 class="fw-bold mb-2" style="font-size: 1.1rem; line-height: 1.35; color: #0f172a; font-family: 'Be Vietnam Pro', sans-serif;">{{ $sch->standardized_name }}</h5>
-                        <p class="text-secondary small mb-3" style="font-family: 'Be Vietnam Pro', sans-serif;">📍 {{ $sch->address ?: 'Xã Đông Anh, Hà Nội' }}</p>
+<div class="container py-4" style="max-width: 1240px; margin: 0 auto; padding: 0 16px;">
+    <div class="row g-4" style="display: flex; flex-wrap: wrap; margin: -12px;">
+        @forelse($schools as $sch)
+            @php
+                $schoolTag = '🏫 Trường học';
+                $nameLower = mb_strtolower($sch->name);
+                if (str_contains($nameLower, 'mầm non')) {
+                    $schoolTag = '🏫 Mầm non';
+                } elseif (str_contains($nameLower, 'tiểu học')) {
+                    $schoolTag = '🏫 Tiểu học';
+                } elseif (str_contains($nameLower, 'thcs')) {
+                    $schoolTag = '🏫 THCS';
+                } elseif (str_contains($nameLower, 'thpt')) {
+                    $schoolTag = '🏫 THPT';
+                } elseif ($sch->commune && !str_contains($sch->commune->name, 'Tổ dân phố')) {
+                    $schoolTag = '📍 ' . $sch->commune->name;
+                } else {
+                    $schoolTag = '📍 Xã Đông Anh';
+                }
+                $editUrl = request()->is('admin*') ? route('admin.schools.edit', $sch->id) : route('principal.schools.edit', $sch->slug ?: $sch->id);
+            @endphp
+            <div class="col-md-6 col-lg-4" style="padding: 12px; flex: 0 0 100%; max-width: 100%; box-sizing: border-box;">
+                <div class="school-admin-card">
+                    <div class="school-card-img-box">
+                        <img src="{{ $sch->image_path ?: 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=600&q=80' }}" style="width: 100%; height: 100%; object-fit: cover;" alt="{{ $sch->standardized_name }}">
+                        <span style="position: absolute; top: 12px; left: 12px; background: rgba(79, 70, 229, 0.92); backdrop-filter: blur(8px); color: white; padding: 6px 14px; border-radius: 14px; font-size: 0.78rem; font-weight: 600; box-shadow: 0 4px 12px rgba(0,0,0,0.12); font-family: 'Be Vietnam Pro', sans-serif;">
+                            {{ $schoolTag }}
+                        </span>
                     </div>
-                    
-                    <div class="pt-3 border-top mt-2" style="border-color: #f1f5f9 !important;">
-                        <div class="d-flex justify-content-between align-items-center mb-2.5">
-                            @if(count($sch->merged_components) > 0)
-                                <span class="badge bg-primary bg-opacity-10 text-primary border border-primary-subtle px-3 py-1.5" style="font-size: 0.76rem; border-radius: 9999px; font-weight: 600; font-family: 'Be Vietnam Pro', sans-serif;">
-                                    🔗 {{ count($sch->merged_components) }} trường sáp nhập
-                                </span>
-                            @else
-                                <span class="badge bg-light text-secondary border px-3 py-1.5" style="font-size: 0.76rem; border-radius: 9999px; font-weight: 600; font-family: 'Be Vietnam Pro', sans-serif;">
-                                    📍 1 điểm trường độc lập
-                                </span>
-                            @endif
+                    <div class="p-3 d-flex flex-column justify-content-between flex-grow-1">
+                        <div>
+                            <h5 class="fw-bold mb-2" style="font-size: 1.1rem; line-height: 1.35; color: #0f172a; font-family: 'Be Vietnam Pro', sans-serif;">{{ $sch->standardized_name }}</h5>
+                            <p class="text-secondary small mb-3" style="font-family: 'Be Vietnam Pro', sans-serif;">📍 {{ $sch->address ?: 'Xã Đông Anh, Hà Nội' }}</p>
                         </div>
+                        
+                        <div class="pt-3 border-top mt-2" style="border-color: #f1f5f9 !important;">
+                            <div class="d-flex justify-content-between align-items-center mb-2.5">
+                                @if(count($sch->merged_components) > 0)
+                                    <span class="badge bg-primary bg-opacity-10 text-primary border border-primary-subtle px-3 py-1.5" style="font-size: 0.76rem; border-radius: 9999px; font-weight: 600; font-family: 'Be Vietnam Pro', sans-serif;">
+                                        🔗 {{ count($sch->merged_components) }} trường sáp nhập
+                                    </span>
+                                @else
+                                    <span class="badge bg-light text-secondary border px-3 py-1.5" style="font-size: 0.76rem; border-radius: 9999px; font-weight: 600; font-family: 'Be Vietnam Pro', sans-serif;">
+                                        📍 1 điểm trường độc lập
+                                    </span>
+                                @endif
+                            </div>
 
-                        <div class="d-flex gap-2">
-                            <a href="{{ route('principal.schools.dashboard', $sch->slug ?: $sch->id) }}" class="btn btn-sm btn-success flex-grow-1 shadow-sm" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: none; font-size: 0.82rem; padding: 8px 12px; border-radius: 9999px; font-weight: 600; font-family: 'Be Vietnam Pro', sans-serif; display: inline-flex; align-items: center; justify-content: center; gap: 6px; color: #ffffff;">
-                                <span>📊</span> Dashboard
-                            </a>
-                            <a href="{{ $editUrl }}" class="btn btn-sm btn-light border flex-grow-1 shadow-sm" style="font-size: 0.82rem; padding: 8px 12px; border-radius: 9999px; font-weight: 600; color: #475569; background: #ffffff; border-color: #e2e8f0 !important; font-family: 'Be Vietnam Pro', sans-serif; display: inline-flex; align-items: center; justify-content: center; gap: 6px;">
-                                <span>⚙️</span> Cấu hình
-                            </a>
+                            <div class="d-flex gap-2" style="display: flex; gap: 8px;">
+                                <a href="{{ route('principal.schools.dashboard', $sch->slug ?: $sch->id) }}" class="btn btn-sm btn-success flex-grow-1 shadow-sm" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: none; font-size: 0.82rem; padding: 8px 12px; border-radius: 9999px; font-weight: 600; font-family: 'Be Vietnam Pro', sans-serif; display: inline-flex; align-items: center; justify-content: center; gap: 6px; color: #ffffff; flex: 1;">
+                                    <span>📊</span> Dashboard
+                                </a>
+                                <a href="{{ $editUrl }}" class="btn btn-sm btn-light border flex-grow-1 shadow-sm" style="font-size: 0.82rem; padding: 8px 12px; border-radius: 9999px; font-weight: 600; color: #475569; background: #ffffff; border-color: #e2e8f0 !important; font-family: 'Be Vietnam Pro', sans-serif; display: inline-flex; align-items: center; justify-content: center; gap: 6px; flex: 1;">
+                                    <span>⚙️</span> Cấu hình
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-    @empty
-        <div class="col-12 text-center py-5">
-            <div class="p-5 rounded-4 bg-white border shadow-sm" style="max-width: 600px; margin: 0 auto;">
-                <h4 class="text-dark fw-bold mb-2">Chưa tìm thấy trường học được phân công</h4>
-                <p class="text-secondary small mb-0">Vui lòng liên hệ QTV Hệ thống để gán mã trường quản lý cho tài khoản của bạn.</p>
+        @empty
+            <div style="width: 100%; padding: 40px 16px; text-align: center; box-sizing: border-box;">
+                <div style="max-width: 600px; margin: 0 auto; background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 24px; padding: 40px 24px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05); text-align: center;">
+                    <div style="font-size: 2.5rem; margin-bottom: 12px;">🏫</div>
+                    <h4 style="font-size: 1.25rem; font-weight: 800; color: #0f172a; margin: 0 0 8px 0; font-family: 'Be Vietnam Pro', sans-serif;">Chưa tìm thấy trường học được phân công</h4>
+                    <p style="font-size: 0.9rem; color: #64748b; margin: 0; font-family: 'Be Vietnam Pro', sans-serif; line-height: 1.6;">Vui lòng liên hệ QTV Hệ thống để gán mã trường quản lý cho tài khoản của bạn.</p>
+                </div>
             </div>
-        </div>
-    @endforelse
+        @endforelse
+    </div>
 </div>
 @endsection

@@ -1542,6 +1542,19 @@ class AdminController extends Controller
             'stall_id' => $stallId,
         ]);
 
+        // Cập nhật user_id cho Trường học / Cơ sở kinh doanh được chọn
+        if ($eateryId) {
+            $connections = ['mysql', 'mysql_education', 'mysql_market', 'mysql_stay', 'mysql_wellness', 'mysql_culture'];
+            foreach ($connections as $conn) {
+                try {
+                    \Illuminate\Support\Facades\DB::connection($conn)
+                        ->table('eateries')
+                        ->where('id', $eateryId)
+                        ->update(['user_id' => $user->id]);
+                } catch (\Throwable $ex) {}
+            }
+        }
+
         // Cập nhật thông tin gian hàng nếu có chọn stall_id
         if ($stallId) {
             \Illuminate\Support\Facades\DB::connection('mysql_market')
@@ -1554,7 +1567,7 @@ class AdminController extends Controller
                 ]);
         }
 
-        return redirect('/admin/users')->with('success', 'Thêm mới tài khoản tiểu thương gian hàng thành công!');
+        return redirect('/admin/users')->with('success', 'Thêm mới tài khoản người dùng thành công!');
     }
 
     public function showUser($id)
@@ -1737,6 +1750,19 @@ class AdminController extends Controller
             'eatery_id' => $eateryId,
             'stall_id' => $stallId
         ]);
+
+        // Cập nhật user_id cho Trường học / Cơ sở kinh doanh được chọn
+        if ($eateryId) {
+            $connections = ['mysql', 'mysql_education', 'mysql_market', 'mysql_stay', 'mysql_wellness', 'mysql_culture'];
+            foreach ($connections as $conn) {
+                try {
+                    \Illuminate\Support\Facades\DB::connection($conn)
+                        ->table('eateries')
+                        ->where('id', $eateryId)
+                        ->update(['user_id' => $user->id]);
+                } catch (\Throwable $ex) {}
+            }
+        }
 
         // Cập nhật thông tin gian hàng nếu có chọn stall_id
         if ($stallId) {

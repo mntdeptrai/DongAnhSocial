@@ -19,30 +19,30 @@
                 <span class="pro-info-val">{{ optional($school)->address ?: 'Xã Đông Anh, Hà Nội' }}</span>
             </div>
         </li>
-        @if($school->phone || $user->phone)
+        @if(optional($school)->phone || $user->phone)
         <li class="pro-info-row">
             <span class="pro-info-icon">📞</span>
             <div class="pro-info-text">
                 <span class="pro-info-lbl">Điện thoại</span>
-                <span class="pro-info-val">{{ $school->phone ?: $user->phone }}</span>
+                <span class="pro-info-val">{{ optional($school)->phone ?: ($user->phone ?: 'Chưa cập nhật') }}</span>
             </div>
         </li>
         @endif
-        @if($school->website)
+        @if(optional($school)->website)
         <li class="pro-info-row">
             <span class="pro-info-icon">🌐</span>
             <div class="pro-info-text">
                 <span class="pro-info-lbl">Website</span>
-                <span class="pro-info-val" style="color: #2563eb;">{{ $school->website }}</span>
+                <span class="pro-info-val" style="color: #2563eb;">{{ optional($school)->website }}</span>
             </div>
         </li>
         @endif
-        @if($school->opening_hours)
+        @if(optional($school)->opening_hours)
         <li class="pro-info-row">
             <span class="pro-info-icon">🕒</span>
             <div class="pro-info-text">
                 <span class="pro-info-lbl">Giờ mở cửa</span>
-                <span class="pro-info-val">{{ $school->opening_hours }}</span>
+                <span class="pro-info-val">{{ optional($school)->opening_hours }}</span>
             </div>
         </li>
         @endif

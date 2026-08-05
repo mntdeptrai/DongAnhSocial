@@ -100,6 +100,35 @@ class SchoolManagementController extends Controller
                     ->get();
             }
 
+            // Fallback thông minh: Tự động ghép nối trường học nếu tên tài khoản khớp tên Trường
+            if ($schools->isEmpty() && !empty($user->name)) {
+                $searchName = trim(preg_replace('/^(trường\s+|tài\s+khoản\s+)/ui', '', $user->name));
+                if (mb_strlen($searchName) >= 3) {
+                    $matchedSchools = Eatery::on('mysql_education')
+                        ->where(function($q) use ($searchName) {
+                            $q->where('name', $searchName)
+                              ->orWhere('name', 'Trường ' . $searchName)
+                              ->orWhere('name', 'Trường Tiểu học ' . $searchName)
+                              ->orWhere('name', 'Trường THCS ' . $searchName)
+                              ->orWhere('name', 'Trường THPT ' . $searchName)
+                              ->orWhere('name', 'Trường Mầm non ' . $searchName);
+                        })
+                        ->where(function($q) use ($user) {
+                            $q->whereNull('user_id')->orWhere('user_id', 0)->orWhere('user_id', $user->id);
+                        })
+                        ->with('commune')
+                        ->get();
+
+                    if ($matchedSchools->isNotEmpty()) {
+                        foreach ($matchedSchools as $mSch) {
+                            $mSch->user_id = $user->id;
+                            $mSch->save();
+                        }
+                        $schools = $matchedSchools;
+                    }
+                }
+            }
+
             // Nếu Hiệu trưởng đã được phân công 1 trường, chuyển thẳng vào trang dashboard trường đó
             if ($schools->count() === 1) {
                 return redirect()->route('principal.schools.dashboard', $schools->first()->slug ?: $schools->first()->id);

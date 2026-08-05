@@ -302,6 +302,31 @@ class AuthController extends Controller
                 if (!$school) {
                     $school = \App\Models\Eatery::on('mysql')->where('user_id', $user->id)->first();
                 }
+
+                // Fallback thông minh: Tự động gán cơ sở nếu tên Tài khoản trùng khớp với tên Trường học
+                if (!$school && !empty($user->name)) {
+                    $searchName = trim(preg_replace('/^(trường\s+|tài\s+khoản\s+)/ui', '', $user->name));
+                    if (mb_strlen($searchName) >= 3) {
+                        $school = \App\Models\Eatery::on('mysql_education')
+                            ->where(function($q) use ($searchName, $user) {
+                                $q->where('name', $searchName)
+                                  ->orWhere('name', 'Trường ' . $searchName)
+                                  ->orWhere('name', 'Trường Tiểu học ' . $searchName)
+                                  ->orWhere('name', 'Trường THCS ' . $searchName)
+                                  ->orWhere('name', 'Trường THPT ' . $searchName)
+                                  ->orWhere('name', 'Trường Mầm non ' . $searchName);
+                            })
+                            ->where(function($q) use ($user) {
+                                $q->whereNull('user_id')->orWhere('user_id', 0)->orWhere('user_id', $user->id);
+                            })
+                            ->first();
+
+                        if ($school) {
+                            $school->user_id = $user->id;
+                            $school->save();
+                        }
+                    }
+                }
             }
         }
 

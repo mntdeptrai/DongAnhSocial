@@ -77,6 +77,10 @@
                         <td>
                             @if($user->role === 'admin')
                                 <span class="admin-badge admin-badge-primary" style="font-size: 0.72rem; font-weight: 700; background-color: #f3e8ff; color: #7e22ce; border-color: rgba(126, 34, 206, 0.15);">Admin</span>
+                            @elseif($user->role === 'principal')
+                                <span class="admin-badge admin-badge-primary" style="font-size: 0.72rem; font-weight: 700; background-color: #e0e7ff; color: #4338ca; border-color: rgba(67, 56, 202, 0.15);">Principal 🏫</span>
+                            @elseif($user->role === 'manager')
+                                <span class="admin-badge admin-badge-primary" style="font-size: 0.72rem; font-weight: 700; background-color: #fef3c7; color: #b45309; border-color: rgba(180, 83, 9, 0.15);">Manager 🏛️</span>
                             @elseif($user->role === 'seller')
                                 <span class="admin-badge admin-badge-primary" style="font-size: 0.72rem; font-weight: 700; background-color: #ecfdf5; color: #047857; border-color: rgba(4, 120, 87, 0.15);">Seller</span>
                             @else
