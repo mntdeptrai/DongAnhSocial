@@ -590,7 +590,7 @@ class HomeController extends Controller
      */
     public function getWebNotifications(Request $request)
     {
-        $userId = session('user_id') ?? auth()->id();
+        $userId = auth()->id() ?? session('user_id');
         if (!$userId) {
             return response()->json([]);
         }
@@ -604,7 +604,7 @@ class HomeController extends Controller
      */
     public function markWebNotificationsRead(Request $request)
     {
-        $userId = session('user_id') ?? auth()->id();
+        $userId = auth()->id() ?? session('user_id');
         if ($userId) {
             \App\Services\NotificationService::markAsRead($userId);
         }

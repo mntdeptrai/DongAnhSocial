@@ -275,17 +275,17 @@ class NotificationService
                 })
                 ->toArray();
 
-            $followedUserIds = DB::table('follows')
+            $followedUserIds = \Illuminate\Support\Facades\Schema::hasTable('follows') ? DB::table('follows')
                 ->where('user_id', $userId)
                 ->pluck('followed_id')
                 ->filter()
-                ->toArray();
+                ->toArray() : [];
 
-            $followedEateryIds = DB::table('follows')
+            $followedEateryIds = \Illuminate\Support\Facades\Schema::hasTable('follows') ? DB::table('follows')
                 ->where('user_id', $userId)
                 ->pluck('eatery_id')
                 ->filter()
-                ->toArray();
+                ->toArray() : [];
 
             $targetUserIds = array_unique(array_merge($friendIds, $followedUserIds));
 
