@@ -280,8 +280,7 @@
                                  x-transition:leave-start="opacity-100 transform scale-100"
                                  x-transition:leave-end="opacity-0 transform scale-95"
                                  class="notif-dropdown-menu" 
-                                 style="position: absolute; right: -40px; top: 100%; margin-top: 10px; width: 340px; background: var(--bg-card, #ffffff); border: 1px solid var(--border-glow, rgba(0,0,0,0.08)); border-radius: 20px; box-shadow: 0 12px 40px rgba(0,0,0,0.15); z-index: 10000; overflow: hidden; text-align: left; display: none;"
-                                 :style="open ? 'display: flex; flex-direction: column;' : 'display: none;'">
+                                 style="position: absolute; right: 0; top: 100%; margin-top: 10px; width: 340px; background: var(--bg-card, #ffffff); border: 1px solid var(--border-glow, rgba(0,0,0,0.08)); border-radius: 20px; box-shadow: 0 12px 40px rgba(0,0,0,0.15); z-index: 10000; overflow: hidden; text-align: left; display: flex; flex-direction: column; white-space: normal;">
                                 
                                 <div style="padding: 16px 18px; border-bottom: 1px solid rgba(0,0,0,0.06); display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.015);">
                                     <h4 style="margin: 0; font-size: 1.05rem; font-weight: 800; color: var(--text-main, #1e293b); font-family: var(--font-heading);">Thông báo</h4>
@@ -298,14 +297,14 @@
                                     <template x-if="!loading && items.length > 0">
                                         <div style="display: flex; flex-direction: column;">
                                             <template x-for="item in items" :key="item.id">
-                                                <a :href="item.type === 'reaction' || item.type === 'comment' ? '/checkin' : (item.type === 'friend' ? '/social' : '/orders')" style="display: flex; align-items: flex-start; gap: 12px; padding: 12px 18px; text-decoration: none; color: inherit; border-bottom: 1px solid rgba(0,0,0,0.03); transition: background 0.15s;" onmouseover="this.style.background='rgba(0,0,0,0.02)'" onmouseout="this.style.background='transparent'">
+                                                <a :href="item.type === 'reaction' || item.type === 'comment' ? '/checkin' : (item.type === 'friend' ? '/social' : '/orders')" style="display: flex; align-items: flex-start; gap: 12px; padding: 12px 18px; text-decoration: none; color: inherit; border-bottom: 1px solid rgba(0,0,0,0.03); transition: background 0.15s; white-space: normal;" onmouseover="this.style.background='rgba(0,0,0,0.02)'" onmouseout="this.style.background='transparent'">
                                                     <div style="width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0; background: rgba(14,165,233,0.1);">
                                                         <span x-text="item.type === 'reaction' ? '❤️' : (item.type === 'comment' ? '💬' : (item.type === 'friend' ? '👥' : '📦'))"></span>
                                                     </div>
-                                                    <div style="flex: 1; display: flex; flex-direction: column; gap: 2px;">
-                                                        <span style="font-size: 0.84rem; font-weight: 800; color: var(--text-main, #0f172a);" x-text="item.title"></span>
-                                                        <span style="font-size: 0.8rem; color: var(--text-muted, #475569); line-height: 1.35;" x-text="item.body"></span>
-                                                        <span style="font-size: 0.72rem; color: #94a3b8; margin-top: 2px;" x-text="item.time"></span>
+                                                    <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; text-align: left;">
+                                                        <span style="font-size: 0.84rem; font-weight: 800; color: var(--text-main, #0f172a); white-space: normal; word-break: break-word;" x-text="item.title"></span>
+                                                        <span style="font-size: 0.8rem; color: var(--text-muted, #475569); line-height: 1.35; white-space: normal; word-break: break-word;" x-text="item.body"></span>
+                                                        <span style="font-size: 0.72rem; color: #94a3b8; margin-top: 2px; white-space: normal;" x-text="item.time"></span>
                                                     </div>
                                                 </a>
                                             </template>
@@ -344,7 +343,7 @@
                                     </svg>
                                 </div>
                             </button>
-                            <div x-cloak x-show="open" x-transition class="profile-dropdown-menu" style="display: none;" :style="open ? 'display: flex; flex-direction: column;' : 'display: none;'">
+                            <div x-cloak x-show="open" x-transition class="profile-dropdown-menu">
                                 @php
                                     $effectiveRole = session('user_role') ?: (Auth::check() ? Auth::user()->role : 'user');
                                 @endphp
