@@ -48,7 +48,7 @@
 /* Custom styles for the brand-new DongAnh Discovery Banner */
 .custom-hero-banner {
     position: relative;
-    overflow: visible !important; /* Allow the search suggestions dropdown to float fully outside the banner without being cut off */
+    overflow: hidden !important; /* Prevents 3D clouds, airplane keyframes, and sky elements from expanding screen width on mobile */
     padding: 70px 0 110px;
     background: linear-gradient(180deg, #7dd3fc 0%, #38bdf8 45%, #0ea5e9 85%, #0284c7 100%);
     min-height: 560px;
@@ -1647,19 +1647,20 @@
 /* Categories Slider Horizontal Scroll Fix for Mobile & Desktop */
 .categories-container-wrap {
     width: 100% !important;
+    max-width: 1400px !important;
     position: relative !important;
     z-index: 10 !important;
-    margin: 16px 0 24px 0 !important;
-    padding: 0 !important;
+    margin: 20px auto 24px auto !important;
+    padding: 0 16px !important;
     box-sizing: border-box !important;
 }
 
 .categories-slider {
     display: flex !important;
     flex-wrap: nowrap !important;
-    justify-content: flex-start !important;
+    justify-content: center !important;
     align-items: center !important;
-    gap: 10px !important;
+    gap: 12px !important;
     padding: 12px 16px 16px !important;
     width: 100% !important;
     max-width: 100% !important;
@@ -1674,60 +1675,95 @@
     cursor: grab;
 }
 
+@media (max-width: 1350px) {
+    .categories-slider {
+        justify-content: flex-start !important;
+    }
+}
+
 .categories-slider::-webkit-scrollbar {
     display: none !important;
 }
 
 .category-card {
     flex: 0 0 auto !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    gap: 8px !important;
-    padding: 9px 18px !important;
-    background: #ffffff !important;
-    border: 1.5px solid rgba(14, 165, 233, 0.25) !important;
-    border-radius: 9999px !important;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06) !important;
-    color: #0f172a !important;
-    text-decoration: none !important;
-    white-space: nowrap !important;
+    min-width: 110px !important;
+    max-width: 130px !important;
+    width: 120px !important;
+    height: 108px !important;
+    padding: 12px 8px !important;
+    text-align: center !important;
     cursor: pointer !important;
-    transition: all 0.2s ease !important;
-    min-height: 42px !important;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    border: 1.5px solid rgba(14, 165, 233, 0.22) !important;
+    border-radius: 20px !important;
+    white-space: nowrap !important;
+    background: #ffffff !important;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05) !important;
+    text-decoration: none !important;
+    box-sizing: border-box !important;
+}
+
+.category-card:hover {
+    border-color: #0284c7 !important;
+    transform: translateY(-4px) !important;
+    box-shadow: 0 8px 20px rgba(2, 132, 199, 0.18) !important;
 }
 
 .category-card.active {
-    background: #0284c7 !important;
+    background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%) !important;
     border-color: #0284c7 !important;
     color: #ffffff !important;
-    box-shadow: 0 6px 18px rgba(2, 132, 199, 0.35) !important;
+    box-shadow: 0 8px 22px rgba(2, 132, 199, 0.35) !important;
 }
 
-.category-card.active .cat-title-en,
-.category-card.active .cat-title-vi {
-    color: #ffffff !important;
+.category-card .cat-icon {
+    font-size: 1.6rem !important;
+    line-height: 1 !important;
 }
 
 .category-card .cat-name {
     display: flex !important;
     flex-direction: column !important;
-    align-items: flex-start !important;
-    text-align: left !important;
-    gap: 1px !important;
+    align-items: center !important;
+    text-align: center !important;
+    gap: 2px !important;
+    width: 100% !important;
+    overflow: hidden !important;
 }
 
 .category-card .cat-title-en {
     color: #0f172a !important;
-    font-weight: 700 !important;
-    font-size: 0.82rem !important;
-    line-height: 1.2 !important;
+    font-weight: 800 !important;
+    font-size: 0.72rem !important;
+    line-height: 1.15 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.3px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 100% !important;
 }
 
 .category-card .cat-title-vi {
     color: #64748b !important;
-    font-weight: 500 !important;
-    font-size: 0.68rem !important;
-    line-height: 1.2 !important;
+    font-weight: 600 !important;
+    font-size: 0.65rem !important;
+    line-height: 1.15 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 100% !important;
+}
+
+.category-card.active .cat-title-en,
+.category-card.active .cat-title-vi {
+    color: #ffffff !important;
 }
 </style>
 

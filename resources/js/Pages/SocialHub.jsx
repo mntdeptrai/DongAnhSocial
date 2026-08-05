@@ -46,6 +46,64 @@ export default function SocialHub() {
         }, 4000);
     };
 
+    // Universal Web Notifications Dropdown State
+    const [notifOpen, setNotifOpen] = useState(false);
+    const [notifItems, setNotifItems] = useState([]);
+    const [notifLoading, setNotifLoading] = useState(false);
+    const notifContainerRef = useRef(null);
+
+    const unreadCount = notifItems.filter(item => !item.is_read).length;
+
+    const fetchNotifications = () => {
+        setNotifLoading(true);
+        axios.get('/api/user-notifications')
+            .then(res => {
+                setNotifItems(Array.isArray(res.data) ? res.data : []);
+                setNotifLoading(false);
+            })
+            .catch(() => setNotifLoading(false));
+    };
+
+    const markNotificationsAsRead = () => {
+        setNotifItems(prev => prev.map(item => ({ ...item, is_read: true })));
+        axios.post('/api/user-notifications/read').catch(() => {});
+    };
+
+    const getProfileSlug = (u) => {
+        if (!u) return '';
+        if (u.username) return u.username;
+        if (u.slug) return u.slug;
+        if (u.name) {
+            const slug = u.name
+                .toLowerCase()
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .replace(/[đĐ]/g, 'd')
+                .replace(/([^0-9a-z-\s])/g, '')
+                .replace(/(\s+)/g, '-')
+                .replace(/-+/g, '-')
+                .replace(/^-+|-+$/g, '');
+            if (slug) return slug;
+        }
+        return u.id;
+    };
+
+    useEffect(() => {
+        if (currentUser) {
+            fetchNotifications();
+        }
+    }, [currentUser]);
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (notifContainerRef.current && !notifContainerRef.current.contains(event.target)) {
+                setNotifOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
     // Search states
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState([]);
@@ -724,20 +782,114 @@ export default function SocialHub() {
                                         </svg>
                                     </button>
 
-                                    {/* Nút Yêu cầu kết bạn (Thông báo) */}
-                                    <button 
-                                        onClick={() => setActiveTab('requests')} 
-                                        className="header-action-btn"
-                                        title="Yêu cầu kết bạn"
-                                    >
-                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-                                            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-                                        </svg>
-                                        {pendingReceived.length > 0 && (
-                                            <span className="badge">{pendingReceived.length}</span>
+                                    {/* Nút Thông báo chung (Orders, Comments, Friends, System Alerts) */}
+                                    <div ref={notifContainerRef} style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                                        <button 
+                                            onClick={() => {
+                                                const nextState = !notifOpen;
+                                                setNotifOpen(nextState);
+                                                if (nextState) {
+                                                    fetchNotifications();
+                                                    markNotificationsAsRead();
+                                                }
+                                            }} 
+                                            className="header-action-btn"
+                                            title="Thông báo"
+                                            style={{ outline: 'none', border: 'none', background: 'rgba(0, 0, 0, 0.05)', cursor: 'pointer', position: 'relative' }}
+                                        >
+                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                                                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                                            </svg>
+                                            {unreadCount > 0 && (
+                                                <span className="badge" style={{ position: 'absolute', top: '-2px', right: '-2px' }}>
+                                                    {unreadCount}
+                                                </span>
+                                            )}
+                                        </button>
+
+                                        {/* Dropdown Menu Thông báo */}
+                                        {notifOpen && (
+                                            <div 
+                                                className="notif-dropdown-menu" 
+                                                style={{ 
+                                                    position: 'absolute', 
+                                                    right: 0, 
+                                                    top: '100%', 
+                                                    marginTop: '10px', 
+                                                    width: '340px', 
+                                                    background: 'var(--bg-card, #ffffff)', 
+                                                    border: '1px solid var(--border-glow, rgba(0,0,0,0.08))', 
+                                                    borderRadius: '20px', 
+                                                    boxShadow: '0 12px 40px rgba(0,0,0,0.15)', 
+                                                    zIndex: 10000, 
+                                                    overflow: 'hidden', 
+                                                    textAlign: 'left', 
+                                                    display: 'flex', 
+                                                    flexDirection: 'column', 
+                                                    whiteSpace: 'normal' 
+                                                }}
+                                            >
+                                                <div style={{ padding: '16px 18px', borderBottom: '1px solid rgba(0,0,0,0.06)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(0,0,0,0.015)' }}>
+                                                    <h4 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-main, #1e293b)', fontFamily: 'var(--font-heading)' }}>Thông báo</h4>
+                                                    {unreadCount > 0 && (
+                                                        <span style={{ fontSize: '0.78rem', color: '#ea580c', fontWeight: 700, background: 'rgba(234,88,12,0.1)', padding: '3px 8px', borderRadius: '12px' }}>
+                                                            {unreadCount} mới
+                                                        </span>
+                                                    )}
+                                                </div>
+
+                                                <div style={{ maxHeight: '380px', overflowY: 'auto', display: 'flex', flexDirection: 'column', padding: '8px 0', WebkitOverflowScrolling: 'touch' }}>
+                                                    {notifLoading ? (
+                                                        <div style={{ padding: '30px', textAlign: 'center', color: 'var(--text-muted, #64748b)', fontSize: '0.88rem' }}>
+                                                            <span style={{ display: 'inline-block', animation: 'spin 1s linear infinite', marginRight: '6px' }}>⏳</span> Đang tải...
+                                                        </div>
+                                                    ) : notifItems.length === 0 ? (
+                                                        <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--text-muted, #64748b)', fontSize: '0.88rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                                                            <span style={{ fontSize: '2rem' }}>🔔</span>
+                                                            <span>Hiện chưa có thông báo mới nào.</span>
+                                                        </div>
+                                                    ) : (
+                                                        notifItems.map(item => {
+                                                            const itemUrl = item.type === 'reaction' || item.type === 'comment' 
+                                                                ? '/checkin' 
+                                                                : (item.type === 'friend' ? '/social' : '/orders');
+                                                            const icon = item.type === 'reaction' ? '❤️' : (item.type === 'comment' ? '💬' : (item.type === 'friend' ? '👥' : '📦'));
+                                                            return (
+                                                                <a 
+                                                                    key={item.id} 
+                                                                    href={itemUrl} 
+                                                                    onClick={(e) => {
+                                                                        if (item.type === 'friend') {
+                                                                            e.preventDefault();
+                                                                            setNotifOpen(false);
+                                                                            setActiveTab('requests');
+                                                                        }
+                                                                    }}
+                                                                    style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', padding: '12px 18px', textDecoration: 'none', color: 'inherit', borderBottom: '1px solid rgba(0,0,0,0.03)', transition: 'background 0.15s', whiteSpace: 'normal' }}
+                                                                >
+                                                                    <div style={{ width: '36px', height: '36px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem', flexShrink: 0, background: 'rgba(14,165,233,0.1)' }}>
+                                                                        {icon}
+                                                                    </div>
+                                                                    <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '2px', textAlign: 'left' }}>
+                                                                        <span style={{ fontSize: '0.84rem', fontWeight: 800, color: 'var(--text-main, #0f172a)', whiteSpace: 'normal', wordBreak: 'break-word' }}>{item.title}</span>
+                                                                        <span style={{ fontSize: '0.8rem', color: 'var(--text-muted, #475569)', lineHeight: 1.35, whiteSpace: 'normal', wordBreak: 'break-word' }}>{item.body}</span>
+                                                                        <span style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: '2px' }}>{item.time}</span>
+                                                                    </div>
+                                                                </a>
+                                                            );
+                                                        })
+                                                    )}
+                                                </div>
+
+                                                <div style={{ borderTop: '1px solid rgba(0,0,0,0.06)', textAlign: 'center', background: 'rgba(0,0,0,0.015)' }}>
+                                                    <a href="/checkin" style={{ display: 'block', padding: '12px', fontSize: '0.82rem', color: 'var(--text-main, #1e293b)', textDecoration: 'none', fontWeight: 700 }}>
+                                                        Xem tất cả thông báo ➔
+                                                    </a>
+                                                </div>
+                                            </div>
                                         )}
-                                    </button>
+                                    </div>
                                 </>
                             )}
 
@@ -933,11 +1085,12 @@ export default function SocialHub() {
                                             </div>
                                             {/* Name */}
                                             <div style={{ flex: 1, minWidth: 0 }}>
-                                                <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-main)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user.name}</div>
+                                                <a href={`/profile/${getProfileSlug(user)}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-main)', textDecoration: 'none', display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user.name}</a>
                                                 <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Thành viên cộng đồng</div>
                                             </div>
                                             {/* Action */}
-                                            <div style={{ flexShrink: 0 }}>
+                                            <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                <a href={`/profile/${getProfileSlug(user)}`} target="_blank" rel="noopener noreferrer" style={{ background: 'rgba(var(--primary-rgb),0.08)', border: '1px solid rgba(var(--primary-rgb),0.2)', color: 'var(--primary)', fontSize: '0.72rem', padding: '5px 8px', borderRadius: '6px', textDecoration: 'none', fontWeight: 700 }} title="Xem trang cá nhân">👤 Profile</a>
                                                 {user.friendship_status === 'none' && (
                                                     <button
                                                         onClick={() => sendFriendRequest(user.id)}
@@ -982,14 +1135,38 @@ export default function SocialHub() {
                                                 onClick={() => setActiveFriend(friend)}
                                                 style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', borderRadius: '12px', background: activeFriend?.id === friend.id ? 'rgba(var(--primary-rgb),0.1)' : 'var(--bg-surface)', border: activeFriend?.id === friend.id ? '1px solid rgba(var(--primary-rgb),0.3)' : '1px solid var(--border-glow)', cursor: 'pointer', transition: 'all 0.2s' }}
                                             >
-                                                <div style={{ width: '40px', height: '40px', background: 'rgba(var(--primary-rgb),0.1)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>
+                                                <div style={{ width: '40px', height: '40px', background: 'rgba(var(--primary-rgb),0.1)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem', flexShrink: 0 }}>
                                                     {friend.avatar || '👤'}
                                                 </div>
-                                                <div style={{ flex: 1 }}>
-                                                    <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-main)' }}>{friend.name}</div>
+                                                <div style={{ flex: 1, minWidth: 0 }}>
+                                                    <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-main)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{friend.name}</div>
                                                     <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{friend.is_online ? 'Đang hoạt động' : 'Ngoại tuyến'}</div>
                                                 </div>
-                                                <div style={{ width: '8px', height: '8px', background: friend.is_online ? '#10b981' : '#a1a1aa', borderRadius: '50%', boxShadow: friend.is_online ? '0 0 6px #10b981' : 'none' }} title={friend.is_online ? 'Đang hoạt động' : 'Ngoại tuyến'}></div>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+                                                    <a 
+                                                        href={`/profile/${getProfileSlug(friend)}`}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        onClick={(e) => e.stopPropagation()}
+                                                        style={{
+                                                            padding: '4px 8px',
+                                                            borderRadius: '6px',
+                                                            background: 'rgba(var(--primary-rgb),0.08)',
+                                                            border: '1px solid rgba(var(--primary-rgb),0.2)',
+                                                            color: 'var(--primary)',
+                                                            fontSize: '0.7rem',
+                                                            fontWeight: 700,
+                                                            textDecoration: 'none',
+                                                            display: 'inline-flex',
+                                                            alignItems: 'center',
+                                                            gap: '2px'
+                                                        }}
+                                                        title="Xem trang cá nhân"
+                                                    >
+                                                        👤 Profile
+                                                    </a>
+                                                    <div style={{ width: '8px', height: '8px', background: friend.is_online ? '#10b981' : '#a1a1aa', borderRadius: '50%', boxShadow: friend.is_online ? '0 0 6px #10b981' : 'none' }} title={friend.is_online ? 'Đang hoạt động' : 'Ngoại tuyến'}></div>
+                                                </div>
                                             </div>
                                         ))}
                                     </div>
@@ -1007,11 +1184,12 @@ export default function SocialHub() {
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '20px' }}>
                                         {pendingReceived.map(req => (
                                             <div key={req.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px', background: 'var(--bg-surface)', borderRadius: '12px', border: '1px solid var(--border-glow)' }}>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1 }}>
-                                                    <span style={{ fontSize: '1.2rem' }}>{req.sender.avatar || '👤'}</span>
-                                                    <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-main)' }}>{req.sender.name}</span>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: 0 }}>
+                                                    <span style={{ fontSize: '1.2rem', flexShrink: 0 }}>{req.sender.avatar || '👤'}</span>
+                                                    <a href={`/profile/${getProfileSlug(req.sender)}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-main)', textDecoration: 'none', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{req.sender.name}</a>
                                                 </div>
-                                                <div style={{ display: 'flex', gap: '6px' }}>
+                                                <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexShrink: 0 }}>
+                                                    <a href={`/profile/${getProfileSlug(req.sender)}`} target="_blank" rel="noopener noreferrer" style={{ background: 'rgba(var(--primary-rgb),0.08)', border: '1px solid rgba(var(--primary-rgb),0.2)', color: 'var(--primary)', fontSize: '0.72rem', padding: '4px 8px', borderRadius: '6px', textDecoration: 'none', fontWeight: 700, display: 'inline-flex', alignItems: 'center' }} title="Xem trang cá nhân">👤 Trang cá nhân</a>
                                                     <button onClick={() => acceptFriendRequest(req.id)} style={{ background: '#10b981', border: 'none', color: '#fff', fontSize: '0.75rem', padding: '4px 8px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>✓</button>
                                                     <button onClick={() => declineFriendRequest(req.id)} style={{ background: '#ef4444', border: 'none', color: '#fff', fontSize: '0.75rem', padding: '4px 8px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>✕</button>
                                                 </div>
@@ -1027,11 +1205,14 @@ export default function SocialHub() {
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                                         {pendingSent.map(req => (
                                             <div key={req.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px', background: 'var(--bg-surface)', borderRadius: '12px', border: '1px solid var(--border-glow)' }}>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1 }}>
-                                                    <span style={{ fontSize: '1.2rem' }}>{req.receiver.avatar || '👤'}</span>
-                                                    <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main)' }}>{req.receiver.name}</span>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: 0 }}>
+                                                    <span style={{ fontSize: '1.2rem', flexShrink: 0 }}>{req.receiver.avatar || '👤'}</span>
+                                                    <a href={`/profile/${getProfileSlug(req.receiver)}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main)', textDecoration: 'none', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{req.receiver.name}</a>
                                                 </div>
-                                                <button onClick={() => declineFriendRequest(req.id)} style={{ background: 'rgba(239,68,68,0.15)', border: 'none', color: '#ef4444', fontSize: '0.72rem', padding: '4px 8px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>Hủy</button>
+                                                <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexShrink: 0 }}>
+                                                    <a href={`/profile/${getProfileSlug(req.receiver)}`} target="_blank" rel="noopener noreferrer" style={{ background: 'rgba(var(--primary-rgb),0.08)', border: '1px solid rgba(var(--primary-rgb),0.2)', color: 'var(--primary)', fontSize: '0.72rem', padding: '4px 8px', borderRadius: '6px', textDecoration: 'none', fontWeight: 700, display: 'inline-flex', alignItems: 'center' }} title="Xem trang cá nhân">👤 Trang cá nhân</a>
+                                                    <button onClick={() => declineFriendRequest(req.id)} style={{ background: 'rgba(239,68,68,0.15)', border: 'none', color: '#ef4444', fontSize: '0.72rem', padding: '4px 8px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>Hủy</button>
+                                                </div>
                                             </div>
                                         ))}
                                     </div>
@@ -1047,16 +1228,19 @@ export default function SocialHub() {
                                 ) : (
                                     suggestions.map(user => (
                                         <div key={user.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px', background: 'var(--bg-surface)', borderRadius: '12px', border: '1px solid var(--border-glow)' }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                <span style={{ fontSize: '1.2rem' }}>{user.avatar || '👤'}</span>
-                                                <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main)' }}>{user.name}</span>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: 0 }}>
+                                                <span style={{ fontSize: '1.2rem', flexShrink: 0 }}>{user.avatar || '👤'}</span>
+                                                <a href={`/profile/${getProfileSlug(user)}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main)', textDecoration: 'none', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user.name}</a>
                                             </div>
-                                            <button 
-                                                onClick={() => sendFriendRequest(user.id)}
-                                                style={{ background: 'rgba(14,165,233,0.15)', border: 'none', color: 'var(--primary)', fontSize: '0.75rem', padding: '6px 10px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}
-                                            >
-                                                Kết bạn
-                                            </button>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+                                                <a href={`/profile/${getProfileSlug(user)}`} target="_blank" rel="noopener noreferrer" style={{ background: 'rgba(var(--primary-rgb),0.08)', border: '1px solid rgba(var(--primary-rgb),0.2)', color: 'var(--primary)', fontSize: '0.72rem', padding: '5px 8px', borderRadius: '6px', textDecoration: 'none', fontWeight: 700, display: 'inline-flex', alignItems: 'center' }} title="Xem trang cá nhân">👤 Trang cá nhân</a>
+                                                <button 
+                                                    onClick={() => sendFriendRequest(user.id)}
+                                                    style={{ background: 'rgba(14,165,233,0.15)', border: 'none', color: 'var(--primary)', fontSize: '0.75rem', padding: '6px 10px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}
+                                                >
+                                                    Kết bạn
+                                                </button>
+                                            </div>
                                         </div>
                                     ))
                                 )}
@@ -1073,17 +1257,18 @@ export default function SocialHub() {
                                 ) : (
                                     nearbyUsers.map(user => (
                                         <div key={user.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px', background: 'var(--bg-surface)', borderRadius: '12px', border: '1px solid var(--border-glow)' }}>
-                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', flex: 1, minWidth: 0 }}>
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                                    <span style={{ fontSize: '1.1rem' }}>{user.avatar}</span>
-                                                    <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-main)' }}>{user.name}</span>
+                                                    <span style={{ fontSize: '1.1rem', flexShrink: 0 }}>{user.avatar}</span>
+                                                    <a href={`/profile/${getProfileSlug(user)}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-main)', textDecoration: 'none', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user.name}</a>
                                                 </div>
                                                 <div style={{ fontSize: '0.7rem', color: '#10b981', fontWeight: 600 }}>
                                                     📍 Cách {user.distance} km • {user.last_active}
                                                 </div>
                                             </div>
 
-                                            <div>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+                                                <a href={`/profile/${getProfileSlug(user)}`} target="_blank" rel="noopener noreferrer" style={{ background: 'rgba(var(--primary-rgb),0.08)', border: '1px solid rgba(var(--primary-rgb),0.2)', color: 'var(--primary)', fontSize: '0.72rem', padding: '5px 8px', borderRadius: '6px', textDecoration: 'none', fontWeight: 700, display: 'inline-flex', alignItems: 'center' }} title="Xem trang cá nhân">👤 Trang cá nhân</a>
                                                 {user.friendship_status === 'none' && (
                                                     <button 
                                                         onClick={() => sendFriendRequest(user.id)}
@@ -1154,12 +1339,36 @@ export default function SocialHub() {
                                         </span>
                                     </div>
                                 </div>
-                                <button 
-                                    onClick={() => setActiveFriend(null)}
-                                    style={{ background: 'transparent', border: 'none', color: '#a1a1aa', fontSize: '1.2rem', cursor: 'pointer' }}
-                                >
-                                    ✕
-                                </button>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <a 
+                                        href={`/profile/${activeFriend.id}`} 
+                                        target="_blank" 
+                                        rel="noopener noreferrer"
+                                        style={{
+                                            background: 'rgba(var(--primary-rgb),0.1)',
+                                            border: '1px solid rgba(var(--primary-rgb),0.25)',
+                                            color: 'var(--primary)',
+                                            fontSize: '0.78rem',
+                                            padding: '6px 12px',
+                                            borderRadius: '10px',
+                                            fontWeight: 700,
+                                            textDecoration: 'none',
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            gap: '4px',
+                                            transition: 'all 0.2s'
+                                        }}
+                                        title="Xem trang cá nhân"
+                                    >
+                                        <span>👤 Xem trang cá nhân</span>
+                                    </a>
+                                    <button 
+                                        onClick={() => setActiveFriend(null)}
+                                        style={{ background: 'transparent', border: 'none', color: '#a1a1aa', fontSize: '1.2rem', cursor: 'pointer', padding: '4px 8px' }}
+                                    >
+                                        ✕
+                                    </button>
+                                </div>
                             </div>
 
                             {/* Chat Messages Body */}

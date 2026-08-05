@@ -351,11 +351,30 @@ class NotificationService
                 return ($b['time_ts'] ?? 0) <=> ($a['time_ts'] ?? 0);
             });
 
+            // Ghi nhận trạng thái đã đọc/chưa đọc dựa trên mốc thời gian xem thông báo gần nhất
+            $lastReadTs = (int) (\Illuminate\Support\Facades\Cache::get("user_notif_read_{$userId}") ?? session('notifications_last_read_at', 0));
+            foreach ($notifications as &$notif) {
+                if (isset($notif['time_ts'])) {
+                    $notif['is_read'] = ($notif['time_ts'] <= $lastReadTs);
+                }
+            }
+            unset($notif);
+
         } catch (\Throwable $e) {
             \Log::error('Error generating notifications: ' . $e->getMessage());
         }
 
         return $notifications;
+    }
+
+    /**
+     * Đánh dấu đã đọc tất cả thông báo của người dùng
+     */
+    public static function markAsRead(int $userId): void
+    {
+        $now = time();
+        \Illuminate\Support\Facades\Cache::put("user_notif_read_{$userId}", $now, now()->addDays(60));
+        session(['notifications_last_read_at' => $now]);
     }
 
     /**

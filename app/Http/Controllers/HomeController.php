@@ -443,6 +443,18 @@ class HomeController extends Controller
     }
 
     /**
+     * Đánh dấu đã đọc tất cả thông báo
+     */
+    public function markWebNotificationsRead(Request $request)
+    {
+        $userId = session('user_id') ?? auth()->id();
+        if ($userId) {
+            \App\Services\NotificationService::markAsRead($userId);
+        }
+        return response()->json(['success' => true]);
+    }
+
+    /**
      * API phát event thả emoji (Reactions) qua WebSocket
      */
     public function reactToCheckin(Request $request, $id)

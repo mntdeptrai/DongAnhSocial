@@ -138,6 +138,12 @@
         border-color: #0ea5e9 !important;
     }
 
+    html, body {
+        overflow-x: hidden !important;
+        max-width: 100vw !important;
+        width: 100% !important;
+    }
+
     body {
         font-family: 'Be Vietnam Pro', sans-serif !important;
         background-color: var(--bg-base) !important;
@@ -155,6 +161,13 @@
         max-width: 1400px;
         margin: 0 auto;
         padding: 0 24px;
+        box-sizing: border-box;
+    }
+
+    @media (max-width: 768px) {
+        .market-container {
+            padding: 0 12px;
+        }
     }
 
     /* Modern Airbnb-style Gallery Grid styles */
@@ -377,11 +390,14 @@
     /* Custom Responsive Grids */
     .top-db-row {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-        gap: 24px;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
         position: relative;
         z-index: 10;
         padding-bottom: 40px;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
     }
     
     .db-card-metric {
@@ -454,8 +470,11 @@
     /* Filters Layout Grid */
     .filters-grid-custom {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 20px;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 14px;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
     }
     .filter-item-wrapper {
         display: flex;

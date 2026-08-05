@@ -102,6 +102,12 @@
     
     <!-- 📱 MOBILE LAYOUT — Safety net + box-sizing universal -->
     <style>
+        html, body {
+            overflow-x: hidden !important;
+            max-width: 100vw !important;
+            width: 100% !important;
+        }
+
         /* Prevent Alpine.js FOUC (Flash of Unstyled Content) on page load */
         [x-cloak] { display: none !important; }
 
@@ -174,13 +180,10 @@
         }
 
         @media (max-width: 992px) {
-            html {
-                /* html { overflow-x: hidden } đặt trong base.css */
-                overflow-y: auto;
-                height: auto;
-            }
-            body {
-                /* KHÔNG đặt overflow-x: hidden ở body — gây iOS scroll bug */
+            html, body {
+                overflow-x: hidden !important;
+                max-width: 100vw !important;
+                width: 100% !important;
                 overflow-y: auto;
                 height: auto;
                 -webkit-overflow-scrolling: touch;
@@ -457,6 +460,9 @@
                             open: false, 
                             items: [],
                             loading: false,
+                            get unreadCount() {
+                                return this.items.filter(i => !i.is_read).length;
+                            },
                             init() {
                                 this.fetchNotifications();
                             },
@@ -469,16 +475,20 @@
                                         this.loading = false;
                                     })
                                     .catch(() => { this.loading = false; });
+                            },
+                            markAsRead() {
+                                this.items.forEach(i => i.is_read = true);
+                                fetch('/api/user-notifications/read', { method: 'POST', headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]')?.content || '' } }).catch(() => {});
                             }
                         }" @click.outside="open = false" style="position: relative; display: flex; align-items: center;">
                             
-                            <button @click="open = !open; if(open) fetchNotifications();" class="header-action-btn" title="Thông báo" style="outline: none; border: none; background: rgba(0, 0, 0, 0.05); cursor: pointer; position: relative;">
+                            <button @click="open = !open; if(open) { fetchNotifications(); markAsRead(); }" class="header-action-btn" title="Thông báo" style="outline: none; border: none; background: rgba(0, 0, 0, 0.05); cursor: pointer; position: relative;">
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
                                     <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
                                 </svg>
-                                <template x-if="items.length > 0">
-                                    <span class="badge" style="position: absolute; top: -2px; right: -2px;" x-text="items.length"></span>
+                                <template x-if="unreadCount > 0">
+                                    <span class="badge" style="position: absolute; top: -2px; right: -2px;" x-text="unreadCount"></span>
                                 </template>
                             </button>
 
@@ -496,8 +506,8 @@
                                 
                                 <div style="padding: 16px 18px; border-bottom: 1px solid rgba(0,0,0,0.06); display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.015);">
                                     <h4 style="margin: 0; font-size: 1.05rem; font-weight: 800; color: var(--text-main, #1e293b); font-family: var(--font-heading);">Thông báo</h4>
-                                    <template x-if="items.length > 0">
-                                        <span style="font-size: 0.78rem; color: #ea580c; font-weight: 700; background: rgba(234,88,12,0.1); padding: 3px 8px; border-radius: 12px;" x-text="items.length + ' mới'"></span>
+                                    <template x-if="unreadCount > 0">
+                                        <span style="font-size: 0.78rem; color: #ea580c; font-weight: 700; background: rgba(234,88,12,0.1); padding: 3px 8px; border-radius: 12px;" x-text="unreadCount + ' mới'"></span>
                                     </template>
                                 </div>
 
@@ -1048,6 +1058,9 @@
 
                     <!-- Header action buttons -->
                     <div style="display: flex; align-items: center; gap: 2px; flex-shrink: 0;" @click.stop>
+                        <a :href="'/profile/' + chat.id" target="_blank" class="fchat-header-btn" title="Xem trang cá nhân" style="color: #6b7280; text-decoration: none; display: flex; align-items: center; justify-content: center;">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                        </a>
                         <button class="fchat-header-btn" title="Gọi thoại">
                             <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1-9.4 0-17-7.6-17-17 0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z"/></svg>
                         </button>
