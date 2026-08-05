@@ -1221,6 +1221,49 @@
         </div>
     </div>
 
+    <!-- ====== CHANGE PASSWORD MODAL ====== -->
+    <div x-show="showPasswordModal" x-transition.opacity style="display:none;" class="pf-modal-overlay">
+        <div @click.outside="showPasswordModal = false" x-show="showPasswordModal" x-transition.scale class="pf-modal-box" style="max-width: 480px;">
+            <button type="button" @click="showPasswordModal = false" class="pf-modal-close">✕</button>
+            <div style="margin-bottom: 20px;">
+                <h3 style="font-size: 1.2rem; font-weight: 800; color: #0f172a; margin-bottom: 4px;">🔑 Thay đổi mật khẩu</h3>
+                <p style="font-size: 0.85rem; color: #64748b; margin: 0;">Mã OTP xác thực sẽ được gửi tới email tài khoản: <strong>{{ $user->email }}</strong>.</p>
+            </div>
+
+            <form action="{{ route('profile.password') }}" method="POST">
+                @csrf
+                @method('PUT')
+
+                <!-- Gửi OTP & Nhập OTP -->
+                <div class="pf-form-group">
+                    <label class="pf-form-label">Mã xác thực OTP (6 chữ số) <span style="color: #ef4444;">*</span></label>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="text" name="otp" required maxlength="6" class="pf-form-input" placeholder="Nhập mã OTP 6 chữ số..." style="flex: 1; letter-spacing: 2px; font-weight: 700;">
+                        <button type="button" @click="sendOtp()" :disabled="otpCooldown > 0" class="pro-btn-outline" style="border-radius: 12px; padding: 10px 14px; font-size: 0.84rem; white-space: nowrap; font-weight: 600;" :style="otpCooldown > 0 ? 'opacity: 0.6; cursor: not-allowed;' : ''" x-text="cooldownText"></button>
+                    </div>
+                    <template x-if="otpFeedback">
+                        <div style="margin-top: 6px; font-size: 0.8rem; font-weight: 600;" :style="otpFeedbackType === 'success' ? 'color: #10b981;' : (otpFeedbackType === 'error' ? 'color: #ef4444;' : 'color: #0ea5e9;')" x-text="otpFeedback"></div>
+                    </template>
+                </div>
+
+                <div class="pf-form-group">
+                    <label class="pf-form-label">Mật khẩu mới <span style="color: #ef4444;">*</span></label>
+                    <input type="password" name="password" required minlength="6" class="pf-form-input" placeholder="Nhập mật khẩu mới (tối thiểu 6 ký tự)...">
+                </div>
+
+                <div class="pf-form-group">
+                    <label class="pf-form-label">Xác nhận mật khẩu mới <span style="color: #ef4444;">*</span></label>
+                    <input type="password" name="password_confirmation" required minlength="6" class="pf-form-input" placeholder="Nhập lại mật khẩu mới...">
+                </div>
+
+                <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px;">
+                    <button type="button" @click="showPasswordModal = false" class="pro-btn-outline" style="border-radius: 12px; padding: 10px 22px;">Hủy</button>
+                    <button type="submit" class="pro-btn-primary" style="border-radius: 12px; padding: 10px 22px;">🔒 Đổi mật khẩu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- ====== CREATE POST MODAL ====== -->
     @if(Auth::check())
     <div class="sch-modal" id="addPostModal" onclick="if(event.target === this) closeModal('addPostModal')">
