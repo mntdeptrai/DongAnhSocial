@@ -70,17 +70,17 @@
 
 .hero-airplane-svg-wrap {
     position: relative;
-    width: 175px;
-    height: 98px;
-    filter: drop-shadow(0 26px 24px rgba(15, 23, 42, 0.38));
+    width: 200px;
+    height: 84px;
+    filter: drop-shadow(0 20px 22px rgba(15, 23, 42, 0.35));
     animation: airplaneBank3D 4s ease-in-out infinite alternate;
 }
 
 /* Contrail Jet Smoke Trail behind airplane */
 .jet-contrail-container {
     position: absolute;
-    top: 52px;
-    right: 148px;
+    top: 44px;
+    right: 170px;
     display: flex;
     align-items: center;
     pointer-events: none;
@@ -130,38 +130,33 @@
 
 @keyframes flightPath3D {
     0% {
-        transform: translate3d(-200px, 110px, 40px) rotateX(10deg) rotateY(15deg) rotateZ(15deg) scale(0.7);
+        transform: translate3d(-240px, 110px, 30px) rotateX(8deg) rotateY(12deg) rotateZ(8deg) scale(0.7);
         opacity: 0;
     }
-    10% {
-        transform: translate3d(20vw, 85px, 80px) rotateX(5deg) rotateY(20deg) rotateZ(20deg) scale(0.85);
+    12% {
+        transform: translate3d(15vw, 75px, 70px) rotateX(5deg) rotateY(10deg) rotateZ(6deg) scale(0.85);
         opacity: 1;
     }
-    20% {
-        transform: translate3d(50vw, 65px, 120px) rotateX(15deg) rotateY(10deg) rotateZ(0deg) scale(1.0);
-    }
     35% {
-        transform: translate3d(35vw, 15px, 140px) rotateX(10deg) rotateY(-15deg) rotateZ(-38deg) scale(1.12);
+        transform: translate3d(38vw, 35px, 110px) rotateX(2deg) rotateY(6deg) rotateZ(3deg) scale(1.0);
     }
-    50% {
-        transform: translate3d(50vw, 170px, 150px) rotateX(-10deg) rotateY(20deg) rotateZ(48deg) scale(1.18);
+    60% {
+        transform: translate3d(62vw, 50px, 120px) rotateX(-2deg) rotateY(4deg) rotateZ(-3deg) scale(1.05);
     }
-    65% {
-        transform: translate3d(65vw, 15px, 140px) rotateX(15deg) rotateY(25deg) rotateZ(35deg) scale(1.12);
-    }
-    80% {
-        transform: translate3d(50vw, 65px, 100px) rotateX(-5deg) rotateY(10deg) rotateZ(-15deg) scale(0.95);
+    82% {
+        transform: translate3d(85vw, 20px, 70px) rotateX(4deg) rotateY(8deg) rotateZ(5deg) scale(0.85);
+        opacity: 1;
     }
     100% {
-        transform: translate3d(calc(100vw + 250px), -40px, -20px) rotateX(10deg) rotateY(5deg) rotateZ(-10deg) scale(0.65);
+        transform: translate3d(calc(100vw + 250px), -30px, 10px) rotateX(8deg) rotateY(10deg) rotateZ(8deg) scale(0.68);
         opacity: 0;
     }
 }
 
 @keyframes airplaneBank3D {
     0% { transform: rotateX(0deg) rotateZ(0deg) translateY(0px); }
-    50% { transform: rotateX(6deg) rotateZ(4deg) translateY(-8px); }
-    100% { transform: rotateX(-4deg) rotateZ(-2deg) translateY(5px); }
+    50% { transform: rotateX(3deg) rotateZ(3deg) translateY(-5px); }
+    100% { transform: rotateX(-2deg) rotateZ(-2deg) translateY(3px); }
 }
 
 @keyframes puffExpand {
@@ -1649,15 +1644,22 @@
     }
 }
 
-/* Categories Slider Perfectly Centered & Anti-clipping */
+/* Categories Slider Horizontal Scroll Fix for Mobile & Desktop */
 .categories-container-wrap {
     width: 100% !important;
     overflow-x: auto !important;
-    overflow-y: visible !important;
+    overflow-y: hidden !important;
     scroll-behavior: smooth !important;
     -webkit-overflow-scrolling: touch !important;
+    touch-action: pan-x pan-y !important;
     scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
     margin-bottom: 24px;
+    cursor: grab;
+    user-select: none;
+}
+.categories-container-wrap:active {
+    cursor: grabbing;
 }
 .categories-container-wrap::-webkit-scrollbar {
     display: none !important;
@@ -1666,13 +1668,13 @@
 .categories-slider {
     display: flex !important;
     flex-wrap: nowrap !important;
-    justify-content: center !important;
+    justify-content: flex-start !important;
     align-items: stretch !important;
     gap: 12px !important;
-    padding: 12px 28px 20px !important;
+    padding: 12px 20px 20px !important;
     width: max-content !important;
     min-width: 100% !important;
-    margin: 0 auto !important;
+    margin: 0 !important;
     overflow: visible !important;
 }
 </style>
@@ -1707,95 +1709,119 @@
             <div class="jet-contrail-puff" style="width: 45px; height: 45px; right: 130px; animation-delay: 1.2s;"></div>
         </div>
         <div class="hero-airplane-svg-wrap">
-            <svg viewBox="0 0 320 180" style="width: 100%; height: 100%;">
+            <svg viewBox="0 0 380 160" style="width: 100%; height: 100%;">
                 <defs>
+                    <!-- Metallic Fuselage Gradient -->
                     <linearGradient id="fuselage3D" x1="0%" y1="0%" x2="0%" y2="100%">
                         <stop offset="0%" stop-color="#ffffff"/>
                         <stop offset="25%" stop-color="#f8fafc"/>
-                        <stop offset="55%" stop-color="#cbd5e1"/>
-                        <stop offset="85%" stop-color="#64748b"/>
-                        <stop offset="100%" stop-color="#334155"/>
+                        <stop offset="55%" stop-color="#e2e8f0"/>
+                        <stop offset="85%" stop-color="#94a3b8"/>
+                        <stop offset="100%" stop-color="#475569"/>
                     </linearGradient>
+
                     <linearGradient id="fuselageGlint" x1="0%" y1="0%" x2="100%" y2="0%">
                         <stop offset="0%" stop-color="rgba(255,255,255,0)"/>
-                        <stop offset="40%" stop-color="rgba(255,255,255,0.95)"/>
+                        <stop offset="50%" stop-color="rgba(255,255,255,0.9)"/>
                         <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
                     </linearGradient>
+
+                    <!-- Aerodynamic Swept Wings Gradient -->
                     <linearGradient id="mainWing3D" x1="0%" y1="0%" x2="100%" y2="100%">
                         <stop offset="0%" stop-color="#38bdf8"/>
                         <stop offset="35%" stop-color="#0284c7"/>
                         <stop offset="80%" stop-color="#0369a1"/>
                         <stop offset="100%" stop-color="#075985"/>
                     </linearGradient>
+
                     <linearGradient id="farWing3D" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stop-color="#0369a1"/>
-                        <stop offset="100%" stop-color="#0c4a6e"/>
-                    </linearGradient>
-                    <linearGradient id="tailFin3D" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stop-color="#f43f5e"/>
-                        <stop offset="50%" stop-color="#e11d48"/>
-                        <stop offset="100%" stop-color="#9f1239"/>
-                    </linearGradient>
-                    <linearGradient id="cockpitGlass3D" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stop-color="#38bdf8"/>
-                        <stop offset="50%" stop-color="#0284c7"/>
+                        <stop offset="0%" stop-color="#0284c7"/>
                         <stop offset="100%" stop-color="#0f172a"/>
                     </linearGradient>
+
+                    <!-- Vertical Tail Fin (Sleek modern tail) -->
+                    <linearGradient id="tailFin3D" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#0284c7"/>
+                        <stop offset="50%" stop-color="#0369a1"/>
+                        <stop offset="100%" stop-color="#0f172a"/>
+                    </linearGradient>
+
+                    <!-- Cockpit Windshield -->
+                    <linearGradient id="cockpitGlass3D" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#38bdf8"/>
+                        <stop offset="60%" stop-color="#0f172a"/>
+                        <stop offset="100%" stop-color="#020617"/>
+                    </linearGradient>
+
+                    <!-- Engine Chrome Nacelle -->
                     <linearGradient id="engineChrome" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" stop-color="#cbd5e1"/>
-                        <stop offset="30%" stop-color="#ffffff"/>
+                        <stop offset="0%" stop-color="#ffffff"/>
+                        <stop offset="30%" stop-color="#cbd5e1"/>
                         <stop offset="70%" stop-color="#64748b"/>
-                        <stop offset="100%" stop-color="#334155"/>
+                        <stop offset="100%" stop-color="#1e293b"/>
                     </linearGradient>
                 </defs>
 
-                <!-- 1. FAR SIDE WING -->
-                <path d="M190,72 L130,22 C125,18 115,20 120,30 L160,70 Z" fill="url(#farWing3D)" />
-                <path d="M130,22 L126,10 L132,18 Z" fill="#0284c7" />
+                <!-- 1. FAR HORIZONTAL STABILIZER (REAR WING FAR) -->
+                <path d="M75,68 L32,54 C28,52 24,54 26,59 L62,74 Z" fill="url(#farWing3D)" opacity="0.85"/>
 
-                <!-- 2. TAIL ASSEMBLY -->
-                <path d="M45,70 L25,52 C22,49 18,51 22,56 L40,73 Z" fill="url(#farWing3D)" />
-                <path d="M60,68 L28,12 C24,5 12,8 18,22 L38,72 Z" fill="url(#tailFin3D)"/>
-                <path d="M30,28 L45,30 L38,55 L25,52 Z" fill="#ffffff" opacity="0.85"/>
+                <!-- 2. FAR MAIN WING (Swept back with realistic perspective) -->
+                <path d="M210,68 L155,28 C150,24 142,26 146,34 L175,70 Z" fill="url(#farWing3D)"/>
+                <path d="M155,28 L152,18 L157,26 Z" fill="#0284c7"/> <!-- Winglet tip -->
 
-                <!-- 3. MAIN AIRPLANE FUSELAGE -->
-                <path d="M305,82 C318,87 312,94 290,98 C240,107 130,112 50,104 C30,102 12,96 18,88 C24,82 45,78 120,75 C210,72 292,77 305,82 Z" fill="url(#fuselage3D)"/>
-                <path d="M300,82 C285,78 200,74 120,76 C60,78 28,82 24,85 C32,82 70,78 140,77 C220,76 290,80 300,82 Z" fill="url(#fuselageGlint)"/>
+                <!-- 3. TAIL ASSEMBLY -->
+                <path d="M50,70 Q25,72 10,75 C20,77 45,79 60,78 Z" fill="#64748b"/>
+                <path d="M85,68 L48,16 C44,10 34,13 40,24 L62,72 Z" fill="url(#tailFin3D)"/>
+                <path d="M48,16 L45,8 L50,15 Z" fill="#38bdf8"/>
+
+                <!-- 4. NEAR HORIZONTAL STABILIZER (REAR WING NEAR) -->
+                <path d="M80,78 L42,94 C38,96 36,92 40,88 L72,75 Z" fill="url(#farWing3D)"/>
+
+                <!-- 5. MAIN AIRPLANE FUSELAGE (Streamlined 787 Aerodynamic Body) -->
+                <path d="M355,82 C342,75 300,68 180,68 C100,68 50,72 30,75 C45,84 90,88 180,88 C300,88 342,87 355,82 Z" fill="url(#fuselage3D)"/>
+                <path d="M348,81 C335,76 290,70 180,70 C100,70 55,73 35,75 C50,72 100,69 180,69 C290,69 335,75 348,81 Z" fill="url(#fuselageGlint)"/>
+                <path d="M350,83 C338,87 295,88 180,88 C95,88 48,84 32,76 C52,82 100,86 180,86 C295,86 338,85 350,83 Z" fill="#334155" opacity="0.35"/>
 
                 <!-- Cockpit Windshield -->
-                <path d="M272,80 C286,82 294,86 288,90 C276,91 268,88 266,84 Z" fill="url(#cockpitGlass3D)"/>
-                <path d="M272,81 Q282,83 286,87" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="1"/>
+                <path d="M328,76 C342,79 346,82 342,84 C330,85 320,83 318,79 Z" fill="url(#cockpitGlass3D)"/>
+                <path d="M328,77 C338,79 342,82 339,83" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="1"/>
 
                 <!-- Passenger Windows Line -->
-                <g fill="#1e293b" opacity="0.85">
-                    <rect x="250" y="86" width="3.5" height="5" rx="1.5"/>
-                    <rect x="240" y="86.5" width="3.5" height="5" rx="1.5"/>
-                    <rect x="230" y="87" width="3.5" height="5" rx="1.5"/>
-                    <rect x="220" y="87.5" width="3.5" height="5" rx="1.5"/>
-                    <rect x="210" y="88" width="3.5" height="5" rx="1.5"/>
-                    <rect x="200" y="88.5" width="3.5" height="5" rx="1.5"/>
-                    <rect x="190" y="89" width="3.5" height="5" rx="1.5"/>
-                    <rect x="180" y="89.5" width="3.5" height="5" rx="1.5"/>
-                    <rect x="170" y="90" width="3.5" height="5" rx="1.5"/>
-                    <rect x="160" y="90.5" width="3.5" height="5" rx="1.5"/>
-                    <rect x="150" y="91" width="3.5" height="5" rx="1.5"/>
-                    <rect x="140" y="91.5" width="3.5" height="5" rx="1.5"/>
-                    <rect x="130" y="92" width="3.5" height="5" rx="1.5"/>
-                    <rect x="120" y="92.5" width="3.5" height="5" rx="1.5"/>
-                    <rect x="110" y="93" width="3.5" height="5" rx="1.5"/>
-                    <rect x="100" y="93.5" width="3.5" height="5" rx="1.5"/>
+                <g fill="#1e293b" opacity="0.75">
+                    <circle cx="308" cy="80" r="1.5"/>
+                    <circle cx="298" cy="80" r="1.5"/>
+                    <circle cx="288" cy="80" r="1.5"/>
+                    <circle cx="278" cy="80" r="1.5"/>
+                    <circle cx="268" cy="80" r="1.5"/>
+                    <circle cx="258" cy="80" r="1.5"/>
+                    <circle cx="248" cy="80" r="1.5"/>
+                    <circle cx="238" cy="80" r="1.5"/>
+                    <circle cx="228" cy="80" r="1.5"/>
+                    <circle cx="218" cy="80" r="1.5"/>
+                    <circle cx="208" cy="80" r="1.5"/>
+                    <circle cx="198" cy="80" r="1.5"/>
+                    <circle cx="188" cy="80" r="1.5"/>
+                    <circle cx="178" cy="80" r="1.5"/>
+                    <circle cx="168" cy="80" r="1.5"/>
+                    <circle cx="158" cy="80" r="1.5"/>
+                    <circle cx="148" cy="80" r="1.5"/>
+                    <circle cx="138" cy="80" r="1.5"/>
+                    <circle cx="128" cy="80" r="1.5"/>
+                    <circle cx="118" cy="80" r="1.5"/>
                 </g>
 
-                <!-- 4. NEAR SIDE MAIN SWEPT WING -->
-                <path d="M165,92 L95,162 C88,169 74,166 78,154 L125,95 Z" fill="url(#mainWing3D)" />
-                <path d="M95,162 L88,176 C85,180 92,176 96,168 Z" fill="#0284c7" />
+                <!-- 6. NEAR MAIN SWEPT WING -->
+                <path d="M205,82 L130,128 C122,133 110,128 116,120 L160,80 Z" fill="url(#mainWing3D)"/>
+                <path d="M130,128 L122,138 C120,142 126,140 130,132 Z" fill="#38bdf8"/>
 
-                <!-- 5. TURBINE JET ENGINE -->
-                <path d="M138,98 L134,115 L142,115 L146,98 Z" fill="#475569" />
-                <rect x="120" y="112" width="42" height="20" rx="10" fill="url(#engineChrome)"/>
-                <ellipse cx="162" cy="122" rx="5" ry="10" fill="#0f172a"/>
-                <ellipse cx="162" cy="122" rx="2" ry="5" fill="#e2e8f0"/>
-                <ellipse cx="120" cy="122" rx="4" ry="9" fill="#f97316"/>
+                <!-- 7. REALISTIC TURBOFAN JET ENGINE -->
+                <path d="M185,82 L180,94 L190,94 L195,82 Z" fill="#475569"/>
+                <rect x="168" y="90" width="46" height="18" rx="9" fill="url(#engineChrome)"/>
+                <ellipse cx="214" cy="99" rx="4" ry="9" fill="#94a3b8"/>
+                <ellipse cx="214" cy="99" rx="2.5" ry="7.5" fill="#0f172a"/>
+                <circle cx="214" cy="99" r="1.5" fill="#cbd5e1"/>
+                <ellipse cx="168" cy="99" rx="3" ry="8" fill="#334155"/>
+                <ellipse cx="168" cy="99" rx="1.5" ry="5" fill="#1e293b"/>
             </svg>
         </div>
     </div>
@@ -2881,27 +2907,56 @@
 
     // Hàm tự động cuộn thẻ danh mục được chọn vào chính giữa thanh trượt trơn tru (Google Maps/Airbnb Style)
     function centerActiveCategoryCard(cardElement) {
-        const slider = document.querySelector('.categories-slider');
-        if (!slider || !cardElement) return;
+        const container = document.querySelector('.categories-container-wrap') || document.querySelector('.categories-slider');
+        if (!container || !cardElement) return;
 
-        const sliderWidth = slider.clientWidth;
-        const sliderRect = slider.getBoundingClientRect();
+        const containerWidth = container.clientWidth;
+        const containerRect = container.getBoundingClientRect();
         const cardRect = cardElement.getBoundingClientRect();
         
         // Vị trí thực tế của thẻ so với điểm bắt đầu của nội dung trượt (kể cả khi đã cuộn)
-        const relativeLeft = cardRect.left - sliderRect.left + slider.scrollLeft;
+        const relativeLeft = cardRect.left - containerRect.left + container.scrollLeft;
         const cardWidth = cardElement.clientWidth;
 
         // Tính toán khoảng cách để đưa thẻ về giữa
-        const targetScrollLeft = relativeLeft - (sliderWidth / 2) + (cardWidth / 2);
+        const targetScrollLeft = relativeLeft - (containerWidth / 2) + (cardWidth / 2);
 
-        slider.scrollTo({
-            left: targetScrollLeft,
+        container.scrollTo({
+            left: Math.max(0, targetScrollLeft),
             behavior: 'smooth'
         });
     }
 
     document.addEventListener("DOMContentLoaded", function() {
+        // 1. Kích hoạt cuộn bằng kéo chuột (Drag to scroll) cho máy tính & hỗ trợ vuốt chạm trên điện thoại
+        const catWrap = document.querySelector('.categories-container-wrap');
+        if (catWrap) {
+            let isDown = false;
+            let startX;
+            let scrollLeft;
+
+            catWrap.addEventListener('mousedown', (e) => {
+                isDown = true;
+                catWrap.style.cursor = 'grabbing';
+                startX = e.pageX - catWrap.offsetLeft;
+                scrollLeft = catWrap.scrollLeft;
+            });
+            catWrap.addEventListener('mouseleave', () => {
+                isDown = false;
+                catWrap.style.cursor = 'grab';
+            });
+            catWrap.addEventListener('mouseup', () => {
+                isDown = false;
+                catWrap.style.cursor = 'grab';
+            });
+            catWrap.addEventListener('mousemove', (e) => {
+                if (!isDown) return;
+                e.preventDefault();
+                const x = e.pageX - catWrap.offsetLeft;
+                const walk = (x - startX) * 1.8;
+                catWrap.scrollLeft = scrollLeft - walk;
+            });
+        }
         // 2. Thiết lập bản đồ Leaflet tâm vị trí Đông Anh (xã Đông Anh)
         map = L.map('map', {
             zoomControl: false, // Chúng ta sẽ tùy chỉnh vị trí nút zoom
