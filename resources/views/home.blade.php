@@ -194,7 +194,7 @@
     font-family: var(--font-heading);
     font-size: 3.8rem;
     font-weight: 900;
-    line-height: 0.85;
+    line-height: 1.0;
     letter-spacing: -2px;
     margin: 0;
     background: linear-gradient(135deg, #10b981 0%, #059669 35%, #06b6d4 70%, #0891b2 100%);
@@ -206,6 +206,11 @@
             drop-shadow(-2px 2px 0px #0f172a)
             drop-shadow(0px 8px 12px rgba(15, 23, 42, 0.4));
     transform-origin: center;
+}
+
+.logo-title span {
+    display: inline-block;
+    padding-bottom: 8px;
 }
 
 .slogan-group {
