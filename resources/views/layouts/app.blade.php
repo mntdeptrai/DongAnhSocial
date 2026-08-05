@@ -533,9 +533,9 @@
                                     <template x-if="!loading && items.length > 0">
                                         <div style="display: flex; flex-direction: column;">
                                             <template x-for="item in items" :key="item.id">
-                                                <a :href="item.type === 'reaction' || item.type === 'comment' ? '/checkin' : (item.type === 'friend' ? '/social' : '/orders')" style="display: flex; align-items: flex-start; gap: 12px; padding: 12px 18px; text-decoration: none; color: inherit; border-bottom: 1px solid rgba(0,0,0,0.03); transition: background 0.15s; white-space: normal;" onmouseover="this.style.background='rgba(0,0,0,0.02)'" onmouseout="this.style.background='transparent'">
+                                                <a :href="item.type === 'new_post' ? ('/ban-tin?post=' + (item.post_id || '')) : (item.type === 'reaction' || item.type === 'comment' ? '/checkin' : (item.type === 'friend' ? '/social' : '/orders'))" style="display: flex; align-items: flex-start; gap: 12px; padding: 12px 18px; text-decoration: none; color: inherit; border-bottom: 1px solid rgba(0,0,0,0.03); transition: background 0.15s; white-space: normal;" onmouseover="this.style.background='rgba(0,0,0,0.02)'" onmouseout="this.style.background='transparent'">
                                                     <div style="width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0; background: rgba(14,165,233,0.1);">
-                                                        <span x-text="item.type === 'reaction' ? '❤️' : (item.type === 'comment' ? '💬' : (item.type === 'friend' ? '👥' : '📦'))"></span>
+                                                        <span x-text="item.type === 'reaction' ? '❤️' : (item.type === 'comment' ? '💬' : (item.type === 'friend' ? '👥' : (item.type === 'new_post' ? '📣' : '📦')))"></span>
                                                     </div>
                                                     <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; text-align: left;">
                                                         <span style="font-size: 0.84rem; font-weight: 800; color: var(--text-main, #0f172a); white-space: normal; word-break: break-word;" x-text="item.title"></span>
@@ -556,9 +556,6 @@
                                 </div>
 
                                 <div style="border-top: 1px solid rgba(0,0,0,0.06); text-align: center; background: rgba(0,0,0,0.015);">
-                                    <a href="/checkin" style="display: block; padding: 12px; font-size: 0.82rem; color: var(--text-main, #1e293b); text-decoration: none; font-weight: 700;">
-                                        Xem tất cả thông báo ➔
-                                    </a>
                                 </div>
                             </div>
                         </div>
