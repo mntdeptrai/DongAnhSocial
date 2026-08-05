@@ -1533,10 +1533,6 @@
 
     <!-- Polaroid Galleries + Decorations -->
     <div class="gallery-container">
-        <!-- Stamp: Plane -->
-        <div class="travel-stamp stamp-plane" style="left: 7%; top: 135px; transform: rotate(-15deg);">
-            ✈️
-        </div>
 
         <!-- Polaroid 1: Scooter -->
         <div class="polaroid-card" style="left: 14%; top: 30px;" data-angle="-7">
@@ -1587,17 +1583,6 @@
             <div class="polaroid-caption">Thành Cổ Loa</div>
         </div>
 
-        <!-- Stamp: Green circle -->
-        <div class="travel-stamp stamp-circle-green" style="left: 68%; top: 135px; transform: rotate(-10deg);">
-            <svg viewBox="0 0 100 100" style="width: 100%; height: 100%;">
-                <path id="circlePath2" d="M 50, 50 m -35, 0 a 35,35 0 1,1 70,0 a 35,35 0 1,1 -70,0" fill="none" />
-                <text font-family="'Outfit', sans-serif" font-weight="900" font-size="12" fill="#0d9488">
-                    <textPath href="#circlePath2" startOffset="0%">DONG ANH • MAP •</textPath>
-                </text>
-                <circle cx="50" cy="50" r="21" fill="none" stroke="#0d9488" stroke-width="2" stroke-dasharray="3,3" />
-                <text x="50" y="55" font-family="'Outfit', sans-serif" font-weight="900" font-size="14" fill="#0d9488" text-anchor="middle">🗺️</text>
-            </svg>
-        </div>
 
         <!-- Polaroid 4: Concert -->
         <div class="polaroid-card" style="left: 73%; top: 35px;" data-angle="-5">
