@@ -404,7 +404,7 @@
                                             <!-- Avatar with Presence Dot -->
                                             <div style="position: relative; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.03); flex-shrink: 0;">
                                                 <template x-if="chat.avatar_url">
-                                                    <img :src="chat.avatar_url" alt="avatar" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+                                                    <img onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=800&q=80';" :src="chat.avatar_url" alt="avatar" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
                                                 </template>
                                                 <template x-if="!chat.avatar_url">
                                                     <span style="font-size: 1.3rem;" x-text="chat.avatar"></span>
@@ -545,7 +545,7 @@
                                 @php $navUser = Auth::user() ?? \App\Models\User::find(session('user_id')); @endphp
                                 <div class="profile-avatar-container">
                                     @if($navUser && $navUser->avatar && str_starts_with($navUser->avatar, 'avatars/'))
-                                        <img src="{{ rtrim(env('R2_PUBLIC_URL'), '/') . '/' . $navUser->avatar }}" alt="avatar" style="width: 100%; height: 100%; object-fit: cover;">
+                                        <img onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=800&q=80';" src="{{ rtrim(env('R2_PUBLIC_URL'), '/') . '/' . $navUser->avatar }}" alt="avatar" style="width: 100%; height: 100%; object-fit: cover;">
                                     @else
                                         <span style="font-size: 1.2rem;">{{ $navUser->avatar ?? '👤' }}</span>
                                     @endif
@@ -1032,7 +1032,7 @@
                         <div style="position: relative; width: 32px; height: 32px; flex-shrink: 0;">
                             <div style="width: 32px; height: 32px; border-radius: 50%; background: #fff3cd; overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: 1.1rem;">
                                 <template x-if="chat.avatar_url">
-                                    <img :src="chat.avatar_url" alt="avatar" style="width: 100%; height: 100%; object-fit: cover;">
+                                    <img onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=800&q=80';" :src="chat.avatar_url" alt="avatar" style="width: 100%; height: 100%; object-fit: cover;">
                                 </template>
                                 <template x-if="!chat.avatar_url">
                                     <span x-text="chat.avatar || '👤'"></span>
@@ -1071,7 +1071,7 @@
                     <!-- Empty state -->
                     <div x-show="!chat.loading && chat.messages.length === 0" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 8px; color: #6b7280;">
                         <div style="width: 48px; height: 48px; border-radius: 50%; background: #e4e6eb; display: flex; align-items: center; justify-content: center; font-size: 1.3rem;">
-                            <template x-if="chat.avatar_url"><img :src="chat.avatar_url" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;"></template>
+                            <template x-if="chat.avatar_url"><img onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=800&q=80';" :src="chat.avatar_url" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;"></template>
                             <template x-if="!chat.avatar_url"><span x-text="chat.avatar || '👤'"></span></template>
                         </div>
                         <span style="font-size: 0.75rem; font-weight: 600; color: #111827;" x-text="chat.name"></span>
@@ -1096,7 +1096,7 @@
                                         <template x-if="!(chat.messages[mi+1] && chat.messages[mi+1].sender_id != {{ session('user_id') }})">
                                             <div style="width: 24px; height: 24px; border-radius: 50%; background: #fff3cd; overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: 0.75rem;">
                                                 <template x-if="chat.avatar_url">
-                                                    <img :src="chat.avatar_url" style="width: 100%; height: 100%; object-fit: cover;">
+                                                    <img onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=800&q=80';" :src="chat.avatar_url" style="width: 100%; height: 100%; object-fit: cover;">
                                                 </template>
                                                 <template x-if="!chat.avatar_url">
                                                     <span x-text="chat.avatar || '👤'"></span>
@@ -1120,7 +1120,7 @@
                                     <template x-if="msg.media_path">
                                         <div style="border-radius: 12px; overflow: hidden; border: 1px solid rgba(0,0,0,0.08);">
                                             <template x-if="msg.media_type === 'image'">
-                                                <img :src="msg.media_path" style="width: 100%; max-height: 180px; object-fit: cover; display: block; cursor: pointer;" @click="window.open(msg.media_path)">
+                                                <img onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=800&q=80';" :src="msg.media_path" style="width: 100%; max-height: 180px; object-fit: cover; display: block; cursor: pointer;" @click="window.open(msg.media_path)">
                                             </template>
                                             <template x-if="msg.media_type === 'video'">
                                                 <video :src="msg.media_path" controls style="width: 100%; max-height: 180px; display: block;"></video>
@@ -2224,31 +2224,6 @@
     </div>
 
     <script>
-                                    <div class="cmd-result-content">
-                                        <div class="cmd-result-title">${item.name}</div>
-                                        <div class="cmd-result-sub">${item.address || 'Đông Anh, Hà Nội'}</div>
-                                    </div>
-                                    <span class="cmd-result-badge">${item.badge || 'Địa điểm'}</span>
-                                </a>
-                            `;
-                        });
-                        container.innerHTML = html;
-                    })
-                    .catch(() => {
-                        container.innerHTML = `
-                            <a href="/tim-kiem?cat=smart-education-map" class="cmd-result-item" onclick="closeCommandPalette()">
-                                <div class="cmd-result-icon">🏫</div>
-                                <div class="cmd-result-content">
-                                    <div class="cmd-result-title">Trường Học & Sáp Nhập Giáo Dục</div>
-                                    <div class="cmd-result-sub">Danh sách 18 trường mầm non, tiểu học, THCS công lập</div>
-                                </div>
-                                <span class="cmd-result-badge">Giáo Dục</span>
-                            </a>
-                        `;
-                    });
-            }, 120);
-        }
-
         // Back to top scroll listener
         window.addEventListener('scroll', () => {
             const btn = document.getElementById('backToTopBtn');
@@ -2689,7 +2664,7 @@
                 container.innerHTML = friends.map(f => `
                     <button type="button" class="dash-friend-item" onclick="sendPostToFriend(${f.id}, '${escapeHtml(f.name)}')">
                         <div class="dash-friend-avatar-wrap">
-                            ${f.avatar_url ? `<img src="${f.avatar_url}" alt="avatar">` : `<span>${f.avatar || '👤'}</span>`}
+                            ${f.avatar_url ? `<img onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=800&q=80';" src="${f.avatar_url}" alt="avatar">` : `<span>${f.avatar || '👤'}</span>`}
                             ${f.is_online ? `<span class="dash-friend-online"></span>` : ''}
                         </div>
                         <span class="dash-friend-name">${escapeHtml(f.name)}</span>

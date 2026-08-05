@@ -510,7 +510,7 @@
                                     <span>⭐</span> {{ $tour->popularity }}
                                 </div>
                                 <div class="tour-thumbnail-wrapper hover-zoom-container">
-                                    <img src="{{ $tour->thumbnail ?: 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=800&q=80' }}" class="tour-thumbnail hover-zoom-img" alt="{{ $tour->name }}">
+                                    <img onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=800&q=80';" src="{{ $tour->thumbnail ?: 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=800&q=80' }}" class="tour-thumbnail hover-zoom-img" alt="{{ $tour->name }}">
                                     <div class="tour-card-overlay">
                                         <span class="tour-difficulty-tag">{{ $tour->difficulty }}</span>
                                     </div>
@@ -591,7 +591,7 @@
                         </div>
 
                         <div class="tour-thumbnail-wrapper hover-zoom-container">
-                            <img src="{{ $cTour->thumbnail ?: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=800&q=80' }}" class="tour-thumbnail hover-zoom-img" alt="{{ $cTour->name }}">
+                            <img onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=800&q=80';" src="{{ $cTour->thumbnail ?: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=800&q=80' }}" class="tour-thumbnail hover-zoom-img" alt="{{ $cTour->name }}">
                             <div class="tour-card-overlay">
                                 <span class="tour-difficulty-tag">{{ $cTour->difficulty }}</span>
                             </div>
@@ -688,7 +688,7 @@
                             
                             @if($diary->image_path)
                                 <div style="position: relative; height: 220px; border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,0.08); margin-bottom: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.25);">
-                                    <img src="{{ $diary->image_path }}" style="width: 100%; height: 100%; object-fit: cover;">
+                                    <img onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=800&q=80';" src="{{ $diary->image_path }}" style="width: 100%; height: 100%; object-fit: cover;">
                                     <span style="position: absolute; bottom: 12px; right: 12px; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); font-size: 0.7rem; color: #ffffff; padding: 6px 12px; border-radius: 20px; font-weight: 800; text-transform: uppercase;">📸 Kỷ niệm Selfie</span>
                                 </div>
                             @endif
@@ -726,7 +726,7 @@
                                                     
                                                     @if(!empty($stopRev['image_path']))
                                                         <div style="width: 70px; height: 70px; border-radius: 8px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); flex-shrink: 0;">
-                                                            <img src="{{ $stopRev['image_path'] }}" style="width: 100%; height: 100%; object-fit: cover;">
+                                                            <img onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=800&q=80';" src="{{ $stopRev['image_path'] }}" style="width: 100%; height: 100%; object-fit: cover;">
                                                         </div>
                                                     @endif
                                                 </div>
