@@ -1596,9 +1596,42 @@
                 <img src="{{ $school->image_path ?: 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=150&q=80' }}" class="fb-modal-user-avatar">
                 <div class="fb-modal-user-info">
                     <h5 class="fb-modal-user-name">{{ $school->standardized_name }}</h5>
-                    <div class="fb-modal-badges">
-                        <span class="fb-modal-badge">🌐 Công khai ▾</span>
-                        <span class="fb-modal-badge">⚙️ Thông báo trường ▾</span>
+                    <div class="fb-modal-badges" style="position: relative; display: flex; gap: 8px;">
+                        <!-- Hidden Inputs -->
+                        <input type="hidden" name="privacy" id="postPrivacyInputSchool" value="public">
+                        <input type="hidden" name="category" id="postCategoryInputSchool" value="announcement">
+
+                        <!-- Privacy Dropdown Badge -->
+                        <div style="position: relative;">
+                            <button type="button" class="fb-modal-badge" id="privacyDropdownBtnSchool" onclick="togglePostDropdown('privacyDropdownMenuSchool')" style="cursor: pointer; border: none; background: #e2e8f0; font-family: inherit; font-size: 0.78rem; padding: 4px 10px; border-radius: 6px; font-weight: 700; color: #334155; display: inline-flex; align-items: center; gap: 4px;">
+                                <span id="privacyDropdownLabelSchool">🌐 Công khai</span> ▾
+                            </button>
+                            <div id="privacyDropdownMenuSchool" class="fb-post-dropdown-menu" style="display: none; position: absolute; top: 110%; left: 0; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); width: 220px; z-index: 100; padding: 6px;">
+                                <div onclick="selectPostPrivacy('public', '🌐 Công khai')" class="fb-dropdown-item" style="padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 0.85rem; font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 8px;">
+                                    <span>🌐</span>
+                                    <div>
+                                        <div>Công khai</div>
+                                        <div style="font-size: 0.72rem; font-weight: 500; color: #64748b;">Bất kỳ ai trên Đông Anh Social</div>
+                                    </div>
+                                </div>
+                                <div onclick="selectPostPrivacy('friends', '👥 Bạn bè')" class="fb-dropdown-item" style="padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 0.85rem; font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 8px;">
+                                    <span>👥</span>
+                                    <div>
+                                        <div>Phụ huynh & Bạn bè</div>
+                                        <div style="font-size: 0.72rem; font-weight: 500; color: #64748b;">Chỉ phụ huynh/bạn bè đã kết nối</div>
+                                    </div>
+                                </div>
+                                <div onclick="selectPostPrivacy('private', '🔒 Chỉ mình tôi')" class="fb-dropdown-item" style="padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 0.85rem; font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 8px;">
+                                    <span>🔒</span>
+                                    <div>
+                                        <div>Chỉ nội bộ trường</div>
+                                        <div style="font-size: 0.72rem; font-weight: 500; color: #64748b;">Chỉ riêng trường nhìn thấy</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1620,7 +1653,7 @@
                 <div class="fb-modal-action-buttons">
                     <label class="fb-modal-action-btn" title="Thêm ảnh/video">
                         🖼️
-                        <input type="file" name="images[]" multiple accept="image/*" class="fb-modal-file-input" onchange="previewMultiPostImages(this, 'add-post-multi-preview', 'preview-grid')">
+                        <input type="file" name="images[]" multiple accept="image/*,video/*,.mp4,.mov,.avi,.mkv,.webm" class="fb-modal-file-input" onchange="previewMultiPostImages(this, 'add-post-multi-preview', 'preview-grid')">
                     </label>
                     <button type="button" class="fb-modal-action-btn" title="Gắn thẻ">🏷️</button>
                     <button type="button" class="fb-modal-action-btn" title="Cảm xúc">😊</button>

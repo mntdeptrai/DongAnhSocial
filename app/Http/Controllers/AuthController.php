@@ -295,7 +295,6 @@ class AuthController extends Controller
         if (!isset($school) || !$school) {
             $school = null;
         }
-        $posts = collect();
 
         if ($user->isPrincipal() || $user->role === 'principal') {
             if (!$school) {
@@ -304,24 +303,45 @@ class AuthController extends Controller
                     $school = \App\Models\Eatery::on('mysql')->where('user_id', $user->id)->first();
                 }
             }
+        }
 
-            if ($school) {
-                $posts = \App\Models\EducationProgram::on('mysql_education')
+        $tours = \App\Models\FoodTour::where('user_id', $user->id)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        if ($school) {
+            $eduPosts = \App\Models\EducationProgram::on('mysql_education')
+                ->where('eatery_id', $school->id)
+                ->orderBy('created_at', 'desc')
+                ->get();
+            if ($eduPosts->isEmpty()) {
+                $eduPosts = \App\Models\EducationProgram::on('mysql')
                     ->where('eatery_id', $school->id)
                     ->orderBy('created_at', 'desc')
                     ->get();
-                if ($posts->isEmpty()) {
-                    $posts = \App\Models\EducationProgram::on('mysql')
-                        ->where('eatery_id', $school->id)
-                        ->orderBy('created_at', 'desc')
-                        ->get();
-                }
             }
-        } else {
-            // Lấy danh sách lộ trình do người dùng tự xây dựng
-            $tours = \App\Models\FoodTour::where('user_id', $user->id)
+            $userPosts = \App\Models\Post::on('mysql_education')
+                ->where('user_id', $user->id)
                 ->orderBy('created_at', 'desc')
                 ->get();
+            if ($userPosts->isEmpty()) {
+                $userPosts = \App\Models\Post::on('mysql')
+                    ->where('user_id', $user->id)
+                    ->orderBy('created_at', 'desc')
+                    ->get();
+            }
+            $posts = $eduPosts->concat($userPosts)->sortByDesc('created_at')->values();
+        } else {
+            $posts = \App\Models\Post::on('mysql_education')
+                ->where('user_id', $user->id)
+                ->orderBy('created_at', 'desc')
+                ->get();
+            if ($posts->isEmpty()) {
+                $posts = \App\Models\Post::on('mysql')
+                    ->where('user_id', $user->id)
+                    ->orderBy('created_at', 'desc')
+                    ->get();
+            }
         }
 
         // Lấy số lượng theo dõi & bạn bè thực tế từ DB
@@ -379,7 +399,51 @@ class AuthController extends Controller
             $p->real_shares_count = (int) ($p->shares_count ?? 0);
         }
 
-        return view('auth.profile', compact('user', 'tours', 'school', 'posts', 'followersCount', 'followingCount', 'reviews', 'photos', 'videos'));
+        $stall = null;
+        $ocopProductsCount = 0;
+        if ($user->isSeller() || $user->role === 'seller') {
+            $stall = $user->getStall();
+            try {
+                $ocopProductsCount = \App\Models\OcopProduct::where('user_id', $user->id)->count();
+            } catch (\Exception $e) {}
+        }
+
+        $friendsList = \App\Models\User::where('id', '!=', $user->id)
+            ->select('id', 'name', 'avatar', 'role', 'username')
+            ->limit(50)
+            ->get();
+
+        $locationConnections = [
+            'mysql' => 'Ẩm thực',
+            'mysql_education' => 'Trường học',
+            'mysql_culture' => 'Văn hóa / Di sản',
+            'mysql_stay' => 'Lưu trú',
+            'mysql_wellness' => 'Y tế',
+            'mysql_market' => 'Chợ / Gian hàng',
+        ];
+
+        $allLocations = [];
+        foreach ($locationConnections as $conn => $catLabel) {
+            try {
+                $items = \App\Models\Eatery::on($conn)
+                    ->select('id', 'name', 'address', 'image_path')
+                    ->limit(40)
+                    ->get();
+
+                foreach ($items as $loc) {
+                    if (!empty($loc->name)) {
+                        $allLocations[] = [
+                            'name' => $loc->name,
+                            'address' => $loc->address ?: 'Đông Anh, Hà Nội',
+                            'category' => $catLabel,
+                            'image' => $loc->image_path ?: '',
+                        ];
+                    }
+                }
+            } catch (\Exception $e) {}
+        }
+
+        return view('auth.profile', compact('user', 'tours', 'school', 'posts', 'followersCount', 'followingCount', 'reviews', 'photos', 'videos', 'stall', 'ocopProductsCount', 'friendsList', 'allLocations'));
     }
 
     /**

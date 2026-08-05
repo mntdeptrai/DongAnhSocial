@@ -448,64 +448,119 @@ class SchoolManagementController extends Controller
      */
     public function storePost(Request $request)
     {
-        $this->verifyPrincipalOrAdmin();
         $user = Auth::user();
+        if (!$user) {
+            return response()->json(['error' => 'Vui lòng đăng nhập để thực hiện chức năng này.'], 401);
+        }
 
         $request->validate([
-            'eatery_id' => 'required|integer',
+            'eatery_id' => 'nullable|integer',
             'name' => 'required|string|max:1000',
             'description' => 'required|string',
             'duration' => 'nullable|string|max:255',
             'tuition_fee' => 'nullable|numeric',
-            'image' => 'nullable|image|max:512000',
-            'images.*' => 'nullable|image|max:512000',
+            'image' => 'nullable|file|max:512000',
+            'images.*' => 'nullable|file|max:512000',
+            'videos.*' => 'nullable|file|max:512000',
         ]);
 
-        $school = Eatery::on('mysql_education')->find($request->eatery_id);
-        if (!$school) {
-            $school = Eatery::on('mysql')->find($request->eatery_id);
+        $school = null;
+        if ($request->eatery_id) {
+            $school = Eatery::on('mysql_education')->find($request->eatery_id);
+            if (!$school) {
+                $school = Eatery::on('mysql')->find($request->eatery_id);
+            }
         }
 
-        if (!$school || (!$user->isAdmin() && $school->user_id !== $user->id)) {
-            abort(403, 'Quyền truy cập bị từ chối!');
+        if (!$school && ($user->isPrincipal() || $user->role === 'principal')) {
+            $school = Eatery::on('mysql_education')->where('user_id', $user->id)->first();
+            if (!$school) {
+                $school = Eatery::on('mysql')->where('user_id', $user->id)->first();
+            }
         }
 
         $uploadedImages = [];
-        if ($request->hasFile('images')) {
-            foreach ($request->file('images') as $file) {
-                $path = R2Helper::upload($file, 'education');
-                if ($path) {
+        $uploadedVideos = [];
+
+        // Single file check (image or video)
+        if ($request->hasFile('image')) {
+            $file = $request->file('image');
+            $mime = $file->getMimeType() ?: '';
+            $path = R2Helper::upload($file, 'education');
+            if ($path) {
+                if (str_contains($mime, 'video') || in_array(strtolower($file->getClientOriginalExtension()), ['mp4', 'mov', 'avi', 'mkv', 'webm'])) {
+                    $uploadedVideos[] = $path;
+                } else {
                     $uploadedImages[] = $path;
                 }
             }
         }
 
-        $imagePath = null;
-        if ($request->hasFile('image')) {
-            $imagePath = R2Helper::upload($request->file('image'), 'education');
-            if ($imagePath && empty($uploadedImages)) {
-                $uploadedImages[] = $imagePath;
+        // Multi files in images[] (can contain photos or videos!)
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $file) {
+                $mime = $file->getMimeType() ?: '';
+                $path = R2Helper::upload($file, 'education');
+                if ($path) {
+                    if (str_contains($mime, 'video') || in_array(strtolower($file->getClientOriginalExtension()), ['mp4', 'mov', 'avi', 'mkv', 'webm'])) {
+                        $uploadedVideos[] = $path;
+                    } else {
+                        $uploadedImages[] = $path;
+                    }
+                }
             }
         }
 
-        if (empty($imagePath) && !empty($uploadedImages)) {
-            $imagePath = $uploadedImages[0];
+        // Dedicated videos[] files
+        if ($request->hasFile('videos')) {
+            foreach ($request->file('videos') as $file) {
+                $path = R2Helper::upload($file, 'education');
+                if ($path) {
+                    $uploadedVideos[] = $path;
+                }
+            }
         }
 
-        $postData = [
-            'eatery_id' => $school->id,
-            'name' => $request->name,
-            'description' => $request->description,
-            'duration' => $request->duration,
-            'tuition_fee' => $request->tuition_fee,
-            'image_path' => $imagePath,
-            'images' => $uploadedImages,
-        ];
+        $imagePath = !empty($uploadedImages) ? $uploadedImages[0] : null;
+        $videoPath = !empty($uploadedVideos) ? $uploadedVideos[0] : null;
 
-        try {
-            $post = \App\Models\EducationProgram::on('mysql_education')->create($postData);
-        } catch (\Exception $e) {
-            $post = \App\Models\EducationProgram::on('mysql')->create($postData);
+        if ($school) {
+            // Giữ nguyên logic cũ cho Trường học / Principal -> Đăng vào EducationProgram
+            $postData = [
+                'eatery_id' => $school->id,
+                'name' => $request->name,
+                'description' => $request->description,
+                'duration' => $request->duration,
+                'tuition_fee' => $request->tuition_fee,
+                'image_path' => $imagePath,
+                'images' => $uploadedImages,
+                'video_path' => $videoPath,
+                'videos' => $uploadedVideos,
+            ];
+
+            try {
+                $post = \App\Models\EducationProgram::on('mysql_education')->create($postData);
+            } catch (\Exception $e) {
+                $post = \App\Models\EducationProgram::on('mysql')->create($postData);
+            }
+        } else {
+            // Bảng mới posts dành cho cá nhân Admin / Người dùng
+            $postData = [
+                'user_id' => $user->id,
+                'name' => $request->name,
+                'description' => $request->description,
+                'image_path' => $imagePath,
+                'images' => $uploadedImages,
+                'video_path' => $videoPath,
+                'videos' => $uploadedVideos,
+                'status' => 'active',
+            ];
+
+            try {
+                $post = \App\Models\Post::on('mysql_education')->create($postData);
+            } catch (\Exception $e) {
+                $post = \App\Models\Post::on('mysql')->create($postData);
+            }
         }
 
         // Tự động gửi thông báo đến tất cả Bạn bè & Followers ngay lập tức
@@ -526,9 +581,9 @@ class SchoolManagementController extends Controller
                 'message' => 'Đăng bài viết mới thành công!',
                 'post' => $post,
                 'school' => [
-                    'id' => $school->id,
-                    'name' => $school->standardized_name,
-                    'image_path' => $school->image_path ?: 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=150&q=80',
+                    'id' => $school ? $school->id : null,
+                    'name' => $school ? $school->standardized_name : $user->name,
+                    'image_path' => $school ? ($school->image_path ?: 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=150&q=80') : ($user->avatar ?: 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=150&q=80'),
                 ]
             ]);
         }

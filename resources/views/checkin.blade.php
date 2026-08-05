@@ -506,13 +506,13 @@
                 </div>
                 
                 <!-- Hidden File Input -->
-                <input type="file" id="locketFileInput" accept="image/*" style="display: none;" onchange="handleLocketGallerySelect(event)">
+                <input type="file" id="locketFileInput" accept="image/*,video/*,.mp4,.mov,.avi,.mkv,.webm" style="display: none;" onchange="handleLocketGallerySelect(event)">
                 
                 <!-- Details Form (Initially Hidden) -->
                 <div id="locketDetailsForm" style="display: none;" class="locket-details-form">
                     <form action="{{ route('checkin.store') }}" method="POST" enctype="multipart/form-data" id="locketCheckinForm">
                         @csrf
-                        <input type="file" name="image" id="locketFormFileInput" accept="image/*" style="display: none;">
+                        <input type="file" name="image" id="locketFormFileInput" accept="image/*,video/*,.mp4,.mov,.avi,.mkv,.webm" style="display: none;">
                         <input type="hidden" name="image_base64" id="locketFormBase64Input">
                         
                         <div class="form-group">
@@ -663,7 +663,12 @@
                                             {{ $checkin->user ? mb_substr($checkin->user->name, 0, 1, 'UTF-8') : '👤' }}
                                         </div>
                                         <div class="author-meta">
-                                            <span class="author-name">{{ $checkin->display_name }}</span>
+                                            <span class="author-name" style="display: inline-flex; align-items: center; gap: 4px;">
+                                                {{ $checkin->display_name }}
+                                                @if($checkin->user && $checkin->user->role === 'admin')
+                                                    <span title="Tài khoản Quản trị viên (Admin)" style="color: #ef4444; font-size: 0.95rem;">⭐</span>
+                                                @endif
+                                            </span>
                                             <span class="author-role-badge {{ ($checkin->user && $checkin->user->role === 'admin') ? 'role-admin' : 'role-user' }}">
                                                 {{ ($checkin->user && $checkin->user->role === 'admin') ? 'Admin' : 'Thực khách' }}
                                             </span>

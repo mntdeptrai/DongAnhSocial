@@ -5,9 +5,10 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class EducationProgram extends Model
+class Post extends Model
 {
     protected $fillable = [
+        'user_id',
         'eatery_id',
         'name',
         'description',
@@ -15,16 +16,21 @@ class EducationProgram extends Model
         'images',
         'video_path',
         'videos',
-        'duration',
-        'tuition_fee',
         'likes_count',
         'shares_count',
+        'comments_count',
+        'status',
     ];
 
     protected $casts = [
         'images' => 'array',
         'videos' => 'array',
     ];
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
 
     public function eatery(): BelongsTo
     {

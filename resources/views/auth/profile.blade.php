@@ -558,6 +558,41 @@
         background: #f1f5f9;
     }
 
+    .post-emoji-chip {
+        background: #ffffff;
+        border: 1px solid #cbd5e1;
+        border-radius: 20px;
+        padding: 5px 12px;
+        font-size: 0.82rem;
+        font-weight: 700;
+        color: #334155;
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+    .post-emoji-chip:hover {
+        background: #eff6ff;
+        border-color: #3b82f6;
+        color: #2563eb;
+    }
+
+    .post-loc-cat-btn {
+        background: #ffffff;
+        border: 1px solid #cbd5e1;
+        border-radius: 20px;
+        padding: 4px 12px;
+        font-size: 0.78rem;
+        font-weight: 700;
+        color: #475569;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: all 0.15s ease;
+    }
+    .post-loc-cat-btn:hover, .post-loc-cat-btn.active {
+        background: #2563eb;
+        border-color: #2563eb;
+        color: #ffffff;
+    }
+
     .pro-post-img {
         width: 100%;
         height: 100%;
@@ -735,341 +770,35 @@
             }
         @endphp
 
-        <!-- ==========================================================
-             1. TOP HERO HEADER & COVER PHOTO CARD
-             ========================================================== -->
-        <div class="pro-header-card">
-            <!-- Cover Image -->
-            <div class="pro-cover-box">
-                @php
-                    $coverSrc = optional($school)->image_path ?: 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=1600&q=80';
-                @endphp
-                <img src="{{ $coverSrc }}" class="pro-cover-img" id="pro-cover-img-el" alt="Cover" style="cursor: pointer;" onclick="openSingleImageLightbox(this.src, '🖼️ Ảnh bìa - {{ addslashes(optional($school)->standardized_name ?: $user->name) }}')">
-                @if($isOwner)
-                    <label class="pro-cover-btn" style="cursor: pointer;" onclick="event.stopPropagation();">
-                        📷 Đổi ảnh bìa
-                        <input type="file" id="cover-file-input" accept="image/*" style="display: none;" onchange="handleCoverSelect(this)">
-                    </label>
-                @endif
-            </div>
+        <!-- 1. TOP HERO HEADER & COVER PHOTO CARD -->
+        @include('auth.partials.profile-header')
 
-            <!-- Profile Info Bar -->
-            <div class="pro-info-bar">
-                <div class="pro-info-main">
-                    <!-- Left: Avatar & Text Details -->
-                    <div class="pro-left-details">
-                        <div class="pro-avatar-box">
-                            @php
-                                $avatarSrc = '';
-                                if ($user->avatar && str_starts_with($user->avatar, 'avatars/')) {
-                                    $avatarSrc = rtrim(env('R2_PUBLIC_URL'), '/') . '/' . $user->avatar;
-                                } elseif (optional($school)->image_path) {
-                                    $avatarSrc = optional($school)->image_path;
-                                }
-                            @endphp
-                            @if($avatarSrc)
-                                <img src="{{ $avatarSrc }}" class="pro-avatar-img" id="pro-avatar-img-el" alt="{{ $user->name }}" style="cursor: pointer;" onclick="openSingleImageLightbox(this.src, '🧑 Ảnh đại diện - {{ addslashes(optional($school)->standardized_name ?: $user->name) }}')">
-                            @else
-                                <div style="width:100%;height:100%;background:#e2e8f0;display:flex;align-items:center;justify-content:center;font-size:3rem;border-radius:20px;">👤</div>
-                            @endif
-                            @if($isOwner)
-                                <label class="pro-avatar-badge" title="Đổi ảnh đại diện" style="cursor: pointer;" onclick="event.stopPropagation();">
-                                    📷
-                                    <input type="file" id="avatar-file-input" accept="image/*" style="display: none;" onchange="handleAvatarSelect(this)">
-                                </label>
-                            @endif
-                        </div>
-
-                        <div>
-                            <h1 class="pro-name-title">
-                                {{ optional($school)->standardized_name ?: $user->name }}
-                                @if($user->is_verified)
-                                    <span class="pro-verify-badge" title="Tài khoản xịn đã xác minh bởi Admin ⭐">⭐</span>
-                                @endif
-                            </h1>
-                            <div class="pro-subtitle">
-                                {{ optional(optional($school)->category)->name ?: 'Trường mầm non' }} · {{ optional($school)->commune ? optional($school)->commune->name : 'Đông Anh, Hà Nội' }}
-                            </div>
-
-                            <!-- Counter Stats (Direct Database Values) -->
-                            <div class="pro-stats-row">
-                                <div class="pro-stat-item">
-                                    <span class="pro-stat-num">{{ $followersCount }}</span>
-                                    <span class="pro-stat-label">Người theo dõi</span>
-                                </div>
-                                <div class="pro-stat-item">
-                                    <span class="pro-stat-num">{{ $followingCount }}</span>
-                                    <span class="pro-stat-label">Đang theo dõi</span>
-                                </div>
-                                <div class="pro-stat-item">
-                                    <span class="pro-stat-num">{{ number_format($avgScore, 1) }}</span>
-                                    <span class="pro-stat-label">Đánh giá</span>
-                                </div>
-                                <div class="pro-stat-item">
-                                    <span class="pro-stat-num">{{ $posts->count() }}</span>
-                                    <span class="pro-stat-label">Bài viết</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Right: Action Buttons Group (Phân biệt rõ Chủ sở hữu & Người xem) -->
-                    <div class="pro-actions-group">
-                        @if($isOwner)
-                            <!-- Dành riêng cho Chính Chủ Tài Khoản (Owner View) -->
-                            <button type="button" @click="showEditModal = true" class="pro-btn-primary">
-                                ✏️ Chỉnh sửa hồ sơ
-                            </button>
-
-                            <button type="button" @click="showPasswordModal = true" class="pro-btn-outline">
-                                🔑 Đổi mật khẩu
-                            </button>
-
-                            <button type="button" onclick="shareProfilePage()" class="pro-btn-outline">
-                                📤 Chia sẻ
-                            </button>
-                        @else
-                            <!-- Dành cho Khách & Người xem khác ghé thăm (Viewer / Guest View) -->
-                            <!-- 1. Nút Thêm bạn bè (Friendship Button) -->
-                            <div id="friend-btn-wrapper" style="display: inline-flex;">
-                                @if($friendshipStatus === 'none')
-                                    <button type="button" class="pro-btn-primary" id="friend-btn" onclick="sendFriendRequest({{ $user->id }})">
-                                        ➕ Thêm bạn bè
-                                    </button>
-                                @elseif($friendshipStatus === 'pending_sent')
-                                    <button type="button" class="pro-btn-outline" id="friend-btn" onclick="cancelFriendRequest({{ $friendshipId }}, {{ $user->id }})">
-                                        ⏳ Đã gửi lời mời
-                                    </button>
-                                @elseif($friendshipStatus === 'pending_received')
-                                    <button type="button" class="pro-btn-primary" id="friend-btn" style="background: #059669; color: #ffffff;" onclick="acceptFriendRequest({{ $friendshipId }})">
-                                        ✅ Chấp nhận lời mời
-                                    </button>
-                                @elseif($friendshipStatus === 'accepted')
-                                    <button type="button" class="pro-btn-outline" id="friend-btn" style="background: #ecfdf5; border-color: #10b981; color: #047857;" onclick="unfriendUser({{ $friendshipId }}, {{ $user->id }})">
-                                        👥 Bạn bè ✓
-                                    </button>
-                                @endif
-                            </div>
-
-                            <!-- 2. Nút Theo dõi (Follow Button) -->
-                            <button type="button" 
-                                    class="{{ $isFollowing ? 'pro-btn-outline' : 'pro-btn-primary' }}" 
-                                    id="follow-btn" 
-                                    data-following="{{ $isFollowing ? 'true' : 'false' }}"
-                                    style="{{ $isFollowing ? 'background: #f1f5f9; color: #475569;' : '' }}"
-                                    onclick="toggleFollowUser(this, {{ $user->id }})">
-                                <span id="follow-icon">{{ $isFollowing ? '✓' : '🔔' }}</span> 
-                                <span id="follow-text">{{ $isFollowing ? 'Đang theo dõi' : 'Theo dõi' }}</span>
-                            </button>
-
-                            <!-- 3. Nút Thả tim (nếu là trang Trường học / Cơ sở) -->
-                            @if($school)
-                                @php
-                                    $uId = \Illuminate\Support\Facades\Auth::id() ?? session('user_id');
-                                    $sId = session()->getId();
-                                    $eateryLiked = \App\Models\CheckinReaction::where('reactionable_type', 'eatery')
-                                        ->where('reactionable_id', $school->id)
-                                        ->where(function($q) use ($uId, $sId) {
-                                            if ($uId) { $q->where('user_id', $uId); } else { $q->where('session_id', $sId); }
-                                        })->exists();
-
-                                    $eateryLikesCount = \App\Models\CheckinReaction::where('reactionable_type', 'eatery')
-                                        ->where('reactionable_id', $school->id)
-                                        ->count();
-                                @endphp
-                                <button type="button" class="pro-btn-primary" 
-                                        id="eatery-heart-btn-{{ $school->id }}" 
-                                        onclick="togglePlaceHeart(this, {{ $school->id }})" 
-                                        style="{{ $eateryLiked ? 'background: #ef4444 !important; color: #ffffff !important;' : 'background: #f1f5f9; color: #0f172a;' }}">
-                                    ❤️ <span id="eatery-heart-text-{{ $school->id }}">{{ $eateryLiked ? 'Đã thả tim' : 'Thả tim' }} ({{ $eateryLikesCount }})</span>
-                                </button>
-                            @endif
-
-                            <!-- 4. Nút Nhắn tin -->
-                            <button type="button" class="pro-btn-outline" 
-                                    onclick="openDirectMessage({{ $user->id }}, '{{ addslashes(optional($school)->standardized_name ?: $user->name) }}', '{{ optional($school)->image_path ?: '' }}')">
-                                💬 Nhắn tin
-                            </button>
-
-                            <!-- 5. Nút Chia sẻ -->
-                            <button type="button" class="pro-btn-outline" 
-                                    onclick="shareProfilePage()">
-                                📤 Chia sẻ
-                            </button>
-                        @endif
-                    </div>
-                </div>
-
-                <!-- Tab Navigation Bar -->
-                <div class="pro-tabs-bar">
-                    <button type="button" class="pro-tab-item" :class="{ 'active': activeTab === 'overview' }" @click="activeTab = 'overview'">Tổng quan</button>
-                    <button type="button" class="pro-tab-item" :class="{ 'active': activeTab === 'posts' }" @click="activeTab = 'posts'">Bài viết ({{ $posts->count() }})</button>
-                    <button type="button" class="pro-tab-item" :class="{ 'active': activeTab === 'photos' }" @click="activeTab = 'photos'">Thư viện ảnh ({{ $allPhotoUrls->count() }})</button>
-                    <button type="button" class="pro-tab-item" :class="{ 'active': activeTab === 'about' }" @click="activeTab = 'about'">Giới thiệu</button>
-                    <button type="button" class="pro-tab-item" :class="{ 'active': activeTab === 'reviews' }" @click="activeTab = 'reviews'">Đánh giá ({{ $totalRev }})</button>
-                </div>
-            </div>
-        </div>
-
-
-        <!-- ==========================================================
-             2. TWO-COLUMN MAIN CONTENT BODY
-             ========================================================== -->
+        <!-- 2. TWO-COLUMN MAIN CONTENT BODY -->
         <div class="pro-body-grid">
 
             <!-- LEFT SIDEBAR COLUMN (340px) -->
-            <div>
-                <!-- Card 1: Thông tin địa điểm -->
-                <div class="pro-card">
-                    <div class="pro-card-title">
-                        <span>Thông tin địa điểm</span>
-                    </div>
-                    <ul class="pro-info-list">
-                        <li class="pro-info-row">
-                            <span class="pro-info-icon">🏫</span>
-                            <div class="pro-info-text">
-                                <span class="pro-info-lbl">Loại hình</span>
-                                <span class="pro-info-val">{{ optional(optional($school)->category)->name ?: 'Trường mầm non' }}</span>
-                            </div>
-                        </li>
-                        <li class="pro-info-row">
-                            <span class="pro-info-icon">📍</span>
-                            <div class="pro-info-text">
-                                <span class="pro-info-lbl">Địa chỉ</span>
-                                <span class="pro-info-val">{{ optional($school)->address ?: 'Xã Đông Anh, Hà Nội' }}</span>
-                            </div>
-                        </li>
-                        <li class="pro-info-row">
-                            <span class="pro-info-icon">📞</span>
-                            <div class="pro-info-text">
-                                <span class="pro-info-lbl">Điện thoại</span>
-                                <span class="pro-info-val">{{ optional($school)->phone ?: ($user->phone ?: 'Chưa cập nhật') }}</span>
-                            </div>
-                        </li>
-                        <li class="pro-info-row">
-                            <span class="pro-info-icon">🌐</span>
-                            <div class="pro-info-text">
-                                <span class="pro-info-lbl">Website</span>
-                                <span class="pro-info-val" style="color: #2563eb;">{{ optional($school)->website ?: 'phucloc.edu.vn' }}</span>
-                            </div>
-                        </li>
-                        <li class="pro-info-row">
-                            <span class="pro-info-icon">🕒</span>
-                            <div class="pro-info-text">
-                                <span class="pro-info-lbl">Giờ mở cửa</span>
-                                <span class="pro-info-val">{{ optional($school)->opening_hours ?: '7:00 – 17:30' }}</span>
-                            </div>
-                        </li>
-                    </ul>
-
-                    @if($isOwner)
-                        <button type="button" @click="showEditModal = true" class="pro-btn-orange" style="width: 100%; border: none; cursor: pointer;">
-                            ✏️ Cập nhật thông tin
-                        </button>
-                    @endif
-                </div>
-
-                <!-- Card 2: Đánh giá Score Breakdown -->
-                <div class="pro-card">
-                    <div class="pro-card-title">
-                        <span>Đánh giá</span>
-                        <a href="#" style="font-size: 0.8rem; color: #f59e0b; text-decoration: none; font-weight: 700;">Xem tất cả</a>
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 16px;">
-                        <div>
-                            <div class="pro-rating-big">{{ number_format($avgScore, 1) }}</div>
-                            <div class="pro-stars">★★★★★</div>
-                            <div style="font-size: 0.8rem; color: #94a3b8; font-weight: 600;">{{ $totalRev }} đánh giá</div>
-                        </div>
-                        <div style="flex: 1; display: flex; flex-direction: column; gap: 6px;">
-                            <div style="display: flex; align-items: center; gap: 8px; font-size: 0.75rem; color: #64748b;">
-                                <span>5</span>
-                                <div style="flex: 1; height: 6px; background: #e2e8f0; border-radius: 100px; overflow: hidden;">
-                                    <div style="width: {{ $totalRev > 0 ? ($star5Count / $totalRev)*100 : 85 }}%; height: 100%; background: #f59e0b;"></div>
-                                </div>
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 8px; font-size: 0.75rem; color: #64748b;">
-                                <span>4</span>
-                                <div style="flex: 1; height: 6px; background: #e2e8f0; border-radius: 100px; overflow: hidden;">
-                                    <div style="width: {{ $totalRev > 0 ? ($star4Count / $totalRev)*100 : 10 }}%; height: 100%; background: #f59e0b;"></div>
-                                </div>
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 8px; font-size: 0.75rem; color: #64748b;">
-                                <span>3</span>
-                                <div style="flex: 1; height: 6px; background: #e2e8f0; border-radius: 100px; overflow: hidden;">
-                                    <div style="width: {{ $totalRev > 0 ? ($star3Count / $totalRev)*100 : 3 }}%; height: 100%; background: #f59e0b;"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <button type="button" class="pro-btn-outline" style="width: 100%; justify-content: center; border-radius: 14px;">
-                        ✍️ Viết đánh giá
-                    </button>
-                </div>
-
-                <!-- Card 3: Từ khoá Badges -->
-                <div class="pro-card">
-                    <div class="pro-card-title" style="color: #0f172a;">
-                        <span>Từ khoá</span>
-                    </div>
-                    <div class="pro-tags-flex">
-                        <span class="pro-tag-pill">Mầm non</span>
-                        <span class="pro-tag-pill">Giáo dục</span>
-                        <span class="pro-tag-pill">Đông Anh</span>
-                        <span class="pro-tag-pill">Trẻ em</span>
-                        <span class="pro-tag-pill">Hà Nội</span>
-                        <span class="pro-tag-pill">Tuyển sinh 2025</span>
-                    </div>
-                </div>
-            </div>
+            @include('auth.partials.profile-sidebar')
 
             <!-- RIGHT MAIN COLUMN -->
             <div>
                 <!-- ================= TAB 1: OVERVIEW & TAB 2: POSTS ================= -->
                 <div x-show="activeTab === 'overview' || activeTab === 'posts'">
-                    <!-- 1. Mini Top Key Stat Cards (4 Cards Grid - Only on Overview) -->
-                    <div class="pro-mini-stats-grid" x-show="activeTab === 'overview'">
-                        <div class="pro-mini-stat-card">
-                            <div class="pro-mini-stat-icon">📅</div>
-                            <div class="pro-mini-stat-val">{{ $foundedYr ?: 'Chưa cập nhật' }}</div>
-                            <div class="pro-mini-stat-lbl">Thành lập</div>
-                        </div>
-                        <div class="pro-mini-stat-card">
-                            <div class="pro-mini-stat-icon">👩‍🏫</div>
-                            <div class="pro-mini-stat-val">{{ $staffCount !== null ? $staffCount . ' người' : 'Chưa cập nhật' }}</div>
-                            <div class="pro-mini-stat-lbl">Giáo viên</div>
-                        </div>
-                        <div class="pro-mini-stat-card">
-                            <div class="pro-mini-stat-icon">🎒</div>
-                            <div class="pro-mini-stat-val">{{ $studentsCount !== null ? $studentsCount . ' bé' : 'Chưa cập nhật' }}</div>
-                            <div class="pro-mini-stat-lbl">Học sinh</div>
-                        </div>
-                        <div class="pro-mini-stat-card">
-                            <div class="pro-mini-stat-icon">🏆</div>
-                            <div class="pro-mini-stat-val">{{ $awardsCount !== null ? $awardsCount . ' danh hiệu' : 'Chưa cập nhật' }}</div>
-                            <div class="pro-mini-stat-lbl">Giải thưởng</div>
-                        </div>
-                    </div>
+                    <!-- Mini Top Key Stat Cards (4 Cards Grid - Tailored by Role) -->
+                    @include('auth.partials.profile-mini-stats')
 
                     <!-- 2. Post Creator Card Trigger -->
                     <div class="pro-creator-card">
                         <div class="pro-creator-top">
-                            <img src="{{ optional($school)->image_path ?: 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=150&q=80' }}" class="pro-creator-avatar" alt="Avatar">
-                            @if($school)
-                                <button type="button" onclick="openModal('addPostModal')" class="pro-creator-input" style="text-align: left; background: #f1f5f9; border: none; outline: none; cursor: pointer; width: 100%;">
-                                    Chia sẻ điều gì đó về địa điểm này...
-                                </button>
-                            @else
-                                <button type="button" @click="showEditModal = true" class="pro-creator-input">
-                                    Chia sẻ điều gì đó về địa điểm này...
-                                </button>
-                            @endif
+                            <img src="{{ optional($school)->image_path ?: ($user->avatar ?: 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=150&q=80') }}" class="pro-creator-avatar" alt="Avatar">
+                            <button type="button" onclick="openModal('addPostModal')" class="pro-creator-input" style="text-align: left; background: #f1f5f9; border: none; outline: none; cursor: pointer; width: 100%;">
+                                Chia sẻ điều gì đó...
+                            </button>
                         </div>
                         <div class="pro-creator-actions">
-                            <button type="button" @if($school) onclick="openModal('addPostModal')" @else @click="showEditModal = true" @endif class="pro-creator-btn">🖼️ Ảnh & Video</button>
-                            <button type="button" @if($school) onclick="openModal('addPostModal')" @else @click="showEditModal = true" @endif class="pro-creator-btn">😃 Cảm xúc</button>
-                            <button type="button" @if($school) onclick="openModal('addPostModal')" @else @click="showEditModal = true" @endif class="pro-creator-btn">🎈 Check-in</button>
-                            <button type="button" @if($school) onclick="openModal('addPostModal')" @else @click="showEditModal = true" @endif class="pro-creator-btn">📅 Sự kiện</button>
+                            <button type="button" onclick="openModal('addPostModal')" class="pro-creator-btn">🖼️ Ảnh & Video</button>
+                            <button type="button" onclick="openModal('addPostModal')" class="pro-creator-btn">😃 Cảm xúc</button>
+                            <button type="button" onclick="openModal('addPostModal')" class="pro-creator-btn">🎈 Check-in</button>
+                            <button type="button" onclick="openModal('addPostModal')" class="pro-creator-btn">📅 Sự kiện</button>
                         </div>
                     </div>
 
@@ -1078,8 +807,8 @@
                         <div class="pro-empty-card">
                             <div style="font-size: 3rem; margin-bottom: 12px;">📰</div>
                             <h4 style="font-size: 1.1rem; font-weight: 800; color: #0f172a; margin-bottom: 6px;">Chưa có bài viết nào</h4>
-                            <p style="font-size: 0.88rem; color: #64748b; margin-bottom: 20px;">Đăng thông báo & hình ảnh hoạt động giáo dục nhà trường lên bảng tin!</p>
-                            @if($school)
+                            <p style="font-size: 0.88rem; color: #64748b; margin-bottom: 20px;">Đăng thông báo & hình ảnh hoạt động lên bảng tin!</p>
+                            @if(Auth::check())
                                 <button type="button" onclick="openModal('addPostModal')" class="pro-btn-primary" style="border-radius: 100px; cursor: pointer;">
                                     + Đăng bài viết mới
                                 </button>
@@ -1097,7 +826,14 @@
                                     <div class="fb-post-author-box">
                                         <img src="{{ optional($school)->image_path ?: 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=150&q=80' }}" class="fb-user-avatar" alt="{{ optional($school)->standardized_name }}">
                                         <div>
-                                            <h4 class="fb-post-author-name" style="word-break: break-word; overflow-wrap: anywhere;">{{ optional($school)->standardized_name ?: $user->name }}</h4>
+                                            <h4 class="fb-post-author-name" style="word-break: break-word; overflow-wrap: anywhere; display: inline-flex; align-items: center; gap: 4px;">
+                                                {{ optional($school)->standardized_name ?: $user->name }}
+                                                @if($user->isAdmin() || $user->role === 'admin')
+                                                    <span title="Tài khoản Quản trị viên (Admin)" style="color: #ef4444; font-size: 0.95rem; filter: drop-shadow(0 0 4px rgba(239, 68, 68, 0.4));">⭐</span>
+                                                @elseif($user->is_verified)
+                                                    <span class="pro-verify-badge" style="font-size: 0.85rem;" title="Tài khoản xịn đã xác minh bởi Admin ⭐">⭐</span>
+                                                @endif
+                                            </h4>
                                             <div class="fb-post-subtext">
                                                 <span>{{ $p->created_at ? $p->created_at->diffForHumans() : 'Vừa xong' }}</span>
                                                 <span>•</span>
@@ -1156,6 +892,18 @@
                                                 @endif
                                             </div>
                                         </div>
+                                    </div>
+                                @endif
+
+                                <!-- Video Player Section if post contains videos -->
+                                @php
+                                    $vids = $p->all_videos;
+                                @endphp
+                                @if(!empty($vids))
+                                    <div class="fb-post-video-container" style="width: 100%; border-radius: 16px; overflow: hidden; margin-top: 10px; background: #000; display: flex; flex-direction: column; gap: 8px;">
+                                        @foreach($vids as $vidUrl)
+                                            <video src="{{ $vidUrl }}" controls preload="metadata" style="width: 100%; max-height: 480px; display: block; border-radius: 12px; background: #0f172a;"></video>
+                                        @endforeach
                                     </div>
                                 @endif
 
@@ -1306,6 +1054,7 @@
                 </div>
 
                 <!-- ================= TAB 5: REVIEWS / ĐÁNH GIÁ ================= -->
+                @if($school || (($user->isSeller() || $user->role === 'seller') && !empty($stall)))
                 <div x-show="activeTab === 'reviews'" x-cloak style="display: none;">
                     <div class="pro-card">
                         <div class="pro-card-title" style="color: #0f172a; margin-bottom: 20px;">
@@ -1386,6 +1135,7 @@
                         @endif
                     </div>
                 </div>
+                @endif
 
             </div>
 
@@ -1472,7 +1222,7 @@
     </div>
 
     <!-- ====== CREATE POST MODAL ====== -->
-    @if($school)
+    @if(Auth::check())
     <div class="sch-modal" id="addPostModal" onclick="if(event.target === this) closeModal('addPostModal')">
         <div class="fb-modal-box">
             <button type="button" onclick="closeModal('addPostModal')" class="sch-close-modal" style="top: 16px; right: 16px; width: 36px; height: 36px; border-radius: 50%; background: #f1f5f9; border: none; font-size: 1.1rem; color: #475569; position: absolute; z-index: 10; cursor: pointer;">✕</button>
@@ -1482,16 +1232,51 @@
             
             <form action="{{ route('principal.posts.store') }}" method="POST" enctype="multipart/form-data" onsubmit="handleRealtimePostSubmit(event, this)">
                 @csrf
-                <input type="hidden" name="eatery_id" value="{{ $school->id }}">
+                <input type="hidden" name="eatery_id" value="{{ optional($school)->id }}">
 
                 <!-- User Header Row -->
                 <div class="fb-modal-user-row">
-                    <img src="{{ $school->image_path ?: 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=150&q=80' }}" class="fb-modal-user-avatar">
+                    <img src="{{ optional($school)->image_path ?: ($user->avatar ?: 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=150&q=80') }}" class="fb-modal-user-avatar">
                     <div class="fb-modal-user-info">
-                        <h5 class="fb-modal-user-name">{{ $school->standardized_name }}</h5>
-                        <div class="fb-modal-badges">
-                            <span class="fb-modal-badge">🌐 Công khai ▾</span>
-                            <span class="fb-modal-badge">⚙️ Thông báo trường ▾</span>
+                        <h5 class="fb-modal-user-name" style="display: inline-flex; align-items: center; gap: 4px;">
+                            {{ optional($school)->standardized_name ?: $user->name }}
+                            @if($user->isAdmin() || $user->role === 'admin')
+                                <span title="Tài khoản Quản trị viên (Admin)" style="color: #ef4444; font-size: 0.95rem;">⭐</span>
+                            @endif
+                        </h5>
+                        <div class="fb-modal-badges" style="position: relative; display: flex; gap: 8px;">
+                            <!-- Hidden Inputs -->
+                            <input type="hidden" name="privacy" id="postPrivacyInput" value="public">
+
+                            <!-- Privacy Dropdown Badge -->
+                            <div style="position: relative;">
+                                <button type="button" class="fb-modal-badge" id="privacyDropdownBtn" onclick="togglePostDropdown('privacyDropdownMenu')" style="cursor: pointer; border: none; background: #e2e8f0; font-family: inherit; font-size: 0.78rem; padding: 4px 10px; border-radius: 6px; font-weight: 700; color: #334155; display: inline-flex; align-items: center; gap: 4px;">
+                                    <span id="privacyDropdownLabel">🌐 Công khai</span> ▾
+                                </button>
+                                <div id="privacyDropdownMenu" class="fb-post-dropdown-menu" style="display: none; position: absolute; top: 110%; left: 0; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); width: 220px; z-index: 100; padding: 6px;">
+                                    <div onclick="selectPostPrivacy('public', '🌐 Công khai')" class="fb-dropdown-item" style="padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 0.85rem; font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 8px;">
+                                        <span>🌐</span>
+                                        <div>
+                                            <div>Công khai</div>
+                                            <div style="font-size: 0.72rem; font-weight: 500; color: #64748b;">Bất kỳ ai trên Đông Anh Social</div>
+                                        </div>
+                                    </div>
+                                    <div onclick="selectPostPrivacy('friends', '👥 Bạn bè')" class="fb-dropdown-item" style="padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 0.85rem; font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 8px;">
+                                        <span>👥</span>
+                                        <div>
+                                            <div>Bạn bè</div>
+                                            <div style="font-size: 0.72rem; font-weight: 500; color: #64748b;">Chỉ bạn bè của bạn</div>
+                                        </div>
+                                    </div>
+                                    <div onclick="selectPostPrivacy('private', '🔒 Chỉ mình tôi')" class="fb-dropdown-item" style="padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 0.85rem; font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 8px;">
+                                        <span>🔒</span>
+                                        <div>
+                                            <div>Chỉ mình tôi</div>
+                                            <div style="font-size: 0.72rem; font-weight: 500; color: #64748b;">Chỉ riêng bạn nhìn thấy</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1499,7 +1284,63 @@
                 <!-- Content Area -->
                 <div class="fb-modal-body">
                     <input type="text" name="name" required class="fb-modal-title-input" placeholder="Tiêu đề bài viết...">
-                    <textarea name="description" required class="fb-modal-textarea" rows="4" placeholder="{{ $school->standardized_name }} ơi, bạn đang nghĩ gì thế?"></textarea>
+                    <textarea name="description" id="postModalTextarea" required class="fb-modal-textarea" rows="4" placeholder="{{ optional($school)->standardized_name ?: $user->name }} ơi, bạn đang nghĩ gì thế?"></textarea>
+
+                    <!-- Interactive Helpers Containers -->
+                    <div id="postHelperTagContainer" style="display: none; position: relative; padding: 10px 14px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; margin-bottom: 12px; align-items: center; gap: 8px;">
+                        <span style="font-size: 1rem;">🏷️</span>
+                        <span style="font-size: 0.85rem; font-weight: 700; color: #475569;">Gắn thẻ:</span>
+                        <input type="text" id="postHelperTagInput" placeholder="Nhập tên người bạn..." style="flex: 1; border: none; background: transparent; outline: none; font-size: 0.9rem; font-weight: 600; color: #0f172a;" oninput="onTagFriendsInput(this.value)">
+                        <button type="button" onclick="closePostHelper('postHelperTagContainer')" style="border: none; background: none; color: #94a3b8; font-size: 1.1rem; cursor: pointer;">✕</button>
+
+                        <!-- Tag Friends Auto-complete Dropdown Menu -->
+                        <div id="tagFriendsDropdown" style="display: none; position: absolute; top: 110%; left: 0; right: 0; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); max-height: 220px; overflow-y: auto; z-index: 200; padding: 6px;"></div>
+                    </div>
+
+                    <div id="postHelperEmojiContainer" style="display: none; padding: 12px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; margin-bottom: 12px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <span style="font-size: 0.85rem; font-weight: 800; color: #0f172a;">😊 Bạn đang cảm thấy thế nào?</span>
+                            <button type="button" onclick="closePostHelper('postHelperEmojiContainer')" style="border: none; background: none; color: #94a3b8; font-size: 1rem; cursor: pointer;">✕</button>
+                        </div>
+                        <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                            <button type="button" class="post-emoji-chip" onclick="selectPostEmoji('😊 Hạnh phúc')">😊 Hạnh phúc</button>
+                            <button type="button" class="post-emoji-chip" onclick="selectPostEmoji('😍 Yêu đời')">😍 Yêu đời</button>
+                            <button type="button" class="post-emoji-chip" onclick="selectPostEmoji('🎉 Hào hứng')">🎉 Hào hứng</button>
+                            <button type="button" class="post-emoji-chip" onclick="selectPostEmoji('🥳 Vui vẻ')">🥳 Vui vẻ</button>
+                            <button type="button" class="post-emoji-chip" onclick="selectPostEmoji('😎 Tự tin')">😎 Tự tin</button>
+                            <button type="button" class="post-emoji-chip" onclick="selectPostEmoji('😋 Thèm ăn')">😋 Thèm ăn</button>
+                            <button type="button" class="post-emoji-chip" onclick="selectPostEmoji('✈️ Du lịch')">✈️ Du lịch</button>
+                            <button type="button" class="post-emoji-chip" onclick="selectPostEmoji('✨ Tuyệt vời')">✨ Tuyệt vời</button>
+                        </div>
+                    </div>
+
+                    <div id="postHelperLocationContainer" style="display: none; padding: 14px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; margin-bottom: 14px; position: relative;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <span style="font-size: 0.88rem; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 6px;">
+                                📍 Tìm & chọn địa điểm Check-in tại Đông Anh
+                            </span>
+                            <button type="button" onclick="closePostHelper('postHelperLocationContainer')" style="border: none; background: none; color: #94a3b8; font-size: 1rem; cursor: pointer;">✕</button>
+                        </div>
+                        
+                        <!-- Search Box -->
+                        <div style="position: relative; margin-bottom: 10px;">
+                            <input type="text" id="postHelperLocInput" placeholder="🔍 Tìm tên trường học, doanh nghiệp, di tích, quán ăn..." style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 0.88rem; outline: none; box-sizing: border-box; background: #ffffff;" oninput="onSearchLocationInput(this.value)">
+                        </div>
+
+                        <!-- Category Filters -->
+                        <div style="display: flex; gap: 6px; overflow-x: auto; padding-bottom: 6px; margin-bottom: 10px; scrollbar-width: none;">
+                            <button type="button" class="post-loc-cat-btn active" onclick="filterLocationsByCategory('all', this)">Tất cả</button>
+                            <button type="button" class="post-loc-cat-btn" onclick="filterLocationsByCategory('Trường học', this)">🏫 Trường học</button>
+                            <button type="button" class="post-loc-cat-btn" onclick="filterLocationsByCategory('Ẩm thực', this)">🍜 Ẩm thực</button>
+                            <button type="button" class="post-loc-cat-btn" onclick="filterLocationsByCategory('Văn hóa / Di sản', this)">🏛️ Văn hóa</button>
+                            <button type="button" class="post-loc-cat-btn" onclick="filterLocationsByCategory('Chợ / Gian hàng', this)">🛍️ Chợ / OCOP</button>
+                            <button type="button" class="post-loc-cat-btn" onclick="filterLocationsByCategory('Lưu trú', this)">🏨 Lưu trú</button>
+                            <button type="button" class="post-loc-cat-btn" onclick="filterLocationsByCategory('Y tế', this)">🏥 Y tế</button>
+                        </div>
+
+                        <!-- Locations List Stream -->
+                        <div id="locationsListStream" style="max-height: 220px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; padding-right: 4px;"></div>
+                    </div>
                 </div>
 
                 <!-- Multi Image Preview Box -->
@@ -1513,11 +1354,11 @@
                     <div class="fb-modal-action-buttons">
                         <label class="fb-modal-action-btn" title="Thêm ảnh/video">
                             🖼️
-                            <input type="file" name="images[]" multiple accept="image/*" class="fb-modal-file-input" onchange="previewMultiPostImages(this, 'add-post-multi-preview', 'preview-grid')">
+                            <input type="file" name="images[]" multiple accept="image/*,video/*,.mp4,.mov,.avi,.mkv,.webm" class="fb-modal-file-input" onchange="previewMultiPostImages(this, 'add-post-multi-preview', 'preview-grid')">
                         </label>
-                        <button type="button" class="fb-modal-action-btn" title="Gắn thẻ">🏷️</button>
-                        <button type="button" class="fb-modal-action-btn" title="Cảm xúc">😊</button>
-                        <button type="button" class="fb-modal-action-btn" title="Vị trí">📍</button>
+                        <button type="button" class="fb-modal-action-btn" title="Gắn thẻ" onclick="togglePostHelper('postHelperTagContainer')">🏷️</button>
+                        <button type="button" class="fb-modal-action-btn" title="Cảm xúc" onclick="togglePostHelper('postHelperEmojiContainer')">😊</button>
+                        <button type="button" class="fb-modal-action-btn" title="Vị trí" onclick="togglePostHelper('postHelperLocationContainer')">📍</button>
                     </div>
                 </div>
 
@@ -1545,6 +1386,220 @@
         if (m) {
             m.classList.remove('show');
             m.style.display = 'none';
+        }
+    }
+
+    function togglePostDropdown(menuId) {
+        const menus = ['privacyDropdownMenu', 'categoryDropdownMenu'];
+        menus.forEach(id => {
+            const m = document.getElementById(id);
+            if (m) {
+                if (id === menuId) {
+                    m.style.display = (m.style.display === 'none' || m.style.display === '') ? 'block' : 'none';
+                } else {
+                    m.style.display = 'none';
+                }
+            }
+        });
+    }
+
+    function selectPostPrivacy(value, label) {
+        const inp = document.getElementById('postPrivacyInput');
+        const lbl = document.getElementById('privacyDropdownLabel');
+        if (inp) inp.value = value;
+        if (lbl) lbl.innerText = label;
+        const menu = document.getElementById('privacyDropdownMenu');
+        if (menu) menu.style.display = 'none';
+    }
+
+    function selectPostCategory(value, label) {
+        const inp = document.getElementById('postCategoryInput');
+        const lbl = document.getElementById('categoryDropdownLabel');
+        if (inp) inp.value = value;
+        if (lbl) lbl.innerText = label;
+        const menu = document.getElementById('categoryDropdownMenu');
+        if (menu) menu.style.display = 'none';
+    }
+
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('#privacyDropdownBtn') && !e.target.closest('#privacyDropdownMenu') &&
+            !e.target.closest('#categoryDropdownBtn') && !e.target.closest('#categoryDropdownMenu')) {
+            const pMenu = document.getElementById('privacyDropdownMenu');
+            const cMenu = document.getElementById('categoryDropdownMenu');
+            if (pMenu) pMenu.style.display = 'none';
+            if (cMenu) cMenu.style.display = 'none';
+        }
+    });
+
+    function togglePostHelper(containerId) {
+        const el = document.getElementById(containerId);
+        if (!el) return;
+        if (el.style.display === 'none' || el.style.display === '') {
+            el.style.display = containerId === 'postHelperTagContainer' ? 'flex' : 'block';
+            if (containerId === 'postHelperTagContainer') {
+                const inp = document.getElementById('postHelperTagInput');
+                if (inp) inp.focus();
+            } else if (containerId === 'postHelperLocationContainer') {
+                const inp = document.getElementById('postHelperLocInput');
+                if (inp) inp.focus();
+                renderLocationList(allLocationsData);
+            }
+        } else {
+            el.style.display = 'none';
+        }
+    }
+
+    function closePostHelper(containerId) {
+        const el = document.getElementById(containerId);
+        if (el) el.style.display = 'none';
+        const dropdown = document.getElementById('tagFriendsDropdown');
+        if (dropdown) dropdown.style.display = 'none';
+    }
+
+    const friendsData = @json($friendsList ?? []);
+
+    function onTagFriendsInput(query) {
+        const dropdown = document.getElementById('tagFriendsDropdown');
+        if (!dropdown) return;
+
+        const q = query.trim().toLowerCase();
+        if (!q) {
+            dropdown.style.display = 'none';
+            dropdown.innerHTML = '';
+            applyPostHelperText();
+            return;
+        }
+
+        const matches = friendsData.filter(u => u.name && u.name.toLowerCase().includes(q));
+        if (matches.length === 0) {
+            dropdown.innerHTML = '<div style="padding: 10px; font-size: 0.85rem; color: #94a3b8; text-align: center;">Không tìm thấy người dùng phù hợp</div>';
+            dropdown.style.display = 'block';
+            applyPostHelperText();
+            return;
+        }
+
+        dropdown.innerHTML = matches.map(u => `
+            <div onclick="selectTaggedFriend('${u.name.replace(/'/g, "\\'")}')" class="fb-dropdown-item" style="padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 0.88rem; font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 10px; transition: background 0.15s ease;">
+                <img src="${u.avatar || 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=80&q=80'}" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;">
+                <div>
+                    <div>${u.name}</div>
+                    <div style="font-size: 0.72rem; font-weight: 500; color: #64748b;">${u.role === 'admin' ? '⭐ Admin' : (u.role === 'principal' ? '🏫 Hiệu trưởng' : 'Thành viên')}</div>
+                </div>
+            </div>
+        `).join('');
+        dropdown.style.display = 'block';
+        applyPostHelperText();
+    }
+
+    function selectTaggedFriend(friendName) {
+        const inp = document.getElementById('postHelperTagInput');
+        const dropdown = document.getElementById('tagFriendsDropdown');
+        if (inp) inp.value = friendName;
+        if (dropdown) dropdown.style.display = 'none';
+        applyPostHelperText();
+    }
+
+    let selectedPostEmoji = '';
+    let selectedPostLocation = '';
+
+    const allLocationsData = @json($allLocations ?? []);
+    let activeLocationCategory = 'all';
+
+    function filterLocationsByCategory(category, btn) {
+        activeLocationCategory = category;
+        const btns = document.querySelectorAll('.post-loc-cat-btn');
+        btns.forEach(b => b.classList.remove('active'));
+        if (btn) btn.classList.add('active');
+
+        const q = (document.getElementById('postHelperLocInput')?.value || '').trim().toLowerCase();
+        let filtered = allLocationsData;
+        if (category !== 'all') {
+            filtered = filtered.filter(l => l.category === category);
+        }
+        if (q) {
+            filtered = filtered.filter(l => (l.name && l.name.toLowerCase().includes(q)) || (l.address && l.address.toLowerCase().includes(q)));
+        }
+        renderLocationList(filtered);
+    }
+
+    function onSearchLocationInput(query) {
+        const q = query.trim().toLowerCase();
+        let filtered = allLocationsData;
+        if (activeLocationCategory !== 'all') {
+            filtered = filtered.filter(l => l.category === activeLocationCategory);
+        }
+        if (q) {
+            filtered = filtered.filter(l => (l.name && l.name.toLowerCase().includes(q)) || (l.address && l.address.toLowerCase().includes(q)));
+        }
+        renderLocationList(filtered);
+    }
+
+    function renderLocationList(locations) {
+        const stream = document.getElementById('locationsListStream');
+        if (!stream) return;
+
+        if (!locations || locations.length === 0) {
+            stream.innerHTML = '<div style="padding: 14px; text-align: center; color: #94a3b8; font-size: 0.85rem;">Không tìm thấy địa điểm phù hợp</div>';
+            return;
+        }
+
+        stream.innerHTML = locations.map(loc => `
+            <div onclick="selectPostLocation('${loc.name.replace(/'/g, "\\'")}')" class="fb-dropdown-item" style="padding: 8px 12px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; gap: 12px; background: #ffffff; border: 1px solid #e2e8f0; transition: all 0.15s ease;">
+                <div style="width: 36px; height: 36px; border-radius: 8px; overflow: hidden; background: #f1f5f9; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 1.1rem;">
+                    ${loc.image ? `<img src="${loc.image}" style="width: 100%; height: 100%; object-fit: cover;">` : '📍'}
+                </div>
+                <div style="flex: 1; overflow: hidden; text-align: left;">
+                    <div style="font-size: 0.88rem; font-weight: 700; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${loc.name}</div>
+                    <div style="font-size: 0.72rem; color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                        <span style="font-weight: 700; color: #2563eb;">[${loc.category}]</span> ${loc.address}
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function selectPostEmoji(emojiStr) {
+        selectedPostEmoji = emojiStr;
+        applyPostHelperText();
+        closePostHelper('postHelperEmojiContainer');
+    }
+
+    function selectPostLocation(locStr) {
+        selectedPostLocation = locStr;
+        const locInp = document.getElementById('postHelperLocInput');
+        if (locInp) locInp.value = locStr;
+        applyPostHelperText();
+        closePostHelper('postHelperLocationContainer');
+    }
+
+    function applyPostHelperText() {
+        const tagInp = document.getElementById('postHelperTagInput');
+        const locInp = document.getElementById('postHelperLocInput');
+        
+        let suffixParts = [];
+        if (selectedPostEmoji) {
+            suffixParts.push('— đang cảm thấy ' + selectedPostEmoji);
+        }
+        if (tagInp && tagInp.value.trim()) {
+            suffixParts.push('cùng với ' + tagInp.value.trim());
+        }
+        const currentLoc = (locInp && locInp.value.trim()) ? locInp.value.trim() : selectedPostLocation;
+        if (currentLoc) {
+            suffixParts.push('tại ' + (currentLoc.startsWith('📍') ? currentLoc : '📍 ' + currentLoc));
+        }
+
+        let badgeEl = document.getElementById('postModalMetaBadge');
+        if (!badgeEl) {
+            const userRow = document.querySelector('.fb-modal-user-info');
+            if (userRow) {
+                badgeEl = document.createElement('div');
+                badgeEl.id = 'postModalMetaBadge';
+                badgeEl.style.cssText = 'font-size: 0.85rem; font-weight: 700; color: #2563eb; margin-top: 4px;';
+                userRow.appendChild(badgeEl);
+            }
+        }
+        if (badgeEl) {
+            badgeEl.innerHTML = suffixParts.join(' ');
         }
     }
 
@@ -1578,9 +1633,10 @@
         const imageUrls = new Array(total);
 
         files.forEach((file, index) => {
+            const isVideo = file.type.startsWith('video/') || ['mp4', 'mov', 'avi', 'mkv', 'webm'].some(ext => file.name.toLowerCase().endsWith('.' + ext));
             const reader = new FileReader();
             reader.onload = function(e) {
-                imageUrls[index] = e.target.result;
+                imageUrls[index] = { type: isVideo ? 'video' : 'image', url: e.target.result };
                 loadedCount++;
                 if (loadedCount === total) {
                     renderFbCollagePreview(grid, imageUrls, containerId);
@@ -1609,35 +1665,46 @@
         `;
         wrapper.appendChild(topBar);
 
+        const getMediaHtml = (item) => {
+            if (!item) return '';
+            if (typeof item === 'string') {
+                return `<img src="${item}" style="width: 100%; height: 100%; object-fit: cover;">`;
+            }
+            if (item.type === 'video') {
+                return `<video src="${item.url}" controls muted style="width: 100%; height: 100%; object-fit: cover; background: #000;"></video>`;
+            }
+            return `<img src="${item.url}" style="width: 100%; height: 100%; object-fit: cover;">`;
+        };
+
         const flexGrid = document.createElement('div');
         flexGrid.style.cssText = 'display: flex; gap: 2px; width: 100%; height: 380px; background: #0f172a;';
 
         if (total === 1) {
             flexGrid.style.height = '320px';
-            flexGrid.innerHTML = `<div style="width: 100%; height: 100%; overflow: hidden;"><img src="${imageUrls[0]}" style="width: 100%; height: 100%; object-fit: cover;"></div>`;
+            flexGrid.innerHTML = `<div style="width: 100%; height: 100%; overflow: hidden;">${getMediaHtml(imageUrls[0])}</div>`;
         } else if (total === 2) {
             flexGrid.style.height = '340px';
             flexGrid.innerHTML = `
-                <div style="flex: 1; height: 100%; overflow: hidden;"><img src="${imageUrls[0]}" style="width: 100%; height: 100%; object-fit: cover;"></div>
-                <div style="flex: 1; height: 100%; overflow: hidden;"><img src="${imageUrls[1]}" style="width: 100%; height: 100%; object-fit: cover;"></div>
+                <div style="flex: 1; height: 100%; overflow: hidden;">${getMediaHtml(imageUrls[0])}</div>
+                <div style="flex: 1; height: 100%; overflow: hidden;">${getMediaHtml(imageUrls[1])}</div>
             `;
         } else if (total === 3) {
             flexGrid.style.height = '360px';
             flexGrid.innerHTML = `
-                <div style="flex: 1; height: 100%; overflow: hidden;"><img src="${imageUrls[0]}" style="width: 100%; height: 100%; object-fit: cover;"></div>
+                <div style="flex: 1; height: 100%; overflow: hidden;">${getMediaHtml(imageUrls[0])}</div>
                 <div style="flex: 1; height: 100%; display: flex; flex-direction: column; gap: 2px;">
-                    <div style="flex: 1; overflow: hidden;"><img src="${imageUrls[1]}" style="width: 100%; height: 100%; object-fit: cover;"></div>
-                    <div style="flex: 1; overflow: hidden;"><img src="${imageUrls[2]}" style="width: 100%; height: 100%; object-fit: cover;"></div>
+                    <div style="flex: 1; overflow: hidden;">${getMediaHtml(imageUrls[1])}</div>
+                    <div style="flex: 1; overflow: hidden;">${getMediaHtml(imageUrls[2])}</div>
                 </div>
             `;
         } else if (total === 4) {
             flexGrid.style.height = '380px';
             flexGrid.innerHTML = `
-                <div style="flex: 1.1; height: 100%; overflow: hidden;"><img src="${imageUrls[0]}" style="width: 100%; height: 100%; object-fit: cover;"></div>
+                <div style="flex: 1.1; height: 100%; overflow: hidden;">${getMediaHtml(imageUrls[0])}</div>
                 <div style="flex: 1; height: 100%; display: flex; flex-direction: column; gap: 2px;">
-                    <div style="flex: 1; overflow: hidden;"><img src="${imageUrls[1]}" style="width: 100%; height: 100%; object-fit: cover;"></div>
-                    <div style="flex: 1; overflow: hidden;"><img src="${imageUrls[2]}" style="width: 100%; height: 100%; object-fit: cover;"></div>
-                    <div style="flex: 1; overflow: hidden;"><img src="${imageUrls[3]}" style="width: 100%; height: 100%; object-fit: cover;"></div>
+                    <div style="flex: 1; overflow: hidden;">${getMediaHtml(imageUrls[1])}</div>
+                    <div style="flex: 1; overflow: hidden;">${getMediaHtml(imageUrls[2])}</div>
+                    <div style="flex: 1; overflow: hidden;">${getMediaHtml(imageUrls[3])}</div>
                 </div>
             `;
         } else {
@@ -1646,14 +1713,14 @@
 
             flexGrid.innerHTML = `
                 <div style="flex: 1; height: 100%; display: flex; flex-direction: column; gap: 2px;">
-                    <div style="flex: 1; overflow: hidden;"><img src="${imageUrls[0]}" style="width: 100%; height: 100%; object-fit: cover;"></div>
-                    <div style="flex: 1; overflow: hidden;"><img src="${imageUrls[1]}" style="width: 100%; height: 100%; object-fit: cover;"></div>
+                    <div style="flex: 1; overflow: hidden;">${getMediaHtml(imageUrls[0])}</div>
+                    <div style="flex: 1; overflow: hidden;">${getMediaHtml(imageUrls[1])}</div>
                 </div>
                 <div style="flex: 1; height: 100%; display: flex; flex-direction: column; gap: 2px;">
-                    <div style="flex: 1; overflow: hidden;"><img src="${imageUrls[2]}" style="width: 100%; height: 100%; object-fit: cover;"></div>
-                    <div style="flex: 1; overflow: hidden;"><img src="${imageUrls[3]}" style="width: 100%; height: 100%; object-fit: cover;"></div>
+                    <div style="flex: 1; overflow: hidden;">${getMediaHtml(imageUrls[2])}</div>
+                    <div style="flex: 1; overflow: hidden;">${getMediaHtml(imageUrls[3])}</div>
                     <div style="flex: 1; overflow: hidden; position: relative;">
-                        <img src="${imageUrls[4]}" style="width: 100%; height: 100%; object-fit: cover;">
+                        ${getMediaHtml(imageUrls[4])}
                         <div style="position: absolute; inset: 0; background: rgba(0, 0, 0, 0.45); backdrop-filter: blur(1px); display: flex; align-items: center; justify-content: center; color: #ffffff; font-size: 1.8rem; font-weight: 900; font-family: 'Be Vietnam Pro', sans-serif; letter-spacing: -0.5px;">+${extraCount}</div>
                     </div>
                 </div>

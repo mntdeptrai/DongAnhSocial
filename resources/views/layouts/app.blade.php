@@ -507,7 +507,12 @@
                                     $effectiveRole = session('user_role') ?: (Auth::check() ? Auth::user()->role : 'user');
                                 @endphp
                                 <div class="user-info-header">
-                                    <div class="user-name">{{ session('user_name') ?: (Auth::check() ? Auth::user()->name : '') }}</div>
+                                    <div class="user-name" style="display: inline-flex; align-items: center; gap: 4px;">
+                                        {{ session('user_name') ?: (Auth::check() ? Auth::user()->name : '') }}
+                                        @if($effectiveRole === 'admin')
+                                            <span title="Tài khoản Quản trị viên (Admin)" style="color: #ef4444; font-size: 0.9rem;">⭐</span>
+                                        @endif
+                                    </div>
                                     <div class="user-role">
                                         @if($effectiveRole === 'admin')
                                             🏛️ Quản trị viên Tổng

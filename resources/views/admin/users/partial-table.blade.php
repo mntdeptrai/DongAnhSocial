@@ -21,7 +21,12 @@
                             </div>
                         </td>
                         <td>
-                            <strong style="color: var(--admin-text-main); font-size: 0.9rem; display: block;">{{ $user->name }}</strong>
+                            <strong style="color: var(--admin-text-main); font-size: 0.9rem; display: inline-flex; align-items: center; gap: 4px;">
+                                {{ $user->name }}
+                                @if($user->role === 'admin')
+                                    <span title="Tài khoản Quản trị viên (Admin)" style="color: #ef4444; font-size: 0.95rem;">⭐</span>
+                                @endif
+                            </strong>
                             @if($user->role === 'seller')
                                 @php 
                                     $stall = $user->getStall(); 
