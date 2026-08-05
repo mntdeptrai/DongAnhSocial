@@ -17,19 +17,19 @@
 @push('head')
 <script type="application/ld+json">
 {
-  "@context": "https://schema.org/",
-  "@type": "Product",
+  "@@context": "https://schema.org/",
+  "@@type": "Product",
   "name": "{{ addslashes($product->name) }}",
   "image": [
     "{{ $product->image_path ? asset($product->image_path) : 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=800&q=80' }}"
   ],
   "description": "{{ addslashes(preg_replace('/\s+/', ' ', strip_tags($product->description ?: ($product->story ?: 'Sản phẩm OCOP đạt chứng nhận cấp quốc gia tại Đông Anh, Hà Nội')))) }}",
   "brand": {
-    "@type": "Brand",
+    "@@type": "Brand",
     "name": "{{ addslashes($eatery ? $eatery->name : 'Đông Anh OCOP') }}"
   },
   "offers": {
-    "@type": "Offer",
+    "@@type": "Offer",
     "url": "{{ route('ocop.product.show', $product->id) }}",
     "priceCurrency": "VND",
     "price": "{{ (int)preg_replace('/[^0-9]/', '', (string)$product->price) ?: 0 }}",
@@ -37,39 +37,39 @@
     "itemCondition": "https://schema.org/NewCondition",
     "availability": "https://schema.org/InStock",
     "seller": {
-      "@type": "Organization",
+      "@@type": "Organization",
       "name": "{{ addslashes($eatery ? $eatery->name : 'Đông Anh OCOP') }}"
     }
   }
-  @if($product->star_rating)
+  <?php if($product->star_rating): ?>
   ,
   "aggregateRating": {
-    "@type": "AggregateRating",
+    "@@type": "AggregateRating",
     "ratingValue": "{{ $product->star_rating }}",
     "reviewCount": "10",
     "bestRating": "5",
     "worstRating": "1"
   }
-  @endif
+  <?php endif; ?>
 }
 </script>
 
 <script type="application/ld+json">
 {
-  "@context": "https://schema.org",
-  "@type": "BreadcrumbList",
+  "@@context": "https://schema.org",
+  "@@type": "BreadcrumbList",
   "itemListElement": [{
-    "@type": "ListItem",
+    "@@type": "ListItem",
     "position": 1,
     "name": "Trang chủ",
     "item": "{{ url('/') }}"
   },{
-    "@type": "ListItem",
+    "@@type": "ListItem",
     "position": 2,
     "name": "Sản phẩm OCOP Đông Anh",
     "item": "{{ url('/') }}#ocop"
   },{
-    "@type": "ListItem",
+    "@@type": "ListItem",
     "position": 3,
     "name": "{{ addslashes($product->name) }}"
   }]
