@@ -515,6 +515,11 @@
     }
 
     /* Stalls cards custom styles */
+    .stall-card-wrapper {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
     .stall-card-gov {
         background: var(--bg-card) !important;
         border: 1px solid var(--border-glow) !important;
@@ -561,9 +566,10 @@
         color: #ffffff;
         box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         border: 2px solid rgba(255,255,255,0.4);
+        flex-shrink: 0;
     }
 
-    /* Badges pills */
+    /* Badges pills - uniform single row */
     .gov-badge {
         font-size: 0.65rem;
         font-weight: 800;
@@ -574,12 +580,24 @@
         gap: 6px;
         text-transform: uppercase;
         letter-spacing: 0.5px;
+        white-space: nowrap;
     }
     .badge-qr-green { background: rgba(16, 185, 129, 0.08) !important; color: #10b981 !important; border: 1px solid rgba(16, 185, 129, 0.15) !important; }
     .badge-attp-blue { background: rgba(37, 99, 235, 0.08) !important; color: #2563eb !important; border: 1px solid rgba(37, 99, 235, 0.15) !important; }
     .badge-ocop-orange { background: rgba(245, 158, 11, 0.08) !important; color: #f59e0b !important; border: 1px solid rgba(245, 158, 11, 0.15) !important; }
     .badge-verify-sky { background: rgba(14, 165, 233, 0.08) !important; color: #0ea5e9 !important; border: 1px solid rgba(14, 165, 233, 0.15) !important; }
     .badge-home-purple { background: rgba(139, 92, 246, 0.08) !important; color: #8b5cf6 !important; border: 1px solid rgba(139, 92, 246, 0.15) !important; }
+
+    /* Badges container - single row with overflow hidden */
+    .stall-badges-row {
+        padding: 12px 20px 0 20px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        min-height: 42px;
+        max-height: 80px;
+        overflow: hidden;
+    }
 
     /* Product items list */
     .product-item-gov {
@@ -592,6 +610,7 @@
         border-radius: 14px;
         margin-bottom: 8px;
         transition: all 0.3s ease;
+        min-height: 48px;
     }
     .product-item-gov:hover {
         background: rgba(14, 165, 233, 0.06);
@@ -602,12 +621,27 @@
         font-size: 0.85rem;
         font-weight: 600;
         color: var(--text-main);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 140px;
     }
     .product-price-txt {
         font-family: var(--font-heading);
-        font-size: 0.85rem;
+        font-size: 0.8rem;
         font-weight: 800;
         color: var(--primary);
+        white-space: nowrap;
+    }
+
+    /* Products section - fixed height for uniform cards */
+    .stall-products-section {
+        padding: 16px 20px;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        min-height: 220px;
     }
 
     /* Actions buttons */
@@ -1493,7 +1527,7 @@
                         </div>
                         
                         <!-- Badges area -->
-                        <div style="padding: 12px 20px 0 20px; display: flex; flex-wrap: wrap; gap: 6px;">
+                        <div class="stall-badges-row">
                             <span class="gov-badge badge-verify-sky" 
                                   style="cursor: pointer; transition: all 0.2s;" 
                                   onmouseover="this.style.background='rgba(14, 165, 233, 0.15)'" 
@@ -1513,15 +1547,15 @@
                         </div>
                         
                         <!-- Products listed & latest review -->
-                        <div style="padding: 20px; flex: 1; display: flex; flex-direction: column; justify-content: space-between;">
+                        <div class="stall-products-section">
                             <div>
                                 <h5 style="font-size: 0.78rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;">Sản phẩm nổi bật</h5>
                                 <div style="display: flex; flex-direction: column; gap: 2px;">
                                     @foreach($stallProducts->take(3) as $prod)
-                                        <div class="product-item-gov" style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
+                                        <div class="product-item-gov">
                                             <div style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0;">
-                                                <span style="font-size: 1rem;">🍎</span>
-                                                <span class="product-name-txt" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ $prod->name }}</span>
+                                                <span style="font-size: 1rem; flex-shrink: 0;">🍎</span>
+                                                <span class="product-name-txt">{{ $prod->name }}</span>
                                             </div>
                                             <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
                                                 <span class="product-price-txt">

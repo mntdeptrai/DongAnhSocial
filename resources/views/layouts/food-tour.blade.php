@@ -253,7 +253,7 @@
                                 fetch('/api/user-notifications')
                                     .then(res => res.json())
                                     .then(data => {
-                                        this.items = data;
+                                        this.items = Array.isArray(data) ? data : [];
                                         this.loading = false;
                                     })
                                     .catch(() => { this.loading = false; });
