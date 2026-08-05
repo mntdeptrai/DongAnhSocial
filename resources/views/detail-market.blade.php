@@ -502,15 +502,20 @@
         display: grid;
         grid-template-columns: repeat(3, 1fr);
         gap: 24px;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
     }
     @media (max-width: 1200px) {
         .stalls-grid-custom {
             grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
         }
     }
     @media (max-width: 768px) {
         .stalls-grid-custom {
             grid-template-columns: 1fr;
+            gap: 16px;
         }
     }
 
@@ -519,6 +524,10 @@
         display: flex;
         flex-direction: column;
         height: 100%;
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        box-sizing: border-box;
     }
     .stall-card-gov {
         background: var(--bg-card) !important;
@@ -531,6 +540,10 @@
         display: flex;
         flex-direction: column;
         position: relative;
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        box-sizing: border-box;
     }
     
     /* Apple glass card edge styling */
@@ -554,14 +567,14 @@
     }
 
     .stall-avatar {
-        width: 46px;
-        height: 46px;
+        width: 40px;
+        height: 40px;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
         font-family: var(--font-heading);
-        font-size: 1.15rem;
+        font-size: 1rem;
         font-weight: 900;
         color: #ffffff;
         box-shadow: 0 4px 10px rgba(0,0,0,0.1);
@@ -573,13 +586,13 @@
     .gov-badge {
         font-size: 0.65rem;
         font-weight: 800;
-        padding: 5px 12px;
+        padding: 5px 10px;
         border-radius: 20px;
         display: inline-flex;
         align-items: center;
-        gap: 6px;
+        gap: 4px;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
+        letter-spacing: 0.3px;
         white-space: nowrap;
     }
     .badge-qr-green { background: rgba(16, 185, 129, 0.08) !important; color: #10b981 !important; border: 1px solid rgba(16, 185, 129, 0.15) !important; }
@@ -590,13 +603,14 @@
 
     /* Badges container - single row with overflow hidden */
     .stall-badges-row {
-        padding: 12px 20px 0 20px;
+        padding: 12px 16px 0 16px;
         display: flex;
         flex-wrap: wrap;
         gap: 6px;
-        min-height: 42px;
-        max-height: 80px;
-        overflow: hidden;
+        min-height: 38px;
+        box-sizing: border-box;
+        width: 100%;
+        min-width: 0;
     }
 
     /* Product items list */
@@ -606,75 +620,107 @@
         align-items: center;
         background: rgba(14, 165, 233, 0.03);
         border: 1px solid rgba(14, 165, 233, 0.08);
-        padding: 10px 14px;
+        padding: 8px 12px;
         border-radius: 14px;
         margin-bottom: 8px;
         transition: all 0.3s ease;
-        min-height: 48px;
+        min-height: 44px;
+        gap: 6px;
+        min-width: 0;
+        width: 100%;
+        box-sizing: border-box;
     }
     .product-item-gov:hover {
         background: rgba(14, 165, 233, 0.06);
         border-color: var(--primary);
-        transform: scale(1.02);
     }
     .product-name-txt {
-        font-size: 0.85rem;
+        font-size: 0.82rem;
         font-weight: 600;
         color: var(--text-main);
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        max-width: 140px;
+        flex: 1;
+        min-width: 0;
     }
     .product-price-txt {
         font-family: var(--font-heading);
-        font-size: 0.8rem;
+        font-size: 0.78rem;
         font-weight: 800;
         color: var(--primary);
         white-space: nowrap;
+        flex-shrink: 0;
     }
 
     /* Products section - fixed height for uniform cards */
     .stall-products-section {
-        padding: 16px 20px;
+        padding: 14px 16px;
         flex: 1;
         display: flex;
         flex-direction: column;
         justify-content: space-between;
-        min-height: 220px;
+        min-height: 200px;
+        width: 100%;
+        min-width: 0;
+        box-sizing: border-box;
     }
 
-    /* Actions buttons */
     /* Actions buttons - Floating Modern Capsules */
     .btn-stall-grid {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
-        gap: 8px;
-        padding: 0 20px 20px 20px;
+        gap: 6px;
+        padding: 0 16px 16px 16px;
         background: none;
+        width: 100%;
+        min-width: 0;
+        box-sizing: border-box;
     }
     .btn-stall-action {
         background: rgba(14, 165, 233, 0.04);
         border: 1px solid var(--border-glow);
         color: var(--text-main);
-        padding: 10px 4px;
+        padding: 9px 2px;
         border-radius: 12px;
         text-align: center;
         font-weight: 700;
-        font-size: 0.78rem;
+        font-size: 0.72rem;
         cursor: pointer;
         transition: all 0.2s var(--ease-premium);
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 4px;
+        gap: 3px;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
+        letter-spacing: 0;
+        min-width: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        box-sizing: border-box;
     }
     .btn-stall-action:hover {
         background: var(--primary);
         color: #ffffff;
         border-color: var(--primary);
+    }
+
+    @media (max-width: 576px) {
+        .btn-stall-grid {
+            gap: 4px;
+            padding: 0 10px 14px 10px;
+        }
+        .btn-stall-action {
+            padding: 8px 1px;
+            font-size: 0.68rem;
+        }
+        .stall-products-section {
+            padding: 12px 10px;
+        }
+        .stall-badges-row {
+            padding: 10px 10px 0 10px;
+        }
     }
 
     /* Pulsing dots indicators */
@@ -1407,7 +1453,7 @@
 
     <!-- VI. DANH SÁCH GIAN HÀNG TIỂU THƯƠNG -->
     <div style="margin-top: 40px; margin-bottom: 40px;">
-        <h2 style="font-family: var(--font-heading); font-weight: 900; font-size: 1.8rem; margin-bottom: 24px; color: var(--text-main);">
+        <h2 style="font-family: var(--font-heading); font-weight: 900; font-size: clamp(1.3rem, 5vw, 1.8rem); margin-bottom: 24px; color: var(--text-main); word-break: break-word;">
             🏪 Hệ thống Gian Hàng Số {{ $eatery->name }}
         </h2>
         
