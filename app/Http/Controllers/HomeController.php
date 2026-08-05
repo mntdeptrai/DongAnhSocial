@@ -247,10 +247,100 @@ class HomeController extends Controller
                 ->get();
         } catch (\Throwable $e) {}
 
-        // Gộp tất cả bài viết và sắp xếp theo thời gian tạo mới nhất
-        $allPostsCombined = $eduPosts->concat($userPosts)->concat($checkinPosts)
-            ->sortByDesc('created_at')
-            ->values();
+        // Gộp tất cả bài viết
+        $allPostsCombined = $eduPosts->concat($userPosts)->concat($checkinPosts)->values();
+
+        // ========================================================
+        // THUẬT TOÁN CÁ NHÂN HÓA BẢNG TIN (Personalized Feed)
+        // Mỗi user sẽ thấy thứ tự bài viết khác nhau
+        // ========================================================
+        $currentUserId = \Illuminate\Support\Facades\Auth::id() ?? session('user_id');
+
+        // Lấy danh sách bạn bè & eatery đã theo dõi của user hiện tại
+        $friendUserIds = [];
+        $userEateryIds = [];
+        if ($currentUserId) {
+            try {
+                $friendUserIds = \DB::table('friendships')
+                    ->where('status', 'accepted')
+                    ->where(function($q) use ($currentUserId) {
+                        $q->where('user_id', $currentUserId)->orWhere('friend_id', $currentUserId);
+                    })
+                    ->get()
+                    ->map(fn($f) => $f->user_id == $currentUserId ? $f->friend_id : $f->user_id)
+                    ->toArray();
+            } catch (\Throwable $e) {}
+
+            // Lấy eatery_id của user (trường/gian hàng user quản lý)
+            try {
+                $user = \App\Models\User::find($currentUserId);
+                if ($user && $user->eatery_id) {
+                    $userEateryIds[] = $user->eatery_id;
+                }
+            } catch (\Throwable $e) {}
+        }
+
+        // Pre-load engagement counts cho tất cả bài viết (tránh N+1 query)
+        $allPostIds = $allPostsCombined->pluck('id')->toArray();
+        $engagementReactions = \App\Models\CheckinReaction::selectRaw('reactionable_id, count(*) as cnt')
+            ->whereIn('reactionable_id', $allPostIds)
+            ->groupBy('reactionable_id')
+            ->pluck('cnt', 'reactionable_id');
+        $engagementComments = \App\Models\Comment::selectRaw('commentable_id, count(*) as cnt')
+            ->whereIn('commentable_id', $allPostIds)
+            ->groupBy('commentable_id')
+            ->pluck('cnt', 'commentable_id');
+
+        // Tính điểm cá nhân hóa cho từng bài viết
+        $allPostsCombined = $allPostsCombined->map(function($post) use ($friendUserIds, $userEateryIds, $currentUserId, $engagementReactions, $engagementComments) {
+            $score = 0;
+            $createdTs = $post->created_at ? $post->created_at->timestamp : 0;
+            $ageHours = max(1, (time() - $createdTs) / 3600);
+
+            // Điểm thời gian: bài mới được ưu tiên (giảm dần theo giờ)
+            $score += max(0, 100 - ($ageHours * 0.5));
+
+            // Điểm bạn bè: bài từ bạn bè +40 điểm
+            $postUserId = $post->user_id ?? null;
+            if ($postUserId && in_array($postUserId, $friendUserIds)) {
+                $score += 40;
+            }
+
+            // Điểm trường/gian hàng theo dõi: +30 điểm
+            $postEateryId = $post->eatery_id ?? null;
+            if ($postEateryId && in_array($postEateryId, $userEateryIds)) {
+                $score += 30;
+            }
+
+            // Điểm tương tác: bài có nhiều reaction/comment được boost
+            $reactionCount = $engagementReactions->get($post->id, 0);
+            $commentCount = $engagementComments->get($post->id, 0);
+            $score += min(25, ($reactionCount * 3) + ($commentCount * 5));
+
+            // Biến thể theo user: thêm nhiễu nhẹ dựa trên user_id để mỗi người thấy khác nhau
+            if ($currentUserId) {
+                $seed = crc32($currentUserId . '_' . $post->id . '_' . date('Y-m-d'));
+                $noise = ($seed % 20) - 10; // -10 đến +10 điểm nhiễu
+                $score += $noise;
+            }
+
+            $post->_feed_score = $score;
+            return $post;
+        });
+
+        // Sắp xếp theo điểm cá nhân hóa (cao → thấp)
+        $allPostsCombined = $allPostsCombined->sortByDesc('_feed_score')->values();
+
+        // Deep link: nếu có ?post=ID, đẩy bài viết đó lên đầu tiên (tạm thời)
+        $highlightPostId = request()->query('post');
+        if ($highlightPostId) {
+            $highlightPostId = (int) $highlightPostId;
+            $pinnedPost = $allPostsCombined->first(fn($p) => $p->id == $highlightPostId);
+            if ($pinnedPost) {
+                $allPostsCombined = $allPostsCombined->reject(fn($p) => $p->id == $highlightPostId && get_class($p) === get_class($pinnedPost));
+                $allPostsCombined = collect([$pinnedPost])->concat($allPostsCombined)->values();
+            }
+        }
 
         // Attach comments and reactions
         $postIds = $allPostsCombined->pluck('id')->toArray();

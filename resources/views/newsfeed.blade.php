@@ -90,7 +90,7 @@
                     $imgCount = count($imgs);
                 @endphp
 
-                <article class="fb-post-card mb-4" style="background: #ffffff; border-radius: 20px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.05); width: 100%; max-width: 100%; box-sizing: border-box;">
+                <article class="fb-post-card mb-4" id="post-{{ $p->id }}" style="background: #ffffff; border-radius: 20px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.05); width: 100%; max-width: 100%; box-sizing: border-box; transition: box-shadow 0.4s ease, border-color 0.4s ease;">
                     
                     <!-- Facebook Post Header -->
                     <div class="fb-post-header" style="padding: 16px; box-sizing: border-box; width: 100%;">
@@ -517,5 +517,21 @@ function handleNewsfeedPostSubmit(e, form) {
         alert('Có lỗi xảy ra, vui lòng thử lại.');
     });
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const postId = urlParams.get('post');
+    if (postId) {
+        const targetPost = document.getElementById('post-' + postId);
+        if (targetPost) {
+            targetPost.style.borderColor = '#0284c7';
+            targetPost.style.boxShadow = '0 0 0 4px rgba(2, 132, 199, 0.25), 0 8px 30px rgba(0,0,0,0.12)';
+            setTimeout(() => {
+                targetPost.style.borderColor = '#e2e8f0';
+                targetPost.style.boxShadow = '0 4px 20px rgba(0,0,0,0.05)';
+            }, 3500);
+        }
+    }
+});
 </script>
 @endsection

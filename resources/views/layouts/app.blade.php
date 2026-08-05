@@ -2707,8 +2707,15 @@
             return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
         }
 
+        function getPostShareUrl() {
+            if (currentSharingPost && currentSharingPost.id) {
+                return window.location.origin + '/ban-tin?post=' + currentSharingPost.id;
+            }
+            return window.location.href;
+        }
+
         function sendPostToFriend(friendId, friendName) {
-            const shareUrl = window.location.href;
+            const shareUrl = getPostShareUrl();
             const msg = `📰 [Chia sẻ bài viết] ${currentSharingPost.title}\n🔗 Xem tại: ${shareUrl}`;
             
             closeDongAnhShareModal();
@@ -2731,16 +2738,36 @@
 
         function copySharePostLink() {
             closeDongAnhShareModal();
-            const shareUrl = window.location.href;
+            const shareUrl = getPostShareUrl();
             if (navigator.clipboard && window.isSecureContext) {
                 navigator.clipboard.writeText(shareUrl).then(() => {
                     if (typeof showToastNotification === 'function') {
-                        showToastNotification('🔗 Đã sao chép liên kết bài viết!');
+                        showToastNotification('🔗 Đã sao chép liên kết trực tiếp bài viết!');
                     } else if (typeof window.showToast === 'function') {
-                        window.showToast('🔗 Đã sao chép liên kết bài viết!', 'success');
+                        window.showToast('🔗 Đã sao chép liên kết trực tiếp bài viết!', 'success');
                     }
-                });
+                }).catch(() => fallbackCopyPostLink(shareUrl));
+            } else {
+                fallbackCopyPostLink(shareUrl);
             }
+        }
+
+        function fallbackCopyPostLink(text) {
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            ta.style.position = 'fixed';
+            ta.style.left = '-9999px';
+            document.body.appendChild(ta);
+            ta.select();
+            try {
+                document.execCommand('copy');
+                if (typeof showToastNotification === 'function') {
+                    showToastNotification('🔗 Đã sao chép liên kết trực tiếp bài viết!');
+                } else if (typeof window.showToast === 'function') {
+                    window.showToast('🔗 Đã sao chép liên kết trực tiếp bài viết!', 'success');
+                }
+            } catch (err) {}
+            document.body.removeChild(ta);
         }
 
         function shareToInternalFeed() {
@@ -2759,7 +2786,7 @@
 
         async function triggerExternalShare() {
             closeDongAnhShareModal();
-            const shareUrl = window.location.href;
+            const shareUrl = getPostShareUrl();
             const shareData = {
                 title: currentSharingPost.title,
                 text: currentSharingPost.title + ' — DongAnh Social',
