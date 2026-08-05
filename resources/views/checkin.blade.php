@@ -9,30 +9,7 @@
 <div style="position: fixed; bottom: 10%; right: -10%; width: 500px; height: 500px; background: radial-gradient(circle, rgba(16, 185, 129, 0.05) 0%, rgba(16, 185, 129, 0) 70%); filter: blur(100px); pointer-events: none; z-index: 1;"></div>
 
 <div class="checkin-feed-container">
-    <div style="width: 100%; display: flex; flex-direction: column; z-index: 2;">
-        
-        <!-- Harmonious Modern Breadcrumb Navigation -->
-        <nav class="integrated-breadcrumb-nav" aria-label="Breadcrumb">
-            <a href="/" class="breadcrumb-item-link">
-                <span style="font-size: 0.95rem;">🏠</span>
-                <span>Trang chủ</span>
-            </a>
-            <span class="breadcrumb-arrow">
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
-            </span>
-            <span class="breadcrumb-item-active">
-                <span style="font-size: 0.95rem;">📸</span>
-                <span>Góc Check-in & Nhật Ký</span>
-            </span>
-        </nav>
-
-        <!-- Page Header -->
-        <div class="feed-header" style="margin-bottom: 20px;">
-            <h1>📸 <span>Cộng đồng Check-in Đông Anh</span>
-                <span id="liveBadge" style="display:inline-flex;align-items:center;font-size:0.72rem;font-weight:700;letter-spacing:0.5px;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.4);color:#10b981;border-radius:20px;padding:3px 10px;margin-left:10px;vertical-align:middle;transition:all 0.3s;">⏳ Kết nối...</span>
-            </h1>
-            <p>Trải nghiệm thực tế, khoảnh khắc lưu niệm và đánh giá hành trình từ những bước chân khám phá mảnh đất Đông Anh.</p>
-        </div>
+    <div style="width: 100%; display: flex; flex-direction: column; z-index: 2; margin-top: 20px;">
 
         <!-- LOCKET CAMERA FIRST INTEGRATED WIDGET -->
         <style>
@@ -660,6 +637,165 @@
                     </button>
                 </div>
                 @endauth
+
+                <!-- ========================================================
+                     SECTION: Profile Posts (Facebook Style Posts)
+                     ======================================================== -->
+                @if(isset($profilePosts) && $profilePosts->isNotEmpty())
+                    <div id="profilePostsSection" style="margin-bottom: 24px;">
+                        <h2 style="font-size: 1.1rem; font-weight: 800; color: var(--text-main); font-family: var(--font-heading); display: flex; align-items: center; gap: 8px; margin-bottom: 16px;">
+                            <span style="background: var(--primary-grad); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">📰 Bài viết cập nhật từ Profile</span>
+                        </h2>
+                        @foreach($profilePosts as $post)
+                            @php
+                                $authorName = $post->user ? $post->user->name : ($post->eatery ? $post->eatery->name : 'Thành viên Đông Anh');
+                                $authorSlug = $post->user ? \Illuminate\Support\Str::slug($post->user->name) : '';
+                                $profileUrl = $authorSlug ? "/profile/{$authorSlug}" : ($post->user_id ? "/profile/{$post->user_id}" : '#');
+                            @endphp
+                            <article class="checkin-post-card glass-panel" data-post-id="{{ $post->id }}" data-user-id="{{ $post->user_id ?? '' }}" style="margin-bottom: 20px;">
+                                <!-- Post Author Header -->
+                                <div class="post-header">
+                                    <div class="post-author">
+                                        <a href="{{ $profileUrl }}" style="text-decoration: none; display: flex; align-items: center; gap: 10px;">
+                                            <div class="author-avatar" style="width: 42px; height: 42px; border-radius: 50%; background: linear-gradient(135deg, #0284c7, #0369a1); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1rem;">
+                                                {{ mb_substr($authorName, 0, 1, 'UTF-8') }}
+                                            </div>
+                                            <div class="author-meta">
+                                                <span class="author-name" style="display: inline-flex; align-items: center; gap: 4px; color: var(--text-main); font-weight: 700;">
+                                                    {{ $authorName }}
+                                                    @if($post->user && $post->user->role === 'admin')
+                                                        <span title="Tài khoản Quản trị viên (Admin)" style="color: #ef4444; font-size: 0.95rem;">⭐</span>
+                                                    @endif
+                                                </span>
+                                                <span class="author-role-badge {{ ($post->user && $post->user->role === 'admin') ? 'role-admin' : 'role-user' }}">
+                                                    {{ ($post->user && $post->user->role === 'admin') ? 'Admin' : ($post->eatery ? 'Gian hàng' : 'Profile') }}
+                                                </span>
+                                            </div>
+                                        </a>
+                                    </div>
+                                    <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 6px;">
+                                        <span class="post-time">📅 {{ $post->created_at->diffForHumans() }} ({{ $post->created_at->format('d/m/Y H:i') }})</span>
+                                    </div>
+                                </div>
+
+                                <!-- Post Title / Name -->
+                                @if($post->name)
+                                    <div style="font-weight: 800; font-size: 1.05rem; color: var(--text-main); margin: 12px 0 6px 0;">
+                                        {{ $post->name }}
+                                    </div>
+                                @endif
+
+                                <!-- Post Content / Description -->
+                                @if($post->description)
+                                    <div class="post-comment" style="font-size: 0.92rem; line-height: 1.6; color: var(--text-main); margin-bottom: 12px;">
+                                        {!! nl2br(e($post->description)) !!}
+                                    </div>
+                                @endif
+
+                                <!-- Multi-Image Grid -->
+                                @php $allImgs = $post->all_images; @endphp
+                                @if(!empty($allImgs))
+                                    <div class="post-photo-wrapper" style="display: grid; gap: 8px; grid-template-columns: {{ count($allImgs) > 1 ? 'repeat(2, 1fr)' : '1fr' }}; border-radius: 16px; overflow: hidden; margin-bottom: 12px;">
+                                        @foreach($allImgs as $img)
+                                            <img src="{{ $img }}" alt="Ảnh bài viết" class="post-photo-img" loading="lazy" style="width: 100%; max-height: 380px; object-fit: cover; border-radius: 12px; cursor: pointer;" onclick="openStopImageModal('{{ $img }}')">
+                                        @endforeach
+                                    </div>
+                                @endif
+
+                                <!-- Eatery Badge if attached -->
+                                @if($post->eatery)
+                                    <a href="/dia-diem/{{ $post->eatery->slug }}" class="post-tour-link" style="margin-bottom: 12px; display: inline-flex;">
+                                        📍 {{ $post->eatery->name }}
+                                    </a>
+                                @endif
+
+                                <!-- Reactions Bar -->
+                                <div class="reactions-bar">
+                                    <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                                        <span style="font-size:0.8rem; font-weight:800; color:var(--text-muted);">Thả cảm xúc:</span>
+                                        <div class="reactions-list" data-post-id="{{ $post->id }}" data-post-type="post">
+                                            @php
+                                                $rCounts = $post->reaction_counts ?? ['❤️'=>0, '🔥'=>0, '👍'=>0, '😂'=>0, '😍'=>0, '🤤'=>0];
+                                            @endphp
+                                            <button type="button" class="react-btn" data-emoji="❤️" onclick="sendReaction({{ $post->id }}, 'post', '❤️', event)">
+                                                <span>❤️</span> <span class="react-count {{ ($rCounts['❤️'] ?? 0) > 0 ? 'active-count' : '' }}">{{ $rCounts['❤️'] ?? 0 }}</span>
+                                            </button>
+                                            <button type="button" class="react-btn" data-emoji="🔥" onclick="sendReaction({{ $post->id }}, 'post', '🔥', event)">
+                                                <span>🔥</span> <span class="react-count {{ ($rCounts['🔥'] ?? 0) > 0 ? 'active-count' : '' }}">{{ $rCounts['🔥'] ?? 0 }}</span>
+                                            </button>
+                                            <button type="button" class="react-btn" data-emoji="👍" onclick="sendReaction({{ $post->id }}, 'post', '👍', event)">
+                                                <span>👍</span> <span class="react-count {{ ($rCounts['👍'] ?? 0) > 0 ? 'active-count' : '' }}">{{ $rCounts['👍'] ?? 0 }}</span>
+                                            </button>
+                                            <button type="button" class="react-btn" data-emoji="😂" onclick="sendReaction({{ $post->id }}, 'post', '😂', event)">
+                                                <span>😂</span> <span class="react-count {{ ($rCounts['😂'] ?? 0) > 0 ? 'active-count' : '' }}">{{ $rCounts['😂'] ?? 0 }}</span>
+                                            </button>
+                                            <button type="button" class="react-btn" data-emoji="😍" onclick="sendReaction({{ $post->id }}, 'post', '😍', event)">
+                                                <span>😍</span> <span class="react-count {{ ($rCounts['😍'] ?? 0) > 0 ? 'active-count' : '' }}">{{ $rCounts['😍'] ?? 0 }}</span>
+                                            </button>
+                                            <button type="button" class="react-btn" data-emoji="🤤" onclick="sendReaction({{ $post->id }}, 'post', '🤤', event)">
+                                                <span>🤤</span> <span class="react-count {{ ($rCounts['🤤'] ?? 0) > 0 ? 'active-count' : '' }}">{{ $rCounts['🤤'] ?? 0 }}</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="reaction-total-badge" style="{{ ($post->reaction_total ?? 0) > 0 ? '' : 'display:none;' }}">
+                                        <span class="total-num">{{ $post->reaction_total ?? 0 }}</span> lượt bày tỏ
+                                    </div>
+                                </div>
+
+                                <!-- Comments Section -->
+                                <div class="comments-section" style="margin-top: 15px; padding-top: 15px; border-top: 1px dashed var(--border-glow); display: flex; flex-direction: column; gap: 10px;">
+                                    <h5 class="comments-count" style="margin: 0; font-size: 0.85rem; font-weight: 800; color: var(--text-muted); display: flex; align-items: center; gap: 6px;">💬 Bình luận ({{ $post->comments ? $post->comments->count() : 0 }})</h5>
+                                    <div class="comments-list" style="display: flex; flex-direction: column; gap: 8px;">
+                                        @if($post->comments && $post->comments->isNotEmpty())
+                                            @foreach($post->comments as $comment)
+                                                <div class="comment-item" data-comment-id="{{ $comment->id }}" style="display: flex; gap: 10px; align-items: flex-start; background: rgba(255, 255, 255, 0.02); border-radius: 12px; padding: 10px 14px; border: 1px solid rgba(255,255,255,0.03);">
+                                                    <div class="comment-avatar" style="width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, rgba(var(--primary-rgb),0.1), rgba(16,185,129,0.08)); border: 1px solid rgba(var(--primary-rgb),0.2); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; color: var(--text-main); flex-shrink: 0;">
+                                                        {{ $comment->user ? mb_substr($comment->user->name, 0, 1, 'UTF-8') : '👤' }}
+                                                    </div>
+                                                    <div style="flex: 1; display: flex; flex-direction: column; gap: 3px;">
+                                                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                                                            <span style="font-size: 0.82rem; font-weight: 700; color: var(--text-main);">
+                                                                {{ $comment->display_name }}
+                                                                @if($comment->user && $comment->user->role === 'admin')
+                                                                    <span style="font-size: 0.65rem; font-weight: 700; background: rgba(239, 68, 68, 0.15); color: #ef4444; border-radius: 4px; padding: 1px 4px; margin-left: 4px;">Admin</span>
+                                                                @endif
+                                                            </span>
+                                                            <span style="font-size: 0.7rem; color: var(--text-muted);">{{ $comment->created_at->diffForHumans() }}</span>
+                                                        </div>
+                                                        <p style="margin: 0; font-size: 0.85rem; color: var(--text-muted); line-height: 1.4;">{{ $comment->content }}</p>
+                                                    </div>
+                                                </div>
+                                            @endforeach
+                                        @endif
+                                    </div>
+
+                                    <!-- Form bình luận -->
+                                    <form action="{{ route('comments.store') }}" method="POST" style="display: flex; flex-direction: column; gap: 8px; margin-top: 5px;">
+                                        @csrf
+                                        <input type="hidden" name="commentable_id" value="{{ $post->id }}">
+                                        <input type="hidden" name="commentable_type" value="App\Models\Post">
+
+                                        @if(!auth()->check())
+                                            <div style="width: 100%; display: flex; gap: 10px; align-items: center;">
+                                                <input type="text" name="guest_name" placeholder="Tên của bạn (Khách vãng lai)..." 
+                                                    style="flex: 1; padding: 8px 12px; border-radius: 8px; border: 1.5px solid var(--border-glow); background: rgba(0,0,0,0.15); color: var(--text-main); font-size: 0.8rem; outline: none; transition: border-color 0.2s;"
+                                                    onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border-glow)'">
+                                            </div>
+                                        @endif
+
+                                        <div style="display: flex; gap: 10px; align-items: center;">
+                                            <input type="text" name="content" placeholder="Viết bình luận..." required
+                                                style="flex: 1; padding: 8px 12px; border-radius: 8px; border: 1.5px solid var(--border-glow); background: rgba(0,0,0,0.15); color: var(--text-main); font-size: 0.82rem; outline: none; transition: border-color 0.2s;"
+                                                onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border-glow)'">
+                                            <button type="submit" style="padding: 8px 14px; border-radius: 8px; background: var(--primary); color: #fff; border: none; font-size: 0.8rem; font-weight: 700; cursor: pointer; white-space: nowrap; transition: opacity 0.2s;"
+                                                onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">Gửi 💬</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </article>
+                        @endforeach
+                    </div>
+                @endif
 
                 <!-- ========================================================
                      SECTION: Standalone Check-ins

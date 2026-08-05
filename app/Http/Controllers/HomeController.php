@@ -185,6 +185,135 @@ class HomeController extends Controller
     }
 
     /**
+     * Trang Bản tin (Newsfeed chuyên biệt cho các bài đăng Profile, Trường học, Gian hàng & Cập nhật cộng đồng)
+     */
+    public function newsfeed()
+    {
+        // 1. Lấy tất cả bài viết từ EducationProgram (Trường học / Hiệu trưởng), loại bỏ các tiêu đề mẫu mặc định
+        $excludedTitles = [
+            'Hệ đào tạo THPT chính quy chuẩn quốc gia',
+            'Lớp chọn ngoại ngữ (Tiếng Anh - Tiếng Trung tăng cường)',
+            'Hệ THCS Chất lượng cao trọng điểm',
+            'Câu lạc bộ Kỹ năng sống & STEM',
+        ];
+
+        $eduPostsMysqlEdu = collect();
+        $eduPostsMysql = collect();
+
+        try {
+            $eduPostsMysqlEdu = \App\Models\EducationProgram::on('mysql_education')
+                ->with(['eatery'])
+                ->whereNotIn('name', $excludedTitles)
+                ->orderBy('created_at', 'desc')
+                ->get();
+        } catch (\Throwable $e) {}
+
+        try {
+            $eduPostsMysql = \App\Models\EducationProgram::on('mysql')
+                ->with(['eatery'])
+                ->whereNotIn('name', $excludedTitles)
+                ->orderBy('created_at', 'desc')
+                ->get();
+        } catch (\Throwable $e) {}
+
+        $eduPosts = $eduPostsMysqlEdu->concat($eduPostsMysql)->unique('id');
+
+        // 2. Lấy tất cả bài viết từ table Post (Người dùng / Trường học / Gian hàng) từ cả mysql_education & mysql
+        $userPostsMysqlEdu = collect();
+        $userPostsMysql = collect();
+
+        try {
+            $userPostsMysqlEdu = \App\Models\Post::on('mysql_education')
+                ->with(['user', 'eatery'])
+                ->orderBy('created_at', 'desc')
+                ->get();
+        } catch (\Throwable $e) {}
+
+        try {
+            $userPostsMysql = \App\Models\Post::on('mysql')
+                ->with(['user', 'eatery'])
+                ->orderBy('created_at', 'desc')
+                ->get();
+        } catch (\Throwable $e) {}
+
+        $userPosts = $userPostsMysqlEdu->concat($userPostsMysql)->unique('id');
+
+        // 3. Lấy bài viết Checkin công khai
+        $checkinPosts = collect();
+        try {
+            $checkinPosts = \App\Models\Checkin::with(['user', 'eatery'])
+                ->where('status', 'published')
+                ->orderBy('created_at', 'desc')
+                ->get();
+        } catch (\Throwable $e) {}
+
+        // Gộp tất cả bài viết và sắp xếp theo thời gian tạo mới nhất
+        $allPostsCombined = $eduPosts->concat($userPosts)->concat($checkinPosts)
+            ->sortByDesc('created_at')
+            ->values();
+
+        // Attach comments and reactions
+        $postIds = $allPostsCombined->pluck('id')->toArray();
+        $commentsGroup = \App\Models\Comment::with('user')
+            ->whereIn('commentable_type', ['post', 'App\Models\Post', 'App\Models\EducationProgram', 'App\Models\Checkin', 'checkin'])
+            ->whereIn('commentable_id', $postIds)
+            ->get()
+            ->groupBy('commentable_id');
+
+        $allReactions = \App\Models\CheckinReaction::selectRaw('reactionable_type, reactionable_id, emoji, count(*) as count')
+            ->groupBy('reactionable_type', 'reactionable_id', 'emoji')
+            ->get()
+            ->groupBy(function($item) {
+                return $item->reactionable_type . '_' . $item->reactionable_id;
+            });
+
+        $userId = \Illuminate\Support\Facades\Auth::id() ?? session('user_id');
+        $sessionId = session()->getId();
+
+        $userReactions = \App\Models\CheckinReaction::where(function($q) use ($userId, $sessionId) {
+                if ($userId) {
+                    $q->where('user_id', $userId);
+                } else {
+                    $q->where('session_id', $sessionId);
+                }
+            })
+            ->get()
+            ->keyBy(function($item) {
+                return $item->reactionable_type . '_' . $item->reactionable_id;
+            });
+
+        $emojis = ['❤️', '🔥', '👍', '😂', '😍', '🤤'];
+
+        $posts = $allPostsCombined->transform(function($post) use ($allReactions, $userReactions, $emojis, $commentsGroup) {
+            $typeKey = ($post instanceof \App\Models\EducationProgram) ? 'post_' : (($post instanceof \App\Models\Checkin) ? 'checkin_' : 'post_');
+            $key = $typeKey . $post->id;
+            $reactionsGroup = $allReactions->get($key, collect());
+            $counts = [];
+            $total = 0;
+            foreach ($emojis as $e) {
+                $cnt = (int) ($reactionsGroup->firstWhere('emoji', $e)?->count ?? 0);
+                $counts[$e] = $cnt;
+                $total += $cnt;
+            }
+            $post->reaction_counts = $counts;
+            $post->reaction_total = $total;
+            $post->is_liked = $userReactions->has($key);
+            $post->comments = $commentsGroup->get($post->id, collect());
+            return $post;
+        });
+
+        // 4. Gợi ý Profile mới nhất
+        $featuredUsers = \App\Models\User::whereNotNull('name')
+            ->latest()
+            ->take(5)
+            ->get();
+
+        $allEateries = EateryApiService::getEateries()->sortBy('name')->values();
+
+        return view('newsfeed', compact('posts', 'featuredUsers', 'allEateries'));
+    }
+
+    /**
      * Trang newsfeed cộng đồng check-in — gồm cả Food Tour Diary và Check-in đơn lẻ
      */
     public function checkinFeed()
@@ -200,7 +329,19 @@ class HomeController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        // 3. Tải tất cả bộ đếm cảm xúc (Reactions) từ DB
+        // 3. Lấy bài viết từ Profile người dùng / trường học / gian hàng
+        $profilePosts = \App\Models\Post::with(['user', 'eatery'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        $profilePostIds = $profilePosts->pluck('id')->toArray();
+        $profileCommentsGroup = \App\Models\Comment::with('user')
+            ->whereIn('commentable_type', ['post', 'App\Models\Post'])
+            ->whereIn('commentable_id', $profilePostIds)
+            ->get()
+            ->groupBy('commentable_id');
+
+        // 4. Tải tất cả bộ đếm cảm xúc (Reactions) từ DB
         $allCheckinReactions = \App\Models\CheckinReaction::selectRaw('reactionable_type, reactionable_id, emoji, count(*) as count')
             ->groupBy('reactionable_type', 'reactionable_id', 'emoji')
             ->get()
@@ -209,6 +350,22 @@ class HomeController extends Controller
             });
 
         $emojis = ['❤️', '🔥', '👍', '😂', '😍', '🤤'];
+
+        $profilePosts->transform(function($post) use ($allCheckinReactions, $emojis, $profileCommentsGroup) {
+            $key = 'post_' . $post->id;
+            $reactionsGroup = $allCheckinReactions->get($key, collect());
+            $counts = [];
+            $total = 0;
+            foreach ($emojis as $e) {
+                $cnt = (int) ($reactionsGroup->firstWhere('emoji', $e)?->count ?? 0);
+                $counts[$e] = $cnt;
+                $total += $cnt;
+            }
+            $post->reaction_counts = $counts;
+            $post->reaction_total = $total;
+            $post->comments = $profileCommentsGroup->get($post->id, collect());
+            return $post;
+        });
 
         $standaloneCheckins->transform(function($chk) use ($allCheckinReactions, $emojis) {
             $key = 'checkin_' . $chk->id;
@@ -243,10 +400,10 @@ class HomeController extends Controller
         $eateries = EateryApiService::getEateries();
         $eateriesMap = $eateries->keyBy('id');
 
-        // 4. Danh sách địa điểm cho modal tạo check-in
+        // 5. Danh sách địa điểm cho modal tạo check-in
         $allEateries = EateryApiService::getEateries()->sortBy('name')->values();
 
-        return view('checkin', compact('diaries', 'eateriesMap', 'standaloneCheckins', 'allEateries'));
+        return view('checkin', compact('diaries', 'eateriesMap', 'standaloneCheckins', 'profilePosts', 'allEateries'));
     }
 
     /**

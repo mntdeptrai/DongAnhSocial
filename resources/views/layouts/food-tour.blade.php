@@ -205,10 +205,11 @@
                 <nav>
                 <ul class="nav-menu">
                     <li><a href="/" class="nav-link {{ request()->is('/') && !request()->has('cat') ? 'active' : '' }}">Trang chủ</a></li>
+                    <li><a href="/ban-tin" class="nav-link {{ request()->is('ban-tin*') ? 'active' : '' }}">📰 Bản tin</a></li>
                     <li><a href="/tim-kiem" class="nav-link {{ request()->is('tim-kiem*') ? 'active' : '' }}">Bản đồ & Tìm kiếm</a></li>
                     <li><a href="/food-tours" class="nav-link {{ request()->is('food-tours*') || (request()->is('food-tour*') && !request()->is('food-tour/tu-tay-lam-dac-san-co-loa*')) ? 'active' : '' }}">Food Tour</a></li>
                     <li><a href="/exp-corner" class="nav-link {{ request()->is('exp-corner*') || request()->is('food-tour/tu-tay-lam-dac-san-co-loa*') ? 'active' : '' }}">Góc trải nghiệm thực tế</a></li>
-                    <li><a href="/checkin" class="nav-link {{ request()->is('checkin*') ? 'active' : '' }}">Góc Check-in</a></li>
+                    <li><a href="/checkin" class="nav-link {{ request()->is('checkin*') ? 'active' : '' }}">📸 Góc Check-in</a></li>
                     @if(session()->has('user_id'))
                         <li><a href="/social" class="nav-link {{ request()->is('social*') ? 'active' : '' }}">💬 Kết nối bạn bè</a></li>
                     @endif

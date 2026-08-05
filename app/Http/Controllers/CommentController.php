@@ -17,7 +17,7 @@ class CommentController extends Controller
         $request->validate([
             'content'          => 'required|string|max:1000',
             'commentable_id'   => 'required|integer',
-            'commentable_type' => 'required|string|in:App\Models\Checkin,App\Models\FoodTourDiary',
+            'commentable_type' => 'required|string|in:App\Models\Checkin,App\Models\FoodTourDiary,App\Models\Post,post',
             'guest_name'       => 'nullable|string|max:100',
         ]);
 

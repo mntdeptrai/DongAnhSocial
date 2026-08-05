@@ -24,6 +24,7 @@ use App\Http\Controllers\ManagerOrderController;
 
 // --- USER SIDE ROUTES (Giao diện người dùng) ---
 Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::get('/ban-tin', [HomeController::class, 'newsfeed'])->name('newsfeed');
 Route::get('/tuyen-duong-40', [HomeController::class, 'tuyenDuong40'])->name('tuyen-duong');
 Route::get('/tim-kiem', [SearchController::class, 'search'])->name('search');
 Route::get('/checkin', [HomeController::class, 'checkinFeed'])->name('checkin.feed');
