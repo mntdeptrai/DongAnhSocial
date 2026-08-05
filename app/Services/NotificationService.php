@@ -290,16 +290,15 @@ class NotificationService
             $targetUserIds = array_unique(array_merge($friendIds, $followedUserIds));
 
             if (!empty($targetUserIds) || !empty($followedEateryIds)) {
-                // Tải bài viết từ EducationProgram / Post
-                $newEduPosts = DB::table('education_programs')
-                    ->where(function($q) use ($targetUserIds, $followedEateryIds) {
-                        if (!empty($followedEateryIds)) {
-                            $q->orWhereIn('eatery_id', $followedEateryIds);
-                        }
-                    })
-                    ->latest()
-                    ->take(10)
-                    ->get();
+                // Tải bài viết từ EducationProgram chỉ từ eatery mà user theo dõi hoặc bạn bè đăng
+                $newEduPosts = collect();
+                if (!empty($followedEateryIds)) {
+                    $newEduPosts = DB::table('education_programs')
+                        ->whereIn('eatery_id', $followedEateryIds)
+                        ->latest()
+                        ->take(10)
+                        ->get();
+                }
 
                 foreach ($newEduPosts as $ep) {
                     $eatery = Eatery::find($ep->eatery_id);
