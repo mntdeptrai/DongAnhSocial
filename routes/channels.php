@@ -12,12 +12,14 @@ Broadcast::channel('checkin-feed', function () {
 });
 
 // Channel private cho chat real-time của từng user
-Broadcast::channel('chat.{userId}', function ($user, $userId) {
-    return (int) $user->id === (int) $userId;
+Broadcast::channel('chat.{userId}', function ($user = null, $userId = null) {
+    $currentId = $user ? $user->id : session('user_id');
+    return $currentId && (int) $currentId === (int) $userId;
 });
 
 // Channel private cho WebRTC call signaling của từng user
-Broadcast::channel('call.{userId}', function ($user, $userId) {
-    return (int) $user->id === (int) $userId;
+Broadcast::channel('call.{userId}', function ($user = null, $userId = null) {
+    $currentId = $user ? $user->id : session('user_id');
+    return $currentId && (int) $currentId === (int) $userId;
 });
 

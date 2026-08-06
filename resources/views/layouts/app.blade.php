@@ -3108,7 +3108,7 @@
     </script>
 
     {{-- WebRTC P2P Call Modals & Overlay --}}
-    @auth
+    @if(Auth::check() || session('user_id'))
     <div id="webrtc-incoming-modal" class="webrtc-modal-overlay" style="display: none;">
         <div class="webrtc-modal-card">
             <div class="webrtc-avatar-pulse">
@@ -3343,13 +3343,13 @@
             }
 
             // Init WebRTC for current logged in user
-            var currentUserId = {{ Auth::id() }};
+            var currentUserId = {{ Auth::id() ?? session('user_id') ?? 0 }};
             if (currentUserId && window.DongAnhWebRTC) {
                 window.DongAnhWebRTC.init(currentUserId);
             }
         });
     </script>
-    @endauth
+    @endif
 
     {{-- Laravel Echo + Reverb WebSocket client — chỉ load trên trang cần real-time --}}
     @stack('realtime-scripts')
