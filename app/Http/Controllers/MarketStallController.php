@@ -65,6 +65,12 @@ class MarketStallController extends Controller
         $bankInfo   = $bankAcct ? ($bankName . ' · ' . $bankAcct) : '';
 
         $qrCodeUrl = $first->qr_code_path ?: '';
+        if ($qrCodeUrl) {
+            // Replace any accidental unencoded spaces in URL bank slug or query parameters
+            $qrCodeUrl = preg_replace_callback('/^https:\/\/img\.vietqr\.io\/image\/([^-\/]+)-/', function($m) {
+                return 'https://img.vietqr.io/image/' . str_replace(' ', '', $m[1]) . '-';
+            }, $qrCodeUrl);
+        }
         if (empty($qrCodeUrl) && !empty($bankAcct)) {
             $bankCodeMap = [
                 'MBBANK' => 'MB', 'MB' => 'MB', 'VIETCOMBANK' => 'VCB', 'VCB' => 'VCB',

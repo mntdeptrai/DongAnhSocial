@@ -6,7 +6,7 @@
         @include('auth.partials.sidebar.seller')
     @elseif($user->isManager() || $user->role === 'manager')
         @include('auth.partials.sidebar.manager')
-    @elseif($school || $user->role === 'principal')
+    @elseif($user->isPrincipal() || $user->role === 'principal')
         @include('auth.partials.sidebar.principal')
     @else
         @include('auth.partials.sidebar.user')

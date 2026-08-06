@@ -29,5 +29,8 @@
 </head>
 <body style="margin: 0; background: var(--bg-base); font-family: 'Be Vietnam Pro', sans-serif; color: var(--text-main); min-height: 100vh;">
     @inertia
+
+    {{-- WebRTC P2P Call Modals & Listener --}}
+    @include('partials.webrtc-call-modal')
 </body>
 </html>

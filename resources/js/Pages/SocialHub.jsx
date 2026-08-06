@@ -1340,6 +1340,46 @@ export default function SocialHub() {
                                     </div>
                                 </div>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <button
+                                        onClick={() => window.DongAnhWebRTC && window.DongAnhWebRTC.startCall(activeFriend.id, activeFriend.name, activeFriend.avatar, 'audio')}
+                                        style={{
+                                            background: 'rgba(16, 185, 129, 0.1)',
+                                            border: '1px solid rgba(16, 185, 129, 0.3)',
+                                            color: '#10b981',
+                                            fontSize: '0.78rem',
+                                            padding: '6px 10px',
+                                            borderRadius: '10px',
+                                            fontWeight: 700,
+                                            cursor: 'pointer',
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            gap: '4px',
+                                            transition: 'all 0.2s'
+                                        }}
+                                        title="Gọi thoại P2P"
+                                    >
+                                        📞 Gọi thoại
+                                    </button>
+                                    <button
+                                        onClick={() => window.DongAnhWebRTC && window.DongAnhWebRTC.startCall(activeFriend.id, activeFriend.name, activeFriend.avatar, 'video')}
+                                        style={{
+                                            background: 'rgba(0, 242, 254, 0.1)',
+                                            border: '1px solid rgba(0, 242, 254, 0.3)',
+                                            color: '#00f2fe',
+                                            fontSize: '0.78rem',
+                                            padding: '6px 10px',
+                                            borderRadius: '10px',
+                                            fontWeight: 700,
+                                            cursor: 'pointer',
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            gap: '4px',
+                                            transition: 'all 0.2s'
+                                        }}
+                                        title="Gọi video P2P"
+                                    >
+                                        📹 Gọi video
+                                    </button>
                                     <a 
                                         href={`/profile/${activeFriend.id}`} 
                                         target="_blank" 

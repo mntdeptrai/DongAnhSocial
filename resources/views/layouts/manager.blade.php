@@ -155,8 +155,8 @@
                                 <span class="mgr-user-name">{{ session('user_name') }}</span>
                                 <span class="mgr-user-role">Ban Quản Lý Chợ</span>
                             </div>
-                            <a href="/auth/logout"
-                               onclick="return confirm('Bạn có chắc muốn đăng xuất?')"
+                            <a href="#"
+                               onclick="event.preventDefault(); openLogoutConfirmModal();"
                                style="margin-left: 12px; display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; font-size: 0.72rem; border-radius: 8px; background: #fef2f2; color: #ef4444; border: 1.5px solid rgba(239,68,68,0.15); font-weight: 700; text-decoration: none; transition: all 0.2s;" onmouseover="this.style.background='#fee2e2'" onmouseout="this.style.background='#fef2f2'">
                                🚪 Đăng xuất
                             </a>
@@ -286,6 +286,44 @@
             window.showToast(@json(session('warning')), 'warning');
         @endif
     })();
+    </script>
+    <!-- Popup Xác Nhận Đăng Xuất -->
+    <div id="logoutConfirmModal" style="display:none; opacity:0; position:fixed; inset:0; z-index:999999; background:rgba(15,23,42,0.6); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); transition:opacity 0.25s ease; justify-content:center; align-items:center;">
+        <div id="logoutConfirmBox" style="background:#ffffff; border-radius:20px; padding:28px 32px; max-width:420px; width:calc(100% - 40px); box-shadow:0 25px 60px rgba(0,0,0,0.25); transform:scale(0.92); transition:transform 0.25s ease; position:relative;">
+            <button type="button" onclick="closeLogoutConfirmModal()" style="position:absolute; top:12px; right:14px; background:#f1f5f9; border:none; width:32px; height:32px; border-radius:50%; font-size:1rem; cursor:pointer; color:#64748b; display:flex; align-items:center; justify-content:center; transition:all 0.2s;" onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#f1f5f9'">✕</button>
+            <div style="display:flex; align-items:center; gap:14px; margin-bottom:18px;">
+                <div style="width:48px; height:48px; border-radius:14px; background:#fef2f2; display:flex; align-items:center; justify-content:center; font-size:1.5rem; flex-shrink:0;">🚪</div>
+                <div>
+                    <h3 style="font-size:1.1rem; font-weight:800; color:#0f172a; margin:0;">Xác nhận đăng xuất</h3>
+                    <p style="font-size:0.8rem; color:#64748b; margin:2px 0 0 0;">Phiên làm việc sẽ kết thúc</p>
+                </div>
+            </div>
+            <p style="font-size:0.92rem; color:#334155; line-height:1.6; margin-bottom:24px;">Bạn có chắc chắn muốn đăng xuất khỏi hệ thống? Mọi thay đổi chưa lưu sẽ bị mất.</p>
+            <div style="display:flex; align-items:center; justify-content:flex-end; gap:10px;">
+                <button type="button" onclick="closeLogoutConfirmModal()" style="padding:10px 20px; border-radius:12px; font-weight:700; font-size:0.9rem; border:none; cursor:pointer; background:#f1f5f9; color:#475569; transition:all 0.2s;" onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#f1f5f9'">Hủy bỏ</button>
+                <button type="button" onclick="window.location.href='/auth/logout'" style="padding:10px 20px; border-radius:12px; font-weight:700; font-size:0.9rem; border:none; cursor:pointer; background:#ef4444; color:#ffffff; box-shadow:0 4px 14px rgba(239,68,68,0.3); transition:all 0.2s;" onmouseover="this.style.background='#dc2626'; this.style.transform='translateY(-1px)'" onmouseout="this.style.background='#ef4444'; this.style.transform='none'">Đăng xuất</button>
+            </div>
+        </div>
+    </div>
+    <script>
+    function openLogoutConfirmModal() {
+        const modal = document.getElementById('logoutConfirmModal');
+        const box = document.getElementById('logoutConfirmBox');
+        if (!modal || !box) return;
+        modal.style.display = 'flex';
+        setTimeout(() => { modal.style.opacity = '1'; box.style.transform = 'scale(1)'; }, 10);
+    }
+    function closeLogoutConfirmModal() {
+        const modal = document.getElementById('logoutConfirmModal');
+        const box = document.getElementById('logoutConfirmBox');
+        if (!modal || !box) return;
+        modal.style.opacity = '0';
+        box.style.transform = 'scale(0.92)';
+        setTimeout(() => { modal.style.display = 'none'; }, 250);
+    }
+    document.getElementById('logoutConfirmModal')?.addEventListener('click', function(e) {
+        if (e.target === this) closeLogoutConfirmModal();
+    });
     </script>
 </body>
 </html>

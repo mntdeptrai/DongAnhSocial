@@ -393,8 +393,8 @@ class HomeController extends Controller
 
         // 4. Gợi ý Profile mới nhất
         $featuredUsers = \App\Models\User::whereNotNull('name')
-            ->latest()
-            ->take(5)
+            ->inRandomOrder()
+            ->take(10)
             ->get();
 
         $allEateries = EateryApiService::getEateries()->sortBy('name')->values();
