@@ -65,7 +65,8 @@ class SocialHubController extends Controller
         )->unique();
 
         $suggestions = User::whereNotIn('id', $nonSuggestions)
-            ->limit(10)
+            ->inRandomOrder()
+            ->limit(20)
             ->get();
 
         $myFoodTours = FoodTour::where('user_id', $user->id)->get();

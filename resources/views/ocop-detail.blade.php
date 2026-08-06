@@ -80,6 +80,15 @@
 @section('content')
 
 @php
+    // --- HÀM TỰ ĐỘNG NHẬN DIỆN LINK TRONG TEXT ---
+    $linkify = function($text) {
+        return preg_replace(
+            '~(https?://[^\s<>"\)]+)~i',
+            '<a href="$1" target="_blank" rel="noopener noreferrer" style="color: #059669; font-weight: 700; text-decoration: underline; word-break: break-all;">$1</a>',
+            e($text)
+        );
+    };
+
     // --- BỘ PHÂN TÍCH & CHUYỂN ĐỔI MÔ TẢ THÀNH INFOGRAPHIC THÔNG MINH ---
     $fullText = ($product->description ?: '') . "\n" . ($product->story ?: '');
     $lines = array_filter(array_map('trim', explode("\n", str_replace(["\r\n", "\r"], "\n", $fullText))));
@@ -749,7 +758,7 @@
                                 <div style="margin-top: 8px; padding: 10px 14px; background: #ffffff; border: 1px solid #bbf7d0; border-radius: 12px; font-size: 0.88rem; color: #1e293b;">
                                     💳 <strong>Kênh phân phối & Thanh toán:</strong>
                                     @foreach($paymentDistList as $pItem)
-                                        <div style="margin-top: 3px; color: #334155;">• {{ $pItem }}</div>
+                                        <div style="margin-top: 3px; color: #334155;">• {!! $linkify($pItem) !!}</div>
                                     @endforeach
                                 </div>
                             @endif
@@ -906,7 +915,7 @@
                     <div style="display: flex; flex-direction: column; gap: 8px;">
                         @foreach($specsList as $sp)
                             <div style="background: #f0fdf4; padding: 8px 12px; border-radius: 10px; border: 1px solid #bbf7d0; font-size: 0.9rem; color: #166534; font-weight: 700; display: flex; align-items: center; gap: 6px;">
-                                <span>✔</span> <span>{{ $sp }}</span>
+                                <span>✔</span> <span>{!! $linkify($sp) !!}</span>
                             </div>
                         @endforeach
                     </div>
@@ -956,7 +965,7 @@
                     <div style="display: flex; flex-direction: column; gap: 8px; font-size: 0.9rem; color: #334155;">
                         @foreach($usageList as $u)
                             <div style="display: flex; align-items: flex-start; gap: 6px;">
-                                <span>🧊</span> <span>{{ $u }}</span>
+                                <span>🧊</span> <span>{!! $linkify($u) !!}</span>
                             </div>
                         @endforeach
                     </div>
@@ -1000,11 +1009,11 @@
 
         <div style="font-size: 1.05rem; line-height: 1.85; color: #334155; font-style: italic;">
             @if(!empty($product->story))
-                <p style="margin-bottom: 16px;">{{ $product->story }}</p>
+                <p style="margin-bottom: 16px;">{!! $linkify($product->story) !!}</p>
             @endif
 
             @foreach($heritageStory as $hs)
-                <p style="margin-bottom: 12px;">{{ $hs }}</p>
+                <p style="margin-bottom: 12px;">{!! $linkify($hs) !!}</p>
             @endforeach
         </div>
 
