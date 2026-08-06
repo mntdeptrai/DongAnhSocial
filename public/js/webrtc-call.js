@@ -148,7 +148,11 @@ window.DongAnhWebRTC = (function () {
 
         } catch (err) {
             console.error('[WebRTC] Error starting call:', err);
-            alert('Không thể bắt đầu cuộc gọi: ' + err.message);
+            let msg = err.message || 'Lỗi không xác định';
+            if (err.name === 'NotAllowedError' || msg.includes('Permission denied')) {
+                msg = 'Trình duyệt chưa được cấp quyền truy cập Camera/Microphone. Vui lòng cho phép quyền trong cài đặt trang web trên trình duyệt và thử lại!';
+            }
+            alert('Không thể bắt đầu cuộc gọi: ' + msg);
             cleanupCall();
         }
     }
@@ -214,7 +218,11 @@ window.DongAnhWebRTC = (function () {
 
         } catch (err) {
             console.error('[WebRTC] Error accepting call:', err);
-            alert('Không thể kết nối cuộc gọi: ' + err.message);
+            let msg = err.message || 'Lỗi không xác định';
+            if (err.name === 'NotAllowedError' || msg.includes('Permission denied')) {
+                msg = 'Trình duyệt chưa được cấp quyền truy cập Camera/Microphone. Vui lòng cho phép quyền trong cài đặt trang web trên trình duyệt và thử lại!';
+            }
+            alert('Không thể kết nối cuộc gọi: ' + msg);
             hangup('ended');
         }
     }
@@ -503,11 +511,20 @@ window.DongAnhWebRTC = (function () {
         if (audioEl) audioEl.srcObject = stream;
     }
 
+    function setAvatarSrc(imgElem, avatar) {
+        if (!imgElem) return;
+        if (!avatar || !avatar.startsWith('http') && !avatar.startsWith('/') && !avatar.startsWith('data:')) {
+            imgElem.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100%" height="100%" fill="%23e2e8f0"/><text x="50%" y="55%" font-size="50" text-anchor="middle" dominant-baseline="middle">👤</text></svg>';
+        } else {
+            imgElem.src = avatar;
+        }
+    }
+
     function showIncomingModal(name, avatar, type) {
         const modal = document.getElementById('webrtc-incoming-modal');
         if (!modal) return;
         document.getElementById('webrtc-incoming-name').innerText = name;
-        document.getElementById('webrtc-incoming-avatar').src = avatar;
+        setAvatarSrc(document.getElementById('webrtc-incoming-avatar'), avatar);
         document.getElementById('webrtc-incoming-type').innerText = type === 'video' ? '📹 Cuộc gọi video tới' : '📞 Cuộc gọi thoại tới';
         modal.style.display = 'flex';
     }
@@ -521,7 +538,7 @@ window.DongAnhWebRTC = (function () {
         const modal = document.getElementById('webrtc-outgoing-modal');
         if (!modal) return;
         document.getElementById('webrtc-outgoing-name').innerText = name;
-        document.getElementById('webrtc-outgoing-avatar').src = avatar;
+        setAvatarSrc(document.getElementById('webrtc-outgoing-avatar'), avatar);
         document.getElementById('webrtc-outgoing-type').innerText = type === 'video' ? 'Đang gọi video...' : 'Đang gọi thoại...';
         modal.style.display = 'flex';
     }
@@ -535,7 +552,7 @@ window.DongAnhWebRTC = (function () {
         const overlay = document.getElementById('webrtc-active-overlay');
         if (!overlay) return;
         document.getElementById('webrtc-active-name').innerText = name;
-        document.getElementById('webrtc-active-avatar').src = avatar;
+        setAvatarSrc(document.getElementById('webrtc-active-avatar'), avatar);
         const videoContainer = document.getElementById('webrtc-video-container');
         if (videoContainer) videoContainer.style.display = type === 'video' ? 'block' : 'none';
         const videoBtn = document.getElementById('webrtc-video-btn');
