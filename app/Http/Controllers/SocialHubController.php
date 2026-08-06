@@ -699,9 +699,9 @@ class SocialHubController extends Controller
             'sdp_offer'   => 'required|array',
         ]);
 
-        $caller = Auth::user();
+        $caller = Auth::user() ?? User::find(session('user_id'));
         if (!$caller) {
-            return response()->json(['status' => 'error', 'message' => 'Unauthenticated'], 401);
+            return response()->json(['status' => 'error', 'message' => 'Bạn chưa đăng nhập.'], 401);
         }
 
         // Tạo log cuộc gọi
@@ -716,15 +716,19 @@ class SocialHubController extends Controller
         $callerAvatar = $caller->avatar ? asset($caller->avatar) : '👤';
 
         // Broadcast Offer tới người nhận qua Reverb (P2P Signaling)
-        broadcast(new CallOffer(
-            callId: $call->id,
-            callerId: $caller->id,
-            callerName: $caller->name,
-            callerAvatar: $callerAvatar,
-            receiverId: (int)$request->receiver_id,
-            type: $request->type,
-            sdpOffer: $request->sdp_offer
-        ))->toOthers();
+        try {
+            broadcast(new CallOffer(
+                callId: $call->id,
+                callerId: $caller->id,
+                callerName: $caller->name,
+                callerAvatar: $callerAvatar,
+                receiverId: (int)$request->receiver_id,
+                type: $request->type,
+                sdpOffer: $request->sdp_offer
+            ))->toOthers();
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('CallOffer broadcast warning: ' . $e->getMessage());
+        }
 
         return response()->json([
             'status'  => 'success',
@@ -742,10 +746,10 @@ class SocialHubController extends Controller
             'sdp_answer' => 'required|array',
         ]);
 
-        $user = Auth::user();
+        $user = Auth::user() ?? User::find(session('user_id'));
         $call = CallLog::findOrFail($request->call_id);
 
-        if ($call->receiver_id !== $user->id) {
+        if (!$user || $call->receiver_id !== $user->id) {
             return response()->json(['status' => 'error', 'message' => 'Unauthorized'], 403);
         }
 
@@ -755,12 +759,16 @@ class SocialHubController extends Controller
         ]);
 
         // Broadcast Answer tới người gọi
-        broadcast(new CallAnswer(
-            callId: $call->id,
-            callerId: $call->caller_id,
-            receiverId: $user->id,
-            sdpAnswer: $request->sdp_answer
-        ))->toOthers();
+        try {
+            broadcast(new CallAnswer(
+                callId: $call->id,
+                callerId: $call->caller_id,
+                receiverId: $user->id,
+                sdpAnswer: $request->sdp_answer
+            ))->toOthers();
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('CallAnswer broadcast warning: ' . $e->getMessage());
+        }
 
         return response()->json(['status' => 'success']);
     }
@@ -776,11 +784,15 @@ class SocialHubController extends Controller
             'candidate'      => 'required|array',
         ]);
 
-        broadcast(new IceCandidate(
-            callId: (int)$request->call_id,
-            targetUserId: (int)$request->target_user_id,
-            candidate: $request->candidate
-        ))->toOthers();
+        try {
+            broadcast(new IceCandidate(
+                callId: (int)$request->call_id,
+                targetUserId: (int)$request->target_user_id,
+                candidate: $request->candidate
+            ))->toOthers();
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('IceCandidate broadcast warning: ' . $e->getMessage());
+        }
 
         return response()->json(['status' => 'success']);
     }
@@ -796,7 +808,7 @@ class SocialHubController extends Controller
             'reason'         => 'nullable|string|in:ended,rejected,missed,busy',
         ]);
 
-        $user = Auth::user();
+        $user = Auth::user() ?? User::find(session('user_id'));
         $call = CallLog::find($request->call_id);
         $reason = $request->reason ?? 'ended';
 
@@ -812,11 +824,15 @@ class SocialHubController extends Controller
             ]);
         }
 
-        broadcast(new CallHangup(
-            callId: (int)$request->call_id,
-            targetUserId: (int)$request->target_user_id,
-            reason: $reason
-        ))->toOthers();
+        try {
+            broadcast(new CallHangup(
+                callId: (int)$request->call_id,
+                targetUserId: (int)$request->target_user_id,
+                reason: $reason
+            ))->toOthers();
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('CallHangup broadcast warning: ' . $e->getMessage());
+        }
 
         return response()->json(['status' => 'success']);
     }
@@ -826,7 +842,7 @@ class SocialHubController extends Controller
      */
     public function callHistory(Request $request)
     {
-        $user = Auth::user();
+        $user = Auth::user() ?? User::find(session('user_id'));
         if (!$user) {
             return response()->json([], 401);
         }

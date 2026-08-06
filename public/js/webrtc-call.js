@@ -107,6 +107,7 @@ window.DongAnhWebRTC = (function () {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Accept': 'application/json',
                     'X-CSRF-TOKEN': csrfToken || ''
                 },
                 body: JSON.stringify({
@@ -115,6 +116,18 @@ window.DongAnhWebRTC = (function () {
                     sdp_offer: offer
                 })
             });
+
+            if (!res.ok) {
+                const errText = await res.text();
+                let errMsg = 'Không thể kết nối máy chủ (' + res.status + ')';
+                try {
+                    const errJson = JSON.parse(errText);
+                    if (errJson.message) errMsg = errJson.message;
+                } catch(e) {
+                    if (res.status === 401) errMsg = 'Vui lòng đăng nhập lại để gọi điện.';
+                }
+                throw new Error(errMsg);
+            }
 
             const data = await res.json();
             if (data.status === 'success') {
@@ -188,6 +201,7 @@ window.DongAnhWebRTC = (function () {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Accept': 'application/json',
                     'X-CSRF-TOKEN': csrfToken || ''
                 },
                 body: JSON.stringify({
@@ -282,6 +296,7 @@ window.DongAnhWebRTC = (function () {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Accept': 'application/json',
                     'X-CSRF-TOKEN': csrfToken || ''
                 },
                 body: JSON.stringify({
@@ -309,6 +324,7 @@ window.DongAnhWebRTC = (function () {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        'Accept': 'application/json',
                         'X-CSRF-TOKEN': csrfToken || ''
                     },
                     body: JSON.stringify({
