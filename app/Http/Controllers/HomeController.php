@@ -806,6 +806,47 @@ class HomeController extends Controller
     }
 
     /**
+     * Lấy danh sách người đã thích bài viết
+     */
+    public function getPostLikers(Request $request)
+    {
+        $request->validate([
+            'id'   => 'required|integer',
+            'type' => 'required|string|in:post,eatery,checkin,diary',
+        ]);
+
+        $id = (int) $request->input('id');
+        $type = $request->input('type');
+
+        $reactions = \App\Models\CheckinReaction::where('reactionable_type', $type)
+            ->where('reactionable_id', $id)
+            ->with('user:id,name,avatar')
+            ->latest()
+            ->get();
+
+        $likers = $reactions->map(function ($reaction) {
+            if ($reaction->user) {
+                return [
+                    'name'   => $reaction->user->name,
+                    'avatar' => $reaction->user->avatar,
+                    'emoji'  => $reaction->emoji ?? '👍',
+                ];
+            }
+            return [
+                'name'   => 'Khách',
+                'avatar' => null,
+                'emoji'  => $reaction->emoji ?? '👍',
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'likers'  => $likers,
+            'total'   => $likers->count(),
+        ]);
+    }
+
+    /**
      * Lấy danh sách bình luận thực tế từ DB
      */
     public function getComments(Request $request)

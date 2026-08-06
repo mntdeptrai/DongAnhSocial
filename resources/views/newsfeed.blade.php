@@ -190,7 +190,7 @@
 
                     <!-- Facebook Post Stats Bar -->
                     <div class="fb-post-stats" style="padding: 10px 16px; border-top: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; font-size: 0.84rem; color: #64748b;">
-                        <div id="post-likes-count-{{ $p->id }}">👍 {{ $p->reaction_total ?? $p->likes_count ?? 0 }} lượt thích</div>
+                        <div id="post-likes-count-{{ $p->id }}" onclick="showPostLikers({{ $p->id }}, 'post')" style="cursor:pointer;" title="Xem ai đã thích">👍 {{ $p->reaction_total ?? $p->likes_count ?? 0 }} lượt thích</div>
                         <div>💬 {{ $p->comments ? $p->comments->count() : 0 }} bình luận • 0 chia sẻ</div>
                     </div>
 

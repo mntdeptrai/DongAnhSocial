@@ -60,6 +60,7 @@ Route::post('/api/videos/{id}/like', [HomeController::class, 'likeVideo'])->name
 
 // API Reactions & Comments (Like bài viết, Thả tim địa điểm & Bình luận chuẩn DB Real)
 Route::post('/api/reactions/toggle', [HomeController::class, 'toggleReaction'])->name('api.reactions.toggle');
+Route::get('/api/reactions/likers', [HomeController::class, 'getPostLikers'])->name('api.reactions.likers');
 Route::get('/api/comments', [HomeController::class, 'getComments'])->name('api.comments.index');
 Route::post('/api/comments', [HomeController::class, 'storeComment'])->name('api.comments.store');
 

@@ -1281,7 +1281,7 @@
 
                             <!-- Facebook Post Stats Bar -->
                             <div class="fb-post-stats">
-                                <div id="post-likes-count-{{ $p->id }}">👍 {{ $p->real_likes_count ?? $p->likes_count ?? 0 }} lượt thích</div>
+                                <div id="post-likes-count-{{ $p->id }}" onclick="showPostLikers({{ $p->id }}, 'post')" style="cursor:pointer;" title="Xem ai đã thích">👍 {{ $p->real_likes_count ?? $p->likes_count ?? 0 }} lượt thích</div>
                                 <div>💬 {{ $p->real_comments_count ?? 0 }} bình luận • {{ $p->real_shares_count ?? 0 }} chia sẻ</div>
                             </div>
 
@@ -2489,7 +2489,7 @@
             </div>
             ${photoGridHtml}
             <div class="fb-post-stats">
-                <div id="post-likes-count-${post.id}">👍 0 lượt thích</div>
+                <div id="post-likes-count-${post.id}" onclick="showPostLikers(${post.id}, 'post')" style="cursor:pointer;" title="Xem ai đã thích">👍 0 lượt thích</div>
                 <div>💬 0 bình luận • 0 chia sẻ</div>
             </div>
             <div class="fb-post-actions">
