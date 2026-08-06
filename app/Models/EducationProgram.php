@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class EducationProgram extends Model
 {
     protected $fillable = [
+        'hashid',
         'eatery_id',
         'name',
         'description',
@@ -20,6 +21,15 @@ class EducationProgram extends Model
         'likes_count',
         'shares_count',
     ];
+
+    protected static function booted(): void
+    {
+        static::creating(function ($model) {
+            if (empty($model->hashid)) {
+                $model->hashid = \Illuminate\Support\Str::lower(\Illuminate\Support\Str::random(10));
+            }
+        });
+    }
 
     protected $casts = [
         'images' => 'array',

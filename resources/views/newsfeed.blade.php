@@ -86,30 +86,36 @@
                         $authorName = $p->display_name;
                     }
 
-                    $imgs = method_exists($p, 'getAllImagesAttribute') ? $p->all_images : ($p->image_path ? [$p->image_path] : []);
-                    $imgCount = count($imgs);
-                @endphp
+                        $postUser = $p->user ?? ($p->eatery && $p->eatery->user_id ? \App\Models\User::find($p->eatery->user_id) : ($p->eatery_id ? \App\Models\User::where('eatery_id', $p->eatery_id)->first() : null));
+                        $isVerifiedAuthor = ($postUser && ($postUser->is_verified || in_array($postUser->role, ['admin', 'principal', 'seller']))) || ($p instanceof \App\Models\EducationProgram);
+                        $isAdminAuthor = $postUser && ($postUser->role === 'admin');
 
-                <article class="fb-post-card mb-4" id="post-{{ $p->id }}" style="background: #ffffff; border-radius: 20px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.05); width: 100%; max-width: 100%; box-sizing: border-box; transition: box-shadow 0.4s ease, border-color 0.4s ease;">
-                    
-                    <!-- Facebook Post Header -->
-                    <div class="fb-post-header" style="padding: 16px; box-sizing: border-box; width: 100%;">
-                        <div class="fb-post-author-box" style="display: flex; align-items: center; gap: 12px;">
-                            <a href="{{ $profileUrl }}" style="text-decoration: none; display: flex; align-items: center; gap: 12px; color: inherit;">
-                                @if($authorAvatar)
-                                    <img src="{{ $authorAvatar }}" class="fb-user-avatar" alt="{{ $authorName }}" style="width: 42px; height: 42px; border-radius: 50%; object-fit: cover; border: 1px solid #cbd5e1;">
-                                @else
-                                    <div class="fb-user-avatar" style="width: 42px; height: 42px; border-radius: 50%; background: linear-gradient(135deg, #0284c7, #0369a1); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.1rem; flex-shrink: 0;">
-                                        {{ mb_substr($authorName, 0, 1, 'UTF-8') }}
-                                    </div>
-                                @endif
-                                <div>
-                                    <h4 class="fb-post-author-name" style="margin: 0; font-size: 0.98rem; font-weight: 800; color: #0f172a; display: inline-flex; align-items: center; gap: 6px;">
-                                        {{ $authorName }}
-                                        @if($p->user && $p->user->role === 'admin')
-                                            <span title="Tài khoản Quản trị viên (Admin)" style="color: #ef4444; font-size: 0.95rem;">⭐</span>
-                                        @endif
-                                    </h4>
+                        $imgs = method_exists($p, 'getAllImagesAttribute') ? $p->all_images : ($p->image_path ? [$p->image_path] : []);
+                        $imgCount = count($imgs);
+                    @endphp
+
+                    <article class="fb-post-card mb-4" id="post-{{ $p->id }}" style="background: #ffffff; border-radius: 20px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.05); width: 100%; max-width: 100%; box-sizing: border-box; transition: box-shadow 0.4s ease, border-color 0.4s ease;">
+                        
+                        <!-- Facebook Post Header -->
+                        <div class="fb-post-header" style="padding: 16px; box-sizing: border-box; width: 100%;">
+                            <div class="fb-post-author-box" style="display: flex; align-items: center; gap: 12px;">
+                                <a href="{{ $profileUrl }}" style="text-decoration: none; display: flex; align-items: center; gap: 12px; color: inherit;">
+                                    @if($authorAvatar)
+                                        <img src="{{ $authorAvatar }}" class="fb-user-avatar" alt="{{ $authorName }}" style="width: 42px; height: 42px; border-radius: 50%; object-fit: cover; border: 1px solid #cbd5e1;">
+                                    @else
+                                        <div class="fb-user-avatar" style="width: 42px; height: 42px; border-radius: 50%; background: linear-gradient(135deg, #0284c7, #0369a1); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.1rem; flex-shrink: 0;">
+                                            {{ mb_substr($authorName, 0, 1, 'UTF-8') }}
+                                        </div>
+                                    @endif
+                                    <div>
+                                        <h4 class="fb-post-author-name" style="margin: 0; font-size: 0.98rem; font-weight: 800; color: #0f172a; display: inline-flex; align-items: center; gap: 6px;">
+                                            {{ $authorName }}
+                                            @if($isAdminAuthor)
+                                                <span title="Tài khoản Quản trị viên (Admin)" style="color: #ef4444; font-size: 0.95rem;">⭐</span>
+                                            @elseif($isVerifiedAuthor)
+                                                <span title="Tài khoản chính thức đã xác minh ⭐" style="color: #f59e0b; font-size: 0.95rem;">⭐</span>
+                                            @endif
+                                        </h4>
                                     <div class="fb-post-subtext" style="font-size: 0.78rem; color: #64748b; margin-top: 2px; display: flex; align-items: center; gap: 6px;">
                                         <span>{{ $p->created_at ? $p->created_at->diffForHumans() : 'Vừa xong' }}</span>
                                         <span>•</span>
@@ -191,7 +197,7 @@
                     <!-- Facebook Post Stats Bar -->
                     <div class="fb-post-stats" style="padding: 10px 16px; border-top: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; font-size: 0.84rem; color: #64748b;">
                         <div id="post-likes-count-{{ $p->id }}" onclick="showPostLikers({{ $p->id }}, 'post')" style="cursor:pointer;" title="Xem ai đã thích">👍 {{ $p->reaction_total ?? $p->likes_count ?? 0 }} lượt thích</div>
-                        <div>💬 {{ $p->comments ? $p->comments->count() : 0 }} bình luận • 0 chia sẻ</div>
+                        <div>💬 {{ $p->comments ? $p->comments->count() : 0 }} bình luận • <span id="post-shares-count-{{ $p->id }}">{{ $p->shares_count ?? 0 }}</span> chia sẻ</div>
                     </div>
 
                     <!-- Facebook Footer Actions Bar -->
@@ -205,7 +211,7 @@
                         <button class="fb-action-btn" onclick="toggleComments('{{ $p->id }}', this)" style="border: none; background: transparent; padding: 8px 16px; font-weight: 700; color: #64748b; cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 0.88rem;">
                             💬 Bình luận
                         </button>
-                        <button class="fb-action-btn" onclick="shareFbPost({{ $p->id }}, {{ json_encode($p->name ?? '') }}, {{ json_encode($imgs) }})" style="border: none; background: transparent; padding: 8px 16px; font-weight: 700; color: #64748b; cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 0.88rem;">
+                        <button class="fb-action-btn" onclick="shareFbPost({{ $p->id }}, {{ json_encode($p->name ?? '') }}, {{ json_encode($imgs) }}, '{{ $p->hashid ?? $p->id }}')" style="border: none; background: transparent; padding: 8px 16px; font-weight: 700; color: #64748b; cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 0.88rem;">
                             🔄 Chia sẻ
                         </button>
                     </div>

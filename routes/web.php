@@ -63,6 +63,7 @@ Route::post('/api/reactions/toggle', [HomeController::class, 'toggleReaction'])-
 Route::get('/api/reactions/likers', [HomeController::class, 'getPostLikers'])->name('api.reactions.likers');
 Route::get('/api/comments', [HomeController::class, 'getComments'])->name('api.comments.index');
 Route::post('/api/comments', [HomeController::class, 'storeComment'])->name('api.comments.store');
+Route::post('/api/posts/increment-share', [HomeController::class, 'incrementShare'])->name('api.posts.share');
 
 // --- FOOD TOUR JOURNEY ROUTES (Trải nghiệm hành trình ẩm thực) ---
 Route::get('/food-tours', [FoodTourController::class, 'index'])->name('food-tours.index');

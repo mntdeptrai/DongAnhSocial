@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class Post extends Model
 {
     protected $fillable = [
+        'hashid',
         'user_id',
         'eatery_id',
         'name',
@@ -21,6 +22,15 @@ class Post extends Model
         'comments_count',
         'status',
     ];
+
+    protected static function booted(): void
+    {
+        static::creating(function ($model) {
+            if (empty($model->hashid)) {
+                $model->hashid = \Illuminate\Support\Str::lower(\Illuminate\Support\Str::random(10));
+            }
+        });
+    }
 
     protected $casts = [
         'images' => 'array',

@@ -910,7 +910,7 @@
                                 <!-- Facebook Post Stats Bar -->
                                 <div class="fb-post-stats">
                                     <div id="post-likes-count-{{ $p->id }}" onclick="showPostLikers({{ $p->id }}, 'post')" style="cursor:pointer;" title="Xem ai đã thích">👍 {{ $p->real_likes_count ?? $p->likes_count ?? 0 }} lượt thích</div>
-                                    <div>💬 {{ $p->real_comments_count ?? 0 }} bình luận • {{ $p->real_shares_count ?? 0 }} chia sẻ</div>
+                                    <div>💬 {{ $p->real_comments_count ?? 0 }} bình luận • <span id="post-shares-count-{{ $p->id }}">{{ $p->shares_count ?? $p->real_shares_count ?? 0 }}</span> chia sẻ</div>
                                 </div>
 
                                 <!-- Facebook Footer Actions Bar -->
@@ -922,7 +922,7 @@
                                         👍 {{ ($p->is_liked ?? false) ? 'Đã thích' : 'Thích' }}
                                     </button>
                                     <button class="fb-action-btn" onclick="toggleComments({{ $p->id }}, this)">💬 Bình luận</button>
-                                    <button class="fb-action-btn" onclick="shareFbPost({{ $p->id }}, {{ json_encode($p->name) }}, {{ json_encode($imgs) }})">🔄 Chia sẻ</button>
+                                    <button class="fb-action-btn" onclick="shareFbPost({{ $p->id }}, {{ json_encode($p->name) }}, {{ json_encode($imgs) }}, '{{ $p->hashid ?? $p->id }}')">🔄 Chia sẻ</button>
                                 </div>
                             </article>
                         @endforeach
@@ -2209,12 +2209,12 @@
             ${photoGridHtml}
             <div class="fb-post-stats">
                 <div id="post-likes-count-${post.id}" onclick="showPostLikers(${post.id}, 'post')" style="cursor:pointer;" title="Xem ai đã thích">👍 0 lượt thích</div>
-                <div>💬 0 bình luận • 0 chia sẻ</div>
+                <div>💬 0 bình luận • <span id="post-shares-count-${post.id}">${post.shares_count || 0}</span> chia sẻ</div>
             </div>
             <div class="fb-post-actions">
                 <button class="fb-action-btn" id="post-like-btn-${post.id}" onclick="togglePostLike(this, ${post.id})">👍 Thích</button>
                 <button class="fb-action-btn" onclick="alert('Tính năng bình luận bài viết đang được kết nối dữ liệu thực!')">💬 Bình luận</button>
-                <button class="fb-action-btn" onclick="shareFbPost(${post.id}, ${JSON.stringify(post.name)}, ${JSON.stringify(imgs)})">🔄 Chia sẻ</button>
+                <button class="fb-action-btn" onclick="shareFbPost(${post.id}, ${JSON.stringify(post.name)}, ${JSON.stringify(imgs)}, '${post.hashid || post.id}')">🔄 Chia sẻ</button>
             </div>
         `;
 

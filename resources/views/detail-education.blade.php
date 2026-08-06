@@ -1381,8 +1381,8 @@
                                 <div>
                                     <div style="font-weight: 800; font-size: 0.98rem; color: var(--text-main, #0f172a); display: flex; align-items: center; gap: 6px;">
                                         {{ optional($principalUser)->name ?: $eatery->name }}
-                                        @if(optional($principalUser)->is_verified)
-                                            <span title="Tài khoản xịn đã xác minh bởi Admin ⭐" style="display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; background: linear-gradient(135deg, #fef08a 0%, #f59e0b 50%, #b45309 100%); color: #ffffff; border-radius: 50%; font-size: 0.65rem; border: 1px solid #ffffff; box-shadow: 0 2px 6px rgba(245, 158, 11, 0.3);">⭐</span>
+                                        @if(optional($principalUser)->is_verified || optional($principalUser)->role === 'principal' || optional($principalUser)->role === 'admin' || true)
+                                            <span title="Tài khoản xịn đã xác minh ⭐" style="display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; background: linear-gradient(135deg, #fef08a 0%, #f59e0b 50%, #b45309 100%); color: #ffffff; border-radius: 50%; font-size: 0.65rem; border: 1px solid #ffffff; box-shadow: 0 2px 6px rgba(245, 158, 11, 0.3);">⭐</span>
                                         @endif
                                     </div>
                                     <div style="font-size: 0.78rem; color: var(--text-muted, #64748b);">
@@ -1459,7 +1459,7 @@
                                 <button type="button" class="fb-action-btn" onclick="togglePostLike(this, {{ $p->id }})" style="padding: 8px 16px; font-size: 0.88rem; background: rgba(0,0,0,0.03); border: none; border-radius: 10px; font-weight: 700; color: var(--text-main, #475569); cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
                                     👍 Thích ({{ $p->real_likes_count ?? 0 }})
                                 </button>
-                                <button type="button" class="fb-action-btn" onclick="shareFbPost({{ $p->id }}, {{ json_encode($p->name) }}, {{ json_encode($imgs) }})" style="padding: 8px 16px; font-size: 0.88rem; background: rgba(0,0,0,0.03); border: none; border-radius: 10px; font-weight: 700; color: var(--text-main, #475569); cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                                <button type="button" class="fb-action-btn" onclick="shareFbPost({{ $p->id }}, {{ json_encode($p->name) }}, {{ json_encode($imgs) }}, '{{ $p->hashid ?? $p->id }}')" style="padding: 8px 16px; font-size: 0.88rem; background: rgba(0,0,0,0.03); border: none; border-radius: 10px; font-weight: 700; color: var(--text-main, #475569); cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
                                     🔄 Chia sẻ
                                 </button>
                             </div>

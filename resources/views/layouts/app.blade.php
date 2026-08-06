@@ -556,6 +556,7 @@
                                 </div>
 
                                 <div style="border-top: 1px solid rgba(0,0,0,0.06); text-align: center; background: rgba(0,0,0,0.015);">
+                                    
                                 </div>
                             </div>
                         </div>
@@ -911,89 +912,142 @@
         }
     </style>
 
-    <!-- Messenger-style Floating Chat Widget (Translucent Light Theme) -->
+    <!-- Messenger-style Floating Chat Widget (High-End Sleek & Premium Theme) -->
     <style>
+        .fchat-head-bubble {
+            pointer-events: auto;
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            cursor: pointer;
+            position: relative;
+            transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease;
+        }
+        .fchat-head-bubble:hover {
+            transform: scale(1.12);
+        }
+        .fchat-head-close {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #ef4444;
+            color: #ffffff;
+            border: 2px solid #ffffff;
+            font-size: 0.68rem;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.2s ease, transform 0.2s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+            z-index: 10;
+        }
+        .fchat-head-bubble:hover .fchat-head-close {
+            opacity: 1;
+        }
+        .fchat-head-close:hover {
+            background: #dc2626;
+            transform: scale(1.1);
+        }
         .fchat-window {
             pointer-events: auto;
-            width: 310px;
-            background: #e8f4fd; /* Matches App.tsx background */
-            border: 1px solid rgba(0, 0, 0, 0.08);
-            border-radius: 16px 16px 0 0;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            width: 345px;
+            background: #ffffff;
+            border: 1px solid rgba(226, 232, 240, 0.9);
+            border-radius: 20px 20px 12px 12px;
+            box-shadow: 0 20px 50px -10px rgba(15, 23, 42, 0.22), 0 0 0 1px rgba(0, 0, 0, 0.04);
             display: flex;
             flex-direction: column;
             overflow: hidden;
-            transition: height 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-            font-family: 'Plus Jakarta Sans', sans-serif;
+            transition: height 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
         }
         .fchat-header {
-            background: #ffffff;
-            padding: 10px 12px;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.07);
+            background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+            padding: 10px 14px;
+            border-bottom: 1px solid #e2e8f0;
             display: flex;
             justify-content: space-between;
             align-items: center;
             cursor: pointer;
             user-select: none;
             flex-shrink: 0;
+            transition: background 0.2s ease;
         }
-        .fchat-header:hover { background: #f8fafc; }
+        .fchat-header:hover { background: #f1f5f9; }
         .fchat-header-btn {
-            width: 32px; height: 32px;
-            border-radius: 50%;
+            width: 30px; height: 30px;
+            border-radius: 8px;
             background: transparent;
             border: none;
-            color: #0084ff;
+            color: #64748b;
             cursor: pointer;
             display: flex; align-items: center; justify-content: center;
-            transition: background 0.15s, color 0.15s;
-            font-size: 0.8rem;
+            transition: all 0.2s ease;
+            font-size: 0.85rem;
         }
-        .fchat-header-btn:hover { background: #eff6ff; }
+        .fchat-header-btn:hover { background: #e2e8f0; color: #0f172a; }
+        .fchat-header-btn.primary { color: #0284c7; background: #f0f9ff; }
+        .fchat-header-btn.primary:hover { background: #e0f2fe; color: #0369a1; }
         .fchat-messages {
             flex: 1;
             overflow-y: auto;
-            padding: 12px;
+            padding: 14px 12px;
             display: flex;
             flex-direction: column;
-            gap: 6px;
-            background: #e8f4fd;
+            gap: 8px;
+            background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
             -webkit-overflow-scrolling: touch;
         }
-        .fchat-messages::-webkit-scrollbar { width: 0px; display: none; }
+        .fchat-messages::-webkit-scrollbar { width: 4px; }
+        .fchat-messages::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .fchat-messages::-webkit-scrollbar-track { background: transparent; }
         .fchat-input-bar {
             background: transparent !important;
             border: none !important;
-            color: #111827 !important;
-            font-size: 0.875rem !important;
+            color: #0f172a !important;
+            font-size: 0.88rem !important;
             padding: 0 !important;
             outline: none !important;
             width: 100% !important;
+            font-weight: 500 !important;
         }
-        .fchat-input-bar::placeholder { color: #9ca3af; }
+        .fchat-input-bar::placeholder { color: #94a3b8; }
         .fchat-input-container {
             flex: 1;
             display: flex;
             align-items: center;
-            border-radius: 9999px;
-            padding: 6px 12px;
-            background: #f0f2f5;
+            border-radius: 20px;
+            padding: 7px 14px;
+            background: #f1f5f9;
+            border: 1.5px solid #e2e8f0;
+            transition: all 0.2s ease;
+        }
+        .fchat-input-container:focus-within {
+            background: #ffffff;
+            border-color: #0284c7;
+            box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
         }
         .fchat-footer {
-            padding: 8px;
+            padding: 10px 12px;
             background: #ffffff;
-            border-top: 1px solid rgba(0, 0, 0, 0.07);
+            border-top: 1px solid #e2e8f0;
             flex-shrink: 0;
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 8px;
         }
 
-        /* Message Bubble Specific Classes - mirrored from Beautiful Floating Chat */
+        /* Message Bubble Specific Classes — Luxury & Readable */
         .fchat-msg-row {
             display: flex;
             align-items: flex-end;
-            gap: 6px;
+            gap: 8px;
             width: 100%;
             margin-bottom: 2px;
         }
@@ -1004,35 +1058,39 @@
             flex-direction: row;
         }
         .fchat-bubble-wrap {
-            /* NO flex here — flex-column stretches children to full width */
             display: block;
-            max-width: 72%;
+            max-width: 76%;
         }
         .fchat-bubble {
-            display: inline-block !important;   /* shrinks to text, overrides any global CSS */
+            display: inline-block !important;
             width: auto !important;
             max-width: 100% !important;
-            padding: 7px 12px !important;
-            font-size: 0.875rem !important;
-            line-height: 1.4 !important;
+            padding: 9px 14px !important;
+            font-size: 0.88rem !important;
+            line-height: 1.45 !important;
             word-wrap: break-word !important;
             word-break: break-word !important;
-            white-space: normal !important;     /* collapse spaces, don't preserve them */
+            white-space: normal !important;
             box-sizing: border-box !important;
         }
         .fchat-bubble-sent {
-            background: #0084ff;
+            background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
             color: #ffffff;
+            box-shadow: 0 4px 14px rgba(2, 132, 199, 0.25);
             border-radius: 18px 18px 4px 18px;
+            font-weight: 500;
         }
         .fchat-bubble-received {
-            background: #e4e6eb;
-            color: #050505;
+            background: #ffffff;
+            color: #0f172a;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
             border-radius: 18px 18px 18px 4px;
+            font-weight: 500;
         }
         .fchat-avatar-slot {
-            width: 24px;
-            height: 24px;
+            width: 26px;
+            height: 26px;
             flex-shrink: 0;
         }
     </style>
@@ -1040,157 +1098,182 @@
     <div id="floating-chat-container" 
          x-data 
          x-cloak
-         style="position: fixed; bottom: 24px; right: 24px; display: flex; gap: 14px; z-index: 99999; align-items: flex-end; pointer-events: none; font-family: 'Plus Jakarta Sans', sans-serif;">
+         style="position: fixed; bottom: 24px; right: 92px; display: flex; gap: 14px; z-index: 99999; align-items: flex-end; pointer-events: none; font-family: 'Plus Jakarta Sans', sans-serif;">
         
         <template x-for="(chat, index) in $store.chatStore.openChats" :key="chat.id">
-            <div class="fchat-window"
-                 :style="chat.is_minimized ? 'height: 52px;' : 'height: 520px;'">
-                
-                <!-- Chat Header -->
-                <div class="fchat-header" @click="chat.is_minimized = !chat.is_minimized">
-                    <div style="display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1;">
-                        <!-- Avatar with online dot -->
-                        <div style="position: relative; width: 32px; height: 32px; flex-shrink: 0;">
-                            <div style="width: 32px; height: 32px; border-radius: 50%; background: #fff3cd; overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: 1.1rem;">
-                                <template x-if="chat.avatar_url">
-                                    <img onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=800&q=80';" :src="chat.avatar_url" alt="avatar" style="width: 100%; height: 100%; object-fit: cover;">
-                                </template>
-                                <template x-if="!chat.avatar_url">
-                                    <span x-text="chat.avatar || '👤'"></span>
-                                </template>
-                            </div>
-                            <span x-show="chat.is_online" style="position: absolute; bottom: 0; right: 0; width: 10px; height: 10px; border-radius: 50%; background: #31a24c; border: 2px solid #ffffff;"></span>
+            <div>
+                <!-- Minimized Floating Avatar Chat Head -->
+                <div x-show="chat.is_minimized" 
+                     @click="chat.is_minimized = false"
+                     class="fchat-head-bubble"
+                     :title="chat.name">
+                    <div style="position: relative; width: 52px; height: 52px; border-radius: 50%;">
+                        <div style="width: 52px; height: 52px; border-radius: 50%; background: #ffffff; overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; border: 2.5px solid #ffffff; box-shadow: 0 8px 25px rgba(15, 23, 42, 0.25);">
+                            <template x-if="chat.avatar_url">
+                                <img onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=800&q=80';" :src="chat.avatar_url" alt="avatar" style="width: 100%; height: 100%; object-fit: cover;">
+                            </template>
+                            <template x-if="!chat.avatar_url">
+                                <span x-text="chat.avatar || '👤'"></span>
+                            </template>
                         </div>
-                        <div style="display: flex; flex-direction: column; min-width: 0;">
-                            <span style="font-size: 0.875rem; font-weight: 600; color: #111827; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.25;" x-text="chat.name"></span>
-                            <span style="font-size: 0.75rem; line-height: 1.2;" :style="chat.is_online ? 'color: #31a24c;' : 'color: #6b7280;'" x-text="chat.is_online ? 'Đang hoạt động' : 'Ngoại tuyến'"></span>
-                        </div>
-                    </div>
-
-                    <!-- Header action buttons -->
-                    <div style="display: flex; align-items: center; gap: 2px; flex-shrink: 0;" @click.stop>
-                        <a :href="'/profile/' + chat.id" target="_blank" class="fchat-header-btn" title="Xem trang cá nhân" style="color: #6b7280; text-decoration: none; display: flex; align-items: center; justify-content: center;">
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
-                        </a>
-                        <button class="fchat-header-btn" title="Gọi thoại">
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1-9.4 0-17-7.6-17-17 0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z"/></svg>
-                        </button>
-                        <button class="fchat-header-btn" title="Gọi video">
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
-                        </button>
-                        <button class="fchat-header-btn" @click="chat.is_minimized = !chat.is_minimized" title="Thu nhỏ" style="color: #6b7280;">
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M19 13H5v-2h14v2z"/></svg>
-                        </button>
-                        <button class="fchat-header-btn" @click="$store.chatStore.closeChat(chat.id)" title="Đóng" style="color: #6b7280;" onmouseover="this.style.color='#f44336'" onmouseout="this.style.color='#6b7280'">✕</button>
+                        <span x-show="chat.is_online" style="position: absolute; bottom: 1px; right: 1px; width: 13px; height: 13px; border-radius: 50%; background: #22c55e; border: 2px solid #ffffff; box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.3);"></span>
+                        <button type="button" @click.stop="$store.chatStore.closeChat(chat.id)" class="fchat-head-close" title="Đóng">✕</button>
                     </div>
                 </div>
 
-                <!-- Messages Area -->
-                <div class="fchat-messages" :id="'floating-chat-messages-' + chat.id" x-show="!chat.is_minimized">
-                    <!-- Loading -->
-                    <div x-show="chat.loading" style="display: flex; justify-content: center; align-items: center; height: 100%; color: #6b7280; font-size: 0.78rem; gap: 6px;">
-                        <span style="display: inline-block; animation: spin 1s linear infinite;">⏳</span> Đang tải...
-                    </div>
-
-                    <!-- Empty state -->
-                    <div x-show="!chat.loading && chat.messages.length === 0" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 8px; color: #6b7280;">
-                        <div style="width: 48px; height: 48px; border-radius: 50%; background: #e4e6eb; display: flex; align-items: center; justify-content: center; font-size: 1.3rem;">
-                            <template x-if="chat.avatar_url"><img onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=800&q=80';" :src="chat.avatar_url" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;"></template>
-                            <template x-if="!chat.avatar_url"><span x-text="chat.avatar || '👤'"></span></template>
+                <!-- Expanded Full Chat Window -->
+                <div x-show="!chat.is_minimized" class="fchat-window" style="height: 520px;">
+                    
+                    <!-- Chat Header -->
+                    <div class="fchat-header" @click="chat.is_minimized = !chat.is_minimized">
+                        <div style="display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1;">
+                            <!-- Avatar with online dot -->
+                            <div style="position: relative; width: 36px; height: 36px; flex-shrink: 0;">
+                                <div style="width: 36px; height: 36px; border-radius: 50%; background: #f1f5f9; overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; border: 2px solid #ffffff; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+                                    <template x-if="chat.avatar_url">
+                                        <img onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=800&q=80';" :src="chat.avatar_url" alt="avatar" style="width: 100%; height: 100%; object-fit: cover;">
+                                    </template>
+                                    <template x-if="!chat.avatar_url">
+                                        <span x-text="chat.avatar || '👤'"></span>
+                                    </template>
+                                </div>
+                                <span x-show="chat.is_online" style="position: absolute; bottom: 0; right: 0; width: 10px; height: 10px; border-radius: 50%; background: #22c55e; border: 2px solid #ffffff; box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.3);"></span>
+                            </div>
+                            <div style="display: flex; flex-direction: column; min-width: 0; justify-content: center;">
+                                <span style="font-size: 0.92rem; font-weight: 700; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.25; letter-spacing: -0.01em;" x-text="chat.name"></span>
+                                <div style="display: flex; align-items: center; gap: 4px; margin-top: 1px;">
+                                    <span style="font-size: 0.72rem; font-weight: 600; line-height: 1.2;" :style="chat.is_online ? 'color: #16a34a;' : 'color: #94a3b8;'" x-text="chat.is_online ? '• Đang hoạt động' : 'Ngoại tuyến'"></span>
+                                </div>
+                            </div>
                         </div>
-                        <span style="font-size: 0.75rem; font-weight: 600; color: #111827;" x-text="chat.name"></span>
-                        <span style="font-size: 0.68rem;">Hãy gửi lời chào đầu tiên! 👋</span>
+
+                        <!-- Header action buttons -->
+                        <div style="display: flex; align-items: center; gap: 3px; flex-shrink: 0;" @click.stop>
+                            <a :href="'/profile/' + chat.id" target="_blank" class="fchat-header-btn" title="Xem trang cá nhân" style="text-decoration: none;">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                            </a>
+                            <button class="fchat-header-btn" title="Gọi thoại">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1-9.4 0-17-7.6-17-17 0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z"/></svg>
+                            </button>
+                            <button class="fchat-header-btn" title="Gọi video">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
+                            </button>
+                            <button class="fchat-header-btn" @click="chat.is_minimized = true" title="Thu nhỏ">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M19 13H5v-2h14v2z"/></svg>
+                            </button>
+                            <button class="fchat-header-btn" @click="$store.chatStore.closeChat(chat.id)" title="Đóng" onmouseover="this.style.color='#ef4444'; this.style.background='#fef2f2'" onmouseout="this.style.color='#64748b'; this.style.background='transparent'">✕</button>
+                        </div>
                     </div>
 
-                    <!-- Message bubbles -->
-                    <template x-show="!chat.loading" x-for="(msg, mi) in chat.messages" :key="msg.id">
-                        <div>
-                            <!-- Timestamp separator if first message -->
-                            <template x-if="mi === 0">
-                                <div style="text-align: center; margin: 4px 0 10px; font-size: 0.65rem; color: #6b7280;" x-text="msg.created_at_format || ''"></div>
-                            </template>
+                    <!-- Messages Area -->
+                    <div class="fchat-messages" :id="'floating-chat-messages-' + chat.id">
+                        <!-- Loading -->
+                        <div x-show="chat.loading" style="display: flex; justify-content: center; align-items: center; height: 100%; color: #64748b; font-size: 0.82rem; gap: 8px; font-weight: 600;">
+                            <span style="display: inline-block; animation: spin 1s linear infinite;">⏳</span> Đang tải cuộc trò chuyện...
+                        </div>
 
-                            <!-- Message Row: row-reverse = sent (right), row = received (left) -->
-                            <div class="fchat-msg-row" :class="msg.sender_id == {{ session('user_id') }} ? 'sent' : 'received'">
-                                
-                                <!-- Avatar slot for received messages -->
-                                <template x-if="msg.sender_id != {{ session('user_id') }}">
-                                    <div class="fchat-avatar-slot">
-                                        <!-- Show avatar only for the last consecutive received message -->
-                                        <template x-if="!(chat.messages[mi+1] && chat.messages[mi+1].sender_id != {{ session('user_id') }})">
-                                            <div style="width: 24px; height: 24px; border-radius: 50%; background: #fff3cd; overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: 0.75rem;">
-                                                <template x-if="chat.avatar_url">
-                                                    <img onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=800&q=80';" :src="chat.avatar_url" style="width: 100%; height: 100%; object-fit: cover;">
+                        <!-- Empty state -->
+                        <div x-show="!chat.loading && chat.messages.length === 0" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 10px; color: #64748b; padding: 20px; text-align: center;">
+                            <div style="width: 56px; height: 56px; border-radius: 50%; background: #ffffff; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; box-shadow: 0 4px 16px rgba(0,0,0,0.06); border: 2px solid #ffffff;">
+                                <template x-if="chat.avatar_url"><img onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=800&q=80';" :src="chat.avatar_url" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;"></template>
+                                <template x-if="!chat.avatar_url"><span x-text="chat.avatar || '👤'"></span></template>
+                            </div>
+                            <span style="font-size: 0.88rem; font-weight: 700; color: #0f172a;" x-text="chat.name"></span>
+                            <span style="font-size: 0.76rem; color: #64748b;">Chưa có tin nhắn nào. Hãy gửi lời chào đầu tiên! 👋</span>
+                        </div>
+
+                        <!-- Message bubbles -->
+                        <template x-show="!chat.loading" x-for="(msg, mi) in chat.messages" :key="msg.id">
+                            <div>
+                                <!-- Timestamp separator if first message -->
+                                <template x-if="mi === 0">
+                                    <div style="display: flex; justify-content: center; margin: 6px 0 12px;">
+                                        <span style="background: rgba(226, 232, 240, 0.7); color: #64748b; font-size: 0.68rem; font-weight: 600; padding: 3px 10px; border-radius: 12px; backdrop-filter: blur(4px);" x-text="msg.created_at_format || 'Hôm nay'"></span>
+                                    </div>
+                                </template>
+
+                                <!-- Message Row: row-reverse = sent (right), row = received (left) -->
+                                <div class="fchat-msg-row" :class="msg.sender_id == {{ session('user_id') }} ? 'sent' : 'received'">
+                                    
+                                    <!-- Avatar slot for received messages -->
+                                    <template x-if="msg.sender_id != {{ session('user_id') }}">
+                                        <div class="fchat-avatar-slot">
+                                            <!-- Show avatar only for the last consecutive received message -->
+                                            <template x-if="!(chat.messages[mi+1] && chat.messages[mi+1].sender_id != {{ session('user_id') }})">
+                                                <div style="width: 26px; height: 26px; border-radius: 50%; background: #ffffff; overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; box-shadow: 0 2px 6px rgba(0,0,0,0.06); border: 1px solid #e2e8f0;">
+                                                    <template x-if="chat.avatar_url">
+                                                        <img onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=800&q=80';" :src="chat.avatar_url" style="width: 100%; height: 100%; object-fit: cover;">
+                                                    </template>
+                                                    <template x-if="!chat.avatar_url">
+                                                        <span x-text="chat.avatar || '👤'"></span>
+                                                    </template>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </template>
+
+                                    <!-- Bubble wrapper: controls alignment direction -->
+                                    <div class="fchat-bubble-wrap">
+                                        <!-- Text Bubble -->
+                                        <template x-if="msg.message">
+                                            <div class="fchat-bubble"
+                                                 :class="msg.sender_id == {{ session('user_id') }} ? 'fchat-bubble-sent' : 'fchat-bubble-received'">
+                                                <span x-text="msg.message"></span>
+                                            </div>
+                                        </template>
+                                        
+                                        <!-- Image / Video Bubble -->
+                                        <template x-if="msg.media_path">
+                                            <div style="border-radius: 16px; overflow: hidden; border: 1px solid rgba(0,0,0,0.08); box-shadow: 0 4px 14px rgba(0,0,0,0.08);">
+                                                <template x-if="msg.media_type === 'image'">
+                                                    <img onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=800&q=80';" :src="msg.media_path" style="width: 100%; max-height: 190px; object-fit: cover; display: block; cursor: pointer;" @click="window.open(msg.media_path)">
                                                 </template>
-                                                <template x-if="!chat.avatar_url">
-                                                    <span x-text="chat.avatar || '👤'"></span>
+                                                <template x-if="msg.media_type === 'video'">
+                                                    <video :src="msg.media_path" controls style="width: 100%; max-height: 190px; display: block;"></video>
                                                 </template>
                                             </div>
                                         </template>
                                     </div>
-                                </template>
-
-                                <!-- Bubble wrapper: controls alignment direction -->
-                                <div class="fchat-bubble-wrap">
-                                    <!-- Text Bubble -->
-                                    <template x-if="msg.message">
-                                        <div class="fchat-bubble"
-                                             :class="msg.sender_id == {{ session('user_id') }} ? 'fchat-bubble-sent' : 'fchat-bubble-received'">
-                                            <span x-text="msg.message"></span>
-                                        </div>
-                                    </template>
-                                    
-                                    <!-- Image / Video Bubble -->
-                                    <template x-if="msg.media_path">
-                                        <div style="border-radius: 12px; overflow: hidden; border: 1px solid rgba(0,0,0,0.08);">
-                                            <template x-if="msg.media_type === 'image'">
-                                                <img onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=800&q=80';" :src="msg.media_path" style="width: 100%; max-height: 180px; object-fit: cover; display: block; cursor: pointer;" @click="window.open(msg.media_path)">
-                                            </template>
-                                            <template x-if="msg.media_type === 'video'">
-                                                <video :src="msg.media_path" controls style="width: 100%; max-height: 180px; display: block;"></video>
-                                            </template>
-                                        </div>
-                                    </template>
                                 </div>
                             </div>
-                        </div>
-                    </template>
+                        </template>
 
-                    <!-- Scroll anchor -->
-                    <div :id="'floating-chat-bottom-' + chat.id" style="height: 1px; clear: both;"></div>
-                </div>
-
-                <!-- Input Footer -->
-                <div class="fchat-footer" x-show="!chat.is_minimized">
-                    <button type="button" class="fchat-header-btn shrink-0" style="width: 32px; height: 32px;">
-                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
-                    </button>
-                    <button type="button" @click="document.getElementById('floating-file-input-' + chat.id).click()" class="fchat-header-btn shrink-0" style="width: 32px; height: 32px;" title="Gửi tệp đính kèm">
-                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                    </button>
-                    <input type="file" :id="'floating-file-input-' + chat.id" style="display: none;" accept="image/*,video/*" @change="$store.chatStore.uploadFile(chat.id, $event)">
-
-                    <!-- Input Area -->
-                    <div class="fchat-input-container">
-                        <input type="text" 
-                               :id="'floating-chat-input-' + chat.id" 
-                               placeholder="Aa" 
-                               x-model="chat.inputText" 
-                               @keydown.enter.prevent="$store.chatStore.sendSubmitMessage(chat.id)"
-                               autocomplete="off" 
-                               class="fchat-input-bar">
+                        <!-- Scroll anchor -->
+                        <div :id="'floating-chat-bottom-' + chat.id" style="height: 1px; clear: both;"></div>
                     </div>
-                    
-                    <!-- Actions -->
-                    <div style="flex-shrink: 0; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">
-                        <!-- 👍 Like -->
-                        <button type="button" x-show="!chat.inputText || !chat.inputText.trim()" @click="$store.chatStore.sendMessage(chat.id, '👍')" class="fchat-header-btn shrink-0" style="width: 32px; height: 32px;">
-                            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>
+
+                    <!-- Input Footer -->
+                    <div class="fchat-footer">
+                        <button type="button" class="fchat-header-btn primary shrink-0" style="width: 34px; height: 34px;" title="Ghi âm">
+                            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
                         </button>
-                        <!-- 🚀 Send -->
-                        <button type="button" @click.prevent="$store.chatStore.sendSubmitMessage(chat.id)" x-show="chat.inputText && chat.inputText.trim()" class="fchat-header-btn shrink-0" style="width: 32px; height: 32px;">
-                            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                        <button type="button" @click="document.getElementById('floating-file-input-' + chat.id).click()" class="fchat-header-btn primary shrink-0" style="width: 34px; height: 34px;" title="Gửi tệp đính kèm">
+                            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
                         </button>
+                        <input type="file" :id="'floating-file-input-' + chat.id" style="display: none;" accept="image/*,video/*" @change="$store.chatStore.uploadFile(chat.id, $event)">
+
+                        <!-- Input Area -->
+                        <div class="fchat-input-container">
+                            <input type="text" 
+                                   :id="'floating-chat-input-' + chat.id" 
+                                   placeholder="Nhập tin nhắn..." 
+                                   x-model="chat.inputText" 
+                                   @keydown.enter.prevent="$store.chatStore.sendSubmitMessage(chat.id)"
+                                   autocomplete="off" 
+                                   class="fchat-input-bar">
+                        </div>
+                        
+                        <!-- Actions -->
+                        <div style="flex-shrink: 0; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center;">
+                            <!-- 👍 Like -->
+                            <button type="button" x-show="!chat.inputText || !chat.inputText.trim()" @click="$store.chatStore.sendMessage(chat.id, '👍')" class="fchat-header-btn primary shrink-0" style="width: 34px; height: 34px; font-size: 1.05rem;" title="Gửi 👍">
+                                👍
+                            </button>
+                            <!-- 🚀 Send -->
+                            <button type="button" @click.prevent="$store.chatStore.sendSubmitMessage(chat.id)" x-show="chat.inputText && chat.inputText.trim()" style="width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: #ffffff; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(2, 132, 199, 0.35); transition: transform 0.15s ease;" onmouseover="this.style.transform='scale(1.08)'" onmouseout="this.style.transform='none'" title="Gửi tin nhắn">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -2632,17 +2715,46 @@
     </div>
 
     <script>
-        let currentSharingPost = { id: null, title: '', images: [] };
+        let currentSharingPost = { id: null, hashid: null, title: '', images: [] };
 
-        window.shareFbPost = function(postId, postTitle, postImages) {
+        window.shareFbPost = function(postId, postTitle, postImages, hashid) {
             currentSharingPost = {
                 id: postId,
+                hashid: hashid || postId,
                 title: postTitle || 'Bài viết Đông Anh Social',
                 images: Array.isArray(postImages) ? postImages : []
             };
 
+            registerPostShare(postId, hashid || postId);
             openDongAnhShareModal();
         };
+
+        function registerPostShare(postId, hashid) {
+            var targetId = hashid || postId;
+            if (!targetId) return;
+
+            var csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
+            fetch('/api/posts/increment-share', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ id: targetId })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success && data.shares_count !== undefined) {
+                    if (postId) {
+                        var el = document.getElementById('post-shares-count-' + postId);
+                        if (el) el.textContent = data.shares_count;
+                    }
+                }
+            })
+            .catch(err => console.log('Share increment error:', err));
+        }
 
         function openDongAnhShareModal() {
             const modal = document.getElementById('dongAnhShareModal');
@@ -2705,8 +2817,11 @@
         }
 
         function getPostShareUrl() {
-            if (currentSharingPost && currentSharingPost.id) {
-                return window.location.origin + '/ban-tin?post=' + currentSharingPost.id;
+            if (currentSharingPost) {
+                const shareId = currentSharingPost.hashid || currentSharingPost.id;
+                if (shareId) {
+                    return window.location.origin + '/ban-tin?post=' + shareId;
+                }
             }
             return window.location.href;
         }

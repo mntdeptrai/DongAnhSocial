@@ -331,13 +331,12 @@ class HomeController extends Controller
         // Sắp xếp theo điểm cá nhân hóa (cao → thấp)
         $allPostsCombined = $allPostsCombined->sortByDesc('_feed_score')->values();
 
-        // Deep link: nếu có ?post=ID, đẩy bài viết đó lên đầu tiên (tạm thời)
-        $highlightPostId = request()->query('post');
-        if ($highlightPostId) {
-            $highlightPostId = (int) $highlightPostId;
-            $pinnedPost = $allPostsCombined->first(fn($p) => $p->id == $highlightPostId);
+        // Deep link: nếu có ?post=HASHID (hoặc ID), đẩy bài viết đó lên đầu tiên
+        $highlightPostParam = request()->query('post');
+        if ($highlightPostParam) {
+            $pinnedPost = $allPostsCombined->first(fn($p) => (isset($p->hashid) && $p->hashid === $highlightPostParam) || $p->id == $highlightPostParam);
             if ($pinnedPost) {
-                $allPostsCombined = $allPostsCombined->reject(fn($p) => $p->id == $highlightPostId && get_class($p) === get_class($pinnedPost));
+                $allPostsCombined = $allPostsCombined->reject(fn($p) => ((isset($p->hashid) && $p->hashid === $highlightPostParam) || $p->id == $highlightPostParam) && get_class($p) === get_class($pinnedPost));
                 $allPostsCombined = collect([$pinnedPost])->concat($allPostsCombined)->values();
             }
         }
@@ -948,6 +947,77 @@ class HomeController extends Controller
                 'content'          => $comment->content,
                 'created_at_human' => 'Vừa xong'
             ]
+        ]);
+    }
+
+    /**
+     * Tăng số lượt chia sẻ cho bài viết trong DB (Post, EducationProgram, Checkin)
+     */
+    public function incrementShare(Request $request)
+    {
+        $request->validate([
+            'id'   => 'required',
+            'type' => 'nullable|string|in:post,education,checkin'
+        ]);
+
+        $idParam = $request->input('id');
+        $type = $request->input('type');
+
+        $newShareCount = 0;
+        $connections = ['mysql', 'mysql_education'];
+
+        foreach ($connections as $conn) {
+            try {
+                if ($type === 'education' || $type === 'App\\Models\\EducationProgram') {
+                    $item = \App\Models\EducationProgram::on($conn)
+                        ->where('id', $idParam)
+                        ->orWhere('hashid', $idParam)
+                        ->first();
+                    if ($item) {
+                        $item->increment('shares_count');
+                        $newShareCount = (int) $item->fresh()->shares_count;
+                        break;
+                    }
+                } elseif ($type === 'checkin' || $type === 'App\\Models\\Checkin') {
+                    $item = \App\Models\Checkin::on($conn)
+                        ->where('id', $idParam)
+                        ->orWhere('hashid', $idParam)
+                        ->first();
+                    if ($item) {
+                        $item->increment('shares_count');
+                        $newShareCount = (int) $item->fresh()->shares_count;
+                        break;
+                    }
+                } else {
+                    $item = \App\Models\Post::on($conn)
+                        ->where('id', $idParam)
+                        ->orWhere('hashid', $idParam)
+                        ->first();
+                    if (!$item) {
+                        $item = \App\Models\EducationProgram::on($conn)
+                            ->where('id', $idParam)
+                            ->orWhere('hashid', $idParam)
+                            ->first();
+                    }
+                    if (!$item) {
+                        $item = \App\Models\Checkin::on($conn)
+                            ->where('id', $idParam)
+                            ->orWhere('hashid', $idParam)
+                            ->first();
+                    }
+                    if ($item) {
+                        $item->increment('shares_count');
+                        $newShareCount = (int) $item->fresh()->shares_count;
+                        break;
+                    }
+                }
+            } catch (\Throwable $e) {}
+        }
+
+        return response()->json([
+            'success'      => true,
+            'shares_count' => $newShareCount,
+            'message'      => 'Tăng số lượt chia sẻ thành công'
         ]);
     }
 }

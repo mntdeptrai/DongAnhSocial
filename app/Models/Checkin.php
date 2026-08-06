@@ -10,14 +10,25 @@ class Checkin extends Model
     protected $table = 'checkins';
 
     protected $fillable = [
+        'hashid',
         'user_id',
         'eatery_id',
         'guest_name',
         'rating',
         'comment',
         'image_path',
+        'shares_count',
         'status',
     ];
+
+    protected static function booted(): void
+    {
+        static::creating(function ($model) {
+            if (empty($model->hashid)) {
+                $model->hashid = \Illuminate\Support\Str::lower(\Illuminate\Support\Str::random(10));
+            }
+        });
+    }
 
     /**
      * User đã tạo check-in này (nullable — khách vãng lai)
