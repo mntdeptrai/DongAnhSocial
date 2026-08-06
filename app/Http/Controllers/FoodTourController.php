@@ -81,6 +81,17 @@ class FoodTourController extends Controller
             }, 'stops.eatery.category', 'stops.eatery.commune'])
             ->firstOrFail();
 
+        // Hydrate stops eateries if multi-db connection returns null
+        $allEateries = EateryApiService::getEateries();
+        foreach ($tour->stops as $stop) {
+            if (!$stop->eatery) {
+                $eatery = $allEateries->firstWhere('id', $stop->eatery_id);
+                if ($eatery) {
+                    $stop->setRelation('eatery', $eatery);
+                }
+            }
+        }
+
         $diaries = \App\Models\FoodTourDiary::where('food_tour_id', $tour->id)
             ->with('user')
             ->orderBy('created_at', 'desc')
@@ -329,13 +340,30 @@ YÊU CẦU TRẢ VỀ CHỈ LÀ CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU, KHÔNG C
             'difficulty' => 'nullable|string|max:100',
             'best_time' => 'required|string|max:100',
             'mood' => 'nullable|string|max:100',
-            'thumbnail' => 'nullable|string|url',
+            'thumbnail_file' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
+            'thumbnail' => 'nullable|string',
             'story' => 'nullable|string',
             'stops' => 'required|array|min:1',
             'stops.*.eatery_id' => 'required|integer',
             'stops.*.stop_story' => 'nullable|string',
             'stops.*.estimated_time' => 'nullable|string|max:100',
         ]);
+
+        $thumbnailPath = null;
+        if ($request->hasFile('thumbnail_file')) {
+            $file = $request->file('thumbnail_file');
+            $uploadDir = public_path('uploads/tours');
+            if (!file_exists($uploadDir)) {
+                mkdir($uploadDir, 0777, true);
+            }
+            $fileName = time() . '_' . \Illuminate\Support\Str::random(8) . '.' . $file->getClientOriginalExtension();
+            $file->move($uploadDir, $fileName);
+            $thumbnailPath = '/uploads/tours/' . $fileName;
+        } elseif ($request->filled('thumbnail')) {
+            $thumbnailPath = $request->input('thumbnail');
+        } else {
+            $thumbnailPath = 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=800&q=80';
+        }
 
         $slug = \Illuminate\Support\Str::slug($request->input('name')) . '-' . substr(md5(uniqid()), 0, 5);
 
@@ -351,7 +379,7 @@ YÊU CẦU TRẢ VỀ CHỈ LÀ CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU, KHÔNG C
             'best_time' => $request->input('best_time'),
             'popularity' => 'Mới tạo',
             'mood' => $this->determineMood($request->input('name'), $request->input('description'), $request->input('budget'), $request->input('stops')),
-            'thumbnail' => $request->input('thumbnail') ?: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=800&q=80',
+            'thumbnail' => $thumbnailPath,
             'story' => $request->input('story'),
             'status' => 'saved',
             'is_ai_generated' => false,
@@ -377,9 +405,16 @@ YÊU CẦU TRẢ VỀ CHỈ LÀ CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU, KHÔNG C
     {
         $tour = FoodTour::where('slug', $slug)->with('stops.eatery')->firstOrFail();
 
-        // Check ownership or admin
-        if ($tour->user_id !== auth()->id() && auth()->user()->role !== 'admin') {
-            abort(403, 'Bạn không có quyền chỉnh sửa lộ trình này.');
+        // Strict Ownership & Permission Check:
+        // A user can ONLY edit their own created tour ($tour->user_id === auth()->id()).
+        // Admins can ONLY edit official system tours ($tour->user_id === null).
+        $canManage = auth()->check() && (
+            ($tour->user_id !== null && $tour->user_id === auth()->id()) ||
+            ($tour->user_id === null && (optional(auth()->user())->role === 'admin' || session('user_role') === 'admin'))
+        );
+
+        if (!$canManage) {
+            abort(403, 'Bạn không có quyền chỉnh sửa lộ trình ẩm thực này.');
         }
 
         $eateries = EateryApiService::getEateries();
@@ -393,9 +428,13 @@ YÊU CẦU TRẢ VỀ CHỈ LÀ CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU, KHÔNG C
     {
         $tour = FoodTour::where('slug', $slug)->firstOrFail();
 
-        // Check ownership or admin
-        if ($tour->user_id !== auth()->id() && auth()->user()->role !== 'admin') {
-            abort(403, 'Bạn không có quyền chỉnh sửa lộ trình này.');
+        $canManage = auth()->check() && (
+            ($tour->user_id !== null && $tour->user_id === auth()->id()) ||
+            ($tour->user_id === null && (optional(auth()->user())->role === 'admin' || session('user_role') === 'admin'))
+        );
+
+        if (!$canManage) {
+            abort(403, 'Bạn không có quyền cập nhật lộ trình ẩm thực này.');
         }
 
         $request->validate([
@@ -407,13 +446,28 @@ YÊU CẦU TRẢ VỀ CHỈ LÀ CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU, KHÔNG C
             'difficulty' => 'nullable|string|max:100',
             'best_time' => 'required|string|max:100',
             'mood' => 'nullable|string|max:100',
-            'thumbnail' => 'nullable|string|url',
+            'thumbnail_file' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
+            'thumbnail' => 'nullable|string',
             'story' => 'nullable|string',
             'stops' => 'required|array|min:1',
             'stops.*.eatery_id' => 'required|integer',
             'stops.*.stop_story' => 'nullable|string',
             'stops.*.estimated_time' => 'nullable|string|max:100',
         ]);
+
+        $thumbnailPath = $tour->thumbnail;
+        if ($request->hasFile('thumbnail_file')) {
+            $file = $request->file('thumbnail_file');
+            $uploadDir = public_path('uploads/tours');
+            if (!file_exists($uploadDir)) {
+                mkdir($uploadDir, 0777, true);
+            }
+            $fileName = time() . '_' . \Illuminate\Support\Str::random(8) . '.' . $file->getClientOriginalExtension();
+            $file->move($uploadDir, $fileName);
+            $thumbnailPath = '/uploads/tours/' . $fileName;
+        } elseif ($request->filled('thumbnail')) {
+            $thumbnailPath = $request->input('thumbnail');
+        }
 
         $tour->update([
             'name' => $request->input('name'),
@@ -424,7 +478,7 @@ YÊU CẦU TRẢ VỀ CHỈ LÀ CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU, KHÔNG C
             'difficulty' => $request->input('difficulty') ?: '☕ Nhẹ nhàng',
             'best_time' => $request->input('best_time'),
             'mood' => $this->determineMood($request->input('name'), $request->input('description'), $request->input('budget'), $request->input('stops')),
-            'thumbnail' => $request->input('thumbnail') ?: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=800&q=80',
+            'thumbnail' => $thumbnailPath ?: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=800&q=80',
             'story' => $request->input('story'),
         ]);
 
@@ -451,9 +505,13 @@ YÊU CẦU TRẢ VỀ CHỈ LÀ CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU, KHÔNG C
     {
         $tour = FoodTour::where('slug', $slug)->firstOrFail();
 
-        // Check ownership or admin
-        if ($tour->user_id !== auth()->id() && auth()->user()->role !== 'admin') {
-            abort(403, 'Bạn không có quyền xóa lộ trình này.');
+        $canManage = auth()->check() && (
+            ($tour->user_id !== null && $tour->user_id === auth()->id()) ||
+            ($tour->user_id === null && (optional(auth()->user())->role === 'admin' || session('user_role') === 'admin'))
+        );
+
+        if (!$canManage) {
+            abort(403, 'Bạn không có quyền xóa lộ trình ẩm thực này.');
         }
 
         $tour->delete();
@@ -468,9 +526,13 @@ YÊU CẦU TRẢ VỀ CHỈ LÀ CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU, KHÔNG C
     {
         $tour = FoodTour::where('slug', $slug)->firstOrFail();
 
-        // Check ownership or admin
-        if ($tour->user_id !== auth()->id() && auth()->user()->role !== 'admin') {
-            abort(403, 'Bạn không có quyền chia sẻ lộ trình này.');
+        $canManage = auth()->check() && (
+            ($tour->user_id !== null && $tour->user_id === auth()->id()) ||
+            ($tour->user_id === null && (optional(auth()->user())->role === 'admin' || session('user_role') === 'admin'))
+        );
+
+        if (!$canManage) {
+            abort(403, 'Bạn không có quyền chia sẻ lộ trình ẩm thực này.');
         }
 
         if ($tour->shared_at) {

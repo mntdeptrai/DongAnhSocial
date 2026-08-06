@@ -609,6 +609,52 @@
         });
     </script>
 
+    <!-- 🌟 Universal Glassmorphism Light Mode Custom Alert Modal System -->
+    <div id="customAlertModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.45); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 100050; align-items: center; justify-content: center; animation: fadeIn 0.3s ease;">
+        <div style="width: 90%; max-width: 420px; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 24px; padding: 28px; box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25); text-align: center; color: #0f172a; position: relative;">
+            <div style="width: 60px; height: 60px; border-radius: 50%; background: #f0f9ff; border: 1px solid #bae6fd; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(14, 165, 233, 0.15);">
+                <span id="customAlertIcon" style="font-size: 1.8rem;">🔔</span>
+            </div>
+            <h3 id="customAlertTitle" style="font-size: 1.25rem; font-weight: 800; color: #0f172a; margin: 0 0 10px 0;">Thông báo</h3>
+            <p id="customAlertMessage" style="font-size: 0.88rem; color: #475569; line-height: 1.55; margin: 0 0 24px 0; white-space: pre-line;">
+                Nội dung thông báo...
+            </p>
+            <button id="customAlertBtn" onclick="closeCustomAlert()" style="display: inline-flex; align-items: center; justify-content: center; padding: 12px 32px; border-radius: 50px; font-weight: 800; font-size: 0.9rem; border: none; cursor: pointer; background: linear-gradient(135deg, #0ea5e9, #0284c7); color: #ffffff; box-shadow: 0 6px 18px rgba(14, 165, 233, 0.35); transition: all 0.25s ease;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 24px rgba(14, 165, 233, 0.45)';" onmouseout="this.style.transform='none'; this.style.boxShadow='0 6px 18px rgba(14, 165, 233, 0.35)';">
+                Đồng ý
+            </button>
+        </div>
+    </div>
+
+    <script>
+        var customAlertCallback = null;
+        function showCustomAlert(title, message, btnText = 'Đồng ý', callback = null, icon = '🔔') {
+            const modal = document.getElementById('customAlertModal');
+            if (!modal) {
+                alert(title + "\n" + message);
+                if (typeof callback === 'function') callback();
+                return;
+            }
+            document.getElementById('customAlertTitle').innerText = title;
+            document.getElementById('customAlertMessage').innerText = message;
+            const btn = document.getElementById('customAlertBtn');
+            if (btn) btn.innerText = btnText;
+            const iconEl = document.getElementById('customAlertIcon');
+            if (iconEl) iconEl.innerText = icon;
+            customAlertCallback = callback;
+            modal.style.display = 'flex';
+        }
+
+        function closeCustomAlert() {
+            const modal = document.getElementById('customAlertModal');
+            if (modal) modal.style.display = 'none';
+            if (typeof customAlertCallback === 'function') {
+                const cb = customAlertCallback;
+                customAlertCallback = null;
+                cb();
+            }
+        }
+    </script>
+
     @yield('scripts')
 </body>
 </html>

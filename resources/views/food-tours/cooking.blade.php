@@ -481,74 +481,90 @@
     <!-- 📖 Diaries Modals for all tours -->
     @foreach($tours as $tourData)
         @if($tourData->diaries_count > 0)
-        <div id="communityDiariesModal-{{ $tourData->id }}" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.5); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); z-index: 10005; align-items: center; justify-content: center; animation: fadeIn 0.3s ease;">
-            <div style="width: 90%; max-width: 650px; max-height: 85vh; display: flex; flex-direction: column; padding: 30px; border-radius: 24px; background: rgba(26, 26, 38, 0.85); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); border: 1.5px solid rgba(255, 255, 255, 0.1); box-shadow: 0 25px 60px rgba(0, 0, 0, 0.4); color: #ffffff; position: relative;">
+        <div id="communityDiariesModal-{{ $tourData->id }}" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); z-index: 10005; align-items: center; justify-content: center; animation: fadeIn 0.3s ease;">
+            <div style="width: 90%; max-width: 650px; max-height: 85vh; display: flex; flex-direction: column; padding: 30px; border-radius: 24px; background: #ffffff; border: 1px solid #e2e8f0; box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25); color: #0f172a; position: relative;">
                 
-                <button onclick="closeDiariesModal('{{ $tourData->id }}')" style="position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1); width: 36px; height: 36px; border-radius: 50%; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.8); cursor: pointer; transition: all 0.2s; z-index: 10;" onmouseover="this.style.background='rgba(255,255,255,0.15)'; this.style.color='#fff';" onmouseout="this.style.background='rgba(255,255,255,0.08)'; this.style.color='rgba(255,255,255,0.8)';">✕</button>
+                <button onclick="closeDiariesModal('{{ $tourData->id }}')" style="position: absolute; top: 20px; right: 20px; background: #f1f5f9; border: 1px solid #e2e8f0; width: 36px; height: 36px; border-radius: 50%; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; color: #475569; cursor: pointer; transition: all 0.2s; z-index: 10;" onmouseover="this.style.background='#e2e8f0'; this.style.color='#0f172a';" onmouseout="this.style.background='#f1f5f9'; this.style.color='#475569';">✕</button>
                 
-                <h3 style="font-weight: 800; color: #ffffff; font-size: 1.4rem; margin: 0 0 20px 0; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 16px;">
+                <h3 style="font-weight: 800; color: #0f172a; font-size: 1.4rem; margin: 0 0 20px 0; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #f1f5f9; padding-bottom: 16px;">
                     📖 Nhật ký Cộng đồng
-                    <span style="font-size: 0.8rem; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); color: #10b981; padding: 4px 12px; border-radius: 20px; font-weight: 800;">{{ $tourData->diaries_count }} đánh giá</span>
+                    <span style="font-size: 0.8rem; background: #ecfdf5; border: 1px solid #a7f3d0; color: #059669; padding: 4px 12px; border-radius: 20px; font-weight: 800;">{{ $tourData->diaries_count }} đánh giá</span>
                 </h3>
                 
-                <div style="flex: 1; overflow-y: auto; padding-right: 12px; display: flex; flex-direction: column; gap: 20px;">
+                <div style="flex: 1; overflow-y: auto; padding-right: 12px; display: flex; flex-direction: column; gap: 24px;">
                     @foreach($tourData->diaries as $diary)
-                        <div style="padding: 20px; border-radius: 16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); transition: transform 0.2s;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <div style="padding: 22px; border-radius: 20px; background: #ffffff; border: 1.5px solid #cbd5e1; border-top: 4px solid #10b981; box-shadow: 0 4px 18px rgba(15, 23, 42, 0.06); position: relative;">
+                            
+                            <!-- Header Banner for each separate diary -->
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid #f1f5f9;">
                                 <div style="display: flex; align-items: center; gap: 10px;">
-                                    <div style="width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #ffffff; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 800; text-transform: uppercase; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);">
-                                        {{ substr($diary->user ? $diary->user->name : 'TK', 0, 2) }}
-                                    </div>
-                                    <div>
-                                        <strong style="font-size: 0.85rem; color: #ffffff; display: block;">
-                                            {{ $diary->user ? $diary->user->name : 'Thực khách Food Tour' }}
-                                        </strong>
-                                        <span style="font-size: 0.65rem; color: rgba(255,255,255,0.5); display: block; margin-top: 1px;">
-                                            📅 {{ $diary->created_at->format('d/m/Y H:i') }}
-                                        </span>
-                                    </div>
+                                    <span style="font-size: 0.72rem; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #ffffff; padding: 4px 10px; border-radius: 20px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 2px 6px rgba(16, 185, 129, 0.25);">
+                                        📌 Nhật ký #{{ $loop->iteration }}
+                                    </span>
+                                    <span style="font-size: 0.75rem; color: #64748b; font-weight: 600;">
+                                        📅 {{ $diary->created_at->format('d/m/Y H:i') }}
+                                    </span>
                                 </div>
+                                
                                 @if($diary->rating)
-                                <div style="color: #ffb03a; font-size: 0.7rem; font-weight: 700; display: flex; align-items: center; gap: 3px; background: rgba(255,176,58,0.15); padding: 4px 8px; border-radius: 8px; border: 1px solid rgba(255,176,58,0.2);">
-                                    <span>⭐</span><strong>{{ $diary->rating }}</strong>
+                                <div style="color: #d97706; font-size: 0.75rem; font-weight: 800; display: flex; align-items: center; gap: 4px; background: #fffbeb; padding: 5px 12px; border-radius: 20px; border: 1px solid #fef3c7;">
+                                    <span>⭐</span><strong>{{ $diary->rating }} / 5 Sao</strong>
                                 </div>
                                 @else
-                                <div style="color: #10b981; font-size: 0.7rem; font-weight: 700; display: flex; align-items: center; gap: 3px; background: rgba(16, 185, 129, 0.15); padding: 4px 8px; border-radius: 8px; border: 1px solid rgba(16,185,129,0.2);">
-                                    <span>✅</span><strong>Hoàn thành</strong>
+                                <div style="color: #059669; font-size: 0.75rem; font-weight: 800; display: flex; align-items: center; gap: 4px; background: #ecfdf5; padding: 5px 12px; border-radius: 20px; border: 1px solid #a7f3d0;">
+                                    <span>✅</span><strong>Đã hoàn thành</strong>
                                 </div>
                                 @endif
                             </div>
+
+                            <!-- User info block -->
+                            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 14px; background: #f8fafc; padding: 10px 14px; border-radius: 14px; border: 1px solid #f1f5f9;">
+                                <div style="width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #ffffff; display: flex; align-items: center; justify-content: center; font-size: 0.88rem; font-weight: 800; text-transform: uppercase; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3); flex-shrink: 0;">
+                                    {{ substr($diary->user ? $diary->user->name : 'TK', 0, 2) }}
+                                </div>
+                                <div>
+                                    <strong style="font-size: 0.92rem; color: #0f172a; display: block;">
+                                        {{ $diary->user ? $diary->user->name : 'Thực khách Food Tour' }}
+                                    </strong>
+                                    <span style="font-size: 0.72rem; color: #64748b;">Tác giả nhật ký chuyến đi</span>
+                                </div>
+                            </div>
                             
+                            <!-- Overall Tour Comment -->
                             @if($diary->comment)
-                            <p style="margin: 0 0 12px 0; font-size: 0.85rem; color: rgba(255,255,255,0.8); font-style: italic; line-height: 1.5;">
-                                "{{ $diary->comment }}"
-                            </p>
+                            <div style="margin: 0 0 16px 0; font-size: 0.88rem; color: #1e293b; line-height: 1.55; background: #f8fafc; padding: 12px 16px; border-radius: 12px; border-left: 4px solid #10b981; border-top: 1px solid #f1f5f9; border-right: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9;">
+                                <span style="font-size: 1.1rem; color: #10b981; margin-right: 4px;">💬</span> <em>"{{ $diary->comment }}"</em>
+                            </div>
                             @endif
                             
+                            <!-- Cover/Selfie Photo -->
                             @if($diary->image_path)
-                                <div style="position: relative; height: 220px; border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,0.08); margin-bottom: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.25);">
-                                    <img src="{{ $diary->image_path }}" style="width: 100%; height: 100%; object-fit: cover;">
-                                    <span style="position: absolute; bottom: 12px; right: 12px; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); font-size: 0.7rem; color: #ffffff; padding: 6px 12px; border-radius: 20px; font-weight: 800; text-transform: uppercase;">📸 Kỷ niệm Selfie</span>
+                                <div style="position: relative; height: 220px; border-radius: 14px; overflow: hidden; border: 1px solid #cbd5e1; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.06);">
+                                    <img onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=800&q=80';" src="{{ $diary->image_path }}" style="width: 100%; height: 100%; object-fit: cover;">
+                                    <span style="position: absolute; bottom: 12px; right: 12px; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); font-size: 0.7rem; color: #ffffff; padding: 6px 12px; border-radius: 20px; font-weight: 800; text-transform: uppercase;">📸 Kỷ niệm Selfie</span>
                                 </div>
                             @endif
 
+                            <!-- Stop-by-stop check-in list preview -->
                             @if(!empty($diary->stop_reviews))
-                                <div style="margin-top: 16px; border-top: 1px dashed rgba(255,255,255,0.15); padding-top: 16px;">
-                                    <span style="font-size: 0.7rem; color: rgba(255,255,255,0.6); display: block; margin-bottom: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">📍 Check-in tại các chặng dừng:</span>
+                                <div style="margin-top: 16px; background: #f8fafc; border-radius: 14px; padding: 14px; border: 1px solid #e2e8f0;">
+                                    <span style="font-size: 0.75rem; color: #334155; display: flex; align-items: center; gap: 6px; margin-bottom: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">
+                                        📍 Đánh giá từng chặng dừng của {{ $diary->user ? $diary->user->name : 'thực khách' }}:
+                                    </span>
                                     <div style="display: flex; flex-direction: column; gap: 10px;">
                                         @foreach($diary->stop_reviews as $stopIdx => $stopRev)
                                             @php
                                                 $stopEatery = $tourData->stops[$stopIdx]->eatery ?? null;
                                             @endphp
                                             @if($stopEatery)
-                                                <div style="display: flex; gap: 12px; background: rgba(255,255,255,0.02); border-radius: 12px; padding: 12px; border: 1px solid rgba(255,255,255,0.05); align-items: flex-start;">
+                                                <div style="display: flex; gap: 12px; background: #ffffff; border-radius: 12px; padding: 12px; border: 1px solid #cbd5e1; box-shadow: 0 1px 3px rgba(0,0,0,0.02); align-items: flex-start;">
                                                     <div style="flex: 1;">
                                                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                                                            <span style="font-size: 0.8rem; font-weight: 800; color: #ffffff; display: flex; align-items: center; gap: 6px;">
+                                                            <span style="font-size: 0.84rem; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 6px;">
                                                                 <span style="font-size: 1rem;">{{ $stopEatery->category->icon ?: '🍜' }}</span>
                                                                 {{ $stopEatery->name }}
                                                             </span>
-                                                            <span style="color: #ffb03a; font-size: 0.7rem; font-weight: 700; background: rgba(255,176,58,0.1); padding: 2px 6px; border-radius: 6px; display: flex; align-items: center; gap: 2px;">
+                                                            <span style="color: #d97706; font-size: 0.7rem; font-weight: 700; background: #fffbeb; padding: 3px 8px; border-radius: 6px; border: 1px solid #fef3c7; display: flex; align-items: center; gap: 2px;">
                                                                 @if(!empty($stopRev['rating']))
                                                                     ⭐ {{ $stopRev['rating'] }}
                                                                 @else
@@ -557,15 +573,15 @@
                                                             </span>
                                                         </div>
                                                         @if(!empty($stopRev['comment']))
-                                                        <p style="margin: 0; font-size: 0.8rem; color: rgba(255,255,255,0.7); font-style: italic; line-height: 1.5;">
+                                                        <p style="margin: 0; font-size: 0.8rem; color: #475569; font-style: italic; line-height: 1.5;">
                                                             "{{ $stopRev['comment'] }}"
                                                         </p>
                                                         @endif
                                                     </div>
                                                     
                                                     @if(!empty($stopRev['image_path']))
-                                                        <div style="width: 70px; height: 70px; border-radius: 8px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); flex-shrink: 0;">
-                                                            <img src="{{ $stopRev['image_path'] }}" style="width: 100%; height: 100%; object-fit: cover;">
+                                                        <div style="width: 70px; height: 70px; border-radius: 8px; overflow: hidden; border: 1px solid #cbd5e1; flex-shrink: 0;">
+                                                            <img onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=800&q=80';" src="{{ $stopRev['image_path'] }}" style="width: 100%; height: 100%; object-fit: cover;">
                                                         </div>
                                                     @endif
                                                 </div>
@@ -593,6 +609,17 @@
         const modal = document.getElementById('communityDiariesModal-' + tourId);
         if (modal) modal.style.display = 'none';
     }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('saved') === '1') {
+            if (typeof window.showToast === 'function') {
+                window.showToast('🎉 Nhật ký chuyến đi Food Tour của bạn đã được lưu trữ thành công vào cơ sở dữ liệu!', 'success', 'Lưu nhật ký thành công');
+            }
+            const newUrl = window.location.pathname;
+            window.history.replaceState({}, document.title, newUrl);
+        }
+    });
 </script>
 
 

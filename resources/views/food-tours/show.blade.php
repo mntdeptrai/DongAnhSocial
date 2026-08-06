@@ -5,12 +5,13 @@
     /* Styling Leaflet custom premium popup to match design perfectly */
     .premium-leaflet-popup .leaflet-popup-content-wrapper {
         background: rgba(255, 255, 255, 0.98) !important;
-        border-radius: 16px !important;
-        border: 1.5px solid rgba(255, 255, 255, 0.8) !important;
-        box-shadow: 0 10px 25px rgba(15, 23, 42, 0.15) !important;
+        border-radius: 20px !important;
+        border: 1.5px solid rgba(255, 255, 255, 0.9) !important;
+        box-shadow: 0 15px 35px rgba(15, 23, 42, 0.18) !important;
         padding: 0 !important;
         overflow: hidden !important;
         color: #0f172a !important;
+        animation: springPopIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
     }
     
     @if($tour->mood === 'cooking')
@@ -65,23 +66,53 @@
     
     .premium-leaflet-popup .leaflet-popup-close-button:hover {
         color: #0ea5e9 !important;
-        transform: scale(1.05) !important;
+        transform: scale(1.08) !important;
     }
     
     .timeline-card {
-        transition: all 0.3s var(--ease-premium) !important;
+        transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
         will-change: transform, box-shadow;
     }
     .timeline-card:hover {
-        transform: translateX(4px) translateY(-2px) !important;
-        border-color: var(--primary) !important;
-        box-shadow: 0 6px 20px rgba(14, 165, 233, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+        transform: translateY(-4px) scale(1.01) !important;
+        border-color: #0ea5e9 !important;
+        box-shadow: 0 12px 28px rgba(14, 165, 233, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.8) !important;
+    }
+
+    /* Spring Pop-In Animations & Glassmorphism Modals */
+    @keyframes springPopIn {
+        0% { transform: scale(0.65) translateY(20px); opacity: 0; }
+        70% { transform: scale(1.04) translateY(-4px); opacity: 1; }
+        100% { transform: scale(1) translateY(0); opacity: 1; }
+    }
+    
+    @keyframes pulseRing {
+        0% { box-shadow: 0 0 0 0 rgba(14, 165, 233, 0.5); }
+        70% { box-shadow: 0 0 0 14px rgba(14, 165, 233, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(14, 165, 233, 0); }
+    }
+
+    /* Animated Map Route Line Glow */
+    .route-glow {
+        stroke-dasharray: 12, 12;
+        animation: routeLineDashFlow 1.4s linear infinite;
+        filter: drop-shadow(0 0 8px rgba(14, 165, 233, 0.6));
+    }
+    
+    @keyframes routeLineDashFlow {
+        from { stroke-dashoffset: 24; }
+        to { stroke-dashoffset: 0; }
+    }
+
+    @keyframes confettiFall {
+        0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+        100% { transform: translateY(105vh) rotate(720deg); opacity: 0; }
     }
     
     @if($tour->mood === 'cooking')
     .timeline-card:hover {
         border-color: #10b981 !important;
-        box-shadow: 0 6px 20px rgba(16, 185, 129, 0.15) !important;
+        box-shadow: 0 12px 28px rgba(16, 185, 129, 0.18) !important;
     }
     @endif
 </style>
@@ -160,7 +191,14 @@
                         @endif
                     </div>
 
-                    @if(auth()->check() && (auth()->id() === $tour->user_id || session('user_role') === 'admin'))
+                    @php
+                        $canManageTour = auth()->check() && (
+                            ($tour->user_id !== null && $tour->user_id === auth()->id()) ||
+                            ($tour->user_id === null && (optional(auth()->user())->role === 'admin' || session('user_role') === 'admin'))
+                        );
+                    @endphp
+
+                    @if($canManageTour)
                         <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
                             <a href="/food-tour/{{ $tour->slug }}/edit" class="btn-primary" style="flex: 1; text-align: center; text-decoration: none; padding: 8px 12px; border-radius: 8px; font-size: 0.78rem; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 4px;">
                                 ✏️ Chỉnh sửa
@@ -487,18 +525,35 @@
 
 @php
     $mappedStops = $tour->stops->map(function($stop) {
+        $eatery = $stop->eatery;
+        if (!$eatery) return null;
+
+        $catName = 'Ẩm thực Đông Anh';
+        $catIcon = '🍜';
+
+        if (is_object($eatery) && isset($eatery->category)) {
+            $catName = is_object($eatery->category) ? ($eatery->category->name ?? 'Ẩm thực Đông Anh') : ($eatery->category['name'] ?? 'Ẩm thực Đông Anh');
+            $catIcon = is_object($eatery->category) ? ($eatery->category->icon ?? '🍜') : ($eatery->category['icon'] ?? '🍜');
+        } elseif (is_array($eatery) && isset($eatery['category'])) {
+            $catName = is_array($eatery['category']) ? ($eatery['category']['name'] ?? 'Ẩm thực Đông Anh') : 'Ẩm thực Đông Anh';
+            $catIcon = is_array($eatery['category']) ? ($eatery['category']['icon'] ?? '🍜') : '🍜';
+        }
+
+        $lat = is_object($eatery) ? ($eatery->latitude ?? 21.1408) : ($eatery['latitude'] ?? 21.1408);
+        $lng = is_object($eatery) ? ($eatery->longitude ?? 105.8450) : ($eatery['longitude'] ?? 105.8450);
+
         return [
-            'id' => $stop->eatery->id,
-            'name' => $stop->eatery->name,
-            'address' => $stop->eatery->address,
-            'latitude' => $stop->eatery->latitude,
-            'longitude' => $stop->eatery->longitude,
-            'category_icon' => $stop->eatery->category->icon ?: '🍜',
-            'category_name' => $stop->eatery->category->name,
-            'image' => $stop->eatery->image_path ?: 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=300&q=80',
-            'slug' => $stop->eatery->slug
+            'id' => is_object($eatery) ? $eatery->id : ($eatery['id'] ?? 0),
+            'name' => is_object($eatery) ? ($eatery->name ?? 'Địa điểm Đông Anh') : ($eatery['name'] ?? 'Địa điểm Đông Anh'),
+            'address' => is_object($eatery) ? ($eatery->address ?? 'Đông Anh, Hà Nội') : ($eatery['address'] ?? 'Đông Anh, Hà Nội'),
+            'latitude' => (float) $lat,
+            'longitude' => (float) $lng,
+            'category_icon' => $catIcon ?: '🍜',
+            'category_name' => $catName ?: 'Ẩm thực Đông Anh',
+            'image' => (is_object($eatery) ? ($eatery->image_path ?? null) : ($eatery['image_path'] ?? null)) ?: 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=300&q=80',
+            'slug' => is_object($eatery) ? ($eatery->slug ?? '') : ($eatery['slug'] ?? '')
         ];
-    });
+    })->filter()->values();
 @endphp
 
 @section('scripts')
@@ -620,25 +675,35 @@
 
     document.addEventListener("DOMContentLoaded", function() {
         initTourMap();
-        // Try restoring tour state first
-        if (!loadTourStateFromLocalStorage()) {
-            // Focus the start location initially before tour starts
-            focusStartLocation();
-        }
+        
+        // Mặc định luôn khởi chạy ở Chế độ Xem Tổng quan Lộ trình (Overview Mode)
+        focusStartLocation();
+
+        // Force Leaflet to recalculate container size after render
+        setTimeout(() => {
+            if (map) map.invalidateSize();
+        }, 300);
     });
 
     // 2. Initialize Leaflet Map
     function initTourMap() {
-        if (stopsData.length === 0) return;
+        let centerLat = 21.1408;
+        let centerLng = 105.8450;
 
-        // Calculate average bounding box center to center the map
-        let sumLat = 0, sumLng = 0;
-        stopsData.forEach(s => {
-            sumLat += s.latitude;
-            sumLng += s.longitude;
-        });
-        const centerLat = sumLat / stopsData.length;
-        const centerLng = sumLng / stopsData.length;
+        if (stopsData && stopsData.length > 0) {
+            let sumLat = 0, sumLng = 0, validCount = 0;
+            stopsData.forEach(s => {
+                if (s.latitude && s.longitude) {
+                    sumLat += parseFloat(s.latitude);
+                    sumLng += parseFloat(s.longitude);
+                    validCount++;
+                }
+            });
+            if (validCount > 0) {
+                centerLat = sumLat / validCount;
+                centerLng = sumLng / validCount;
+            }
+        }
 
         // Leaflet Init
         map = L.map('tourMap', {
@@ -654,24 +719,30 @@
         // Add standard zoom control at top right
         L.control.zoom({ position: 'topright' }).addTo(map);
 
-        // Dark/Light theme tiles mapper (Sử dụng Google Maps chính thức cho bản đồ sáng)
+        // Dark/Light theme tiles mapper (CARTO Voyager cho Sáng & CARTO Dark Matter cho Tối)
         const getTileUrl = (theme) => {
             return theme === 'light'
-                ? 'https://mt1.google.com/vt/lyrs=m&hl=vi&x={x}&y={y}&z={z}'
+                ? 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'
                 : 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
         };
 
-        const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+        const currentTheme = document.documentElement.getAttribute('data-theme') || (localStorage.getItem('theme') || 'light');
         let tileLayer = L.tileLayer(getTileUrl(currentTheme), {
-            attribution: currentTheme === 'light' ? '&copy; Google Maps' : '&copy; OpenStreetMap contributors &copy; CARTO'
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+            subdomains: 'abcd',
+            maxZoom: 20
         }).addTo(map);
 
         // Listen for global theme changes to hot-swap map styling
         document.addEventListener('theme-changed', function(e) {
-            map.removeLayer(tileLayer);
-            tileLayer = L.tileLayer(getTileUrl(e.detail.theme), {
-                attribution: e.detail.theme === 'light' ? '&copy; Google Maps' : '&copy; OpenStreetMap contributors &copy; CARTO'
-            }).addTo(map);
+            if (map && tileLayer) {
+                map.removeLayer(tileLayer);
+                tileLayer = L.tileLayer(getTileUrl(e.detail.theme), {
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+                    subdomains: 'abcd',
+                    maxZoom: 20
+                }).addTo(map);
+            }
         });
 
         // 3. Add Custom Markers
@@ -783,25 +854,32 @@
             const segmentCoordsStr = `${start.longitude},${start.latitude};${end.longitude},${end.latitude}`;
             const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${segmentCoordsStr}?overview=full&geometries=geojson`;
             
-            segmentPromises.push(
+            const fetchWithTimeout = new Promise((resolve) => {
+                const timeoutId = setTimeout(() => resolve(null), 1200);
                 fetch(osrmUrl)
                     .then(res => res.json())
                     .then(data => {
+                        clearTimeout(timeoutId);
                         if (data.code === 'Ok' && data.routes && data.routes.length > 0) {
                             const coordinates = data.routes[0].geometry.coordinates;
-                            return coordinates.map(coord => [coord[1], coord[0]]);
+                            resolve(coordinates.map(coord => [coord[1], coord[0]]));
+                        } else {
+                            resolve(null);
                         }
-                        throw new Error('OSRM leg failed');
                     })
-                    .catch(err => {
-                        console.warn(`OSRM leg ${i} failed, will draw fallback parabolic curve:`, err);
-                        return null; // fallback will be drawn
-                    })
-            );
+                    .catch(() => {
+                        clearTimeout(timeoutId);
+                        resolve(null);
+                    });
+            });
+
+            segmentPromises.push(fetchWithTimeout);
         }
 
         const segmentsData = await Promise.all(segmentPromises);
         if (drawId !== currentRouteDrawId) return; // Cancel stale draws to prevent overlapping race conditions!
+
+        const routePrimaryColor = tourMood === 'cooking' ? '#10b981' : '#0ea5e9';
 
         segmentsData.forEach((latLngs, i) => {
             const start = routingPoints[i];
@@ -817,7 +895,7 @@
             if (latLngs) {
                 // Street routing polyline
                 segmentLine = L.polyline(latLngs, {
-                    color: isVisited ? 'var(--primary)' : (tourMood === 'cooking' ? 'rgba(16, 185, 129, 0.45)' : 'rgba(255, 126, 41, 0.45)'),
+                    color: isVisited ? routePrimaryColor : (tourMood === 'cooking' ? 'rgba(16, 185, 129, 0.45)' : 'rgba(14, 165, 233, 0.45)'),
                     weight: isVisited ? 6 : 4,
                     opacity: isVisited ? 0.95 : 0.75,
                     lineJoin: 'round'
@@ -857,7 +935,7 @@
                 }
 
                 segmentLine = L.polyline(curvePoints, {
-                    color: isVisited ? 'var(--primary)' : (tourMood === 'cooking' ? 'rgba(16, 185, 129, 0.45)' : 'rgba(255, 126, 41, 0.45)'),
+                    color: isVisited ? routePrimaryColor : (tourMood === 'cooking' ? 'rgba(16, 185, 129, 0.45)' : 'rgba(14, 165, 233, 0.45)'),
                     weight: isVisited ? 6 : 4,
                     opacity: isVisited ? 0.95 : 0.75,
                     lineJoin: 'round'
@@ -1161,18 +1239,15 @@
                     }, 500);
                 },
                 function(error) {
-                    console.warn("Geolocation permission error: ", error);
-                    alert("Không thể lấy vị trí hiện tại của bạn. Chúng tôi sẽ vẽ lộ trình mặc định bắt đầu hành trình!");
-                    
+                    console.info("GPS Location unavailable or denied, seamless fallback to Stop 1:", error);
                     drawJourneyRoute().then(() => {
                         fitMapToRoute();
                     });
                     selectStop(targetStopIndex);
                 },
-                { enableHighAccuracy: true, timeout: 6000 }
+                { enableHighAccuracy: false, timeout: 2500 }
             );
         } else {
-            alert("Trình duyệt không hỗ trợ GPS Geolocation. Bản đồ sẽ vẽ lộ trình mặc định!");
             drawJourneyRoute().then(() => {
                 fitMapToRoute();
             });
@@ -1223,9 +1298,19 @@
 
     function fitMapToRoute() {
         if (!map) return;
-        if (routeSegmentsList.length > 0) {
-            const group = new L.featureGroup(routeSegmentsList);
-            map.fitBounds(group.getBounds(), { padding: [50, 50] });
+        try {
+            if (routeSegmentsList.length > 0) {
+                const group = new L.featureGroup(routeSegmentsList);
+                map.fitBounds(group.getBounds(), { padding: [50, 50] });
+            } else if (markersList.length > 0) {
+                const group = new L.featureGroup(markersList);
+                map.fitBounds(group.getBounds(), { padding: [50, 50] });
+            } else if (stopsData && stopsData.length > 0) {
+                const bounds = L.latLngBounds(stopsData.map(s => [parseFloat(s.latitude), parseFloat(s.longitude)]));
+                map.fitBounds(bounds, { padding: [50, 50] });
+            }
+        } catch (e) {
+            console.warn("fitMapToRoute exception handled:", e);
         }
     }
 
@@ -1923,7 +2008,10 @@
         if (overallTourRating === null) {
             showCustomAlert(
                 "Bạn quên chấm điểm kìa! ✨", 
-                "Hãy dành 1 giây chọn số sao để chia sẻ cảm nhận của bạn về chuyến hành trình ẩm thực Đông Anh tuyệt vời này nhé!"
+                "Hãy dành 1 giây chọn số sao để chia sẻ cảm nhận của bạn về chuyến hành trình ẩm thực Đông Anh tuyệt vời này nhé!",
+                "Tuyệt vời, để mình chọn!",
+                null,
+                "⭐"
             );
             
             // Add a gentle pulsing glow to the star row to draw attention
@@ -1968,20 +2056,40 @@
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                alert("🎉 Chúc mừng! Nhật ký hành trình của bạn đã được Lưu trữ thành công vào cơ sở dữ liệu!\n\n⭐ Đánh giá chung: " + (overallTourRating ? overallTourRating + "/5 Sao" : "Không có") + "\n✍️ Bình luận: " + (overallTourComment || "Chưa có bình luận."));
                 closeCompletionModal();
                 exitJourneyMode();
+                triggerCelebrationConfetti();
                 
-                // Redirect back to respective food tours / cooking tours list page!
-                const targetUrl = '{{ $tour->mood }}' === 'cooking' ? '/exp-corner' : '/food-tours';
-                window.location.href = targetUrl;
+                const targetUrl = '{{ $tour->mood }}' === 'cooking' ? '/exp-corner?saved=1' : '/food-tours?saved=1';
+                
+                showCustomAlert(
+                    "Lưu nhật ký thành công! 🎉",
+                    "⭐ Đánh giá chung: " + (overallTourRating ? overallTourRating + "/5 Sao" : "Không có") + "\n✍️ Bình luận: " + (overallTourComment || "Chưa có bình luận."),
+                    "Xem danh sách Food Tour 🚀",
+                    function() {
+                        window.location.href = targetUrl;
+                    },
+                    "🎉"
+                );
             } else {
-                alert("❌ Lỗi khi lưu nhật ký: " + (data.message || "Vui lòng thử lại sau."));
+                showCustomAlert(
+                    "❌ Lưu nhật ký thất bại",
+                    data.message || "Vui lòng thử lại sau.",
+                    "Đã hiểu",
+                    null,
+                    "⚠️"
+                );
             }
         })
         .catch(err => {
             console.error("Lưu nhật ký hành trình thất bại:", err);
-            alert("❌ Lỗi kết nối hệ thống khi lưu nhật ký. Vui lòng thử lại!");
+            showCustomAlert(
+                "❌ Lỗi kết nối hệ thống",
+                "Lỗi kết nối máy chủ khi lưu nhật ký. Vui lòng thử lại!",
+                "Đã hiểu",
+                null,
+                "🌐"
+            );
         })
         .finally(() => {
             saveBtn.disabled = false;
@@ -2015,24 +2123,45 @@
         }
     }
 
-    // 14. Custom Alert Modal Controllers
-    function showCustomAlert(title, message) {
-        const modal = document.getElementById('customAlertModal');
-        if (!modal) return;
+    // 14. Celebration Confetti Engine
+    function triggerCelebrationConfetti() {
+        const container = document.getElementById('confettiContainer');
+        if (!container) return;
+        container.innerHTML = '';
         
-        document.getElementById('customAlertTitle').innerText = title;
-        document.getElementById('customAlertMessage').innerText = message;
-        
-        // Ensure z-index is super high to overlay the completion modal
-        modal.style.zIndex = '100010';
-        modal.style.display = 'flex';
-    }
+        const colors = ['#0ea5e9', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#3b82f6', '#f43f5e'];
+        const particleCount = 90;
 
-    function closeCustomAlert() {
-        const modal = document.getElementById('customAlertModal');
-        if (modal) {
-            modal.style.display = 'none';
+        for (let i = 0; i < particleCount; i++) {
+            const confetti = document.createElement('div');
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            const size = Math.random() * 10 + 6;
+            const left = Math.random() * 100;
+            const animDuration = Math.random() * 2.5 + 2.5;
+            const animDelay = Math.random() * 0.4;
+            const shape = Math.random() > 0.5 ? '50%' : '3px';
+
+            confetti.style.cssText = `
+                position: fixed;
+                top: -20px;
+                left: ${left}vw;
+                width: ${size}px;
+                height: ${size}px;
+                background: ${color};
+                border-radius: ${shape};
+                z-index: 100100;
+                pointer-events: none;
+                opacity: ${Math.random() * 0.85 + 0.15};
+                box-shadow: 0 0 10px ${color};
+                transform: rotate(${Math.random() * 360}deg);
+                animation: confettiFall ${animDuration}s ease-out ${animDelay}s forwards;
+            `;
+            container.appendChild(confetti);
         }
+
+        setTimeout(() => {
+            if (container) container.innerHTML = '';
+        }, 5500);
     }
 
     // 15. Community Diaries Modal Controllers
@@ -2338,111 +2467,143 @@
     </div>
 </div>
 
-<!-- 15. Custom Alert Pop-up Modal (Glassmorphic) -->
-<div id="customAlertModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.45); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 100010; align-items: center; justify-content: center; animation: fadeIn 0.3s ease;">
-    <div style="width: 85%; max-width: 360px; padding: 26px 24px; border-radius: 24px; background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1.5px solid rgba(255, 255, 255, 0.9); box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0,0,0,0.05); text-align: center; position: relative;">
+<!-- 14. Auth Gate Modal -->
+<div id="authGateModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.45); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 100050; align-items: center; justify-content: center;">
+    <div style="width: 90%; max-width: 400px; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 24px; padding: 28px; box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25); text-align: center;">
+        <div style="font-size: 2.5rem; margin-bottom: 12px;">🔑</div>
+        <h3 style="font-size: 1.2rem; font-weight: 800; color: #0f172a; margin-bottom: 8px;">Đăng nhập để trải nghiệm Food Tour</h3>
+        <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 20px; line-height: 1.5;">Bạn cần đăng nhập tài khoản để bật chế độ dẫn đường GPS và lưu nhật ký check-in hành trình nhé!</p>
+        <div style="display: flex; gap: 10px;">
+            <a id="authGateLoginBtn" href="/login" class="btn-primary" style="flex: 1; padding: 10px; border-radius: 12px; font-weight: 700; text-decoration: none; display: inline-block; text-align: center;">Đăng nhập</a>
+            <button onclick="closeAuthGateModal()" class="btn-secondary" style="flex: 1; padding: 10px; border-radius: 12px; font-weight: 700; border: 1px solid #cbd5e1; background: #f8fafc; color: #64748b; cursor: pointer;">Để sau</button>
+        </div>
+    </div>
+</div>
+
+<!-- 15. Custom Alert Pop-up Modal (Glassmorphic Spring Card) -->
+<div id="customAlertModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.45); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); z-index: 100010; align-items: center; justify-content: center;">
+    <div class="spring-modal-card" style="width: 85%; max-width: 380px; padding: 30px 26px; border-radius: 28px; text-align: center; position: relative;">
         
-        <div style="width: 60px; height: 60px; border-radius: 50%; background: rgba(14, 165, 233, 0.12); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px auto; animation: bounce 2s infinite;">
-            <span style="font-size: 1.8rem;">⭐</span>
+        <div style="width: 68px; height: 68px; border-radius: 50%; background: linear-gradient(135deg, rgba(14, 165, 233, 0.15) 0%, rgba(16, 185, 129, 0.15) 100%); border: 2px solid rgba(14, 165, 233, 0.3); display: flex; align-items: center; justify-content: center; margin: 0 auto 18px auto; box-shadow: 0 0 20px rgba(14, 165, 233, 0.25); animation: pulseRing 2s infinite;">
+            <span id="customAlertIcon" style="font-size: 2.2rem; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.15));">🎉</span>
         </div>
         
-        <h3 id="customAlertTitle" style="font-size: 1.25rem; font-weight: 800; color: #0f172a; margin: 0 0 10px 0;">Thông báo</h3>
+        <h3 id="customAlertTitle" style="font-size: 1.3rem; font-weight: 900; color: #0f172a; margin: 0 0 10px 0; letter-spacing: -0.3px;">Thông báo</h3>
         
-        <p id="customAlertMessage" style="font-size: 0.85rem; color: #475569; line-height: 1.5; margin: 0 0 24px 0;">
+        <p id="customAlertMessage" style="font-size: 0.88rem; color: #475569; line-height: 1.6; margin: 0 0 26px 0; white-space: pre-line; font-weight: 500;">
             Nội dung thông báo ở đây.
         </p>
         
-        <button onclick="closeCustomAlert()" class="btn-primary" style="display: inline-flex; align-items: center; justify-content: center; padding: 10px 28px; border-radius: 50px; font-weight: 700; font-size: 0.88rem; border: none; cursor: pointer; background: var(--primary-grad); color: #ffffff; box-shadow: 0 6px 16px rgba(14, 165, 233, 0.3); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 22px rgba(14, 165, 233, 0.45)';" onmouseout="this.style.transform='none'; this.style.boxShadow='0 6px 16px rgba(14, 165, 233, 0.3)';">
-            Tuyệt vời, để mình chọn!
+        <button id="customAlertBtn" onclick="closeCustomAlert()" class="btn-primary" style="display: inline-flex; align-items: center; justify-content: center; padding: 12px 32px; border-radius: 50px; font-weight: 800; font-size: 0.92rem; border: none; cursor: pointer; background: var(--primary-grad); color: #ffffff; box-shadow: 0 8px 24px rgba(14, 165, 233, 0.4); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px) scale(1.03)'; this.style.boxShadow='0 12px 28px rgba(14, 165, 233, 0.55)';" onmouseout="this.style.transform='none'; this.style.boxShadow='0 8px 24px rgba(14, 165, 233, 0.4)';">
+            Đồng ý
         </button>
     </div>
 </div>
 
 <!-- 16. Community Diaries Modal -->
 @if(isset($diaries) && count($diaries) > 0)
-<div id="communityDiariesModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.5); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); z-index: 10005; align-items: center; justify-content: center; animation: fadeIn 0.3s ease;">
-    <div style="width: 90%; max-width: 480px; max-height: 85vh; display: flex; flex-direction: column; padding: 24px 20px; border-radius: 24px; background: rgba(26, 26, 38, 0.85); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); border: 1.5px solid rgba(255, 255, 255, 0.1); box-shadow: 0 25px 60px rgba(0, 0, 0, 0.4); color: #ffffff; position: relative;">
+<div id="communityDiariesModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); z-index: 10005; align-items: center; justify-content: center; animation: fadeIn 0.3s ease;">
+    <div style="width: 90%; max-width: 520px; max-height: 85vh; display: flex; flex-direction: column; padding: 26px 22px; border-radius: 24px; background: #ffffff; border: 1px solid #e2e8f0; box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25); color: #0f172a; position: relative;">
         
-        <button onclick="closeCommunityDiariesModal()" style="position: absolute; top: 16px; right: 16px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1); width: 32px; height: 32px; border-radius: 50%; font-size: 1rem; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.8); cursor: pointer; transition: all 0.2s; z-index: 10;" onmouseover="this.style.background='rgba(255,255,255,0.15)'; this.style.color='#fff';" onmouseout="this.style.background='rgba(255,255,255,0.08)'; this.style.color='rgba(255,255,255,0.8)';">✕</button>
+        <button onclick="closeCommunityDiariesModal()" style="position: absolute; top: 18px; right: 18px; background: #f1f5f9; border: 1px solid #e2e8f0; width: 34px; height: 34px; border-radius: 50%; font-size: 1rem; display: flex; align-items: center; justify-content: center; color: #475569; cursor: pointer; transition: all 0.2s; z-index: 10;" onmouseover="this.style.background='#e2e8f0'; this.style.color='#0f172a';" onmouseout="this.style.background='#f1f5f9'; this.style.color='#475569';">✕</button>
         
-        <h3 style="font-weight: 800; color: #ffffff; font-size: 1.25rem; margin: 0 0 16px 0; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 16px;">
+        <h3 style="font-weight: 800; color: #0f172a; font-size: 1.3rem; margin: 0 0 16px 0; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #f1f5f9; padding-bottom: 14px;">
             📖 Nhật ký Cộng đồng
-            <span style="font-size: 0.75rem; background: rgba(14,165,233,0.15); border: 1px solid rgba(14,165,233,0.3); color: #0ea5e9; padding: 3px 10px; border-radius: 20px; font-weight: 800;">{{ count($diaries) }} đánh giá</span>
+            <span style="font-size: 0.78rem; background: #e0f2fe; border: 1px solid #bae6fd; color: #0284c7; padding: 3px 12px; border-radius: 20px; font-weight: 800;">{{ count($diaries) }} đánh giá</span>
         </h3>
         
         <!-- scrollable content -->
-        <div style="flex: 1; overflow-y: auto; padding-right: 8px; display: flex; flex-direction: column; gap: 16px;">
+        <div style="flex: 1; overflow-y: auto; padding-right: 8px; display: flex; flex-direction: column; gap: 24px;">
             @foreach($diaries as $diary)
-                <div style="padding: 16px; border-radius: 16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); transition: transform 0.2s;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <div style="padding: 22px; border-radius: 20px; background: #ffffff; border: 1.5px solid #cbd5e1; border-top: 4px solid #0ea5e9; box-shadow: 0 4px 18px rgba(15, 23, 42, 0.06); position: relative;">
+                    
+                    <!-- Header Banner for each separate diary -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid #f1f5f9;">
                         <div style="display: flex; align-items: center; gap: 10px;">
-                            <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--primary-grad); color: #ffffff; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 800; text-transform: uppercase; box-shadow: 0 2px 8px rgba(14, 165, 233, 0.4);">
-                                {{ substr($diary->user ? $diary->user->name : 'TK', 0, 2) }}
-                            </div>
-                            <div>
-                                <strong style="font-size: 0.85rem; color: #ffffff; display: block;">
-                                    {{ $diary->user ? $diary->user->name : 'Thực khách Food Tour' }}
-                                </strong>
-                                <span style="font-size: 0.65rem; color: rgba(255,255,255,0.5); display: block; margin-top: 1px;">
-                                    📅 {{ $diary->created_at->format('d/m/Y H:i') }}
-                                </span>
-                            </div>
+                            <span style="font-size: 0.72rem; background: linear-gradient(135deg, #0ea5e9, #0284c7); color: #ffffff; padding: 4px 10px; border-radius: 20px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 2px 6px rgba(14, 165, 233, 0.25);">
+                                📌 Nhật ký #{{ $loop->iteration }}
+                            </span>
+                            <span style="font-size: 0.75rem; color: #64748b; font-weight: 600;">
+                                📅 {{ $diary->created_at->format('d/m/Y H:i') }}
+                            </span>
                         </div>
+                        
                         @if($diary->rating)
-                        <div style="color: #ffb03a; font-size: 0.7rem; font-weight: 700; display: flex; align-items: center; gap: 3px; background: rgba(255,176,58,0.15); padding: 4px 8px; border-radius: 8px; border: 1px solid rgba(255,176,58,0.2);">
-                            <span>⭐</span><strong>{{ $diary->rating }}</strong>
+                        <div style="color: #d97706; font-size: 0.75rem; font-weight: 800; display: flex; align-items: center; gap: 4px; background: #fffbeb; padding: 5px 12px; border-radius: 20px; border: 1px solid #fef3c7;">
+                            <span>⭐</span><strong>{{ $diary->rating }} / 5 Sao</strong>
                         </div>
                         @else
-                        <div style="color: #10b981; font-size: 0.7rem; font-weight: 700; display: flex; align-items: center; gap: 3px; background: rgba(16, 185, 129, 0.15); padding: 4px 8px; border-radius: 8px; border: 1px solid rgba(16,185,129,0.2);">
-                            <span>✅</span><strong>Hoàn thành</strong>
+                        <div style="color: #059669; font-size: 0.75rem; font-weight: 800; display: flex; align-items: center; gap: 4px; background: #ecfdf5; padding: 5px 12px; border-radius: 20px; border: 1px solid #a7f3d0;">
+                            <span>✅</span><strong>Đã hoàn thành</strong>
                         </div>
                         @endif
                     </div>
+
+                    <!-- User info block -->
+                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 14px; background: #f8fafc; padding: 10px 14px; border-radius: 14px; border: 1px solid #f1f5f9;">
+                        <div style="width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(135deg, #0ea5e9, #0284c7); color: #ffffff; display: flex; align-items: center; justify-content: center; font-size: 0.88rem; font-weight: 800; text-transform: uppercase; box-shadow: 0 2px 8px rgba(14, 165, 233, 0.3); flex-shrink: 0;">
+                            {{ substr($diary->user ? $diary->user->name : 'TK', 0, 2) }}
+                        </div>
+                        <div>
+                            <strong style="font-size: 0.92rem; color: #0f172a; display: block;">
+                                {{ $diary->user ? $diary->user->name : 'Thực khách Food Tour' }}
+                            </strong>
+                            <span style="font-size: 0.72rem; color: #64748b;">Tác giả nhật ký chuyến đi</span>
+                        </div>
+                    </div>
                     
+                    <!-- Overall Tour Comment -->
                     @if($diary->comment)
-                    <p style="margin: 0 0 12px 0; font-size: 0.85rem; color: rgba(255,255,255,0.8); font-style: italic; line-height: 1.5;">
-                        "{{ $diary->comment }}"
-                    </p>
+                    <div style="margin: 0 0 16px 0; font-size: 0.88rem; color: #1e293b; line-height: 1.55; background: #f8fafc; padding: 12px 16px; border-radius: 12px; border-left: 4px solid #0ea5e9; border-top: 1px solid #f1f5f9; border-right: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9;">
+                        <span style="font-size: 1.1rem; color: #0ea5e9; margin-right: 4px;">💬</span> <em>"{{ $diary->comment }}"</em>
+                    </div>
                     @endif
                     
+                    <!-- Cover/Selfie Photo -->
                     @if($diary->image_path)
-                        <div style="position: relative; height: 160px; border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,0.08); margin-bottom: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
-                            <img src="{{ $diary->image_path }}" style="width: 100%; height: 100%; object-fit: cover;">
-                            <span style="position: absolute; bottom: 8px; right: 8px; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); font-size: 0.6rem; color: #ffffff; padding: 4px 10px; border-radius: 20px; font-weight: 800; text-transform: uppercase;">📸 Kỷ niệm Selfie</span>
+                        <div style="position: relative; height: 220px; border-radius: 14px; overflow: hidden; border: 1px solid #cbd5e1; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.06);">
+                            <img onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=800&q=80';" src="{{ $diary->image_path }}" style="width: 100%; height: 100%; object-fit: cover;">
+                            <span style="position: absolute; bottom: 12px; right: 12px; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); font-size: 0.7rem; color: #ffffff; padding: 6px 12px; border-radius: 20px; font-weight: 800; text-transform: uppercase;">📸 Kỷ niệm Selfie</span>
                         </div>
                     @endif
 
-                    <!-- Mini stop-by-stop check-in list preview -->
+                    <!-- Stop-by-stop check-in list preview -->
                     @if(!empty($diary->stop_reviews))
-                        <div style="margin-top: 14px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 12px;">
-                            <span style="font-size: 0.65rem; color: rgba(255,255,255,0.5); display: block; margin-bottom: 8px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">📍 Check-in tại các chặng dừng:</span>
-                            <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <div style="margin-top: 16px; background: #f8fafc; border-radius: 14px; padding: 14px; border: 1px solid #e2e8f0;">
+                            <span style="font-size: 0.75rem; color: #334155; display: flex; align-items: center; gap: 6px; margin-bottom: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">
+                                📍 Đánh giá từng chặng dừng của {{ $diary->user ? $diary->user->name : 'thực khách' }}:
+                            </span>
+                            <div style="display: flex; flex-direction: column; gap: 10px;">
                                 @foreach($diary->stop_reviews as $stopIdx => $stopRev)
                                     @php
                                         $stopEatery = $tour->stops[$stopIdx]->eatery ?? null;
                                     @endphp
                                     @if($stopEatery)
-                                        <div style="background: rgba(255,255,255,0.02); border-radius: 10px; padding: 8px 12px; border: 1px solid rgba(255,255,255,0.05);">
-                                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                                                <span style="font-size: 0.75rem; font-weight: 800; color: #ffffff;">
-                                                    {{ $stopEatery->category->icon ?: '🍜' }} {{ $stopEatery->name }}
-                                                </span>
-                                                <span style="color: #ffb03a; font-size: 0.65rem; display: flex; align-items: center; gap: 2px;">
-                                                    @if(!empty($stopRev['rating']))
-                                                        ⭐{{ $stopRev['rating'] }}
-                                                    @else
-                                                        ✅ Đã đến
-                                                    @endif
-                                                </span>
+                                        <div style="display: flex; gap: 12px; background: #ffffff; border-radius: 12px; padding: 12px; border: 1px solid #cbd5e1; box-shadow: 0 1px 3px rgba(0,0,0,0.02); align-items: flex-start;">
+                                            <div style="flex: 1;">
+                                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                                                    <span style="font-size: 0.84rem; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 6px;">
+                                                        <span style="font-size: 1rem;">{{ $stopEatery->category->icon ?: '🍜' }}</span>
+                                                        {{ $stopEatery->name }}
+                                                    </span>
+                                                    <span style="color: #d97706; font-size: 0.7rem; font-weight: 700; background: #fffbeb; padding: 3px 8px; border-radius: 6px; border: 1px solid #fef3c7; display: flex; align-items: center; gap: 2px;">
+                                                        @if(!empty($stopRev['rating']))
+                                                            ⭐ {{ $stopRev['rating'] }}
+                                                        @else
+                                                            ✅ Đã đến
+                                                        @endif
+                                                    </span>
+                                                </div>
+                                                @if(!empty($stopRev['comment']))
+                                                <p style="margin: 0; font-size: 0.8rem; color: #475569; font-style: italic; line-height: 1.5;">
+                                                    "{{ $stopRev['comment'] }}"
+                                                </p>
+                                                @endif
                                             </div>
-                                            @if(!empty($stopRev['comment']))
-                                            <p style="margin: 0; font-size: 0.75rem; color: rgba(255,255,255,0.6); font-style: italic; line-height: 1.4;">
-                                                "{{ $stopRev['comment'] }}"
-                                            </p>
-                                            @endif
+                                            
                                             @if(!empty($stopRev['image_path']))
-                                                <div style="position: relative; height: 100px; border-radius: 8px; overflow: hidden; margin-top: 6px; border: 1px solid rgba(255,255,255,0.08);">
-                                                    <img src="{{ $stopRev['image_path'] }}" style="width: 100%; height: 100%; object-fit: cover;">
+                                                <div style="width: 70px; height: 70px; border-radius: 8px; overflow: hidden; border: 1px solid #cbd5e1; flex-shrink: 0;">
+                                                    <img onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=800&q=80';" src="{{ $stopRev['image_path'] }}" style="width: 100%; height: 100%; object-fit: cover;">
                                                 </div>
                                             @endif
                                         </div>

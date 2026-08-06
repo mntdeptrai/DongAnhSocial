@@ -243,6 +243,52 @@
         transform: translateY(-2px);
         box-shadow: 0 10px 25px rgba(255, 126, 41, 0.4);
     }
+
+    /* Interactive Preset Selection Pills */
+    .option-pills-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 6px;
+    }
+
+    .option-pill-btn {
+        background: rgba(15, 23, 42, 0.03);
+        border: 1.5px solid rgba(15, 23, 42, 0.12);
+        border-radius: 14px;
+        padding: 10px 18px;
+        font-size: 0.88rem;
+        font-weight: 700;
+        color: var(--text-main);
+        cursor: pointer;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        user-select: none;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+    }
+
+    .option-pill-btn:hover {
+        border-color: #0ea5e9;
+        background: rgba(14, 165, 233, 0.08);
+        color: #0ea5e9;
+        transform: translateY(-1px);
+    }
+
+    .option-pill-btn.active {
+        background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+        border-color: #0ea5e9;
+        color: #ffffff !important;
+        box-shadow: 0 4px 14px rgba(14, 165, 233, 0.35);
+        transform: translateY(-1px);
+    }
+
+    [data-theme="dark"] .option-pill-btn {
+        background: rgba(255, 255, 255, 0.05);
+        border-color: rgba(255, 255, 255, 0.15);
+        color: #ffffff;
+    }
 </style>
 @endsection
 
@@ -253,7 +299,7 @@
             {{ isset($tour) ? '✏️ Chỉnh sửa Lộ trình' : '🗺️ Tự thiết kế Lộ trình' }}
         </h1>
         
-        <form action="{{ isset($tour) ? route('food-tours.update', $tour->slug) : route('food-tours.store') }}" method="POST" @submit="validateForm($event)">
+        <form action="{{ isset($tour) ? route('food-tours.update', $tour->slug) : route('food-tours.store') }}" method="POST" enctype="multipart/form-data" @submit="validateForm($event)">
             @csrf
             @if(isset($tour))
                 @method('PUT')
@@ -285,105 +331,228 @@
                 <textarea name="description" rows="3" class="form-textarea" placeholder="Mô tả khoảng 2-3 câu ngắn về lộ trình này." required>{{ old('description', $tour->description ?? '') }}</textarea>
             </div>
 
+            <!-- 1. Thời lượng & Khoảng cách di chuyển -->
             <div class="grid-2">
                 <div class="form-group">
-                    <label class="form-label">Thời lượng ước tính <span style="color:#ef4444;">*</span></label>
-                    <input type="text" name="duration" class="form-input" placeholder="Ví dụ: 2.5 giờ" value="{{ old('duration', $tour->duration ?? '2.5 giờ') }}" required>
+                    <label class="form-label">⏱️ Thời lượng ước tính <span style="color:#ef4444;">*</span></label>
+                    <select x-model="durationSelect" @change="if(durationSelect !== 'custom') duration = durationSelect; else duration = ''" class="form-select">
+                        <option value="1.5 giờ">1.5 giờ (Nhanh gọn)</option>
+                        <option value="2.0 giờ">2.0 giờ (Phổ thông)</option>
+                        <option value="2.5 giờ">2.5 giờ (Tiêu chuẩn)</option>
+                        <option value="3.0 giờ">3.0 giờ (Thong thả)</option>
+                        <option value="Nửa ngày (4h)">Nửa ngày (4 tiếng)</option>
+                        <option value="custom">✏️ Nhập thời lượng khác...</option>
+                    </select>
+                    <input type="hidden" name="duration" :value="duration" x-if="durationSelect !== 'custom'">
+                    <input type="text" name="duration" x-model="duration" class="form-input" style="margin-top: 8px;" x-show="durationSelect === 'custom'" placeholder="Ví dụ: 3.5 giờ">
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label">Khoảng cách di chuyển <span style="color:#ef4444;">*</span></label>
-                    <input type="text" name="distance" class="form-input" placeholder="Ví dụ: 4.5 km" value="{{ old('distance', $tour->distance ?? '5.0 km') }}" required>
+                    <label class="form-label">📏 Khoảng cách di chuyển <span style="color:#ef4444;">*</span></label>
+                    <select x-model="distanceSelect" @change="if(distanceSelect !== 'custom') distance = distanceSelect; else distance = ''" class="form-select">
+                        <option value="2.0 km">2.0 km (Rất gần)</option>
+                        <option value="3.5 km">3.5 km (Gần)</option>
+                        <option value="5.0 km">5.0 km (Vừa phải)</option>
+                        <option value="7.5 km">7.5 km (Khá xa)</option>
+                        <option value="10.0 km">10.0 km (Xa)</option>
+                        <option value="custom">✏️ Nhập khoảng cách khác...</option>
+                    </select>
+                    <input type="hidden" name="distance" :value="distance" x-if="distanceSelect !== 'custom'">
+                    <input type="text" name="distance" x-model="distance" class="form-input" style="margin-top: 8px;" x-show="distanceSelect === 'custom'" placeholder="Ví dụ: 4.5 km">
                 </div>
             </div>
 
+            <!-- 2. Ngân sách & Khung giờ đẹp nhất -->
             <div class="grid-2">
                 <div class="form-group">
-                    <label class="form-label">Ngân sách dự chi <span style="color:#ef4444;">*</span></label>
-                    <input type="text" name="budget" class="form-input" placeholder="Ví dụ: 150.000đ - 250.000đ" value="{{ old('budget', $tour->budget ?? '200.000đ') }}" required @input="formatBudgetInput($event)" @blur="formatBudgetInput($event)">
+                    <label class="form-label">💰 Ngân sách dự chi <span style="color:#ef4444;">*</span></label>
+                    <select x-model="budgetSelect" @change="if(budgetSelect !== 'custom') budget = budgetSelect; else budget = ''" class="form-select">
+                        <option value="100.000đ">100.000đ (Tiết kiệm)</option>
+                        <option value="150.000đ">150.000đ (Phổ thông)</option>
+                        <option value="200.000đ">200.000đ (Tiêu chuẩn)</option>
+                        <option value="300.000đ">300.000đ (Thoải mái)</option>
+                        <option value="500.000đ">500.000đ (Sang xịn)</option>
+                        <option value="custom">✏️ Nhập ngân sách khác...</option>
+                    </select>
+                    <input type="hidden" name="budget" :value="budget" x-if="budgetSelect !== 'custom'">
+                    <input type="text" name="budget" x-model="budget" class="form-input" style="margin-top: 8px;" x-show="budgetSelect === 'custom'" placeholder="Ví dụ: 150.000đ - 250.000đ" @input="formatBudgetInput($event)">
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label">Khung giờ đẹp nhất <span style="color:#ef4444;">*</span></label>
-                    <input type="text" name="best_time" class="form-input" placeholder="Ví dụ: 17:00 - 21:00" value="{{ old('best_time', $tour->best_time ?? '18:00 - 22:00') }}" required>
+                    <label class="form-label">🕒 Khung giờ đẹp nhất <span style="color:#ef4444;">*</span></label>
+                    <select x-model="bestTimeSelect" @change="if(bestTimeSelect !== 'custom') best_time = bestTimeSelect; else best_time = ''" class="form-select">
+                        <option value="🌅 Sáng (07:00 - 11:00)">🌅 Sáng (07:00 - 11:00)</option>
+                        <option value="☀️ Trưa (11:00 - 14:00)">☀️ Trưa (11:00 - 14:00)</option>
+                        <option value="🌇 Chiều (14:30 - 17:30)">🌇 Chiều (14:30 - 17:30)</option>
+                        <option value="🌙 Tối (18:00 - 22:00)">🌙 Tối (18:00 - 22:00)</option>
+                        <option value="🌃 Đêm khuya (22:00 - 01:00)">🌃 Đêm khuya (22:00 - 01:00)</option>
+                        <option value="custom">✏️ Nhập khung giờ khác...</option>
+                    </select>
+                    <input type="hidden" name="best_time" :value="best_time" x-if="bestTimeSelect !== 'custom'">
+                    <input type="text" name="best_time" x-model="best_time" class="form-input" style="margin-top: 8px;" x-show="bestTimeSelect === 'custom'" placeholder="Ví dụ: 17:00 - 21:00">
+                </div>
+            </div>
+
+            <!-- 3. Phong cách & Cấp độ trải nghiệm -->
+            <div class="grid-2">
+                <div class="form-group">
+                    <label class="form-label">✨ Chủ đề & Phong cách Lộ trình</label>
+                    <select name="mood" x-model="mood" class="form-select">
+                        <option value="specialty">🌿 Đặc sản Đông Anh</option>
+                        <option value="chill">☕ Chill cuối tuần</option>
+                        <option value="night">🌙 Ăn đêm Cao Lỗ</option>
+                        <option value="cheap">🎓 Sinh viên giá rẻ</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">⚡ Cấp độ trải nghiệm</label>
+                    <select name="difficulty" x-model="difficulty" class="form-select">
+                        <option value="☕ Nhẹ nhàng">☕ Nhẹ nhàng</option>
+                        <option value="🏃 Sôi động">🏃 Sôi động</option>
+                        <option value="🔥 Thử thách">🔥 Thử thách</option>
+                    </select>
                 </div>
             </div>
 
             <div class="form-group">
-                <label class="form-label">Thumbnail ảnh nền (Link ảnh)</label>
-                <input type="url" name="thumbnail" class="form-input" placeholder="Nhập liên kết ảnh làm hình nền chính (để trống nếu sử dụng ảnh mặc định)" value="{{ old('thumbnail', $tour->thumbnail ?? '') }}">
+                <label class="form-label">🖼️ Hình ảnh nền Lộ trình (Thumbnail)</label>
+                
+                <!-- Tab Mode Toggle: File Upload vs Image Link -->
+                <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                    <button type="button" @click="imgMode = 'file'" :style="imgMode === 'file' ? 'background: #0ea5e9; color: #fff; border-color: #0ea5e9;' : 'background: #f1f5f9; color: #475569; border-color: #e2e8f0;'" style="padding: 6px 14px; border-radius: 20px; font-size: 0.82rem; font-weight: 700; border: 1px solid; cursor: pointer; transition: all 0.2s;">
+                        📁 Tải ảnh từ máy tính / Điện thoại
+                    </button>
+                    <button type="button" @click="imgMode = 'url'" :style="imgMode === 'url' ? 'background: #0ea5e9; color: #fff; border-color: #0ea5e9;' : 'background: #f1f5f9; color: #475569; border-color: #e2e8f0;'" style="padding: 6px 14px; border-radius: 20px; font-size: 0.82rem; font-weight: 700; border: 1px solid; cursor: pointer; transition: all 0.2s;">
+                        🔗 Dán Link URL ảnh
+                    </button>
+                </div>
+
+                <!-- Input File Upload -->
+                <div x-show="imgMode === 'file'" style="background: rgba(14, 165, 233, 0.04); border: 2px dashed rgba(14, 165, 233, 0.3); border-radius: 16px; padding: 20px; text-align: center; cursor: pointer;" @click="$refs.fileInput.click()">
+                    <span style="font-size: 1.8rem; display: block; margin-bottom: 6px;">📸</span>
+                    <strong style="color: #0f172a; font-size: 0.9rem; display: block;">Bấm vào đây để chọn tập tin ảnh từ thiết bị</strong>
+                    <span style="font-size: 0.75rem; color: #64748b;">Hỗ trợ định dạng JPG, PNG, WEBP, GIF (Tối đa 5MB)</span>
+                    <input type="file" ref="fileInput" name="thumbnail_file" accept="image/*" style="display: none;" @change="handleFilePreview($event)">
+                </div>
+
+                <!-- Input URL Link -->
+                <div x-show="imgMode === 'url'">
+                    <input type="url" name="thumbnail" x-model="imageUrl" class="form-input" placeholder="Nhập liên kết ảnh URL (Ví dụ: https://images.unsplash.com/...)" value="{{ old('thumbnail', $tour->thumbnail ?? '') }}">
+                </div>
+
+                <!-- Image Live Preview Box -->
+                <div x-show="previewUrl || imageUrl" style="margin-top: 12px; position: relative; height: 180px; border-radius: 14px; overflow: hidden; border: 1px solid #cbd5e1; box-shadow: 0 4px 12px rgba(0,0,0,0.06);">
+                    <img :src="previewUrl || imageUrl" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=800&q=80';">
+                    <span style="position: absolute; bottom: 8px; right: 8px; background: rgba(15, 23, 42, 0.8); color: #fff; font-size: 0.7rem; padding: 4px 10px; border-radius: 20px; font-weight: 700;">Xem trước ảnh nền</span>
+                </div>
             </div>
 
             <div class="form-group">
-                <label class="form-label">Câu chuyện hành trình (Lời tự sự dẫn dắt)</label>
+                <label class="form-label">📖 Câu chuyện hành trình (Lời tự sự dẫn dắt)</label>
                 <textarea name="story" rows="4" class="form-textarea" placeholder="Bộc lộ cảm xúc, kể câu chuyện vì sao bạn kết nối các địa điểm này lại với nhau...">{{ old('story', $tour->story ?? '') }}</textarea>
             </div>
 
-            <!-- CHẶNG DỪNG CHÂN (DYNAMIC BUILDER) -->
+            <!-- CHẶNG DỪNG CHÂN (TIMELINE BUILDER) -->
             <div class="form-section-title">
-                <span>📍</span> Các chặng dừng chân (Đã thêm: <span x-text="stops.length"></span>)
+                <span>📍</span> Tiến trình Lộ trình (<span x-text="stops.length"></span> chặng đã chọn)
             </div>
 
-            <!-- Search Eatery to add -->
-            <div class="eatery-search-container">
-                <label class="form-label" style="margin-bottom: 6px; display:block;">🔍 Tìm kiếm địa điểm để thêm chặng</label>
-                <input type="text" x-model="searchQuery" @input="filterEateries()" @focus="dropdownOpen = true" @click.away="dropdownOpen = false" class="form-input" placeholder="Nhập tên quán ăn, nhà hàng, điểm du lịch Đông Anh...">
+            <!-- Timeline Stops Container -->
+            <div style="position: relative; padding-left: 24px; border-left: 3px dashed #0ea5e9; margin-left: 14px; margin-bottom: 30px;">
                 
-                <!-- Drodown list -->
-                <div class="search-results-dropdown" x-show="dropdownOpen && filteredEateries.length > 0">
-                    <template x-for="eat in filteredEateries" :key="eat.id">
-                        <div class="search-result-item" @click="addStop(eat)">
-                            <div>
-                                <strong style="color: var(--text-main); font-size: 0.9rem;" x-text="eat.name"></strong>
-                                <span style="font-size: 0.72rem; color: var(--text-muted); display: block; max-width: 500px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" x-text="eat.address"></span>
-                            </div>
-                            <span style="font-size: 0.68rem; background: rgba(255, 126, 41, 0.15); color: var(--primary); padding: 2px 8px; border-radius: 20px; font-weight: 700;" x-text="eat.category_name"></span>
-                        </div>
-                    </template>
-                </div>
-            </div>
-
-            <!-- Empty State Stops -->
-            <div x-show="stops.length === 0" style="text-align: center; padding: 40px; background: rgba(255,255,255,0.01); border: 1.5px dashed rgba(255,126,41,0.2); border-radius: 16px; margin-bottom: 20px;">
-                <span style="font-size: 2.5rem; display: block; margin-bottom: 12px;">🗺️</span>
-                <strong style="color: var(--text-main);">Chưa có chặng dừng chân nào được thêm</strong>
-                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">Hãy sử dụng ô tìm kiếm ở trên để thêm các địa điểm bạn muốn vào lộ trình (Cần ít nhất 1 địa điểm).</p>
-            </div>
-
-            <!-- Stops Cards list -->
-            <div style="margin-bottom: 25px;">
+                <!-- Loop through added stops -->
                 <template x-for="(stop, index) in stops" :key="index">
-                    <div class="stop-card">
-                        <div class="stop-header">
-                            <div class="stop-index-badge">
-                                <span x-text="'Chặng ' + (index + 1)"></span>
-                                <span style="opacity:0.75; font-size: 0.8rem;" x-text="'(' + stop.category_name + ')'"></span>
+                    <div style="position: relative; margin-bottom: 24px;">
+                        
+                        <!-- Timeline Step Node Badge -->
+                        <div style="position: absolute; left: -39px; top: 18px; width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, #0ea5e9, #0284c7); color: #ffffff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.85rem; box-shadow: 0 0 10px rgba(14, 165, 233, 0.4); z-index: 2;">
+                            <span x-text="index + 1"></span>
+                        </div>
+
+                        <!-- Card Content -->
+                        <div class="stop-card" style="margin-bottom: 0; background: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 18px; padding: 20px; box-shadow: 0 4px 14px rgba(15,23,42,0.04);">
+                            <div class="stop-header">
+                                <div class="stop-index-badge" style="background: linear-gradient(135deg, #0ea5e9, #0284c7); font-size: 0.78rem; padding: 4px 12px; border-radius: 20px;">
+                                    <span>📍 Chặng <span x-text="index + 1"></span></span>
+                                    <span style="opacity:0.85; font-size: 0.75rem;" x-text="'(' + stop.category_name + ')'"></span>
+                                </div>
+                                <div class="stop-actions">
+                                    <button type="button" @click="moveStop(index, -1)" class="btn-icon" :disabled="index === 0" title="Di chuyển lên" style="border-radius: 8px;">▲</button>
+                                    <button type="button" @click="moveStop(index, 1)" class="btn-icon" :disabled="index === stops.length - 1" title="Di chuyển xuống" style="border-radius: 8px;">▼</button>
+                                    <button type="button" @click="removeStop(index)" class="btn-icon btn-delete" title="Xóa chặng này" style="border-radius: 8px;">✕</button>
+                                </div>
                             </div>
-                            <div class="stop-actions">
-                                <button type="button" @click="moveStop(index, -1)" class="btn-icon" :disabled="index === 0" title="Di chuyển lên">▲</button>
-                                <button type="button" @click="moveStop(index, 1)" class="btn-icon" :disabled="index === stops.length - 1" title="Di chuyển xuống">▼</button>
-                                <button type="button" @click="removeStop(index)" class="btn-icon btn-delete" title="Xóa chặng">✕</button>
+
+                            <div style="font-weight: 800; font-size: 1.05rem; color: #0f172a; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                                <span>🍜</span> <span x-text="stop.name"></span>
+                            </div>
+
+                            <!-- Hidden fields -->
+                            <input type="hidden" :name="'stops['+index+'][eatery_id]'" :value="stop.eatery_id">
+
+                            <div class="grid-2">
+                                <div class="form-group" style="margin-bottom:0;">
+                                    <label class="form-label" style="font-size:0.8rem; color: #475569;">⏱️ Thời gian trải nghiệm gợi ý</label>
+                                    <div style="display: flex; gap: 6px; margin-bottom: 6px; flex-wrap: wrap;">
+                                        <template x-for="tOpt in ['30 phút', '45 phút', '60 phút', '90 phút']">
+                                            <button type="button" @click="stop.estimated_time = tOpt" :class="{'active': stop.estimated_time === tOpt}" class="option-pill-btn" style="padding: 4px 10px; font-size: 0.75rem; border-radius: 8px;">
+                                                <span x-text="tOpt"></span>
+                                            </button>
+                                        </template>
+                                    </div>
+                                    <input type="text" :name="'stops['+index+'][estimated_time]'" x-model="stop.estimated_time" class="form-input" style="padding: 8px 12px; font-size:0.88rem;" placeholder="Ví dụ: 45 phút">
+                                </div>
+                                
+                                <div class="form-group" style="margin-bottom:0;">
+                                    <label class="form-label" style="font-size:0.8rem; color: #475569;">💡 Gợi ý thực đơn / Mẹo hay tại đây</label>
+                                    <input type="text" :name="'stops['+index+'][stop_story]'" x-model="stop.stop_story" class="form-input" style="padding: 8px 12px; font-size:0.88rem;" placeholder="Ví dụ: Thử món nổi tiếng nhất, đi tầm chiều mát...">
+                                </div>
                             </div>
                         </div>
 
-                        <div style="font-weight: 800; font-size: 1rem; color: var(--text-main); margin-bottom: 14px;" x-text="stop.name"></div>
-
-                        <!-- Hidden fields to submit to backend -->
-                        <input type="hidden" :name="'stops['+index+'][eatery_id]'" :value="stop.eatery_id">
-
-                        <div class="grid-2">
-                            <div class="form-group" style="margin-bottom:0;">
-                                <label class="form-label" style="font-size:0.8rem;">⏱️ Thời gian trải nghiệm gợi ý</label>
-                                <input type="text" :name="'stops['+index+'][estimated_time]'" x-model="stop.estimated_time" class="form-input" style="padding: 8px 12px; font-size:0.88rem;" placeholder="Ví dụ: 45 phút">
-                            </div>
-                            
-                            <div class="form-group" style="margin-bottom:0;">
-                                <label class="form-label" style="font-size:0.8rem;">💡 Gợi ý thực đơn / Mẹo hay</label>
-                                <input type="text" :name="'stops['+index+'][stop_story]'" x-model="stop.stop_story" class="form-input" style="padding: 8px 12px; font-size:0.88rem;" placeholder="Ví dụ: Nên gọi đĩa bún sợi nhỏ chấm thêm tương quê ngon...">
-                            </div>
+                        <!-- Connector arrow line -->
+                        <div x-show="index < stops.length - 1" style="text-align: center; margin: 10px 0 -4px 0; color: #0ea5e9; font-size: 0.8rem; font-weight: 700;">
+                            ↓ Di chuyển sang Chặng <span x-text="index + 2"></span>
                         </div>
                     </div>
                 </template>
+
+                <!-- INLINE SEARCH CARD FOR NEXT STOP -->
+                <div style="position: relative; margin-top: 10px;">
+                    <div style="position: absolute; left: -39px; top: 18px; width: 28px; height: 28px; border-radius: 50%; background: #e2e8f0; color: #64748b; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.85rem; z-index: 2;">
+                        <span x-text="stops.length + 1"></span>
+                    </div>
+
+                    <div class="eatery-search-container" style="background: rgba(14, 165, 233, 0.04); border: 2px dashed #0ea5e9; border-radius: 18px; padding: 20px;">
+                        <label class="form-label" style="margin-bottom: 8px; display:flex; align-items: center; gap: 8px; color: #0284c7; font-size: 0.95rem; font-weight: 800;">
+                            <span>➕ Chọn địa điểm cho Chặng <span x-text="stops.length + 1"></span>:</span>
+                        </label>
+                        
+                        <input type="text" 
+                               ref="searchInput" 
+                               x-model="searchQuery" 
+                               @input="filterEateries()" 
+                               @focus="dropdownOpen = true" 
+                               class="form-input" 
+                               placeholder="🔍 Tìm tên quán ăn, nhà hàng, địa điểm Đông Anh..."
+                               style="background: #ffffff; border: 1.5px solid #cbd5e1; box-shadow: 0 2px 6px rgba(0,0,0,0.03);">
+                        
+                        <!-- Dropdown Results -->
+                        <div class="search-results-dropdown" x-show="dropdownOpen && filteredEateries.length > 0" style="position: relative; top: auto; margin-top: 10px; max-height: 280px;">
+                            <template x-for="eat in filteredEateries" :key="eat.id">
+                                <div class="search-result-item" @click="addStop(eat)" style="padding: 12px 16px;">
+                                    <div>
+                                        <strong style="color: #0f172a; font-size: 0.92rem;" x-text="eat.name"></strong>
+                                        <span style="font-size: 0.75rem; color: #64748b; display: block; margin-top: 2px;" x-text="eat.address"></span>
+                                    </div>
+                                    <span style="font-size: 0.7rem; background: #e0f2fe; color: #0284c7; padding: 3px 10px; border-radius: 20px; font-weight: 800; white-space: nowrap;" x-text="eat.category_name"></span>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+
             </div>
 
             <!-- Submit button -->
@@ -409,6 +578,32 @@
 
     function tourForm() {
         return {
+            duration: "{{ old('duration', $tour->duration ?? '2.5 giờ') }}",
+            durationSelect: "{{ old('duration', $tour->duration ?? '2.5 giờ') }}",
+
+            distance: "{{ old('distance', $tour->distance ?? '5.0 km') }}",
+            distanceSelect: "{{ old('distance', $tour->distance ?? '5.0 km') }}",
+
+            budget: "{{ old('budget', $tour->budget ?? '200.000đ') }}",
+            budgetSelect: "{{ old('budget', $tour->budget ?? '200.000đ') }}",
+
+            best_time: "{{ old('best_time', $tour->best_time ?? '🌙 Tối (18:00 - 22:00)') }}",
+            bestTimeSelect: "{{ old('best_time', $tour->best_time ?? '🌙 Tối (18:00 - 22:00)') }}",
+
+            mood: "{{ old('mood', $tour->mood ?? 'specialty') }}",
+            difficulty: "{{ old('difficulty', $tour->difficulty ?? '☕ Nhẹ nhàng') }}",
+
+            imgMode: 'file',
+            previewUrl: null,
+            imageUrl: "{{ old('thumbnail', $tour->thumbnail ?? '') }}",
+
+            handleFilePreview(event) {
+                const file = event.target.files[0];
+                if (file) {
+                    this.previewUrl = URL.createObjectURL(file);
+                }
+            },
+
             stops: {!! json_encode(isset($tour) ? $tour->stops->map(function($s) {
                 return [
                     'eatery_id' => $s->eatery_id,
@@ -456,15 +651,43 @@
 
             init() {
                 this.filteredEateries = allEateries.slice(0, 10);
+
+                const dOpts = ['1.5 giờ', '2.0 giờ', '2.5 giờ', '3.0 giờ', 'Nửa ngày (4h)'];
+                if (!dOpts.includes(this.duration)) this.durationSelect = 'custom';
+
+                const distOpts = ['2.0 km', '3.5 km', '5.0 km', '7.5 km', '10.0 km'];
+                if (!distOpts.includes(this.distance)) this.distanceSelect = 'custom';
+
+                const bOpts = ['100.000đ', '150.000đ', '200.000đ', '300.000đ', '500.000đ'];
+                if (!bOpts.includes(this.budget)) this.budgetSelect = 'custom';
+
+                const tOpts = ['🌅 Sáng (07:00 - 11:00)', '☀️ Trưa (11:00 - 14:00)', '🌇 Chiều (14:30 - 17:30)', '🌙 Tối (18:00 - 22:00)', '🌃 Đêm khuya (22:00 - 01:00)'];
+                if (!tOpts.includes(this.best_time)) this.bestTimeSelect = 'custom';
+            },
+
+            focusAddStop() {
+                const searchInput = this.$refs.searchInput;
+                if (searchInput) {
+                    searchInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    setTimeout(() => {
+                        searchInput.focus();
+                        this.dropdownOpen = true;
+                    }, 250);
+                }
             },
 
             filterEateries() {
                 const query = this.searchQuery.toLowerCase().trim();
+                const existingIds = this.stops.map(s => Number(s.eatery_id));
+                
+                // Loại bỏ hoàn toàn các địa điểm đã có trong chặng dừng
+                let available = allEateries.filter(eat => !existingIds.includes(Number(eat.id)));
+                
                 if (!query) {
-                    this.filteredEateries = allEateries.slice(0, 10);
+                    this.filteredEateries = available.slice(0, 10);
                     return;
                 }
-                this.filteredEateries = allEateries.filter(eat => 
+                this.filteredEateries = available.filter(eat => 
                     eat.name.toLowerCase().includes(query) || 
                     eat.address.toLowerCase().includes(query)
                 ).slice(0, 10);
@@ -472,9 +695,9 @@
 
             addStop(eatery) {
                 // Check if eatery already added
-                const exists = this.stops.some(stop => stop.eatery_id === eatery.id);
+                const exists = this.stops.some(stop => Number(stop.eatery_id) === Number(eatery.id));
                 if (exists) {
-                    alert('Địa điểm này đã được thêm vào hành trình rồi!');
+                    showCustomAlert('Địa điểm đã chọn', 'Địa điểm này đã có trong lộ trình của bạn!', 'Đã hiểu', null, '⚠️');
                     return;
                 }
                 
@@ -487,12 +710,13 @@
                 });
 
                 this.searchQuery = '';
-                this.filteredEateries = allEateries.slice(0, 10);
                 this.dropdownOpen = false;
+                this.filterEateries();
             },
 
             removeStop(index) {
                 this.stops.splice(index, 1);
+                this.filterEateries();
             },
 
             moveStop(index, direction) {
@@ -507,7 +731,7 @@
 
             validateForm(event) {
                 if (this.stops.length === 0) {
-                    alert('Bạn cần thêm ít nhất 1 địa điểm chặng dừng chân cho Food Tour!');
+                    showCustomAlert('Cần thêm địa điểm', 'Bạn cần chọn ít nhất 1 địa điểm chặng dừng chân cho Food Tour trước khi xuất bản!', 'Đã hiểu', null, '🗺️');
                     event.preventDefault();
                     return false;
                 }
