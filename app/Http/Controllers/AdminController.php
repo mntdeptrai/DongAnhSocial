@@ -1450,6 +1450,172 @@ class AdminController extends Controller
         return view('admin.users.index', compact('users', 'totalUsers', 'adminCount', 'sellerCount', 'userCount'));
     }
 
+    /**
+     * Xuất danh sách người dùng & gian hàng chợ ra file Excel (.csv / .xls)
+     */
+    public function exportUsers(Request $request)
+    {
+        $this->verifyAdmin();
+        $role = session('user_role');
+        if (!in_array($role, ['admin', 'manager'])) {
+            abort(403, 'Bạn không có quyền xuất dữ liệu!');
+        }
+
+        $query = User::query();
+
+        if ($role === 'manager') {
+            $managerUserId = session('user_id');
+            $managerEatery = \Illuminate\Support\Facades\DB::connection('mysql_market')
+                ->table('eateries')
+                ->where('user_id', $managerUserId)
+                ->first();
+            if (!$managerEatery) {
+                $managerEatery = EateryApiService::getEateries()->firstWhere('user_id', $managerUserId);
+            }
+            $eateryId = $managerEatery ? $managerEatery->id : 0;
+
+            $stallIds = \Illuminate\Support\Facades\DB::connection('mysql_market')
+                ->table('ocop_products')
+                ->where('eatery_id', $eateryId)
+                ->pluck('id')
+                ->toArray();
+
+            $query->where('role', 'seller')->where(function($q) use ($eateryId, $stallIds) {
+                $q->where('eatery_id', $eateryId);
+                if (!empty($stallIds)) {
+                    $q->orWhereIn('stall_id', $stallIds);
+                }
+            });
+        }
+
+        if ($request->has('search') && $request->search != '') {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('phone', $search)
+                  ->orWhere('email', $search)
+                  ->orWhere('name', 'like', $search . '%');
+            });
+        }
+
+        if ($request->has('status') && $request->status != '') {
+            $query->where('status', $request->status);
+        }
+
+        $users = $query->orderBy('created_at', 'desc')->get();
+
+        // Nạp danh sách chợ (Eateries) để tra cứu tên chợ của từng gian hàng
+        $eateriesMap = [];
+        try {
+            $eList1 = \Illuminate\Support\Facades\DB::connection('mysql_market')->table('eateries')->get();
+            foreach ($eList1 as $e) {
+                $eateriesMap[$e->id] = $e->standardized_name ?: $e->name;
+            }
+        } catch (\Exception $ex) {}
+        try {
+            $eList2 = \Illuminate\Support\Facades\DB::connection('mysql')->table('eateries')->get();
+            foreach ($eList2 as $e) {
+                if (!isset($eateriesMap[$e->id])) {
+                    $eateriesMap[$e->id] = $e->standardized_name ?: $e->name;
+                }
+            }
+        } catch (\Exception $ex) {}
+
+        $filename = 'Danh_sach_nguoi_dung_gian_hang_' . date('Y-m-d_H-i') . '.csv';
+
+        $headers = [
+            'Content-Type'        => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Pragma'              => 'no-cache',
+            'Cache-Control'       => 'must-revalidate, post-check=0, pre-check=0',
+            'Expires'             => '0',
+        ];
+
+        $callback = function() use ($users, $eateriesMap) {
+            $file = fopen('php://output', 'w');
+            // Xuất UTF-8 BOM để Excel mở không bị lỗi font tiếng Việt
+            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+
+            // Dòng tiêu đề các cột
+            fputcsv($file, [
+                'STT',
+                'Tên người dùng',
+                'Số điện thoại',
+                'Email',
+                'Vai trò',
+                'Gian hàng liên kết',
+                'Tên chợ của gian hàng nằm trong',
+                'Trạng thái'
+            ]);
+
+            $stt = 1;
+            foreach ($users as $u) {
+                $stallName = 'Chưa gán gian hàng';
+                $marketName = 'Chưa thuộc chợ nào';
+
+                if ($u->role === 'seller') {
+                    $stall = $u->getStall();
+                    $ownedEateries = $u->getOwnedEateries();
+                    $routeBusinesses = $u->getRouteBusinesses();
+
+                    if ($stall) {
+                        $stallName = $stall->stall_name ?: ($stall->name ?: 'Gian hàng #' . $stall->id);
+                        if (!empty($stall->eatery_id) && isset($eateriesMap[$stall->eatery_id])) {
+                            $marketName = $eateriesMap[$stall->eatery_id];
+                        }
+                    } elseif (count($ownedEateries) > 0) {
+                        $stallNames = [];
+                        $mNames = [];
+                        foreach ($ownedEateries as $oe) {
+                            $stallNames[] = $oe['name'];
+                            if (!empty($oe['id']) && isset($eateriesMap[$oe['id']])) {
+                                $mNames[] = $eateriesMap[$oe['id']];
+                            }
+                        }
+                        $stallName = implode(', ', $stallNames);
+                        if (!empty($mNames)) {
+                            $marketName = implode(', ', array_unique($mNames));
+                        }
+                    } elseif ($routeBusinesses && $routeBusinesses->count() > 0) {
+                        $stallName = $routeBusinesses->pluck('name')->implode(', ');
+                        $mNames = $routeBusinesses->pluck('village_name')->filter()->unique()->toArray();
+                        if (!empty($mNames)) {
+                            $marketName = 'Tuyến 4.0 (' . implode(', ', $mNames) . ')';
+                        }
+                    }
+                }
+
+                if ($marketName === 'Chưa thuộc chợ nào' && !empty($u->eatery_id) && isset($eateriesMap[$u->eatery_id])) {
+                    $marketName = $eateriesMap[$u->eatery_id];
+                }
+
+                $roleText = match($u->role) {
+                    'admin' => 'Admin (Quản trị viên)',
+                    'principal' => 'Principal (Hiệu trưởng / Cơ sở)',
+                    'manager' => 'Manager (Quản lý Chợ)',
+                    'seller' => 'Seller (Tiểu thương Chợ)',
+                    default => 'Customer (Người dùng / Khách hàng)',
+                };
+
+                $statusText = $u->status === 'active' ? 'Hoạt động' : 'Vô hiệu hóa';
+
+                fputcsv($file, [
+                    $stt++,
+                    $u->name,
+                    $u->phone ?: 'Chưa cập nhật',
+                    $u->email ?: '',
+                    $roleText,
+                    $stallName,
+                    $marketName,
+                    $statusText
+                ]);
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
     public function createUser()
     {
         $this->verifyAdmin();

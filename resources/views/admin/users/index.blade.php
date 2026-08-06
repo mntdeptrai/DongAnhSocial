@@ -87,9 +87,9 @@
             <a href="/admin/users/create" class="btn-admin btn-admin-primary" style="padding: 10px 18px; border-radius: 10px; display: flex; align-items: center; gap: 6px; font-size: 0.82rem; font-weight: 700; height: 42px; border: none;">
                 ➕ Thêm mới
             </a>
-            <button type="button" onclick="alert('Tính năng xuất Excel đang được tích hợp cùng cổng quản trị tổng!')" class="btn-admin btn-admin-accent" style="padding: 10px 18px; border-radius: 10px; display: flex; align-items: center; gap: 6px; font-size: 0.82rem; font-weight: 700; height: 42px; background-color: #10b981; border: none;">
+            <a href="{{ route('admin.users.export', request()->query()) }}" class="btn-admin btn-admin-accent" style="padding: 10px 18px; border-radius: 10px; display: flex; align-items: center; gap: 6px; font-size: 0.82rem; font-weight: 700; height: 42px; background-color: #10b981; border: none; color: #ffffff; text-decoration: none;">
                 📥 Xuất File
-            </button>
+            </a>
         </div>
     </div>
 

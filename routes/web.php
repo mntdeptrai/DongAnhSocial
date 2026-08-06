@@ -289,6 +289,7 @@ Route::prefix('admin')->middleware(['auth', 'role:admin,manager', 'tenant.auth']
     // Quản lý tài khoản User (Dành cho Admin và Manager quản lý tiểu thương)
     Route::middleware(['role:admin,manager'])->group(function () {
         Route::get('/users', [AdminController::class, 'indexUsers'])->name('admin.users.index');
+        Route::get('/users/export', [AdminController::class, 'exportUsers'])->name('admin.users.export');
         Route::get('/users/create', [AdminController::class, 'createUser'])->name('admin.users.create');
         Route::post('/users', [AdminController::class, 'storeUser'])->name('admin.users.store');
         Route::get('/users/{id}', [AdminController::class, 'showUser'])->name('admin.users.show');
