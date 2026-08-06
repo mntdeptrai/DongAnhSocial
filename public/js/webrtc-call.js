@@ -43,23 +43,27 @@ window.DongAnhWebRTC = (function () {
 
         console.log('[WebRTC] Lắng nghe cuộc gọi trên channel private: call.' + userId);
 
-        window.Echo.private(`call.${userId}`)
-            .listen('.CallOffer', (e) => {
-                console.log('[WebRTC] Nhận CallOffer:', e);
-                handleIncomingCall(e);
-            })
-            .listen('.CallAnswer', (e) => {
-                console.log('[WebRTC] Nhận CallAnswer:', e);
-                handleCallAnswer(e);
-            })
-            .listen('.IceCandidate', (e) => {
-                console.log('[WebRTC] Nhận IceCandidate:', e);
-                handleRemoteIceCandidate(e);
-            })
-            .listen('.CallHangup', (e) => {
-                console.log('[WebRTC] Nhận CallHangup:', e);
-                handleRemoteHangup(e);
-            });
+        const callChannel = window.Echo.private(`call.${userId}`);
+        
+        callChannel.listen('.CallOffer', (e) => {
+            console.log('[WebRTC] Nhận CallOffer:', e);
+            handleIncomingCall(e);
+        });
+        
+        callChannel.listen('.CallAnswer', (e) => {
+            console.log('[WebRTC] Nhận CallAnswer:', e);
+            handleCallAnswer(e);
+        });
+        
+        callChannel.listen('.IceCandidate', (e) => {
+            console.log('[WebRTC] Nhận IceCandidate:', e);
+            handleRemoteIceCandidate(e);
+        });
+        
+        callChannel.listen('.CallHangup', (e) => {
+            console.log('[WebRTC] Nhận CallHangup:', e);
+            handleRemoteHangup(e);
+        });
     }
 
     /**

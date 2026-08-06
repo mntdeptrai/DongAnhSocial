@@ -3321,23 +3321,25 @@
                     }
                     channel(name) {
                         const ch = this._pusher.subscribe(name);
-                        return {
+                        const obj = {
                             listen: (event, cb) => {
                                 const evtName = event.startsWith('.') ? event.slice(1) : event;
                                 ch.bind(evtName, cb);
-                                return this;
+                                return obj;
                             }
                         };
+                        return obj;
                     }
                     private(name) {
                         const ch = this._pusher.subscribe('private-' + name);
-                        return {
+                        const obj = {
                             listen: (event, cb) => {
                                 const evtName = event.startsWith('.') ? event.slice(1) : event;
                                 ch.bind(evtName, cb);
-                                return this;
+                                return obj;
                             }
                         };
+                        return obj;
                     }
                 })();
             }
