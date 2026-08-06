@@ -79,15 +79,55 @@ window.DongAnhWebRTC = (function () {
         targetUserName = receiverName || 'Người dùng';
         targetUserAvatar = receiverAvatar || '👤';
 
+    /**
+     * Lấy media stream (Micro / Camera) với cơ chế fallback tự động:
+     * HD Video -> Basic Video -> Audio-only (nếu camera bị bận hoặc lỗi)
+     */
+    async function getLocalMediaStream(requestedType) {
+        if (requestedType === 'video') {
+            try {
+                return await navigator.mediaDevices.getUserMedia({
+                    audio: true,
+                    video: { width: { ideal: 1280 }, height: { ideal: 720 } }
+                });
+            } catch (e1) {
+                console.warn('[WebRTC] HD Video failed, fallback to basic video:', e1);
+                try {
+                    return await navigator.mediaDevices.getUserMedia({
+                        audio: true,
+                        video: true
+                    });
+                } catch (e2) {
+                    console.warn('[WebRTC] Camera unavailable, fallback to audio call:', e2);
+                    showToast('📷 Camera không khả dụng (đang bị dùng bởi app khác hoặc bị bận). Đã chuyển sang cuộc gọi thoại.');
+                    callType = 'audio';
+                    return await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+                }
+            }
+        } else {
+            return await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+        }
+    }
+
+    /**
+     * Bắt đầu cuộc gọi tới người dùng khác
+     */
+    async function startCall(receiverId, receiverName, receiverAvatar, type = 'audio') {
+        if (peer || currentCallId) {
+            alert('Bạn đang trong một cuộc gọi khác.');
+            return;
+        }
+
+        callType = type;
+        targetUserId = receiverId;
+        targetUserName = receiverName || 'Người dùng';
+        targetUserAvatar = receiverAvatar || '👤';
+
         showOutgoingModal(receiverName, receiverAvatar, callType);
         playRingtone(true);
 
         try {
-            const constraints = {
-                audio: true,
-                video: callType === 'video' ? { width: { ideal: 1280 }, height: { ideal: 720 } } : false
-            };
-            localStream = await navigator.mediaDevices.getUserMedia(constraints);
+            localStream = await getLocalMediaStream(callType);
             setLocalStreamUI(localStream, callType);
 
             // Tạo SimplePeer (initiator = true = Caller)
@@ -184,11 +224,7 @@ window.DongAnhWebRTC = (function () {
         hideIncomingModal();
 
         try {
-            const constraints = {
-                audio: true,
-                video: callType === 'video' ? { width: { ideal: 1280 }, height: { ideal: 720 } } : false
-            };
-            localStream = await navigator.mediaDevices.getUserMedia(constraints);
+            localStream = await getLocalMediaStream(callType);
             setLocalStreamUI(localStream, callType);
 
             // Tạo SimplePeer (initiator = false = Receiver)
