@@ -117,7 +117,7 @@ window.DongAnhWebRTC = (function () {
                 body: JSON.stringify({
                     receiver_id: receiverId,
                     type: callType,
-                    sdp_offer: offer
+                    sdp_offer: { type: offer.type, sdp: offer.sdp }
                 })
             });
 
@@ -190,7 +190,8 @@ window.DongAnhWebRTC = (function () {
             });
 
             // Set Remote Description từ SDP Offer của Caller
-            await peerConnection.setRemoteDescription(new RTCSessionDescription(window.pendingSdpOffer));
+            const offerDesc = window.pendingSdpOffer;
+            await peerConnection.setRemoteDescription({ type: offerDesc.type, sdp: offerDesc.sdp });
 
             // Tạo SDP Answer
             const answer = await peerConnection.createAnswer();
@@ -210,7 +211,7 @@ window.DongAnhWebRTC = (function () {
                 },
                 body: JSON.stringify({
                     call_id: currentCallId,
-                    sdp_answer: answer
+                    sdp_answer: { type: answer.type, sdp: answer.sdp }
                 })
             });
         } catch (err) {
@@ -244,7 +245,8 @@ window.DongAnhWebRTC = (function () {
         startDurationCounter();
 
         try {
-            await peerConnection.setRemoteDescription(new RTCSessionDescription(e.sdp_answer));
+            const answerDesc = e.sdp_answer;
+            await peerConnection.setRemoteDescription({ type: answerDesc.type, sdp: answerDesc.sdp });
             console.log('[WebRTC] Peer Connection Established Successfully!');
         } catch (err) {
             console.error('[WebRTC] Error setting remote description:', err);
