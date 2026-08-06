@@ -1461,7 +1461,7 @@ class AdminController extends Controller
             abort(403, 'Bạn không có quyền xuất dữ liệu!');
         }
 
-        $query = User::query();
+        $query = User::query()->where('role', 'seller');
 
         if ($role === 'manager') {
             $managerUserId = session('user_id');
@@ -1503,8 +1503,14 @@ class AdminController extends Controller
 
         $users = $query->orderBy('created_at', 'desc')->get();
 
-        // Nạp danh sách chợ (Eateries) để tra cứu tên chợ của từng gian hàng
+        // Nạp danh sách chợ (Eateries) từ mọi nguồn kết nối DB để tra cứu tên chợ chính xác nhất
         $eateriesMap = [];
+        try {
+            $apiEateries = EateryApiService::getEateries();
+            foreach ($apiEateries as $e) {
+                $eateriesMap[$e->id] = $e->standardized_name ?: $e->name;
+            }
+        } catch (\Exception $ex) {}
         try {
             $eList1 = \Illuminate\Support\Facades\DB::connection('mysql_market')->table('eateries')->get();
             foreach ($eList1 as $e) {
@@ -1520,7 +1526,7 @@ class AdminController extends Controller
             }
         } catch (\Exception $ex) {}
 
-        $filename = 'Danh_sach_nguoi_dung_gian_hang_' . date('Y-m-d_H-i') . '.xls';
+        $filename = 'Danh_sach_tieu_thuong_gian_hang_' . date('Y-m-d_H-i') . '.xls';
 
         $headers = [
             'Content-Type'        => 'application/vnd.ms-excel; charset=UTF-8',
@@ -1556,15 +1562,16 @@ class AdminController extends Controller
                 $stallName = 'Chưa gán gian hàng';
                 $marketName = 'Chưa thuộc chợ nào';
 
-                if ($u->role === 'seller') {
+                if ($u->role === 'seller' || !empty($u->stall_id) || !empty($u->eatery_id)) {
                     $stall = $u->getStall();
                     $ownedEateries = $u->getOwnedEateries();
                     $routeBusinesses = $u->getRouteBusinesses();
 
                     if ($stall) {
                         $stallName = $stall->stall_name ?: ($stall->name ?: 'Gian hàng #' . $stall->id);
-                        if (!empty($stall->eatery_id) && isset($eateriesMap[$stall->eatery_id])) {
-                            $marketName = $eateriesMap[$stall->eatery_id];
+                        $eId = !empty($stall->eatery_id) ? $stall->eatery_id : $u->eatery_id;
+                        if (!empty($eId) && isset($eateriesMap[$eId])) {
+                            $marketName = $eateriesMap[$eId];
                         }
                     } elseif (count($ownedEateries) > 0) {
                         $stallNames = [];
