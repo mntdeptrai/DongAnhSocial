@@ -625,17 +625,39 @@ class SchoolManagementController extends Controller
      */
     public function updatePost(Request $request, $id)
     {
-        $this->verifyPrincipalOrAdmin();
-        $user = Auth::user();
-
-        $post = \App\Models\EducationProgram::findOrFail($id);
-        
-        $school = Eatery::on('mysql_education')->find($post->eatery_id);
-        if (!$school) {
-            $school = Eatery::on('mysql')->find($post->eatery_id);
+        $userId = session('user_id') ?: Auth::id();
+        $user = Auth::user() ?: \App\Models\User::find($userId);
+        if (!$user) {
+            if ($request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Chưa đăng nhập!'], 401);
+            }
+            return redirect('/auth/login');
         }
 
-        if (!$school || (!$user->isAdmin() && $school->user_id !== $user->id)) {
+        $post = \App\Models\EducationProgram::on('mysql_education')->find($id)
+             ?: \App\Models\EducationProgram::on('mysql')->find($id)
+             ?: \App\Models\Post::on('mysql_education')->find($id)
+             ?: \App\Models\Post::on('mysql')->find($id);
+
+        if (!$post) {
+            if ($request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Không tìm thấy bài viết!'], 404);
+            }
+            return redirect()->back()->with('error', 'Không tìm thấy bài viết cần cập nhật!');
+        }
+
+        $isOwner = ($user->isAdmin() || $user->role === 'admin') || (isset($post->user_id) && $post->user_id == $user->id);
+        if (!$isOwner && !empty($post->eatery_id)) {
+            $school = Eatery::on('mysql_education')->find($post->eatery_id) ?: Eatery::on('mysql')->find($post->eatery_id);
+            if ($school && $school->user_id == $user->id) {
+                $isOwner = true;
+            }
+        }
+
+        if (!$isOwner) {
+            if ($request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Quyền truy cập bị từ chối!'], 403);
+            }
             abort(403, 'Quyền truy cập bị từ chối!');
         }
 
@@ -650,8 +672,8 @@ class SchoolManagementController extends Controller
 
         $post->name = $request->name;
         $post->description = $request->description;
-        $post->duration = $request->duration;
-        $post->tuition_fee = $request->tuition_fee;
+        if (isset($post->duration)) $post->duration = $request->duration;
+        if (isset($post->tuition_fee)) $post->tuition_fee = $request->tuition_fee;
 
         $existingImages = is_array($post->images) ? $post->images : [];
 
@@ -685,6 +707,10 @@ class SchoolManagementController extends Controller
 
         $post->save();
 
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json(['success' => true, 'message' => 'Cập nhật bài viết thành công!', 'post' => $post]);
+        }
+
         return redirect()->back()->with('success', 'Cập nhật bài viết thành công!');
     }
 
@@ -693,28 +719,47 @@ class SchoolManagementController extends Controller
      */
     public function destroyPost($id)
     {
-        $this->verifyPrincipalOrAdmin();
-        $user = Auth::user();
-
-        $post = \App\Models\EducationProgram::on('mysql_education')->find($id);
-        if (!$post) {
-            $post = \App\Models\EducationProgram::on('mysql')->find($id);
+        $userId = session('user_id') ?: Auth::id();
+        $user = Auth::user() ?: \App\Models\User::find($userId);
+        if (!$user) {
+            if (request()->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Chưa đăng nhập!'], 401);
+            }
+            return redirect('/auth/login');
         }
 
+        $post = \App\Models\EducationProgram::on('mysql_education')->find($id)
+             ?: \App\Models\EducationProgram::on('mysql')->find($id)
+             ?: \App\Models\Post::on('mysql_education')->find($id)
+             ?: \App\Models\Post::on('mysql')->find($id);
+
         if (!$post) {
+            if (request()->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Không tìm thấy bài viết!'], 404);
+            }
             return redirect()->back()->with('error', 'Không tìm thấy bài viết cần xóa!');
         }
-        
-        $school = Eatery::on('mysql_education')->find($post->eatery_id);
-        if (!$school) {
-            $school = Eatery::on('mysql')->find($post->eatery_id);
+
+        $isOwner = ($user->isAdmin() || $user->role === 'admin') || (isset($post->user_id) && $post->user_id == $user->id);
+        if (!$isOwner && !empty($post->eatery_id)) {
+            $school = Eatery::on('mysql_education')->find($post->eatery_id) ?: Eatery::on('mysql')->find($post->eatery_id);
+            if ($school && $school->user_id == $user->id) {
+                $isOwner = true;
+            }
         }
 
-        if (!$school || (!$user->isAdmin() && $school->user_id !== $user->id)) {
+        if (!$isOwner) {
+            if (request()->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Quyền truy cập bị từ chối!'], 403);
+            }
             abort(403, 'Quyền truy cập bị từ chối!');
         }
 
         $post->delete();
+
+        if (request()->wantsJson() || request()->ajax()) {
+            return response()->json(['success' => true, 'message' => 'Đã xóa bài viết thành công!']);
+        }
 
         return redirect()->back()->with('success', 'Đã xóa bài viết thành công!');
     }

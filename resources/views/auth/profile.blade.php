@@ -822,9 +822,9 @@
                             @endphp
                             <article class="fb-post-card mb-4" style="background: #ffffff; border-radius: 20px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.05); width: 100%; max-width: 100%; box-sizing: border-box;">
                                 <!-- Facebook Post Header -->
-                                <div class="fb-post-header" style="box-sizing: border-box; width: 100%;">
+                                <div class="fb-post-header" style="box-sizing: border-box; width: 100%; display: flex; align-items: center; justify-content: space-between; position: relative;">
                                     <div class="fb-post-author-box">
-                                        <img src="{{ optional($school)->image_path ?: 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=150&q=80' }}" class="fb-user-avatar" alt="{{ optional($school)->standardized_name }}">
+                                        <img src="{{ optional($school)->image_path ?: ($user->avatar ?: 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=150&q=80') }}" class="fb-user-avatar" alt="{{ optional($school)->standardized_name }}">
                                         <div>
                                             <h4 class="fb-post-author-name" style="word-break: break-word; overflow-wrap: anywhere; display: inline-flex; align-items: center; gap: 4px;">
                                                 {{ optional($school)->standardized_name ?: $user->name }}
@@ -841,6 +841,27 @@
                                             </div>
                                         </div>
                                     </div>
+
+                                    <!-- Nút 3 chấm cho chủ bài viết hoặc Admin -->
+                                    @if($isOwner || (Auth::check() && (Auth::user()->isAdmin() || Auth::user()->role === 'admin')))
+                                        <div style="position: relative;" x-data="{ openOptions: false }">
+                                            <button type="button" @click="openOptions = !openOptions" @click.away="openOptions = false" style="background: none; border: none; font-size: 1.3rem; color: #64748b; cursor: pointer; padding: 4px 10px; border-radius: 50%; transition: background 0.2s; line-height: 1;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='none'" title="Tùy chọn bài viết">
+                                                •••
+                                            </button>
+                                            <div x-show="openOptions" x-cloak style="position: absolute; right: 0; top: 100%; margin-top: 4px; background: #ffffff; border-radius: 14px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); border: 1px solid #e2e8f0; width: 180px; z-index: 50; overflow: hidden; padding: 6px 0;">
+                                                <button type="button" onclick="editPostItem({{ json_encode($p) }})" style="width: 100%; text-align: left; background: none; border: none; padding: 10px 16px; font-size: 0.9rem; font-weight: 600; color: #1e293b; cursor: pointer; display: flex; align-items: center; gap: 8px;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='none'">
+                                                    ✏️ Chỉnh sửa bài
+                                                </button>
+                                                <form action="/posts/{{ $p->id }}" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn xóa bài viết này không?');" style="margin: 0;">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" style="width: 100%; text-align: left; background: none; border: none; padding: 10px 16px; font-size: 0.9rem; font-weight: 600; color: #ef4444; cursor: pointer; display: flex; align-items: center; gap: 8px;" onmouseover="this.style.background='#fef2f2'" onmouseout="this.style.background='none'">
+                                                        🗑️ Xóa bài viết
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    @endif
                                 </div>
 
                                 <!-- Post Content Text -->
@@ -1337,6 +1358,44 @@
                 <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px;">
                     <button type="button" @click="showPasswordModal = false" class="pro-btn-outline" style="border-radius: 12px; padding: 10px 22px;">Hủy</button>
                     <button type="submit" class="pro-btn-primary" style="border-radius: 12px; padding: 10px 22px;">🔒 Đổi mật khẩu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ====== EDIT POST MODAL ====== -->
+    <div class="sch-modal" id="editPostModal" onclick="if(event.target === this) closeModal('editPostModal')">
+        <div class="fb-modal-box">
+            <button type="button" onclick="closeModal('editPostModal')" class="sch-close-modal" style="top: 16px; right: 16px; width: 36px; height: 36px; border-radius: 50%; background: #f1f5f9; border: none; font-size: 1.1rem; color: #475569; position: absolute; z-index: 10; cursor: pointer;">✕</button>
+            <div class="fb-modal-header">
+                <h4 class="fb-modal-title">✏️ Chỉnh sửa bài viết</h4>
+            </div>
+            
+            <form id="editPostForm" action="" method="POST" enctype="multipart/form-data">
+                @csrf
+                <div class="fb-modal-user-row">
+                    <img src="{{ optional($school)->image_path ?: ($user->avatar ?: 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=150&q=80') }}" class="fb-modal-user-avatar">
+                    <div>
+                        <div class="fb-modal-user-name">{{ optional($school)->standardized_name ?: $user->name }}</div>
+                        <div class="fb-modal-privacy">🌐 Công khai</div>
+                    </div>
+                </div>
+
+                <div style="padding: 0 16px 12px 16px;">
+                    <input type="text" name="name" id="editPostNameInput" required class="fb-modal-title-input" placeholder="Tiêu đề bài viết...">
+                </div>
+
+                <div style="padding: 0 16px 16px 16px;">
+                    <textarea name="description" id="editPostDescInput" required class="fb-modal-textarea" rows="4" placeholder="Nội dung bài viết..."></textarea>
+                </div>
+
+                <div style="padding: 0 16px 16px 16px;">
+                    <label style="font-weight: 700; font-size: 0.88rem; color: #475569; display: block; margin-bottom: 6px;">📷 Thêm hình ảnh bổ sung:</label>
+                    <input type="file" name="images[]" multiple accept="image/*" class="pf-form-input" style="width: 100%;">
+                </div>
+
+                <div class="fb-modal-footer">
+                    <button type="submit" class="fb-post-submit-btn">💾 Lưu cập nhật</button>
                 </div>
             </form>
         </div>
@@ -2647,6 +2706,14 @@
             console.error('Image upload error:', err);
             showToastNotification('❌ Có lỗi xảy ra khi cập nhật hình ảnh!');
         });
+    }
+
+    function editPostItem(post) {
+        const form = document.getElementById('editPostForm');
+        form.action = '/posts/' + post.id + '/update';
+        document.getElementById('editPostNameInput').value = post.name || '';
+        document.getElementById('editPostDescInput').value = post.description || '';
+        openModal('editPostModal');
     }
 
     function showToastNotification(msg) {
