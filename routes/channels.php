@@ -15,3 +15,9 @@ Broadcast::channel('checkin-feed', function () {
 Broadcast::channel('chat.{userId}', function ($user, $userId) {
     return (int) $user->id === (int) $userId;
 });
+
+// Channel private cho WebRTC call signaling của từng user
+Broadcast::channel('call.{userId}', function ($user, $userId) {
+    return (int) $user->id === (int) $userId;
+});
+

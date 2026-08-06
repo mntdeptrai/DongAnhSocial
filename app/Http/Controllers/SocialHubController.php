@@ -6,7 +6,12 @@ use App\Models\User;
 use App\Models\Friendship;
 use App\Models\Message;
 use App\Models\FoodTour;
+use App\Models\CallLog;
 use App\Events\MessageSent;
+use App\Events\CallOffer;
+use App\Events\CallAnswer;
+use App\Events\IceCandidate;
+use App\Events\CallHangup;
 use App\Services\SocialService;
 use App\Domain\Social\FriendshipData;
 use App\Domain\Social\MessageData;
@@ -682,4 +687,158 @@ class SocialHubController extends Controller
         }
         return response()->json(['status' => 'error', 'message' => 'Unauthenticated'], 401);
     }
+
+    /**
+     * WebRTC P2P Call: Khởi tạo cuộc gọi & broadcast CallOffer
+     */
+    public function initiateCall(Request $request)
+    {
+        $request->validate([
+            'receiver_id' => 'required|exists:users,id',
+            'type'        => 'required|in:audio,video',
+            'sdp_offer'   => 'required|array',
+        ]);
+
+        $caller = Auth::user();
+        if (!$caller) {
+            return response()->json(['status' => 'error', 'message' => 'Unauthenticated'], 401);
+        }
+
+        // Tạo log cuộc gọi
+        $call = CallLog::create([
+            'caller_id'   => $caller->id,
+            'receiver_id' => $request->receiver_id,
+            'type'        => $request->type,
+            'status'      => 'ringing',
+            'started_at'  => now(),
+        ]);
+
+        $callerAvatar = $caller->avatar ? asset($caller->avatar) : '👤';
+
+        // Broadcast Offer tới người nhận qua Reverb (P2P Signaling)
+        broadcast(new CallOffer(
+            callId: $call->id,
+            callerId: $caller->id,
+            callerName: $caller->name,
+            callerAvatar: $callerAvatar,
+            receiverId: (int)$request->receiver_id,
+            type: $request->type,
+            sdpOffer: $request->sdp_offer
+        ))->toOthers();
+
+        return response()->json([
+            'status'  => 'success',
+            'call_id' => $call->id,
+        ]);
+    }
+
+    /**
+     * WebRTC P2P Call: Trả lời cuộc gọi & broadcast CallAnswer
+     */
+    public function answerCall(Request $request)
+    {
+        $request->validate([
+            'call_id'    => 'required|exists:call_logs,id',
+            'sdp_answer' => 'required|array',
+        ]);
+
+        $user = Auth::user();
+        $call = CallLog::findOrFail($request->call_id);
+
+        if ($call->receiver_id !== $user->id) {
+            return response()->json(['status' => 'error', 'message' => 'Unauthorized'], 403);
+        }
+
+        $call->update([
+            'status'     => 'answered',
+            'started_at' => now(),
+        ]);
+
+        // Broadcast Answer tới người gọi
+        broadcast(new CallAnswer(
+            callId: $call->id,
+            callerId: $call->caller_id,
+            receiverId: $user->id,
+            sdpAnswer: $request->sdp_answer
+        ))->toOthers();
+
+        return response()->json(['status' => 'success']);
+    }
+
+    /**
+     * WebRTC P2P Call: Trao đổi ICE Candidate giữa 2 peer
+     */
+    public function iceCandidate(Request $request)
+    {
+        $request->validate([
+            'call_id'        => 'required|exists:call_logs,id',
+            'target_user_id' => 'required|exists:users,id',
+            'candidate'      => 'required|array',
+        ]);
+
+        broadcast(new IceCandidate(
+            callId: (int)$request->call_id,
+            targetUserId: (int)$request->target_user_id,
+            candidate: $request->candidate
+        ))->toOthers();
+
+        return response()->json(['status' => 'success']);
+    }
+
+    /**
+     * WebRTC P2P Call: Kết thúc hoặc từ chối cuộc gọi
+     */
+    public function hangupCall(Request $request)
+    {
+        $request->validate([
+            'call_id'        => 'required|exists:call_logs,id',
+            'target_user_id' => 'required|exists:users,id',
+            'reason'         => 'nullable|string|in:ended,rejected,missed,busy',
+        ]);
+
+        $user = Auth::user();
+        $call = CallLog::find($request->call_id);
+        $reason = $request->reason ?? 'ended';
+
+        if ($call) {
+            $duration = null;
+            if ($call->started_at && $call->status === 'answered') {
+                $duration = now()->diffInSeconds($call->started_at);
+            }
+            $call->update([
+                'status'   => $reason,
+                'ended_at' => now(),
+                'duration' => $duration,
+            ]);
+        }
+
+        broadcast(new CallHangup(
+            callId: (int)$request->call_id,
+            targetUserId: (int)$request->target_user_id,
+            reason: $reason
+        ))->toOthers();
+
+        return response()->json(['status' => 'success']);
+    }
+
+    /**
+     * Lấy lịch sử cuộc gọi của người dùng hiện tại
+     */
+    public function callHistory(Request $request)
+    {
+        $user = Auth::user();
+        if (!$user) {
+            return response()->json([], 401);
+        }
+
+        $logs = CallLog::with(['caller:id,name,avatar', 'receiver:id,name,avatar'])
+            ->where('caller_id', $user->id)
+            ->orWhere('receiver_id', $user->id)
+            ->orderBy('created_at', 'desc')
+            ->limit(30)
+            ->get();
+
+        return response()->json($logs);
+    }
 }
+

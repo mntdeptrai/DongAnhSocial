@@ -168,7 +168,19 @@
                         💬 Nhắn tin
                     </button>
 
-                    <!-- 5. Nút Chia sẻ -->
+                    <!-- 5. Nút Gọi điện WebRTC P2P -->
+                    <button type="button" class="pro-btn-outline" 
+                            onclick="DongAnhWebRTC.startCall({{ $user->id }}, '{{ addslashes(optional($school)->standardized_name ?: $user->name) }}', '{{ optional($school)->image_path ?: '' }}', 'audio')">
+                        📞 Gọi điện
+                    </button>
+
+                    <!-- 6. Nút Gọi Video WebRTC P2P -->
+                    <button type="button" class="pro-btn-outline" 
+                            onclick="DongAnhWebRTC.startCall({{ $user->id }}, '{{ addslashes(optional($school)->standardized_name ?: $user->name) }}', '{{ optional($school)->image_path ?: '' }}', 'video')">
+                        📹 Video Call
+                    </button>
+
+                    <!-- 7. Nút Chia sẻ -->
                     <button type="button" class="pro-btn-outline" 
                             onclick="shareProfilePage()">
                         📤 Chia sẻ

@@ -100,6 +100,14 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/social/messages', [SocialHubController::class, 'sendMessage'])->name('social.messages.send')->middleware('throttle:60,1');
     Route::get('/social/search', [SocialHubController::class, 'searchUsers'])->name('social.search');
     Route::get('/social/recent-chats', [SocialHubController::class, 'getRecentChats'])->name('social.recent-chats');
+
+    // WebRTC P2P Call Signaling Routes
+    Route::post('/social/call/initiate', [SocialHubController::class, 'initiateCall'])->name('social.call.initiate');
+    Route::post('/social/call/answer', [SocialHubController::class, 'answerCall'])->name('social.call.answer');
+    Route::post('/social/call/ice-candidate', [SocialHubController::class, 'iceCandidate'])->name('social.call.ice-candidate');
+    Route::post('/social/call/hangup', [SocialHubController::class, 'hangupCall'])->name('social.call.hangup');
+    Route::get('/social/call/history', [SocialHubController::class, 'callHistory'])->name('social.call.history');
+
     
     // AI Food Tour Generation (authenticated and rate-limited)
     Route::post('/api/food-tours/generate-ai', [FoodTourController::class, 'generateAI'])
