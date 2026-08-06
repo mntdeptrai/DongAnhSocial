@@ -23,8 +23,8 @@ class VietnameseSeoHelper
         $clean = preg_replace('/^th\b(?!\s*(cs|pt))/ui', 'Tiểu học', $clean);
         $clean = preg_replace('/^Tiểu Học\b/u', 'Tiểu học', $clean);
 
-        // Đảm bảo có tiền tố "Trường" nếu chưa có
-        if (!preg_match('/^Trường\b/ui', $clean)) {
+        // Đảm bảo có tiền tố "Trường" nếu là tên trường học (Mầm non, Tiểu học, THCS, THPT) và chưa có
+        if (preg_match('/\b(Mầm non|Tiểu học|THCS|THPT|Mầm Non|Tiểu Học|MN|TH)\b/u', $name) && !preg_match('/^Trường\b/ui', $clean)) {
             $clean = 'Trường ' . $clean;
         }
 

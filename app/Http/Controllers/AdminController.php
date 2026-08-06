@@ -1508,20 +1508,20 @@ class AdminController extends Controller
         try {
             $apiEateries = EateryApiService::getEateries();
             foreach ($apiEateries as $e) {
-                $eateriesMap[$e->id] = $e->standardized_name ?: $e->name;
+                $eateriesMap[$e->id] = $e->name;
             }
         } catch (\Exception $ex) {}
         try {
             $eList1 = \Illuminate\Support\Facades\DB::connection('mysql_market')->table('eateries')->get();
             foreach ($eList1 as $e) {
-                $eateriesMap[$e->id] = $e->standardized_name ?: $e->name;
+                $eateriesMap[$e->id] = $e->name;
             }
         } catch (\Exception $ex) {}
         try {
             $eList2 = \Illuminate\Support\Facades\DB::connection('mysql')->table('eateries')->get();
             foreach ($eList2 as $e) {
                 if (!isset($eateriesMap[$e->id])) {
-                    $eateriesMap[$e->id] = $e->standardized_name ?: $e->name;
+                    $eateriesMap[$e->id] = $e->name;
                 }
             }
         } catch (\Exception $ex) {}
