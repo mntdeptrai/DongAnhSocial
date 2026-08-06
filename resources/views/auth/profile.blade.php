@@ -963,98 +963,176 @@
 
                 <!-- ================= TAB 4: ABOUT / GIỚI THIỆU ================= -->
                 <div x-show="activeTab === 'about'" x-cloak style="display: none;">
-                    <div class="pro-card" style="margin-bottom: 20px;">
-                        <div class="pro-card-title" style="color: #0f172a; margin-bottom: 16px;">
-                            <span>🏫 Thông tin chi tiết địa điểm</span>
+                    @if($user->isPrincipal() || $user->role === 'principal')
+                        <div class="pro-card" style="margin-bottom: 20px;">
+                            <div class="pro-card-title" style="color: #0f172a; margin-bottom: 16px;">
+                                <span>🏫 Thông tin chi tiết địa điểm</span>
+                            </div>
+                            <ul class="pro-info-list" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
+                                <li class="pro-info-row">
+                                    <span class="pro-info-icon">🏫</span>
+                                    <div class="pro-info-text">
+                                        <span class="pro-info-lbl">Loại hình</span>
+                                        <span class="pro-info-val">{{ optional(optional($school)->category)->name ?: 'Chưa cập nhật' }}</span>
+                                    </div>
+                                </li>
+                                <li class="pro-info-row">
+                                    <span class="pro-info-icon">📍</span>
+                                    <div class="pro-info-text">
+                                        <span class="pro-info-lbl">Địa chỉ</span>
+                                        <span class="pro-info-val">{{ optional($school)->address ?: 'Chưa cập nhật' }}</span>
+                                    </div>
+                                </li>
+                                <li class="pro-info-row">
+                                    <span class="pro-info-icon">📞</span>
+                                    <div class="pro-info-text">
+                                        <span class="pro-info-lbl">Điện thoại</span>
+                                        <span class="pro-info-val">{{ optional($school)->phone ?: ($user->phone ?: 'Chưa cập nhật') }}</span>
+                                    </div>
+                                </li>
+                                <li class="pro-info-row">
+                                    <span class="pro-info-icon">🌐</span>
+                                    <div class="pro-info-text">
+                                        <span class="pro-info-lbl">Website</span>
+                                        @if(optional($school)->website)
+                                            <a href="{{ str_starts_with(optional($school)->website, 'http') ? optional($school)->website : 'https://' . optional($school)->website }}" target="_blank" class="pro-info-val" style="color: #2563eb;">{{ optional($school)->website }}</a>
+                                        @else
+                                            <span class="pro-info-val">Chưa cập nhật</span>
+                                        @endif
+                                    </div>
+                                </li>
+                                <li class="pro-info-row">
+                                    <span class="pro-info-icon">🕒</span>
+                                    <div class="pro-info-text">
+                                        <span class="pro-info-lbl">Giờ mở cửa</span>
+                                        <span class="pro-info-val">{{ optional($school)->opening_hours ?: 'Chưa cập nhật' }}</span>
+                                    </div>
+                                </li>
+                                <li class="pro-info-row">
+                                    <span class="pro-info-icon">📍</span>
+                                    <div class="pro-info-text">
+                                        <span class="pro-info-lbl">Khu vực</span>
+                                        <span class="pro-info-val">{{ optional($school)->commune ? optional($school)->commune->name : 'Chưa cập nhật' }}</span>
+                                    </div>
+                                </li>
+                            </ul>
                         </div>
-                        <ul class="pro-info-list" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
-                            <li class="pro-info-row">
-                                <span class="pro-info-icon">🏫</span>
-                                <div class="pro-info-text">
-                                    <span class="pro-info-lbl">Loại hình</span>
-                                    <span class="pro-info-val">{{ optional(optional($school)->category)->name ?: 'Trường mầm non' }}</span>
-                                </div>
-                            </li>
-                            <li class="pro-info-row">
-                                <span class="pro-info-icon">📍</span>
-                                <div class="pro-info-text">
-                                    <span class="pro-info-lbl">Địa chỉ</span>
-                                    <span class="pro-info-val">{{ optional($school)->address ?: 'Xã Đông Anh, Hà Nội' }}</span>
-                                </div>
-                            </li>
-                            <li class="pro-info-row">
-                                <span class="pro-info-icon">📞</span>
-                                <div class="pro-info-text">
-                                    <span class="pro-info-lbl">Điện thoại</span>
-                                    <span class="pro-info-val">{{ optional($school)->phone ?: ($user->phone ?: 'Chưa cập nhật') }}</span>
-                                </div>
-                            </li>
-                            <li class="pro-info-row">
-                                <span class="pro-info-icon">🌐</span>
-                                <div class="pro-info-text">
-                                    <span class="pro-info-lbl">Website</span>
-                                    <span class="pro-info-val" style="color: #2563eb;">{{ optional($school)->website ?: 'phucloc.edu.vn' }}</span>
-                                </div>
-                            </li>
-                            <li class="pro-info-row">
-                                <span class="pro-info-icon">🕒</span>
-                                <div class="pro-info-text">
-                                    <span class="pro-info-lbl">Giờ mở cửa</span>
-                                    <span class="pro-info-val">{{ optional($school)->opening_hours ?: '7:00 – 17:30' }}</span>
-                                </div>
-                            </li>
-                            <li class="pro-info-row">
-                                <span class="pro-info-icon">📍</span>
-                                <div class="pro-info-text">
-                                    <span class="pro-info-lbl">Khu vực</span>
-                                    <span class="pro-info-val">{{ optional($school)->commune ? optional($school)->commune->name : 'Đông Anh, Hà Nội' }}</span>
-                                </div>
-                            </li>
-                        </ul>
-                    </div>
 
-                    <div class="pro-card" style="margin-bottom: 20px;">
-                        <div class="pro-card-title" style="color: #0f172a; margin-bottom: 16px;">
-                            <span>📊 Quy mô & Thành tựu</span>
+                        <div class="pro-card" style="margin-bottom: 20px;">
+                            <div class="pro-card-title" style="color: #0f172a; margin-bottom: 16px;">
+                                <span>📊 Quy mô & Thành tựu</span>
+                            </div>
+                            <div class="pro-mini-stats-grid">
+                                <div class="pro-mini-stat-card">
+                                    <div class="pro-mini-stat-icon">📅</div>
+                                    <div class="pro-mini-stat-val">{{ $foundedYr ?: 'Chưa cập nhật' }}</div>
+                                    <div class="pro-mini-stat-lbl">Năm thành lập</div>
+                                </div>
+                                <div class="pro-mini-stat-card">
+                                    <div class="pro-mini-stat-icon">👩‍🏫</div>
+                                    <div class="pro-mini-stat-val">{{ $staffCount !== null ? $staffCount . ' người' : 'Chưa cập nhật' }}</div>
+                                    <div class="pro-mini-stat-lbl">Giáo viên</div>
+                                </div>
+                                <div class="pro-mini-stat-card">
+                                    <div class="pro-mini-stat-icon">🎒</div>
+                                    <div class="pro-mini-stat-val">{{ $studentsCount !== null ? $studentsCount . ' bé' : 'Chưa cập nhật' }}</div>
+                                    <div class="pro-mini-stat-lbl">Học sinh</div>
+                                </div>
+                                <div class="pro-mini-stat-card">
+                                    <div class="pro-mini-stat-icon">🏆</div>
+                                    <div class="pro-mini-stat-val">{{ $awardsCount !== null ? $awardsCount . ' danh hiệu' : 'Chưa cập nhật' }}</div>
+                                    <div class="pro-mini-stat-lbl">Giải thưởng</div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="pro-mini-stats-grid">
-                            <div class="pro-mini-stat-card">
-                                <div class="pro-mini-stat-icon">📅</div>
-                                <div class="pro-mini-stat-val">{{ $foundedYr ?: 'Chưa cập nhật' }}</div>
-                                <div class="pro-mini-stat-lbl">Năm thành lập</div>
-                            </div>
-                            <div class="pro-mini-stat-card">
-                                <div class="pro-mini-stat-icon">👩‍🏫</div>
-                                <div class="pro-mini-stat-val">{{ $staffCount !== null ? $staffCount . ' người' : 'Chưa cập nhật' }}</div>
-                                <div class="pro-mini-stat-lbl">Giáo viên</div>
-                            </div>
-                            <div class="pro-mini-stat-card">
-                                <div class="pro-mini-stat-icon">🎒</div>
-                                <div class="pro-mini-stat-val">{{ $studentsCount !== null ? $studentsCount . ' bé' : 'Chưa cập nhật' }}</div>
-                                <div class="pro-mini-stat-lbl">Học sinh</div>
-                            </div>
-                            <div class="pro-mini-stat-card">
-                                <div class="pro-mini-stat-icon">🏆</div>
-                                <div class="pro-mini-stat-val">{{ $awardsCount !== null ? $awardsCount . ' danh hiệu' : 'Chưa cập nhật' }}</div>
-                                <div class="pro-mini-stat-lbl">Giải thưởng</div>
-                            </div>
-                        </div>
-                    </div>
 
-                    @if(optional($school)->description)
-                    <div class="pro-card">
-                        <div class="pro-card-title" style="color: #0f172a; margin-bottom: 12px;">
-                            <span>📝 Giới thiệu chi tiết</span>
+                        @if(optional($school)->description)
+                        <div class="pro-card">
+                            <div class="pro-card-title" style="color: #0f172a; margin-bottom: 12px;">
+                                <span>📝 Giới thiệu chi tiết</span>
+                            </div>
+                            <p style="font-size: 0.95rem; color: #334155; line-height: 1.7; margin: 0; white-space: pre-line;">
+                                {{ $school->description }}
+                            </p>
                         </div>
-                        <p style="font-size: 0.95rem; color: #334155; line-height: 1.7; margin: 0; white-space: pre-line;">
-                            {{ $school->description }}
-                        </p>
-                    </div>
+                        @endif
+                    @elseif($user->isSeller() || $user->role === 'seller')
+                        <div class="pro-card" style="margin-bottom: 20px;">
+                            <div class="pro-card-title" style="color: #0f172a; margin-bottom: 16px;">
+                                <span>🛒 Thông tin gian hàng & Kinh doanh</span>
+                            </div>
+                            <ul class="pro-info-list" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
+                                <li class="pro-info-row">
+                                    <span class="pro-info-icon">🛒</span>
+                                    <div class="pro-info-text">
+                                        <span class="pro-info-lbl">Tên gian hàng</span>
+                                        <span class="pro-info-val">{{ $stall ? $stall->stall_name : 'Cơ sở kinh doanh' }}</span>
+                                    </div>
+                                </li>
+                                <li class="pro-info-row">
+                                    <span class="pro-info-icon">📞</span>
+                                    <div class="pro-info-text">
+                                        <span class="pro-info-lbl">Hotline kinh doanh</span>
+                                        <span class="pro-info-val">{{ $user->phone ?: 'Chưa cập nhật' }}</span>
+                                    </div>
+                                </li>
+                                <li class="pro-info-row">
+                                    <span class="pro-info-icon">✉️</span>
+                                    <div class="pro-info-text">
+                                        <span class="pro-info-lbl">Email liên hệ</span>
+                                        <span class="pro-info-val">{{ $user->email ?: 'Chưa cập nhật' }}</span>
+                                    </div>
+                                </li>
+                                <li class="pro-info-row">
+                                    <span class="pro-info-icon">📅</span>
+                                    <div class="pro-info-text">
+                                        <span class="pro-info-lbl">Ngày tham gia</span>
+                                        <span class="pro-info-val">{{ $user->created_at ? $user->created_at->format('d/m/Y') : 'Mới tham gia' }}</span>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                    @else
+                        <div class="pro-card" style="margin-bottom: 20px;">
+                            <div class="pro-card-title" style="color: #0f172a; margin-bottom: 16px;">
+                                <span>👤 Thông tin cá nhân</span>
+                            </div>
+                            <ul class="pro-info-list" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
+                                <li class="pro-info-row">
+                                    <span class="pro-info-icon">👤</span>
+                                    <div class="pro-info-text">
+                                        <span class="pro-info-lbl">Họ và tên</span>
+                                        <span class="pro-info-val">{{ $user->name }}</span>
+                                    </div>
+                                </li>
+                                <li class="pro-info-row">
+                                    <span class="pro-info-icon">✉️</span>
+                                    <div class="pro-info-text">
+                                        <span class="pro-info-lbl">Email</span>
+                                        <span class="pro-info-val">{{ $user->email ?: 'Chưa cập nhật' }}</span>
+                                    </div>
+                                </li>
+                                <li class="pro-info-row">
+                                    <span class="pro-info-icon">📞</span>
+                                    <div class="pro-info-text">
+                                        <span class="pro-info-lbl">Điện thoại</span>
+                                        <span class="pro-info-val">{{ $user->phone ?: 'Chưa cập nhật' }}</span>
+                                    </div>
+                                </li>
+                                <li class="pro-info-row">
+                                    <span class="pro-info-icon">📅</span>
+                                    <div class="pro-info-text">
+                                        <span class="pro-info-lbl">Ngày tham gia</span>
+                                        <span class="pro-info-val">{{ $user->created_at ? $user->created_at->format('d/m/Y') : 'Mới tham gia' }}</span>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
                     @endif
                 </div>
 
                 <!-- ================= TAB 5: REVIEWS / ĐÁNH GIÁ ================= -->
-                @if($school || (($user->isSeller() || $user->role === 'seller') && !empty($stall)))
+                @if(($user->isPrincipal() || $user->role === 'principal') || (($user->isSeller() || $user->role === 'seller') && !empty($stall)))
                 <div x-show="activeTab === 'reviews'" x-cloak style="display: none;">
                     <div class="pro-card">
                         <div class="pro-card-title" style="color: #0f172a; margin-bottom: 20px;">
@@ -1188,7 +1266,7 @@
 
                 <div class="pf-form-group">
                     <label class="pf-form-label">📍 Địa chỉ</label>
-                    <input type="text" name="address" class="pf-form-input" value="{{ optional($school)->address ?: 'Thôn Hùng Sơn, Xã Đông Anh' }}" placeholder="Ví dụ: Thôn Hùng Sơn, Xã Đông Anh, Hà Nội">
+                    <input type="text" name="address" class="pf-form-input" value="{{ optional($school)->address }}" placeholder="Ví dụ: Thôn Hùng Sơn, Xã Đông Anh, Hà Nội">
                 </div>
 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
@@ -1198,14 +1276,14 @@
                     </div>
                     <div class="pf-form-group">
                         <label class="pf-form-label">🌐 Website</label>
-                        <input type="text" name="website" class="pf-form-input" value="{{ optional($school)->website ?: 'phucloc.edu.vn' }}" placeholder="phucloc.edu.vn">
+                        <input type="text" name="website" class="pf-form-input" value="{{ optional($school)->website }}" placeholder="phucloc.edu.vn">
                     </div>
                 </div>
 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                     <div class="pf-form-group">
                         <label class="pf-form-label">🕒 Giờ mở cửa</label>
-                        <input type="text" name="opening_hours" class="pf-form-input" value="{{ optional($school)->opening_hours ?: '07:00 – 17:30' }}" placeholder="07:00 – 17:30">
+                        <input type="text" name="opening_hours" class="pf-form-input" value="{{ optional($school)->opening_hours }}" placeholder="07:00 – 17:30">
                     </div>
                     <div class="pf-form-group">
                         <label class="pf-form-label">✉️ Email liên hệ</label>

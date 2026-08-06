@@ -59,8 +59,8 @@
                             🛍️ {{ $stall ? 'Chủ gian hàng ' . $stall->stall_name : 'Kinh doanh & Tuyến 4.0 Đông Anh' }}
                         @elseif($user->role === 'manager')
                             🏛️ Ban Quản lý Chợ / Cơ sở
-                        @elseif($school || $user->role === 'principal')
-                            🏫 {{ optional(optional($school)->category)->name ?: 'Cơ sở giáo dục' }} · {{ optional($school)->commune ? optional($school)->commune->name : 'Đông Anh, Hà Nội' }}
+                        @elseif($user->isPrincipal() || $user->role === 'principal')
+                            🏫 {{ optional(optional($school)->category)->name ?: 'Cơ sở giáo dục' }}{{ optional($school)->commune ? ' · ' . optional($school)->commune->name : '' }}
                         @else
                             👤 Thành viên cộng đồng · Khám phá & Trải nghiệm Đông Anh
                         @endif
@@ -195,7 +195,7 @@
             <button type="button" class="pro-tab-item" :class="{ 'active': activeTab === 'posts' }" @click="activeTab = 'posts'">Bài viết ({{ $posts->count() }})</button>
             <button type="button" class="pro-tab-item" :class="{ 'active': activeTab === 'photos' }" @click="activeTab = 'photos'">Thư viện ảnh ({{ $allPhotoUrls->count() }})</button>
             <button type="button" class="pro-tab-item" :class="{ 'active': activeTab === 'about' }" @click="activeTab = 'about'">Giới thiệu</button>
-            @if($school || (($user->isSeller() || $user->role === 'seller') && !empty($stall)))
+            @if(($user->isPrincipal() || $user->role === 'principal') || (($user->isSeller() || $user->role === 'seller') && !empty($stall)))
             <button type="button" class="pro-tab-item" :class="{ 'active': activeTab === 'reviews' }" @click="activeTab = 'reviews'">Đánh giá ({{ $totalRev }})</button>
             @endif
         </div>
