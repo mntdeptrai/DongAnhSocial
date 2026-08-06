@@ -2364,6 +2364,10 @@
     const IS_USER_LOGGED_IN = @json(!!$currentUserId);
 
     function checkAuthGuard(actionName) {
+        var allowGuestActions = ['thích bài viết', 'bình luận', 'thả tim địa điểm', 'tương tác bài viết', 'thích'];
+        if (actionName && allowGuestActions.indexOf(actionName.toLowerCase()) !== -1) {
+            return true;
+        }
         if (!IS_USER_LOGGED_IN) {
             openAuthLoginModal(actionName);
             return false;

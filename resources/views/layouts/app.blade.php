@@ -2972,6 +2972,10 @@
     var __IS_LOGGED_IN = @json(!!(Auth::check() || session('user_id')));
 
     function checkAuthGuard(actionName) {
+        var allowGuestActions = ['thích bài viết', 'bình luận', 'thả tim địa điểm', 'tương tác bài viết', 'thích'];
+        if (actionName && allowGuestActions.indexOf(actionName.toLowerCase()) !== -1) {
+            return true;
+        }
         if (!__IS_LOGGED_IN) {
             openAuthLoginModal(actionName);
             return false;

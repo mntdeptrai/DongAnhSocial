@@ -905,14 +905,6 @@ class HomeController extends Controller
         ]);
 
         $userId = \Illuminate\Support\Facades\Auth::id() ?? session('user_id');
-
-        if (!$userId) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Vui lòng đăng nhập để bình luận.',
-            ], 401);
-        }
-
         $user = $userId ? \App\Models\User::find($userId) : null;
         $guestName = $user ? null : ($request->input('guest_name') ?? 'Khách vãng lai');
 
