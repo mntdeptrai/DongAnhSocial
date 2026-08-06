@@ -32,21 +32,17 @@ window.DongAnhWebRTC = (function () {
     };
 
     /**
-     * Loại bỏ dòng SDP không tương thích giữa các trình duyệt
-     * Chrome sinh 'a=ssrc:...' và 'a=ssrc-group:...' mà Firefox không parse được
-     * Các dòng này là Plan B legacy, không cần thiết trong Unified Plan
+     * Encode SDP thành base64 để tránh bị corrupt khi truyền qua JSON/PHP/WebSocket
      */
-    function mungeSdp(sdpStr) {
-        if (!sdpStr) return sdpStr;
-        return sdpStr.split('\r\n')
-            .filter(line => {
-                // Loại bỏ tất cả a=ssrc:... (cname, msid, mslabel, label)
-                if (/^a=ssrc:/.test(line)) return false;
-                // Loại bỏ a=ssrc-group:... (FID, SIM)
-                if (/^a=ssrc-group:/.test(line)) return false;
-                return true;
-            })
-            .join('\r\n');
+    function encodeSdp(sdpStr) {
+        return btoa(unescape(encodeURIComponent(sdpStr)));
+    }
+
+    /**
+     * Decode SDP từ base64
+     */
+    function decodeSdp(b64) {
+        return decodeURIComponent(escape(atob(b64)));
     }
 
     /**
@@ -135,7 +131,7 @@ window.DongAnhWebRTC = (function () {
                 body: JSON.stringify({
                     receiver_id: receiverId,
                     type: callType,
-                    sdp_offer: { type: offer.type, sdp: mungeSdp(offer.sdp) }
+                    sdp_offer: { type: offer.type, sdp: encodeSdp(offer.sdp) }
                 })
             });
 
@@ -209,7 +205,7 @@ window.DongAnhWebRTC = (function () {
 
             // Set Remote Description từ SDP Offer của Caller
             const offerDesc = window.pendingSdpOffer;
-            await peerConnection.setRemoteDescription({ type: offerDesc.type, sdp: mungeSdp(offerDesc.sdp) });
+            await peerConnection.setRemoteDescription({ type: offerDesc.type, sdp: decodeSdp(offerDesc.sdp) });
 
             // Tạo SDP Answer
             const answer = await peerConnection.createAnswer();
@@ -229,7 +225,7 @@ window.DongAnhWebRTC = (function () {
                 },
                 body: JSON.stringify({
                     call_id: currentCallId,
-                    sdp_answer: { type: answer.type, sdp: mungeSdp(answer.sdp) }
+                    sdp_answer: { type: answer.type, sdp: encodeSdp(answer.sdp) }
                 })
             });
         } catch (err) {
@@ -264,7 +260,7 @@ window.DongAnhWebRTC = (function () {
 
         try {
             const answerDesc = e.sdp_answer;
-            await peerConnection.setRemoteDescription({ type: answerDesc.type, sdp: mungeSdp(answerDesc.sdp) });
+            await peerConnection.setRemoteDescription({ type: answerDesc.type, sdp: decodeSdp(answerDesc.sdp) });
             console.log('[WebRTC] Peer Connection Established Successfully!');
         } catch (err) {
             console.error('[WebRTC] Error setting remote description:', err);
