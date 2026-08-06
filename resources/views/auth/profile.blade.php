@@ -1853,6 +1853,7 @@
     }
 
     function togglePostLike(btn, postId) {
+        if (typeof checkAuthGuard === 'function' && !checkAuthGuard('thích bài viết')) return;
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
 
         fetch('/api/reactions/toggle', {
@@ -1984,6 +1985,7 @@
 
     function submitPostComment(e, postId) {
         e.preventDefault();
+        if (typeof checkAuthGuard === 'function' && !checkAuthGuard('bình luận')) return;
         const inputEl = document.getElementById(`fb-comment-input-${postId}`);
         if (!inputEl || !inputEl.value.trim()) return;
 
@@ -2226,10 +2228,7 @@
 
     function checkAuthGuard(actionName) {
         if (!IS_USER_LOGGED_IN) {
-            showToastNotification('🔒 Vui lòng đăng nhập để ' + actionName + '!');
-            setTimeout(() => {
-                window.location.href = '/auth/login?redirect=' + encodeURIComponent(window.location.pathname);
-            }, 1200);
+            openAuthLoginModal(actionName);
             return false;
         }
         return true;

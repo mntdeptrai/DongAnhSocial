@@ -237,15 +237,11 @@
                         </div>
 
                         <!-- Comment Input Form -->
+                        @if(auth()->check() || session('user_id'))
                         <form action="{{ route('comments.store') }}" method="POST" style="display: flex; flex-direction: column; gap: 8px;">
                             @csrf
                             <input type="hidden" name="commentable_id" value="{{ $p->id }}">
                             <input type="hidden" name="commentable_type" value="App\Models\Post">
-
-                            @if(!auth()->check())
-                                <input type="text" name="guest_name" placeholder="Tên của bạn (Khách vãng lai)..." 
-                                    style="width: 100%; padding: 8px 14px; border-radius: 10px; border: 1px solid #cbd5e1; background: #ffffff; color: #0f172a; font-size: 0.82rem; outline: none; box-sizing: border-box;">
-                            @endif
 
                             <div style="display: flex; gap: 10px; align-items: center;">
                                 <input type="text" name="content" placeholder="Viết bình luận của bạn..." required
@@ -255,6 +251,11 @@
                                 </button>
                             </div>
                         </form>
+                        @else
+                        <div style="text-align: center; padding: 10px; font-size: 0.85rem; color: #64748b;">
+                            🔒 <a href="javascript:void(0)" onclick="openAuthLoginModal('bình luận')" style="color: #0284c7; font-weight: 700; text-decoration: none;">Đăng nhập</a> để bình luận
+                        </div>
+                        @endif
                     </div>
                 </article>
             @endforeach
@@ -382,6 +383,7 @@ function toggleComments(postId, btnEl) {
 
 function sendReaction(postId, type, emoji, event) {
     if (event) event.preventDefault();
+    if (typeof checkAuthGuard === 'function' && !checkAuthGuard('tương tác bài viết')) return;
     fetch('/api/reactions/toggle', {
         method: 'POST',
         headers: {
@@ -404,6 +406,7 @@ function sendReaction(postId, type, emoji, event) {
 }
 
 function togglePostLike(btn, postId) {
+    if (typeof checkAuthGuard === 'function' && !checkAuthGuard('thích bài viết')) return;
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
 
     fetch('/api/reactions/toggle', {

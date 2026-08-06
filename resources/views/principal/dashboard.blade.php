@@ -1985,6 +1985,7 @@
     }
 
     function togglePostLike(btn, postId) {
+        if (typeof checkAuthGuard === 'function' && !checkAuthGuard('thích bài viết')) return;
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
 
         fetch('/api/reactions/toggle', {
@@ -2162,6 +2163,7 @@
 
     function submitPostComment(e, postId) {
         e.preventDefault();
+        if (typeof checkAuthGuard === 'function' && !checkAuthGuard('bình luận')) return;
         const inputEl = document.getElementById(`fb-comment-input-${postId}`);
         if (!inputEl || !inputEl.value.trim()) return;
 

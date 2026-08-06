@@ -54,6 +54,9 @@ class AuthController extends Controller
             
             if ($user->status === 'disabled') {
                 Auth::logout();
+                if ($request->wantsJson()) {
+                    return response()->json(['success' => false, 'message' => 'Tài khoản của bạn đã bị ban quản trị vô hiệu hóa.'], 403);
+                }
                 return back()->withErrors([
                     'email' => 'Tài khoản của bạn đã bị ban quản trị vô hiệu hóa.',
                 ])->onlyInput('email');
@@ -68,6 +71,10 @@ class AuthController extends Controller
                 'user_role' => $user->role,
             ]);
 
+            if ($request->wantsJson()) {
+                return response()->json(['success' => true, 'message' => 'Đăng nhập thành công!']);
+            }
+
             if (in_array($user->role, ['admin', 'manager'])) {
                 return redirect()->intended('/admin/dashboard');
             } elseif ($user->role === 'seller') {
@@ -76,6 +83,10 @@ class AuthController extends Controller
                 return redirect()->intended('/principal/schools');
             }
             return redirect()->intended('/');
+        }
+
+        if ($request->wantsJson()) {
+            return response()->json(['success' => false, 'message' => 'Sai tài khoản hoặc mật khẩu!'], 422);
         }
 
         return back()->withErrors([

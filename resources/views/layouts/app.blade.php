@@ -2809,6 +2809,134 @@
     </script>
 
 
+    {{-- Global Auth Guard — Login Popup Modal --}}
+    <div id="authLoginModal" style="display:none; position:fixed; inset:0; z-index:999999; background:rgba(0,0,0,0.55); backdrop-filter:blur(6px); align-items:center; justify-content:center;" onclick="if(event.target===this)closeAuthLoginModal()">
+        <div style="background:#fff; border-radius:20px; width:92%; max-width:420px; box-shadow:0 25px 80px rgba(0,0,0,0.25); animation:authModalIn .3s ease; overflow:hidden;">
+            {{-- Header --}}
+            <div style="text-align:center; padding:28px 24px 0; position:relative;">
+                <button onclick="closeAuthLoginModal()" style="position:absolute; top:14px; right:16px; background:none; border:none; font-size:1.4rem; cursor:pointer; color:#94a3b8; line-height:1;" aria-label="Đóng">&times;</button>
+                <div style="font-size:2.5rem; margin-bottom:8px;">🍜</div>
+                <h3 style="margin:0; font-size:1.35rem; font-weight:800; color:#0f172a;">Đăng nhập</h3>
+                <p id="authLoginMessage" style="margin:6px 0 0; font-size:0.84rem; color:#64748b;">Đăng nhập để tương tác với cộng đồng</p>
+            </div>
+            {{-- Error display --}}
+            <div id="authLoginError" style="display:none; margin:12px 24px 0; padding:10px 14px; background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.2); border-radius:10px; color:#dc2626; font-size:0.82rem; font-weight:600;"></div>
+            {{-- Form --}}
+            <form id="authLoginForm" onsubmit="handleAuthLoginSubmit(event)" style="padding:20px 24px 24px;">
+                <div style="margin-bottom:14px;">
+                    <label style="display:block; font-size:0.82rem; font-weight:700; color:#334155; margin-bottom:6px;">Tài khoản</label>
+                    <input type="text" id="authLoginEmail" required placeholder="Email, tên đăng nhập hoặc SĐT"
+                        style="width:100%; padding:11px 14px; border:1.5px solid #e2e8f0; border-radius:12px; font-size:0.9rem; outline:none; transition:border .2s; background:#f8fafc; box-sizing:border-box;"
+                        onfocus="this.style.borderColor='#0284c7';this.style.background='#fff'" onblur="this.style.borderColor='#e2e8f0';this.style.background='#f8fafc'">
+                </div>
+                <div style="margin-bottom:18px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                        <label style="font-size:0.82rem; font-weight:700; color:#334155;">Mật khẩu</label>
+                        <a href="/auth/forgot-password" style="font-size:0.76rem; color:#0284c7; text-decoration:none;">Quên mật khẩu?</a>
+                    </div>
+                    <input type="password" id="authLoginPassword" required placeholder="••••••••"
+                        style="width:100%; padding:11px 14px; border:1.5px solid #e2e8f0; border-radius:12px; font-size:0.9rem; outline:none; transition:border .2s; background:#f8fafc; box-sizing:border-box;"
+                        onfocus="this.style.borderColor='#0284c7';this.style.background='#fff'" onblur="this.style.borderColor='#e2e8f0';this.style.background='#f8fafc'">
+                </div>
+                <button type="submit" id="authLoginSubmitBtn"
+                    style="width:100%; padding:12px; border:none; border-radius:12px; background:linear-gradient(135deg,#0284c7,#0369a1); color:#fff; font-size:0.95rem; font-weight:800; cursor:pointer; transition:opacity .2s;"
+                    onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
+                    Đăng nhập
+                </button>
+                <div style="text-align:center; margin-top:16px; font-size:0.82rem; color:#64748b;">
+                    Chưa có tài khoản? <a href="/auth/register" style="color:#0284c7; font-weight:700; text-decoration:none;">Đăng ký ngay</a>
+                </div>
+            </form>
+        </div>
+    </div>
+    <style>
+        @keyframes authModalIn { from { opacity:0; transform:scale(.93) translateY(12px); } to { opacity:1; transform:scale(1) translateY(0); } }
+        @keyframes toastIn { from { opacity:0; transform:translateX(-50%) translateY(-10px); } to { opacity:1; transform:translateX(-50%) translateY(0); } }
+    </style>
+    <script>
+    var __IS_LOGGED_IN = @json(!!(Auth::check() || session('user_id')));
+
+    function checkAuthGuard(actionName) {
+        if (!__IS_LOGGED_IN) {
+            openAuthLoginModal(actionName);
+            return false;
+        }
+        return true;
+    }
+
+    function openAuthLoginModal(actionName) {
+        var modal = document.getElementById('authLoginModal');
+        var msgEl = document.getElementById('authLoginMessage');
+        var errEl = document.getElementById('authLoginError');
+        errEl.style.display = 'none';
+        if (actionName) {
+            msgEl.textContent = 'Đăng nhập để ' + actionName;
+        } else {
+            msgEl.textContent = 'Đăng nhập để tương tác với cộng đồng';
+        }
+        modal.style.display = 'flex';
+        setTimeout(function() {
+            document.getElementById('authLoginEmail').focus();
+        }, 100);
+    }
+
+    function closeAuthLoginModal() {
+        document.getElementById('authLoginModal').style.display = 'none';
+    }
+
+    function handleAuthLoginSubmit(e) {
+        e.preventDefault();
+        var email = document.getElementById('authLoginEmail').value.trim();
+        var password = document.getElementById('authLoginPassword').value;
+        var btn = document.getElementById('authLoginSubmitBtn');
+        var errEl = document.getElementById('authLoginError');
+
+        btn.disabled = true;
+        btn.textContent = 'Đang đăng nhập...';
+        errEl.style.display = 'none';
+
+        var csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
+        fetch('/auth/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken,
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({ email: email, password: password })
+        })
+        .then(function(res) { return res.json().then(function(data) { return { status: res.status, data: data }; }); })
+        .then(function(result) {
+            if (result.status >= 200 && result.status < 300 && (result.data.success || result.data.redirect)) {
+                // Login success — reload page
+                showToastNotification('✅ Đăng nhập thành công!');
+                setTimeout(function() { window.location.reload(); }, 600);
+            } else {
+                errEl.textContent = result.data.message || result.data.error || 'Sai tài khoản hoặc mật khẩu!';
+                errEl.style.display = 'block';
+                btn.disabled = false;
+                btn.textContent = 'Đăng nhập';
+            }
+        })
+        .catch(function() {
+            // Fallback: try form submit redirect
+            window.location.href = '/auth/login';
+        });
+    }
+
+    function showToastNotification(msg) {
+        var existing = document.getElementById('globalToastNotif');
+        if (existing) existing.remove();
+        var toast = document.createElement('div');
+        toast.id = 'globalToastNotif';
+        toast.textContent = msg;
+        toast.style.cssText = 'position:fixed; top:24px; left:50%; transform:translateX(-50%); background:#1e293b; color:#fff; padding:12px 24px; border-radius:12px; font-size:0.9rem; font-weight:600; z-index:9999999; box-shadow:0 8px 30px rgba(0,0,0,0.2); animation:toastIn .3s ease;';
+        document.body.appendChild(toast);
+        setTimeout(function() { toast.remove(); }, 3000);
+    }
+    </script>
+
     {{-- Modal xem danh sách người đã thích --}}
     <div id="postLikersModal" style="display:none; position:fixed; inset:0; z-index:99999; background:rgba(0,0,0,0.5); backdrop-filter:blur(4px); align-items:center; justify-content:center;" onclick="if(event.target===this)closePostLikersModal()">
         <div style="background:#fff; border-radius:16px; width:90%; max-width:400px; max-height:70vh; display:flex; flex-direction:column; box-shadow:0 20px 60px rgba(0,0,0,0.2); animation:likersModalIn .25s ease;">
