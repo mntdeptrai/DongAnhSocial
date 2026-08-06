@@ -753,13 +753,6 @@ class HomeController extends Controller
         $userId = \Illuminate\Support\Facades\Auth::id() ?? session('user_id');
         $sessionId = session()->getId();
 
-        if (!$userId) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Vui lòng đăng nhập để tương tác.',
-            ], 401);
-        }
-
         $query = \App\Models\CheckinReaction::where('reactionable_type', $type)
             ->where('reactionable_id', $id);
 
