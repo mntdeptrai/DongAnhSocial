@@ -33,14 +33,17 @@ window.DongAnhWebRTC = (function () {
 
     /**
      * Loại bỏ dòng SDP không tương thích giữa các trình duyệt
-     * Chrome sinh 'a=ssrc:... msid:...' mà Firefox không hiểu
+     * Chrome sinh 'a=ssrc:...' và 'a=ssrc-group:...' mà Firefox không parse được
+     * Các dòng này là Plan B legacy, không cần thiết trong Unified Plan
      */
     function mungeSdp(sdpStr) {
         if (!sdpStr) return sdpStr;
         return sdpStr.split('\r\n')
             .filter(line => {
-                // Loại bỏ a=ssrc:XXX msid:... (thừa trong Unified Plan)
-                if (/^a=ssrc:\d+ msid:/.test(line)) return false;
+                // Loại bỏ tất cả a=ssrc:... (cname, msid, mslabel, label)
+                if (/^a=ssrc:/.test(line)) return false;
+                // Loại bỏ a=ssrc-group:... (FID, SIM)
+                if (/^a=ssrc-group:/.test(line)) return false;
                 return true;
             })
             .join('\r\n');
