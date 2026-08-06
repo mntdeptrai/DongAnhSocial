@@ -1520,10 +1520,10 @@ class AdminController extends Controller
             }
         } catch (\Exception $ex) {}
 
-        $filename = 'Danh_sach_nguoi_dung_gian_hang_' . date('Y-m-d_H-i') . '.csv';
+        $filename = 'Danh_sach_nguoi_dung_gian_hang_' . date('Y-m-d_H-i') . '.xls';
 
         $headers = [
-            'Content-Type'        => 'text/csv; charset=UTF-8',
+            'Content-Type'        => 'application/vnd.ms-excel; charset=UTF-8',
             'Content-Disposition' => 'attachment; filename="' . $filename . '"',
             'Pragma'              => 'no-cache',
             'Cache-Control'       => 'must-revalidate, post-check=0, pre-check=0',
@@ -1531,21 +1531,25 @@ class AdminController extends Controller
         ];
 
         $callback = function() use ($users, $eateriesMap) {
-            $file = fopen('php://output', 'w');
-            // Xuất UTF-8 BOM để Excel mở không bị lỗi font tiếng Việt
-            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
-
-            // Dòng tiêu đề các cột
-            fputcsv($file, [
-                'STT',
-                'Tên người dùng',
-                'Số điện thoại',
-                'Email',
-                'Vai trò',
-                'Gian hàng liên kết',
-                'Tên chợ của gian hàng nằm trong',
-                'Trạng thái'
-            ]);
+            echo '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">';
+            echo '<head><meta http-equiv="Content-Type" content="text/html; charset=utf-8">';
+            echo '<style>';
+            echo 'table { border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; }';
+            echo 'th { background-color: #10b981; color: #ffffff; font-weight: bold; border: 1px solid #cbd5e1; padding: 10px; text-align: center; }';
+            echo 'td { border: 1px solid #cbd5e1; padding: 8px; vertical-align: middle; }';
+            echo '.stt { text-align: center; font-weight: bold; }';
+            echo '</style>';
+            echo '</head><body>';
+            echo '<table>';
+            echo '<thead>';
+            echo '<tr>';
+            echo '<th style="width: 60px;">STT</th>';
+            echo '<th>Tên người dùng</th>';
+            echo '<th>Gian hàng liên kết</th>';
+            echo '<th>Tên chợ của gian hàng nằm trong</th>';
+            echo '</tr>';
+            echo '</thead>';
+            echo '<tbody>';
 
             $stt = 1;
             foreach ($users as $u) {
@@ -1588,29 +1592,17 @@ class AdminController extends Controller
                     $marketName = $eateriesMap[$u->eatery_id];
                 }
 
-                $roleText = match($u->role) {
-                    'admin' => 'Admin (Quản trị viên)',
-                    'principal' => 'Principal (Hiệu trưởng / Cơ sở)',
-                    'manager' => 'Manager (Quản lý Chợ)',
-                    'seller' => 'Seller (Tiểu thương Chợ)',
-                    default => 'Customer (Người dùng / Khách hàng)',
-                };
-
-                $statusText = $u->status === 'active' ? 'Hoạt động' : 'Vô hiệu hóa';
-
-                fputcsv($file, [
-                    $stt++,
-                    $u->name,
-                    $u->phone ?: 'Chưa cập nhật',
-                    $u->email ?: '',
-                    $roleText,
-                    $stallName,
-                    $marketName,
-                    $statusText
-                ]);
+                echo '<tr>';
+                echo '<td class="stt">' . $stt++ . '</td>';
+                echo '<td>' . htmlspecialchars($u->name, ENT_QUOTES, 'UTF-8') . '</td>';
+                echo '<td>' . htmlspecialchars($stallName, ENT_QUOTES, 'UTF-8') . '</td>';
+                echo '<td>' . htmlspecialchars($marketName, ENT_QUOTES, 'UTF-8') . '</td>';
+                echo '</tr>';
             }
 
-            fclose($file);
+            echo '</tbody>';
+            echo '</table>';
+            echo '</body></html>';
         };
 
         return response()->stream($callback, 200, $headers);
