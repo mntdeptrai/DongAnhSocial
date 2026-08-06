@@ -1,11 +1,12 @@
 /**
  * WebRTC P2P Call Client for DongAnhSocial
- * Directly connects two devices for zero latency video/audio calling.
- * Uses Laravel Reverb (WebSocket) as the signaling server for initial SDP & ICE candidate exchange.
+ * Sử dụng simple-peer library để kết nối P2P trực tiếp.
+ * Laravel Reverb (WebSocket) chỉ dùng để trao đổi tín hiệu (signaling).
+ * v2.0 — simple-peer based (auto SDP handling)
  */
 
 window.DongAnhWebRTC = (function () {
-    let peerConnection = null;
+    let peer = null; // SimplePeer instance
     let localStream = null;
     let remoteStream = null;
 
@@ -31,75 +32,57 @@ window.DongAnhWebRTC = (function () {
         ]
     };
 
-    /**
-     * Encode SDP thành base64 để tránh bị corrupt khi truyền qua JSON/PHP/WebSocket
-     */
-    function encodeSdp(sdpStr) {
-        return btoa(unescape(encodeURIComponent(sdpStr)));
+    // --- CSRF Helper ---
+    function getCsrf() {
+        return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
     }
 
-    /**
-     * Decode SDP từ base64
-     */
-    function decodeSdp(b64) {
-        return decodeURIComponent(escape(atob(b64)));
-    }
-
-    /**
-     * Khởi tạo WebRTC Call listener với Laravel Echo
-     */
+    // --- INIT (Lắng nghe channel WebSocket) ---
     function init(userId) {
         if (!window.Echo) {
-            console.warn('[WebRTC] Laravel Echo chưa được khởi tạo. Đợi 1 giây...');
+            console.warn('[WebRTC] Laravel Echo chưa sẵn sàng, chờ 1s...');
             setTimeout(() => init(userId), 1000);
             return;
         }
 
         console.log('[WebRTC] Lắng nghe cuộc gọi trên channel private: call.' + userId);
 
-        const callChannel = window.Echo.private(`call.${userId}`);
-        
-        callChannel.listen('.CallOffer', (e) => {
+        const ch = window.Echo.private('call.' + userId);
+
+        ch.listen('.CallOffer', (e) => {
             console.log('[WebRTC] Nhận CallOffer:', e);
             handleIncomingCall(e);
         });
-        
-        callChannel.listen('.CallAnswer', (e) => {
-            console.log('[WebRTC] Nhận CallAnswer:', e);
-            handleCallAnswer(e);
+
+        // Nhận signal data (SDP answer hoặc ICE candidates) từ đối phương
+        ch.listen('.CallSignal', (e) => {
+            console.log('[WebRTC] Nhận CallSignal:', e);
+            handleRemoteSignal(e);
         });
-        
-        callChannel.listen('.IceCandidate', (e) => {
-            console.log('[WebRTC] Nhận IceCandidate:', e);
-            handleRemoteIceCandidate(e);
-        });
-        
-        callChannel.listen('.CallHangup', (e) => {
+
+        ch.listen('.CallHangup', (e) => {
             console.log('[WebRTC] Nhận CallHangup:', e);
             handleRemoteHangup(e);
         });
     }
 
-    /**
-     * Bắt đầu cuộc gọi tới người dùng khác
-     */
-    async function startCall(receiverId, receiverName, receiverAvatar, type = 'audio') {
-        if (peerConnection) {
-            alert('Bạn đang trong một cuộc gọi khác.');
+    // --- GỌI ĐI (Caller) ---
+    async function startCall(receiverId, receiverName, receiverAvatar, type) {
+        if (peer || currentCallId) {
+            alert('Bạn đang trong cuộc gọi khác.');
             return;
         }
 
-        callType = type;
+        callType = type || 'audio';
+        isCaller = true;
         targetUserId = receiverId;
         targetUserName = receiverName || 'Người dùng';
         targetUserAvatar = receiverAvatar || '👤';
-        isCaller = true;
 
-        showOutgoingModal(targetUserName, targetUserAvatar, callType);
-        playRingtone(true); // Nhạc chuông gọi đi
+        showOutgoingModal(receiverName, receiverAvatar, callType);
+        playRingtone(true);
 
         try {
-            // Lấy media từ mic/cam
             const constraints = {
                 audio: true,
                 video: callType === 'video' ? { width: { ideal: 1280 }, height: { ideal: 720 } } : false
@@ -107,52 +90,62 @@ window.DongAnhWebRTC = (function () {
             localStream = await navigator.mediaDevices.getUserMedia(constraints);
             setLocalStreamUI(localStream, callType);
 
-            // Tạo RTCPeerConnection
-            createPeerConnection();
-
-            // Add local tracks to PeerConnection
-            localStream.getTracks().forEach(track => {
-                peerConnection.addTrack(track, localStream);
+            // Tạo SimplePeer (initiator = true = Caller)
+            peer = new SimplePeer({
+                initiator: true,
+                trickle: true,
+                stream: localStream,
+                config: rtcConfig
             });
 
-            // Tạo SDP Offer
-            const offer = await peerConnection.createOffer();
-            await peerConnection.setLocalDescription(offer);
+            // simple-peer tự tạo SDP Offer + ICE candidates → gửi qua signal event
+            peer.on('signal', async (signalData) => {
+                console.log('[WebRTC] Signal gửi đi (caller):', signalData.type || 'candidate');
 
-            // Gửi Offer tới server qua API
-            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-            const res = await fetch('/social/call/initiate', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'X-CSRF-TOKEN': csrfToken || ''
-                },
-                body: JSON.stringify({
-                    receiver_id: receiverId,
-                    type: callType,
-                    sdp_offer: { type: offer.type, sdp: encodeSdp(offer.sdp) }
-                })
-            });
+                if (signalData.type === 'offer') {
+                    // Gửi SDP Offer tới server → broadcast tới receiver
+                    const res = await fetch('/social/call/initiate', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': getCsrf()
+                        },
+                        body: JSON.stringify({
+                            receiver_id: receiverId,
+                            type: callType,
+                            signal_data: JSON.stringify(signalData)
+                        })
+                    });
 
-            if (!res.ok) {
-                const errText = await res.text();
-                let errMsg = 'Không thể kết nối máy chủ (' + res.status + ')';
-                try {
-                    const errJson = JSON.parse(errText);
-                    if (errJson.message) errMsg = errJson.message;
-                } catch(e) {
-                    if (res.status === 401) errMsg = 'Vui lòng đăng nhập lại để gọi điện.';
+                    if (!res.ok) {
+                        const errText = await res.text();
+                        let errMsg = 'Không thể kết nối (' + res.status + ')';
+                        try {
+                            const errJson = JSON.parse(errText);
+                            if (errJson.message) errMsg = errJson.message;
+                        } catch(e) {
+                            if (res.status === 401) errMsg = 'Vui lòng đăng nhập lại.';
+                        }
+                        throw new Error(errMsg);
+                    }
+
+                    const data = await res.json();
+                    if (data.status === 'success') {
+                        currentCallId = data.call_id;
+                    } else {
+                        throw new Error(data.message || 'Lỗi khởi tạo cuộc gọi');
+                    }
+                } else {
+                    // ICE candidate → gửi qua signal endpoint
+                    if (currentCallId) {
+                        sendSignal(currentCallId, targetUserId, signalData);
+                    }
                 }
-                throw new Error(errMsg);
-            }
+            });
 
-            const data = await res.json();
-            if (data.status === 'success') {
-                currentCallId = data.call_id;
-            } else {
-                throw new Error(data.message || 'Khởi tạo cuộc gọi thất bại');
-            }
+            setupPeerEvents();
+
         } catch (err) {
             console.error('[WebRTC] Error starting call:', err);
             alert('Không thể bắt đầu cuộc gọi: ' + err.message);
@@ -160,12 +153,9 @@ window.DongAnhWebRTC = (function () {
         }
     }
 
-    /**
-     * Xử lý khi nhận cuộc gọi đến (CallOffer)
-     */
+    // --- NHẬN CUỘC GỌI ĐẾN ---
     function handleIncomingCall(e) {
-        if (peerConnection || currentCallId) {
-            // Đang bận
+        if (peer || currentCallId) {
             sendHangup(e.call_id, e.caller_id, 'busy');
             return;
         }
@@ -176,15 +166,15 @@ window.DongAnhWebRTC = (function () {
         targetUserAvatar = e.caller_avatar;
         callType = e.type;
         isCaller = false;
-        window.pendingSdpOffer = e.sdp_offer;
+
+        // Lưu signal data (SDP Offer) để dùng khi acceptCall
+        window._pendingSignalData = JSON.parse(e.signal_data);
 
         showIncomingModal(targetUserName, targetUserAvatar, callType);
-        playRingtone(false); // Nhạc chuông cuộc gọi đến
+        playRingtone(false);
     }
 
-    /**
-     * Chấp nhận cuộc gọi đến
-     */
+    // --- CHẤP NHẬN CUỘC GỌI ---
     async function acceptCall() {
         stopRingtone();
         hideIncomingModal();
@@ -197,37 +187,31 @@ window.DongAnhWebRTC = (function () {
             localStream = await navigator.mediaDevices.getUserMedia(constraints);
             setLocalStreamUI(localStream, callType);
 
-            createPeerConnection();
-
-            localStream.getTracks().forEach(track => {
-                peerConnection.addTrack(track, localStream);
+            // Tạo SimplePeer (initiator = false = Receiver)
+            peer = new SimplePeer({
+                initiator: false,
+                trickle: true,
+                stream: localStream,
+                config: rtcConfig
             });
 
-            // Set Remote Description từ SDP Offer của Caller
-            const offerDesc = window.pendingSdpOffer;
-            await peerConnection.setRemoteDescription({ type: offerDesc.type, sdp: decodeSdp(offerDesc.sdp) });
+            // simple-peer sinh SDP Answer + ICE candidates
+            peer.on('signal', (signalData) => {
+                console.log('[WebRTC] Signal gửi đi (receiver):', signalData.type || 'candidate');
+                if (currentCallId) {
+                    sendSignal(currentCallId, targetUserId, signalData);
+                }
+            });
 
-            // Tạo SDP Answer
-            const answer = await peerConnection.createAnswer();
-            await peerConnection.setLocalDescription(answer);
+            setupPeerEvents();
+
+            // Nhập SDP Offer từ Caller → simple-peer tự tạo Answer
+            peer.signal(window._pendingSignalData);
+            window._pendingSignalData = null;
 
             showActiveCallOverlay(targetUserName, targetUserAvatar, callType);
             startDurationCounter();
 
-            // Gửi Answer tới server
-            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-            await fetch('/social/call/answer', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'X-CSRF-TOKEN': csrfToken || ''
-                },
-                body: JSON.stringify({
-                    call_id: currentCallId,
-                    sdp_answer: { type: answer.type, sdp: encodeSdp(answer.sdp) }
-                })
-            });
         } catch (err) {
             console.error('[WebRTC] Error accepting call:', err);
             alert('Không thể kết nối cuộc gọi: ' + err.message);
@@ -235,9 +219,7 @@ window.DongAnhWebRTC = (function () {
         }
     }
 
-    /**
-     * Từ chối cuộc gọi đến
-     */
+    // --- TỪ CHỐI CUỘC GỌI ---
     function rejectCall() {
         stopRingtone();
         hideIncomingModal();
@@ -247,77 +229,99 @@ window.DongAnhWebRTC = (function () {
         cleanupCall();
     }
 
-    /**
-     * Caller nhận SDP Answer từ Callee
-     */
-    async function handleCallAnswer(e) {
-        if (!peerConnection || e.call_id !== currentCallId) return;
-
-        stopRingtone();
-        hideOutgoingModal();
-        showActiveCallOverlay(targetUserName, targetUserAvatar, callType);
-        startDurationCounter();
-
+    // --- NHẬN SIGNAL TỪ ĐỐI PHƯƠNG (SDP Answer hoặc ICE candidates) ---
+    function handleRemoteSignal(e) {
+        if (!peer || e.call_id !== currentCallId) return;
         try {
-            const answerDesc = e.sdp_answer;
-            await peerConnection.setRemoteDescription({ type: answerDesc.type, sdp: decodeSdp(answerDesc.sdp) });
-            console.log('[WebRTC] Peer Connection Established Successfully!');
-        } catch (err) {
-            console.error('[WebRTC] Error setting remote description:', err);
-        }
-    }
+            const signalData = typeof e.signal_data === 'string' ? JSON.parse(e.signal_data) : e.signal_data;
+            console.log('[WebRTC] Áp dụng remote signal:', signalData.type || 'candidate');
+            peer.signal(signalData);
 
-    /**
-     * Nhận ICE Candidate từ peer đối phương
-     */
-    async function handleRemoteIceCandidate(e) {
-        if (!peerConnection || e.call_id !== currentCallId) return;
-        try {
-            if (e.candidate) {
-                await peerConnection.addIceCandidate(new RTCIceCandidate(e.candidate));
+            // Nếu là answer → caller nhận được, chuyển sang overlay active
+            if (signalData.type === 'answer' && isCaller) {
+                stopRingtone();
+                hideOutgoingModal();
+                showActiveCallOverlay(targetUserName, targetUserAvatar, callType);
+                startDurationCounter();
             }
         } catch (err) {
-            console.error('[WebRTC] Error adding ICE candidate:', err);
+            console.error('[WebRTC] Error handling remote signal:', err);
         }
     }
 
-    /**
-     * Đối phương cúp máy hoặc từ chối
-     */
+    // --- ĐỐI PHƯƠNG CÚP MÁY ---
     function handleRemoteHangup(e) {
         if (e.call_id === currentCallId) {
             let msg = 'Cuộc gọi đã kết thúc.';
             if (e.reason === 'rejected') msg = 'Người nhận đã từ chối cuộc gọi.';
             if (e.reason === 'busy') msg = 'Người nhận đang bận.';
-            
             showToast(msg);
             cleanupCall();
         }
     }
 
-    /**
-     * Cúp máy chủ động
-     */
-    function hangup(reason = 'ended') {
+    // --- CÚP MÁY ---
+    function hangup(reason) {
         stopRingtone();
         if (currentCallId && targetUserId) {
-            sendHangup(currentCallId, targetUserId, reason);
+            sendHangup(currentCallId, targetUserId, reason || 'ended');
         }
         cleanupCall();
     }
 
-    /**
-     * Gửi event Hangup qua server API
-     */
+    // --- SETUP PEER EVENTS ---
+    function setupPeerEvents() {
+        peer.on('stream', (stream) => {
+            console.log('[WebRTC] Nhận remote stream!');
+            remoteStream = stream;
+            setRemoteStreamUI(stream);
+        });
+
+        peer.on('connect', () => {
+            console.log('[WebRTC] ✅ P2P Connection Established!');
+        });
+
+        peer.on('error', (err) => {
+            console.error('[WebRTC] Peer Error:', err);
+            showToast('Lỗi kết nối: ' + err.message);
+        });
+
+        peer.on('close', () => {
+            console.log('[WebRTC] Peer Connection Closed.');
+            cleanupCall();
+        });
+    }
+
+    // --- GỬI SIGNAL DATA QUA SERVER ---
+    async function sendSignal(callId, targetId, signalData) {
+        try {
+            await fetch('/social/call/signal', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': getCsrf()
+                },
+                body: JSON.stringify({
+                    call_id: callId,
+                    target_user_id: targetId,
+                    signal_data: JSON.stringify(signalData)
+                })
+            });
+        } catch (err) {
+            console.error('[WebRTC] Error sending signal:', err);
+        }
+    }
+
+    // --- GỬI HANGUP ---
     async function sendHangup(callId, targetId, reason) {
-        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
         try {
             await fetch('/social/call/hangup', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json',
-                    'X-CSRF-TOKEN': csrfToken || ''
+                    'X-CSRF-TOKEN': getCsrf()
                 },
                 body: JSON.stringify({
                     call_id: callId,
@@ -330,53 +334,7 @@ window.DongAnhWebRTC = (function () {
         }
     }
 
-    /**
-     * Khởi tạo RTCPeerConnection
-     */
-    function createPeerConnection() {
-        peerConnection = new RTCPeerConnection(rtcConfig);
-
-        // Gửi ICE candidate local tới peer đối phương
-        peerConnection.onicecandidate = (event) => {
-            if (event.candidate && currentCallId && targetUserId) {
-                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-                fetch('/social/call/ice-candidate', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json',
-                        'X-CSRF-TOKEN': csrfToken || ''
-                    },
-                    body: JSON.stringify({
-                        call_id: currentCallId,
-                        target_user_id: targetUserId,
-                        candidate: event.candidate
-                    })
-                });
-            }
-        };
-
-        // Nhận track remote từ peer đối phương
-        peerConnection.ontrack = (event) => {
-            console.log('[WebRTC] Received remote stream track:', event.track.kind);
-            if (!remoteStream) {
-                remoteStream = new MediaStream();
-                setRemoteStreamUI(remoteStream);
-            }
-            remoteStream.addTrack(event.track);
-        };
-
-        peerConnection.oniceconnectionstatechange = () => {
-            console.log('[WebRTC] ICE Connection State:', peerConnection.iceConnectionState);
-            if (peerConnection.iceConnectionState === 'disconnected' || peerConnection.iceConnectionState === 'failed') {
-                showToast('Kết nối bị gián đoạn');
-            }
-        };
-    }
-
-    /**
-     * Bật/Tắt Micro
-     */
+    // --- BẬT/TẮT MICRO ---
     function toggleMute() {
         if (localStream) {
             const audioTrack = localStream.getAudioTracks()[0];
@@ -391,9 +349,7 @@ window.DongAnhWebRTC = (function () {
         }
     }
 
-    /**
-     * Bật/Tắt Camera
-     */
+    // --- BẬT/TẮT CAMERA ---
     function toggleVideo() {
         if (localStream) {
             const videoTrack = localStream.getVideoTracks()[0];
@@ -408,9 +364,7 @@ window.DongAnhWebRTC = (function () {
         }
     }
 
-    /**
-     * Dọn dẹp trạng thái cuộc gọi
-     */
+    // --- DỌN DẸP ---
     function cleanupCall() {
         stopRingtone();
         stopDurationCounter();
@@ -425,9 +379,9 @@ window.DongAnhWebRTC = (function () {
             remoteStream = null;
         }
 
-        if (peerConnection) {
-            peerConnection.close();
-            peerConnection = null;
+        if (peer) {
+            peer.destroy();
+            peer = null;
         }
 
         currentCallId = null;
@@ -435,7 +389,7 @@ window.DongAnhWebRTC = (function () {
         targetUserName = '';
         targetUserAvatar = '';
         isCaller = false;
-        window.pendingSdpOffer = null;
+        window._pendingSignalData = null;
 
         hideIncomingModal();
         hideOutgoingModal();
@@ -449,7 +403,6 @@ window.DongAnhWebRTC = (function () {
     function playRingtone(isOutgoing) {
         stopRingtone();
 
-        // 1. Nhấp nháy tiêu đề tab trình duyệt để thu hút sự chú ý khi ở tab khác
         if (!isOutgoing) {
             originalDocumentTitle = document.title;
             let blink = false;
@@ -458,7 +411,6 @@ window.DongAnhWebRTC = (function () {
                 blink = !blink;
             }, 800);
 
-            // Gửi Desktop Notification nếu trình duyệt cấp phép
             if ('Notification' in window && Notification.permission === 'granted') {
                 new Notification('📞 Cuộc gọi tới từ ' + targetUserName, {
                     body: callType === 'video' ? 'Cuộc gọi Video P2P' : 'Cuộc gọi Thoại P2P',
@@ -470,75 +422,43 @@ window.DongAnhWebRTC = (function () {
             }
         }
 
-        // 2. Web Audio API Generator - Âm thanh chuông điện thoại thực tế
         try {
             audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            if (audioContext.state === 'suspended') {
-                audioContext.resume().catch(() => {});
-            }
+            if (audioContext.state === 'suspended') audioContext.resume().catch(() => {});
 
             if (isOutgoing) {
-                // Nhạc chuông gọi đi (Dial tone: Tùuuu... Tùuuu...)
                 ringtoneInterval = setInterval(() => {
                     if (!audioContext || audioContext.state === 'closed') return;
                     if (audioContext.state === 'suspended') audioContext.resume();
-
                     const now = audioContext.currentTime;
                     const osc1 = audioContext.createOscillator();
                     const osc2 = audioContext.createOscillator();
                     const gain = audioContext.createGain();
-
-                    osc1.type = 'sine';
-                    osc1.frequency.setValueAtTime(440, now);
-                    osc2.type = 'sine';
-                    osc2.frequency.setValueAtTime(480, now);
-
+                    osc1.type = 'sine'; osc1.frequency.setValueAtTime(440, now);
+                    osc2.type = 'sine'; osc2.frequency.setValueAtTime(480, now);
                     gain.gain.setValueAtTime(0.08, now);
                     gain.gain.exponentialRampToValueAtTime(0.001, now + 1.8);
-
-                    osc1.connect(gain);
-                    osc2.connect(gain);
-                    gain.connect(audioContext.destination);
-
-                    osc1.start(now);
-                    osc2.start(now);
-                    osc1.stop(now + 1.8);
-                    osc2.stop(now + 1.8);
+                    osc1.connect(gain); osc2.connect(gain); gain.connect(audioContext.destination);
+                    osc1.start(now); osc2.start(now); osc1.stop(now + 1.8); osc2.stop(now + 1.8);
                 }, 3000);
             } else {
-                // Nhạc chuông cuộc gọi đến (Ring-Ring... Ring-Ring...)
                 const playDoubleBurst = () => {
                     if (!audioContext || audioContext.state === 'closed') return;
                     if (audioContext.state === 'suspended') audioContext.resume();
-
                     const now = audioContext.currentTime;
-
-                    // Burst 1 (Hạng nốt kép 880Hz + 1046Hz)
                     [0, 0.2].forEach(offset => {
                         const t = now + offset;
                         const osc1 = audioContext.createOscillator();
                         const osc2 = audioContext.createOscillator();
                         const gain = audioContext.createGain();
-
-                        osc1.type = 'triangle';
-                        osc1.frequency.setValueAtTime(880, t);
-                        osc2.type = 'sine';
-                        osc2.frequency.setValueAtTime(1046.5, t); // C6 Note
-
+                        osc1.type = 'triangle'; osc1.frequency.setValueAtTime(880, t);
+                        osc2.type = 'sine'; osc2.frequency.setValueAtTime(1046.5, t);
                         gain.gain.setValueAtTime(0.2, t);
                         gain.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
-
-                        osc1.connect(gain);
-                        osc2.connect(gain);
-                        gain.connect(audioContext.destination);
-
-                        osc1.start(t);
-                        osc2.start(t);
-                        osc1.stop(t + 0.15);
-                        osc2.stop(t + 0.15);
+                        osc1.connect(gain); osc2.connect(gain); gain.connect(audioContext.destination);
+                        osc1.start(t); osc2.start(t); osc1.stop(t + 0.15); osc2.stop(t + 0.15);
                     });
                 };
-
                 playDoubleBurst();
                 ringtoneInterval = setInterval(playDoubleBurst, 1500);
             }
@@ -548,19 +468,9 @@ window.DongAnhWebRTC = (function () {
     }
 
     function stopRingtone() {
-        if (titleBlinkInterval) {
-            clearInterval(titleBlinkInterval);
-            titleBlinkInterval = null;
-            document.title = originalDocumentTitle;
-        }
-        if (ringtoneInterval) {
-            clearInterval(ringtoneInterval);
-            ringtoneInterval = null;
-        }
-        if (audioContext) {
-            audioContext.close().catch(() => {});
-            audioContext = null;
-        }
+        if (titleBlinkInterval) { clearInterval(titleBlinkInterval); titleBlinkInterval = null; document.title = originalDocumentTitle; }
+        if (ringtoneInterval) { clearInterval(ringtoneInterval); ringtoneInterval = null; }
+        if (audioContext) { audioContext.close().catch(() => {}); audioContext = null; }
     }
 
     // --- DURATION COUNTER ---
@@ -568,7 +478,6 @@ window.DongAnhWebRTC = (function () {
         callSeconds = 0;
         const timerEl = document.getElementById('webrtc-call-timer');
         if (timerEl) timerEl.innerText = '00:00';
-
         callDurationTimer = setInterval(() => {
             callSeconds++;
             const mins = String(Math.floor(callSeconds / 60)).padStart(2, '0');
@@ -578,18 +487,13 @@ window.DongAnhWebRTC = (function () {
     }
 
     function stopDurationCounter() {
-        if (callDurationTimer) {
-            clearInterval(callDurationTimer);
-            callDurationTimer = null;
-        }
+        if (callDurationTimer) { clearInterval(callDurationTimer); callDurationTimer = null; }
     }
 
     // --- UI HELPERS ---
     function setLocalStreamUI(stream, type) {
         const videoEl = document.getElementById('webrtc-local-video');
-        if (videoEl) {
-            videoEl.srcObject = stream;
-        }
+        if (videoEl) videoEl.srcObject = stream;
     }
 
     function setRemoteStreamUI(stream) {
@@ -632,17 +536,10 @@ window.DongAnhWebRTC = (function () {
         if (!overlay) return;
         document.getElementById('webrtc-active-name').innerText = name;
         document.getElementById('webrtc-active-avatar').src = avatar;
-        
         const videoContainer = document.getElementById('webrtc-video-container');
-        if (videoContainer) {
-            videoContainer.style.display = type === 'video' ? 'block' : 'none';
-        }
-
+        if (videoContainer) videoContainer.style.display = type === 'video' ? 'block' : 'none';
         const videoBtn = document.getElementById('webrtc-video-btn');
-        if (videoBtn) {
-            videoBtn.style.display = type === 'video' ? 'inline-flex' : 'none';
-        }
-
+        if (videoBtn) videoBtn.style.display = type === 'video' ? 'inline-flex' : 'none';
         overlay.style.display = 'flex';
     }
 
@@ -657,10 +554,7 @@ window.DongAnhWebRTC = (function () {
         toast.innerText = message;
         document.body.appendChild(toast);
         setTimeout(() => toast.classList.add('show'), 50);
-        setTimeout(() => {
-            toast.classList.remove('show');
-            setTimeout(() => toast.remove(), 300);
-        }, 3000);
+        setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, 3000);
     }
 
     return {

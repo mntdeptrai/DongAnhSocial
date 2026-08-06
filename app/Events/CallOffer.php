@@ -20,7 +20,7 @@ class CallOffer implements ShouldBroadcastNow
         public string $callerAvatar,
         public int $receiverId,
         public string $type, // 'audio' | 'video'
-        public array $sdpOffer
+        public string $signalData // JSON string from simple-peer
     ) {}
 
     public function broadcastOn(): Channel
@@ -36,13 +36,13 @@ class CallOffer implements ShouldBroadcastNow
     public function broadcastWith(): array
     {
         return [
-            'call_id' => $this->callId,
-            'caller_id' => $this->callerId,
-            'caller_name' => $this->callerName,
-            'caller_avatar' => $this->callerAvatar,
-            'receiver_id' => $this->receiverId,
-            'type' => $this->type,
-            'sdp_offer' => $this->sdpOffer,
+            'call_id'      => $this->callId,
+            'caller_id'    => $this->callerId,
+            'caller_name'  => $this->callerName,
+            'caller_avatar'=> $this->callerAvatar,
+            'receiver_id'  => $this->receiverId,
+            'type'         => $this->type,
+            'signal_data'  => $this->signalData,
         ];
     }
 }

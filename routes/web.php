@@ -103,8 +103,7 @@ Route::middleware(['auth'])->group(function () {
 
     // WebRTC P2P Call Signaling Routes
     Route::post('/social/call/initiate', [SocialHubController::class, 'initiateCall'])->name('social.call.initiate');
-    Route::post('/social/call/answer', [SocialHubController::class, 'answerCall'])->name('social.call.answer');
-    Route::post('/social/call/ice-candidate', [SocialHubController::class, 'iceCandidate'])->name('social.call.ice-candidate');
+    Route::post('/social/call/signal', [SocialHubController::class, 'signalCall'])->name('social.call.signal');
     Route::post('/social/call/hangup', [SocialHubController::class, 'hangupCall'])->name('social.call.hangup');
     Route::get('/social/call/history', [SocialHubController::class, 'callHistory'])->name('social.call.history');
 

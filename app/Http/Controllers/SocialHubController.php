@@ -9,8 +9,7 @@ use App\Models\FoodTour;
 use App\Models\CallLog;
 use App\Events\MessageSent;
 use App\Events\CallOffer;
-use App\Events\CallAnswer;
-use App\Events\IceCandidate;
+use App\Events\CallSignal;
 use App\Events\CallHangup;
 use App\Services\SocialService;
 use App\Domain\Social\FriendshipData;
@@ -689,14 +688,14 @@ class SocialHubController extends Controller
     }
 
     /**
-     * WebRTC P2P Call: Khởi tạo cuộc gọi & broadcast CallOffer
+     * WebRTC P2P Call: Khởi tạo cuộc gọi & broadcast CallOffer (simple-peer)
      */
     public function initiateCall(Request $request)
     {
         $request->validate([
             'receiver_id' => 'required|exists:users,id',
             'type'        => 'required|in:audio,video',
-            'sdp_offer'   => 'required|array',
+            'signal_data' => 'required|string',
         ]);
 
         $caller = Auth::user() ?? User::find(session('user_id'));
@@ -715,7 +714,7 @@ class SocialHubController extends Controller
 
         $callerAvatar = $caller->avatar ? asset($caller->avatar) : '👤';
 
-        // Broadcast Offer tới người nhận qua Reverb (P2P Signaling)
+        // Broadcast Offer tới người nhận qua Reverb
         try {
             broadcast(new CallOffer(
                 callId: $call->id,
@@ -724,7 +723,7 @@ class SocialHubController extends Controller
                 callerAvatar: $callerAvatar,
                 receiverId: (int)$request->receiver_id,
                 type: $request->type,
-                sdpOffer: $request->sdp_offer
+                signalData: $request->signal_data
             ))->toOthers();
         } catch (\Throwable $e) {
             \Illuminate\Support\Facades\Log::warning('CallOffer broadcast warning: ' . $e->getMessage());
@@ -737,61 +736,38 @@ class SocialHubController extends Controller
     }
 
     /**
-     * WebRTC P2P Call: Trả lời cuộc gọi & broadcast CallAnswer
+     * WebRTC P2P Call: Chuyển tiếp signal data (SDP answer / ICE candidates) giữa 2 peer
      */
-    public function answerCall(Request $request)
-    {
-        $request->validate([
-            'call_id'    => 'required|exists:call_logs,id',
-            'sdp_answer' => 'required|array',
-        ]);
-
-        $user = Auth::user() ?? User::find(session('user_id'));
-        $call = CallLog::findOrFail($request->call_id);
-
-        if (!$user || $call->receiver_id !== $user->id) {
-            return response()->json(['status' => 'error', 'message' => 'Unauthorized'], 403);
-        }
-
-        $call->update([
-            'status'     => 'answered',
-            'started_at' => now(),
-        ]);
-
-        // Broadcast Answer tới người gọi
-        try {
-            broadcast(new CallAnswer(
-                callId: $call->id,
-                callerId: $call->caller_id,
-                receiverId: $user->id,
-                sdpAnswer: $request->sdp_answer
-            ))->toOthers();
-        } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::warning('CallAnswer broadcast warning: ' . $e->getMessage());
-        }
-
-        return response()->json(['status' => 'success']);
-    }
-
-    /**
-     * WebRTC P2P Call: Trao đổi ICE Candidate giữa 2 peer
-     */
-    public function iceCandidate(Request $request)
+    public function signalCall(Request $request)
     {
         $request->validate([
             'call_id'        => 'required|exists:call_logs,id',
             'target_user_id' => 'required|exists:users,id',
-            'candidate'      => 'required|array',
+            'signal_data'    => 'required|string',
         ]);
 
+        $user = Auth::user() ?? User::find(session('user_id'));
+        if (!$user) {
+            return response()->json(['status' => 'error', 'message' => 'Unauthorized'], 401);
+        }
+
+        // Nếu signal chứa SDP answer → cập nhật trạng thái cuộc gọi
+        $signalJson = json_decode($request->signal_data, true);
+        if (isset($signalJson['type']) && $signalJson['type'] === 'answer') {
+            $call = CallLog::find($request->call_id);
+            if ($call) {
+                $call->update(['status' => 'answered', 'started_at' => now()]);
+            }
+        }
+
         try {
-            broadcast(new IceCandidate(
+            broadcast(new \App\Events\CallSignal(
                 callId: (int)$request->call_id,
                 targetUserId: (int)$request->target_user_id,
-                candidate: $request->candidate
+                signalData: $request->signal_data
             ))->toOthers();
         } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::warning('IceCandidate broadcast warning: ' . $e->getMessage());
+            \Illuminate\Support\Facades\Log::warning('CallSignal broadcast warning: ' . $e->getMessage());
         }
 
         return response()->json(['status' => 'success']);
