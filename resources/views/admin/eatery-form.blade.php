@@ -445,7 +445,7 @@
     </div>
 </div>
 
-@if($eatery && in_array($eatery->category->slug, ['traditional-market', 'dong-anh-market', 'dong-anh-food-map', 'hanh-trinh-di-san', 'discover-dong-anh-community-culture-hub']))
+@if($eatery && in_array($eatery->category->slug, ['traditional-market', 'dong-anh-market', 'dong-anh-food-map', 'hanh-trinh-di-san', 'discover-dong-anh-community-culture-hub', 'co-so-kinh-doanh']))
 
 @if(in_array($eatery->category->slug, ['traditional-market', 'dong-anh-market']))
 <!-- ==========================================================================
@@ -586,14 +586,14 @@
     <div class="admin-card">
         <div class="admin-card-header" style="display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap;">
             <h2 class="admin-card-title" style="margin-bottom: 0; display: inline-flex; align-items: center; gap: 8px;">
-                <span>🛍️</span> Tổng Hợp Mặt Hàng Nông Sản & Đặc Sản Đang Bày Bán Tại Chợ
+                <span>🛍️</span> {{ $eatery->category->slug === 'co-so-kinh-doanh' ? 'Danh Sách Sản Phẩm & Hàng Hóa Kinh Doanh' : 'Tổng Hợp Mặt Hàng Nông Sản & Đặc Sản Đang Bày Bán Tại Chợ' }}
             </h2>
             <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
                 <button type="button" class="btn-admin btn-admin-primary" onclick="openAddOcopProductModal()">
-                    ➕ Đăng Ký Sản Phẩm Đặc Sản / OCOP Mới
+                    ➕ {{ $eatery->category->slug === 'co-so-kinh-doanh' ? 'Thêm Sản Phẩm / Hàng Hóa Mới' : 'Đăng Ký Sản Phẩm Đặc Sản / OCOP Mới' }}
                 </button>
                 <span class="admin-badge admin-badge-info" style="font-size: 0.85rem; font-weight: 800; background: #e0f2fe; color: #0284c7; padding: 6px 14px; border-radius: 20px; border: 1px solid rgba(2,132,199,0.25);">
-                    👁️ Kênh Giám Sát Ban Quản Lý Chợ
+                    👁️ Quản Lý Hàng Hóa Cơ Sở
                 </span>
             </div>
         </div>
