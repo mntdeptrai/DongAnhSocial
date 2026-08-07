@@ -104,7 +104,7 @@ class NotificationService
                         'checkin', 'app\models\checkin' => '/goc-checkin',
                         'diary', 'app\models\foodtourdiary' => '/food-tour',
                         'eatery', 'app\models\eatery' => '/dia-diem/' . (optional(Eatery::find($first->reactionable_id))->slug ?? ''),
-                        default => '/ban-tin?post=' . $first->reactionable_id,
+                        default => '/ban-tin?post=' . (optional(\App\Models\Post::find($first->reactionable_id))->hashid ?? $first->reactionable_id),
                     };
 
                     $notifications[] = [
@@ -185,7 +185,7 @@ class NotificationService
                         str_contains($first->commentable_type, 'Checkin') => '/goc-checkin',
                         str_contains($first->commentable_type, 'FoodTourDiary') => '/food-tour',
                         str_contains($first->commentable_type, 'Eatery') => '/dia-diem/' . (optional(Eatery::find($first->commentable_id))->slug ?? ''),
-                        default => '/ban-tin?post=' . $first->commentable_id,
+                        default => '/ban-tin?post=' . (optional(\App\Models\Post::find($first->commentable_id))->hashid ?? $first->commentable_id),
                     };
 
                     $notifications[] = [
@@ -221,7 +221,7 @@ class NotificationService
                         'is_read'    => false,
                         'post_type'  => 'post',
                         'post_id'    => $sp->id,
-                        'target_url' => '/ban-tin?post=' . $sp->id,
+                        'target_url' => '/ban-tin?post=' . ($sp->hashid ?? $sp->id),
                     ];
                 }
             }
@@ -408,15 +408,16 @@ class NotificationService
                     $snippet = Str::limit($ep->name ?: $ep->description, 50);
 
                     $notifications[] = [
-                        'id'        => 'new_edu_' . $ep->id . '_' . strtotime($ep->created_at),
-                        'title'     => '📣 Bài viết mới từ ' . $authorName,
-                        'body'      => "{$authorName} vừa đăng bài viết mới: \"{$snippet}\"",
-                        'time'      => Carbon::parse($ep->created_at)->diffForHumans(),
-                        'time_ts'   => strtotime($ep->created_at),
-                        'type'      => 'new_post',
-                        'icon'      => 'article',
-                        'is_read'   => false,
-                        'post_id'   => $ep->id,
+                        'id'         => 'new_edu_' . $ep->id . '_' . strtotime($ep->created_at),
+                        'title'      => '📣 Bài viết mới từ ' . $authorName,
+                        'body'       => "{$authorName} vừa đăng bài viết mới: \"{$snippet}\"",
+                        'time'       => Carbon::parse($ep->created_at)->diffForHumans(),
+                        'time_ts'    => strtotime($ep->created_at),
+                        'type'       => 'new_post',
+                        'icon'       => 'article',
+                        'is_read'    => false,
+                        'post_id'    => $ep->id,
+                        'target_url' => '/ban-tin?post=' . ($ep->hashid ?? $ep->id),
                     ];
                 }
 
@@ -433,15 +434,16 @@ class NotificationService
                         $snippet = Str::limit($chk->content ?: ($chk->caption ?: 'bài viết mới'), 50);
 
                         $notifications[] = [
-                            'id'        => 'new_chk_' . $chk->id . '_' . strtotime($chk->created_at),
-                            'title'     => '📝 Bài viết mới từ ' . $authorName,
-                            'body'      => "{$authorName} vừa chia sẻ một bài viết mới: \"{$snippet}\"",
-                            'time'      => Carbon::parse($chk->created_at)->diffForHumans(),
-                            'time_ts'   => strtotime($chk->created_at),
-                            'type'      => 'new_post',
-                            'icon'      => 'article',
-                            'is_read'   => false,
-                            'post_id'   => $chk->id,
+                            'id'         => 'new_chk_' . $chk->id . '_' . strtotime($chk->created_at),
+                            'title'      => '📝 Bài viết mới từ ' . $authorName,
+                            'body'       => "{$authorName} vừa chia sẻ một bài viết mới: \"{$snippet}\"",
+                            'time'       => Carbon::parse($chk->created_at)->diffForHumans(),
+                            'time_ts'    => strtotime($chk->created_at),
+                            'type'       => 'new_post',
+                            'icon'       => 'article',
+                            'is_read'    => false,
+                            'post_id'    => $chk->id,
+                            'target_url' => '/ban-tin?post=' . ($chk->hashid ?? $chk->id),
                         ];
                     }
                 }
