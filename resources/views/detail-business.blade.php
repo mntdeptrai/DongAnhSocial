@@ -343,39 +343,49 @@
 </div>
 
 @php
+    $formatMediaUrl = function($url) {
+        if (!$url) return asset('images/ocop-placeholder.png');
+        if (\Illuminate\Support\Str::startsWith($url, ['http://', 'https://'])) return $url;
+        return asset(ltrim($url, '/'));
+    };
+
     $allMedia = [];
 
     // 1. Ảnh đại diện chính của cơ sở
     if ($eatery->image_path) {
-        $allMedia[] = ['type' => 'image', 'url' => $eatery->image_path];
+        $allMedia[] = ['type' => 'image', 'url' => $formatMediaUrl($eatery->image_path)];
     }
 
     // 2. Ảnh Giấy chứng nhận ATTP / VSATTP (nếu có)
     if ($eatery->foodSafetyCertificate && $eatery->foodSafetyCertificate->image_path) {
-        $allMedia[] = ['type' => 'image', 'url' => $eatery->foodSafetyCertificate->image_path, 'caption' => 'Giấy chứng nhận ATTP / VSATTP'];
+        $allMedia[] = ['type' => 'image', 'url' => $formatMediaUrl($eatery->foodSafetyCertificate->image_path), 'caption' => 'Giấy chứng nhận ATTP / VSATTP'];
     }
 
     // 3. Ảnh gallery đã upload bởi admin/seller
     $eateryPhotos = $eatery->relationLoaded('photos') ? $eatery->photos : collect();
     foreach ($eateryPhotos as $photo) {
-        $allMedia[] = ['type' => 'image', 'url' => $photo->image_path, 'caption' => $photo->caption];
+        if ($photo->image_path) {
+            $allMedia[] = ['type' => 'image', 'url' => $formatMediaUrl($photo->image_path), 'caption' => $photo->caption];
+        }
     }
 
-    // 3. Ảnh từ các bài đánh giá của khách hàng
+    // 4. Ảnh từ các bài đánh giá của khách hàng
     foreach ($eatery->reviews as $rev) {
         if ($rev->media) {
             foreach ($rev->media as $m) {
-                $allMedia[] = ['type' => $m->file_type, 'url' => $m->file_path];
+                if ($m->file_path) {
+                    $allMedia[] = ['type' => $m->file_type, 'url' => $formatMediaUrl($m->file_path)];
+                }
             }
         }
     }
 
-    // 4. Nếu không có ảnh nào: dùng ảnh placeholder trung lập
+    // 5. Nếu không có ảnh nào: dùng ảnh placeholder trung lập
     if (empty($allMedia)) {
         $allMedia[] = ['type' => 'image', 'url' => asset('images/ocop-placeholder.png')];
     }
 
-    // 5. Pad đủ 5 ô cho grid (lặp lại ảnh đầu tiên nếu thiếu)
+    // 6. Pad đủ 5 ô cho grid (lặp lại ảnh đầu tiên nếu thiếu)
     $firstMedia = $allMedia[0];
     while (count($allMedia) < 5) {
         $allMedia[] = $firstMedia;
@@ -393,26 +403,26 @@
                     <div style="width: 60px; height: 60px; border-radius: 50%; background: rgba(255,255,255,0.8); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: #ff4f18;">▶</div>
                 </div>
             @else
-                <img src="{{ $allMedia[0]['url'] }}" alt="{{ $eatery->name }}" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s;">
+                <img src="{{ $allMedia[0]['url'] }}" alt="{{ $eatery->name }}" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s;" onerror="this.onerror=null; this.src='{{ asset('images/ocop-placeholder.png') }}';">
             @endif
             <div class="gallery-overlay" style="position: absolute; inset: 0; background: rgba(0,0,0,0.1); opacity: 0; transition: opacity 0.3s;"></div>
         </div>
         
         <!-- Image 2 -->
         <div onclick="openHeroGalleryModal(1)" style="cursor: pointer; position: relative; overflow: hidden;" class="gallery-item">
-            <img src="{{ $allMedia[1]['url'] }}" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s;">
+            <img src="{{ $allMedia[1]['url'] }}" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s;" onerror="this.onerror=null; this.src='{{ asset('images/ocop-placeholder.png') }}';">
             <div class="gallery-overlay" style="position: absolute; inset: 0; background: rgba(0,0,0,0.1); opacity: 0; transition: opacity 0.3s;"></div>
         </div>
         
         <!-- Image 3 -->
         <div onclick="openHeroGalleryModal(2)" style="cursor: pointer; position: relative; overflow: hidden;" class="gallery-item">
-            <img src="{{ $allMedia[2]['url'] }}" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s;">
+            <img src="{{ $allMedia[2]['url'] }}" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s;" onerror="this.onerror=null; this.src='{{ asset('images/ocop-placeholder.png') }}';">
             <div class="gallery-overlay" style="position: absolute; inset: 0; background: rgba(0,0,0,0.1); opacity: 0; transition: opacity 0.3s;"></div>
         </div>
         
         <!-- Image 4 -->
         <div onclick="openHeroGalleryModal(3)" style="cursor: pointer; position: relative; overflow: hidden;" class="gallery-item">
-            <img src="{{ $allMedia[3]['url'] }}" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s;">
+            <img src="{{ $allMedia[3]['url'] }}" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s;" onerror="this.onerror=null; this.src='{{ asset('images/ocop-placeholder.png') }}';">
             <div class="gallery-overlay" style="position: absolute; inset: 0; background: rgba(0,0,0,0.1); opacity: 0; transition: opacity 0.3s;"></div>
         </div>
         
@@ -421,7 +431,7 @@
             @if($allMedia[4]['type'] === 'video')
                 <video src="{{ $allMedia[4]['url'] }}" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s;" muted playsinline></video>
             @else
-                <img src="{{ $allMedia[4]['url'] }}" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s;">
+                <img src="{{ $allMedia[4]['url'] }}" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s;" onerror="this.onerror=null; this.src='{{ asset('images/ocop-placeholder.png') }}';">
             @endif
             <div style="position: absolute; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; transition: background 0.3s;" onmouseover="this.style.background='rgba(0,0,0,0.3)'" onmouseout="this.style.background='rgba(0,0,0,0.4)'">
                 <div style="text-align: center;">
