@@ -433,9 +433,20 @@ class ApiService {
     return null;
   }
 
+  /// Cache getAllEateries để tránh 3 screens gọi lại liên tục (Feed + Map + Utilities)
+  static List<dynamic>? _cachedAllEateries;
+  static DateTime? _allEateriesCacheTime;
+
   /// Lấy tất cả địa điểm từ mọi danh mục (gọi song song)
-  /// Trả về danh sách đã khử trùng lặp
-  static Future<List<dynamic>> getAllEateries() async {
+  /// Trả về danh sách đã khử trùng lặp, cache 5 phút
+  static Future<List<dynamic>> getAllEateries({bool forceRefresh = false}) async {
+    // Trả về cache nếu còn hạn (5 phút) và không bắt buộc refresh
+    if (!forceRefresh && _cachedAllEateries != null && _allEateriesCacheTime != null) {
+      if (DateTime.now().difference(_allEateriesCacheTime!) < const Duration(minutes: 5)) {
+        return _cachedAllEateries!;
+      }
+    }
+
     try {
       final categories = await getCategories();
       if (categories.isEmpty) return [];
@@ -456,9 +467,13 @@ class ApiService {
           }
         }
       }
+
+      // Lưu cache
+      _cachedAllEateries = combined;
+      _allEateriesCacheTime = DateTime.now();
       return combined;
     } catch (_) {}
-    return [];
+    return _cachedAllEateries ?? [];
   }
 
   /// Tìm kiếm địa điểm theo từ khóa trong một danh mục

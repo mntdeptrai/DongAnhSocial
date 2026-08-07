@@ -11,7 +11,8 @@
     <application
         android:label="DongAnh Social"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:largeHeap="true">
         <service
             android:name=".BackgroundPollingService"
             android:enabled="true"

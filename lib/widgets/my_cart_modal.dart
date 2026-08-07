@@ -329,7 +329,7 @@ class _MyCartModalState extends State<MyCartModal> {
                                   ClipRRect(
                                     borderRadius: BorderRadius.circular(10),
                                     child: imgUrl.isNotEmpty
-                                        ? Image.network(imgUrl, width: 54, height: 54, fit: BoxFit.cover)
+                                        ? Image.network(imgUrl, width: 54, height: 54, fit: BoxFit.cover, cacheWidth: 108, filterQuality: FilterQuality.low)
                                         : Container(
                                             width: 54,
                                             height: 54,

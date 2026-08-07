@@ -26,7 +26,7 @@ import java.net.HttpURLConnection
 import java.net.URL
 
 class MainActivity : FlutterActivity() {
-    private val CHANNEL = "com.example.mobile/notifications"
+    private val CHANNEL = "com.donganh.social/notifications"
     private var isPollingActive = false
     private val handler = Handler(Looper.getMainLooper())
     private var lastNotifiedMsgId: Long = 0

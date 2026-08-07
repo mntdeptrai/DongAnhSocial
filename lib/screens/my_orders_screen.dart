@@ -653,6 +653,8 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> with SingleTickerProvid
                                     width: 48,
                                     height: 48,
                                     fit: BoxFit.cover,
+                                    cacheWidth: 96,
+                                    filterQuality: FilterQuality.low,
                                     errorBuilder: (ctx, err, stack) => Container(
                                       width: 48,
                                       height: 48,

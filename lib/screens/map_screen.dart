@@ -590,7 +590,8 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin, Wi
                       height: imageHeight,
                       width: double.infinity,
                       fit: BoxFit.cover,
-                      filterQuality: FilterQuality.medium,
+                      cacheWidth: 400,
+                      filterQuality: FilterQuality.low,
                       errorBuilder: (_, __, ___) => Container(
                         height: imageHeight,
                         color: const Color(0xFF1E293B),
@@ -911,6 +912,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin, Wi
                 TileLayer(
                   urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                   userAgentPackageName: 'com.donganh.discovery',
+                  maxZoom: 17,
                 ),
                 MarkerLayer(markers: markers),
               ],
@@ -1287,6 +1289,8 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin, Wi
                                                           ? Image.network(
                                                               thumbUrl,
                                                               fit: BoxFit.cover,
+                                                              cacheWidth: 84,
+                                                              filterQuality: FilterQuality.low,
                                                               errorBuilder: (_, __, ___) => Center(child: Text(iconStr)),
                                                             )
                                                           : Center(child: Text(iconStr)),

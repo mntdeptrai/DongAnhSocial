@@ -188,10 +188,12 @@ class _ExpCornerScreenState extends State<ExpCornerScreen> {
                                       ? (imgPath.toString().startsWith('http')
                                           ? imgPath.toString()
                                           : 'https://donganhdiscovery.xadonganh.com/' + (imgPath.toString().startsWith('/') ? imgPath.toString().substring(1) : imgPath.toString()))
-                                      : 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=800&q=80',
+                                      : 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=400&q=60',
                                   width: double.infinity,
                                   height: 180,
                                   fit: BoxFit.cover,
+                                  cacheWidth: 400,
+                                  filterQuality: FilterQuality.low,
                                   errorBuilder: (_, __, ___) => Container(
                                     height: 180,
                                     color: const Color(0xFFE2E8F0),

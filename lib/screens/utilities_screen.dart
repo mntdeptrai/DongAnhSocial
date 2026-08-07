@@ -557,10 +557,12 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
                         ? item['image_path']
                         : ((item['image'] != null && item['image'].toString().isNotEmpty)
                             ? item['image']
-                            : 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=800&q=80'),
+                            : 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=400&q=60'),
                     height: 160,
                     width: double.infinity,
                     fit: BoxFit.cover,
+                    cacheWidth: 400,
+                    filterQuality: FilterQuality.low,
                     errorBuilder: (_, __, ___) => Container(
                       height: 160,
                       color: const Color(0xFFE0F2FE),
@@ -804,6 +806,8 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
                   height: 120,
                   width: double.infinity,
                   fit: BoxFit.cover,
+                  cacheWidth: 300,
+                  filterQuality: FilterQuality.low,
                   errorBuilder: (_, __, ___) => Container(
                     height: 120,
                     color: const Color(0xFFECFDF5),

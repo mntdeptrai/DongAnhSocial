@@ -104,8 +104,9 @@ class FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
       if (_cameras != null && _cameras!.isNotEmpty) {
         final controller = CameraController(
           _cameras![_selectedCameraIndex % _cameras!.length],
-          ResolutionPreset.medium,
+          ResolutionPreset.low,
           enableAudio: false,
+          imageFormatGroup: ImageFormatGroup.jpeg,
         );
         _cameraController = controller;
 
@@ -137,8 +138,9 @@ class FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
     await _cameraController?.dispose();
     _cameraController = CameraController(
       _cameras![_selectedCameraIndex],
-      ResolutionPreset.medium,
+      ResolutionPreset.low,
       enableAudio: false,
+      imageFormatGroup: ImageFormatGroup.jpeg,
     );
 
     try {
@@ -528,6 +530,7 @@ class FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
               builder: (context, constraints) {
                 final height = constraints.maxHeight;
                 return PageView.builder(
+                  controller: PageController(keepPage: false),
                   scrollDirection: Axis.vertical,
                   itemCount: _feedItems.length + 1,
                   onPageChanged: (pageIndex) {
@@ -993,9 +996,10 @@ class FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
                     ? (item['image_path'].toString().startsWith('http')
                         ? item['image_path'].toString()
                         : 'https://donganhdiscovery.xadonganh.com/' + (item['image_path'].toString().startsWith('/') ? item['image_path'].toString().substring(1) : item['image_path'].toString()))
-                    : 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=800&q=80',
+                    : 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=400&q=60',
                 fit: BoxFit.cover,
-                filterQuality: FilterQuality.medium,
+                cacheWidth: 400,
+                filterQuality: FilterQuality.low,
                 errorBuilder: (_, __, ___) => Container(
                   decoration: const BoxDecoration(
                     gradient: LinearGradient(

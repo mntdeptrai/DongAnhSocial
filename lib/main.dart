@@ -122,7 +122,7 @@ class MyApp extends StatelessWidget {
 }
 
 class NativeNotificationService {
-  static const _channel = MethodChannel('com.example.mobile/notifications');
+  static const _channel = MethodChannel('com.donganh.social/notifications');
   static Function(Map<String, dynamic>)? _onNotificationTapped;
 
   static void initialize(Function(Map<String, dynamic>) onTapped) {
@@ -292,9 +292,9 @@ class _MainLayoutState extends State<MainLayout> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    // Giới hạn dung lượng bộ nhớ đệm ảnh ở mức 30MB để tránh tràn RAM
-    PaintingBinding.instance.imageCache.maximumSizeBytes = 30 * 1024 * 1024;
-    PaintingBinding.instance.imageCache.maximumSize = 100;
+    // Giới hạn dung lượng bộ nhớ đệm ảnh ở mức 15MB / 50 ảnh cho máy 2GB RAM
+    PaintingBinding.instance.imageCache.maximumSizeBytes = 15 * 1024 * 1024;
+    PaintingBinding.instance.imageCache.maximumSize = 50;
 
     // Tất cả mọi tài khoản (Admin, Seller, Manager, User) khi đăng nhập đều vào Giao diện Người dùng bình thường trước
     _activeRole = 'user';
@@ -327,9 +327,15 @@ class _MainLayoutState extends State<MainLayout> with WidgetsBindingObserver {
       // Giải phóng RAM bộ nhớ tạm khi ứng dụng chạy ngầm
       PaintingBinding.instance.imageCache.clear();
       PaintingBinding.instance.imageCache.clearLiveImages();
+      // Pause camera khi app đi nền để giải phóng RAM camera buffer
+      _feedScreenKey.currentState?.pauseCamera();
     } else if (state == AppLifecycleState.resumed) {
       // Làm mới dữ liệu 1 lần duy nhất khi người dùng mở lại ứng dụng
       _fetchDynamicCounts();
+      // Resume camera chỉ khi đang ở tab Feed
+      if (_currentIndex == 0 && _activeRole == 'user') {
+        _feedScreenKey.currentState?.resumeCamera();
+      }
     }
   }
 
@@ -358,7 +364,7 @@ class _MainLayoutState extends State<MainLayout> with WidgetsBindingObserver {
     } catch (_) {}
   }
 
-  Widget _buildActiveRoleContent(List<Widget> screens) {
+  Widget _buildActiveRoleContent() {
     final userRole = ApiService.currentUser?['role'] ?? 'user';
 
     // Khóa bảo mật theo phân quyền thực tế (Strict Role Guard)
@@ -372,26 +378,39 @@ class _MainLayoutState extends State<MainLayout> with WidgetsBindingObserver {
       return AdminDashboardScreen(onBack: () => setState(() => _activeRole = 'user'));
     }
 
-    // Mặc định trả về giao diện Người dùng Consumer nếu không đủ quyền hạn
+    // Lazy: Chỉ tạo screen đang active, không tạo sẵn 6 screens
     return KeyedSubtree(
       key: ValueKey<int>(_currentIndex),
-      child: screens[_currentIndex],
+      child: _buildLazyScreen(),
     );
+  }
+
+  /// Lazy Tab Builder: Chỉ khởi tạo screen đang active, KHÔNG tạo sẵn 6 screens.
+  /// Tiết kiệm ~80-150MB RAM so với pre-built list.
+  Widget _buildLazyScreen() {
+    switch (_currentIndex) {
+      case 0:
+        return FeedScreen(key: _feedScreenKey);
+      case 1:
+        return const MyCheckinsScreen();
+      case 2:
+        return const MapScreen();
+      case 3:
+        return const UtilitiesScreen();
+      case 4:
+        return const NotificationsScreen();
+      case 5:
+        return ProfileScreen(
+          onLogout: widget.onLogout,
+          onLoginRequest: widget.onLoginRequest,
+        );
+      default:
+        return FeedScreen(key: _feedScreenKey);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final List<Widget> screens = [
-      FeedScreen(key: _feedScreenKey),  // Tab 0: Home (Lướt tin check-in)
-      const MyCheckinsScreen(),          // Tab 1: Check-in của tôi
-      const MapScreen(),                 // Tab 2: Map (bản đồ địa điểm)
-      const UtilitiesScreen(),          // Tab 3: Chợ số OCOP
-      const NotificationsScreen(),      // Tab 4: Thông báo
-      ProfileScreen(                     // Tab 5: Cá nhân
-        onLogout: widget.onLogout,
-        onLoginRequest: widget.onLoginRequest,
-      ),
-    ];
 
     return Scaffold(
       drawer: RoleMenuDrawer(
@@ -470,7 +489,7 @@ class _MainLayoutState extends State<MainLayout> with WidgetsBindingObserver {
                   ),
                 );
               },
-              child: _buildActiveRoleContent(screens),
+              child: _buildActiveRoleContent(),
             ),
           ),
           if (_activeRole == 'user')

@@ -165,6 +165,8 @@ class _EateryDetailScreenState extends State<EateryDetailScreen> {
                   child: Image.network(
                     pImgUrl,
                     fit: BoxFit.cover,
+                    cacheWidth: 300,
+                    filterQuality: FilterQuality.low,
                     errorBuilder: (_, __, ___) => Container(
                       color: const Color(0xFFFFFBEB),
                       child: const Icon(Icons.shopping_bag_outlined, color: Colors.amber, size: 40),
@@ -309,6 +311,8 @@ class _EateryDetailScreenState extends State<EateryDetailScreen> {
                 child: Image.network(
                   imageUrl,
                   fit: BoxFit.contain,
+                  cacheWidth: 800,
+                  filterQuality: FilterQuality.low,
                 ),
               ),
             ),
@@ -421,6 +425,8 @@ class _EateryDetailScreenState extends State<EateryDetailScreen> {
                               Image.network(
                                 fullImgUrl,
                                 fit: BoxFit.cover,
+                                cacheWidth: 600,
+                                filterQuality: FilterQuality.low,
                                 errorBuilder: (_, __, ___) => Container(
                                   color: const Color(0xFF1E293B),
                                   child: Center(
@@ -770,6 +776,8 @@ class _EateryDetailScreenState extends State<EateryDetailScreen> {
                                                     width: 110,
                                                     height: 110,
                                                     fit: BoxFit.cover,
+                                                    cacheWidth: 220,
+                                                    filterQuality: FilterQuality.low,
                                                     errorBuilder: (_, __, ___) => Container(
                                                       width: 110,
                                                       height: 110,
@@ -924,6 +932,8 @@ class _EateryDetailScreenState extends State<EateryDetailScreen> {
                                                       height: 140,
                                                       width: double.infinity,
                                                       fit: BoxFit.cover,
+                                                      cacheWidth: 400,
+                                                      filterQuality: FilterQuality.low,
                                                       errorBuilder: (_, __, ___) => const SizedBox.shrink(),
                                                     ),
                                                   ),
