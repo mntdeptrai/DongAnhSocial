@@ -432,6 +432,7 @@
             case 'dong-anh-market': return '#f29900'; // Vàng chợ
             case 'dong-anh-food-map': return '#ea4335'; // Đỏ ẩm thực
             case 'discover-dong-anh-community-culture-hub': return '#e81e63'; // Hồng văn hóa
+            case 'co-so-kinh-doanh': return '#0284c7'; // Xanh cơ sở kinh doanh
             default: return '#70757a';
         }
     }
@@ -445,6 +446,7 @@
             case 'dong-anh-market': return '🛍️'; 
             case 'dong-anh-food-map': return '🍜'; 
             case 'discover-dong-anh-community-culture-hub': return '🏛️'; 
+            case 'co-so-kinh-doanh': return '🏪';
             default: return '📍';
         }
     }
@@ -458,6 +460,7 @@
             case 'dong-anh-market': return 'CHỢ TRUYỀN THỐNG & SIÊU THỊ';
             case 'dong-anh-food-map': return 'ĐỊA ĐIỂM ẨM THỰC';
             case 'discover-dong-anh-community-culture-hub': return 'NHÀ VĂN HÓA & THỂ THAO';
+            case 'co-so-kinh-doanh': return 'CƠ SỞ KINH DOANH';
             default: return originalName.toUpperCase();
         }
     }

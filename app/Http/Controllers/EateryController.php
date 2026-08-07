@@ -27,8 +27,8 @@ class EateryController extends Controller
             $schemaType = 'Hotel';
         } elseif ($categorySlug === 'wellness-care') {
             $schemaType = 'HealthAndBeautyBusiness';
-        } elseif ($categorySlug === 'dong-anh-market' || $categorySlug === 'traditional-market') {
-            $schemaType = 'ShoppingCenter';
+        } elseif ($categorySlug === 'dong-anh-market' || $categorySlug === 'traditional-market' || $categorySlug === 'co-so-kinh-doanh') {
+            $schemaType = 'Store';
         } elseif ($categorySlug === 'smart-education-map') {
             $schemaType = 'School';
         }
@@ -171,6 +171,9 @@ class EateryController extends Controller
         }
         if ($categorySlug === 'dong-anh-market') {
             return view('detail-ocop', $viewData);
+        }
+        if ($categorySlug === 'co-so-kinh-doanh') {
+            return view('detail-business', $viewData);
         }
         if ($categorySlug === 'stay-in-dong-anh') {
             return view('detail-stay', $viewData);

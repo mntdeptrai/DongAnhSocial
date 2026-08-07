@@ -260,8 +260,8 @@ class EateryApiService
             return self::fetchEateriesFromCategory($categorySlug, $filters);
         }
 
-        // Aggregate eateries across all 8 databases (including heritage journey)
-        $categories = ['dong-anh-food-map', 'hanh-trinh-di-san', 'stay-in-dong-anh', 'wellness-care', 'dong-anh-market', 'traditional-market', 'smart-education-map', 'discover-dong-anh-community-culture-hub'];
+        // Aggregate eateries across all 9 categories (including business facilities)
+        $categories = ['dong-anh-food-map', 'hanh-trinh-di-san', 'stay-in-dong-anh', 'wellness-care', 'dong-anh-market', 'traditional-market', 'smart-education-map', 'discover-dong-anh-community-culture-hub', 'co-so-kinh-doanh'];
         $allEateries = collect();
         foreach ($categories as $cat) {
             try {

@@ -74,6 +74,10 @@
             <button type="button" class="admin-sub-tab-btn" onclick="switchSubTab(event, 'tab-cultural-activities')">
                 🏛️ Hoạt động văn hóa & Trải nghiệm ({{ optional($eatery->relationLoaded('culturalActivities') ? $eatery->culturalActivities : collect())->count() }})
             </button>
+        @elseif($eatery->category->slug === 'co-so-kinh-doanh')
+            <button type="button" class="admin-sub-tab-btn" onclick="switchSubTab(event, 'tab-ocop-products')">
+                🛍️ Sản phẩm & Hàng hóa kinh doanh ({{ optional($eatery->relationLoaded('ocopProducts') ? $eatery->ocopProducts : collect())->count() }})
+            </button>
         @endif
 
         <button type="button" class="admin-sub-tab-btn" onclick="switchSubTab(event, 'tab-photos')">
@@ -158,6 +162,10 @@
                                             $displayIcon = '🏛️';
                                             $displayNameEn = 'Discover Dong Anh Community & Culture Hub';
                                             $displayNameVi = 'Khám phá thiết chế văn hóa - thể thao Đông Anh';
+                                        } elseif ($cat->slug === 'co-so-kinh-doanh') {
+                                            $displayIcon = '🏪';
+                                            $displayNameEn = 'Cơ sở kinh doanh';
+                                            $displayNameVi = 'Cơ sở kinh doanh';
                                         }
                                     @endphp
                                     <option value="{{ $cat->id }}" data-slug="{{ $cat->slug }}" {{ old('category_id', $eatery ? $eatery->category_id : '') == $cat->id ? 'selected' : '' }}>
