@@ -928,8 +928,11 @@ class EateryApiService
         list($eatery, $conn) = self::findEateryAndConnection($data['eatery_id']);
         if (!$eatery) return null;
 
-        $cert = new FoodSafetyCertificate();
-        $cert->setConnection($conn);
+        $cert = FoodSafetyCertificate::on($conn)->where('eatery_id', $data['eatery_id'])->latest('id')->first();
+        if (!$cert) {
+            $cert = new FoodSafetyCertificate();
+            $cert->setConnection($conn);
+        }
         $cert->fill($data);
         $cert->save();
         return $cert;

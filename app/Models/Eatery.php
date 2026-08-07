@@ -192,7 +192,7 @@ class Eatery extends Model
      */
     public function foodSafetyCertificate(): \Illuminate\Database\Eloquent\Relations\HasOne
     {
-        return $this->hasOne(FoodSafetyCertificate::class);
+        return $this->hasOne(FoodSafetyCertificate::class)->latestOfMany();
     }
 
     /**
