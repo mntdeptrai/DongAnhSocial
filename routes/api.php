@@ -94,6 +94,7 @@ Route::prefix('v1')->group(function () {
         Route::get('/messages/{friendId}', [SocialHubController::class, 'getMessages']);
         Route::post('/messages', [SocialHubController::class, 'sendMessage']);
         Route::get('/social/unread-check', [SocialHubController::class, 'checkUnread']);
+        Route::get('/search/all', [SocialHubController::class, 'searchAll']);
 
         // ===================================================================
         // 👤 ROLE 1: USER API (Thành Viên / Khách Hàng)

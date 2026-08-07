@@ -590,7 +590,26 @@ class ApiService {
     return [];
   }
 
-  /// GET /checkins/my — Lịch sử check-in của tôi (cần đăng nhập)
+  /// GET /search/all?q=... — Tìm kiếm tổng hợp: Người dùng (người lạ & bạn bè), Địa điểm, Quán ăn, Món ăn, Sản phẩm OCOP
+  static Future<Map<String, dynamic>> searchAll(String query) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/search/all?q=${Uri.encodeComponent(query)}'),
+        headers: _getHeaders(),
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['success'] == true) {
+          return {
+            'users': data['users'] ?? [],
+            'eateries': data['eateries'] ?? [],
+            'products': data['products'] ?? [],
+          };
+        }
+      }
+    } catch (_) {}
+    return {'users': [], 'eateries': [], 'products': []};
+  }
   static Future<List<dynamic>> getMyCheckins() async {
     try {
       final response = await http.get(Uri.parse('$baseUrl/checkins/my'), headers: _getHeaders());

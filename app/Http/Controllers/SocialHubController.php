@@ -295,13 +295,42 @@ class SocialHubController extends Controller
         ]);
     }
 
-    public function getFriends()
+    public function getFriends(Request $request)
     {
         $user = Auth::user();
         if ($user) {
             $user->update(['last_active_at' => now()]);
         }
         
+        $search = $request->query('query') ?: $request->query('search') ?: $request->query('q');
+
+        if (!empty($search)) {
+            $search = mb_strtolower(trim($search));
+            // Tìm kiếm TẤT CẢ người dùng (người lạ, thành viên, chủ gian hàng, bạn bè)
+            $allUsers = User::where('id', '!=', $user ? $user->id : 0)
+                ->where(function($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                      ->orWhere('email', 'like', "%{$search}%")
+                      ->orWhere('phone', 'like', "%{$search}%")
+                      ->orWhere('username', 'like', "%{$search}%");
+                })
+                ->limit(30)
+                ->get()
+                ->map(function($f) {
+                    return [
+                        'id' => $f->id,
+                        'name' => $f->name,
+                        'email' => $f->email,
+                        'avatar' => $f->avatar,
+                        'avatar_url' => $f->avatar_url,
+                        'is_online' => $f->is_online ?? false,
+                        'role' => $f->role ?? 'user',
+                    ];
+                });
+
+            return response()->json($allUsers);
+        }
+
         $sentFriendIds = Friendship::where('user_id', $user->id)
             ->where('status', 'accepted')
             ->pluck('friend_id');
@@ -319,10 +348,92 @@ class SocialHubController extends Controller
                 'avatar' => $f->avatar,
                 'avatar_url' => $f->avatar_url,
                 'is_online' => $f->is_online ?? false,
+                'role' => $f->role ?? 'user',
             ];
         });
 
         return response()->json($friends);
+    }
+
+    /**
+     * API Tìm kiếm tổng hợp: Người dùng (người lạ & bạn bè), Địa điểm, Quán ăn, Món ăn, Sản phẩm OCOP
+     */
+    public function searchAll(Request $request)
+    {
+        $q = trim($request->query('q') ?: $request->query('query') ?: $request->query('search') ?: '');
+        if (empty($q)) {
+            return response()->json([
+                'success'  => true,
+                'users'    => [],
+                'eateries' => [],
+                'products' => [],
+            ]);
+        }
+
+        // 1. Tìm kiếm Người dùng / Người lạ / Chủ gian hàng / Bạn bè
+        $users = User::where('name', 'like', "%{$q}%")
+            ->orWhere('email', 'like', "%{$q}%")
+            ->orWhere('phone', 'like', "%{$q}%")
+            ->orWhere('username', 'like', "%{$q}%")
+            ->limit(20)
+            ->get()
+            ->map(function ($u) {
+                return [
+                    'id'         => $u->id,
+                    'name'       => $u->name,
+                    'email'      => $u->email,
+                    'phone'      => $u->phone,
+                    'avatar'     => $u->avatar,
+                    'avatar_url' => $u->avatar_url,
+                    'role'       => $u->role ?? 'user',
+                    'type'       => 'user',
+                ];
+            });
+
+        // 2. Tìm kiếm Địa điểm / Quán ăn / Di sản
+        $eateries = \App\Models\Eatery::where('name', 'like', "%{$q}%")
+            ->orWhere('address', 'like', "%{$q}%")
+            ->orWhere('description', 'like', "%{$q}%")
+            ->limit(20)
+            ->get()
+            ->map(function ($e) {
+                return [
+                    'id'          => $e->id,
+                    'name'        => $e->name,
+                    'slug'        => $e->slug,
+                    'address'     => $e->address,
+                    'image_path'  => $e->image_path,
+                    'star_rating' => $e->star_rating,
+                    'type'        => 'eatery',
+                ];
+            });
+
+        // 3. Tìm kiếm Sản phẩm OCOP / Món ăn / Đặc sản
+        $products = \App\Models\OcopProduct::where('name', 'like', "%{$q}%")
+            ->orWhere('stall_name', 'like', "%{$q}%")
+            ->orWhere('seller_name', 'like', "%{$q}%")
+            ->orWhere('description', 'like', "%{$q}%")
+            ->limit(20)
+            ->get()
+            ->map(function ($p) {
+                return [
+                    'id'          => $p->id,
+                    'name'        => $p->name,
+                    'stall_name'  => $p->stall_name,
+                    'seller_name' => $p->seller_name,
+                    'price'       => $p->price,
+                    'image_path'  => $p->image_path,
+                    'star_rating' => $p->star_rating,
+                    'type'        => 'product',
+                ];
+            });
+
+        return response()->json([
+            'success'  => true,
+            'users'    => $users,
+            'eateries' => $eateries,
+            'products' => $products,
+        ], 200, [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     }
 
     public function getMessages($friendId, Request $request)

@@ -17,9 +17,11 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
   List<dynamic> _foodEateries = [];
   List<dynamic> _marketEateries = [];
   List<dynamic> _marketProducts = [];
+  List<dynamic> _users = [];
 
   bool _isLoadingFood = true;
   bool _isLoadingMarket = true;
+  bool _isLoadingUsers = true;
 
   String _searchQuery = '';
   String _selectedFilter = 'Tất cả';
@@ -30,9 +32,10 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
     _fetchFoodData();
     _fetchMarketData();
+    _fetchUsersData();
     _fetchCartData();
   }
 
@@ -116,6 +119,27 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
     }
   }
 
+  Future<void> _fetchUsersData() async {
+    setState(() => _isLoadingUsers = true);
+    try {
+      final res = await ApiService.getFriends();
+      if (mounted) {
+        setState(() {
+          _users = (res is List) ? List<dynamic>.from(res) : [];
+          _isLoadingUsers = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('_fetchUsersData API error: $e');
+      if (mounted) {
+        setState(() {
+          _users = [];
+          _isLoadingUsers = false;
+        });
+      }
+    }
+  }
+
   void _addToCart(Map<String, dynamic> product) async {
     final int productId = product['id'] is int ? product['id'] : (int.tryParse(product['id']?.toString() ?? '0') ?? 0);
     final bool isOcop = product['ocop_star'] != null || product['seller_name'] != null;
@@ -160,62 +184,69 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
     const primaryColor = Color(0xFF0EA5E9);
     const accentColor = Color(0xFF06B6D4);
 
+    String normalize(String input) {
+      if (input.isEmpty) return '';
+      var str = input.toLowerCase();
+      const withDiacritics = 'àáãảạăằắẳẵặâầấẩẫậèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵđ';
+      const withoutDiacritics = 'aaaaaaaaaaaaaaaaaeeeeeeeeeeeiiiiiooooooooooooooooouuuuuuuuuuuyyyyyd';
+      for (int i = 0; i < withDiacritics.length; i++) {
+        str = str.replaceAll(withDiacritics[i], withoutDiacritics[i]);
+      }
+      return str.trim();
+    }
+
+    final q = normalize(_searchQuery);
+
     final displayFood = _foodEateries.where((item) {
-      final name = (item['name'] ?? '').toString().toLowerCase();
-      
+      if (q.isEmpty) return true;
+
+      final name = normalize(item['name']?.toString() ?? '');
+      final desc = normalize(item['description']?.toString() ?? '');
+      final address = normalize(item['address']?.toString() ?? '');
+      final phone = normalize(item['phone']?.toString() ?? '');
       String catStr = '';
       if (item['category'] is Map) {
-        catStr = (item['category']['name'] ?? item['category']['slug'] ?? '').toString();
+        catStr = normalize(item['category']['name']?.toString() ?? item['category']['slug']?.toString() ?? '');
       } else {
-        catStr = (item['category'] ?? '').toString();
+        catStr = normalize(item['category']?.toString() ?? '');
       }
-      final cat = catStr.toLowerCase();
-      final q = _searchQuery.toLowerCase();
-      final matchesSearch = name.contains(q) || cat.contains(q);
+      String dishesStr = '';
+      if (item['dishes'] is List) {
+        dishesStr = normalize((item['dishes'] as List).map((d) => d['name'] ?? d['dish_name'] ?? '').join(' '));
+      }
 
-      if (_selectedFilter == '⭐ Nổi bật') {
-        final r = item['rating'];
-        final ratingVal = r is num ? r.toDouble() : (double.tryParse(r?.toString() ?? '') ?? 0.0);
-        return matchesSearch && ratingVal >= 4.5;
+      String ocopProductsStr = '';
+      if (item['ocop_products'] is List) {
+        ocopProductsStr = normalize((item['ocop_products'] as List).map((p) => p['name'] ?? '').join(' '));
       }
-      if (_selectedFilter == '🏆 OCOP') {
-        final isOcopSubject = item['is_ocop'] == true ||
-                             item['is_ocop'] == 1 ||
-                             item['is_ocop'] == '1' ||
-                             item['ocop_star'] != null ||
-                             catStr.contains('dong-anh-market') ||
-                             catStr.toUpperCase().contains('OCOP') ||
-                             (item['name'] ?? '').toString().toUpperCase().contains('OCOP') ||
-                             (item['description'] ?? '').toString().toUpperCase().contains('OCOP');
-        return matchesSearch && isOcopSubject;
-      }
-      return matchesSearch;
+
+      return name.contains(q) || catStr.contains(q) || desc.contains(q) || address.contains(q) || phone.contains(q) || dishesStr.contains(q) || ocopProductsStr.contains(q);
     }).toList();
 
     final displayProducts = _marketProducts.where((p) {
-      final name = (p['name'] ?? '').toString().toLowerCase();
-      final seller = (p['seller_name'] ?? '').toString().toLowerCase();
-      final desc = (p['description'] ?? '').toString().toLowerCase();
-      final q = _searchQuery.toLowerCase();
-      final matchesSearch = name.contains(q) || seller.contains(q) || desc.contains(q);
+      if (q.isEmpty) return true;
 
-      final isOcopProduct = p['is_ocop'] == true ||
-          p['is_ocop'] == 1 ||
-          p['is_ocop'] == '1' ||
-          (p['star_rating'] != null && p['star_rating'].toString().isNotEmpty) ||
-          (p['ocop_star'] != null && p['ocop_star'].toString().isNotEmpty) ||
-          name.contains('ocop') || seller.contains('ocop') || desc.contains('ocop') ||
-          seller.contains('hợp tác xã') || seller.contains('htx') ||
-          desc.contains('chủ thể sản xuất') || desc.contains('qđ số') || desc.contains('quyết định');
+      final name = normalize(p['name']?.toString() ?? '');
+      final stall = normalize(p['stall_name']?.toString() ?? '');
+      final seller = normalize(p['seller_name']?.toString() ?? '');
+      final phone = normalize(p['seller_phone']?.toString() ?? '');
+      final desc = normalize(p['description']?.toString() ?? '');
+      final address = normalize(p['address']?.toString() ?? '');
+      final price = normalize(p['price']?.toString() ?? '');
+      final star = normalize(p['star_rating']?.toString() ?? '');
 
-      if (_selectedFilter == '🏆 OCOP') {
-        return matchesSearch && isOcopProduct;
-      }
-      if (_selectedFilter == '⭐ Nổi bật') {
-        final star = (p['star_rating'] ?? '').toString();
-        return matchesSearch && (star.contains('4') || star.contains('5') || p['is_featured'] == true || isOcopProduct);
-      }
-      return matchesSearch;
+      return name.contains(q) || stall.contains(q) || seller.contains(q) || phone.contains(q) || desc.contains(q) || address.contains(q) || price.contains(q) || star.contains(q);
+    }).toList();
+
+    final displayUsers = _users.where((u) {
+      if (q.isEmpty) return true;
+
+      final name = normalize(u['name']?.toString() ?? '');
+      final email = normalize(u['email']?.toString() ?? '');
+      final phone = normalize(u['phone']?.toString() ?? '');
+      final role = normalize(u['role']?.toString() ?? '');
+
+      return name.contains(q) || email.contains(q) || phone.contains(q) || role.contains(q);
     }).toList();
 
     return Scaffold(
@@ -234,7 +265,7 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
               ),
               child: Column(
                 children: [
-                  // Tab Buttons (Ẩm thực Tinh túy vs Chợ số & OCOP)
+                  // Tab Buttons (Ẩm thực vs Chợ số vs Người dùng)
                   Container(
                     height: 46,
                     padding: const EdgeInsets.all(3),
@@ -244,14 +275,15 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
                     ),
                     child: LayoutBuilder(
                       builder: (context, constraints) {
-                        final tabWidth = (constraints.maxWidth - 6) / 2;
+                        final tabWidth = (constraints.maxWidth - 6) / 3;
                         return AnimatedBuilder(
                           animation: _tabController.animation!,
                           builder: (context, child) {
-                            final animValue = (_tabController.animation?.value ?? _tabController.index.toDouble()).clamp(0.0, 1.0);
+                            final animValue = (_tabController.animation?.value ?? _tabController.index.toDouble()).clamp(0.0, 2.0);
                             final leftPos = animValue * tabWidth;
-                            final activeTab1Color = Color.lerp(Colors.white, Colors.grey.shade700, animValue)!;
-                            final activeTab2Color = Color.lerp(Colors.grey.shade700, Colors.white, animValue)!;
+                            final activeTab1Color = animValue < 0.5 ? Colors.white : Colors.grey.shade700;
+                            final activeTab2Color = (animValue >= 0.5 && animValue < 1.5) ? Colors.white : Colors.grey.shade700;
+                            final activeTab3Color = animValue >= 1.5 ? Colors.white : Colors.grey.shade700;
 
                             return Stack(
                               children: [
@@ -282,15 +314,15 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
                                             children: [
                                               Icon(
                                                 Icons.restaurant_menu_rounded,
-                                                size: 15,
+                                                size: 13,
                                                 color: activeTab1Color,
                                               ),
-                                              const SizedBox(width: 4),
+                                              const SizedBox(width: 3),
                                               Text(
-                                                'ẨM THỰC TINH TÚY',
+                                                _searchQuery.isNotEmpty ? 'ẨM THỰC (${displayFood.length})' : 'ẨM THỰC',
                                                 style: TextStyle(
                                                   fontWeight: FontWeight.bold,
-                                                  fontSize: 12,
+                                                  fontSize: 11,
                                                   color: activeTab1Color,
                                                 ),
                                               ),
@@ -309,16 +341,43 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
                                             children: [
                                               Icon(
                                                 Icons.storefront_rounded,
-                                                size: 15,
+                                                size: 13,
                                                 color: activeTab2Color,
                                               ),
-                                              const SizedBox(width: 4),
+                                              const SizedBox(width: 3),
                                               Text(
-                                                'CHỢ SỐ & OCOP',
+                                                _searchQuery.isNotEmpty ? 'CHỢ SỐ (${displayProducts.length})' : 'CHỢ SỐ OCOP',
                                                 style: TextStyle(
                                                   fontWeight: FontWeight.bold,
-                                                  fontSize: 12,
+                                                  fontSize: 11,
                                                   color: activeTab2Color,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    Expanded(
+                                      child: GestureDetector(
+                                        onTap: () => _tabController.animateTo(2),
+                                        behavior: HitTestBehavior.opaque,
+                                        child: Center(
+                                          child: Row(
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            children: [
+                                              Icon(
+                                                Icons.people_alt_rounded,
+                                                size: 13,
+                                                color: activeTab3Color,
+                                              ),
+                                              const SizedBox(width: 3),
+                                              Text(
+                                                _searchQuery.isNotEmpty ? 'NGƯỜI DÙNG (${displayUsers.length})' : 'NGƯỜI DÙNG',
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 11,
+                                                  color: activeTab3Color,
                                                 ),
                                               ),
                                             ],
@@ -362,19 +421,7 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
                       ),
                     ),
                   ),
-                  const SizedBox(height: 10),
 
-                  // Quick Filter Chips Bar
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: [
-                        _buildFilterChip('Tất cả', Icons.apps_rounded),
-                        _buildFilterChip('⭐ Nổi bật', Icons.star_rounded),
-                        _buildFilterChip('🏆 OCOP', Icons.workspace_premium_rounded),
-                      ],
-                    ),
-                  ),
                 ],
               ),
             ),
@@ -389,6 +436,9 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
 
                   // Tab 2: OCOP Market & Products Showcase
                   _KeepAliveTabContent(child: _buildMarketTabContent(displayProducts, primaryColor)),
+
+                  // Tab 3: Users & Members Search Showcase
+                  _KeepAliveTabContent(child: _buildUsersTabContent(displayUsers, primaryColor)),
                 ],
               ),
             ),
@@ -398,31 +448,118 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
     );
   }
 
-  Widget _buildFilterChip(String label, IconData icon) {
-    final isSelected = _selectedFilter == label;
-    const primaryColor = Color(0xFF0EA5E9);
+  Widget _buildUsersTabContent(List<dynamic> users, Color primaryColor) {
+    if (_isLoadingUsers) {
+      return const CustomPulseLoader(
+        message: 'Đang tải danh sách Thành viên & Chủ gian hàng...',
+        icon: Icons.people_alt_rounded,
+        primaryColor: Color(0xFF0EA5E9),
+      );
+    }
 
-    return Padding(
-      padding: const EdgeInsets.only(right: 8),
-      child: ChoiceChip(
-        avatar: Icon(icon, size: 14, color: isSelected ? Colors.white : primaryColor),
-        label: Text(label),
-        selected: isSelected,
-        onSelected: (val) {
-          if (val) setState(() => _selectedFilter = label);
-        },
-        selectedColor: primaryColor,
-        backgroundColor: Colors.white,
-        side: BorderSide(color: isSelected ? primaryColor : Colors.grey.shade300),
-        labelStyle: TextStyle(
-          color: isSelected ? Colors.white : Colors.grey.shade800,
-          fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-          fontSize: 12,
+    if (users.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.person_search_rounded, size: 56, color: Colors.grey.shade400),
+            const SizedBox(height: 12),
+            Text(
+              _searchQuery.isNotEmpty ? 'Không tìm thấy người dùng trùng khớp' : 'Chưa có thông tin người dùng',
+              style: TextStyle(fontSize: 14, color: Colors.grey.shade600, fontWeight: FontWeight.bold),
+            ),
+          ],
         ),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      ),
+      );
+    }
+
+    return ListView.separated(
+      padding: const EdgeInsets.all(16),
+      itemCount: users.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 10),
+      itemBuilder: (context, index) {
+        final u = users[index];
+        final String name = u['name'] ?? 'Người dùng';
+        final String email = u['email'] ?? u['phone'] ?? '';
+        final String avatar = u['avatar_url'] ?? u['avatar'] ?? '';
+        final String role = (u['role'] ?? 'user').toString().toUpperCase();
+        final bool isSeller = role.contains('SELLER') || role.contains('STALL');
+
+        return Card(
+          elevation: 1,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          child: ListTile(
+            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+            leading: CircleAvatar(
+              radius: 24,
+              backgroundColor: isSeller ? const Color(0xFF059669) : primaryColor,
+              backgroundImage: avatar.startsWith('http') ? NetworkImage(avatar) : null,
+              child: !avatar.startsWith('http')
+                  ? Text(
+                      name.isNotEmpty ? name[0].toUpperCase() : 'U',
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                    )
+                  : null,
+            ),
+            title: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    name,
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: isSeller ? const Color(0xFFECFDF5) : const Color(0xFFF0F9FF),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: isSeller ? const Color(0xFF10B981) : primaryColor),
+                  ),
+                  child: Text(
+                    isSeller ? 'CHỦ GIAN HÀNG' : 'THÀNH VIÊN',
+                    style: TextStyle(
+                      fontSize: 9.5,
+                      fontWeight: FontWeight.bold,
+                      color: isSeller ? const Color(0xFF059669) : primaryColor,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            subtitle: Text(
+              email.isNotEmpty ? email : 'Đông Anh Social Member',
+              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+            ),
+            trailing: ElevatedButton.icon(
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('💬 Đã gửi yêu cầu kết nối tới $name'),
+                    backgroundColor: primaryColor,
+                    duration: const Duration(seconds: 2),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.chat_bubble_outline_rounded, size: 14),
+              label: const Text('Nhắn tin', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primaryColor,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                elevation: 0,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
+
+
 
   Widget _buildFoodTabContent(List<dynamic> eateries, Color primaryColor) {
     if (_isLoadingFood) {
