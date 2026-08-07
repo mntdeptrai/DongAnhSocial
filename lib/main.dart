@@ -8,6 +8,7 @@ import 'services/api_service.dart';
 import 'screens/login_screen.dart';
 import 'screens/map_screen.dart';
 import 'screens/feed_screen.dart';
+import 'screens/news_bulletin_screen.dart';
 import 'screens/chat_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/my_checkins_screen.dart';
@@ -33,6 +34,11 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Low Memory (2GB RAM) optimization: Cap in-memory ImageCache to 35MB & 50 objects max
+  PaintingBinding.instance.imageCache.maximumSizeBytes = 35 * 1024 * 1024;
+  PaintingBinding.instance.imageCache.maximumSize = 50;
+
   await ApiService.init();
 
   try {
@@ -390,9 +396,9 @@ class _MainLayoutState extends State<MainLayout> with WidgetsBindingObserver {
   Widget _buildLazyScreen() {
     switch (_currentIndex) {
       case 0:
-        return FeedScreen(key: _feedScreenKey);
+        return const NewsBulletinScreen();
       case 1:
-        return const MyCheckinsScreen();
+        return FeedScreen(key: _feedScreenKey);
       case 2:
         return const MapScreen();
       case 3:
@@ -405,7 +411,7 @@ class _MainLayoutState extends State<MainLayout> with WidgetsBindingObserver {
           onLoginRequest: widget.onLoginRequest,
         );
       default:
-        return FeedScreen(key: _feedScreenKey);
+        return const NewsBulletinScreen();
     }
   }
 
@@ -436,7 +442,7 @@ class _MainLayoutState extends State<MainLayout> with WidgetsBindingObserver {
                   _currentIndex = index;
                   _activeRole = 'user';
                 });
-                if (index == 0) {
+                if (index == 1) {
                   _feedScreenKey.currentState?.resumeCamera();
                 } else {
                   _feedScreenKey.currentState?.pauseCamera();

@@ -1017,9 +1017,9 @@ class FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    Colors.black.withOpacity(0.4),
+                    Colors.black.withValues(alpha: 0.4),
                     Colors.transparent,
-                    Colors.black.withOpacity(0.7)
+                    Colors.black.withValues(alpha: 0.7)
                   ],
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
@@ -1040,7 +1040,7 @@ class FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
                     children: [
                       CircleAvatar(
                         backgroundColor: Colors.white.withValues(alpha: 0.9),
-                        backgroundImage: NetworkImage(ApiService.getAvatarUrl(item['avatar'] ?? item, item['display_name'] ?? 'User')),
+                        backgroundImage: ResizeImage(NetworkImage(ApiService.getAvatarUrl(item['avatar'] ?? item, item['display_name'] ?? 'User')), width: 120),
                       ),
                       const SizedBox(width: 12),
                       Expanded(

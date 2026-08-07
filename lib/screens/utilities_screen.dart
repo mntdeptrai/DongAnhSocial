@@ -197,8 +197,32 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
     final displayProducts = _marketProducts.where((p) {
       final name = (p['name'] ?? '').toString().toLowerCase();
       final seller = (p['seller_name'] ?? '').toString().toLowerCase();
+      final desc = (p['description'] ?? '').toString().toLowerCase();
       final q = _searchQuery.toLowerCase();
-      return name.contains(q) || seller.contains(q);
+      final matchesSearch = name.contains(q) || seller.contains(q) || desc.contains(q);
+
+      final isOcopItem = p['is_ocop'] == true ||
+          p['is_ocop'] == 1 ||
+          p['is_ocop'] == '1' ||
+          (p['star_rating'] != null && p['star_rating'].toString().isNotEmpty) ||
+          (p['ocop_star'] != null && p['ocop_star'].toString().isNotEmpty) ||
+          name.contains('ocop') ||
+          seller.contains('ocop') ||
+          desc.contains('ocop') ||
+          seller.contains('hợp tác xã') ||
+          seller.contains('htx');
+
+      if (_selectedFilter == '🏆 OCOP') {
+        return matchesSearch && isOcopItem;
+      }
+      if (_selectedFilter == '⭐ Nổi bật') {
+        final star = (p['star_rating'] ?? '').toString();
+        return matchesSearch && (star.contains('4') || star.contains('5') || p['is_featured'] == true || isOcopItem);
+      }
+      if (_selectedFilter == '🛵 Giao nhanh') {
+        return matchesSearch && (p['has_delivery'] == true || p['has_delivery'] == 1 || p['seller_phone'] != null);
+      }
+      return matchesSearch;
     }).toList();
 
     return Scaffold(
@@ -758,7 +782,7 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
           children: [
             Expanded(
               child: Text(
-                'Danh Mục Sản Phẩm OCOP (${products.length})',
+                'Danh Mục Sản Phẩm ${_selectedFilter == '🏆 OCOP' ? 'OCOP Chuẩn' : (_selectedFilter == '⭐ Nổi bật' ? 'Nổi Bật' : 'Chợ Số & OCOP')} (${products.length})',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
@@ -790,6 +814,48 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
   }
 
   Widget _buildProductGridCard(Map<String, dynamic> product) {
+    // Resolve Image URL from image_path or image
+    String imgUrl = '';
+    final rawImg = product['image_path'] ?? product['image'] ?? product['img_url'];
+    if (rawImg != null && rawImg.toString().trim().isNotEmpty) {
+      final s = rawImg.toString().trim();
+      if (s.startsWith('http')) {
+        imgUrl = s;
+      } else {
+        imgUrl = 'https://donganhdiscovery.xadonganh.com/' + (s.startsWith('/') ? s.substring(1) : s);
+      }
+    } else {
+      // Clean agricultural product fallback photo
+      imgUrl = 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=400&q=60';
+    }
+
+    // Format Price
+    String priceText = 'Liên hệ';
+    if (product['price_formatted'] != null && product['price_formatted'].toString().isNotEmpty) {
+      priceText = product['price_formatted'].toString();
+    } else if (product['price'] != null) {
+      final pNum = double.tryParse(product['price'].toString());
+      if (pNum != null && pNum > 0) {
+        priceText = '${pNum.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')}đ';
+      }
+    }
+
+    // Determine if it is a certified OCOP product vs standard market vendor
+    final bool isOcop = product['is_ocop'] == true ||
+        product['is_ocop'] == 1 ||
+        product['is_ocop'] == '1' ||
+        (product['star_rating'] != null && product['star_rating'].toString().isNotEmpty) ||
+        (product['ocop_star'] != null && product['ocop_star'].toString().isNotEmpty) ||
+        (product['name'] ?? '').toString().toUpperCase().contains('OCOP') ||
+        (product['seller_name'] ?? '').toString().toUpperCase().contains('OCOP') ||
+        (product['seller_name'] ?? '').toString().toUpperCase().contains('HTX') ||
+        (product['seller_name'] ?? '').toString().toUpperCase().contains('HỢP TÁC XÃ');
+
+    final String badgeText = isOcop
+        ? (product['ocop_star'] ?? product['star_rating'] ?? 'OCOP CHUẨN')
+        : 'CHỢ SỐ DÂN SINH';
+    final Color badgeBg = isOcop ? const Color(0xFF059669) : const Color(0xFF0EA5E9);
+
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       elevation: 2,
@@ -802,7 +868,7 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
               ClipRRect(
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
                 child: Image.network(
-                  product['image'] ?? 'https://picsum.photos/300/300',
+                  imgUrl,
                   height: 120,
                   width: double.infinity,
                   fit: BoxFit.cover,
@@ -821,11 +887,11 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF059669),
+                    color: badgeBg,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
-                    product['ocop_star'] ?? 'OCOP CHUẨN',
+                    badgeText,
                     style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold),
                   ),
                 ),
@@ -858,8 +924,8 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        product['price_formatted'] ?? '${product['price'] ?? 50000}đ',
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF059669)),
+                        priceText,
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF059669)),
                       ),
                       InkWell(
                         onTap: () => _addToCart(product),

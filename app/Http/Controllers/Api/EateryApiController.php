@@ -1457,7 +1457,7 @@ YÊU CẦU TRẢ VỀ CHỈ LÀ CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU, KHÔNG C
     {
         $postsList = [];
 
-        // 1. Lấy từ bảng Post (gồm tin đăng của Trường học, User, Seller, Admin, Manager từ cả mysql_education & mysql)
+        // 1. Lấy từ bảng Post (gồm tin đăng của Trường học, User, Seller, Admin, Manager)
         try {
             $userPostsMysqlEdu = collect();
             $userPostsMysql = collect();
@@ -1479,30 +1479,35 @@ YÊU CẦU TRẢ VỀ CHỈ LÀ CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU, KHÔNG C
             $userPosts = $userPostsMysqlEdu->concat($userPostsMysql)->unique('id');
 
             foreach ($userPosts as $post) {
-                $authorName = $post->user ? $post->user->name : ($post->eatery ? $post->eatery->name : 'Thành viên Đông Anh');
-                $authorAvatar = $post->user ? ($post->user->avatar ?? null) : null;
-                $authorRole = $post->user ? $post->user->role : 'user';
+                try {
+                    $authorName = $post->user ? $post->user->name : ($post->eatery ? $post->eatery->name : 'Thành viên Đông Anh');
+                    $authorAvatar = $post->user ? ($post->user->avatar ?? null) : ($post->eatery ? ($post->eatery->image_path ?? null) : null);
+                    $authorRole = $post->user ? ($post->user->role ?? 'user') : 'user';
 
-                $postsList[] = [
-                    'id'               => $post->id,
-                    'hashid'           => $post->hashid,
-                    'type'             => 'post',
-                    'author_name'      => $authorName,
-                    'author_avatar'    => $authorAvatar,
-                    'author_role'      => $authorRole,
-                    'title'            => $post->name,
-                    'description'      => $post->description,
-                    'image_path'       => $post->image_path,
-                    'images'           => $post->all_images ?? ($post->image_path ? [$post->image_path] : []),
-                    'likes_count'      => (int) ($post->likes_count ?? 0),
-                    'comments_count'   => (int) ($post->comments_count ?? 0),
-                    'created_at_human' => $post->created_at ? $post->created_at->diffForHumans() : 'Vừa xong',
-                    'comments'         => [],
-                ];
+                    $img = $post->image_path;
+                    $imgs = $img ? [$img] : [];
+
+                    $postsList[] = [
+                        'id'               => $post->id,
+                        'hashid'           => $post->hashid ?? ('post_' . $post->id),
+                        'type'             => 'post',
+                        'author_name'      => $authorName,
+                        'author_avatar'    => $authorAvatar,
+                        'author_role'      => $authorRole,
+                        'title'            => $post->name ?? $post->title ?? '',
+                        'description'      => $post->description ?? '',
+                        'image_path'       => $img,
+                        'images'           => $imgs,
+                        'likes_count'      => (int) ($post->likes_count ?? 0),
+                        'comments_count'   => (int) ($post->comments_count ?? 0),
+                        'created_at_human' => $post->created_at ? $post->created_at->diffForHumans() : 'Vừa xong',
+                        'comments'         => [],
+                    ];
+                } catch (\Throwable $e) {}
             }
         } catch (\Throwable $e) {}
 
-        // 2. Lấy từ bảng EducationProgram (Hiệu trưởng / Trường học từ mysql_education & mysql)
+        // 2. Lấy từ bảng EducationProgram (Hiệu trưởng / Trường học)
         try {
             $excludedTitles = [
                 'Hệ đào tạo THPT chính quy chuẩn quốc gia',
@@ -1533,52 +1538,58 @@ YÊU CẦU TRẢ VỀ CHỈ LÀ CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU, KHÔNG C
             $eduPosts = $eduPostsMysqlEdu->concat($eduPostsMysql)->unique('id');
 
             foreach ($eduPosts as $edu) {
-                $authorName = $edu->eatery ? $edu->eatery->name : 'Ban Giám Hiệu Trường';
-                $postsList[] = [
-                    'id'               => 'edu_' . $edu->id,
-                    'hashid'           => 'edu_' . $edu->id,
-                    'type'             => 'education',
-                    'author_name'      => $authorName,
-                    'author_avatar'    => $edu->eatery ? $edu->eatery->image_path : null,
-                    'author_role'      => 'principal',
-                    'title'            => $edu->name,
-                    'description'      => $edu->description ?? $edu->target_students ?? '',
-                    'image_path'       => $edu->image_path ?? ($edu->eatery ? $edu->eatery->image_path : null),
-                    'images'           => $edu->all_images ?? ($edu->image_path ? [$edu->image_path] : []),
-                    'likes_count'      => 12,
-                    'comments_count'   => 0,
-                    'created_at_human' => $edu->created_at ? $edu->created_at->diffForHumans() : '2 ngày trước',
-                    'comments'         => [],
-                ];
+                try {
+                    $authorName = $edu->eatery ? $edu->eatery->name : 'Ban Giám Hiệu Trường';
+                    $img = $edu->image_path ?? ($edu->eatery ? $edu->eatery->image_path : null);
+
+                    $postsList[] = [
+                        'id'               => 'edu_' . $edu->id,
+                        'hashid'           => 'edu_' . $edu->id,
+                        'type'             => 'education',
+                        'author_name'      => $authorName,
+                        'author_avatar'    => $edu->eatery ? $edu->eatery->image_path : null,
+                        'author_role'      => 'principal',
+                        'title'            => $edu->name ?? '',
+                        'description'      => $edu->description ?? $edu->target_students ?? '',
+                        'image_path'       => $img,
+                        'images'           => $img ? [$img] : [],
+                        'likes_count'      => 12,
+                        'comments_count'   => 0,
+                        'created_at_human' => $edu->created_at ? $edu->created_at->diffForHumans() : '2 ngày trước',
+                        'comments'         => [],
+                    ];
+                } catch (\Throwable $e) {}
             }
         } catch (\Throwable $e) {}
 
         // 3. Lấy bài Checkin công khai
         try {
-            $checkins = Checkin::with(['user', 'eatery'])
+            $checkins = \App\Models\Checkin::with(['user', 'eatery'])
                 ->where('status', 'published')
                 ->orderBy('created_at', 'desc')
                 ->limit(20)
                 ->get();
 
             foreach ($checkins as $chk) {
-                $authorName = $chk->user ? $chk->user->name : 'Thành viên Đông Anh';
-                $postsList[] = [
-                    'id'               => 'chk_' . $chk->id,
-                    'hashid'           => 'chk_' . $chk->id,
-                    'type'             => 'checkin',
-                    'author_name'      => $authorName,
-                    'author_avatar'    => $chk->user ? $chk->user->avatar : null,
-                    'author_role'      => $chk->user ? $chk->user->role : 'user',
-                    'title'            => $chk->eatery ? ('Check-in tại ' . $chk->eatery->name) : 'Khoảnh khắc ẩm thực',
-                    'description'      => $chk->comment ?? '',
-                    'image_path'       => $chk->image_path,
-                    'images'           => $chk->image_path ? [$chk->image_path] : [],
-                    'likes_count'      => (int) ($chk->likes_count ?? 0),
-                    'comments_count'   => 0,
-                    'created_at_human' => $chk->created_at ? $chk->created_at->diffForHumans() : 'Vừa xong',
-                    'comments'         => [],
-                ];
+                try {
+                    $authorName = $chk->user ? $chk->user->name : 'Thành viên Đông Anh';
+                    $postsList[] = [
+                        'id'               => 'chk_' . $chk->id,
+                        'hashid'           => 'chk_' . $chk->id,
+                        'type'             => 'checkin',
+                        'author_name'      => $authorName,
+                        'author_avatar'    => $chk->user ? $chk->user->avatar : null,
+                        'author_role'      => $chk->user ? ($chk->user->role ?? 'user') : 'user',
+                        'title'            => $chk->eatery ? ('Check-in tại ' . $chk->eatery->name) : 'Khoảnh khắc ẩm thực',
+                        'description'      => $chk->comment ?? '',
+                        'image_path'       => $chk->image_path,
+                        'images'           => $chk->image_path ? [$chk->image_path] : [],
+                        'likes_count'      => (int) ($chk->likes_count ?? 0),
+                        'comments_count'   => 0,
+                        'created_at_human' => $chk->created_at ? $chk->created_at->diffForHumans() : 'Vừa xong',
+                        'comments'         => [],
+                    ];
+                } catch (\Throwable $e) {}
             }
         } catch (\Throwable $e) {}
 

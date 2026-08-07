@@ -53,7 +53,7 @@ class RoleMenuDrawer extends StatelessWidget {
                 children: [
                   CircleAvatar(
                     radius: 28,
-                    backgroundImage: NetworkImage(userAvatar),
+                    backgroundImage: ResizeImage(NetworkImage(userAvatar), width: 140),
                     backgroundColor: Colors.white24,
                   ),
                   const SizedBox(width: 14),

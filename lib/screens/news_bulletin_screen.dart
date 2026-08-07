@@ -83,7 +83,7 @@ class _NewsBulletinScreenState extends State<NewsBulletinScreen> {
                       children: [
                         CircleAvatar(
                           radius: 20,
-                          backgroundImage: NetworkImage(ApiService.getAvatarUrl(user, user?['name'])),
+                          backgroundImage: ResizeImage(NetworkImage(ApiService.getAvatarUrl(user, user?['name'])), width: 100),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
@@ -289,7 +289,7 @@ class _NewsBulletinScreenState extends State<NewsBulletinScreen> {
                         children: [
                           CircleAvatar(
                             radius: 18,
-                            backgroundImage: NetworkImage(ApiService.getAvatarUrl(user, user?['name'])),
+                            backgroundImage: ResizeImage(NetworkImage(ApiService.getAvatarUrl(user, user?['name'])), width: 90),
                           ),
                           const SizedBox(width: 12),
                           Expanded(
@@ -392,7 +392,7 @@ class _NewsBulletinScreenState extends State<NewsBulletinScreen> {
                                 children: [
                                   CircleAvatar(
                                     radius: 20,
-                                    backgroundImage: NetworkImage(ApiService.getAvatarUrl(item['author_avatar'] ?? item, authorName)),
+                                    backgroundImage: ResizeImage(NetworkImage(ApiService.getAvatarUrl(item['author_avatar'] ?? item, authorName)), width: 100),
                                   ),
                                   const SizedBox(width: 10),
                                   Expanded(

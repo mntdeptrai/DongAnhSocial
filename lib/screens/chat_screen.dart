@@ -170,7 +170,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                           CircleAvatar(
                             radius: 24,
                             backgroundColor: primaryColor.withValues(alpha: 0.1),
-                            backgroundImage: NetworkImage(ApiService.getAvatarUrl(friend, friend['name'])),
+                            backgroundImage: ResizeImage(NetworkImage(ApiService.getAvatarUrl(friend, friend['name'])), width: 120),
                           ),
                           Positioned(
                             bottom: 0,
