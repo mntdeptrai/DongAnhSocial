@@ -262,7 +262,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> with SingleTickerPr
 
   void _startTimer() {
     _pollingTimer?.cancel();
-    _pollingTimer = Timer.periodic(const Duration(seconds: 4), (timer) {
+    _pollingTimer = Timer.periodic(const Duration(seconds: 2), (timer) {
       _silentRefreshMessages();
     });
   }
@@ -339,6 +339,20 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> with SingleTickerPr
 
     _sendAnimController.forward().then((_) => _sendAnimController.reverse());
     _messageController.clear();
+
+    final currentUserId = ApiService.currentUser?['id'];
+    final tempMsg = {
+      'id': DateTime.now().millisecondsSinceEpoch,
+      'sender_id': currentUserId,
+      'receiver_id': widget.friendId,
+      'message': text,
+      'created_at': 'Vừa xong',
+    };
+
+    setState(() {
+      _messages.add(tempMsg);
+    });
+    _scrollToBottom();
 
     final res = await ApiService.sendMessage(widget.friendId, text);
     if (res['success'] == true) {

@@ -54,6 +54,15 @@ class FcmService
                                         'title' => $title,
                                         'body'  => $body,
                                     ],
+                                    'android' => [
+                                        'priority' => 'high',
+                                        'notification' => [
+                                            'sound' => 'default',
+                                            'channel_id' => 'dong_anh_social_channel',
+                                            'priority' => 'HIGH',
+                                            'visibility' => 'PUBLIC',
+                                        ],
+                                    ],
                                     'data' => array_map('strval', array_merge([
                                         'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
                                     ], $data)),
