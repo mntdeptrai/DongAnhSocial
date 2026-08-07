@@ -25,11 +25,33 @@ class BackgroundPollingService : Service() {
     private var isPollingActive = false
     private var lastNotifiedMsgId: Long = 0
 
-    override fun onBind(intent: Intent?): IBinder? = null
+    override fun onCreate() {
+        super.onCreate()
+        clearNotification()
+    }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        clearNotification()
         stopSelf()
         return START_NOT_STICKY
+    }
+
+    private fun clearNotification() {
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                stopForeground(STOP_FOREGROUND_REMOVE)
+            } else {
+                @Suppress("DEPRECATION")
+                stopForeground(true)
+            }
+            val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            nm.cancel(1001)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                nm.deleteNotificationChannel("dong_anh_background_service")
+            }
+        } catch (e: Exception) {
+            Log.e("BackgroundPolling", "Clear foreground error: ${e.message}")
+        }
     }
 
     private fun createSilentForegroundNotification(): Notification {

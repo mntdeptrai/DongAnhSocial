@@ -176,7 +176,18 @@ class ApiService {
 
   /// POST /user/fcm-token — Cập nhật FCM Token của thiết bị lên server
   static Future<bool> updateFcmToken(String fcmToken) async {
-    if (!isAuthenticated) return false;
+    if (_token == null || _token!.isEmpty) {
+      final prefs = await SharedPreferences.getInstance();
+      _token = prefs.getString('auth_token');
+      final userJson = prefs.getString('current_user');
+      if (userJson != null) {
+        try { currentUser = jsonDecode(userJson); } catch (_) {}
+      }
+    }
+    if (_token == null || _token!.isEmpty) {
+      debugPrint('⚠️ FCM Update skipped: User token is missing/unauthenticated.');
+      return false;
+    }
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/user/fcm-token'),

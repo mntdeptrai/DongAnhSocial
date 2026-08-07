@@ -139,6 +139,11 @@ class MainActivity : FlutterActivity() {
         try {
             val serviceIntent = Intent(this, BackgroundPollingService::class.java)
             stopService(serviceIntent)
+            val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            nm.cancel(1001)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                nm.deleteNotificationChannel("dong_anh_background_service")
+            }
         } catch (e: Exception) {
             Log.e("MainActivity", "Stop BackgroundPollingService: ${e.message}")
         }
