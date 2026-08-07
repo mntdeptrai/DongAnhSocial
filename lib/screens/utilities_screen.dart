@@ -206,8 +206,7 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
           name.contains('ocop') ||
           seller.contains('ocop') ||
           seller.contains('hợp tác xã') ||
-          seller.contains('htx') ||
-          desc.contains('ocop');
+          seller.contains('htx');
 
       if (_selectedFilter == '🏆 OCOP') {
         return matchesSearch && isOcopProduct;

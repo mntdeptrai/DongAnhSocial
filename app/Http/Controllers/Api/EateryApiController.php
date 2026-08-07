@@ -1382,12 +1382,13 @@ YÊU CẦU TRẢ VỀ CHỈ LÀ CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU, KHÔNG C
 
                     if ($listResponse->successful()) {
                         foreach ($listResponse->json() as $e) {
-                            $eName = $e['name'] ?? 'Cơ sở OCOP Đông Anh';
-                            $desc  = $e['description'] ?? ('Gian hàng & sản phẩm OCOP của ' . $eName . ' tại Đông Anh, Hà Nội');
+                            $eName = $e['name'] ?? 'Gian hàng Đông Anh';
+                            $actualDesc = $e['description'] ?? '';
+                            $desc  = !empty($actualDesc) ? $actualDesc : ('Gian hàng & đặc sản của ' . $eName . ' tại Đông Anh, Hà Nội');
                             $isOcopEatery = str_contains(strtolower($eName), 'ocop') ||
                                             str_contains(strtolower($eName), 'htx') ||
                                             str_contains(strtolower($eName), 'hợp tác xã') ||
-                                            str_contains(strtolower($desc), 'ocop');
+                                            str_contains(strtolower($actualDesc), 'ocop');
 
                             $products->push([
                                 'id'            => 'e_' . ($e['id'] ?? rand(1, 999)),
@@ -1778,21 +1779,48 @@ YÊU CẦU TRẢ VỀ CHỈ LÀ CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU, KHÔNG C
                 $decodedBytes = base64_decode($base64Data);
 
                 if ($decodedBytes !== false) {
-                    $filename = 'post_' . time() . '_' . uniqid() . '.' . $type;
-                    $destinationPath = public_path('storage/posts');
-                    if (!file_exists($destinationPath)) {
-                        mkdir($destinationPath, 0755, true);
+                    $filename = 'posts/post_' . time() . '_' . uniqid() . '.' . $type;
+                    $r2PublicUrl = rtrim(env('R2_PUBLIC_URL', 'https://media.xadonganh.com'), '/');
+                    if (env('R2_ACCESS_KEY_ID') && env('R2_BUCKET')) {
+                        try {
+                            \Illuminate\Support\Facades\Storage::disk('r2')->put($filename, $decodedBytes, 'public');
+                            $savedImagePath = $r2PublicUrl . '/' . $filename;
+                        } catch (\Throwable $r2Err) {
+                            \Illuminate\Support\Facades\Log::warning("R2 Upload Error: " . $r2Err->getMessage());
+                            $destinationPath = public_path('storage/posts');
+                            if (!file_exists($destinationPath)) {
+                                mkdir($destinationPath, 0755, true);
+                            }
+                            file_put_contents(public_path('storage/' . $filename), $decodedBytes);
+                            $savedImagePath = 'storage/' . $filename;
+                        }
+                    } else {
+                        $destinationPath = public_path('storage/posts');
+                        if (!file_exists($destinationPath)) {
+                            mkdir($destinationPath, 0755, true);
+                        }
+                        file_put_contents(public_path('storage/' . $filename), $decodedBytes);
+                        $savedImagePath = 'storage/' . $filename;
                     }
-                    file_put_contents($destinationPath . '/' . $filename, $decodedBytes);
-                    $savedImagePath = 'storage/posts/' . $filename;
                 }
             } catch (\Throwable $e) {}
         } else if ($request->hasFile('image_file')) {
             try {
                 $file = $request->file('image_file');
-                $filename = 'post_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-                $file->move(public_path('storage/posts'), $filename);
-                $savedImagePath = 'storage/posts/' . $filename;
+                $filename = 'posts/post_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+                $r2PublicUrl = rtrim(env('R2_PUBLIC_URL', 'https://media.xadonganh.com'), '/');
+                if (env('R2_ACCESS_KEY_ID') && env('R2_BUCKET')) {
+                    try {
+                        \Illuminate\Support\Facades\Storage::disk('r2')->putFileAs('', $file, $filename, 'public');
+                        $savedImagePath = $r2PublicUrl . '/' . $filename;
+                    } catch (\Throwable $r2Err) {
+                        $file->move(public_path('storage/posts'), basename($filename));
+                        $savedImagePath = 'storage/posts/' . basename($filename);
+                    }
+                } else {
+                    $file->move(public_path('storage/posts'), basename($filename));
+                    $savedImagePath = 'storage/posts/' . basename($filename);
+                }
             } catch (\Throwable $e) {}
         }
 
