@@ -716,6 +716,7 @@
                     </div>
                 </div>
 
+                @if(optional($eatery->category)->slug === 'dong-anh-market')
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
                     <div class="admin-form-group" style="margin-bottom: 0;">
                         <label class="admin-form-label">Đạt chuẩn OCOP mấy sao?</label>
@@ -732,6 +733,12 @@
                         <input type="file" name="image" class="admin-form-input" accept="image/*" style="padding: 5px 12px; font-size: 0.8rem;">
                     </div>
                 </div>
+                @else
+                <div class="admin-form-group" style="margin-bottom: 16px;">
+                    <label class="admin-form-label">Ảnh sản phẩm (Upload)</label>
+                    <input type="file" name="image" class="admin-form-input" accept="image/*" style="padding: 5px 12px; font-size: 0.8rem;">
+                </div>
+                @endif
 
                 <div class="admin-form-group" style="margin-bottom: 16px;">
                     <label class="admin-form-label">Hoặc URL ảnh sản phẩm</label>
@@ -743,6 +750,7 @@
                     <textarea name="description" class="admin-form-input" rows="2" placeholder="Mô tả về quy trình sản xuất, công dụng, chứng nhận..." style="resize: vertical;"></textarea>
                 </div>
 
+                @if(!isset($eatery) || optional($eatery->category)->slug !== 'co-so-kinh-doanh')
                 <!-- Collapsible Heritage Fields for OCOP Product -->
                 <div style="border: 1.5px solid rgba(212, 175, 55, 0.35); background: rgba(212, 175, 55, 0.02); border-radius: 8px; margin-top: 15px; margin-bottom: 15px; overflow: hidden;">
                     <div onclick="toggleOcopHeritageAddFields()" style="background-color: rgba(212, 175, 55, 0.08); padding: 10px 14px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem; font-weight: 800; color: #ffb300; border-bottom: 1px solid rgba(212, 175, 55, 0.15);">
@@ -780,6 +788,7 @@
                         </div>
                     </div>
                 </div>
+                @endif
 
                 <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 15px;">
                     <button type="button" class="btn-admin btn-admin-secondary" style="padding: 10px 20px; font-size: 0.82rem; border-radius: 8px;" onclick="closeAddOcopProductModal()">Hủy bỏ</button>
@@ -831,6 +840,7 @@
                     </div>
                 </div>
 
+                @if(optional($eatery->category)->slug === 'dong-anh-market')
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
                     <div class="admin-form-group" style="margin-bottom: 0;">
                         <label class="admin-form-label">Đạt chuẩn OCOP mấy sao?</label>
@@ -847,6 +857,12 @@
                         <input type="file" name="image" class="admin-form-input" accept="image/*" style="padding: 5px 12px; font-size: 0.8rem;">
                     </div>
                 </div>
+                @else
+                <div class="admin-form-group" style="margin-bottom: 16px;">
+                    <label class="admin-form-label">Ảnh sản phẩm mới (Thay thế)</label>
+                    <input type="file" name="image" class="admin-form-input" accept="image/*" style="padding: 5px 12px; font-size: 0.8rem;">
+                </div>
+                @endif
 
                 <div class="admin-form-group" style="margin-bottom: 16px;">
                     <label class="admin-form-label">Hoặc URL ảnh sản phẩm</label>
@@ -858,6 +874,7 @@
                     <textarea id="edit_ocop_description" name="description" class="admin-form-input" rows="2" style="resize: vertical;"></textarea>
                 </div>
 
+                @if(!isset($eatery) || optional($eatery->category)->slug !== 'co-so-kinh-doanh')
                 <!-- Collapsible Heritage Fields for OCOP Product -->
                 <div style="border: 1.5px solid rgba(212, 175, 55, 0.35); background: rgba(212, 175, 55, 0.02); border-radius: 8px; margin-top: 15px; margin-bottom: 15px; overflow: hidden;">
                     <div onclick="toggleOcopHeritageEditFields()" style="background-color: rgba(212, 175, 55, 0.08); padding: 10px 14px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem; font-weight: 800; color: #ffb300; border-bottom: 1px solid rgba(212, 175, 55, 0.15);">
@@ -895,6 +912,7 @@
                         </div>
                     </div>
                 </div>
+                @endif
 
                 <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 15px;">
                     <button type="button" class="btn-admin btn-admin-secondary" style="padding: 10px 20px; font-size: 0.82rem; border-radius: 8px;" onclick="closeEditOcopProductModal()">Hủy bỏ</button>
