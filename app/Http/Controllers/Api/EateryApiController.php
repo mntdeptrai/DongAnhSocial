@@ -1746,6 +1746,10 @@ YÊU CẦU TRẢ VỀ CHỈ LÀ CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU, KHÔNG C
                     'emoji'             => $emoji ?: '👍',
                 ]);
                 $isLiked = true;
+
+                try {
+                    \App\Services\NotificationService::notifyReaction($id, $type, $emoji ?: '👍', $userId);
+                } catch (\Throwable $notifErr) {}
             }
 
             $realLikesCount = \App\Models\CheckinReaction::where('reactionable_type', $type)
@@ -1867,6 +1871,10 @@ YÊU CẦU TRẢ VỀ CHỈ LÀ CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU, KHÔNG C
             'image_path'  => $savedImagePath,
             'status'      => 'published',
         ]);
+
+        try {
+            \App\Services\NotificationService::notifyNewPost($user, $post->name, $post->description ?? '');
+        } catch (\Throwable $notifErr) {}
 
         return response()->json([
             'success' => true,

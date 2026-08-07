@@ -32,6 +32,9 @@ class NotificationService
             $myDiaryIds   = FoodTourDiary::where('user_id', $userId)->pluck('id')->toArray();
             $myPostIds    = DB::table('posts')->where('user_id', $userId)->pluck('id')->toArray();
             $myEateryIds  = Eatery::where('user_id', $userId)->pluck('id')->toArray();
+            if ($user && !empty($user->eatery_id) && !in_array($user->eatery_id, $myEateryIds)) {
+                $myEateryIds[] = $user->eatery_id;
+            }
             $myEduIds     = !empty($myEateryIds) 
                 ? DB::table('education_programs')->whereIn('eatery_id', $myEateryIds)->pluck('id')->toArray() 
                 : [];
@@ -73,7 +76,14 @@ class NotificationService
                 ->orderBy('created_at', 'desc')
                 ->get()
                 ->groupBy(function($r) {
-                    return $r->reactionable_type . '_' . $r->reactionable_id;
+                    $normType = match (strtolower($r->reactionable_type)) {
+                        'checkin', 'app\models\checkin' => 'checkin',
+                        'diary', 'app\models\foodtourdiary' => 'diary',
+                        'eatery', 'app\models\eatery' => 'eatery',
+                        'education', 'app\models\educationprogram' => 'education',
+                        default => 'post',
+                    };
+                    return $normType . '_' . $r->reactionable_id;
                 });
 
                 foreach ($reactionsQuery as $key => $group) {
@@ -101,7 +111,7 @@ class NotificationService
                     }
 
                     $targetUrl = match (strtolower($first->reactionable_type)) {
-                        'checkin', 'app\models\checkin' => '/goc-checkin',
+                        'checkin', 'app\models\checkin' => '/checkin',
                         'diary', 'app\models\foodtourdiary' => '/food-tour',
                         'eatery', 'app\models\eatery' => '/dia-diem/' . (optional(Eatery::find($first->reactionable_id))->slug ?? ''),
                         default => '/ban-tin?post=' . (optional(\App\Models\Post::find($first->reactionable_id))->hashid ?? $first->reactionable_id),
@@ -160,7 +170,14 @@ class NotificationService
                 ->orderBy('created_at', 'desc')
                 ->get()
                 ->groupBy(function($c) {
-                    return $c->commentable_type . '_' . $c->commentable_id;
+                    $normType = match (true) {
+                        str_contains($c->commentable_type, 'Checkin') => 'checkin',
+                        str_contains($c->commentable_type, 'FoodTourDiary') => 'diary',
+                        str_contains($c->commentable_type, 'Eatery') => 'eatery',
+                        str_contains($c->commentable_type, 'EducationProgram') => 'education',
+                        default => 'post',
+                    };
+                    return $normType . '_' . $c->commentable_id;
                 });
 
                 foreach ($commentsQuery as $key => $group) {
@@ -182,7 +199,7 @@ class NotificationService
                     }
 
                     $targetUrl = match (true) {
-                        str_contains($first->commentable_type, 'Checkin') => '/goc-checkin',
+                        str_contains($first->commentable_type, 'Checkin') => '/checkin',
                         str_contains($first->commentable_type, 'FoodTourDiary') => '/food-tour',
                         str_contains($first->commentable_type, 'Eatery') => '/dia-diem/' . (optional(Eatery::find($first->commentable_id))->slug ?? ''),
                         default => '/ban-tin?post=' . (optional(\App\Models\Post::find($first->commentable_id))->hashid ?? $first->commentable_id),
@@ -240,7 +257,7 @@ class NotificationService
                         'is_read'    => false,
                         'post_type'  => 'checkin',
                         'post_id'    => $sc->id,
-                        'target_url' => '/goc-checkin',
+                        'target_url' => '/checkin',
                     ];
                 }
             }
@@ -358,7 +375,7 @@ class NotificationService
                         'type'       => 'friend',
                         'icon'       => 'person_add',
                         'is_read'    => false,
-                        'target_url' => '/ket-noi-ban-be',
+                        'target_url' => '/social',
                     ];
                 }
             }

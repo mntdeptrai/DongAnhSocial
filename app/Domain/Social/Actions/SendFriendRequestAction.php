@@ -35,6 +35,25 @@ class SendFriendRequestAction
         // Phát sóng sự kiện gửi lời mời kết bạn
         broadcast(new FriendRequestSent($friendship))->toOthers();
 
+        try {
+            $receiver = \App\Models\User::find($data->friend_id);
+            if ($receiver && !empty($receiver->fcm_token)) {
+                $sender = \App\Models\User::find($data->user_id);
+                $senderName = $sender ? $sender->name : 'Thành viên Đông Anh';
+                \App\Services\FcmService::sendNotification(
+                    $receiver->fcm_token,
+                    '👥 Lời mời kết bạn mới',
+                    "{$senderName} đã gửi cho bạn một lời mời kết bạn mới.",
+                    [
+                        'type' => 'friend',
+                        'sender_id' => (string)$data->user_id,
+                    ]
+                );
+            }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('FCM Notification error on SendFriendRequestAction: ' . $e->getMessage());
+        }
+
         return $friendship;
     }
 }

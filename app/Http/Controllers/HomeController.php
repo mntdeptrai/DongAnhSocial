@@ -781,6 +781,11 @@ class HomeController extends Controller
                     'emoji'             => $emoji,
                 ]);
                 $isLiked = true;
+
+                // Gửi thông báo đến người tạo nội dung
+                try {
+                    \App\Services\NotificationService::notifyReaction($id, $type, $emoji, $userId);
+                } catch (\Throwable $notifErr) {}
             }
 
             // Đếm chính xác lượt thích từ bảng DB checkin_reactions
