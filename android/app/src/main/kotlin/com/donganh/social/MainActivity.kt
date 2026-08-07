@@ -134,18 +134,13 @@ class MainActivity : FlutterActivity() {
     }
 
     private fun startBackgroundService(token: String? = null) {
-        val serviceIntent = Intent(this, BackgroundPollingService::class.java)
-        if (!token.isNullOrEmpty()) {
-            serviceIntent.putExtra("token", token)
-        }
+        // Dịch vụ FCM Push Notification tự động quản lý thông báo ngầm tiêu chuẩn của Google.
+        // Tắt Foreground Service polling ngầm để loại bỏ thanh thông báo gây rối người dùng.
         try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                startForegroundService(serviceIntent)
-            } else {
-                startService(serviceIntent)
-            }
+            val serviceIntent = Intent(this, BackgroundPollingService::class.java)
+            stopService(serviceIntent)
         } catch (e: Exception) {
-            Log.e("MainActivity", "Failed to start BackgroundPollingService: ${e.message}")
+            Log.e("MainActivity", "Stop BackgroundPollingService: ${e.message}")
         }
     }
 

@@ -28,19 +28,8 @@ class BackgroundPollingService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        val token = intent?.getStringExtra("token")
-        if (!token.isNullOrEmpty()) {
-            val prefs = getSharedPreferences("AppPrefs", Context.MODE_PRIVATE)
-            prefs.edit().putString("auth_token", token).apply()
-        }
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            startForeground(1001, createSilentForegroundNotification())
-        }
-
-        startPollingLoop()
-
-        return START_STICKY
+        stopSelf()
+        return START_NOT_STICKY
     }
 
     private fun createSilentForegroundNotification(): Notification {
