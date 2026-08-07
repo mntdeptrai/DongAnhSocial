@@ -105,6 +105,7 @@ Route::prefix('v1')->group(function () {
             Route::get('/orders', [UserApiController::class, 'getMyOrders']);
             Route::get('/orders/{id}', [UserApiController::class, 'getOrderDetail']);
             Route::get('/checkins', [UserApiController::class, 'getMyCheckins']);
+            Route::get('/posts', [UserApiController::class, 'getMyPosts']);
         });
 
         // ===================================================================

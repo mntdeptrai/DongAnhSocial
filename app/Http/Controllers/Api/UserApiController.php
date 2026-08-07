@@ -26,17 +26,30 @@ class UserApiController extends Controller
             return response()->json(['success' => false, 'message' => 'Unauthenticated'], 401);
         }
 
+        $postsCount = \App\Models\Post::on('mysql_education')->where('user_id', $user->id)->count();
+        if ($postsCount === 0) {
+            $postsCount = \App\Models\Post::on('mysql')->where('user_id', $user->id)->count();
+        }
+
+        $checkinsCount = Checkin::where('user_id', $user->id)->count();
+        $followersCount = \App\Models\Friendship::where('friend_id', $user->id)->where('status', 'accepted')->count();
+        $followingCount = \App\Models\Friendship::where('user_id', $user->id)->where('status', 'accepted')->count();
+
         return response()->json([
             'success' => true,
             'user' => [
-                'id'         => $user->id,
-                'name'       => $user->name,
-                'username'   => $user->username,
-                'email'      => $user->email,
-                'phone'      => $user->phone,
-                'role'       => $user->role,
-                'avatar'     => $user->avatar ?? '👤',
-                'created_at' => $user->created_at ? $user->created_at->format('Y-m-d H:i:s') : null,
+                'id'              => $user->id,
+                'name'            => $user->name,
+                'username'        => $user->username,
+                'email'           => $user->email,
+                'phone'           => $user->phone,
+                'role'            => $user->role,
+                'avatar'          => $user->avatar ?? '👤',
+                'created_at'      => $user->created_at ? $user->created_at->format('Y-m-d H:i:s') : null,
+                'posts_count'     => $postsCount,
+                'checkins_count'  => $checkinsCount,
+                'followers_count' => $followersCount,
+                'following_count' => $followingCount,
             ]
         ], 200, [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     }
@@ -169,4 +182,55 @@ class UserApiController extends Controller
             'checkins' => $checkins,
         ], 200, [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     }
+
+    /**
+     * Lấy danh sách bài viết cá nhân của User
+     */
+    public function getMyPosts(Request $request)
+    {
+        $user = Auth::user() ?: auth('sanctum')->user();
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'Unauthenticated'], 401);
+        }
+
+        $posts = \App\Models\Post::on('mysql_education')
+            ->with(['user'])
+            ->where('user_id', $user->id)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        if ($posts->isEmpty()) {
+            $posts = \App\Models\Post::on('mysql')
+                ->with(['user'])
+                ->where('user_id', $user->id)
+                ->orderBy('created_at', 'desc')
+                ->get();
+        }
+
+        $r2PublicUrl = rtrim(env('R2_PUBLIC_URL', 'https://media.xadonganh.com'), '/');
+
+        $formatted = $posts->map(function ($p) use ($r2PublicUrl) {
+            $img = $p->image_path ?: ($p->image ?? '');
+            if (!empty($img) && !str_starts_with($img, 'http')) {
+                $img = str_starts_with($img, 'posts/') ? ($r2PublicUrl . '/' . $img) : ('https://donganhdiscovery.xadonganh.com/' . ltrim($img, '/'));
+            }
+            return [
+                'id'               => $p->id,
+                'name'             => $p->name ?? $p->title ?? '',
+                'description'      => $p->description ?? $p->content ?? '',
+                'author'           => $p->user ? $p->user->name : 'Thành viên',
+                'user_id'          => $p->user_id,
+                'image_path'       => $img,
+                'likes_count'      => $p->likes_count ?? 0,
+                'comments_count'   => $p->comments_count ?? 0,
+                'created_at_human' => $p->created_at ? $p->created_at->diffForHumans() : 'Vừa xong',
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'posts'   => $formatted,
+        ], 200, [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    }
+}
 }

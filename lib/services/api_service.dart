@@ -602,6 +602,50 @@ class ApiService {
     return [];
   }
 
+  /// GET /user/profile — Refresh profile stats & data from backend DB
+  static Future<Map<String, dynamic>?> getUserProfile() async {
+    try {
+      final response = await http.get(Uri.parse('$baseUrl/user/profile'), headers: _getHeaders());
+      final data = jsonDecode(response.body);
+      if (response.statusCode == 200 && data['success'] == true && data['user'] != null) {
+        currentUser = Map<String, dynamic>.from(data['user']);
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('current_user', jsonEncode(currentUser));
+        return currentUser;
+      }
+    } catch (_) {}
+    return currentUser;
+  }
+
+  /// GET /user/posts — Danh sách bài viết cá nhân thực tế từ DB
+  static Future<List<dynamic>> getMyPosts() async {
+    try {
+      final response = await http.get(Uri.parse('$baseUrl/user/posts'), headers: _getHeaders());
+      final data = jsonDecode(response.body);
+      if (response.statusCode == 200 && data['success'] == true) {
+        return data['posts'] ?? [];
+      }
+    } catch (_) {}
+
+    // Fallback client-side filter if offline
+    try {
+      final user = currentUser;
+      final userId = user?['id'];
+      final userName = (user?['name'] ?? '').toString().trim().toLowerCase();
+      final allPosts = await getNewsfeed();
+      if (user != null) {
+        return allPosts.where((p) {
+          final pUserId = p['user_id'];
+          final pAuthor = (p['author'] ?? p['user']?['name'] ?? '').toString().trim().toLowerCase();
+          final matchId = (pUserId != null && userId != null && pUserId.toString() == userId.toString());
+          final matchAuthor = (userName.isNotEmpty && (pAuthor == userName || pAuthor.contains(userName)));
+          return matchId || matchAuthor;
+        }).toList();
+      }
+    } catch (_) {}
+    return [];
+  }
+
   /// POST /checkins — Gửi check-in mới (hỗ trợ cả khách vãng lai)
   static Future<Map<String, dynamic>> storeCheckin({
     required int eateryId,

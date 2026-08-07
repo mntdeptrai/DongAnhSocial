@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
-import 'my_checkins_screen.dart';
-import 'my_orders_screen.dart';
-import 'seller_dashboard_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   final VoidCallback onLogout;
@@ -19,6 +16,36 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+  List<dynamic> _myPosts = [];
+  List<dynamic> _myCheckins = [];
+  bool _isLoadingActivity = true;
+  int _selectedActivityTab = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchMyActivity();
+  }
+
+  Future<void> _fetchMyActivity() async {
+    if (!ApiService.isAuthenticated) return;
+    setState(() => _isLoadingActivity = true);
+    try {
+      final userFuture = ApiService.getUserProfile();
+      final postsFuture = ApiService.getMyPosts();
+      final checkinsFuture = ApiService.getMyCheckins();
+      final results = await Future.wait([userFuture, postsFuture, checkinsFuture]);
+      if (mounted) {
+        setState(() {
+          _myPosts = results[1] as List<dynamic>;
+          _myCheckins = results[2] as List<dynamic>;
+          _isLoadingActivity = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _isLoadingActivity = false);
+    }
+  }
   void _showEditProfileDialog(BuildContext context) {
     final user = ApiService.currentUser;
     final nameController = TextEditingController(text: user?['name'] ?? '');
@@ -131,130 +158,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
             child: const Text('Cập nhật'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showSavedPlaces(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-      builder: (ctx) => Container(
-        padding: const EdgeInsets.all(20),
-        child: const Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.favorite, color: Colors.redAccent, size: 24),
-                SizedBox(width: 8),
-                Text('Địa điểm đã lưu', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0077B6))),
-              ],
-            ),
-            const Divider(height: 20),
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 24),
-              child: Center(
-                child: Column(
-                  children: [
-                    Icon(Icons.bookmark_outline, size: 48, color: Colors.grey),
-                    SizedBox(height: 8),
-                    Text('Chưa có địa điểm đã lưu', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                    SizedBox(height: 4),
-                    Text('Các địa điểm yêu thích của bạn sẽ hiển thị tại đây.', style: TextStyle(color: Colors.grey, fontSize: 12)),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showAppConfig(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Row(
-          children: [
-            Icon(Icons.settings, color: Color(0xFF0EA5E9)),
-            SizedBox(width: 8),
-            Text('Cấu hình ứng dụng'),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            SwitchListTile(
-              title: const Text('Thông báo đẩy (Push Notifications)'),
-              value: true,
-              activeThumbColor: const Color(0xFF0EA5E9),
-              onChanged: (val) {},
-            ),
-            SwitchListTile(
-              title: const Text('Âm thanh thông báo'),
-              value: true,
-              activeThumbColor: const Color(0xFF0EA5E9),
-              onChanged: (val) {},
-            ),
-            SwitchListTile(
-              title: const Text('Đồng bộ vị trí GPS thời gian thực'),
-              value: true,
-              activeThumbColor: const Color(0xFF0EA5E9),
-              onChanged: (val) {},
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Đóng'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showSupportHelp(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Row(
-          children: [
-            Icon(Icons.help_outline, color: Color(0xFF0EA5E9)),
-            SizedBox(width: 8),
-            Text('Hỗ trợ & Trợ giúp'),
-          ],
-        ),
-        content: const Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('🏛️ Trung tâm Hỗ trợ Đông Anh Discovery', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-            SizedBox(height: 8),
-            Text('📞 Hotline hỗ trợ: 0988.xxx.xxx'),
-            SizedBox(height: 4),
-            Text('✉️ Email: support@xadonganh.com'),
-            SizedBox(height: 4),
-            Text('🌐 Website: donganhdiscovery.xadonganh.com'),
-            SizedBox(height: 12),
-            Text('Đội ngũ kỹ thuật trực hỗ trợ 24/7 giải đáp mọi thắc mắc về chợ số, bản đồ & gian hàng OCOP.'),
-          ],
-        ),
-        actions: [
-          ElevatedButton(
-            onPressed: () => Navigator.pop(ctx),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF0EA5E9),
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('Đã hiểu'),
           ),
         ],
       ),
@@ -580,7 +483,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               _statDivider(),
                               _socialStat('0', 'Đang theo dõi'),
                               _statDivider(),
-                              _socialStat('2', 'Bài viết'),
+                              _socialStat(
+                                _isLoadingActivity ? '...' : _myPosts.length.toString(),
+                                'Bài viết',
+                                () => setState(() => _selectedActivityTab = 0),
+                              ),
                             ],
                           ),
                         ),
@@ -664,7 +571,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       const SizedBox(width: 12),
                       Expanded(
-                        child: _activityStatCard('8', 'Bài Check-in', Icons.location_on_outlined, const Color(0xFF10B981), const Color(0xFFD1FAE5)),
+                        child: _activityStatCard(
+                          _isLoadingActivity ? '...' : _myCheckins.length.toString(),
+                          'Bài Check-in',
+                          Icons.location_on_outlined,
+                          const Color(0xFF10B981),
+                          const Color(0xFFD1FAE5),
+                          () => setState(() => _selectedActivityTab = 1),
+                        ),
                       ),
                     ],
                   ),
@@ -674,103 +588,165 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
             const SizedBox(height: 20),
 
-            // Service Modules & Settings Section
+            // My Activity & Posts Feed Section
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: const Color(0xFFF1F5F9)),
-                  boxShadow: [
-                    BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 10),
-                  ],
-                ),
-                child: Column(
-                  children: [
-                    // Gian hàng của tôi
-                    Material(
-                      color: const Color(0xFFF0FDFA),
-                      borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-                      child: ListTile(
-                        leading: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF0EA5E9),
-                            borderRadius: BorderRadius.circular(10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Nhật ký & Bài viết của tôi',
+                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: Color(0xFF334155)),
+                      ),
+                      IconButton(
+                        onPressed: _fetchMyActivity,
+                        icon: const Icon(Icons.refresh_rounded, size: 18, color: Color(0xFF0EA5E9)),
+                        tooltip: 'Làm mới',
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+
+                  // Tab switchers (Bài viết vs Check-in)
+                  Container(
+                    height: 42,
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () => setState(() => _selectedActivityTab = 0),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              decoration: BoxDecoration(
+                                color: _selectedActivityTab == 0 ? const Color(0xFF0EA5E9) : Colors.transparent,
+                                borderRadius: BorderRadius.circular(10),
+                                boxShadow: _selectedActivityTab == 0
+                                    ? [BoxShadow(color: const Color(0xFF0EA5E9).withValues(alpha: 0.3), blurRadius: 4, offset: const Offset(0, 2))]
+                                    : [],
+                              ),
+                              alignment: Alignment.center,
+                              child: Text(
+                                '📝 Bài viết (${_myPosts.length})',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12.5,
+                                  color: _selectedActivityTab == 0 ? Colors.white : const Color(0xFF64748B),
+                                ),
+                              ),
+                            ),
                           ),
-                          child: const Icon(Icons.storefront, color: Colors.white, size: 20),
                         ),
-                        title: const Text(
-                          '🏪 Gian hàng của tôi',
-                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: Color(0xFF0284C7)),
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () => setState(() => _selectedActivityTab = 1),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              decoration: BoxDecoration(
+                                color: _selectedActivityTab == 1 ? const Color(0xFF10B981) : Colors.transparent,
+                                borderRadius: BorderRadius.circular(10),
+                                boxShadow: _selectedActivityTab == 1
+                                    ? [BoxShadow(color: const Color(0xFF10B981).withValues(alpha: 0.3), blurRadius: 4, offset: const Offset(0, 2))]
+                                    : [],
+                              ),
+                              alignment: Alignment.center,
+                              child: Text(
+                                '📍 Check-in (${_myCheckins.length})',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12.5,
+                                  color: _selectedActivityTab == 1 ? Colors.white : const Color(0xFF64748B),
+                                ),
+                              ),
+                            ),
+                          ),
                         ),
-                        subtitle: const Text('Kê khai dữ liệu số, niêm yết giá & quản lý đơn hàng', style: TextStyle(fontSize: 11, color: Color(0xFF64748B))),
-                        trailing: const Icon(Icons.arrow_forward_ios, size: 14, color: Color(0xFF0284C7)),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => const SellerDashboardScreen()),
-                          );
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Content list
+                  if (_isLoadingActivity)
+                    const Padding(
+                      padding: EdgeInsets.all(24),
+                      child: Center(child: CircularProgressIndicator(color: Color(0xFF0EA5E9))),
+                    )
+                  else if (_selectedActivityTab == 0) ...[
+                    // Posts List
+                    if (_myPosts.isEmpty)
+                      Container(
+                        padding: const EdgeInsets.all(24),
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: const Color(0xFFF1F5F9)),
+                        ),
+                        child: const Column(
+                          children: [
+                            Icon(Icons.article_outlined, size: 40, color: Color(0xFF94A3B8)),
+                            SizedBox(height: 8),
+                            Text('Bạn chưa có bài viết nào', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                            SizedBox(height: 4),
+                            Text('Đăng bài từ Bản tin Đông Anh để lưu trữ tại đây!', style: TextStyle(color: Color(0xFF64748B), fontSize: 12), textAlign: TextAlign.center),
+                          ],
+                        ),
+                      )
+                    else
+                      ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: _myPosts.length,
+                        itemBuilder: (context, index) {
+                          final item = _myPosts[index];
+                          return _buildMyPostCard(item);
                         },
                       ),
-                    ),
-                    const Divider(height: 1, color: Color(0xFFE2E8F0)),
-
-                    // Lịch sử đơn hàng của tôi
-                    Material(
-                      color: const Color(0xFFFFF7ED),
-                      child: ListTile(
-                        leading: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFEA580C),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: const Icon(Icons.shopping_bag_rounded, color: Colors.white, size: 20),
+                  ] else ...[
+                    // Checkins List
+                    if (_myCheckins.isEmpty)
+                      Container(
+                        padding: const EdgeInsets.all(24),
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: const Color(0xFFF1F5F9)),
                         ),
-                        title: const Text(
-                          '📦 Lịch sử đơn hàng của tôi',
-                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: Color(0xFFC2410C)),
+                        child: const Column(
+                          children: [
+                            Icon(Icons.add_location_alt_outlined, size: 40, color: Color(0xFF94A3B8)),
+                            SizedBox(height: 8),
+                            Text('Bạn chưa có nhật ký check-in nào', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                            SizedBox(height: 4),
+                            Text('Ghé thăm các địa điểm Cổ Loa & bấm Check-in để lưu kỉ niệm!', style: TextStyle(color: Color(0xFF64748B), fontSize: 12), textAlign: TextAlign.center),
+                          ],
                         ),
-                        subtitle: const Text('Theo dõi trạng thái, đơn đã nhận, hủy đơn & hoàn hàng', style: TextStyle(fontSize: 11, color: Color(0xFF64748B))),
-                        trailing: const Icon(Icons.arrow_forward_ios, size: 14, color: Color(0xFFC2410C)),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => const MyOrdersScreen()),
-                          );
+                      )
+                    else
+                      ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: _myCheckins.length,
+                        itemBuilder: (context, index) {
+                          final item = _myCheckins[index];
+                          return _buildMyCheckinCard(item);
                         },
                       ),
-                    ),
-                    const Divider(height: 1, color: Color(0xFFE2E8F0)),
-
-                    _optionTile(Icons.history_toggle_off_rounded, 'Lịch sử check-in của tôi', () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const MyCheckinsScreen()),
-                      );
-                    }),
-                    const Divider(height: 1, color: Color(0xFFF1F5F9)),
-                    _optionTile(Icons.notifications_active_outlined, 'Thông báo ứng dụng & Tin nhắn', () {
-                      _showNotificationsModal(context);
-                    }),
-                    const Divider(height: 1, color: Color(0xFFF1F5F9)),
-                    _optionTile(Icons.favorite_border_rounded, 'Địa điểm đã lưu', () {
-                      _showSavedPlaces(context);
-                    }),
-                    const Divider(height: 1, color: Color(0xFFF1F5F9)),
-                    _optionTile(Icons.settings_outlined, 'Cấu hình ứng dụng', () {
-                      _showAppConfig(context);
-                    }),
-                    const Divider(height: 1, color: Color(0xFFF1F5F9)),
-                    _optionTile(Icons.help_outline_rounded, 'Hỗ trợ & Trợ giúp', () {
-                      _showSupportHelp(context);
-                    }),
                   ],
-                ),
+                ],
               ),
             ),
+
+
 
             const SizedBox(height: 24),
 
@@ -806,19 +782,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _socialStat(String count, String label) {
-    return Column(
-      children: [
-        Text(
-          count,
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Color(0xFF0F172A)),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          label,
-          style: const TextStyle(fontSize: 11, color: Color(0xFF64748B), fontWeight: FontWeight.w500),
-        ),
-      ],
+  Widget _socialStat(String count, String label, [VoidCallback? onTap]) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Column(
+        children: [
+          Text(
+            count,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Color(0xFF0F172A)),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: const TextStyle(fontSize: 11, color: Color(0xFF64748B), fontWeight: FontWeight.w500),
+          ),
+        ],
+      ),
     );
   }
 
@@ -830,38 +810,147 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _activityStatCard(String value, String label, IconData icon, Color iconColor, Color bgColor) {
+  Widget _activityStatCard(String value, String label, IconData icon, Color iconColor, Color bgColor, [VoidCallback? onTap]) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: const Color(0xFFF1F5F9)),
+          boxShadow: [
+            BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: bgColor,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Icon(icon, color: iconColor, size: 22),
+            ),
+            const SizedBox(width: 12),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  value,
+                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF0F172A)),
+                ),
+                Text(
+                  label,
+                  style: const TextStyle(color: Color(0xFF64748B), fontSize: 11, fontWeight: FontWeight.w500),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMyPostCard(Map<String, dynamic> item) {
+    final title = item['name'] ?? item['title'] ?? '';
+    final desc = item['description'] ?? item['content'] ?? '';
+    final time = item['created_at_human'] ?? item['time'] ?? 'Gần đây';
+
+    String? imageUrl;
+    if (item['images'] is List && (item['images'] as List).isNotEmpty) {
+      imageUrl = item['images'][0].toString();
+    } else if (item['image_path'] != null) {
+      imageUrl = item['image_path'].toString();
+    }
+    if (imageUrl != null && imageUrl.isNotEmpty && !imageUrl.startsWith('http')) {
+      imageUrl = 'https://donganhdiscovery.xadonganh.com/' + (imageUrl.startsWith('/') ? imageUrl.substring(1) : imageUrl);
+    }
+
     return Container(
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFFF1F5F9)),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 8),
         ],
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: bgColor,
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Icon(icon, color: iconColor, size: 22),
-          ),
-          const SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                value,
-                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF0F172A)),
+              Row(
+                children: [
+                  const Icon(Icons.article_rounded, color: Color(0xFF0EA5E9), size: 18),
+                  const SizedBox(width: 6),
+                  Text(
+                    time,
+                    style: const TextStyle(color: Color(0xFF64748B), fontSize: 11, fontWeight: FontWeight.w500),
+                  ),
+                ],
               ),
-              Text(
-                label,
-                style: const TextStyle(color: Color(0xFF64748B), fontSize: 11, fontWeight: FontWeight.w500),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEFF6FF),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: const Text('Bản tin', style: TextStyle(color: Color(0xFF0EA5E9), fontSize: 10, fontWeight: FontWeight.bold)),
+              ),
+            ],
+          ),
+          if (title.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Text(
+              title,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF0F172A)),
+            ),
+          ],
+          if (desc.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(
+              desc,
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 13, color: Color(0xFF334155), height: 1.35),
+            ),
+          ],
+          if (imageUrl != null && imageUrl.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: Image.network(
+                imageUrl,
+                height: 140,
+                width: double.infinity,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+              ),
+            ),
+          ],
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.favorite_rounded, color: Color(0xFFEF4444), size: 15),
+                  const SizedBox(width: 4),
+                  Text('${item['likes_count'] ?? 0} lượt thích', style: const TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+                ],
+              ),
+              const SizedBox(width: 16),
+              Row(
+                children: [
+                  const Icon(Icons.chat_bubble_outline_rounded, color: Color(0xFF0EA5E9), size: 15),
+                  const SizedBox(width: 4),
+                  Text('${item['comments_count'] ?? 0} bình luận', style: const TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+                ],
               ),
             ],
           ),
@@ -870,12 +959,83 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _optionTile(IconData icon, String title, [VoidCallback? onTap]) {
-    return ListTile(
-      leading: Icon(icon, color: const Color(0xFF64748B), size: 20),
-      title: Text(title, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF334155))),
-      trailing: const Icon(Icons.arrow_forward_ios, size: 13, color: Color(0xFF94A3B8)),
-      onTap: onTap,
+  Widget _buildMyCheckinCard(Map<String, dynamic> item) {
+    final name = item['eatery_name'] ?? item['eatery']?['name'] ?? item['title'] ?? 'Địa điểm Cổ Loa';
+    final comment = item['comment'] ?? item['description'] ?? '';
+    final rating = item['rating'] is int ? item['rating'] : (int.tryParse(item['rating']?.toString() ?? '5') ?? 5);
+    final time = item['created_at_human'] ?? item['time'] ?? 'Gần đây';
+
+    String? imageUrl = item['image_path'] ?? item['image'];
+    if (imageUrl != null && imageUrl.isNotEmpty && !imageUrl.startsWith('http')) {
+      imageUrl = 'https://donganhdiscovery.xadonganh.com/' + (imageUrl.startsWith('/') ? imageUrl.substring(1) : imageUrl);
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFF1F5F9)),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 8),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.location_on_rounded, color: Color(0xFF10B981), size: 18),
+                  const SizedBox(width: 6),
+                  Text(
+                    name,
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF0F172A)),
+                  ),
+                ],
+              ),
+              Row(
+                children: List.generate(
+                  5,
+                  (i) => Icon(
+                    i < rating ? Icons.star_rounded : Icons.star_outline_rounded,
+                    color: Colors.amber,
+                    size: 14,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (comment.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Text(
+              comment,
+              style: const TextStyle(fontSize: 13, color: Color(0xFF334155), height: 1.35),
+            ),
+          ],
+          if (imageUrl != null && imageUrl.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: Image.network(
+                imageUrl,
+                height: 140,
+                width: double.infinity,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+              ),
+            ),
+          ],
+          const SizedBox(height: 8),
+          Text(
+            time,
+            style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
+          ),
+        ],
+      ),
     );
   }
 }
