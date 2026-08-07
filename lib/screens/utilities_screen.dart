@@ -202,11 +202,12 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
       final isOcopProduct = p['is_ocop'] == true ||
           p['is_ocop'] == 1 ||
           p['is_ocop'] == '1' ||
+          (p['star_rating'] != null && p['star_rating'].toString().isNotEmpty) ||
           (p['ocop_star'] != null && p['ocop_star'].toString().isNotEmpty) ||
-          name.contains('ocop') ||
-          seller.contains('ocop') ||
-          seller.contains('hợp tác xã') ||
-          seller.contains('htx');
+          name.contains('ocop') || seller.contains('ocop') || desc.contains('ocop') ||
+          seller.contains('hợp tác xã') || seller.contains('htx') ||
+          seller.contains('hộ kinh doanh') || seller.contains('công ty') || seller.contains('tnhh') || seller.contains('doanh nghiệp') ||
+          desc.contains('chủ thể') || desc.contains('qđ số');
 
       if (_selectedFilter == '🏆 OCOP') {
         return matchesSearch && isOcopProduct;
@@ -876,14 +877,17 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
     }
 
     // Determine if it is a certified OCOP product vs standard market vendor
-    final bool isOcop = product['is_ocop'] == true ||
-        product['is_ocop'] == 1 ||
-        product['is_ocop'] == '1' ||
+    final String sellerUpper = (product['seller_name'] ?? '').toString().toUpperCase();
+    final String nameUpper = (product['name'] ?? '').toString().toUpperCase();
+    final String descUpper = (product['description'] ?? '').toString().toUpperCase();
+
+    final bool isOcop = (product['is_ocop'] == true || product['is_ocop'] == 1 || product['is_ocop'] == '1') ||
+        (product['star_rating'] != null && product['star_rating'].toString().isNotEmpty) ||
         (product['ocop_star'] != null && product['ocop_star'].toString().isNotEmpty) ||
-        (product['name'] ?? '').toString().toUpperCase().contains('OCOP') ||
-        (product['seller_name'] ?? '').toString().toUpperCase().contains('OCOP') ||
-        (product['seller_name'] ?? '').toString().toUpperCase().contains('HTX') ||
-        (product['seller_name'] ?? '').toString().toUpperCase().contains('HỢP TÁC XÃ');
+        nameUpper.contains('OCOP') || sellerUpper.contains('OCOP') || descUpper.contains('OCOP') ||
+        sellerUpper.contains('HTX') || sellerUpper.contains('HỢP TÁC XÃ') ||
+        sellerUpper.contains('HỘ KINH DOANH') || sellerUpper.contains('CÔNG TY') || sellerUpper.contains('TNHH') || sellerUpper.contains('DOANH NGHIỆP') ||
+        descUpper.contains('CHỦ THỂ') || descUpper.contains('QĐ SỐ');
 
     final String badgeText = isOcop
         ? (product['ocop_star'] ?? product['star_rating'] ?? 'OCOP CHUẨN')

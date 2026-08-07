@@ -1265,6 +1265,21 @@ YÊU CẦU TRẢ VỀ CHỈ LÀ CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU, KHÔNG C
                     foreach ($items as $item) {
                         if (!$products->contains('name', $item->name)) {
                             $eatery = $item->eatery;
+                            $pName  = mb_strtolower($item->name ?? '');
+                            $sName  = mb_strtolower($item->stall_name ?? '');
+                            $seller = mb_strtolower($item->seller_name ?? '');
+                            $desc   = mb_strtolower($item->description ?? '');
+
+                            $hasStarRating = !empty($item->star_rating);
+                            $isOcop = $hasStarRating ||
+                                      !empty($item->heritage_year) ||
+                                      str_contains($pName, 'ocop') || str_contains($sName, 'ocop') || str_contains($seller, 'ocop') || str_contains($desc, 'ocop') ||
+                                      str_contains($seller, 'htx') || str_contains($seller, 'hợp tác xã') || str_contains($sName, 'htx') || str_contains($sName, 'hợp tác xã') ||
+                                      str_contains($seller, 'hộ kinh doanh') || str_contains($seller, 'hkd') || str_contains($seller, 'công ty') || str_contains($seller, 'tnhh') || str_contains($seller, 'doanh nghiệp') ||
+                                      str_contains($desc, 'chủ thể') || str_contains($desc, 'qđ số') || str_contains($desc, 'quyết định');
+
+                            $starRating = $item->star_rating ?: ($isOcop ? '4 sao' : null);
+
                             $products->push([
                                 'id'            => $item->id,
                                 'eatery_id'     => $item->eatery_id,
@@ -1272,13 +1287,13 @@ YÊU CẦU TRẢ VỀ CHỈ LÀ CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU, KHÔNG C
                                 'category_slug' => 'dong-anh-market',
                                 'name'          => $item->name,
                                 'price'         => $item->price,
-                                'stall_name'    => $item->stall_name ?: ($eatery?->name ?? 'Gian hàng OCOP Đông Anh'),
+                                'stall_name'    => $item->stall_name ?: ($eatery?->name ?? 'Gian hàng Đông Anh'),
                                 'seller_name'   => $item->seller_name ?: 'Chủ hộ kinh doanh',
                                 'seller_phone'  => $item->seller_phone ?: ($eatery?->phone ?? ''),
-                                'star_rating'   => $item->star_rating ?: '4 sao',
-                                'is_ocop'       => true,
+                                'star_rating'   => $starRating,
+                                'is_ocop'       => $isOcop,
                                 'image_path'    => $item->image_path ?: ($eatery?->image_path ?? ''),
-                                'description'   => $item->description ?: ('Sản phẩm OCOP & Đặc sản của ' . ($eatery?->name ?? 'Đông Anh')),
+                                'description'   => $item->description ?: ('Đặc sản & Nông sản của ' . ($eatery?->name ?? 'Đông Anh')),
                             ]);
                         }
                     }

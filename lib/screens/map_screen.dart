@@ -6,6 +6,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../services/api_service.dart';
+import '../widgets/custom_loader.dart';
 import 'eatery_detail_screen.dart';
 import 'notifications_screen.dart';
 
@@ -925,89 +926,8 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin, Wi
               right: 12,
               child: Column(
                 children: [
-                  // Web-style Sky Blue Header Title Card matching DongAnh Discovery theme
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF38BDF8), Color(0xFF00A8EE), Color(0xFF0284C7)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: const Color(0xFFFFB800), width: 2),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFF00A8EE).withOpacity(0.3),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 32,
-                          height: 32,
-                          decoration: const BoxDecoration(
-                            color: Color(0xFFFFB800),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Center(
-                            child: Text('📍', style: TextStyle(fontSize: 16)),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        const Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Text(
-                                    'DongAnh',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w900,
-                                      fontSize: 15,
-                                    ),
-                                  ),
-                                  Text(
-                                    ' Discovery',
-                                    style: TextStyle(
-                                      color: Color(0xFFFFB800),
-                                      fontWeight: FontWeight.w900,
-                                      fontSize: 15,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              Text(
-                                'Bản đồ số du lịch, di sản & chợ OCOP 🗺️',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        IconButton(
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(),
-                          icon: const Icon(Icons.notifications_active, color: Color(0xFFFFB800), size: 20),
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => const NotificationsScreen()),
-                            );
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 8),
+
+
 
                   // Real-time Search Input Box
                   Container(
@@ -1063,33 +983,11 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin, Wi
 
             // 4. Loading Overlay Indicator
             if (_isLoading)
-              Positioned(
-                top: 130,
-                left: 0,
-                right: 0,
-                child: Center(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: const Color(0xBF000000),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        SizedBox(
-                          width: 14,
-                          height: 14,
-                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                        ),
-                        SizedBox(width: 8),
-                        Text(
-                          'Đang kết nối bản đồ dữ liệu...',
-                          style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
-                        ),
-                      ],
-                    ),
-                  ),
+              const Positioned.fill(
+                child: CustomPulseLoader(
+                  message: 'Đang kết nối bản đồ dữ liệu...',
+                  icon: Icons.map_rounded,
+                  primaryColor: Color(0xFF0EA5E9),
                 ),
               ),
 
