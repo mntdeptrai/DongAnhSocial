@@ -1275,8 +1275,7 @@ YÊU CẦU TRẢ VỀ CHỈ LÀ CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU, KHÔNG C
                                       !empty($item->heritage_year) ||
                                       str_contains($pName, 'ocop') || str_contains($sName, 'ocop') || str_contains($seller, 'ocop') || str_contains($desc, 'ocop') ||
                                       str_contains($seller, 'htx') || str_contains($seller, 'hợp tác xã') || str_contains($sName, 'htx') || str_contains($sName, 'hợp tác xã') ||
-                                      str_contains($seller, 'hộ kinh doanh') || str_contains($seller, 'hkd') || str_contains($seller, 'công ty') || str_contains($seller, 'tnhh') || str_contains($seller, 'doanh nghiệp') ||
-                                      str_contains($desc, 'chủ thể') || str_contains($desc, 'qđ số') || str_contains($desc, 'quyết định');
+                                      str_contains($desc, 'qđ số') || str_contains($desc, 'quuyết định') || str_contains($desc, 'chủ thể sản xuất');
 
                             $starRating = $item->star_rating ?: ($isOcop ? '4 sao' : null);
 

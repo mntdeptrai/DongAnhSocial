@@ -206,8 +206,7 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
           (p['ocop_star'] != null && p['ocop_star'].toString().isNotEmpty) ||
           name.contains('ocop') || seller.contains('ocop') || desc.contains('ocop') ||
           seller.contains('hợp tác xã') || seller.contains('htx') ||
-          seller.contains('hộ kinh doanh') || seller.contains('công ty') || seller.contains('tnhh') || seller.contains('doanh nghiệp') ||
-          desc.contains('chủ thể') || desc.contains('qđ số');
+          desc.contains('chủ thể sản xuất') || desc.contains('qđ số') || desc.contains('quyết định');
 
       if (_selectedFilter == '🏆 OCOP') {
         return matchesSearch && isOcopProduct;
@@ -886,8 +885,7 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
         (product['ocop_star'] != null && product['ocop_star'].toString().isNotEmpty) ||
         nameUpper.contains('OCOP') || sellerUpper.contains('OCOP') || descUpper.contains('OCOP') ||
         sellerUpper.contains('HTX') || sellerUpper.contains('HỢP TÁC XÃ') ||
-        sellerUpper.contains('HỘ KINH DOANH') || sellerUpper.contains('CÔNG TY') || sellerUpper.contains('TNHH') || sellerUpper.contains('DOANH NGHIỆP') ||
-        descUpper.contains('CHỦ THỂ') || descUpper.contains('QĐ SỐ');
+        descUpper.contains('CHỦ THỂ SẢN XUẤT') || descUpper.contains('QĐ SỐ') || descUpper.contains('QUYẾT ĐỊNH');
 
     final String badgeText = isOcop
         ? (product['ocop_star'] ?? product['star_rating'] ?? 'OCOP CHUẨN')

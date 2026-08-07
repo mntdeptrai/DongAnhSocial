@@ -136,8 +136,14 @@ class _EateryDetailScreenState extends State<EateryDetailScreen> {
             ? 'https://donganhdiscovery.xadonganh.com/' + (pImgRaw.startsWith('/') ? pImgRaw.substring(1) : pImgRaw)
             : 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=400&q=80');
 
-    final int rawId = item['id'] is int ? item['id'] : (int.tryParse(item['id']?.toString() ?? '') ?? 1);
-    final int salesCount = rawId * 14 + 18;
+    final int salesCount = int.tryParse(item['sales_count']?.toString() ?? item['sold_count']?.toString() ?? '0') ?? 0;
+
+    String formatVnd(num price) {
+      if (price <= 0) return 'Liên hệ';
+      final String str = price.toInt().toString();
+      final String formatted = str.replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.');
+      return '${formatted}đ';
+    }
 
     return Container(
       decoration: BoxDecoration(
@@ -218,7 +224,7 @@ class _EateryDetailScreenState extends State<EateryDetailScreen> {
                   Row(
                     children: [
                       Text(
-                        pPrice > 0 ? '${pPrice.toInt()}đ' : 'Liên hệ',
+                        formatVnd(pPrice),
                         style: const TextStyle(
                           color: Color(0xFFEE4D2D), // Shopee Price Red
                           fontWeight: FontWeight.w900,
@@ -228,7 +234,7 @@ class _EateryDetailScreenState extends State<EateryDetailScreen> {
                       if (pPrice > 0) ...[
                         const SizedBox(width: 4),
                         Text(
-                          '${(pPrice * 1.25).toInt()}đ',
+                          formatVnd(pPrice * 1.25),
                           style: const TextStyle(
                             color: Colors.grey,
                             fontSize: 9.5,
@@ -246,7 +252,10 @@ class _EateryDetailScreenState extends State<EateryDetailScreen> {
                       const SizedBox(width: 2),
                       const Text('5.0', style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
                       const SizedBox(width: 4),
-                      Text('| Đã bán $salesCount', style: const TextStyle(fontSize: 9.5, color: Colors.grey)),
+                      Text(
+                        salesCount > 0 ? '| Đã bán $salesCount' : '| Mới',
+                        style: const TextStyle(fontSize: 9.5, color: Colors.grey),
+                      ),
                     ],
                   ),
 
