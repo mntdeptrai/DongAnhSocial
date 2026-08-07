@@ -188,9 +188,6 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
                              (item['description'] ?? '').toString().toUpperCase().contains('OCOP');
         return matchesSearch && hasOcopBadge;
       }
-      if (_selectedFilter == '🛵 Giao nhanh') {
-        return matchesSearch && (item['has_delivery'] == true || item['has_delivery'] == 1 || item['has_delivery'] == '1');
-      }
       return matchesSearch;
     }).toList();
 
@@ -219,9 +216,6 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
         final star = (p['star_rating'] ?? '').toString();
         return matchesSearch && (star.contains('4') || star.contains('5') || p['is_featured'] == true || isOcopItem);
       }
-      if (_selectedFilter == '🛵 Giao nhanh') {
-        return matchesSearch && (p['has_delivery'] == true || p['has_delivery'] == 1 || p['seller_phone'] != null);
-      }
       return matchesSearch;
     }).toList();
 
@@ -249,54 +243,90 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
                       color: const Color(0xFFF1F5F9),
                       borderRadius: BorderRadius.circular(24),
                     ),
-                    child: TabBar(
-                      controller: _tabController,
-                      indicatorSize: TabBarIndicatorSize.tab,
-                      dividerColor: Colors.transparent,
-                      indicator: BoxDecoration(
-                        gradient: const LinearGradient(colors: [primaryColor, accentColor]),
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: [
-                          BoxShadow(color: primaryColor.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 2)),
-                        ],
-                      ),
-                      labelColor: Colors.white,
-                      unselectedLabelColor: Colors.grey.shade700,
-                      labelPadding: const EdgeInsets.symmetric(horizontal: 4),
-                      tabs: const [
-                        Tab(
-                          child: FittedBox(
-                            fit: BoxFit.scaleDown,
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        final tabWidth = (constraints.maxWidth - 6) / 2;
+                        final selectedIndex = _tabController.index;
+                        return Stack(
+                          children: [
+                            AnimatedPositioned(
+                              duration: const Duration(milliseconds: 220),
+                              curve: Curves.easeOutCubic,
+                              left: selectedIndex == 0 ? 0 : tabWidth,
+                              top: 0,
+                              bottom: 0,
+                              width: tabWidth,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  gradient: const LinearGradient(colors: [primaryColor, accentColor]),
+                                  borderRadius: BorderRadius.circular(20),
+                                  boxShadow: [
+                                    BoxShadow(color: primaryColor.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 2)),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            Row(
                               children: [
-                                Icon(Icons.restaurant_menu_rounded, size: 15),
-                                SizedBox(width: 3),
-                                Text(
-                                  'ẨM THỰC TINH TÚY',
-                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                                Expanded(
+                                  child: GestureDetector(
+                                    onTap: () => _tabController.animateTo(0),
+                                    behavior: HitTestBehavior.opaque,
+                                    child: Center(
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Icon(
+                                            Icons.restaurant_menu_rounded,
+                                            size: 15,
+                                            color: selectedIndex == 0 ? Colors.white : Colors.grey.shade700,
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            'ẨM THỰC TINH TÚY',
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 12,
+                                              color: selectedIndex == 0 ? Colors.white : Colors.grey.shade700,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                Expanded(
+                                  child: GestureDetector(
+                                    onTap: () => _tabController.animateTo(1),
+                                    behavior: HitTestBehavior.opaque,
+                                    child: Center(
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Icon(
+                                            Icons.storefront_rounded,
+                                            size: 15,
+                                            color: selectedIndex == 1 ? Colors.white : Colors.grey.shade700,
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            'CHỢ SỐ & OCOP',
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 12,
+                                              color: selectedIndex == 1 ? Colors.white : Colors.grey.shade700,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
                                 ),
                               ],
                             ),
-                          ),
-                        ),
-                        Tab(
-                          child: FittedBox(
-                            fit: BoxFit.scaleDown,
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.storefront_rounded, size: 15),
-                                SizedBox(width: 3),
-                                Text(
-                                  'CHỢ SỐ & OCOP',
-                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
+                          ],
+                        );
+                      },
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -335,7 +365,6 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
                       children: [
                         _buildFilterChip('Tất cả', Icons.apps_rounded),
                         _buildFilterChip('⭐ Nổi bật', Icons.star_rounded),
-                        _buildFilterChip('🛵 Giao nhanh', Icons.electric_scooter_rounded),
                         _buildFilterChip('🏆 OCOP', Icons.workspace_premium_rounded),
                       ],
                     ),
@@ -350,10 +379,10 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
                 controller: _tabController,
                 children: [
                   // Tab 1: Food & Specialties Showcase
-                  _buildFoodTabContent(displayFood, primaryColor),
+                  _KeepAliveTabContent(child: _buildFoodTabContent(displayFood, primaryColor)),
 
                   // Tab 2: OCOP Market & Products Showcase
-                  _buildMarketTabContent(displayProducts, primaryColor),
+                  _KeepAliveTabContent(child: _buildMarketTabContent(displayProducts, primaryColor)),
                 ],
               ),
             ),
@@ -948,5 +977,24 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
         ],
       ),
     );
+  }
+}
+
+class _KeepAliveTabContent extends StatefulWidget {
+  final Widget child;
+  const _KeepAliveTabContent({required this.child});
+
+  @override
+  State<_KeepAliveTabContent> createState() => _KeepAliveTabContentState();
+}
+
+class _KeepAliveTabContentState extends State<_KeepAliveTabContent> with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    return widget.child;
   }
 }

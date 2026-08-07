@@ -46,6 +46,7 @@ Route::prefix('v1')->group(function () {
     Route::get('/newsfeed', [EateryApiController::class, 'getNewsfeed']);
     Route::get('/exp-corner', [EateryApiController::class, 'getExpCorner']);
     Route::post('/posts', [EateryApiController::class, 'storePost']);
+    Route::post('/reactions/toggle', [EateryApiController::class, 'toggleReaction']);
     Route::get('/videos', [EateryApiController::class, 'getVideos']);
     Route::post('/videos/{id}/like', [EateryApiController::class, 'likeVideo'])->middleware('throttle:30,1');
 

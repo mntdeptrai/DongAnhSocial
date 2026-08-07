@@ -740,68 +740,86 @@ class HomeController extends Controller
      */
     public function toggleReaction(Request $request)
     {
-        $request->validate([
-            'id'    => 'required|integer',
-            'type'  => 'required|string|in:post,eatery,checkin,diary',
-            'emoji' => 'nullable|string|max:10',
-        ]);
-
-        $id = (int) $request->input('id');
-        $type = $request->input('type');
-        $emoji = $request->input('emoji', '👍');
-
-        $userId = \Illuminate\Support\Facades\Auth::id() ?? session('user_id');
-        $sessionId = session()->getId();
-
-        $query = \App\Models\CheckinReaction::where('reactionable_type', $type)
-            ->where('reactionable_id', $id);
-
-        if ($userId) {
-            $query->where('user_id', $userId);
-        } else {
-            $query->where('session_id', $sessionId);
-        }
-
-        $existing = $query->first();
-        $isLiked = false;
-
-        if ($existing) {
-            // Đã like -> Bỏ thích (Unlike)
-            $existing->delete();
-            $isLiked = false;
-        } else {
-            // Chưa like -> Tạo 1 lượt thích duy nhất cho tài khoản
-            \App\Models\CheckinReaction::create([
-                'reactionable_type' => $type,
-                'reactionable_id'   => $id,
-                'user_id'           => $userId,
-                'session_id'        => $sessionId,
-                'emoji'             => $emoji,
+        try {
+            $request->validate([
+                'id'    => 'required|integer',
+                'type'  => 'required|string|in:post,eatery,checkin,diary',
+                'emoji' => 'nullable|string|max:10',
             ]);
-            $isLiked = true;
+
+            $id = (int) $request->input('id');
+            $type = $request->input('type');
+            $emoji = $request->input('emoji', '👍');
+
+            $user = auth('sanctum')->user() ?: \Illuminate\Support\Facades\Auth::user();
+            $userId = $user ? $user->id : session('user_id');
+            $sessionId = session()->getId() ?: ('guest_' . md5($request->ip() . ($request->header('User-Agent') ?? '')));
+
+            $query = \App\Models\CheckinReaction::where('reactionable_type', $type)
+                ->where('reactionable_id', $id);
+
+            if ($userId) {
+                $query->where('user_id', $userId);
+            } else {
+                $query->where('session_id', $sessionId);
+            }
+
+            $existing = $query->first();
+            $isLiked = false;
+
+            if ($existing) {
+                // Đã like -> Bỏ thích (Unlike)
+                $existing->delete();
+                $isLiked = false;
+            } else {
+                // Chưa like -> Tạo 1 lượt thích duy nhất cho tài khoản/session
+                \App\Models\CheckinReaction::create([
+                    'reactionable_type' => $type,
+                    'reactionable_id'   => $id,
+                    'user_id'           => $userId,
+                    'session_id'        => $sessionId,
+                    'emoji'             => $emoji,
+                ]);
+                $isLiked = true;
+            }
+
+            // Đếm chính xác lượt thích từ bảng DB checkin_reactions
+            $realLikesCount = \App\Models\CheckinReaction::where('reactionable_type', $type)
+                ->where('reactionable_id', $id)
+                ->count();
+
+            // Cập nhật lại số lượng cho Post & EducationProgram nếu type là post
+            if ($type === 'post') {
+                try {
+                    \App\Models\Post::where('id', $id)->update(['likes_count' => $realLikesCount]);
+                } catch (\Throwable $e) {}
+                try {
+                    \App\Models\Post::on('mysql_education')->where('id', $id)->update(['likes_count' => $realLikesCount]);
+                } catch (\Throwable $e) {}
+                try {
+                    \App\Models\EducationProgram::on('mysql_education')->where('id', $id)->update(['likes_count' => $realLikesCount]);
+                } catch (\Throwable $e) {}
+                try {
+                    \App\Models\EducationProgram::on('mysql')->where('id', $id)->update(['likes_count' => $realLikesCount]);
+                } catch (\Throwable $e) {}
+            } else if ($type === 'checkin') {
+                try {
+                    \App\Models\Checkin::where('id', $id)->update(['likes_count' => $realLikesCount]);
+                } catch (\Throwable $e) {}
+            }
+
+            return response()->json([
+                'success'     => true,
+                'liked'       => $isLiked,
+                'likes_count' => $realLikesCount,
+                'message'     => $isLiked ? 'Đã thích' : 'Đã bỏ thích'
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 400);
         }
-
-        // Đếm chính xác lượt thích từ bảng DB
-        $realLikesCount = \App\Models\CheckinReaction::where('reactionable_type', $type)
-            ->where('reactionable_id', $id)
-            ->count();
-
-        // Cập nhật lại số lượng cho EducationProgram nếu type là post
-        if ($type === 'post') {
-            try {
-                \App\Models\EducationProgram::on('mysql_education')->where('id', $id)->update(['likes_count' => $realLikesCount]);
-            } catch (\Exception $e) {}
-            try {
-                \App\Models\EducationProgram::on('mysql')->where('id', $id)->update(['likes_count' => $realLikesCount]);
-            } catch (\Exception $e) {}
-        }
-
-        return response()->json([
-            'success'     => true,
-            'liked'       => $isLiked,
-            'likes_count' => $realLikesCount,
-            'message'     => $isLiked ? 'Đã thích' : 'Đã bỏ thích'
-        ]);
     }
 
     /**

@@ -1357,6 +1357,7 @@ class ApiService {
   }
 
   /// GET /exp-corner — Lấy dữ liệu Góc Trải Nghiệm Thực Tế
+  /// GET /exp-corner — Lấy dữ liệu Góc Trải Nghiệm Thực Tế
   static Future<Map<String, dynamic>> getExpCorner() async {
     try {
       final response = await http.get(
@@ -1369,5 +1370,33 @@ class ApiService {
       }
     } catch (_) {}
     return {};
+  }
+
+  /// POST /reactions/toggle — Thả tim / Bỏ tim bài viết (Đồng bộ với DB web)
+  static Future<Map<String, dynamic>> toggleReaction({required dynamic postId, String type = 'post'}) async {
+    try {
+      int numericId = 0;
+      if (postId is int) {
+        numericId = postId;
+      } else {
+        final clean = postId.toString().replaceAll(RegExp(r'[^0-9]'), '');
+        numericId = int.tryParse(clean) ?? 0;
+      }
+
+      final response = await http.post(
+        Uri.parse('$baseUrl/reactions/toggle'),
+        headers: _getHeaders(),
+        body: jsonEncode({
+          'id': numericId,
+          'type': type,
+          'emoji': '👍',
+        }),
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data is Map<String, dynamic>) return data;
+      }
+    } catch (_) {}
+    return {'success': false};
   }
 }

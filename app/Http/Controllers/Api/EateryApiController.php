@@ -1464,19 +1464,22 @@ YÊU CẦU TRẢ VỀ CHỈ LÀ CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU, KHÔNG C
 
             try {
                 $userPostsMysqlEdu = \App\Models\Post::on('mysql_education')
-                    ->with(['user', 'eatery'])
+                    ->with(['user', 'eatery', 'comments.user'])
                     ->orderBy('created_at', 'desc')
                     ->get();
             } catch (\Throwable $e) {}
 
             try {
                 $userPostsMysql = \App\Models\Post::on('mysql')
-                    ->with(['user', 'eatery'])
+                    ->with(['user', 'eatery', 'comments.user'])
                     ->orderBy('created_at', 'desc')
                     ->get();
             } catch (\Throwable $e) {}
 
             $userPosts = $userPostsMysqlEdu->concat($userPostsMysql)->unique('id');
+
+            $currentUserId = auth('sanctum')->id();
+            $sessionId = session()->getId();
 
             foreach ($userPosts as $post) {
                 try {
@@ -1486,6 +1489,35 @@ YÊU CẦU TRẢ VỀ CHỈ LÀ CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU, KHÔNG C
 
                     $img = $post->image_path;
                     $imgs = $img ? [$img] : [];
+
+                    $commentsArr = [];
+                    if ($post->relationLoaded('comments') && $post->comments) {
+                        foreach ($post->comments as $c) {
+                            $commentsArr[] = [
+                                'author' => $c->user ? $c->user->name : ($c->guest_name ?? 'Thành viên'),
+                                'text'   => $c->content ?? '',
+                                'time'   => $c->created_at ? $c->created_at->diffForHumans() : 'Vừa xong',
+                            ];
+                        }
+                    }
+
+                    // Count real likes in CheckinReaction DB table
+                    $realLikes = \App\Models\CheckinReaction::where('reactionable_type', 'post')
+                        ->where('reactionable_id', $post->id)
+                        ->count();
+
+                    $isLiked = false;
+                    if ($currentUserId) {
+                        $isLiked = \App\Models\CheckinReaction::where('reactionable_type', 'post')
+                            ->where('reactionable_id', $post->id)
+                            ->where('user_id', $currentUserId)
+                            ->exists();
+                    } else if ($sessionId) {
+                        $isLiked = \App\Models\CheckinReaction::where('reactionable_type', 'post')
+                            ->where('reactionable_id', $post->id)
+                            ->where('session_id', $sessionId)
+                            ->exists();
+                    }
 
                     $postsList[] = [
                         'id'               => $post->id,
@@ -1498,10 +1530,11 @@ YÊU CẦU TRẢ VỀ CHỈ LÀ CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU, KHÔNG C
                         'description'      => $post->description ?? '',
                         'image_path'       => $img,
                         'images'           => $imgs,
-                        'likes_count'      => (int) ($post->likes_count ?? 0),
-                        'comments_count'   => (int) ($post->comments_count ?? 0),
+                        'likes_count'      => $realLikes,
+                        'is_liked'         => $isLiked,
+                        'comments_count'   => count($commentsArr) ?: (int) ($post->comments_count ?? 0),
                         'created_at_human' => $post->created_at ? $post->created_at->diffForHumans() : 'Vừa xong',
-                        'comments'         => [],
+                        'comments'         => $commentsArr,
                     ];
                 } catch (\Throwable $e) {}
             }
@@ -1542,10 +1575,23 @@ YÊU CẦU TRẢ VỀ CHỈ LÀ CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU, KHÔNG C
                     $authorName = $edu->eatery ? $edu->eatery->name : 'Ban Giám Hiệu Trường';
                     $img = $edu->image_path ?? ($edu->eatery ? $edu->eatery->image_path : null);
 
+                    $realLikes = \App\Models\CheckinReaction::where('reactionable_type', 'post')
+                        ->where('reactionable_id', $edu->id)
+                        ->count();
+
+                    $isLiked = false;
+                    if ($currentUserId) {
+                        $isLiked = \App\Models\CheckinReaction::where('reactionable_type', 'post')
+                            ->where('reactionable_id', $edu->id)
+                            ->where('user_id', $currentUserId)
+                            ->exists();
+                    }
+
                     $postsList[] = [
                         'id'               => 'edu_' . $edu->id,
+                        'numeric_id'       => $edu->id,
                         'hashid'           => 'edu_' . $edu->id,
-                        'type'             => 'education',
+                        'type'             => 'post',
                         'author_name'      => $authorName,
                         'author_avatar'    => $edu->eatery ? $edu->eatery->image_path : null,
                         'author_role'      => 'principal',
@@ -1553,7 +1599,8 @@ YÊU CẦU TRẢ VỀ CHỈ LÀ CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU, KHÔNG C
                         'description'      => $edu->description ?? $edu->target_students ?? '',
                         'image_path'       => $img,
                         'images'           => $img ? [$img] : [],
-                        'likes_count'      => 12,
+                        'likes_count'      => $realLikes,
+                        'is_liked'         => $isLiked,
                         'comments_count'   => 0,
                         'created_at_human' => $edu->created_at ? $edu->created_at->diffForHumans() : '2 ngày trước',
                         'comments'         => [],
@@ -1573,8 +1620,21 @@ YÊU CẦU TRẢ VỀ CHỈ LÀ CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU, KHÔNG C
             foreach ($checkins as $chk) {
                 try {
                     $authorName = $chk->user ? $chk->user->name : 'Thành viên Đông Anh';
+                    $realLikes = \App\Models\CheckinReaction::where('reactionable_type', 'checkin')
+                        ->where('reactionable_id', $chk->id)
+                        ->count();
+
+                    $isLiked = false;
+                    if ($currentUserId) {
+                        $isLiked = \App\Models\CheckinReaction::where('reactionable_type', 'checkin')
+                            ->where('reactionable_id', $chk->id)
+                            ->where('user_id', $currentUserId)
+                            ->exists();
+                    }
+
                     $postsList[] = [
                         'id'               => 'chk_' . $chk->id,
+                        'numeric_id'       => $chk->id,
                         'hashid'           => 'chk_' . $chk->id,
                         'type'             => 'checkin',
                         'author_name'      => $authorName,
@@ -1584,7 +1644,8 @@ YÊU CẦU TRẢ VỀ CHỈ LÀ CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU, KHÔNG C
                         'description'      => $chk->comment ?? '',
                         'image_path'       => $chk->image_path,
                         'images'           => $chk->image_path ? [$chk->image_path] : [],
-                        'likes_count'      => (int) ($chk->likes_count ?? 0),
+                        'likes_count'      => $realLikes,
+                        'is_liked'         => $isLiked,
                         'comments_count'   => 0,
                         'created_at_human' => $chk->created_at ? $chk->created_at->diffForHumans() : 'Vừa xong',
                         'comments'         => [],
@@ -1594,6 +1655,87 @@ YÊU CẦU TRẢ VỀ CHỈ LÀ CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU, KHÔNG C
         } catch (\Throwable $e) {}
 
         return response()->json($postsList, 200, [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    }
+
+    /**
+     * POST /api/v1/reactions/toggle — Thả tim / Bỏ tim bài viết (Đồng bộ với DB web)
+     */
+    public function toggleReaction(Request $request)
+    {
+        try {
+            $id = (int) ($request->input('id') ?? $request->input('post_id'));
+            $type = $request->input('type', 'post');
+            $emoji = $request->input('emoji', '👍');
+
+            if (!$id) {
+                return response()->json(['success' => false, 'message' => 'Bài viết không hợp lệ'], 400);
+            }
+
+            $user = auth('sanctum')->user();
+            $userId = $user ? $user->id : null;
+            $sessionId = session()->getId() ?: ('app_' . md5($request->ip() . ($request->header('User-Agent') ?? '') . microtime()));
+
+            $query = \App\Models\CheckinReaction::where('reactionable_type', $type)
+                ->where('reactionable_id', $id);
+
+            if ($userId) {
+                $query->where('user_id', $userId);
+            } else {
+                $query->where('session_id', $sessionId);
+            }
+
+            $existing = $query->first();
+            $isLiked = false;
+
+            if ($existing) {
+                $existing->delete();
+                $isLiked = false;
+            } else {
+                \App\Models\CheckinReaction::create([
+                    'reactionable_type' => $type,
+                    'reactionable_id'   => $id,
+                    'user_id'           => $userId,
+                    'session_id'        => $sessionId ?: ('guest_' . uniqid()),
+                    'emoji'             => $emoji ?: '👍',
+                ]);
+                $isLiked = true;
+            }
+
+            $realLikesCount = \App\Models\CheckinReaction::where('reactionable_type', $type)
+                ->where('reactionable_id', $id)
+                ->count();
+
+            if ($type === 'post') {
+                try {
+                    \App\Models\Post::where('id', $id)->update(['likes_count' => $realLikesCount]);
+                } catch (\Throwable $e) {}
+                try {
+                    \App\Models\Post::on('mysql_education')->where('id', $id)->update(['likes_count' => $realLikesCount]);
+                } catch (\Throwable $e) {}
+                try {
+                    \App\Models\EducationProgram::on('mysql_education')->where('id', $id)->update(['likes_count' => $realLikesCount]);
+                } catch (\Throwable $e) {}
+                try {
+                    \App\Models\EducationProgram::on('mysql')->where('id', $id)->update(['likes_count' => $realLikesCount]);
+                } catch (\Throwable $e) {}
+            } else if ($type === 'checkin') {
+                try {
+                    \App\Models\Checkin::where('id', $id)->update(['likes_count' => $realLikesCount]);
+                } catch (\Throwable $e) {}
+            }
+
+            return response()->json([
+                'success'     => true,
+                'liked'       => $isLiked,
+                'likes_count' => $realLikesCount,
+                'message'     => $isLiked ? 'Đã thích' : 'Đã bỏ thích'
+            ], 200, [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 200);
+        }
     }
 
     /**

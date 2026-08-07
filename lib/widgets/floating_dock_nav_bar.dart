@@ -32,8 +32,8 @@ class FloatingDockNavBar extends StatelessWidget {
           child: BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
             child: Container(
-              height: 64,
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+              height: 56,
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
               decoration: BoxDecoration(
                 color: const Color(0xFF0F172A).withValues(alpha: 0.88),
                 borderRadius: BorderRadius.circular(30),
@@ -64,7 +64,7 @@ class FloatingDockNavBar extends StatelessWidget {
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 250),
                         curve: Curves.easeOutCubic,
-                        padding: const EdgeInsets.symmetric(vertical: 6),
+                        padding: const EdgeInsets.symmetric(vertical: 4),
                         decoration: BoxDecoration(
                           color: isSelected
                               ? const Color(0xFF0EA5E9).withValues(alpha: 0.22)
@@ -82,7 +82,7 @@ class FloatingDockNavBar extends StatelessWidget {
                               children: [
                                 Icon(
                                   iconData,
-                                  size: isSelected ? 22 : 20,
+                                  size: isSelected ? 20 : 18,
                                   color: isSelected
                                       ? const Color(0xFF38BDF8)
                                       : Colors.white.withValues(alpha: 0.55),
@@ -112,18 +112,21 @@ class FloatingDockNavBar extends StatelessWidget {
                                   ),
                               ],
                             ),
-                            const SizedBox(height: 2),
-                            Text(
-                              item['label'] as String,
-                              style: TextStyle(
-                                fontSize: 9,
-                                fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
-                                color: isSelected
-                                    ? const Color(0xFF38BDF8)
-                                    : Colors.white.withValues(alpha: 0.55),
+                            const SizedBox(height: 1),
+                            FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                item['label'] as String,
+                                style: TextStyle(
+                                  fontSize: 9,
+                                  fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
+                                  color: isSelected
+                                      ? const Color(0xFF38BDF8)
+                                      : Colors.white.withValues(alpha: 0.55),
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
                             ),
                           ],
                         ),
