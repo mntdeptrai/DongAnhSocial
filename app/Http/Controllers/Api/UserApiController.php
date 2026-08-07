@@ -214,23 +214,18 @@ class UserApiController extends Controller
 
         $posts = $postsEdu->concat($postsMysql)->unique('id')->sortByDesc('created_at')->values();
 
-        if ($posts->isEmpty() && !empty($user->name)) {
+        if ($posts->isEmpty()) {
             try {
-                $postsEduName = \App\Models\Post::on('mysql_education')
-                    ->with(['user'])
-                    ->whereHas('user', function($q) use ($user) {
-                        $q->where('name', $user->name)->orWhere('email', $user->email);
-                    })
-                    ->orderBy('created_at', 'desc')
-                    ->get();
-                $postsMysqlName = \App\Models\Post::on('mysql')
-                    ->with(['user'])
-                    ->whereHas('user', function($q) use ($user) {
-                        $q->where('name', $user->name)->orWhere('email', $user->email);
-                    })
-                    ->orderBy('created_at', 'desc')
-                    ->get();
-                $posts = $postsEduName->concat($postsMysqlName)->unique('id')->sortByDesc('created_at')->values();
+                $allPostsEdu = \App\Models\Post::on('mysql_education')->with(['user'])->orderBy('created_at', 'desc')->get();
+                $allPostsMysql = \App\Models\Post::on('mysql')->with(['user'])->orderBy('created_at', 'desc')->get();
+                $all = $allPostsEdu->concat($allPostsMysql);
+
+                $userName = mb_strtolower(trim($user->name));
+                $posts = $all->filter(function($p) use ($user, $userName) {
+                    if ($p->user_id && (string)$p->user_id === (string)$user->id) return true;
+                    if ($p->user && (mb_strtolower(trim($p->user->name)) === $userName || $p->user->email === $user->email)) return true;
+                    return false;
+                })->values();
             } catch (\Throwable $e) {}
         }
 

@@ -639,14 +639,13 @@ class ApiService {
       if (user != null) {
         final filtered = allPosts.where((p) {
           final pUserId = p['user_id'];
-          final pAuthor = (p['author'] ?? p['user']?['name'] ?? '').toString().trim().toLowerCase();
+          final pAuthor = (p['author_name'] ?? p['author'] ?? p['user']?['name'] ?? '').toString().trim().toLowerCase();
           final matchId = (pUserId != null && userId != null && pUserId.toString() == userId.toString());
-          final matchAuthor = (userName.isNotEmpty && (pAuthor == userName || pAuthor.contains(userName)));
+          final matchAuthor = (userName.isNotEmpty && pAuthor.isNotEmpty && (pAuthor == userName || pAuthor.contains(userName) || userName.contains(pAuthor)));
           return matchId || matchAuthor;
         }).toList();
-        if (filtered.isNotEmpty) return filtered;
+        return filtered;
       }
-      return allPosts;
     } catch (_) {}
     return [];
   }
