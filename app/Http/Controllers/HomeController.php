@@ -1011,6 +1011,8 @@ class HomeController extends Controller
                     if ($item) {
                         $item->increment('shares_count');
                         $newShareCount = (int) $item->fresh()->shares_count;
+                        $user = auth('sanctum')->user() ?: \Illuminate\Support\Facades\Auth::user();
+                        \App\Services\NotificationService::notifyShare((int)$idParam, $type ?? 'post', $user ? $user->id : null);
                         break;
                     }
                 }

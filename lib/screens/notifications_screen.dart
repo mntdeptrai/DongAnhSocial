@@ -119,13 +119,25 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                       Color iconColor = primaryColor;
 
                       if (type == 'seller_order') {
-                        iconData = Icons.storefront;
+                        iconData = Icons.storefront_rounded;
                         iconColor = Colors.amber[800]!;
                       } else if (type == 'my_order') {
-                        iconData = Icons.local_shipping;
+                        iconData = Icons.local_shipping_rounded;
                         iconColor = Colors.green;
+                      } else if (type == 'reaction') {
+                        iconData = Icons.favorite_rounded;
+                        iconColor = const Color(0xFFEF4444);
+                      } else if (type == 'share') {
+                        iconData = Icons.share_rounded;
+                        iconColor = const Color(0xFF3B82F6);
+                      } else if (type == 'review') {
+                        iconData = Icons.star_rounded;
+                        iconColor = const Color(0xFFF59E0B);
+                      } else if (type == 'new_post') {
+                        iconData = Icons.article_rounded;
+                        iconColor = const Color(0xFF10B981);
                       } else if (type == 'comment' || type == 'checkin') {
-                        iconData = Icons.chat_bubble_outline;
+                        iconData = Icons.chat_bubble_outline_rounded;
                         iconColor = const Color(0xFF0EA5E9);
                       } else if (type == 'friend') {
                         iconData = Icons.person_add_rounded;

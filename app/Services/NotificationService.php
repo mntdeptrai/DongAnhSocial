@@ -27,23 +27,43 @@ class NotificationService
             $user = User::find($userId);
             if (!$user) return [];
 
-            // 1. Tải ID các bài viết checkin & nhật ký của user
+            // 1. Tải danh sách ID nội dung thuộc sở hữu của user
             $myCheckinIds = Checkin::where('user_id', $userId)->pluck('id')->toArray();
-            $myDiaryIds = FoodTourDiary::where('user_id', $userId)->pluck('id')->toArray();
+            $myDiaryIds   = FoodTourDiary::where('user_id', $userId)->pluck('id')->toArray();
+            $myPostIds    = DB::table('posts')->where('user_id', $userId)->pluck('id')->toArray();
+            $myEateryIds  = Eatery::where('user_id', $userId)->pluck('id')->toArray();
+            $myEduIds     = !empty($myEateryIds) 
+                ? DB::table('education_programs')->whereIn('eatery_id', $myEateryIds)->pluck('id')->toArray() 
+                : [];
 
             // ========================================================
             // A. THÔNG BÁO THẢ CẢM XÚC (Reactions) — TỔNG HỢP KIỂU FACEBOOK
             // ========================================================
-            if (!empty($myCheckinIds) || !empty($myDiaryIds)) {
-                $reactionsQuery = CheckinReaction::where(function($q) use ($myCheckinIds, $myDiaryIds) {
+            if (!empty($myCheckinIds) || !empty($myDiaryIds) || !empty($myPostIds) || !empty($myEduIds) || !empty($myEateryIds)) {
+                $reactionsQuery = CheckinReaction::where(function($q) use ($myCheckinIds, $myDiaryIds, $myPostIds, $myEduIds, $myEateryIds) {
                     if (!empty($myCheckinIds)) {
                         $q->orWhere(function($sub) use ($myCheckinIds) {
-                            $sub->where('reactionable_type', 'checkin')->whereIn('reactionable_id', $myCheckinIds);
+                            $sub->whereIn('reactionable_type', ['checkin', 'App\\Models\\Checkin'])->whereIn('reactionable_id', $myCheckinIds);
                         });
                     }
                     if (!empty($myDiaryIds)) {
                         $q->orWhere(function($sub) use ($myDiaryIds) {
-                            $sub->where('reactionable_type', 'diary')->whereIn('reactionable_id', $myDiaryIds);
+                            $sub->whereIn('reactionable_type', ['diary', 'App\\Models\\FoodTourDiary'])->whereIn('reactionable_id', $myDiaryIds);
+                        });
+                    }
+                    if (!empty($myPostIds)) {
+                        $q->orWhere(function($sub) use ($myPostIds) {
+                            $sub->whereIn('reactionable_type', ['post', 'App\\Models\\Post'])->whereIn('reactionable_id', $myPostIds);
+                        });
+                    }
+                    if (!empty($myEduIds)) {
+                        $q->orWhere(function($sub) use ($myEduIds) {
+                            $sub->whereIn('reactionable_type', ['education', 'App\\Models\\EducationProgram'])->whereIn('reactionable_id', $myEduIds);
+                        });
+                    }
+                    if (!empty($myEateryIds)) {
+                        $q->orWhere(function($sub) use ($myEateryIds) {
+                            $sub->whereIn('reactionable_type', ['eatery', 'App\\Models\\Eatery'])->whereIn('reactionable_id', $myEateryIds);
                         });
                     }
                 })
@@ -63,20 +83,26 @@ class NotificationService
                         $totalReactors = $group->count();
                     }
 
-                    $latestUser = $first->user ? $first->user->name : 'Một thành viên';
+                    $latestUser = $first->user ? $first->user->name : 'Thành viên Đông Anh';
                     $othersCount = max(0, $totalReactors - 1);
-                    $emoji = $first->emoji ?? '❤️';
-                    $postTypeLabel = $first->reactionable_type === 'checkin' ? 'check-in' : 'hành trình';
+                    $emoji = $first->emoji ?? '👍';
+
+                    $postTypeLabel = match (strtolower($first->reactionable_type)) {
+                        'checkin', 'app\models\checkin' => 'check-in',
+                        'diary', 'app\models\foodtourdiary' => 'hành trình',
+                        'eatery', 'app\models\eatery' => 'cơ sở/gian hàng',
+                        default => 'bài viết',
+                    };
 
                     if ($othersCount > 0) {
-                        $body = "{$latestUser} và {$othersCount} người khác đã thả cảm xúc bài viết {$postTypeLabel} của bạn.";
+                        $body = "{$latestUser} và {$othersCount} người khác đã thích/thả cảm xúc bài viết {$postTypeLabel} của bạn.";
                     } else {
                         $body = "{$latestUser} đã thả {$emoji} bài viết {$postTypeLabel} của bạn.";
                     }
 
                     $notifications[] = [
                         'id'        => 'react_' . $key . '_' . strtotime($first->created_at),
-                        'title'     => '❤️ Cảm xúc mới bài ' . $postTypeLabel,
+                        'title'     => '👍 Cảm xúc mới bài ' . $postTypeLabel,
                         'body'      => $body,
                         'time'      => Carbon::parse($first->created_at)->diffForHumans(),
                         'time_ts'   => strtotime($first->created_at),
@@ -92,16 +118,31 @@ class NotificationService
             // ========================================================
             // B. THÔNG BÁO BÌNH LUẬN (Comments) — TỔNG HỢP KIỂU FACEBOOK
             // ========================================================
-            if (!empty($myCheckinIds) || !empty($myDiaryIds)) {
-                $commentsQuery = Comment::where(function($q) use ($myCheckinIds, $myDiaryIds) {
+            if (!empty($myCheckinIds) || !empty($myDiaryIds) || !empty($myPostIds) || !empty($myEduIds) || !empty($myEateryIds)) {
+                $commentsQuery = Comment::where(function($q) use ($myCheckinIds, $myDiaryIds, $myPostIds, $myEduIds, $myEateryIds) {
                     if (!empty($myCheckinIds)) {
                         $q->orWhere(function($sub) use ($myCheckinIds) {
-                            $sub->where('commentable_type', 'App\\Models\\Checkin')->whereIn('commentable_id', $myCheckinIds);
+                            $sub->whereIn('commentable_type', ['App\\Models\\Checkin', 'checkin'])->whereIn('commentable_id', $myCheckinIds);
                         });
                     }
                     if (!empty($myDiaryIds)) {
                         $q->orWhere(function($sub) use ($myDiaryIds) {
-                            $sub->where('commentable_type', 'App\\Models\\FoodTourDiary')->whereIn('commentable_id', $myDiaryIds);
+                            $sub->whereIn('commentable_type', ['App\\Models\\FoodTourDiary', 'diary'])->whereIn('commentable_id', $myDiaryIds);
+                        });
+                    }
+                    if (!empty($myPostIds)) {
+                        $q->orWhere(function($sub) use ($myPostIds) {
+                            $sub->whereIn('commentable_type', ['App\\Models\\Post', 'post'])->whereIn('commentable_id', $myPostIds);
+                        });
+                    }
+                    if (!empty($myEduIds)) {
+                        $q->orWhere(function($sub) use ($myEduIds) {
+                            $sub->whereIn('commentable_type', ['App\\Models\\EducationProgram', 'education'])->whereIn('commentable_id', $myEduIds);
+                        });
+                    }
+                    if (!empty($myEateryIds)) {
+                        $q->orWhere(function($sub) use ($myEateryIds) {
+                            $sub->whereIn('commentable_type', ['App\\Models\\Eatery', 'eatery'])->whereIn('commentable_id', $myEateryIds);
                         });
                     }
                 })
@@ -121,9 +162,9 @@ class NotificationService
                         $totalCommenters = $group->count();
                     }
 
-                    $latestUser = $first->display_name;
+                    $latestUser = $first->display_name ?? 'Một thành viên';
                     $othersCount = max(0, $totalCommenters - 1);
-                    $postTypeLabel = str_contains($first->commentable_type, 'Checkin') ? 'check-in' : 'hành trình';
+                    $postTypeLabel = str_contains($first->commentable_type, 'Checkin') ? 'check-in' : (str_contains($first->commentable_type, 'Eatery') ? 'cơ sở' : 'bài viết');
 
                     if ($othersCount > 0) {
                         $body = "{$latestUser} và {$othersCount} người khác đã bình luận về bài viết {$postTypeLabel} của bạn.";
@@ -141,8 +182,47 @@ class NotificationService
                         'type'      => 'comment',
                         'icon'      => 'comment',
                         'is_read'   => false,
-                        'post_type' => str_contains($first->commentable_type, 'Checkin') ? 'checkin' : 'diary',
+                        'post_type' => str_contains($first->commentable_type, 'Checkin') ? 'checkin' : 'post',
                         'post_id'   => $first->commentable_id,
+                    ];
+                }
+            }
+
+            // ========================================================
+            // B2. THÔNG BÁO LƯỢT CHIA SẺ (Shares Aggregated)
+            // ========================================================
+            if (!empty($myPostIds)) {
+                $sharedPosts = DB::table('posts')->whereIn('id', $myPostIds)->where('shares_count', '>', 0)->get();
+                foreach ($sharedPosts as $sp) {
+                    $notifications[] = [
+                        'id'        => 'share_post_' . $sp->id,
+                        'title'     => '🔄 Lượt chia sẻ bài viết mới',
+                        'body'      => "Bài viết của bạn đã đạt {$sp->shares_count} lượt chia sẻ từ cộng đồng!",
+                        'time'      => isset($sp->updated_at) ? Carbon::parse($sp->updated_at)->diffForHumans() : 'Vừa xong',
+                        'time_ts'   => isset($sp->updated_at) ? strtotime($sp->updated_at) : time(),
+                        'type'      => 'share',
+                        'icon'      => 'share',
+                        'is_read'   => false,
+                        'post_type' => 'post',
+                        'post_id'   => $sp->id,
+                    ];
+                }
+            }
+
+            if (!empty($myCheckinIds)) {
+                $sharedCheckins = Checkin::whereIn('id', $myCheckinIds)->where('shares_count', '>', 0)->get();
+                foreach ($sharedCheckins as $sc) {
+                    $notifications[] = [
+                        'id'        => 'share_checkin_' . $sc->id,
+                        'title'     => '🔄 Lượt chia sẻ bài viết check-in',
+                        'body'      => "Bài viết check-in của bạn đã đạt {$sc->shares_count} lượt chia sẻ từ cộng đồng!",
+                        'time'      => Carbon::parse($sc->updated_at ?? $sc->created_at)->diffForHumans(),
+                        'time_ts'   => strtotime($sc->updated_at ?? $sc->created_at),
+                        'type'      => 'share',
+                        'icon'      => 'share',
+                        'is_read'   => false,
+                        'post_type' => 'checkin',
+                        'post_id'   => $sc->id,
                     ];
                 }
             }
@@ -150,7 +230,6 @@ class NotificationService
             // ========================================================
             // C. THÔNG BÁO ĐÁNH GIÁ SẢN PHẨM / GIAN HÀNG (Reviews Aggregated)
             // ========================================================
-            $myEateryIds = Eatery::where('user_id', $userId)->pluck('id')->toArray();
             if (!empty($myEateryIds)) {
                 $reviewsQuery = Review::whereIn('eatery_id', $myEateryIds)
                     ->orderBy('created_at', 'desc')
@@ -440,23 +519,31 @@ class NotificationService
     {
         try {
             $post = null;
-            if ($type === 'checkin') {
+            if ($type === 'checkin' || $type === 'App\\Models\\Checkin') {
                 $post = Checkin::find($postId);
-            } else if ($type === 'diary') {
+            } else if ($type === 'diary' || $type === 'App\\Models\\FoodTourDiary') {
                 $post = FoodTourDiary::find($postId);
+            } else if ($type === 'education' || $type === 'App\\Models\\EducationProgram') {
+                $post = \App\Models\EducationProgram::find($postId);
+            } else if ($type === 'eatery' || $type === 'App\\Models\\Eatery') {
+                $post = Eatery::find($postId);
+            } else {
+                $post = \App\Models\Post::find($postId);
             }
 
-            if (!$post || !$post->user_id) return;
-            if ($reactorUserId && (int)$reactorUserId === (int)$post->user_id) return; // Không tự thông báo mình
+            if (!$post) return;
+            $ownerUserId = $post->user_id ?? ($post->eatery ? $post->eatery->user_id : null);
+            if (!$ownerUserId) return;
+            if ($reactorUserId && (int)$reactorUserId === (int)$ownerUserId) return;
 
-            $author = User::find($post->user_id);
+            $author = User::find($ownerUserId);
             if (!$author) return;
 
             // Tính tổng người thả cảm xúc bài này
-            $allReactors = CheckinReaction::where('reactionable_type', $type)
+            $allReactors = CheckinReaction::whereIn('reactionable_type', [$type, 'App\\Models\\' . ucfirst($type)])
                 ->where('reactionable_id', $postId)
-                ->where(function($q) use ($post) {
-                    $q->whereNull('user_id')->orWhere('user_id', '!=', $post->user_id);
+                ->where(function($q) use ($ownerUserId) {
+                    $q->whereNull('user_id')->orWhere('user_id', '!=', $ownerUserId);
                 })
                 ->latest()
                 ->get();
@@ -467,13 +554,18 @@ class NotificationService
             $first = $allReactors->first();
             $latestName = $first && $first->user ? $first->user->name : 'Một thành viên';
             $othersCount = max(0, $totalReactors - 1);
-            $postTypeLabel = $type === 'checkin' ? 'check-in' : 'hành trình';
+            $postTypeLabel = match(strtolower($type)) {
+                'checkin' => 'check-in',
+                'diary' => 'hành trình',
+                'eatery' => 'cơ sở/gian hàng',
+                default => 'bài viết',
+            };
 
             if ($othersCount > 0) {
-                $title = "❤️ Cảm xúc mới bài {$postTypeLabel}";
+                $title = "👍 Cảm xúc mới bài {$postTypeLabel}";
                 $body  = "{$latestName} và {$othersCount} người khác đã thả cảm xúc bài viết {$postTypeLabel} của bạn.";
             } else {
-                $title = "❤️ Cảm xúc mới bài {$postTypeLabel}";
+                $title = "👍 Cảm xúc mới bài {$postTypeLabel}";
                 $body  = "{$latestName} đã thả {$emoji} bài viết {$postTypeLabel} của bạn.";
             }
 
@@ -495,26 +587,37 @@ class NotificationService
     {
         try {
             $post = null;
-            $type = 'checkin';
-            if (str_contains($comment->commentable_type, 'Checkin')) {
+            $type = 'post';
+            if (str_contains($comment->commentable_type, 'Checkin') || $comment->commentable_type === 'checkin') {
                 $post = Checkin::find($comment->commentable_id);
                 $type = 'checkin';
-            } else if (str_contains($comment->commentable_type, 'FoodTourDiary')) {
+            } else if (str_contains($comment->commentable_type, 'FoodTourDiary') || $comment->commentable_type === 'diary') {
                 $post = FoodTourDiary::find($comment->commentable_id);
                 $type = 'diary';
+            } else if (str_contains($comment->commentable_type, 'EducationProgram') || $comment->commentable_type === 'education') {
+                $post = \App\Models\EducationProgram::find($comment->commentable_id);
+                $type = 'education';
+            } else if (str_contains($comment->commentable_type, 'Eatery') || $comment->commentable_type === 'eatery') {
+                $post = Eatery::find($comment->commentable_id);
+                $type = 'eatery';
+            } else {
+                $post = \App\Models\Post::find($comment->commentable_id);
+                $type = 'post';
             }
 
-            if (!$post || !$post->user_id) return;
-            if ($comment->user_id && (int)$comment->user_id === (int)$post->user_id) return; // Không tự thông báo mình
+            if (!$post) return;
+            $ownerUserId = $post->user_id ?? ($post->eatery ? $post->eatery->user_id : null);
+            if (!$ownerUserId) return;
+            if ($comment->user_id && (int)$comment->user_id === (int)$ownerUserId) return;
 
-            $author = User::find($post->user_id);
+            $author = User::find($ownerUserId);
             if (!$author) return;
 
             // Tính tổng người đã bình luận bài này
             $allComments = Comment::where('commentable_type', $comment->commentable_type)
                 ->where('commentable_id', $comment->commentable_id)
-                ->where(function($q) use ($post) {
-                    $q->whereNull('user_id')->orWhere('user_id', '!=', $post->user_id);
+                ->where(function($q) use ($ownerUserId) {
+                    $q->whereNull('user_id')->orWhere('user_id', '!=', $ownerUserId);
                 })
                 ->latest()
                 ->get();
@@ -522,9 +625,14 @@ class NotificationService
             $totalCommenters = $allComments->pluck('user_id')->filter()->unique()->count();
             if ($totalCommenters === 0) $totalCommenters = $allComments->count();
 
-            $latestName = $comment->display_name;
+            $latestName = $comment->display_name ?? 'Một thành viên';
             $othersCount = max(0, $totalCommenters - 1);
-            $postTypeLabel = $type === 'checkin' ? 'check-in' : 'hành trình';
+            $postTypeLabel = match(strtolower($type)) {
+                'checkin' => 'check-in',
+                'diary' => 'hành trình',
+                'eatery' => 'cơ sở',
+                default => 'bài viết',
+            };
 
             if ($othersCount > 0) {
                 $title = "💬 Bình luận mới bài {$postTypeLabel}";
@@ -543,6 +651,45 @@ class NotificationService
             }
         } catch (\Throwable $e) {
             \Log::error('notifyComment Exception: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Bắn FCM Push Notification khi có Lượt Chia Sẻ mới
+     */
+    public static function notifyShare(int $postId, string $type, ?int $sharerUserId = null): void
+    {
+        try {
+            $post = null;
+            if ($type === 'checkin' || $type === 'App\\Models\\Checkin') {
+                $post = Checkin::find($postId);
+            } else if ($type === 'diary' || $type === 'App\\Models\\FoodTourDiary') {
+                $post = FoodTourDiary::find($postId);
+            } else if ($type === 'education' || $type === 'App\\Models\\EducationProgram') {
+                $post = \App\Models\EducationProgram::find($postId);
+            } else if ($type === 'eatery' || $type === 'App\\Models\\Eatery') {
+                $post = Eatery::find($postId);
+            } else {
+                $post = \App\Models\Post::find($postId);
+            }
+
+            if (!$post) return;
+            $ownerUserId = $post->user_id ?? ($post->eatery ? $post->eatery->user_id : null);
+            if (!$ownerUserId) return;
+            if ($sharerUserId && (int)$sharerUserId === (int)$ownerUserId) return;
+
+            $author = User::find($ownerUserId);
+            if (!$author || empty($author->fcm_token)) return;
+
+            $title = "🔄 Lượt chia sẻ mới";
+            $body = "Bài viết / gian hàng của bạn vừa có thêm lượt chia sẻ mới từ cộng đồng!";
+
+            FcmService::sendNotification($author->fcm_token, $title, $body, [
+                'type' => 'share',
+                'post_id' => (string)$postId,
+            ]);
+        } catch (\Throwable $e) {
+            \Log::error('notifyShare Exception: ' . $e->getMessage());
         }
     }
 }
