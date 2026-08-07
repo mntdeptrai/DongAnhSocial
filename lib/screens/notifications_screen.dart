@@ -1,6 +1,13 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../widgets/custom_loader.dart';
+import 'news_bulletin_screen.dart';
+import 'feed_screen.dart';
+import 'food_tour_screen.dart';
+import 'eatery_detail_screen.dart';
+import 'my_orders_screen.dart';
+import 'seller_dashboard_screen.dart';
+import 'chat_screen.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -180,6 +187,62 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                             setState(() {
                               item['is_read'] = true;
                             });
+
+                            final String notifType = item['type'] ?? 'system';
+                            final String postType = item['post_type'] ?? '';
+                            final String targetUrl = item['target_url'] ?? '';
+
+                            if (notifType == 'seller_order') {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (_) => const SellerDashboardScreen()),
+                              );
+                            } else if (notifType == 'my_order') {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (_) => const MyOrdersScreen()),
+                              );
+                            } else if (notifType == 'friend') {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (_) => const ChatScreen()),
+                              );
+                            } else if (notifType == 'review' || postType == 'eatery') {
+                              if (targetUrl.contains('/dia-diem/')) {
+                                final parts = targetUrl.split('/dia-diem/');
+                                if (parts.length > 1 && parts[1].isNotEmpty) {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => EateryDetailScreen(
+                                        categorySlug: 'co-so-kinh-doanh',
+                                        eaterySlug: parts[1],
+                                      ),
+                                    ),
+                                  );
+                                  return;
+                                }
+                              }
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (_) => const SellerDashboardScreen()),
+                              );
+                            } else if (postType == 'checkin' || notifType == 'checkin') {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (_) => const FeedScreen()),
+                              );
+                            } else if (postType == 'diary') {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (_) => const FoodTourScreen()),
+                              );
+                            } else {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (_) => const NewsBulletinScreen()),
+                              );
+                            }
                           },
                         ),
                       );
