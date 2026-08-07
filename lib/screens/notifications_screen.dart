@@ -78,7 +78,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           IconButton(
             icon: const Icon(Icons.done_all),
             tooltip: 'Đánh dấu đã đọc tất cả',
-            onPressed: () {
+            onPressed: () async {
+              ApiService.markNotificationsRead();
               setState(() {
                 for (var item in _notifications) {
                   item['is_read'] = true;
@@ -184,6 +185,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                             ),
                           ),
                           onTap: () {
+                            ApiService.markNotificationsRead();
                             setState(() {
                               item['is_read'] = true;
                             });

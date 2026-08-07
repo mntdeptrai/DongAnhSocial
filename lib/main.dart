@@ -354,6 +354,11 @@ class _MainLayoutState extends State<MainLayout> with WidgetsBindingObserver {
   Future<void> _fetchDynamicCounts() async {
     try {
       final notifs = await ApiService.getAppNotifications();
+      final unreadNotifs = notifs.where((item) {
+        if (item is! Map) return false;
+        return item['is_read'] != true && item['is_read'] != 1;
+      }).length;
+
       final unreadMsgCount = await ApiService.getUnreadMessagesCount();
       final cartRes = await ApiService.getCart();
       int cCount = 0;
@@ -362,7 +367,7 @@ class _MainLayoutState extends State<MainLayout> with WidgetsBindingObserver {
       }
       if (mounted) {
         setState(() {
-          _unreadNotifsCount = notifs.length;
+          _unreadNotifsCount = unreadNotifs;
           _unreadMessagesCount = unreadMsgCount;
           _cartCount = cCount;
         });

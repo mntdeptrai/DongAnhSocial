@@ -43,6 +43,7 @@ Route::prefix('v1')->group(function () {
     Route::get('/communes', [EateryApiController::class, 'getCommunes']);
     Route::get('/market-products', [EateryApiController::class, 'getMarketProducts']);
     Route::get('/notifications', [EateryApiController::class, 'getAppNotifications']);
+    Route::match(['get', 'post'], '/notifications/read', [EateryApiController::class, 'markAppNotificationsRead']);
     Route::get('/newsfeed', [EateryApiController::class, 'getNewsfeed']);
     Route::get('/exp-corner', [EateryApiController::class, 'getExpCorner']);
     Route::post('/posts', [EateryApiController::class, 'storePost']);

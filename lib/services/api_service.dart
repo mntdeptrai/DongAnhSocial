@@ -866,6 +866,16 @@ class ApiService {
     return [];
   }
 
+  /// POST /notifications/read — Đánh dấu đã đọc tất cả thông báo
+  static Future<bool> markNotificationsRead() async {
+    try {
+      final response = await http.post(Uri.parse('$baseUrl/notifications/read'), headers: _getHeaders());
+      return response.statusCode == 200;
+    } catch (_) {
+      return false;
+    }
+  }
+
   /// GET /seller/profile — Lấy hồ sơ kê khai tiểu thương sạp chợ
   static Future<Map<String, dynamic>> getSellerProfile() async {
     try {

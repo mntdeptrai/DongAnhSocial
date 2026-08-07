@@ -1479,6 +1479,25 @@ YÊU CẦU TRẢ VỀ CHỈ LÀ CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU, KHÔNG C
     }
 
     /**
+     * POST /api/v1/notifications/read — Đánh dấu đã đọc tất cả thông báo người dùng
+     */
+    public function markAppNotificationsRead(Request $request)
+    {
+        try {
+            $user = $request->user('sanctum') 
+                ?? \Illuminate\Support\Facades\Auth::guard('sanctum')->user() 
+                ?? \Illuminate\Support\Facades\Auth::user();
+
+            if ($user) {
+                \App\Services\NotificationService::markAsRead($user->id);
+            }
+            return response()->json(['success' => true]);
+        } catch (\Throwable $e) {
+            return response()->json(['success' => false, 'error' => $e->getMessage()]);
+        }
+    }
+
+    /**
      * GET /api/v1/newsfeed — Lấy tất cả bài viết Bản tin đa phân quyền (Post, Education, Checkin)
      */
     public function getNewsfeed(Request $request)
