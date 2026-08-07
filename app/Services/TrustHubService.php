@@ -10,7 +10,7 @@ class TrustHubService
     public function storeCertificate(array $data, $file)
     {
         if ($file) {
-            $data['certificate_path'] = R2Helper::upload($file, 'trust/certificates');
+            $data['image_path'] = R2Helper::upload($file, 'trust/certificates');
         }
         return EateryApiService::storeFoodSafetyCertificate($data);
     }
