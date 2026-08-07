@@ -1438,9 +1438,12 @@ YÊU CẦU TRẢ VỀ CHỈ LÀ CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU, KHÔNG C
     public function getAppNotifications(Request $request)
     {
         $notifications = [];
-        $user = Auth::guard('sanctum')->user() ?? Auth::user();
 
         try {
+            $user = $request->user('sanctum') 
+                ?? \Illuminate\Support\Facades\Auth::guard('sanctum')->user() 
+                ?? \Illuminate\Support\Facades\Auth::user();
+
             if ($user) {
                 $notifications = \App\Services\NotificationService::getNotificationsForUser($user->id);
             }
@@ -1468,7 +1471,7 @@ YÊU CẦU TRẢ VỀ CHỈ LÀ CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU, KHÔNG C
                     ];
                 }
             }
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             \Log::error('getAppNotifications Exception: ' . $e->getMessage());
         }
 
