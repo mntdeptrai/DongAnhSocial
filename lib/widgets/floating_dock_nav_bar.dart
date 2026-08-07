@@ -26,26 +26,35 @@ class FloatingDockNavBar extends StatelessWidget {
 
     return SafeArea(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(30),
+          borderRadius: BorderRadius.circular(32),
           child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-            child: Container(
-              height: 56,
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+            filter: ImageFilter.blur(sigmaX: 28, sigmaY: 28),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 250),
+              height: 58,
+              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 4),
               decoration: BoxDecoration(
-                color: const Color(0xFF0F172A).withValues(alpha: 0.88),
-                borderRadius: BorderRadius.circular(30),
+                // iOS Crystal Translucent Glass
+                color: Colors.white.withValues(alpha: 0.38),
+                borderRadius: BorderRadius.circular(32),
                 border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.15),
-                  width: 1.2,
+                  color: Colors.white.withValues(alpha: 0.75),
+                  width: 1.5,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.25),
+                    color: Colors.black.withValues(alpha: 0.08),
                     blurRadius: 24,
+                    spreadRadius: 0,
                     offset: const Offset(0, 8),
+                  ),
+                  BoxShadow(
+                    color: const Color(0xFF0EA5E9).withValues(alpha: 0.15),
+                    blurRadius: 16,
+                    spreadRadius: -4,
+                    offset: const Offset(0, 4),
                   ),
                 ],
               ),
@@ -62,16 +71,31 @@ class FloatingDockNavBar extends StatelessWidget {
                       onTap: () => onTabSelected(index),
                       behavior: HitTestBehavior.opaque,
                       child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 250),
+                        duration: const Duration(milliseconds: 260),
                         curve: Curves.easeOutCubic,
+                        margin: const EdgeInsets.symmetric(horizontal: 1.5, vertical: 1),
                         padding: const EdgeInsets.symmetric(vertical: 4),
                         decoration: BoxDecoration(
-                          color: isSelected
-                              ? const Color(0xFF0EA5E9).withValues(alpha: 0.22)
-                              : Colors.transparent,
-                          borderRadius: BorderRadius.circular(22),
+                          gradient: isSelected
+                              ? const LinearGradient(
+                                  colors: [Color(0xFF0EA5E9), Color(0xFF0284C7)],
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                )
+                              : null,
+                          color: isSelected ? null : Colors.transparent,
+                          borderRadius: BorderRadius.circular(24),
+                          boxShadow: isSelected
+                              ? [
+                                  BoxShadow(
+                                    color: const Color(0xFF0EA5E9).withValues(alpha: 0.4),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 3),
+                                  ),
+                                ]
+                              : null,
                           border: isSelected
-                              ? Border.all(color: const Color(0xFF0EA5E9).withValues(alpha: 0.6), width: 1)
+                              ? Border.all(color: Colors.white.withValues(alpha: 0.4), width: 1)
                               : null,
                         ),
                         child: Column(
@@ -84,8 +108,8 @@ class FloatingDockNavBar extends StatelessWidget {
                                   iconData,
                                   size: isSelected ? 20 : 18,
                                   color: isSelected
-                                      ? const Color(0xFF38BDF8)
-                                      : Colors.white.withValues(alpha: 0.55),
+                                      ? Colors.white
+                                      : const Color(0xFF1E293B),
                                 ),
                                 if (badge > 0)
                                   Positioned(
@@ -119,10 +143,10 @@ class FloatingDockNavBar extends StatelessWidget {
                                 item['label'] as String,
                                 style: TextStyle(
                                   fontSize: 9,
-                                  fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
+                                  fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
                                   color: isSelected
-                                      ? const Color(0xFF38BDF8)
-                                      : Colors.white.withValues(alpha: 0.55),
+                                      ? Colors.white
+                                      : const Color(0xFF1E293B),
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,

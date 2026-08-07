@@ -1276,6 +1276,7 @@ YÊU CẦU TRẢ VỀ CHỈ LÀ CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU, KHÔNG C
                                 'seller_name'   => $item->seller_name ?: 'Chủ hộ kinh doanh',
                                 'seller_phone'  => $item->seller_phone ?: ($eatery?->phone ?? ''),
                                 'star_rating'   => $item->star_rating ?: '4 sao',
+                                'is_ocop'       => true,
                                 'image_path'    => $item->image_path ?: ($eatery?->image_path ?? ''),
                                 'description'   => $item->description ?: ('Sản phẩm OCOP & Đặc sản của ' . ($eatery?->name ?? 'Đông Anh')),
                             ]);
@@ -1332,6 +1333,7 @@ YÊU CẦU TRẢ VỀ CHỈ LÀ CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU, KHÔNG C
                                             'seller_name'   => $p['seller_name'] ?? 'Chủ hộ kinh doanh',
                                             'seller_phone'  => $p['seller_phone'] ?? $sellerPhone,
                                             'star_rating'   => $p['star_rating'] ?? '4 sao',
+                                            'is_ocop'       => true,
                                             'image_path'    => $p['image_path'] ?? $eateryImg,
                                             'description'   => $p['description'] ?? ('Sản phẩm OCOP của ' . $stallName),
                                         ]);
@@ -1343,6 +1345,7 @@ YÊU CẦU TRẢ VỀ CHỈ LÀ CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU, KHÔNG C
                                 foreach ($dishes as $d) {
                                     $pName = $d['name'] ?? ($d['dish_name'] ?? 'Đặc sản');
                                     if (!$products->contains('name', $pName)) {
+                                        $isOcopDish = str_contains(strtolower($pName), 'ocop') || str_contains(strtolower($stallName), 'ocop') || str_contains(strtolower($stallName), 'htx');
                                         $products->push([
                                             'id'            => $d['id'] ?? rand(10000, 99999),
                                             'eatery_id'     => $eateryId,
@@ -1354,6 +1357,7 @@ YÊU CẦU TRẢ VỀ CHỈ LÀ CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU, KHÔNG C
                                             'seller_name'   => 'Chủ hộ kinh doanh',
                                             'seller_phone'  => $sellerPhone,
                                             'star_rating'   => '4 sao',
+                                            'is_ocop'       => $isOcopDish,
                                             'image_path'    => $d['image_path'] ?? $eateryImg,
                                             'description'   => $d['description'] ?? ('Đặc sản của ' . $stallName),
                                         ]);

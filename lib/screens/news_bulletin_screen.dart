@@ -95,24 +95,317 @@ class _NewsBulletinScreenState extends State<NewsBulletinScreen> {
   }
 
   void _sharePost(dynamic item) {
+    _showShareBottomSheet(context, item);
+  }
+
+  void _showShareBottomSheet(BuildContext context, dynamic item) {
     final title = item['title'] ?? 'Bài viết trên Bản tin Đông Anh';
     const shareUrl = 'https://donganhdiscovery.xadonganh.com/ban-tin';
-    Clipboard.setData(ClipboardData(text: '$title\nXem thêm tại: $shareUrl'));
 
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Row(
+    final friendsList = [
+      {'name': 'Thành viên...', 'avatar': '👧'},
+      {'name': 'Trường M...', 'avatar': '👦'},
+      {'name': 'Trường T...', 'avatar': '🧑'},
+      {'name': 'Nguyễn Tr...', 'avatar': '👨'},
+      {'name': 'Cổ Loa Club', 'avatar': '👧'},
+    ];
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => Container(
+        padding: const EdgeInsets.only(top: 16, left: 20, right: 20, bottom: 28),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
-            SizedBox(width: 8),
-            Text('Đã sao chép liên kết chia sẻ bài viết!'),
+            Center(
+              child: Container(
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const SizedBox(width: 36),
+                const Expanded(
+                  child: Text(
+                    'Gửi hoặc Chia sẻ bài viết',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF0F172A),
+                    ),
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () => Navigator.pop(context),
+                  child: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFF1F5F9),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.close_rounded, size: 20, color: Color(0xFF64748B)),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+
+            const Text(
+              'GỬI TRỰC TIẾP CHO BẠN BÈ',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF64748B),
+                letterSpacing: 0.5,
+              ),
+            ),
+            const SizedBox(height: 14),
+
+            SizedBox(
+              height: 98,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: friendsList.length,
+                separatorBuilder: (_, __) => const SizedBox(width: 14),
+                itemBuilder: (context, idx) {
+                  final friend = friendsList[idx];
+                  return GestureDetector(
+                    onTap: () {
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Row(
+                            children: [
+                              const Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
+                              const SizedBox(width: 8),
+                              Text('Đã chia sẻ trực tiếp tới ${friend['name']}!'),
+                            ],
+                          ),
+                          backgroundColor: const Color(0xFF059669),
+                          behavior: SnackBarBehavior.floating,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                      );
+                    },
+                    child: SizedBox(
+                      width: 72,
+                      child: Column(
+                        children: [
+                          Container(
+                            width: 62,
+                            height: 62,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF8FAFC),
+                              borderRadius: BorderRadius.circular(22),
+                              border: Border.all(color: const Color(0xFFE2E8F0)),
+                            ),
+                            child: Center(
+                              child: Text(
+                                friend['avatar']!,
+                                style: const TextStyle(fontSize: 28),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            friend['name']!,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF334155),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 16),
+              child: Divider(color: Color(0xFFF1F5F9), height: 1, thickness: 1),
+            ),
+
+            const Text(
+              'CHIA SẺ LÊN HỆ SINH THÁI',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF64748B),
+                letterSpacing: 0.5,
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildShareActionItem(
+                  icon: Icons.newspaper_rounded,
+                  label: 'Bảng tin cá\nnhân',
+                  bgColor: const Color(0xFFEEF2FF),
+                  iconColor: const Color(0xFF6366F1),
+                  onTap: () {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: const Row(
+                          children: [
+                            Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
+                            SizedBox(width: 8),
+                            Text('Đã đăng bài viết lên Bảng tin cá nhân!'),
+                          ],
+                        ),
+                        backgroundColor: const Color(0xFF059669),
+                        behavior: SnackBarBehavior.floating,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                    );
+                  },
+                ),
+
+                _buildShareActionItem(
+                  icon: Icons.link_rounded,
+                  label: 'Sao chép\nliên kết',
+                  bgColor: const Color(0xFFECFDF5),
+                  iconColor: const Color(0xFF059669),
+                  onTap: () {
+                    Clipboard.setData(ClipboardData(text: '$title\nXem thêm tại: $shareUrl'));
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: const Row(
+                          children: [
+                            Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
+                            SizedBox(width: 8),
+                            Text('Đã sao chép liên kết chia sẻ bài viết!'),
+                          ],
+                        ),
+                        backgroundColor: const Color(0xFF059669),
+                        behavior: SnackBarBehavior.floating,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                    );
+                  },
+                ),
+
+                _buildShareActionItem(
+                  icon: Icons.language_rounded,
+                  label: 'Ứng dụng\nkhác',
+                  bgColor: const Color(0xFFFEF3C7),
+                  iconColor: const Color(0xFFD97706),
+                  onTap: () {
+                    Clipboard.setData(ClipboardData(text: '$title\n$shareUrl'));
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: const Row(
+                          children: [
+                            Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
+                            SizedBox(width: 8),
+                            Text('Đã copy liên kết để chia sẻ qua ứng dụng khác!'),
+                          ],
+                        ),
+                        backgroundColor: const Color(0xFF059669),
+                        behavior: SnackBarBehavior.floating,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                    );
+                  },
+                ),
+
+                _buildShareActionItem(
+                  icon: Icons.chat_bubble_outline_rounded,
+                  label: 'Đông Anh\nChat',
+                  bgColor: const Color(0xFFE0F2FE),
+                  iconColor: const Color(0xFF0EA5E9),
+                  onTap: () {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: const Row(
+                          children: [
+                            Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
+                            SizedBox(width: 8),
+                            Text('Đã gửi bài viết vào Đông Anh Chat!'),
+                          ],
+                        ),
+                        backgroundColor: const Color(0xFF059669),
+                        behavior: SnackBarBehavior.floating,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
           ],
         ),
-        backgroundColor: const Color(0xFF059669),
-        behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 2),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    );
+  }
+
+  Widget _buildShareActionItem({
+    required IconData icon,
+    required String label,
+    required Color bgColor,
+    required Color iconColor,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: SizedBox(
+        width: 72,
+        child: Column(
+          children: [
+            Container(
+              width: 62,
+              height: 62,
+              decoration: BoxDecoration(
+                color: bgColor,
+                borderRadius: BorderRadius.circular(22),
+              ),
+              child: Center(
+                child: Icon(icon, color: iconColor, size: 28),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF334155),
+                height: 1.2,
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -179,14 +179,15 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
         return matchesSearch && ratingVal >= 4.5;
       }
       if (_selectedFilter == '🏆 OCOP') {
-        final hasOcopBadge = catStr.toUpperCase().contains('OCOP') ||
-                             item['is_ocop'] == true ||
+        final isOcopSubject = item['is_ocop'] == true ||
                              item['is_ocop'] == 1 ||
                              item['is_ocop'] == '1' ||
                              item['ocop_star'] != null ||
+                             catStr.contains('dong-anh-market') ||
+                             catStr.toUpperCase().contains('OCOP') ||
                              (item['name'] ?? '').toString().toUpperCase().contains('OCOP') ||
                              (item['description'] ?? '').toString().toUpperCase().contains('OCOP');
-        return matchesSearch && hasOcopBadge;
+        return matchesSearch && isOcopSubject;
       }
       return matchesSearch;
     }).toList();
@@ -198,23 +199,23 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
       final q = _searchQuery.toLowerCase();
       final matchesSearch = name.contains(q) || seller.contains(q) || desc.contains(q);
 
-      final isOcopItem = p['is_ocop'] == true ||
+      final isOcopProduct = p['is_ocop'] == true ||
           p['is_ocop'] == 1 ||
           p['is_ocop'] == '1' ||
+          (p['category_slug'] == 'dong-anh-market') ||
           (p['star_rating'] != null && p['star_rating'].toString().isNotEmpty) ||
           (p['ocop_star'] != null && p['ocop_star'].toString().isNotEmpty) ||
           name.contains('ocop') ||
           seller.contains('ocop') ||
-          desc.contains('ocop') ||
           seller.contains('hợp tác xã') ||
           seller.contains('htx');
 
       if (_selectedFilter == '🏆 OCOP') {
-        return matchesSearch && isOcopItem;
+        return matchesSearch && isOcopProduct;
       }
       if (_selectedFilter == '⭐ Nổi bật') {
         final star = (p['star_rating'] ?? '').toString();
-        return matchesSearch && (star.contains('4') || star.contains('5') || p['is_featured'] == true || isOcopItem);
+        return matchesSearch && (star.contains('4') || star.contains('5') || p['is_featured'] == true || isOcopProduct);
       }
       return matchesSearch;
     }).toList();
@@ -246,85 +247,92 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
                     child: LayoutBuilder(
                       builder: (context, constraints) {
                         final tabWidth = (constraints.maxWidth - 6) / 2;
-                        final selectedIndex = _tabController.index;
-                        return Stack(
-                          children: [
-                            AnimatedPositioned(
-                              duration: const Duration(milliseconds: 220),
-                              curve: Curves.easeOutCubic,
-                              left: selectedIndex == 0 ? 0 : tabWidth,
-                              top: 0,
-                              bottom: 0,
-                              width: tabWidth,
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  gradient: const LinearGradient(colors: [primaryColor, accentColor]),
-                                  borderRadius: BorderRadius.circular(20),
-                                  boxShadow: [
-                                    BoxShadow(color: primaryColor.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 2)),
+                        return AnimatedBuilder(
+                          animation: _tabController.animation!,
+                          builder: (context, child) {
+                            final animValue = (_tabController.animation?.value ?? _tabController.index.toDouble()).clamp(0.0, 1.0);
+                            final leftPos = animValue * tabWidth;
+                            final activeTab1Color = Color.lerp(Colors.white, Colors.grey.shade700, animValue)!;
+                            final activeTab2Color = Color.lerp(Colors.grey.shade700, Colors.white, animValue)!;
+
+                            return Stack(
+                              children: [
+                                Positioned(
+                                  left: leftPos,
+                                  top: 0,
+                                  bottom: 0,
+                                  width: tabWidth,
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      gradient: const LinearGradient(colors: [primaryColor, accentColor]),
+                                      borderRadius: BorderRadius.circular(20),
+                                      boxShadow: [
+                                        BoxShadow(color: primaryColor.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 2)),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: GestureDetector(
+                                        onTap: () => _tabController.animateTo(0),
+                                        behavior: HitTestBehavior.opaque,
+                                        child: Center(
+                                          child: Row(
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            children: [
+                                              Icon(
+                                                Icons.restaurant_menu_rounded,
+                                                size: 15,
+                                                color: activeTab1Color,
+                                              ),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                'ẨM THỰC TINH TÚY',
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 12,
+                                                  color: activeTab1Color,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    Expanded(
+                                      child: GestureDetector(
+                                        onTap: () => _tabController.animateTo(1),
+                                        behavior: HitTestBehavior.opaque,
+                                        child: Center(
+                                          child: Row(
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            children: [
+                                              Icon(
+                                                Icons.storefront_rounded,
+                                                size: 15,
+                                                color: activeTab2Color,
+                                              ),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                'CHỢ SỐ & OCOP',
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 12,
+                                                  color: activeTab2Color,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ),
                                   ],
                                 ),
-                              ),
-                            ),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: GestureDetector(
-                                    onTap: () => _tabController.animateTo(0),
-                                    behavior: HitTestBehavior.opaque,
-                                    child: Center(
-                                      child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        children: [
-                                          Icon(
-                                            Icons.restaurant_menu_rounded,
-                                            size: 15,
-                                            color: selectedIndex == 0 ? Colors.white : Colors.grey.shade700,
-                                          ),
-                                          const SizedBox(width: 4),
-                                          Text(
-                                            'ẨM THỰC TINH TÚY',
-                                            style: TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 12,
-                                              color: selectedIndex == 0 ? Colors.white : Colors.grey.shade700,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                Expanded(
-                                  child: GestureDetector(
-                                    onTap: () => _tabController.animateTo(1),
-                                    behavior: HitTestBehavior.opaque,
-                                    child: Center(
-                                      child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        children: [
-                                          Icon(
-                                            Icons.storefront_rounded,
-                                            size: 15,
-                                            color: selectedIndex == 1 ? Colors.white : Colors.grey.shade700,
-                                          ),
-                                          const SizedBox(width: 4),
-                                          Text(
-                                            'CHỢ SỐ & OCOP',
-                                            style: TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 12,
-                                              color: selectedIndex == 1 ? Colors.white : Colors.grey.shade700,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ),
                               ],
-                            ),
-                          ],
+                            );
+                          },
                         );
                       },
                     ),
