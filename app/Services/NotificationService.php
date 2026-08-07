@@ -100,17 +100,25 @@ class NotificationService
                         $body = "{$latestUser} đã thả {$emoji} bài viết {$postTypeLabel} của bạn.";
                     }
 
+                    $targetUrl = match (strtolower($first->reactionable_type)) {
+                        'checkin', 'app\models\checkin' => '/goc-checkin',
+                        'diary', 'app\models\foodtourdiary' => '/food-tour',
+                        'eatery', 'app\models\eatery' => '/dia-diem/' . (optional(Eatery::find($first->reactionable_id))->slug ?? ''),
+                        default => '/ban-tin?post=' . $first->reactionable_id,
+                    };
+
                     $notifications[] = [
-                        'id'        => 'react_' . $key . '_' . strtotime($first->created_at),
-                        'title'     => '👍 Cảm xúc mới bài ' . $postTypeLabel,
-                        'body'      => $body,
-                        'time'      => Carbon::parse($first->created_at)->diffForHumans(),
-                        'time_ts'   => strtotime($first->created_at),
-                        'type'      => 'reaction',
-                        'icon'      => 'favorite',
-                        'is_read'   => false,
-                        'post_type' => $first->reactionable_type,
-                        'post_id'   => $first->reactionable_id,
+                        'id'         => 'react_' . $key . '_' . strtotime($first->created_at),
+                        'title'      => '👍 Cảm xúc mới bài ' . $postTypeLabel,
+                        'body'       => $body,
+                        'time'       => Carbon::parse($first->created_at)->diffForHumans(),
+                        'time_ts'    => strtotime($first->created_at),
+                        'type'       => 'reaction',
+                        'icon'       => 'favorite',
+                        'is_read'    => false,
+                        'post_type'  => $first->reactionable_type,
+                        'post_id'    => $first->reactionable_id,
+                        'target_url' => $targetUrl,
                     ];
                 }
             }
@@ -173,17 +181,25 @@ class NotificationService
                         $body = "{$latestUser} đã bình luận bài viết {$postTypeLabel} của bạn: \"{$snippet}\"";
                     }
 
+                    $targetUrl = match (true) {
+                        str_contains($first->commentable_type, 'Checkin') => '/goc-checkin',
+                        str_contains($first->commentable_type, 'FoodTourDiary') => '/food-tour',
+                        str_contains($first->commentable_type, 'Eatery') => '/dia-diem/' . (optional(Eatery::find($first->commentable_id))->slug ?? ''),
+                        default => '/ban-tin?post=' . $first->commentable_id,
+                    };
+
                     $notifications[] = [
-                        'id'        => 'comment_' . $key . '_' . strtotime($first->created_at),
-                        'title'     => '💬 Bình luận mới bài ' . $postTypeLabel,
-                        'body'      => $body,
-                        'time'      => Carbon::parse($first->created_at)->diffForHumans(),
-                        'time_ts'   => strtotime($first->created_at),
-                        'type'      => 'comment',
-                        'icon'      => 'comment',
-                        'is_read'   => false,
-                        'post_type' => str_contains($first->commentable_type, 'Checkin') ? 'checkin' : 'post',
-                        'post_id'   => $first->commentable_id,
+                        'id'         => 'comment_' . $key . '_' . strtotime($first->created_at),
+                        'title'      => '💬 Bình luận mới bài ' . $postTypeLabel,
+                        'body'       => $body,
+                        'time'       => Carbon::parse($first->created_at)->diffForHumans(),
+                        'time_ts'    => strtotime($first->created_at),
+                        'type'       => 'comment',
+                        'icon'       => 'comment',
+                        'is_read'    => false,
+                        'post_type'  => str_contains($first->commentable_type, 'Checkin') ? 'checkin' : 'post',
+                        'post_id'    => $first->commentable_id,
+                        'target_url' => $targetUrl,
                     ];
                 }
             }
@@ -195,16 +211,17 @@ class NotificationService
                 $sharedPosts = DB::table('posts')->whereIn('id', $myPostIds)->where('shares_count', '>', 0)->get();
                 foreach ($sharedPosts as $sp) {
                     $notifications[] = [
-                        'id'        => 'share_post_' . $sp->id,
-                        'title'     => '🔄 Lượt chia sẻ bài viết mới',
-                        'body'      => "Bài viết của bạn đã đạt {$sp->shares_count} lượt chia sẻ từ cộng đồng!",
-                        'time'      => isset($sp->updated_at) ? Carbon::parse($sp->updated_at)->diffForHumans() : 'Vừa xong',
-                        'time_ts'   => isset($sp->updated_at) ? strtotime($sp->updated_at) : time(),
-                        'type'      => 'share',
-                        'icon'      => 'share',
-                        'is_read'   => false,
-                        'post_type' => 'post',
-                        'post_id'   => $sp->id,
+                        'id'         => 'share_post_' . $sp->id,
+                        'title'      => '🔄 Lượt chia sẻ bài viết mới',
+                        'body'       => "Bài viết của bạn đã đạt {$sp->shares_count} lượt chia sẻ từ cộng đồng!",
+                        'time'       => isset($sp->updated_at) ? Carbon::parse($sp->updated_at)->diffForHumans() : 'Vừa xong',
+                        'time_ts'    => isset($sp->updated_at) ? strtotime($sp->updated_at) : time(),
+                        'type'       => 'share',
+                        'icon'       => 'share',
+                        'is_read'    => false,
+                        'post_type'  => 'post',
+                        'post_id'    => $sp->id,
+                        'target_url' => '/ban-tin?post=' . $sp->id,
                     ];
                 }
             }
@@ -213,16 +230,17 @@ class NotificationService
                 $sharedCheckins = Checkin::whereIn('id', $myCheckinIds)->where('shares_count', '>', 0)->get();
                 foreach ($sharedCheckins as $sc) {
                     $notifications[] = [
-                        'id'        => 'share_checkin_' . $sc->id,
-                        'title'     => '🔄 Lượt chia sẻ bài viết check-in',
-                        'body'      => "Bài viết check-in của bạn đã đạt {$sc->shares_count} lượt chia sẻ từ cộng đồng!",
-                        'time'      => Carbon::parse($sc->updated_at ?? $sc->created_at)->diffForHumans(),
-                        'time_ts'   => strtotime($sc->updated_at ?? $sc->created_at),
-                        'type'      => 'share',
-                        'icon'      => 'share',
-                        'is_read'   => false,
-                        'post_type' => 'checkin',
-                        'post_id'   => $sc->id,
+                        'id'         => 'share_checkin_' . $sc->id,
+                        'title'      => '🔄 Lượt chia sẻ bài viết check-in',
+                        'body'       => "Bài viết check-in của bạn đã đạt {$sc->shares_count} lượt chia sẻ từ cộng đồng!",
+                        'time'       => Carbon::parse($sc->updated_at ?? $sc->created_at)->diffForHumans(),
+                        'time_ts'    => strtotime($sc->updated_at ?? $sc->created_at),
+                        'type'       => 'share',
+                        'icon'       => 'share',
+                        'is_read'    => false,
+                        'post_type'  => 'checkin',
+                        'post_id'    => $sc->id,
+                        'target_url' => '/goc-checkin',
                     ];
                 }
             }
@@ -241,6 +259,7 @@ class NotificationService
                     $totalReviewers = $group->count();
                     $latestUser = $first->user_name ?? 'Một khách hàng';
                     $othersCount = max(0, $totalReviewers - 1);
+                    $eatery = Eatery::find($eateryId);
 
                     if ($othersCount > 0) {
                         $body = "{$latestUser} và {$othersCount} người khác đã gửi đánh giá về sản phẩm/gian hàng của bạn.";
@@ -249,14 +268,15 @@ class NotificationService
                     }
 
                     $notifications[] = [
-                        'id'        => 'review_' . $eateryId . '_' . strtotime($first->created_at),
-                        'title'     => '⭐ Đánh giá mới cho gian hàng của bạn',
-                        'body'      => $body,
-                        'time'      => Carbon::parse($first->created_at)->diffForHumans(),
-                        'time_ts'   => strtotime($first->created_at),
-                        'type'      => 'review',
-                        'icon'      => 'star',
-                        'is_read'   => false,
+                        'id'         => 'review_' . $eateryId . '_' . strtotime($first->created_at),
+                        'title'      => '⭐ Đánh giá mới cho gian hàng của bạn',
+                        'body'       => $body,
+                        'time'       => Carbon::parse($first->created_at)->diffForHumans(),
+                        'time_ts'    => strtotime($first->created_at),
+                        'type'       => 'review',
+                        'icon'       => 'star',
+                        'is_read'    => false,
+                        'target_url' => $eatery ? ('/dia-diem/' . $eatery->slug) : '/seller/orders',
                     ];
                 }
             }
@@ -273,14 +293,15 @@ class NotificationService
 
                 foreach ($sellerOrders as $ord) {
                     $notifications[] = [
-                        'id'      => 'seller_ord_' . $ord->id,
-                        'title'   => '🛒 Đơn hàng mới cho cửa hàng!',
-                        'body'    => 'Khách hàng vừa đặt đơn #' . ($ord->code ?? $ord->id) . ' với giá trị ' . number_format($ord->total_amount ?? $ord->total ?? 150000) . 'đ.',
-                        'time'    => isset($ord->created_at) ? Carbon::parse($ord->created_at)->diffForHumans() : 'Vừa xong',
-                        'time_ts' => isset($ord->created_at) ? strtotime($ord->created_at) : time(),
-                        'type'    => 'seller_order',
-                        'icon'    => 'storefront',
-                        'is_read' => false,
+                        'id'         => 'seller_ord_' . $ord->id,
+                        'title'      => '🛒 Đơn hàng mới cho cửa hàng!',
+                        'body'       => 'Khách hàng vừa đặt đơn #' . ($ord->code ?? $ord->id) . ' với giá trị ' . number_format($ord->total_amount ?? $ord->total ?? 150000) . 'đ.',
+                        'time'       => isset($ord->created_at) ? Carbon::parse($ord->created_at)->diffForHumans() : 'Vừa xong',
+                        'time_ts'    => isset($ord->created_at) ? strtotime($ord->created_at) : time(),
+                        'type'       => 'seller_order',
+                        'icon'       => 'storefront',
+                        'is_read'    => false,
+                        'target_url' => '/seller/orders',
                     ];
                 }
             }
@@ -303,14 +324,15 @@ class NotificationService
                 };
 
                 $notifications[] = [
-                    'id'      => 'my_ord_' . $ord->id,
-                    'title'   => '📦 Đơn hàng #' . ($ord->code ?? $ord->id) . ' của bạn',
-                    'body'    => 'Đơn hàng mua đặc sản OCOP của bạn ' . $statusText,
-                    'time'    => isset($ord->created_at) ? Carbon::parse($ord->created_at)->diffForHumans() : 'Vừa xong',
-                    'time_ts' => isset($ord->created_at) ? strtotime($ord->created_at) : time(),
-                    'type'    => 'my_order',
-                    'icon'    => 'local_shipping',
-                    'is_read' => false,
+                    'id'         => 'my_ord_' . $ord->id,
+                    'title'      => '📦 Đơn hàng #' . ($ord->code ?? $ord->id) . ' của bạn',
+                    'body'       => 'Đơn hàng mua đặc sản OCOP của bạn ' . $statusText,
+                    'time'       => isset($ord->created_at) ? Carbon::parse($ord->created_at)->diffForHumans() : 'Vừa xong',
+                    'time_ts'    => isset($ord->created_at) ? strtotime($ord->created_at) : time(),
+                    'type'       => 'my_order',
+                    'icon'       => 'local_shipping',
+                    'is_read'    => false,
+                    'target_url' => '/orders',
                 ];
             }
 
@@ -328,14 +350,15 @@ class NotificationService
                 $sender = User::find($fr->user_id);
                 if ($sender) {
                     $notifications[] = [
-                        'id'      => 'fr_' . $fr->id,
-                        'title'   => '👥 Lời mời kết bạn mới',
-                        'body'    => $sender->name . ' đã gửi cho bạn một lời mời kết bạn mới.',
-                        'time'    => isset($fr->created_at) ? Carbon::parse($fr->created_at)->diffForHumans() : 'Vừa xong',
-                        'time_ts' => isset($fr->created_at) ? strtotime($fr->created_at) : time(),
-                        'type'    => 'friend',
-                        'icon'    => 'person_add',
-                        'is_read' => false,
+                        'id'         => 'fr_' . $fr->id,
+                        'title'      => '👥 Lời mời kết bạn mới',
+                        'body'       => $sender->name . ' đã gửi cho bạn một lời mời kết bạn mới.',
+                        'time'       => isset($fr->created_at) ? Carbon::parse($fr->created_at)->diffForHumans() : 'Vừa xong',
+                        'time_ts'    => isset($fr->created_at) ? strtotime($fr->created_at) : time(),
+                        'type'       => 'friend',
+                        'icon'       => 'person_add',
+                        'is_read'    => false,
+                        'target_url' => '/ket-noi-ban-be',
                     ];
                 }
             }
