@@ -55,17 +55,13 @@ void main() async {
     final fcmToken = await messaging.getToken();
     if (fcmToken != null) {
       debugPrint('🔥 Firebase FCM Token: $fcmToken');
-      if (ApiService.isAuthenticated) {
-        ApiService.updateFcmToken(fcmToken);
-      }
+      ApiService.updateFcmToken(fcmToken);
     }
 
     // Token refresh listener
     messaging.onTokenRefresh.listen((newToken) {
       debugPrint('🔥 FCM Token Refreshed: $newToken');
-      if (ApiService.isAuthenticated) {
-        ApiService.updateFcmToken(newToken);
-      }
+      ApiService.updateFcmToken(newToken);
     });
 
     // Foreground notification listener

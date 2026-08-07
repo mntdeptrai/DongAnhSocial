@@ -49,6 +49,13 @@ class ApiService {
     }
     if (_token != null && _token!.isNotEmpty) {
       fetchUserProfile();
+      try {
+        FirebaseMessaging.instance.getToken().then((token) {
+          if (token != null) {
+            updateFcmToken(token);
+          }
+        });
+      } catch (_) {}
     }
   }
 
@@ -176,8 +183,10 @@ class ApiService {
         headers: _getHeaders(),
         body: jsonEncode({'fcm_token': fcmToken}),
       );
+      debugPrint('🔥 FCM Update Response: ${response.statusCode} - ${response.body}');
       return response.statusCode == 200;
-    } catch (_) {
+    } catch (e) {
+      debugPrint('⚠️ FCM Update Error: $e');
       return false;
     }
   }

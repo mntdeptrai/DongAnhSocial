@@ -799,7 +799,10 @@ class SocialHubController extends Controller
     public function updateFcmToken(Request $request)
     {
         $request->validate(['fcm_token' => 'required|string']);
-        $user = Auth::user();
+        $user = $request->user('sanctum') 
+            ?? \Illuminate\Support\Facades\Auth::guard('sanctum')->user() 
+            ?? \Illuminate\Support\Facades\Auth::user();
+
         if ($user) {
             $user->update(['fcm_token' => $request->fcm_token]);
             return response()->json([
