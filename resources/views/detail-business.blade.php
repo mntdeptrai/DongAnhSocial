@@ -1453,7 +1453,7 @@
             <div style="margin-top: 40px; margin-bottom: 20px; padding: 0 10px; display: flex; align-items: flex-start; gap: 12px; background: rgba(32, 178, 170, 0.03); border: 1px dashed rgba(32, 178, 170, 0.2); padding: 16px; border-radius: 12px;">
                 <span style="font-size: 1.5rem; filter: drop-shadow(0 0 5px rgba(32, 178, 170, 0.5));">🛡️</span>
                 <span style="font-size: 0.9rem; line-height: 1.6; color: var(--text-muted); font-style: italic;">
-                    Nhằm đảm bảo sức khỏe cộng đồng và bảo tồn tinh hoa ẩm thực địa phương, nhà hàng tự nguyện công khai toàn bộ hồ sơ nguồn gốc thực phẩm dưới sự giám sát chặt chẽ của các cơ quan chức năng xã Đông Anh.
+                    Nhằm đảm bảo quyền lợi người tiêu dùng và bảo vệ thương hiệu uy tín, cơ sở tự nguyện công khai toàn bộ hồ sơ chứng thực, giấy phép kinh doanh và minh bạch nguồn gốc hàng hóa dưới sự giám sát của các cơ quan chức năng huyện Đông Anh.
                 </span>
             </div>
 
@@ -1461,7 +1461,7 @@
             <div id="trust-hub-section" class="detail-section glass-panel trust-hub-card" style="padding: 28px; margin-bottom: 40px; position: relative;">
                 <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 24px; border-bottom: 1px dashed rgba(32, 178, 170, 0.25); padding-bottom: 16px;">
                     <h2 class="section-title" style="margin: 0; border: none; padding: 0;">
-                        <span style="display: inline-block; filter: drop-shadow(0 0 8px rgba(32, 178, 170, 0.5));">🛡️</span> Minh Bạch An Toàn & Truy Xuất Số
+                        <span style="display: inline-block; filter: drop-shadow(0 0 8px rgba(32, 178, 170, 0.5));">🛡️</span> Minh Bạch An Toàn & Truy Xuất Nguồn Gốc
                     </h2>
                     @if($eatery->foodSafetyCertificate)
                         <span class="trust-badge" style="background: rgba(32, 178, 170, 0.1); border: 1px solid var(--accent); color: var(--accent); font-weight: 700; font-size: 0.8rem; padding: 4px 12px; border-radius: 20px;">
@@ -1479,9 +1479,9 @@
                     <div class="trust-shield-banner glass-panel" style="background: linear-gradient(135deg, rgba(32, 178, 170, 0.08) 0%, rgba(0, 150, 136, 0.02) 100%); border: 1px solid rgba(32, 178, 170, 0.25); padding: 18px 24px; border-radius: 16px; margin-bottom: 24px; display: flex; gap: 16px; align-items: center;">
                         <div style="font-size: 2.2rem; animation: pulse-trust 2s infinite;">🛡️</div>
                         <div>
-                            <h4 style="font-size: 1.05rem; color: var(--accent); font-weight: 700; margin-bottom: 4px; text-transform: uppercase;">Cơ sở Đủ Điều Kiện An Toàn Thực Phẩm</h4>
+                            <h4 style="font-size: 1.05rem; color: var(--accent); font-weight: 700; margin-bottom: 4px; text-transform: uppercase;">Cơ Sở Đủ Điều Kiện Kinh Doanh & An Toàn</h4>
                             <p style="font-size: 0.88rem; line-height: 1.6; color: var(--text-main); margin: 0;">
-                                Nhà hàng đã công khai toàn bộ hồ sơ pháp lý, hợp đồng cung cấp thực phẩm sạch và nhật ký kiểm tra hàng ngày trên hệ thống dữ liệu số của xã Đông Anh.
+                                Cơ sở kinh doanh đã công khai toàn bộ hồ sơ pháp lý, chứng nhận đủ điều kiện và nhật ký kiểm định chất lượng hàng hóa trên hệ thống dữ liệu số của xã Đông Anh.
                             </p>
                         </div>
                     </div>
@@ -1585,11 +1585,11 @@
                                             <div style="display: flex; align-items: center; gap: 8px; min-width: 250px; flex: 1;">
                                                 <span style="font-size: 1.1rem; animation: pulse-trust 2s infinite;">📢</span>
                                                 <span style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.4;">
-                                                    Bạn ăn thấy quán không đảm bảo vệ sinh như cam kết? Phản hồi ẩn danh ngay để bảo vệ sức khỏe cộng đồng.
+                                                    Bạn nhận thấy cơ sở không đảm bảo chất lượng hàng hóa, dịch vụ như cam kết? Phản hồi ẩn danh ngay để bảo vệ quyền lợi người tiêu dùng.
                                                 </span>
                                             </div>
                                             <button onclick="openFeedbackModal('{{ $eatery->name }}')" class="btn-secondary" style="font-size: 0.75rem; padding: 6px 12px; border-radius: 8px; font-weight: 700; color: #e74c3c; border-color: rgba(231, 76, 60, 0.2); background: rgba(231, 76, 60, 0.04); display: inline-flex; align-items: center; gap: 4px; transition: all 0.3s; cursor: pointer;" onmouseover="this.style.background='rgba(231, 76, 60, 0.08)'; this.style.color='#c0392b';" onmouseout="this.style.background='rgba(231, 76, 60, 0.04)'; this.style.color='#e74c3c';">
-                                                🚨 Gửi Phản Ánh ATTP
+                                                🚨 Gửi Phản Ánh Chất Lượng
                                             </button>
                                         </div>
                                     </div>
@@ -2778,41 +2778,21 @@
         const product = JSON.parse(element.getAttribute('data-product'));
         
         document.getElementById('pmName').textContent = product.name;
-        document.getElementById('pmHeritageYear').textContent = product.heritage_year || 'Đặc sản truyền thống Đông Anh';
+        document.getElementById('pmHeritageYear').textContent = product.heritage_year || 'Sản phẩm & Hàng hóa chính hãng';
         
-        // OCOP stars
+        // Hide OCOP stars badge container for Business Establishments
         const starsContainer = document.getElementById('pmOcopStarsContainer');
-        const starsDiv = document.getElementById('pmOcopStars');
-        starsDiv.innerHTML = '';
-        if (product.star_rating) {
-            const starsMatch = product.star_rating.match(/\d+/);
-            const starsCount = starsMatch ? parseInt(starsMatch[0]) : 0;
-            if (starsCount > 0) {
-                for (let i = 1; i <= 5; i++) {
-                    const starSpan = document.createElement('span');
-                    starSpan.textContent = '★';
-                    if (i <= starsCount) {
-                        starSpan.style.cssText = 'color: #ffb300; text-shadow: 0 0 10px rgba(255, 179, 0, 0.5);';
-                    } else {
-                        starSpan.style.color = 'var(--border-glow)';
-                    }
-                    starsDiv.appendChild(starSpan);
-                }
-                starsContainer.style.display = 'block';
-            } else {
-                starsContainer.style.display = 'none';
-            }
-        } else {
+        if (starsContainer) {
             starsContainer.style.display = 'none';
         }
 
-        // Story
-        document.getElementById('pmStoryText').textContent = product.story || product.description || 'Chưa cập nhật lịch sử hình thành.';
+        // Story / Description
+        document.getElementById('pmStoryText').textContent = product.story || product.description || 'Chưa cập nhật thông tin mô tả chi tiết cho sản phẩm này.';
         
-        // Artisans
+        // Artisans -> Đơn vị sản xuất / cung cấp
         const artisansTab = document.getElementById('pmTabArtisansBtn');
-        if (product.artisans) {
-            document.getElementById('pmArtisansText').textContent = product.artisans;
+        if (product.artisans || product.seller_name || product.stall_name) {
+            document.getElementById('pmArtisansText').textContent = product.artisans || (`Đơn vị cung cấp: ${product.seller_name || product.stall_name || 'Cơ sở kinh doanh'}`);
             artisansTab.style.display = 'inline-block';
         } else {
             artisansTab.style.display = 'none';
@@ -2896,7 +2876,7 @@
         }
         
         playBtnIcon.textContent = "🔊";
-        statusText.textContent = "Bấm để lắng nghe giọng đọc AI giới thiệu đặc sản";
+        statusText.textContent = "Bấm để lắng nghe giọng đọc AI giới thiệu sản phẩm";
         eq.classList.remove("playing-audio");
 
         if (product.audio_narrative) {
@@ -3093,41 +3073,36 @@
         <!-- Modal Header -->
         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed rgba(212, 175, 55, 0.25); padding: 20px 24px; background: rgba(255,255,255,0.01); z-index: 10;">
             <h3 style="margin: 0; font-size: 1.3rem; font-weight: 800; color: var(--text-main); display: flex; align-items: center; gap: 8px; font-family: var(--font-heading);">
-                🏺 Hồ Sơ Di Sản Đặc Sản: <span id="pmName" style="color: var(--primary);"></span>
+                🛍️ Hồ Sơ Sản Phẩm & Nguồn Gốc Hàng Hóa: <span id="pmName" style="color: var(--primary);"></span>
             </h3>
             <button onclick="closeProductHeritageModal()" style="background: transparent; border: none; font-size: 1.5rem; color: var(--text-muted); cursor: pointer; transition: color 0.2s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text-muted)'">✕</button>
         </div>
         
         <!-- Modal Content (Scrollable) -->
         <div class="heritage-museum-card" style="overflow-y: auto; padding: 24px; flex: 1; position: relative; border-radius: 0; border: none; box-shadow: none; background: transparent; margin-bottom: 0;">
-            <!-- Decorative overlay -->
-            <div class="heritage-pattern-overlay" style="opacity: 0.15;"></div>
-
             <div style="position: relative; z-index: 2; display: flex; flex-direction: column; gap: 24px;">
                 
-                <!-- Subheader: Heritage Year & OCOP Stars -->
+                <!-- Subheader -->
                 <div style="display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 16px;">
                     <div>
                         <p style="font-style: italic; color: var(--primary); font-size: 0.95rem; font-weight: 600; margin: 0; display: flex; align-items: center; gap: 6px;">
-                            🌾 <span id="pmHeritageYear"></span>
+                            🏷️ <span id="pmHeritageYear"></span>
                         </p>
                     </div>
                     <div class="ocop-star-badge" id="pmOcopStarsContainer" style="flex-shrink: 0; display: none;">
-                        <span style="font-weight: 900; font-size: 0.65rem; color: var(--primary); display: block; letter-spacing: 1px;">CHỨNG NHẬN OCOP</span>
-                        <div id="pmOcopStars" style="color: #ffc107; font-size: 1.1rem; margin-top: 2px; display: flex; gap: 2px; justify-content: flex-end;">
-                        </div>
+                        <div id="pmOcopStars" style="display: none;"></div>
                     </div>
                 </div>
 
                 <!-- AI Speech Voice widget -->
                 <div id="pmAudioWidget" class="audio-storyteller-widget glass-panel" style="background: rgba(212, 175, 55, 0.04); border: 1px solid rgba(212, 175, 55, 0.2); padding: 14px 18px; border-radius: 14px; display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap; max-width: 100%; box-sizing: border-box;">
                     <div style="display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0;">
-                        <button id="pmPlayAudioBtn" class="audio-play-btn" aria-label="Play narrative audio" title="Nghe kể câu chuyện di sản" style="outline: none;">
+                        <button id="pmPlayAudioBtn" class="audio-play-btn" aria-label="Play narrative audio" title="Nghe giới thiệu sản phẩm" style="outline: none;">
                             <span class="play-icon" id="pmPlayBtnIcon">🔊</span>
                         </button>
                         <div>
-                            <strong style="color: #ffb300; display: block; font-size: 0.95rem;">🎧 Nghe thuyết minh di sản đặc sản</strong>
-                            <span style="font-size: 0.8rem; color: var(--text-muted);" id="pmAudioStatusText">Bấm để lắng nghe giọng đọc AI giới thiệu đặc sản</span>
+                            <strong style="color: #ffb300; display: block; font-size: 0.95rem;">🎧 Nghe giới thiệu thông tin sản phẩm & xuất xứ</strong>
+                            <span style="font-size: 0.8rem; color: var(--text-muted);" id="pmAudioStatusText">Bấm để lắng nghe giọng đọc AI giới thiệu sản phẩm</span>
                         </div>
                     </div>
                     <!-- Equalizer Visualizer -->
@@ -3144,10 +3119,10 @@
                 <!-- Heritage Tabs Container -->
                 <div class="heritage-tabs-container">
                     <div class="heritage-tab-buttons" style="display: flex; flex-wrap: wrap; gap: 8px;">
-                        <button class="heritage-tab-btn active" id="pmTabStoryBtn" onclick="switchPmTab(this, 'pm-tab-story')">🏛️ Câu Chuyện</button>
-                        <button class="heritage-tab-btn" id="pmTabArtisansBtn" onclick="switchPmTab(this, 'pm-tab-artisans')">👨‍🍳 Nghệ Nhân</button>
-                        <button class="heritage-tab-btn" id="pmTabIngredientsBtn" onclick="switchPmTab(this, 'pm-tab-ingredients')">🌾 Thành Phần</button>
-                        <button class="heritage-tab-btn" id="pmTabTimelineBtn" onclick="switchPmTab(this, 'pm-tab-timeline')">📜 Hành Trình</button>
+                        <button class="heritage-tab-btn active" id="pmTabStoryBtn" onclick="switchPmTab(this, 'pm-tab-story')">📝 Thông Tin & Nguồn Gốc</button>
+                        <button class="heritage-tab-btn" id="pmTabArtisansBtn" onclick="switchPmTab(this, 'pm-tab-artisans')">🏢 Nhà Sản Xuất / Đơn Vị Cung Cấp</button>
+                        <button class="heritage-tab-btn" id="pmTabIngredientsBtn" onclick="switchPmTab(this, 'pm-tab-ingredients')">🔬 Quy Cách & Bảo Quản</button>
+                        <button class="heritage-tab-btn" id="pmTabTimelineBtn" onclick="switchPmTab(this, 'pm-tab-timeline')">📜 Tiêu Chuẩn Kiểm Định</button>
                     </div>
 
                     <!-- Tab Story -->
@@ -3157,13 +3132,13 @@
 
                     <!-- Tab Artisans -->
                     <div id="pm-tab-artisans" class="heritage-tab-content" style="margin-top: 20px; display: none;">
-                        <h4 style="color: var(--primary); font-size: 1.05rem; margin-bottom: 12px; font-weight: 700;">Nghệ Nhân Gìn Giữ & Truyền Nghề</h4>
+                        <h4 style="color: var(--primary); font-size: 1.05rem; margin-bottom: 12px; font-weight: 700;">Thông Tin Đơn Vị Phân Phối & Sản Xuất</h4>
                         <p id="pmArtisansText" style="font-size: 1rem; line-height: 1.7; color: var(--text-main); font-style: italic; background: var(--bg-btn-secondary); padding: 18px; border-radius: 12px; border: 1px dashed var(--border-glow-hover); margin: 0;"></p>
                     </div>
 
                     <!-- Tab Ingredients -->
                     <div id="pm-tab-ingredients" class="heritage-tab-content" style="margin-top: 20px; display: none;">
-                        <h4 style="color: var(--primary); font-size: 1.05rem; margin-bottom: 14px; font-weight: 700;">Nguyên Liệu & Bí Quyết Truyền Thống</h4>
+                        <h4 style="color: var(--primary); font-size: 1.05rem; margin-bottom: 14px; font-weight: 700;">Thành Phần & Quy Cách Đóng Gói</h4>
                         <div id="pmIngredientsGrid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;"></div>
                     </div>
 
@@ -3177,7 +3152,7 @@
                 <div id="pmTriviaWidget" class="trivia-widget glass-panel" style="background: linear-gradient(135deg, rgba(212, 175, 55, 0.08) 0%, rgba(255, 111, 0, 0.03) 100%); border: 1px solid rgba(212, 175, 55, 0.2); padding: 20px; border-radius: 14px; display: flex; gap: 14px; align-items: flex-start;">
                     <span style="font-size: 2rem; filter: drop-shadow(0 0 10px rgba(255,179,0,0.6));">💡</span>
                     <div>
-                        <h4 style="font-size: 1rem; color: var(--primary); font-weight: 700; margin-bottom: 4px;">BẠN CÓ BIẾT?</h4>
+                        <h4 style="font-size: 1rem; color: var(--primary); font-weight: 700; margin-bottom: 4px;">LƯU Ý SỬ DỤNG & BẢO QUẢN</h4>
                         <p id="pmTriviaText" style="font-size: 0.9rem; line-height: 1.6; color: var(--text-main); margin: 0;"></p>
                     </div>
                 </div>
