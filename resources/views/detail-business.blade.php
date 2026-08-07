@@ -1448,7 +1448,7 @@
                 @endif
             </div>
 
-            @if(in_array($categorySlug, ['dong-anh-food-map', 'dong-anh-market']))
+            @if(in_array($categorySlug, ['dong-anh-food-map', 'dong-anh-market', 'co-so-kinh-doanh']))
             <!-- Bridge Text and upgraded Trust Hub Card -->
             <div style="margin-top: 40px; margin-bottom: 20px; padding: 0 10px; display: flex; align-items: flex-start; gap: 12px; background: rgba(32, 178, 170, 0.03); border: 1px dashed rgba(32, 178, 170, 0.2); padding: 16px; border-radius: 12px;">
                 <span style="font-size: 1.5rem; filter: drop-shadow(0 0 5px rgba(32, 178, 170, 0.5));">🛡️</span>
@@ -3120,6 +3120,7 @@
                 <div class="heritage-tabs-container">
                     <div class="heritage-tab-buttons" style="display: flex; flex-wrap: wrap; gap: 8px;">
                         <button class="heritage-tab-btn active" id="pmTabStoryBtn" onclick="switchPmTab(this, 'pm-tab-story')">📝 Thông Tin & Nguồn Gốc</button>
+                        <button class="heritage-tab-btn" id="pmTabCertBtn" onclick="switchPmTab(this, 'pm-tab-cert')">🛡️ Giấy Chứng Nhận VSATTP & Giấy Phép</button>
                         <button class="heritage-tab-btn" id="pmTabArtisansBtn" onclick="switchPmTab(this, 'pm-tab-artisans')">🏢 Nhà Sản Xuất / Đơn Vị Cung Cấp</button>
                         <button class="heritage-tab-btn" id="pmTabIngredientsBtn" onclick="switchPmTab(this, 'pm-tab-ingredients')">🔬 Quy Cách & Bảo Quản</button>
                         <button class="heritage-tab-btn" id="pmTabTimelineBtn" onclick="switchPmTab(this, 'pm-tab-timeline')">📜 Tiêu Chuẩn Kiểm Định</button>
@@ -3128,6 +3129,59 @@
                     <!-- Tab Story -->
                     <div id="pm-tab-story" class="heritage-tab-content active-content" style="margin-top: 20px;">
                         <p id="pmStoryText" style="font-size: 1rem; line-height: 1.7; color: var(--text-main); margin: 0;"></p>
+                    </div>
+
+                    <!-- Tab Cert: Giấy chứng nhận VSATTP & Hồ sơ pháp lý -->
+                    <div id="pm-tab-cert" class="heritage-tab-content" style="margin-top: 20px; display: none;">
+                        <h4 style="color: var(--accent); font-size: 1.05rem; margin-bottom: 14px; font-weight: 700; display: flex; align-items: center; gap: 8px;">
+                            🛡️ Hồ Sơ Giấy Chứng Nhận VSATTP & Đủ Điều Kiện An Toàn
+                        </h4>
+                        @if($eatery->foodSafetyCertificate)
+                            <div style="display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-start; background: rgba(32, 178, 170, 0.03); border: 1px solid rgba(32, 178, 170, 0.2); padding: 18px; border-radius: 16px;">
+                                <div>
+                                    <div class="cert-image-preview" style="position: relative; width: 150px; height: 200px; border-radius: 10px; overflow: hidden; border: 1.5px solid var(--accent); cursor: pointer;" onclick="openTrustLightbox('{{ Str::startsWith($eatery->foodSafetyCertificate->image_path, ['http://', 'https://']) ? $eatery->foodSafetyCertificate->image_path : asset(ltrim($eatery->foodSafetyCertificate->image_path, '/')) }}', 'Giấy chứng nhận VSATTP số {{ $eatery->foodSafetyCertificate->certificate_number }}')">
+                                        <img src="{{ Str::startsWith($eatery->foodSafetyCertificate->image_path, ['http://', 'https://']) ? $eatery->foodSafetyCertificate->image_path : asset(ltrim($eatery->foodSafetyCertificate->image_path, '/')) }}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.onerror=null; this.src='{{ asset('images/ocop-placeholder.png') }}';">
+                                        <div style="position: absolute; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0">
+                                            <span style="font-size: 1.8rem; color: #fff;">🔍</span>
+                                        </div>
+                                    </div>
+                                    <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 8px; text-align: center; max-width: 150px; line-height: 1.3;">
+                                        Nhấp để phóng to Giấy phép
+                                    </div>
+                                </div>
+                                <div style="flex: 1; min-width: 240px;">
+                                    <table style="width: 100%; font-size: 0.9rem; border-collapse: collapse;">
+                                        <tr style="border-bottom: 1px dashed var(--border-glow);">
+                                            <td style="padding: 8px 0; color: var(--text-muted); width: 140px;">Số chứng chỉ:</td>
+                                            <td style="padding: 8px 0; font-weight: 700; color: var(--accent);">{{ $eatery->foodSafetyCertificate->certificate_number }}</td>
+                                        </tr>
+                                        <tr style="border-bottom: 1px dashed var(--border-glow);">
+                                            <td style="padding: 8px 0; color: var(--text-muted);">Cơ quan cấp:</td>
+                                            <td style="padding: 8px 0; font-weight: 600; color: var(--text-main);">{{ $eatery->foodSafetyCertificate->issued_by }}</td>
+                                        </tr>
+                                        <tr style="border-bottom: 1px dashed var(--border-glow);">
+                                            <td style="padding: 8px 0; color: var(--text-muted);">Ngày cấp:</td>
+                                            <td style="padding: 8px 0; font-weight: 600; color: var(--text-main);">{{ $eatery->foodSafetyCertificate->issued_at ? $eatery->foodSafetyCertificate->issued_at->format('d/m/Y') : '' }}</td>
+                                        </tr>
+                                        <tr style="border-bottom: 1px dashed var(--border-glow);">
+                                            <td style="padding: 8px 0; color: var(--text-muted);">Hạn sử dụng:</td>
+                                            <td style="padding: 8px 0; font-weight: 600; color: var(--text-main);">{{ $eatery->foodSafetyCertificate->expired_at ? $eatery->foodSafetyCertificate->expired_at->format('d/m/Y') : '' }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 8px 0; color: var(--text-muted);">Trạng thái xác thực:</td>
+                                            <td style="padding: 8px 0;">
+                                                <span style="color: #2ecc71; font-weight: 800; font-size: 0.8rem; text-transform: uppercase;">🟢 Đã đối chiếu CSDL Xã Đông Anh</span>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        @else
+                            <div style="text-align: center; padding: 30px; background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px dashed var(--border-glow);">
+                                <span style="font-size: 2rem; display: block; margin-bottom: 8px;">🛡️</span>
+                                <p style="margin: 0; font-size: 0.9rem; color: var(--text-muted);">Cơ sở đang hoàn thiện cập nhật bản quét Giấy chứng nhận ATTP / Giấy phép kinh doanh trên hệ thống dữ liệu số Đông Anh.</p>
+                            </div>
+                        @endif
                     </div>
 
                     <!-- Tab Artisans -->
