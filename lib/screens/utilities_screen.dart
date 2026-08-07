@@ -879,7 +879,6 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
     final bool isOcop = product['is_ocop'] == true ||
         product['is_ocop'] == 1 ||
         product['is_ocop'] == '1' ||
-        (product['star_rating'] != null && product['star_rating'].toString().isNotEmpty) ||
         (product['ocop_star'] != null && product['ocop_star'].toString().isNotEmpty) ||
         (product['name'] ?? '').toString().toUpperCase().contains('OCOP') ||
         (product['seller_name'] ?? '').toString().toUpperCase().contains('OCOP') ||

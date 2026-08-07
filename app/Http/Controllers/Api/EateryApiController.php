@@ -1400,7 +1400,7 @@ YÊU CẦU TRẢ VỀ CHỈ LÀ CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU, KHÔNG C
                                 'stall_name'    => $eName,
                                 'seller_name'   => 'Chủ hộ kinh doanh',
                                 'seller_phone'  => $e['phone'] ?? '',
-                                'star_rating'   => !empty($e['rating']) ? round((float)$e['rating'], 1) . ' sao' : '4 sao',
+                                'star_rating'   => $isOcopEatery ? (!empty($e['rating']) ? round((float)$e['rating'], 1) . ' sao' : '4 sao') : null,
                                 'is_ocop'       => $isOcopEatery,
                                 'image_path'    => $e['image_path'] ?? '',
                                 'description'   => mb_substr($desc, 0, 200),
