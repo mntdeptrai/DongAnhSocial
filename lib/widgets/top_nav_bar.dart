@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/api_service.dart';
 import '../widgets/squircle_helper.dart';
 
 class TopNavBar extends StatelessWidget implements PreferredSizeWidget {
@@ -9,6 +10,7 @@ class TopNavBar extends StatelessWidget implements PreferredSizeWidget {
   final VoidCallback? onMessengerTap;
   final VoidCallback? onCartTap;
   final VoidCallback? onMenuTap;
+  final Function(String role)? onRoleDashboardTap;
   final int unreadMessagesCount;
   final int unreadNotifsCount;
   final int cartCount;
@@ -22,6 +24,7 @@ class TopNavBar extends StatelessWidget implements PreferredSizeWidget {
     this.onMessengerTap,
     this.onCartTap,
     this.onMenuTap,
+    this.onRoleDashboardTap,
     this.unreadMessagesCount = 1,
     this.unreadNotifsCount = 2,
     this.cartCount = 0,
@@ -32,6 +35,9 @@ class TopNavBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
+    final user = ApiService.currentUser;
+    final userRole = user?['role'] ?? 'user';
+
     return Container(
       decoration: const BoxDecoration(
         color: Color(0xFFF0FDFA),
@@ -70,7 +76,7 @@ class TopNavBar extends StatelessWidget implements PreferredSizeWidget {
                       child: const Icon(Icons.menu_rounded, color: Color(0xFF0F172A), size: 22),
                     ),
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 8),
 
                   // Brand Title with Vibrant Gradient
                   ShaderMask(
@@ -80,7 +86,7 @@ class TopNavBar extends StatelessWidget implements PreferredSizeWidget {
                     child: const Text(
                       'DongAnh',
                       style: TextStyle(
-                        fontSize: 22,
+                        fontSize: 20,
                         fontWeight: FontWeight.w900,
                         color: Colors.white,
                         letterSpacing: -0.8,
@@ -90,19 +96,25 @@ class TopNavBar extends StatelessWidget implements PreferredSizeWidget {
 
                   const Spacer(),
 
-                  // Clean Non-Redundant Action Buttons (Search, Cart, Messenger)
+                  // Nút chuyển nhanh vào Trang Dashboard Theo Role (Role Dashboard Button)
+                  if (userRole != 'user') ...[
+                    _buildRoleDashboardButton(context, userRole),
+                    const SizedBox(width: 6),
+                  ],
+
+                  // Clean Action Buttons (Search, Cart, Messenger)
                   _buildHeaderActionButton(
                     icon: Icons.search_rounded,
                     onTap: onSearchTap,
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 6),
 
                   _buildHeaderActionButton(
                     icon: Icons.shopping_bag_outlined,
                     badgeCount: cartCount,
                     onTap: onCartTap,
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 6),
 
                   _buildHeaderActionButton(
                     icon: Icons.chat_bubble_outline_rounded,
@@ -264,6 +276,63 @@ class TopNavBar extends StatelessWidget implements PreferredSizeWidget {
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRoleDashboardButton(BuildContext context, String role) {
+    IconData icon = Icons.space_dashboard_rounded;
+    String label = 'Dashboard';
+    Color color = const Color(0xFF0EA5E9);
+
+    if (role == 'seller') {
+      icon = Icons.storefront_rounded;
+      label = 'Gian Hàng';
+      color = const Color(0xFF059669);
+    } else if (role == 'principal') {
+      icon = Icons.school_rounded;
+      label = 'Trường Học';
+      color = const Color(0xFF0284C7);
+    } else if (role == 'manager') {
+      icon = Icons.admin_panel_settings_rounded;
+      label = 'BQL Chợ';
+      color = const Color(0xFF4F46E5);
+    } else if (role == 'admin') {
+      icon = Icons.dashboard_customize_rounded;
+      label = 'Admin';
+      color = const Color(0xFF8B5CF6);
+    }
+
+    return GestureDetector(
+      onTap: () {
+        if (onRoleDashboardTap != null) {
+          onRoleDashboardTap!(role);
+        } else {
+          Scaffold.of(context).openDrawer();
+        }
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+        decoration: SquircleHelper.decoration(
+          radius: 12,
+          color: color.withOpacity(0.12),
+          borderSide: BorderSide(color: color.withOpacity(0.4), width: 1),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 16, color: color),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+                color: color,
+              ),
+            ),
+          ],
         ),
       ),
     );

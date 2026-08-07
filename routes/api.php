@@ -2,206 +2,172 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\EateryApiController;
+use App\Http\Controllers\Api\AuthApiController;
+use App\Http\Controllers\Api\UserApiController;
+use App\Http\Controllers\Api\SellerApiController;
+use App\Http\Controllers\Api\PrincipalApiController;
+use App\Http\Controllers\Api\ManagerApiController;
+use App\Http\Controllers\Api\AdminApiController;
+use App\Http\Controllers\Api\CheckinApiController;
+use App\Http\Controllers\Api\UploadApiController;
+use App\Http\Controllers\GioHangController;
+use App\Http\Controllers\SocialHubController;
 
 /*
 |--------------------------------------------------------------------------
-| API Routes
+| API Routes — Restful Mobile App & Web API System (DongAnhSocial)
 |--------------------------------------------------------------------------
 |
-| Ở đây định nghĩa toàn bộ các API endpoint giao tiếp giữa các phân hệ (Food Map,
-| Stay, Wellness, Market, Education) thông qua EateryApiController.
-|
-| BẢO MẬT:
-|  - Route GET công khai: categories, communes, eateries, videos (chỉ đọc)
-|  - Route ghi (POST/PUT/DELETE): bắt buộc đăng nhập qua session web (auth)
+| Hệ thống API phân chia rõ ràng theo 5 Phân quyền (Role):
+|  1. User (Thành viên / Khách hàng)
+|  2. Seller (Tiểu thương / Chủ gian hàng / OCOP / Ẩm thực)
+|  3. Principal (Hiệu trưởng / Quản lý trường học)
+|  4. Manager (Ban Quản lý Chợ / Quản lý địa phương)
+|  5. Admin (Quản trị viên toàn hệ thống)
 |
 */
 
 Route::prefix('v1')->group(function () {
 
     // -----------------------------------------------------------------------
-    // MOBILE LOCKET APP ROUTES (Xác thực qua Sanctum & Hỗ trợ Khách vãng lai)
+    // 0. AUTHENTICATION & TOKEN MANAGEMENT (Xác thực Mobile Sanctum)
     // -----------------------------------------------------------------------
-    Route::post('/auth/token', [\App\Http\Controllers\Api\AuthApiController::class, 'issueToken']);
-    Route::get('/checkins/feed', [\App\Http\Controllers\Api\CheckinApiController::class, 'getFeed']);
-    Route::post('/checkins', [\App\Http\Controllers\Api\CheckinApiController::class, 'storeCheckin']);
-    Route::post('/checkins/comments', [\App\Http\Controllers\Api\CheckinApiController::class, 'storeComment']);
-    Route::post('/checkins/{id}/react', [\App\Http\Controllers\Api\CheckinApiController::class, 'reactToCheckin']);
-
-    // Synchronized Cart API endpoints for Mobile App & Web
-    Route::get('/cart', [\App\Http\Controllers\GioHangController::class, 'index']);
-    Route::post('/cart/add', [\App\Http\Controllers\GioHangController::class, 'store']);
-    Route::put('/cart/update/{id}', [\App\Http\Controllers\GioHangController::class, 'update']);
-    Route::delete('/cart/remove/{id}', [\App\Http\Controllers\GioHangController::class, 'destroy']);
-    Route::post('/cart/clear', [\App\Http\Controllers\GioHangController::class, 'clear']);
+    Route::post('/auth/token', [AuthApiController::class, 'issueToken']);
+    Route::post('/auth/login', [AuthApiController::class, 'apiLogin'])->middleware('throttle:10,1');
+    Route::post('/auth/register', [AuthApiController::class, 'apiRegister'])->middleware('throttle:5,1');
 
     // -----------------------------------------------------------------------
-    // FLEXIBLE / MULTI-PROTOCOL API ENDPOINTS
-    // -----------------------------------------------------------------------
-    // 1. GraphQL API (Flexible query endpoint)
-    Route::post('/graphql', [\App\Http\Controllers\Api\GraphQLApiController::class, 'query']);
-
-    // 2. JSON-RPC 2.0 API (Action-oriented / Batch calls)
-    Route::post('/rpc', [\App\Http\Controllers\Api\RpcApiController::class, 'handle']);
-
-    // 3. Server-Sent Events (SSE - One-way real-time events)
-    Route::get('/stream/events', [\App\Http\Controllers\Api\SseApiController::class, 'streamEvents']);
-
-    // 4. Streaming API (Chunked progressive response for AI)
-    Route::post('/stream/ai/generate-tour', [\App\Http\Controllers\Api\StreamApiController::class, 'streamAiTour']);
-
-    // 5 & 6. Webhooks (Event-driven third-party callbacks)
-    Route::post('/webhooks/payment', [\App\Http\Controllers\Api\WebhookApiController::class, 'handlePayment']);
-    Route::post('/webhooks/sync-stall', [\App\Http\Controllers\Api\WebhookApiController::class, 'syncStall']);
-
-    Route::middleware('auth:sanctum')->group(function () {
-        Route::post('/auth/token/revoke', [\App\Http\Controllers\Api\AuthApiController::class, 'revokeToken']);
-        
-        // FCM Token update
-        Route::post('/user/fcm-token', [\App\Http\Controllers\SocialHubController::class, 'updateFcmToken']);
-
-        // Chat routes for mobile
-        Route::get('/friends', [\App\Http\Controllers\SocialHubController::class, 'getFriends']);
-        Route::get('/messages/{friendId}', [\App\Http\Controllers\SocialHubController::class, 'getMessages']);
-        Route::post('/messages', [\App\Http\Controllers\SocialHubController::class, 'sendMessage']);
-        
-        // Unread check for native background polling
-        Route::get('/social/unread-check', [\App\Http\Controllers\SocialHubController::class, 'checkUnread']);
-        
-        // Checkin history for mobile
-        Route::get('/checkins/my', [\App\Http\Controllers\Api\CheckinApiController::class, 'getMyCheckins']);
-
-        // Admin Management APIs (Đầy đủ 100% chức năng như Web Admin)
-        Route::get('/admin/users', [\App\Http\Controllers\Api\AdminApiController::class, 'getAdminUsers']);
-        Route::post('/admin/users', [\App\Http\Controllers\Api\AdminApiController::class, 'storeUser']);
-        Route::delete('/admin/users/{id}', [\App\Http\Controllers\Api\AdminApiController::class, 'deleteUser']);
-        Route::post('/admin/users/{id}/role', [\App\Http\Controllers\Api\AdminApiController::class, 'updateUserRole']);
-
-        Route::get('/admin/dashboard', [\App\Http\Controllers\Api\AdminApiController::class, 'getAdminDashboardData']);
-        Route::post('/admin/eateries', [\App\Http\Controllers\Api\AdminApiController::class, 'storeEatery']);
-        Route::put('/admin/eateries/{id}', [\App\Http\Controllers\Api\AdminApiController::class, 'updateEatery']);
-        Route::post('/admin/eateries/{id}/toggle-featured', [\App\Http\Controllers\Api\AdminApiController::class, 'toggleEateryFeatured']);
-        Route::delete('/admin/eateries/{id}', [\App\Http\Controllers\Api\AdminApiController::class, 'deleteEatery']);
-
-        Route::delete('/admin/reviews/{id}', [\App\Http\Controllers\Api\AdminApiController::class, 'deleteReview']);
-        Route::post('/admin/categories', [\App\Http\Controllers\Api\AdminApiController::class, 'storeCategory']);
-    });
-
-    // -----------------------------------------------------------------------
-    // PUBLIC ROUTES — Không cần đăng nhập (chỉ đọc dữ liệu)
+    // 1. PUBLIC DATA ROUTES (Danh mục, Địa điểm, Food Tours, Videos Reels)
     // -----------------------------------------------------------------------
     Route::get('/categories', [EateryApiController::class, 'getCategories']);
     Route::get('/communes', [EateryApiController::class, 'getCommunes']);
     Route::get('/market-products', [EateryApiController::class, 'getMarketProducts']);
     Route::get('/notifications', [EateryApiController::class, 'getAppNotifications']);
-    Route::get('/seller/profile', [\App\Http\Controllers\Api\SellerApiController::class, 'getSellerProfile']);
-    Route::post('/seller/profile', [\App\Http\Controllers\Api\SellerApiController::class, 'updateSellerProfile']);
-    Route::get('/seller/orders', [\App\Http\Controllers\Api\SellerApiController::class, 'getSellerOrders']);
-    Route::get('/seller/dashboard-data', [\App\Http\Controllers\Api\SellerApiController::class, 'getSellerDashboardData']);
-    Route::post('/seller/dishes', [\App\Http\Controllers\Api\SellerApiController::class, 'storeDish']);
-    Route::delete('/seller/dishes/{id}', [\App\Http\Controllers\Api\SellerApiController::class, 'deleteDish']);
-    Route::post('/seller/orders/{id}/status', [\App\Http\Controllers\Api\SellerApiController::class, 'updateOrderStatus']);
-
-    Route::get('/manager/dashboard-data', [\App\Http\Controllers\Api\ManagerApiController::class, 'getManagerDashboardData']);
-    Route::post('/manager/bulletins', [\App\Http\Controllers\Api\ManagerApiController::class, 'storeManagerBulletin']);
-    Route::post('/manager/stalls/{id}/status', [\App\Http\Controllers\Api\ManagerApiController::class, 'updateStallStatus']);
-
-    // Videos Reels đặc sản (xem công khai)
+    Route::get('/newsfeed', [EateryApiController::class, 'getNewsfeed']);
+    Route::get('/exp-corner', [EateryApiController::class, 'getExpCorner']);
+    Route::post('/posts', [EateryApiController::class, 'storePost']);
     Route::get('/videos', [EateryApiController::class, 'getVideos']);
     Route::post('/videos/{id}/like', [EateryApiController::class, 'likeVideo'])->middleware('throttle:30,1');
 
-    // Đọc dữ liệu địa điểm theo danh mục
-    Route::get('/{category}/eateries', [EateryApiController::class, 'index']);
-    Route::get('/{category}/eateries/{slug}', [EateryApiController::class, 'show']);
-
-    // Food Tours (xem công khai)
     Route::get('/food-tours', [EateryApiController::class, 'getFoodTours']);
     Route::get('/food-tours/{slug}', [EateryApiController::class, 'getFoodTour']);
 
-    // Auth API
-    Route::post('/auth/login', [\App\Http\Controllers\Api\AuthApiController::class, 'apiLogin'])->middleware('throttle:10,1');
-    Route::post('/auth/register', [\App\Http\Controllers\Api\AuthApiController::class, 'apiRegister'])->middleware('throttle:5,1');
+    Route::get('/{category}/eateries', [EateryApiController::class, 'index']);
+    Route::get('/{category}/eateries/{slug}', [EateryApiController::class, 'show']);
+
+    // Checkins Feed (Xem công khai & Đăng checkin)
+    Route::get('/checkins/feed', [CheckinApiController::class, 'getFeed']);
+    Route::post('/checkins', [CheckinApiController::class, 'storeCheckin']);
+    Route::post('/checkins/comments', [CheckinApiController::class, 'storeComment']);
+    Route::post('/checkins/{id}/react', [CheckinApiController::class, 'reactToCheckin']);
+
+    // Cart API (Giỏ hàng đồng bộ Web & App Mobile)
+    Route::get('/cart', [GioHangController::class, 'index']);
+    Route::post('/cart/add', [GioHangController::class, 'store']);
+    Route::put('/cart/update/{id}', [GioHangController::class, 'update']);
+    Route::delete('/cart/remove/{id}', [GioHangController::class, 'destroy']);
+    Route::post('/cart/clear', [GioHangController::class, 'clear']);
+
+    // Protocols bổ trợ (GraphQL, RPC, SSE, Stream, Webhooks)
+    Route::post('/graphql', [\App\Http\Controllers\Api\GraphQLApiController::class, 'query']);
+    Route::post('/rpc', [\App\Http\Controllers\Api\RpcApiController::class, 'handle']);
+    Route::get('/stream/events', [\App\Http\Controllers\Api\SseApiController::class, 'streamEvents']);
+    Route::post('/stream/ai/generate-tour', [\App\Http\Controllers\Api\StreamApiController::class, 'streamAiTour']);
+    Route::post('/webhooks/payment', [\App\Http\Controllers\Api\WebhookApiController::class, 'handlePayment']);
+    Route::post('/webhooks/sync-stall', [\App\Http\Controllers\Api\WebhookApiController::class, 'syncStall']);
 
     // -----------------------------------------------------------------------
-    // PROTECTED ROUTES — Bắt buộc đăng nhập (auth web session)
+    // PROTECTED ROUTES — YÊU CẦU XÁC THỰC (Sanctum Token hoặc Web Session)
     // -----------------------------------------------------------------------
+    Route::middleware(['auth:sanctum'])->group(function () {
+
+        Route::post('/auth/token/revoke', [AuthApiController::class, 'revokeToken']);
+        Route::post('/upload', [UploadApiController::class, 'upload'])->middleware('throttle:uploads');
+        Route::post('/upload-chunk', [UploadApiController::class, 'uploadChunk'])->middleware('throttle:uploads');
+
+        // FCM Notification
+        Route::post('/user/fcm-token', [SocialHubController::class, 'updateFcmToken']);
+
+        // Chat & Social
+        Route::get('/friends', [SocialHubController::class, 'getFriends']);
+        Route::get('/messages/{friendId}', [SocialHubController::class, 'getMessages']);
+        Route::post('/messages', [SocialHubController::class, 'sendMessage']);
+        Route::get('/social/unread-check', [SocialHubController::class, 'checkUnread']);
+
+        // ===================================================================
+        // 👤 ROLE 1: USER API (Thành Viên / Khách Hàng)
+        // ===================================================================
+        Route::prefix('user')->group(function () {
+            Route::get('/profile', [UserApiController::class, 'getProfile']);
+            Route::put('/profile', [UserApiController::class, 'updateProfile']);
+            Route::post('/change-password', [UserApiController::class, 'changePassword']);
+            Route::get('/orders', [UserApiController::class, 'getMyOrders']);
+            Route::get('/orders/{id}', [UserApiController::class, 'getOrderDetail']);
+            Route::get('/checkins', [UserApiController::class, 'getMyCheckins']);
+        });
+
+        // ===================================================================
+        // 🏪 ROLE 2: SELLER API (Tiểu Thương / Chủ Gian Hàng / OCOP / Ẩm Thực)
+        // ===================================================================
+        Route::prefix('seller')->group(function () {
+            Route::get('/dashboard-data', [SellerApiController::class, 'getSellerDashboardData']);
+            Route::get('/profile', [SellerApiController::class, 'getSellerProfile']);
+            Route::post('/profile', [SellerApiController::class, 'updateSellerProfile']);
+            Route::get('/orders', [SellerApiController::class, 'getSellerOrders']);
+            Route::post('/orders/{id}/status', [SellerApiController::class, 'updateOrderStatus']);
+            Route::post('/dishes', [SellerApiController::class, 'storeDish']);
+            Route::put('/dishes/{id}', [SellerApiController::class, 'updateDish']);
+            Route::delete('/dishes/{id}', [SellerApiController::class, 'deleteDish']);
+        });
+
+        // ===================================================================
+        // 🏫 ROLE 3: PRINCIPAL API (Hiệu Trưởng / Quản Lý Trường Học)
+        // ===================================================================
+        Route::prefix('principal')->group(function () {
+            Route::get('/dashboard-data', [PrincipalApiController::class, 'getPrincipalDashboardData']);
+            Route::get('/posts', [PrincipalApiController::class, 'getSchoolPosts']);
+            Route::post('/posts', [PrincipalApiController::class, 'storeSchoolPost']);
+            Route::delete('/posts/{id}', [PrincipalApiController::class, 'deleteSchoolPost']);
+            Route::post('/education-programs', [PrincipalApiController::class, 'storeEducationProgram']);
+            Route::delete('/education-programs/{id}', [PrincipalApiController::class, 'deleteEducationProgram']);
+        });
+
+        // ===================================================================
+        // 🏛️ ROLE 4: MANAGER API (Ban Quản Lý Chợ / Quản Lý Địa Phương)
+        // ===================================================================
+        Route::prefix('manager')->group(function () {
+            Route::get('/dashboard-data', [ManagerApiController::class, 'getManagerDashboardData']);
+            Route::post('/bulletins', [ManagerApiController::class, 'storeManagerBulletin']);
+            Route::post('/stalls/{id}/status', [ManagerApiController::class, 'updateStallStatus']);
+            Route::post('/stalls/{id}/attp-check', [ManagerApiController::class, 'attpCheck']);
+        });
+
+        // ===================================================================
+        // ⚡ ROLE 5: ADMIN API (Quản Trị Viên Toàn Hệ Thống)
+        // ===================================================================
+        Route::prefix('admin')->group(function () {
+            Route::get('/dashboard', [AdminApiController::class, 'getAdminDashboardData']);
+            Route::get('/users', [AdminApiController::class, 'getAdminUsers']);
+            Route::post('/users', [AdminApiController::class, 'storeUser']);
+            Route::put('/users/{id}', [AdminApiController::class, 'updateUserWeb']);
+            Route::delete('/users/{id}', [AdminApiController::class, 'deleteUser']);
+            Route::post('/users/{id}/role', [AdminApiController::class, 'updateUserRole']);
+            Route::post('/users/{id}/toggle-status', [AdminApiController::class, 'toggleUserStatus']);
+
+            Route::post('/eateries', [AdminApiController::class, 'storeEatery']);
+            Route::put('/eateries/{id}', [AdminApiController::class, 'updateEatery']);
+            Route::post('/eateries/{id}/toggle-featured', [AdminApiController::class, 'toggleEateryFeatured']);
+            Route::delete('/eateries/{id}', [AdminApiController::class, 'deleteEatery']);
+
+            Route::post('/categories', [AdminApiController::class, 'storeCategory']);
+            Route::delete('/reviews/{id}', [AdminApiController::class, 'deleteReview']);
+        });
+    });
+
+    // Backwards compatibility public/session endpoints
     Route::middleware(['auth'])->group(function () {
-
-        // Tải lên tệp đa phương tiện (Tải lên nhiều ảnh/video tối đa 500MB)
-        Route::post('/upload', [\App\Http\Controllers\Api\UploadApiController::class, 'upload'])->middleware('throttle:uploads');
-        Route::post('/upload-chunk', [\App\Http\Controllers\Api\UploadApiController::class, 'uploadChunk'])->middleware('throttle:uploads');
-
-        // Logout
-        Route::post('/auth/logout', [\App\Http\Controllers\Api\AuthApiController::class, 'apiLogout']);
-
-        // CRUD Eateries / Địa điểm (chỉ admin/seller)
-        Route::post('/{category}/eateries', [EateryApiController::class, 'store']);
-        Route::put('/{category}/eateries/{id}', [EateryApiController::class, 'update']);
-        Route::delete('/{category}/eateries/{id}', [EateryApiController::class, 'destroy']);
-
-        // Reviews & Đánh giá
-        Route::post('/{category}/eateries/{id}/reviews', [EateryApiController::class, 'storeReview']);
-        Route::delete('/reviews/{id}', [EateryApiController::class, 'destroyReview']);
-        Route::post('/reviews/{id}/reply', [EateryApiController::class, 'replyReview']);
-
-        // CRUD Dishes (Thực đơn / Món ăn)
-        Route::post('/dishes', [EateryApiController::class, 'storeDish']);
-        Route::put('/dishes/{id}', [EateryApiController::class, 'updateDish']);
-        Route::post('/dishes/{id}/toggle-signature', [EateryApiController::class, 'toggleSignatureDish']);
-        Route::delete('/dishes/{id}', [EateryApiController::class, 'destroyDish']);
-
-        // Video management (Admin/Seller)
-        Route::post('/videos', [EateryApiController::class, 'storeVideo']);
-        Route::put('/videos/{id}', [EateryApiController::class, 'updateVideo']);
-        Route::delete('/videos/{id}', [EateryApiController::class, 'destroyVideo']);
-        Route::post('/videos/{id}/approve', [EateryApiController::class, 'approveVideo']);
-        Route::post('/videos/{id}/reject', [EateryApiController::class, 'rejectVideo']);
-
-        // Trust Hub Management (Certificates, contracts, invoices, logs)
-        Route::post('/trust/certificate', [EateryApiController::class, 'storeFoodSafetyCertificate']);
-        Route::post('/trust/logs', [EateryApiController::class, 'storeDailyFoodLog']);
-        Route::delete('/trust/logs/{id}', [EateryApiController::class, 'destroyDailyFoodLog']);
-        Route::post('/trust/contracts', [EateryApiController::class, 'storeFoodSupplyContract']);
-        Route::delete('/trust/contracts/{id}', [EateryApiController::class, 'destroyFoodSupplyContract']);
-        Route::post('/trust/invoices', [EateryApiController::class, 'storePurchaseInvoice']);
-        Route::delete('/trust/invoices/{id}', [EateryApiController::class, 'destroyPurchaseInvoice']);
-
-        // CRUD Rooms (Stay - Phòng nghỉ)
-        Route::post('/rooms', [EateryApiController::class, 'storeRoom']);
-        Route::put('/rooms/{id}', [EateryApiController::class, 'updateRoom']);
-        Route::delete('/rooms/{id}', [EateryApiController::class, 'destroyRoom']);
-
-        // CRUD Wellness Services (Wellness - Dịch vụ sức khỏe)
-        Route::post('/wellness-services', [EateryApiController::class, 'storeWellnessService']);
-        Route::put('/wellness-services/{id}', [EateryApiController::class, 'updateWellnessService']);
-        Route::delete('/wellness-services/{id}', [EateryApiController::class, 'destroyWellnessService']);
-
-        // CRUD OCOP Products (Market - Sản phẩm OCOP)
-        Route::post('/ocop-products', [EateryApiController::class, 'storeOcopProduct']);
-        Route::put('/ocop-products/{id}', [EateryApiController::class, 'updateOcopProduct']);
-        Route::delete('/ocop-products/{id}', [EateryApiController::class, 'destroyOcopProduct']);
-
-        // CRUD Education Programs (Education - Chương trình đào tạo)
-        Route::post('/education-programs', [EateryApiController::class, 'storeEducationProgram']);
-        Route::put('/education-programs/{id}', [EateryApiController::class, 'updateEducationProgram']);
-        Route::delete('/education-programs/{id}', [EateryApiController::class, 'destroyEducationProgram']);
-
-        // CRUD Cultural Activities (Heritage/Culture - Hoạt động văn hóa)
-        Route::post('/cultural-activities', [EateryApiController::class, 'storeCulturalActivity']);
-        Route::put('/cultural-activities/{id}', [EateryApiController::class, 'updateCulturalActivity']);
-        Route::delete('/cultural-activities/{id}', [EateryApiController::class, 'destroyCulturalActivity']);
-
-        // Food Tour AI & Diary (cần đăng nhập)
+        Route::post('/auth/logout', [AuthApiController::class, 'apiLogout']);
         Route::post('/food-tours/generate-ai', [EateryApiController::class, 'generateAITour']);
         Route::post('/food-tours/{id}/diary', [EateryApiController::class, 'storeFoodTourDiary']);
-
-        // User Management — Chỉ Admin được thực hiện
-        Route::middleware(['role:admin'])->group(function () {
-            Route::get('/users', [\App\Http\Controllers\Api\AdminApiController::class, 'getUsers']);
-            Route::post('/users', [\App\Http\Controllers\Api\AdminApiController::class, 'storeUserWeb']);
-            Route::put('/users/{id}', [\App\Http\Controllers\Api\AdminApiController::class, 'updateUserWeb']);
-            Route::delete('/users/{id}', [\App\Http\Controllers\Api\AdminApiController::class, 'destroyUser']);
-            Route::post('/users/{id}/toggle-status', [\App\Http\Controllers\Api\AdminApiController::class, 'toggleUserStatus']);
-        });
     });
 });

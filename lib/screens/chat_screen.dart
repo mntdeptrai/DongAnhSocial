@@ -170,10 +170,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                           CircleAvatar(
                             radius: 24,
                             backgroundColor: primaryColor.withValues(alpha: 0.1),
-                            child: Text(
-                              friend['avatar'] ?? (friend['name']?[0] ?? '👤'),
-                              style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold, fontSize: 18),
-                            ),
+                            backgroundImage: NetworkImage(ApiService.getAvatarUrl(friend, friend['name'])),
                           ),
                           Positioned(
                             bottom: 0,

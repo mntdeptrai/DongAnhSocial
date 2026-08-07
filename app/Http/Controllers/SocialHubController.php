@@ -635,15 +635,26 @@ class SocialHubController extends Controller
 
         $friends = User::whereIn('id', $friendIds)->get();
 
-        $recentChats = $friends->map(function($friend) use ($user) {
-            // Lấy tin nhắn mới nhất giữa $user và $friend
-            $latestMessage = Message::where(function($q) use ($user, $friend) {
-                $q->where('sender_id', $user->id)->where('receiver_id', $friend->id);
-            })->orWhere(function($q) use ($user, $friend) {
-                $q->where('sender_id', $friend->id)->where('receiver_id', $user->id);
-            })
-            ->orderBy('created_at', 'desc')
-            ->first();
+        $latestMessagesMap = collect();
+        if ($friendIds->isNotEmpty()) {
+            $latestMessagesMap = Message::where(function($q) use ($user, $friendIds) {
+                    $q->where('sender_id', $user->id)->whereIn('receiver_id', $friendIds);
+                })->orWhere(function($q) use ($user, $friendIds) {
+                    $q->whereIn('sender_id', $friendIds)->where('receiver_id', $user->id);
+                })
+                ->orderBy('created_at', 'desc')
+                ->get()
+                ->groupBy(function($msg) use ($user) {
+                    return $msg->sender_id == $user->id ? $msg->receiver_id : $msg->sender_id;
+                })
+                ->map(function($messages) {
+                    return $messages->first();
+                });
+        }
+
+        $recentChats = $friends->map(function($friend) use ($user, $latestMessagesMap) {
+            // Lấy tin nhắn mới nhất đã batch load sẵn
+            $latestMessage = $latestMessagesMap->get($friend->id);
 
             // Xây dựng avatar URL nếu là ảnh R2
             $avatarUrl = null;

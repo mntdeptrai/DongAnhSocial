@@ -48,6 +48,22 @@ class GioHangController extends Controller
     {
         $cart->load('items');
 
+        $dishIds = $cart->items->pluck('dish_id')->filter()->unique()->toArray();
+        $ocopIds = $cart->items->pluck('ocop_product_id')->filter()->unique()->toArray();
+
+        $dishes = !empty($dishIds) ? Dish::on('mysql')->with('eatery')->whereIn('id', $dishIds)->get()->keyBy('id') : collect();
+        $ocopProducts = !empty($ocopIds) ? OcopProduct::on('mysql_market')->with('eatery')->whereIn('id', $ocopIds)->get()->keyBy('id') : collect();
+
+        foreach ($cart->items as $item) {
+            $product = null;
+            if ($item->dish_id) {
+                $product = $dishes->get($item->dish_id);
+            } elseif ($item->ocop_product_id) {
+                $product = $ocopProducts->get($item->ocop_product_id);
+            }
+            $item->setRelation('product', $product);
+        }
+
         $foodColors = ['#FF6B6B','#FF8E53','#FFA726','#66BB6A','#26C6DA','#42A5F5','#AB47BC','#EF5350'];
         $foodEmojis = ['🍜','🍲','🥘','🍛','🥗','🍤','🥩','🍱','🍝','🍣'];
 

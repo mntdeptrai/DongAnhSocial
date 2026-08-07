@@ -59,10 +59,13 @@ class AuthApiController extends Controller
                 'success' => true,
                 'token'   => $token,
                 'user'    => [
-                    'id'    => $user->id,
-                    'name'  => $user->name,
-                    'email' => $user->email,
-                    'role'  => $user->role,
+                    'id'       => $user->id,
+                    'name'     => $user->name,
+                    'username' => $user->username,
+                    'email'    => $user->email,
+                    'phone'    => $user->phone,
+                    'role'     => $user->role,
+                    'avatar'   => $user->avatar,
                 ]
             ]);
         } catch (\Throwable $e) {

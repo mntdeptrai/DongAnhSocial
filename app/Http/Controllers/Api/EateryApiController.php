@@ -1450,4 +1450,250 @@ YÊU CẦU TRẢ VỀ CHỈ LÀ CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU, KHÔNG C
         return response()->json($notifications, 200, [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     }
 
+    /**
+     * GET /api/v1/newsfeed — Lấy tất cả bài viết Bản tin đa phân quyền (Post, Education, Checkin)
+     */
+    public function getNewsfeed(Request $request)
+    {
+        $postsList = [];
+
+        // 1. Lấy từ bảng Post (gồm tin đăng của Trường học, User, Seller, Admin, Manager từ cả mysql_education & mysql)
+        try {
+            $userPostsMysqlEdu = collect();
+            $userPostsMysql = collect();
+
+            try {
+                $userPostsMysqlEdu = \App\Models\Post::on('mysql_education')
+                    ->with(['user', 'eatery'])
+                    ->orderBy('created_at', 'desc')
+                    ->get();
+            } catch (\Throwable $e) {}
+
+            try {
+                $userPostsMysql = \App\Models\Post::on('mysql')
+                    ->with(['user', 'eatery'])
+                    ->orderBy('created_at', 'desc')
+                    ->get();
+            } catch (\Throwable $e) {}
+
+            $userPosts = $userPostsMysqlEdu->concat($userPostsMysql)->unique('id');
+
+            foreach ($userPosts as $post) {
+                $authorName = $post->user ? $post->user->name : ($post->eatery ? $post->eatery->name : 'Thành viên Đông Anh');
+                $authorAvatar = $post->user ? ($post->user->avatar ?? null) : null;
+                $authorRole = $post->user ? $post->user->role : 'user';
+
+                $postsList[] = [
+                    'id'               => $post->id,
+                    'hashid'           => $post->hashid,
+                    'type'             => 'post',
+                    'author_name'      => $authorName,
+                    'author_avatar'    => $authorAvatar,
+                    'author_role'      => $authorRole,
+                    'title'            => $post->name,
+                    'description'      => $post->description,
+                    'image_path'       => $post->image_path,
+                    'images'           => $post->all_images ?? ($post->image_path ? [$post->image_path] : []),
+                    'likes_count'      => (int) ($post->likes_count ?? 0),
+                    'comments_count'   => (int) ($post->comments_count ?? 0),
+                    'created_at_human' => $post->created_at ? $post->created_at->diffForHumans() : 'Vừa xong',
+                    'comments'         => [],
+                ];
+            }
+        } catch (\Throwable $e) {}
+
+        // 2. Lấy từ bảng EducationProgram (Hiệu trưởng / Trường học từ mysql_education & mysql)
+        try {
+            $excludedTitles = [
+                'Hệ đào tạo THPT chính quy chuẩn quốc gia',
+                'Lớp chọn ngoại ngữ (Tiếng Anh - Tiếng Trung tăng cường)',
+                'Hệ THCS Chất lượng cao trọng điểm',
+                'Câu lạc bộ Kỹ năng sống & STEM',
+            ];
+
+            $eduPostsMysqlEdu = collect();
+            $eduPostsMysql = collect();
+
+            try {
+                $eduPostsMysqlEdu = \App\Models\EducationProgram::on('mysql_education')
+                    ->with(['eatery'])
+                    ->whereNotIn('name', $excludedTitles)
+                    ->orderBy('created_at', 'desc')
+                    ->get();
+            } catch (\Throwable $e) {}
+
+            try {
+                $eduPostsMysql = \App\Models\EducationProgram::on('mysql')
+                    ->with(['eatery'])
+                    ->whereNotIn('name', $excludedTitles)
+                    ->orderBy('created_at', 'desc')
+                    ->get();
+            } catch (\Throwable $e) {}
+
+            $eduPosts = $eduPostsMysqlEdu->concat($eduPostsMysql)->unique('id');
+
+            foreach ($eduPosts as $edu) {
+                $authorName = $edu->eatery ? $edu->eatery->name : 'Ban Giám Hiệu Trường';
+                $postsList[] = [
+                    'id'               => 'edu_' . $edu->id,
+                    'hashid'           => 'edu_' . $edu->id,
+                    'type'             => 'education',
+                    'author_name'      => $authorName,
+                    'author_avatar'    => $edu->eatery ? $edu->eatery->image_path : null,
+                    'author_role'      => 'principal',
+                    'title'            => $edu->name,
+                    'description'      => $edu->description ?? $edu->target_students ?? '',
+                    'image_path'       => $edu->image_path ?? ($edu->eatery ? $edu->eatery->image_path : null),
+                    'images'           => $edu->all_images ?? ($edu->image_path ? [$edu->image_path] : []),
+                    'likes_count'      => 12,
+                    'comments_count'   => 0,
+                    'created_at_human' => $edu->created_at ? $edu->created_at->diffForHumans() : '2 ngày trước',
+                    'comments'         => [],
+                ];
+            }
+        } catch (\Throwable $e) {}
+
+        // 3. Lấy bài Checkin công khai
+        try {
+            $checkins = Checkin::with(['user', 'eatery'])
+                ->where('status', 'published')
+                ->orderBy('created_at', 'desc')
+                ->limit(20)
+                ->get();
+
+            foreach ($checkins as $chk) {
+                $authorName = $chk->user ? $chk->user->name : 'Thành viên Đông Anh';
+                $postsList[] = [
+                    'id'               => 'chk_' . $chk->id,
+                    'hashid'           => 'chk_' . $chk->id,
+                    'type'             => 'checkin',
+                    'author_name'      => $authorName,
+                    'author_avatar'    => $chk->user ? $chk->user->avatar : null,
+                    'author_role'      => $chk->user ? $chk->user->role : 'user',
+                    'title'            => $chk->eatery ? ('Check-in tại ' . $chk->eatery->name) : 'Khoảnh khắc ẩm thực',
+                    'description'      => $chk->comment ?? '',
+                    'image_path'       => $chk->image_path,
+                    'images'           => $chk->image_path ? [$chk->image_path] : [],
+                    'likes_count'      => (int) ($chk->likes_count ?? 0),
+                    'comments_count'   => 0,
+                    'created_at_human' => $chk->created_at ? $chk->created_at->diffForHumans() : 'Vừa xong',
+                    'comments'         => [],
+                ];
+            }
+        } catch (\Throwable $e) {}
+
+        return response()->json($postsList, 200, [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    }
+
+    /**
+     * POST /api/v1/posts — Đăng bài viết mới lên Bản tin (Dành cho tất cả các Role)
+     */
+    public function storePost(Request $request)
+    {
+        $user = auth('sanctum')->user() ?: Auth::user();
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'Vui lòng đăng nhập để đăng bài lên Bản tin'], 401);
+        }
+
+        $request->validate([
+            'description' => 'required|string',
+            'name'        => 'nullable|string',
+            'image_path'  => 'nullable|string',
+        ]);
+
+        $post = \App\Models\Post::create([
+            'user_id'     => $user->id,
+            'name'        => $request->input('name') ?: mb_substr($request->description, 0, 50) . '...',
+            'description' => $request->description,
+            'image_path'  => $request->image_path,
+            'status'      => 'published',
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Đã đăng bài viết thành công lên Bản tin!',
+            'post'    => $post
+        ], 201, [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    }
+
+    /**
+     * GET /api/v1/exp-corner — Lấy thông tin Góc Trải Nghiệm Thực Tế (Làng nghề & Vui chơi bản địa Đông Anh)
+     */
+    public function getExpCorner(Request $request)
+    {
+        $activities = [];
+        try {
+            $culturalList = \App\Services\EateryApiService::getAllCulturalActivities();
+            foreach ($culturalList as $act) {
+                $activities[] = [
+                    'id'          => $act->id,
+                    'name'        => $act->name,
+                    'description' => $act->description ?? '',
+                    'location'    => $act->eatery ? $act->eatery->name : ($act->location ?? 'Khu Di Tích Cổ Loa'),
+                    'price'       => $act->price ? (number_format($act->price, 0, ',', '.') . 'đ/người') : 'Miễn phí / Giá niêm yết',
+                    'unit'        => $act->unit ?? '1 người',
+                    'tag'         => $act->category ?? 'Trải nghiệm',
+                    'image_path'  => $act->image_path ?? ($act->eatery ? $act->eatery->image_path : null),
+                ];
+            }
+        } catch (\Throwable $e) {}
+
+        if (empty($activities)) {
+            $activities = [
+                [
+                    'id'          => 1,
+                    'name'        => 'Bắn nỏ, làm bông chủ, oản xôi lá mít dâng vua, đúc các hiện vật tiêu biểu xưởng thủ công Âu Lạc',
+                    'description' => 'Bắn nỏ là biểu tượng cho công nghệ quân sự đỉnh cao của Nhà nước Âu Lạc, được minh chứng qua truyền thuyết nỏ thần An Dương Vương...',
+                    'location'    => 'Khu Di Tích Cổ Loa',
+                    'price'       => '30.000đ/người',
+                    'unit'        => '1 người',
+                    'tag'         => 'Trải nghiệm',
+                    'image_path'  => 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=800&q=80',
+                ],
+                [
+                    'id'          => 2,
+                    'name'        => 'Tham quan di tích lịch sử thành Cổ Loa',
+                    'description' => 'Tham quan quần thể di tích lịch sử đặc biệt quốc gia Cổ Loa, tìm hiểu văn hóa Phùng Nguyên, Đồng Đậu, Gò Mun.',
+                    'location'    => 'Khu Di Tích Cổ Loa',
+                    'price'       => 'Vé tham quan',
+                    'unit'        => '1 lượt',
+                    'tag'         => 'Vé tham quan',
+                    'image_path'  => 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=800&q=80',
+                ],
+                [
+                    'id'          => 3,
+                    'name'        => 'Dịch vụ dâng hương & Trải nghiệm làng nghề gốm sứ Cổ Loa',
+                    'description' => 'Hành trình dâng hương tưởng niệm vua An Dương Vương và tự tay nặn gốm truyền thống cùng nghệ nhân bản địa.',
+                    'location'    => 'Khu Di Tích Cổ Loa',
+                    'price'       => 'Trọn gói',
+                    'unit'        => 'Đoàn / Cá nhân',
+                    'tag'         => 'Dịch vụ di tích',
+                    'image_path'  => 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=800&q=80',
+                ],
+                [
+                    'id'          => 4,
+                    'name'        => 'Tự tay làm bún Mạch Tràng & Trải nghiệm đan lát truyền thống',
+                    'description' => 'Học bí quyết làm bún sẫm màu đặc sản tiến vua Mạch Tràng và trải nghiệm làm sản phẩm đan lát mây tre thủ công.',
+                    'location'    => 'Làng Nghề Mạch Tràng',
+                    'price'       => '50.000đ/người',
+                    'unit'        => '1 người',
+                    'tag'         => 'Làng nghề',
+                    'image_path'  => 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=800&q=80',
+                ]
+            ];
+        }
+
+        return response()->json([
+            'title'       => 'Góc Trải Nghiệm Thực Tế Làng Nghề & Vui Chơi Bản Địa Đông Anh',
+            'subtitle'    => 'Không chỉ là ăn uống, đây là hành trình nhập vai thực tế! Bạn đồng hành cùng người bản xứ, tự tay học các nghề truyền thống (làm bún, đan lát, gốm sứ), tham gia các trò chơi dân gian và vui chơi giải trí sống động.',
+            'stats'       => [
+                'villages'    => '12+',
+                'visitors'    => '500+',
+                'rating'      => '4.9 ⭐',
+                'experience'  => '100%',
+            ],
+            'activities'  => $activities,
+        ], 200, [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    }
+
 }

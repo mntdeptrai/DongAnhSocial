@@ -330,11 +330,8 @@ class ProfileScreen extends StatelessWidget {
                 children: [
                   CircleAvatar(
                     radius: 40,
-                    backgroundColor: primaryColor.withOpacity(0.1),
-                    child: Text(
-                      user?['name']?[0] ?? '👤',
-                      style: TextStyle(color: primaryColor, fontSize: 32, fontWeight: FontWeight.bold),
-                    ),
+                    backgroundColor: primaryColor.withValues(alpha: 0.1),
+                    backgroundImage: NetworkImage(ApiService.getAvatarUrl(user, user?['name'])),
                   ),
                   const SizedBox(height: 16),
                   Text(

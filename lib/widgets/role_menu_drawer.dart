@@ -2,6 +2,11 @@ import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../screens/my_orders_screen.dart';
 import '../screens/admin_dashboard_screen.dart';
+import '../screens/food_tour_screen.dart';
+import '../screens/video_reels_screen.dart';
+import '../screens/news_bulletin_screen.dart';
+import '../screens/exp_corner_screen.dart';
+import '../screens/about_guide_screen.dart';
 import 'squircle_helper.dart';
 
 class RoleMenuDrawer extends StatelessWidget {
@@ -24,7 +29,7 @@ class RoleMenuDrawer extends StatelessWidget {
     final userRole = user?['role'] ?? 'user';
     final userName = user?['name'] ?? 'Khách vãng lai';
     final userEmail = user?['email'] ?? 'Chưa đăng nhập';
-    final userAvatar = user?['avatar'] ?? 'https://i.pravatar.cc/150?img=12';
+    final userAvatar = ApiService.getAvatarUrl(user, userName);
 
     return Drawer(
       backgroundColor: Colors.white,
@@ -108,6 +113,23 @@ class RoleMenuDrawer extends StatelessWidget {
                       onTap: () {
                         Navigator.pop(context);
                         onRoleChanged?.call('seller');
+                      },
+                    ),
+                    const Divider(height: 24),
+                  ] else if (userRole == 'principal') ...[
+                    const Text(
+                      'TRUNG TÂM BAN GIÁM HIỆU TRƯỜNG HỌC',
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF64748B), letterSpacing: 0.8),
+                    ),
+                    const SizedBox(height: 10),
+                    _buildPortalCard(
+                      icon: Icons.school_rounded,
+                      title: 'Kênh Quản Lý Trường Học',
+                      subtitle: 'Truyền thông nhà trường, sáp nhập & chương trình giáo dục',
+                      color: const Color(0xFF0284C7),
+                      onTap: () {
+                        Navigator.pop(context);
+                        onRoleChanged?.call('principal');
                       },
                     ),
                     const Divider(height: 24),
@@ -210,15 +232,25 @@ class RoleMenuDrawer extends StatelessWidget {
 
                   // Standard Consumer Services Section
                   const Text(
-                    'DỊCH VỤ & LỐI TẮC NGƯỜI DÙNG',
+                    'TÍNH NĂNG ĐẦY ĐỦ NHƯ WEB',
                     style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF64748B), letterSpacing: 0.8),
                   ),
                   const SizedBox(height: 10),
 
                   _buildDrawerShortcut(
+                    icon: Icons.newspaper_rounded,
+                    title: '📰 Bản tin',
+                    subtitle: 'Thông báo chính thức & Bài viết đa phân quyền',
+                    color: const Color(0xFF0284C7),
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => const NewsBulletinScreen()));
+                    },
+                  ),
+                  _buildDrawerShortcut(
                     icon: Icons.map_rounded,
-                    title: 'Bản Đồ Ẩm Thực & Di Sản Cổ Loa',
-                    subtitle: 'Khám phá địa điểm & quán ăn Đông Anh',
+                    title: '🗺️ Bản Đồ & Tìm Kiếm',
+                    subtitle: 'Khám phá 8 module địa điểm Đông Anh',
                     color: const Color(0xFF0EA5E9),
                     onTap: () {
                       Navigator.pop(context);
@@ -227,10 +259,51 @@ class RoleMenuDrawer extends StatelessWidget {
                     },
                   ),
                   _buildDrawerShortcut(
-                    icon: Icons.shopping_bag_rounded,
-                    title: 'Chợ Số & Nông Sản OCOP',
-                    subtitle: 'Mua sắm đặc sản Đông Anh online',
+                    icon: Icons.directions_bike_rounded,
+                    title: '🚴 Food Tour AI Gemini',
+                    subtitle: 'Tạo hành trình ẩm thực tự động nối đuôi',
                     color: const Color(0xFF059669),
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => const FoodTourScreen()));
+                    },
+                  ),
+                  _buildDrawerShortcut(
+                    icon: Icons.rowing_rounded,
+                    title: '🎪 Góc Trải Nghiệm Thực Tế',
+                    subtitle: 'Làng nghề & Vui chơi giải trí bản địa Đông Anh',
+                    color: const Color(0xFF059669),
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => const ExpCornerScreen()));
+                    },
+                  ),
+                  _buildDrawerShortcut(
+                    icon: Icons.play_circle_fill_rounded,
+                    title: '🎬 Tóp Tóp Video Reels',
+                    subtitle: 'Xem video review thực tế từ bản địa',
+                    color: const Color(0xFFEA580C),
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => const VideoReelsScreen()));
+                    },
+                  ),
+                  _buildDrawerShortcut(
+                    icon: Icons.photo_camera_rounded,
+                    title: '📸 Góc Check-in Locket',
+                    subtitle: 'Lưu giữ & chia sẻ khoảnh khắc ăn uống',
+                    color: const Color(0xFFF59E0B),
+                    onTap: () {
+                      Navigator.pop(context);
+                      onRoleChanged?.call('user');
+                      onNavigateTab?.call(0); // Feed Tab
+                    },
+                  ),
+                  _buildDrawerShortcut(
+                    icon: Icons.storefront_rounded,
+                    title: '🛍️ Chợ Số & Nông Sản OCOP',
+                    subtitle: 'Mua sắm đặc sản Đông Anh online',
+                    color: const Color(0xFF10B981),
                     onTap: () {
                       Navigator.pop(context);
                       onRoleChanged?.call('user');
@@ -240,47 +313,21 @@ class RoleMenuDrawer extends StatelessWidget {
                   _buildDrawerShortcut(
                     icon: Icons.receipt_long_rounded,
                     title: '📦 Lịch Sử & Quản Lý Đơn Hàng',
-                    subtitle: 'Trạng thái, đơn đã nhận, hủy đơn & hoàn hàng',
-                    color: const Color(0xFFEA580C),
-                    onTap: () {
-                      Navigator.pop(context);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const MyOrdersScreen()),
-                      );
-                    },
-                  ),
-                  _buildDrawerShortcut(
-                    icon: Icons.add_location_alt_rounded,
-                    title: '📸 Góc Trải Nghiệm Thực Tế',
-                    subtitle: 'Lưu giữ & chia sẻ bài check-in của bạn',
-                    color: const Color(0xFF0284C7),
-                    onTap: () {
-                      Navigator.pop(context);
-                      onRoleChanged?.call('user');
-                      onNavigateTab?.call(1); // Real Experience Tab
-                    },
-                  ),
-                  _buildDrawerShortcut(
-                    icon: Icons.photo_camera_rounded,
-                    title: 'Bảng Tin Check-in Locket',
-                    subtitle: 'Khám phá khoảnh khắc ẩm thực cộng đồng',
-                    color: const Color(0xFFF59E0B),
-                    onTap: () {
-                      Navigator.pop(context);
-                      onRoleChanged?.call('user');
-                      onNavigateTab?.call(0); // Feed Tab
-                    },
-                  ),
-                  _buildDrawerShortcut(
-                    icon: Icons.notifications_active_rounded,
-                    title: 'Thông Báo Hệ Thống',
-                    subtitle: 'Cập nhật tin tức & đơn hàng',
+                    subtitle: 'Theo dõi đơn hàng, hoàn hàng & mua lại',
                     color: const Color(0xFF6366F1),
                     onTap: () {
                       Navigator.pop(context);
-                      onRoleChanged?.call('user');
-                      onNavigateTab?.call(4); // Notifs Tab
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => const MyOrdersScreen()));
+                    },
+                  ),
+                  _buildDrawerShortcut(
+                    icon: Icons.info_outline_rounded,
+                    title: 'ℹ️ Giới Thiệu & Hướng Dẫn',
+                    subtitle: 'Tìm hiểu hệ thái số hóa Đông Anh 2026',
+                    color: const Color(0xFF8B5CF6),
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => const AboutGuideScreen()));
                     },
                   ),
                 ],

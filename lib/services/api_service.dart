@@ -46,6 +46,57 @@ class ApiService {
     if (userJson != null) {
       currentUser = jsonDecode(userJson);
     }
+    if (_token != null && _token!.isNotEmpty) {
+      fetchUserProfile();
+    }
+  }
+
+  /// Lấy URL Avatar chuẩn hóa từ Real User Data (Tuyệt đối không dùng Mockdata pravatar)
+  static String getAvatarUrl(dynamic userOrAvatar, [String? fallbackName]) {
+    String? rawAvatar;
+    String name = fallbackName ?? 'User';
+
+    if (userOrAvatar is Map) {
+      rawAvatar = userOrAvatar['avatar'] ?? userOrAvatar['avatar_url'] ?? userOrAvatar['image'];
+      name = userOrAvatar['name'] ?? userOrAvatar['username'] ?? name;
+    } else if (userOrAvatar is String) {
+      rawAvatar = userOrAvatar;
+    }
+
+    if (rawAvatar != null && rawAvatar.isNotEmpty) {
+      if (rawAvatar.startsWith('http://') || rawAvatar.startsWith('https://')) {
+        return rawAvatar;
+      }
+      if (rawAvatar.startsWith('/')) {
+        final Uri uri = Uri.parse(baseUrl);
+        return '${uri.scheme}://${uri.host}${uri.hasPort ? ':${uri.port}' : ''}$rawAvatar';
+      }
+    }
+
+    // Nếu không có avatar dạng URL hoặc là Emoji, tạo UI Avatar chính chủ theo Tên người dùng thực
+    final encodedName = Uri.encodeComponent(name.isNotEmpty ? name : 'User');
+    return 'https://ui-avatars.com/api/?name=$encodedName&background=0284C7&color=fff&size=256&bold=true';
+  }
+
+  /// GET /user/profile — Tải hồ sơ người dùng thực tế từ server
+  static Future<Map<String, dynamic>?> fetchUserProfile() async {
+    if (!isAuthenticated) return null;
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/user/profile'),
+        headers: _getHeaders(),
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['success'] == true && data['user'] != null) {
+          currentUser = data['user'];
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('current_user', jsonEncode(currentUser));
+          return currentUser;
+        }
+      }
+    } catch (_) {}
+    return currentUser;
   }
 
   static Future<void> setBaseUrl(String url) async {
@@ -1254,5 +1305,54 @@ class ApiService {
     });
 
     return controller.stream;
+  }
+
+  /// GET /newsfeed — Lấy tất cả bài viết Bản tin đa phân quyền
+  static Future<List<dynamic>> getNewsfeed() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/newsfeed'),
+        headers: _getHeaders(),
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data is List) return data;
+      }
+    } catch (_) {}
+    return [];
+  }
+
+  /// POST /posts — Tạo bài viết mới lên Bản tin
+  static Future<Map<String, dynamic>> createPost({required String description, String? name, String? imagePath}) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/posts'),
+        headers: _getHeaders(),
+        body: jsonEncode({
+          'description': description,
+          if (name != null) 'name': name,
+          if (imagePath != null) 'image_path': imagePath,
+        }),
+      );
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return jsonDecode(response.body);
+      }
+    } catch (_) {}
+    return {'success': false, 'message': 'Lỗi kết nối máy chủ'};
+  }
+
+  /// GET /exp-corner — Lấy dữ liệu Góc Trải Nghiệm Thực Tế
+  static Future<Map<String, dynamic>> getExpCorner() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/exp-corner'),
+        headers: _getHeaders(),
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data is Map<String, dynamic>) return data;
+      }
+    } catch (_) {}
+    return {};
   }
 }

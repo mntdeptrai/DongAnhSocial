@@ -41,6 +41,11 @@ class EducationProgram extends Model
         return $this->belongsTo(Eatery::class);
     }
 
+    public function comments()
+    {
+        return $this->morphMany(Comment::class, 'commentable');
+    }
+
     /**
      * Get all images as a clean array for Facebook multi-photo grid layout
      */

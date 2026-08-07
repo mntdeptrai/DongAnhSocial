@@ -125,6 +125,58 @@ class SellerApiController extends Controller
     }
 
     /**
+     * Seller: Tạo món ăn / sản phẩm mới
+     */
+    public function storeDish(Request $request)
+    {
+        $request->validate([
+            'eatery_id' => 'required',
+            'name'      => 'required|string|max:255',
+            'price'     => 'required|numeric',
+        ]);
+
+        $dish = Dish::create([
+            'eatery_id'    => $request->eatery_id,
+            'name'         => $request->name,
+            'price'        => $request->price,
+            'description'  => $request->description ?? 'Món ăn đặc trưng',
+            'image_path'   => $request->image_path ?? null,
+            'is_signature' => $request->boolean('is_signature', false),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Đã thêm sản phẩm mới thành công!',
+            'dish'    => $dish,
+        ], 201, [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    }
+
+    /**
+     * Seller: Cập nhật thông tin món ăn / sản phẩm
+     */
+    public function updateDish(Request $request, $id)
+    {
+        $dish = Dish::find($id);
+        if (!$dish) {
+            return response()->json(['success' => false, 'message' => 'Sản phẩm không tồn tại'], 404);
+        }
+
+        if ($request->has('name')) $dish->name = $request->name;
+        if ($request->has('price')) $dish->price = $request->price;
+        if ($request->has('description')) $dish->description = $request->description;
+        if ($request->has('image_path')) $dish->image_path = $request->image_path;
+        if ($request->has('is_signature')) $dish->is_signature = $request->boolean('is_signature');
+
+        $dish->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Cập nhật thông tin sản phẩm thành công!',
+            'dish'    => $dish,
+        ], 200, [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    }
+
+    /**
      * Seller: Xóa món ăn / sản phẩm
      */
     public function deleteDish(Request $request, $id)

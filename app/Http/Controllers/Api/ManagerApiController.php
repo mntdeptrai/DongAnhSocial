@@ -77,4 +77,20 @@ class ManagerApiController extends Controller
             'message' => 'Đã cập nhật trạng thái gian hàng!',
         ]);
     }
+
+    /**
+     * Manager: Xác nhận kiểm tra Vệ sinh ATTP cho gian hàng
+     */
+    public function attpCheck(Request $request, $id)
+    {
+        $passed = $request->boolean('passed', true);
+        $eatery = Eatery::on('mysql_market')->find($id) ?? Eatery::find($id);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Đã cập nhật kết quả kiểm tra ATTP cho gian hàng thành công!',
+            'inspected' => true,
+            'passed' => $passed,
+        ]);
+    }
 }

@@ -71,6 +71,14 @@ class RpcApiController extends Controller
                     $result = $this->getEateryDetails($params);
                     break;
 
+                case 'batchUpdateOrderStatus':
+                    $result = $this->batchUpdateOrderStatus($params);
+                    break;
+
+                case 'batchApproveStalls':
+                    $result = $this->batchApproveStalls($params);
+                    break;
+
                 default:
                     return $this->formatErrorResponse($id, -32601, 'Method not found');
             }
@@ -168,6 +176,43 @@ class RpcApiController extends Controller
             'rating' => $eatery->rating,
             'address' => $eatery->address
         ];
+    }
+
+    /**
+     * RPC Method: Cập nhật hàng loạt trạng thái đơn hàng (Seller)
+     */
+    protected function batchUpdateOrderStatus($params)
+    {
+        $orderIds = $params['order_ids'] ?? null;
+        $status = $params['status'] ?? 'confirmed';
+
+        if (!is_array($orderIds)) {
+            throw new \InvalidArgumentException('Invalid params: "order_ids" must be an array.');
+        }
+
+        $count = DB::table('orders')->whereIn('id', $orderIds)->update([
+            'status' => $status,
+            'updated_at' => now(),
+        ]);
+
+        return ['success' => true, 'updated_count' => $count, 'status' => $status];
+    }
+
+    /**
+     * RPC Method: Duyệt hàng loạt gian hàng (Manager)
+     */
+    protected function batchApproveStalls($params)
+    {
+        $ids = $params['ids'] ?? null;
+        $status = $params['status'] ?? 'active';
+
+        if (!is_array($ids)) {
+            throw new \InvalidArgumentException('Invalid params: "ids" must be an array.');
+        }
+
+        $count = Eatery::on('mysql_market')->whereIn('id', $ids)->update(['status' => $status]);
+
+        return ['success' => true, 'approved_count' => $count];
     }
 
     protected function formatErrorResponse($id, $code, $message)

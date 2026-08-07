@@ -117,6 +117,37 @@ class GraphQLApiController extends Controller
 
                 return Category::select($dbFields)->get()->toArray();
 
+            case 'dishes':
+                $eateryId = $args['eatery_id'] ?? null;
+                $query = \App\Models\Dish::query();
+                if ($eateryId) {
+                    $query->where('eatery_id', $eateryId);
+                }
+                $dbFields = array_intersect($requestedFields, ['id', 'name', 'price', 'description', 'image_path', 'is_signature']);
+                if (empty($dbFields)) $dbFields = ['id', 'name', 'price'];
+
+                return $query->select($dbFields)->limit(20)->get()->toArray();
+
+            case 'checkins':
+                $dbFields = array_intersect($requestedFields, ['id', 'user_id', 'eatery_id', 'rating', 'comment', 'created_at']);
+                if (empty($dbFields)) $dbFields = ['id', 'comment', 'rating'];
+
+                return \App\Models\Checkin::select($dbFields)->latest()->limit(10)->get()->toArray();
+
+            case 'orders':
+                $dbFields = array_intersect($requestedFields, ['id', 'customer_name', 'customer_phone', 'total_amount', 'status', 'created_at']);
+                if (empty($dbFields)) $dbFields = ['id', 'customer_name', 'total_amount', 'status'];
+
+                return \Illuminate\Support\Facades\DB::table('orders')->select($dbFields)->latest()->limit(10)->get()->toArray();
+
+            case 'adminStats':
+                return [
+                    'total_users'      => User::count(),
+                    'total_eateries'   => Eatery::count(),
+                    'total_categories' => Category::count(),
+                    'total_reviews'    => \App\Models\Review::count(),
+                ];
+
             default:
                 throw new \Exception("Không tìm thấy resolver cho field: '{$fieldName}'");
         }

@@ -19,7 +19,7 @@ class MarketMessage extends Model
         'private_user_id',
     ];
 
-    protected $appends = ['product'];
+    protected $appends = [];
 
     public function user()
     {
@@ -28,6 +28,9 @@ class MarketMessage extends Model
 
     public function getProductAttribute()
     {
+        if ($this->relationLoaded('product')) {
+            return $this->getRelation('product');
+        }
         if ($this->product_id) {
             return OcopProduct::on('mysql_market')->find($this->product_id);
         }

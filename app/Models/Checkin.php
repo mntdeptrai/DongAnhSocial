@@ -59,7 +59,7 @@ class Checkin extends Model
      */
     public function getDisplayNameAttribute(): string
     {
-        if ($this->user) {
+        if ($this->relationLoaded('user') && $this->user) {
             return $this->user->name;
         }
         return $this->guest_name ?? 'Khách vãng lai';

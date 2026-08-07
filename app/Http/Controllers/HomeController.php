@@ -224,14 +224,14 @@ class HomeController extends Controller
 
         try {
             $userPostsMysqlEdu = \App\Models\Post::on('mysql_education')
-                ->with(['user', 'eatery'])
+                ->with(['user', 'eatery', 'comments.user'])
                 ->orderBy('created_at', 'desc')
                 ->get();
         } catch (\Throwable $e) {}
 
         try {
             $userPostsMysql = \App\Models\Post::on('mysql')
-                ->with(['user', 'eatery'])
+                ->with(['user', 'eatery', 'comments.user'])
                 ->orderBy('created_at', 'desc')
                 ->get();
         } catch (\Throwable $e) {}
@@ -241,7 +241,7 @@ class HomeController extends Controller
         // 3. Lấy bài viết Checkin công khai
         $checkinPosts = collect();
         try {
-            $checkinPosts = \App\Models\Checkin::with(['user', 'eatery'])
+            $checkinPosts = \App\Models\Checkin::with(['user', 'eatery', 'comments.user'])
                 ->where('status', 'published')
                 ->orderBy('created_at', 'desc')
                 ->get();

@@ -31,6 +31,9 @@ class CartItem extends Model
      */
     public function getProductAttribute()
     {
+        if ($this->relationLoaded('product')) {
+            return $this->getRelation('product');
+        }
         if ($this->dish_id) {
             return Dish::on('mysql')->find($this->dish_id);
         }

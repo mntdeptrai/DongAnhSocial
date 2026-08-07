@@ -14,10 +14,13 @@ import 'screens/my_checkins_screen.dart';
 import 'screens/notifications_screen.dart';
 import 'screens/utilities_screen.dart';
 import 'screens/seller_dashboard_screen.dart';
+import 'screens/principal_dashboard_screen.dart';
 import 'screens/manager_dashboard_screen.dart';
 import 'screens/admin_dashboard_screen.dart';
 import 'widgets/role_menu_drawer.dart';
 import 'widgets/top_nav_bar.dart';
+import 'widgets/floating_island_header.dart';
+import 'widgets/floating_dock_nav_bar.dart';
 import 'widgets/universal_search_modal.dart';
 import 'widgets/my_cart_modal.dart';
 import 'widgets/squircle_helper.dart';
@@ -361,6 +364,8 @@ class _MainLayoutState extends State<MainLayout> with WidgetsBindingObserver {
     // Khóa bảo mật theo phân quyền thực tế (Strict Role Guard)
     if (_activeRole == 'seller' && (userRole == 'seller' || userRole == 'admin')) {
       return SellerDashboardScreen(onBack: () => setState(() => _activeRole = 'user'));
+    } else if (_activeRole == 'principal' && (userRole == 'principal' || userRole == 'admin')) {
+      return PrincipalDashboardScreen(onBack: () => setState(() => _activeRole = 'user'));
     } else if (_activeRole == 'manager' && (userRole == 'manager' || userRole == 'admin')) {
       return ManagerDashboardScreen(onBack: () => setState(() => _activeRole = 'user'));
     } else if (_activeRole == 'admin' && userRole == 'admin') {
@@ -405,12 +410,12 @@ class _MainLayoutState extends State<MainLayout> with WidgetsBindingObserver {
         onLogout: widget.onLogout,
       ),
       appBar: _activeRole == 'user'
-          ? TopNavBar(
+          ? FloatingIslandHeader(
               currentIndex: _currentIndex,
               onTabSelected: (index) {
                 setState(() {
                   _currentIndex = index;
-                  _activeRole = 'user'; // Switch back to consumer view when clicking bottom tabs
+                  _activeRole = 'user';
                 });
                 if (index == 0) {
                   _feedScreenKey.currentState?.resumeCamera();
@@ -420,6 +425,11 @@ class _MainLayoutState extends State<MainLayout> with WidgetsBindingObserver {
                 if (index == 4) {
                   _fetchDynamicCounts();
                 }
+              },
+              onRoleDashboardTap: (role) {
+                setState(() {
+                  _activeRole = role;
+                });
               },
               onSearchTap: () {
                 UniversalSearchModal.show(context, onNavigateToTab: (index) {
@@ -445,21 +455,48 @@ class _MainLayoutState extends State<MainLayout> with WidgetsBindingObserver {
           : null,
       body: Stack(
         children: [
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 300),
-            switchInCurve: Curves.easeOut,
-            switchOutCurve: Curves.easeIn,
-            transitionBuilder: (child, animation) {
-              return FadeTransition(
-                opacity: animation,
-                child: ScaleTransition(
-                  scale: Tween<double>(begin: 0.98, end: 1.0).animate(animation),
-                  child: child,
-                ),
-              );
-            },
-            child: _buildActiveRoleContent(screens),
+          Padding(
+            padding: EdgeInsets.only(bottom: _activeRole == 'user' ? 68.0 : 0.0),
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              switchInCurve: Curves.easeOut,
+              switchOutCurve: Curves.easeIn,
+              transitionBuilder: (child, animation) {
+                return FadeTransition(
+                  opacity: animation,
+                  child: ScaleTransition(
+                    scale: Tween<double>(begin: 0.98, end: 1.0).animate(animation),
+                    child: child,
+                  ),
+                );
+              },
+              child: _buildActiveRoleContent(screens),
+            ),
           ),
+          if (_activeRole == 'user')
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: FloatingDockNavBar(
+                currentIndex: _currentIndex,
+                unreadNotifsCount: _unreadNotifsCount,
+                onTabSelected: (index) {
+                  setState(() {
+                    _currentIndex = index;
+                    _activeRole = 'user';
+                  });
+                  if (index == 0) {
+                    _feedScreenKey.currentState?.resumeCamera();
+                  } else {
+                    _feedScreenKey.currentState?.pauseCamera();
+                  }
+                  if (index == 4) {
+                    _fetchDynamicCounts();
+                  }
+                },
+              ),
+            ),
         ],
       ),
     );

@@ -565,7 +565,7 @@ class FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
         ),
         color: const Color(0xFF1E293B), // Dark card for camera page
         child: Padding(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -736,58 +736,63 @@ class FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
                 ),
               ),
 
-              const SizedBox(height: 10),
+              const SizedBox(height: 4),
 
               // 3. Controls & Check-in Form section
               if (_checkinImagePath == null) ...[
-                // Shutter Controls in Camera Mode
+                // Shutter Controls in Camera Mode (FittedBox guarantees ZERO RenderFlex overflow!)
                 Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 4),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      _circularControlButton(
-                        icon: Icons.photo_library_outlined,
-                        bgColor: const Color(0xFF334155),
-                        onPressed: _pickCheckinImageFromGallery,
-                      ),
-                      GestureDetector(
-                        onTap: _takeCheckinPicture,
-                        child: Container(
-                          width: 60,
-                          height: 60,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(color: const Color(0xFF475569), width: 3),
-                            color: Colors.white,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.08),
-                                blurRadius: 6,
-                                offset: const Offset(0, 3),
+                  padding: const EdgeInsets.only(top: 2, bottom: 2),
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        _circularControlButton(
+                          icon: Icons.photo_library_outlined,
+                          bgColor: const Color(0xFF334155),
+                          onPressed: _pickCheckinImageFromGallery,
+                        ),
+                        const SizedBox(width: 24),
+                        GestureDetector(
+                          onTap: _takeCheckinPicture,
+                          child: Container(
+                            width: 52,
+                            height: 52,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(color: const Color(0xFF475569), width: 2.5),
+                              color: Colors.white,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.08),
+                                  blurRadius: 5,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Center(
+                              child: Container(
+                                width: 38,
+                                height: 38,
+                                decoration: const BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: Color(0xFF0EA5E9),
+                                ),
+                                child: const Icon(Icons.camera_alt, color: Colors.white, size: 18),
                               ),
-                            ],
-                          ),
-                          child: Center(
-                            child: Container(
-                              width: 44,
-                              height: 44,
-                              decoration: const BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: Color(0xFF0EA5E9),
-                              ),
-                              child: const Icon(Icons.camera_alt, color: Colors.white, size: 20),
                             ),
                           ),
                         ),
-                      ),
-                      _circularControlButton(
-                        icon: Icons.cached_outlined,
-                        color: Colors.white,
-                        bgColor: const Color(0xFF334155),
-                        onPressed: _switchCamera,
-                      ),
-                    ],
+                        const SizedBox(width: 24),
+                        _circularControlButton(
+                          icon: Icons.cached_outlined,
+                          color: Colors.white,
+                          bgColor: const Color(0xFF334155),
+                          onPressed: _switchCamera,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ] else ...[
@@ -1030,11 +1035,8 @@ class FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
                   Row(
                     children: [
                       CircleAvatar(
-                        backgroundColor: Colors.white.withOpacity(0.9),
-                        child: Text(
-                          item['avatar_char'] ?? '👤',
-                          style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold),
-                        ),
+                        backgroundColor: Colors.white.withValues(alpha: 0.9),
+                        backgroundImage: NetworkImage(ApiService.getAvatarUrl(item['avatar'] ?? item, item['display_name'] ?? 'User')),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
