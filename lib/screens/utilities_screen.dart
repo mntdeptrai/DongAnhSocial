@@ -202,13 +202,12 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
       final isOcopProduct = p['is_ocop'] == true ||
           p['is_ocop'] == 1 ||
           p['is_ocop'] == '1' ||
-          (p['category_slug'] == 'dong-anh-market') ||
-          (p['star_rating'] != null && p['star_rating'].toString().isNotEmpty) ||
           (p['ocop_star'] != null && p['ocop_star'].toString().isNotEmpty) ||
           name.contains('ocop') ||
           seller.contains('ocop') ||
           seller.contains('hợp tác xã') ||
-          seller.contains('htx');
+          seller.contains('htx') ||
+          desc.contains('ocop');
 
       if (_selectedFilter == '🏆 OCOP') {
         return matchesSearch && isOcopProduct;

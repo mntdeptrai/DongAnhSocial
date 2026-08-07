@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -1337,16 +1338,28 @@ class ApiService {
     return [];
   }
 
-  /// POST /posts — Tạo bài viết mới lên Bản tin
+  /// POST /posts — Tạo bài viết mới lên Bản tin (Hỗ trợ Tải ảnh & Video thật)
   static Future<Map<String, dynamic>> createPost({required String description, String? name, String? imagePath}) async {
     try {
+      String? imageBase64;
+      if (imagePath != null && imagePath.isNotEmpty) {
+        final file = File(imagePath);
+        if (await file.exists()) {
+          final bytes = await file.readAsBytes();
+          final ext = imagePath.split('.').last.toLowerCase();
+          final mime = (ext == 'mp4' || ext == 'mov' || ext == 'avi') ? 'video/$ext' : 'image/$ext';
+          imageBase64 = 'data:$mime;base64,${base64Encode(bytes)}';
+        }
+      }
+
       final response = await http.post(
         Uri.parse('$baseUrl/posts'),
         headers: _getHeaders(),
         body: jsonEncode({
           'description': description,
           if (name != null) 'name': name,
-          if (imagePath != null) 'image_path': imagePath,
+          if (imageBase64 != null) 'image_base64': imageBase64,
+          if (imagePath != null && imageBase64 == null) 'image_path': imagePath,
         }),
       );
       if (response.statusCode == 200 || response.statusCode == 201) {

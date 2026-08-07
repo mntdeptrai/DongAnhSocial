@@ -1384,6 +1384,11 @@ YÊU CẦU TRẢ VỀ CHỈ LÀ CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU, KHÔNG C
                         foreach ($listResponse->json() as $e) {
                             $eName = $e['name'] ?? 'Cơ sở OCOP Đông Anh';
                             $desc  = $e['description'] ?? ('Gian hàng & sản phẩm OCOP của ' . $eName . ' tại Đông Anh, Hà Nội');
+                            $isOcopEatery = str_contains(strtolower($eName), 'ocop') ||
+                                            str_contains(strtolower($eName), 'htx') ||
+                                            str_contains(strtolower($eName), 'hợp tác xã') ||
+                                            str_contains(strtolower($desc), 'ocop');
+
                             $products->push([
                                 'id'            => 'e_' . ($e['id'] ?? rand(1, 999)),
                                 'eatery_id'     => $e['id'] ?? null,
@@ -1395,6 +1400,7 @@ YÊU CẦU TRẢ VỀ CHỈ LÀ CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU, KHÔNG C
                                 'seller_name'   => 'Chủ hộ kinh doanh',
                                 'seller_phone'  => $e['phone'] ?? '',
                                 'star_rating'   => !empty($e['rating']) ? round((float)$e['rating'], 1) . ' sao' : '4 sao',
+                                'is_ocop'       => $isOcopEatery,
                                 'image_path'    => $e['image_path'] ?? '',
                                 'description'   => mb_substr($desc, 0, 200),
                                 'address'       => $e['address'] ?? '',
@@ -1753,16 +1759,48 @@ YÊU CẦU TRẢ VỀ CHỈ LÀ CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU, KHÔNG C
         }
 
         $request->validate([
-            'description' => 'required|string',
-            'name'        => 'nullable|string',
-            'image_path'  => 'nullable|string',
+            'description'  => 'required|string',
+            'name'         => 'nullable|string',
+            'image_path'   => 'nullable|string',
+            'image_base64' => 'nullable|string',
         ]);
+
+        $savedImagePath = $request->image_path;
+
+        if ($request->filled('image_base64')) {
+            try {
+                $base64Data = $request->input('image_base64');
+                $type = 'jpg';
+                if (preg_match('/^data:(image|video)\/(\w+);base64,/', $base64Data, $matches)) {
+                    $base64Data = substr($base64Data, strpos($base64Data, ',') + 1);
+                    $type = strtolower($matches[2]);
+                }
+                $decodedBytes = base64_decode($base64Data);
+
+                if ($decodedBytes !== false) {
+                    $filename = 'post_' . time() . '_' . uniqid() . '.' . $type;
+                    $destinationPath = public_path('storage/posts');
+                    if (!file_exists($destinationPath)) {
+                        mkdir($destinationPath, 0755, true);
+                    }
+                    file_put_contents($destinationPath . '/' . $filename, $decodedBytes);
+                    $savedImagePath = 'storage/posts/' . $filename;
+                }
+            } catch (\Throwable $e) {}
+        } else if ($request->hasFile('image_file')) {
+            try {
+                $file = $request->file('image_file');
+                $filename = 'post_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+                $file->move(public_path('storage/posts'), $filename);
+                $savedImagePath = 'storage/posts/' . $filename;
+            } catch (\Throwable $e) {}
+        }
 
         $post = \App\Models\Post::create([
             'user_id'     => $user->id,
-            'name'        => $request->input('name') ?: mb_substr($request->description, 0, 50) . '...',
+            'name'        => $request->input('name') ?: (mb_substr($request->description, 0, 50) . '...'),
             'description' => $request->description,
-            'image_path'  => $request->image_path,
+            'image_path'  => $savedImagePath,
             'status'      => 'published',
         ]);
 

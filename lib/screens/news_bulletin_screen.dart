@@ -1,5 +1,9 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../services/api_service.dart';
 import '../widgets/squircle_helper.dart';
 
@@ -20,6 +24,7 @@ class _NewsBulletinScreenState extends State<NewsBulletinScreen> {
   final Set<String> _likedPosts = {};
   final Map<String, int> _likesCounts = {};
   final Map<String, List<Map<String, dynamic>>> _postComments = {};
+  final Set<String> _expandedPosts = {};
 
   @override
   void initState() {
@@ -584,6 +589,9 @@ class _NewsBulletinScreenState extends State<NewsBulletinScreen> {
       return;
     }
 
+    final userName = user?['name'] ?? 'Thành viên Đông Anh';
+    String? selectedImagePath;
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -594,119 +602,351 @@ class _NewsBulletinScreenState extends State<NewsBulletinScreen> {
             return Container(
               padding: EdgeInsets.only(
                 bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-                top: 20,
+                top: 16,
                 left: 20,
                 right: 20,
               ),
               decoration: const BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
               ),
               child: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 20,
-                          backgroundImage: ResizeImage(NetworkImage(ApiService.getAvatarUrl(user, user?['name'])), width: 100),
+                    Center(
+                      child: Container(
+                        width: 36,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade300,
+                          borderRadius: BorderRadius.circular(2),
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                user?['name'] ?? 'Thành viên Đông Anh',
-                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-                              ),
-                              const Text(
-                                'Công khai • Đăng bài lên Bản tin',
-                                style: TextStyle(color: Color(0xFF64748B), fontSize: 12),
-                              ),
-                            ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const SizedBox(width: 36),
+                        const Expanded(
+                          child: Text(
+                            'Tạo bài viết',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF0F172A),
+                            ),
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: () => Navigator.pop(context),
+                          child: Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: const BoxDecoration(
+                              color: Color(0xFFF1F5F9),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.close_rounded, size: 20, color: Color(0xFF64748B)),
                           ),
                         ),
                       ],
                     ),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 12),
+                      child: Divider(color: Color(0xFFF1F5F9), height: 1, thickness: 1),
+                    ),
+
+                    Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 22,
+                          backgroundColor: const Color(0xFF0EA5E9),
+                          backgroundImage: NetworkImage(ApiService.getAvatarUrl(user, userName)),
+                        ),
+                        const SizedBox(width: 12),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              userName,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 15,
+                                color: Color(0xFF0F172A),
+                              ),
+                            ),
+                            const SizedBox(height: 3),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFEFF6FF),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.public, size: 12, color: Color(0xFF0EA5E9)),
+                                  SizedBox(width: 4),
+                                  Text(
+                                    'Công khai',
+                                    style: TextStyle(
+                                      color: Color(0xFF0EA5E9),
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                     const SizedBox(height: 16),
+
                     TextField(
                       controller: _titleController,
                       decoration: InputDecoration(
-                        hintText: 'Tiêu đề bài viết (tùy chọn)',
+                        hintText: 'Tiêu đề bài viết...',
+                        hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
                         filled: true,
-                        fillColor: const Color(0xFFF8FAFC),
+                        fillColor: const Color(0xFFFFFFFF),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide(color: Colors.grey.shade300),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.grey.shade200),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: Color(0xFF0EA5E9), width: 1.5),
                         ),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                       ),
                     ),
                     const SizedBox(height: 12),
+
                     TextField(
                       controller: _postController,
                       maxLines: 4,
                       decoration: InputDecoration(
-                        hintText: 'Nội dung chia sẻ...',
+                        hintText: '$userName ơi, bạn đang nghĩ gì thế?',
+                        hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
                         filled: true,
-                        fillColor: const Color(0xFFF8FAFC),
+                        fillColor: const Color(0xFFFFFFFF),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide(color: Colors.grey.shade300),
                         ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.grey.shade200),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: Color(0xFF0EA5E9), width: 1.5),
+                        ),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                       ),
                     ),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF0EA5E9),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    const SizedBox(height: 14),
+
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFFFFF),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
                       ),
-                      onPressed: _isPublishing
-                          ? null
-                          : () async {
-                              final text = _postController.text.trim();
-                              final title = _titleController.text.trim();
-                              if (text.isEmpty) return;
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Thêm vào bài viết của bạn',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF334155),
+                            ),
+                          ),
+                          Row(
+                            children: [
+                              GestureDetector(
+                                onTap: () async {
+                                  try {
+                                    final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
+                                    if (picked != null) {
+                                      setModalState(() {
+                                        selectedImagePath = picked.path;
+                                      });
+                                    }
+                                  } catch (_) {}
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFECFDF5),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: const Icon(Icons.photo_library_rounded, color: Color(0xFF10B981), size: 22),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              GestureDetector(
+                                onTap: () async {
+                                  try {
+                                    final picked = await ImagePicker().pickVideo(source: ImageSource.gallery);
+                                    if (picked != null) {
+                                      setModalState(() {
+                                        selectedImagePath = picked.path;
+                                      });
+                                    }
+                                  } catch (_) {}
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFFEF2F2),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: const Icon(Icons.videocam_rounded, color: Color(0xFFEF4444), size: 22),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (selectedImagePath != null) ...[
+                      const SizedBox(height: 10),
+                      Builder(
+                        builder: (context) {
+                          final ext = selectedImagePath!.split('.').last.toLowerCase();
+                          final isVideo = (ext == 'mp4' || ext == 'mov' || ext == 'avi');
 
-                              setModalState(() => _isPublishing = true);
-                              final res = await ApiService.createPost(
-                                description: text,
-                                name: title.isNotEmpty ? title : null,
-                              );
-                              setModalState(() => _isPublishing = false);
+                          return Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: isVideo
+                                    ? Container(
+                                        height: 120,
+                                        width: double.infinity,
+                                        color: const Color(0xFF1E293B),
+                                        child: const Center(
+                                          child: Icon(Icons.movie_creation_rounded, color: Colors.white54, size: 40),
+                                        ),
+                                      )
+                                    : Image.file(
+                                        File(selectedImagePath!),
+                                        height: 120,
+                                        width: double.infinity,
+                                        fit: BoxFit.cover,
+                                      ),
+                              ),
+                              if (isVideo)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withValues(alpha: 0.7),
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  child: const Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.play_circle_fill_rounded, color: Colors.white, size: 18),
+                                      SizedBox(width: 4),
+                                      Text('Video đính kèm', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                                    ],
+                                  ),
+                                ),
+                              Positioned(
+                                top: 6,
+                                right: 6,
+                                child: GestureDetector(
+                                  onTap: () => setModalState(() => selectedImagePath = null),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(4),
+                                    decoration: const BoxDecoration(
+                                      color: Colors.black54,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(Icons.close, color: Colors.white, size: 16),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+                    ],
 
-                              if (mounted) {
-                                if (res['success'] == true) {
-                                  _postController.clear();
-                                  _titleController.clear();
-                                  Navigator.pop(context);
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(res['message'] ?? 'Đã đăng bài viết!'),
-                                      backgroundColor: const Color(0xFF059669),
-                                    ),
-                                  );
-                                  _fetchNewsfeed();
-                                } else {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(res['message'] ?? 'Đăng bài thất bại!'),
-                                      backgroundColor: const Color(0xFFEF4444),
-                                    ),
-                                  );
+                    const SizedBox(height: 16),
+
+                    SizedBox(
+                      height: 48,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF2563EB),
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        onPressed: _isPublishing
+                            ? null
+                            : () async {
+                                final text = _postController.text.trim();
+                                final title = _titleController.text.trim();
+                                if (text.isEmpty) return;
+
+                                setModalState(() => _isPublishing = true);
+                                final res = await ApiService.createPost(
+                                  description: text,
+                                  name: title.isNotEmpty ? title : null,
+                                  imagePath: selectedImagePath,
+                                );
+                                setModalState(() => _isPublishing = false);
+
+                                if (mounted) {
+                                  if (res['success'] == true) {
+                                    _postController.clear();
+                                    _titleController.clear();
+                                    Navigator.pop(context);
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(res['message'] ?? 'Đã đăng bài viết!'),
+                                        backgroundColor: const Color(0xFF059669),
+                                      ),
+                                    );
+                                    _fetchNewsfeed();
+                                  } else {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(res['message'] ?? 'Đăng bài thất bại!'),
+                                        backgroundColor: const Color(0xFFEF4444),
+                                      ),
+                                    );
+                                  }
                                 }
-                              }
-                            },
-                      child: _isPublishing
-                          ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                          : const Text('Đăng Bài', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                              },
+                        child: _isPublishing
+                            ? const SizedBox(
+                                width: 22,
+                                height: 22,
+                                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
+                              )
+                            : const Text(
+                                'Đăng',
+                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                              ),
+                      ),
                     ),
                   ],
                 ),
@@ -755,6 +995,70 @@ class _NewsBulletinScreenState extends State<NewsBulletinScreen> {
         label,
         style: TextStyle(color: bg, fontSize: 10, fontWeight: FontWeight.bold),
       ),
+    );
+  }
+
+  Widget _buildParsedRichText(String text, {TextStyle? style}) {
+    final urlRegex = RegExp(
+      r'(https?:\/\/[^\s]+|www\.[^\s]+)',
+      caseSensitive: false,
+    );
+
+    final matches = urlRegex.allMatches(text);
+    if (matches.isEmpty) {
+      return Text(
+        text,
+        style: style ?? const TextStyle(fontSize: 13.5, color: Color(0xFF334155), height: 1.4),
+      );
+    }
+
+    final spans = <InlineSpan>[];
+    int lastMatchEnd = 0;
+
+    for (final match in matches) {
+      if (match.start > lastMatchEnd) {
+        spans.add(TextSpan(
+          text: text.substring(lastMatchEnd, match.start),
+          style: style ?? const TextStyle(fontSize: 13.5, color: Color(0xFF334155), height: 1.4),
+        ));
+      }
+
+      final rawUrl = match.group(0)!;
+      final validUrl = rawUrl.startsWith('http') ? rawUrl : 'https://$rawUrl';
+
+      spans.add(
+        TextSpan(
+          text: rawUrl,
+          style: (style ?? const TextStyle(fontSize: 13.5, height: 1.4)).copyWith(
+            color: const Color(0xFF0EA5E9),
+            fontWeight: FontWeight.bold,
+            decoration: TextDecoration.underline,
+            decorationColor: const Color(0xFF0EA5E9).withValues(alpha: 0.5),
+          ),
+          recognizer: TapGestureRecognizer()
+            ..onTap = () async {
+              try {
+                final uri = Uri.parse(validUrl);
+                if (await canLaunchUrl(uri)) {
+                  await launchUrl(uri, mode: LaunchMode.externalApplication);
+                }
+              } catch (_) {}
+            },
+        ),
+      );
+
+      lastMatchEnd = match.end;
+    }
+
+    if (lastMatchEnd < text.length) {
+      spans.add(TextSpan(
+        text: text.substring(lastMatchEnd),
+        style: style ?? const TextStyle(fontSize: 13.5, color: Color(0xFF334155), height: 1.4),
+      ));
+    }
+
+    return RichText(
+      text: TextSpan(children: spans),
     );
   }
 
@@ -815,58 +1119,6 @@ class _NewsBulletinScreenState extends State<NewsBulletinScreen> {
                   ),
 
                   const SizedBox(height: 14),
-
-                  // 2. Banner Announcement
-                  Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: SquircleHelper.decoration(
-                      radius: 18,
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF0284C7), Color(0xFF0EA5E9)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      boxShadow: [
-                        BoxShadow(color: const Color(0xFF0EA5E9).withValues(alpha: 0.25), blurRadius: 12, offset: const Offset(0, 4)),
-                      ],
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.2),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(Icons.campaign_rounded, color: Colors.white, size: 24),
-                        ),
-                        const SizedBox(width: 12),
-                        const Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'TIN TỨC BẢN TIN ĐÔNG ANH 2026',
-                                style: TextStyle(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.8),
-                              ),
-                              SizedBox(height: 2),
-                              Text(
-                                'Thông Báo Đa Phân Quyền Huyện',
-                                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
-                              ),
-                              SizedBox(height: 2),
-                              Text(
-                                'Tổng hợp bài đăng từ Trường học, Gian hàng & Cán bộ',
-                                style: TextStyle(color: Colors.white70, fontSize: 11),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 16),
 
                   const Padding(
                     padding: EdgeInsets.symmetric(horizontal: 4, vertical: 4),
@@ -976,14 +1228,54 @@ class _NewsBulletinScreenState extends State<NewsBulletinScreen> {
                                 ),
                               ),
 
-                            // Post Content Description
+                            // Post Content Description (Collapsible with "... Xem thêm" / "Thu gọn")
                             if (desc.toString().isNotEmpty)
-                              Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                                child: Text(
-                                  desc,
-                                  style: const TextStyle(fontSize: 13.5, color: Color(0xFF334155), height: 1.4),
-                                ),
+                              Builder(
+                                builder: (context) {
+                                  final fullText = desc.toString().trim();
+                                  final isExpanded = _expandedPosts.contains(postId);
+                                  final isLongText = fullText.length > 160;
+                                  final displayText = (!isExpanded && isLongText)
+                                      ? '${fullText.substring(0, 160)}...'
+                                      : fullText;
+
+                                  return Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        _buildParsedRichText(
+                                          displayText,
+                                          style: const TextStyle(fontSize: 13.5, color: Color(0xFF334155), height: 1.4),
+                                        ),
+                                        if (isLongText)
+                                          GestureDetector(
+                                            onTap: () {
+                                              setState(() {
+                                                if (isExpanded) {
+                                                  _expandedPosts.remove(postId);
+                                                } else {
+                                                  _expandedPosts.add(postId);
+                                                }
+                                              });
+                                            },
+                                            behavior: HitTestBehavior.opaque,
+                                            child: Padding(
+                                              padding: const EdgeInsets.only(top: 4, bottom: 2),
+                                              child: Text(
+                                                isExpanded ? 'Thu gọn' : '... Xem thêm',
+                                                style: const TextStyle(
+                                                  color: Color(0xFF0EA5E9),
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 13.5,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                  );
+                                },
                               ),
 
                             const SizedBox(height: 8),
