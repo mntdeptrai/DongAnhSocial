@@ -536,8 +536,8 @@ class AdminController extends Controller
 
         $request->validate([
             'eatery_id' => 'required',
-            'image'     => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
-            'image_url' => 'nullable|url',
+            'image'     => 'nullable|file|mimes:jpeg,png,jpg,gif,webp,svg,bmp,heic,heif,jfif,JPEG,PNG,JPG,GIF,WEBP|max:20480',
+            'image_url' => 'nullable|string',
             'caption'   => 'nullable|string|max:200',
         ]);
 
@@ -614,8 +614,8 @@ class AdminController extends Controller
             'seller_phone' => 'nullable|string|max:20',
             'price' => 'nullable|numeric|min:0',
             'description' => 'nullable|string',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'image_url' => 'nullable|url',
+            'image' => 'nullable|file|mimes:jpeg,png,jpg,gif,webp,svg,bmp,heic,heif,jfif,JPEG,PNG,JPG,GIF,WEBP|max:20480',
+            'image_url' => 'nullable|string',
             'star_rating' => 'nullable|string',
             'heritage_year' => 'nullable|string|max:100',
             'story' => 'nullable|string',
@@ -657,7 +657,7 @@ class AdminController extends Controller
             'seller_phone' => 'nullable|string|max:20',
             'price' => 'nullable|numeric|min:0',
             'description' => 'nullable|string',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
+            'image' => 'nullable|file|mimes:jpeg,png,jpg,gif,webp,svg,bmp,heic,heif,jfif,JPEG,PNG,JPG,GIF,WEBP|max:20480',
             'image_url' => 'nullable|string',
             'star_rating' => 'nullable|string',
             'heritage_year' => 'nullable|string|max:100',
@@ -1129,8 +1129,8 @@ class AdminController extends Controller
             'issued_by' => 'required|string|max:150',
             'issued_at' => 'required|date',
             'expired_at' => 'required|date|after:issued_at',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240',
-            'image_url' => 'nullable|url',
+            'image' => 'nullable|file|mimes:jpeg,png,jpg,gif,webp,svg,bmp,heic,heif,jfif,JPEG,PNG,JPG,GIF,WEBP|max:20480',
+            'image_url' => 'nullable|string',
         ]);
 
         $eateries = EateryApiService::getEateries();
