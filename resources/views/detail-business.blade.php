@@ -350,7 +350,12 @@
         $allMedia[] = ['type' => 'image', 'url' => $eatery->image_path];
     }
 
-    // 2. Ảnh gallery đã upload bởi admin/seller
+    // 2. Ảnh Giấy chứng nhận ATTP / VSATTP (nếu có)
+    if ($eatery->foodSafetyCertificate && $eatery->foodSafetyCertificate->image_path) {
+        $allMedia[] = ['type' => 'image', 'url' => $eatery->foodSafetyCertificate->image_path, 'caption' => 'Giấy chứng nhận ATTP / VSATTP'];
+    }
+
+    // 3. Ảnh gallery đã upload bởi admin/seller
     $eateryPhotos = $eatery->relationLoaded('photos') ? $eatery->photos : collect();
     foreach ($eateryPhotos as $photo) {
         $allMedia[] = ['type' => 'image', 'url' => $photo->image_path, 'caption' => $photo->caption];
@@ -848,13 +853,13 @@
             <!-- Dynamic Category Details Section -->
             @php
                 $items = $eatery->ocopProducts;
-                $title = 'Danh mục Sản phẩm & Đặc sản OCOP';
-                $icon = '🌾';
-                $emptyText = 'Chưa cập nhật sản phẩm đặc sản OCOP nào cho chủ thể này.';
-                $btnText = 'Xem tất cả sản phẩm OCOP';
-                $modalTitle = 'Sản phẩm OCOP & Đặc sản - ' . $eatery->name;
+                $title = 'Danh mục Sản phẩm & Hàng hóa kinh doanh';
+                $icon = '🛍️';
+                $emptyText = 'Chưa cập nhật sản phẩm, hàng hóa kinh doanh nào cho cơ sở này.';
+                $btnText = 'Xem tất cả sản phẩm & hàng hóa';
+                $modalTitle = 'Sản phẩm & Hàng hóa kinh doanh - ' . $eatery->name;
                 $itemUnit = 'sản phẩm';
-                $placeholderSearch = 'Tìm sản phẩm OCOP, nông sản đặc sản...';
+                $placeholderSearch = 'Tìm kiếm sản phẩm, hàng hóa kinh doanh...';
             @endphp
 
             <div class="detail-section glass-panel" style="padding: 28px;">
@@ -1459,7 +1464,7 @@
                     @endif
                 </div>
 
-                @if($eatery->foodSafetyCertificate || $eatery->foodSupplyContracts->count() > 0 || $eatery->purchaseInvoices->count() > 0 || $eatery->dailyFoodLogs->count() > 0)
+                @if($eatery->foodSafetyCertificate || optional($eatery->foodSupplyContracts)->count() > 0 || optional($eatery->purchaseInvoices)->count() > 0 || optional($eatery->dailyFoodLogs)->count() > 0)
                     <!-- Khiên An toàn Vàng kim / Xanh ngọc (Trust Shield Banner) -->
                     <div class="trust-shield-banner glass-panel" style="background: linear-gradient(135deg, rgba(32, 178, 170, 0.08) 0%, rgba(0, 150, 136, 0.02) 100%); border: 1px solid rgba(32, 178, 170, 0.25); padding: 18px 24px; border-radius: 16px; margin-bottom: 24px; display: flex; gap: 16px; align-items: center;">
                         <div style="font-size: 2.2rem; animation: pulse-trust 2s infinite;">🛡️</div>

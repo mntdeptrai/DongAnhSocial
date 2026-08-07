@@ -561,7 +561,7 @@ class EateryApiService
             $categoryRelations[] = 'rooms';
         } elseif ($categorySlug === 'wellness-care') {
             $categoryRelations[] = 'wellnessServices';
-        } elseif (in_array($categorySlug, ['dong-anh-market', 'traditional-market', 'dong-anh-food-map', 'hanh-trinh-di-san', 'discover-dong-anh-community-culture-hub'])) {
+        } elseif (in_array($categorySlug, ['dong-anh-market', 'traditional-market', 'dong-anh-food-map', 'hanh-trinh-di-san', 'discover-dong-anh-community-culture-hub', 'co-so-kinh-doanh'])) {
             $categoryRelations[] = 'ocopProducts';
         } elseif ($categorySlug === 'smart-education-map') {
             $categoryRelations[] = 'educationPrograms';
