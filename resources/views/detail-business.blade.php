@@ -303,8 +303,8 @@
     <div class="detail-header-wrapper">
         <div class="detail-header-left">
             <div class="detail-header-badges">
-                <span class="tag-badge-accent" style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.85rem; color: #d97706; background: rgba(212, 175, 55, 0.12); border: 1px solid rgba(212, 175, 55, 0.35); backdrop-filter: blur(8px); font-weight: 800; border-radius: 30px; padding: 6px 14px;">
-                    🌾 Nông Sản Số & Đặc Sản OCOP Cấp Quốc Gia
+                <span class="tag-badge-accent" style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.85rem; color: #0284c7; background: rgba(2, 132, 199, 0.12); border: 1px solid rgba(2, 132, 199, 0.35); backdrop-filter: blur(8px); font-weight: 800; border-radius: 30px; padding: 6px 14px;">
+                    🏪 Cơ sở kinh doanh dịch vụ & hàng hóa
                 </span>
                 <span class="tag-badge-accent" style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.85rem; color: #059669; background: rgba(5, 150, 105, 0.1); border: 1px solid rgba(5, 150, 105, 0.3); font-weight: 700; border-radius: 30px; padding: 6px 14px;">
                     🔍 Truy xuất nguồn gốc QR Code
