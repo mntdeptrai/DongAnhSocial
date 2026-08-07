@@ -193,18 +193,45 @@ class UserApiController extends Controller
             return response()->json(['success' => false, 'message' => 'Unauthenticated'], 401);
         }
 
-        $posts = \App\Models\Post::on('mysql_education')
-            ->with(['user'])
-            ->where('user_id', $user->id)
-            ->orderBy('created_at', 'desc')
-            ->get();
+        $postsEdu = collect();
+        $postsMysql = collect();
 
-        if ($posts->isEmpty()) {
-            $posts = \App\Models\Post::on('mysql')
+        try {
+            $postsEdu = \App\Models\Post::on('mysql_education')
                 ->with(['user'])
                 ->where('user_id', $user->id)
                 ->orderBy('created_at', 'desc')
                 ->get();
+        } catch (\Throwable $e) {}
+
+        try {
+            $postsMysql = \App\Models\Post::on('mysql')
+                ->with(['user'])
+                ->where('user_id', $user->id)
+                ->orderBy('created_at', 'desc')
+                ->get();
+        } catch (\Throwable $e) {}
+
+        $posts = $postsEdu->concat($postsMysql)->unique('id')->sortByDesc('created_at')->values();
+
+        if ($posts->isEmpty() && !empty($user->name)) {
+            try {
+                $postsEduName = \App\Models\Post::on('mysql_education')
+                    ->with(['user'])
+                    ->whereHas('user', function($q) use ($user) {
+                        $q->where('name', $user->name)->orWhere('email', $user->email);
+                    })
+                    ->orderBy('created_at', 'desc')
+                    ->get();
+                $postsMysqlName = \App\Models\Post::on('mysql')
+                    ->with(['user'])
+                    ->whereHas('user', function($q) use ($user) {
+                        $q->where('name', $user->name)->orWhere('email', $user->email);
+                    })
+                    ->orderBy('created_at', 'desc')
+                    ->get();
+                $posts = $postsEduName->concat($postsMysqlName)->unique('id')->sortByDesc('created_at')->values();
+            } catch (\Throwable $e) {}
         }
 
         $r2PublicUrl = rtrim(env('R2_PUBLIC_URL', 'https://media.xadonganh.com'), '/');

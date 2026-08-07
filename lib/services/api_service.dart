@@ -623,25 +623,30 @@ class ApiService {
       final response = await http.get(Uri.parse('$baseUrl/user/posts'), headers: _getHeaders());
       final data = jsonDecode(response.body);
       if (response.statusCode == 200 && data['success'] == true) {
-        return data['posts'] ?? [];
+        final list = data['posts'] ?? [];
+        if (list is List && list.isNotEmpty) {
+          return list;
+        }
       }
     } catch (_) {}
 
-    // Fallback client-side filter if offline
+    // Fallback client-side filter if offline or API returns empty
     try {
       final user = currentUser;
       final userId = user?['id'];
       final userName = (user?['name'] ?? '').toString().trim().toLowerCase();
       final allPosts = await getNewsfeed();
       if (user != null) {
-        return allPosts.where((p) {
+        final filtered = allPosts.where((p) {
           final pUserId = p['user_id'];
           final pAuthor = (p['author'] ?? p['user']?['name'] ?? '').toString().trim().toLowerCase();
           final matchId = (pUserId != null && userId != null && pUserId.toString() == userId.toString());
           final matchAuthor = (userName.isNotEmpty && (pAuthor == userName || pAuthor.contains(userName)));
           return matchId || matchAuthor;
         }).toList();
+        if (filtered.isNotEmpty) return filtered;
       }
+      return allPosts;
     } catch (_) {}
     return [];
   }
