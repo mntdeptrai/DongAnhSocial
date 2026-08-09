@@ -409,4 +409,51 @@ class R2Helper
 
         return self::resizeImageBinaryGd($binaryContent, $extension, $maxDimension);
     }
+
+    /**
+     * Delete an existing file from Cloudflare R2 bucket (or local storage fallback).
+     *
+     * @param string|null $urlOrPath Full public URL or relative path of the file
+     * @return bool True if deleted successfully, false otherwise
+     */
+    public static function delete(?string $urlOrPath): bool
+    {
+        if (empty($urlOrPath)) {
+            return false;
+        }
+
+        try {
+            $r2PublicUrl = rtrim(env('R2_PUBLIC_URL', ''), '/');
+            $path = $urlOrPath;
+
+            if ($r2PublicUrl && str_starts_with($path, $r2PublicUrl)) {
+                $path = ltrim(substr($path, strlen($r2PublicUrl)), '/');
+            } else {
+                $parsed = parse_url($path, PHP_URL_PATH);
+                if ($parsed) {
+                    $path = ltrim($parsed, '/');
+                }
+            }
+
+            if (!empty($path) && Storage::disk('r2')->exists($path)) {
+                Storage::disk('r2')->delete($path);
+                Log::info('[R2Helper] Deleted file from R2: ' . $path);
+                return true;
+            }
+
+            // Local fallback deletion if stored in public/uploads
+            if (str_starts_with($urlOrPath, '/uploads/')) {
+                $localPath = public_path(ltrim($urlOrPath, '/'));
+                if (file_exists($localPath)) {
+                    @unlink($localPath);
+                    Log::info('[R2Helper] Deleted local fallback file: ' . $localPath);
+                    return true;
+                }
+            }
+        } catch (\Throwable $e) {
+            Log::warning('[R2Helper] Delete failed for ' . $urlOrPath . ': ' . $e->getMessage());
+        }
+
+        return false;
+    }
 }

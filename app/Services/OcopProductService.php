@@ -45,11 +45,23 @@ class OcopProductService
             throw new \Exception('Sản phẩm OCOP không tồn tại!');
         }
 
-        $imagePath = $product->image_path;
+        $oldImagePath = $product->image_path;
+        $imagePath = $oldImagePath;
+
         if ($data->image) {
             $imagePath = R2Helper::upload($data->image, 'ocop');
+            // Tự động xóa ảnh cũ trên Cloudflare R2 khi người dùng upload thay thế ảnh mới
+            if ($oldImagePath && $oldImagePath !== $imagePath) {
+                R2Helper::delete($oldImagePath);
+            }
         } elseif ($data->image_url) {
-            $imagePath = $this->resolveImagePath(null, $data->image_url);
+            $newUrl = $this->resolveImagePath(null, $data->image_url);
+            if ($newUrl && $newUrl !== $oldImagePath) {
+                $imagePath = $newUrl;
+                if ($oldImagePath) {
+                    R2Helper::delete($oldImagePath);
+                }
+            }
         }
 
         return $this->updateAction->execute($product, $data, $imagePath);

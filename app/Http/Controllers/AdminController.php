@@ -720,6 +720,10 @@ class AdminController extends Controller
             }
         }
 
+        if ($product->image_path) {
+            \App\Helpers\R2Helper::delete($product->image_path);
+        }
+
         $ocopProductService->delete($id);
 
         return redirect()->back()->with('success', 'Xóa sản phẩm OCOP thành công!');
