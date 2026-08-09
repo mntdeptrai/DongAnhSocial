@@ -340,6 +340,41 @@
         gap: 20px;
     }
 
+    .related-prod-card {
+        display: flex !important;
+        flex-direction: column !important;
+        background: var(--bg-card);
+        border: 1px solid var(--border-glow);
+        border-radius: 16px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        height: 100%;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
+        box-sizing: border-box;
+    }
+
+    .related-prod-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 25px rgba(2, 132, 199, 0.18);
+        border-color: #0284c7;
+    }
+
+    .related-prod-img {
+        width: 100% !important;
+        height: 180px !important;
+        object-fit: cover !important;
+        display: block !important;
+    }
+
+    .related-prod-body {
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        justify-content: space-between;
+    }
+
     @keyframes fadeIn {
         from { opacity: 0; transform: translateY(6px); }
         to { opacity: 1; transform: translateY(0); }
@@ -763,23 +798,23 @@
     <!-- Related Products Section -->
     @if($otherEstablishmentProducts->count() > 0)
         <div style="margin-bottom: 40px;">
-            <h3 style="font-size: 1.5rem; font-weight: 800; color: var(--text-main); font-family: var(--font-heading); margin-bottom: 20px;">
+            <h3 style="font-size: clamp(1.15rem, 3.5vw, 1.45rem); font-weight: 800; color: var(--text-main); font-family: var(--font-heading); margin-bottom: 20px; line-height: 1.35; word-break: break-word;">
                 🛒 Sản phẩm khác từ {{ $eatery ? $eatery->name : 'cơ sở' }}
             </h3>
             <div class="related-products-grid">
                 @foreach($otherEstablishmentProducts as $item)
-                    <div class="dish-card glass-panel" style="background: var(--bg-card); border: 1px solid var(--border-glow); border-radius: 16px; overflow: hidden; transition: all 0.3s ease; cursor: pointer;" onclick="window.location.href='{{ route('business.product.show', $item->id) }}'">
-                        <img src="{{ $formatMediaUrl($item->image_path) }}" style="width: 100%; height: 180px; object-fit: cover;" alt="{{ $item->name }}">
-                        <div style="padding: 16px;">
-                            <h4 style="margin: 0 0 6px 0; color: var(--text-main); font-size: 1rem; font-weight: 800;">{{ $item->name }}</h4>
+                    <div class="related-prod-card" onclick="window.location.href='{{ route('business.product.show', $item->id) }}'">
+                        <img src="{{ $formatMediaUrl($item->image_path) }}" class="related-prod-img" alt="{{ $item->name }}">
+                        <div class="related-prod-body">
+                            <h4 style="margin: 0 0 6px 0; color: var(--text-main); font-size: 1rem; font-weight: 800; line-height: 1.3;">{{ $item->name }}</h4>
                             <p style="margin: 0 0 10px 0; color: var(--text-muted); font-size: 0.85rem; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
                                 {{ $item->description }}
                             </p>
-                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: auto; flex-wrap: wrap;">
                                 <strong style="color: #10b981; font-size: 1rem;">
                                     {{ $item->price > 0 ? number_format($item->price, 0, ',', '.') . 'đ' : 'Liên hệ' }}
                                 </strong>
-                                <span style="color: #0284c7; font-size: 0.85rem; font-weight: 700;">Xem chi tiết ➔</span>
+                                <span style="color: #0284c7; font-size: 0.85rem; font-weight: 700; white-space: nowrap;">Xem chi tiết ➔</span>
                             </div>
                         </div>
                     </div>
