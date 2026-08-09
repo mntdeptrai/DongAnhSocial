@@ -91,6 +91,10 @@
     .product-detail-hero {
         padding-top: 24px;
         padding-bottom: 40px;
+        max-width: 1240px;
+        margin: 0 auto;
+        width: 100%;
+        box-sizing: border-box;
     }
 
     .prod-glass-card {
@@ -102,6 +106,7 @@
         padding: 32px;
         box-shadow: var(--shadow-main);
         transition: all 0.3s var(--ease-premium);
+        box-sizing: border-box;
     }
 
     .prod-main-grid {
@@ -149,6 +154,7 @@
         font-family: var(--font-heading);
         margin: 0 0 12px 0;
         line-height: 1.25;
+        word-break: break-word;
     }
 
     .prod-store-badge {
@@ -165,6 +171,8 @@
         text-decoration: none;
         transition: all 0.2s ease;
         margin-bottom: 18px;
+        max-width: 100%;
+        box-sizing: border-box;
     }
 
     .prod-store-badge:hover {
@@ -202,11 +210,12 @@
 
     .prod-highlight-item {
         display: flex;
-        align-items: center;
+        align-items: flex-start;
         gap: 10px;
         font-size: 0.98rem;
         color: var(--text-main);
         font-weight: 500;
+        line-height: 1.5;
     }
 
     .prod-action-group {
@@ -215,21 +224,26 @@
         gap: 12px;
     }
 
+    .btn-action-primary, .btn-action-secondary {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 14px 26px;
+        border-radius: 30px;
+        font-weight: 800;
+        font-size: 0.95rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        box-sizing: border-box;
+    }
+
     .btn-action-primary {
         background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
         color: #ffffff !important;
         border: none;
-        padding: 14px 28px;
-        border-radius: 30px;
-        font-weight: 800;
-        font-size: 1rem;
-        cursor: pointer;
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
         box-shadow: 0 6px 20px rgba(2, 132, 199, 0.35);
-        transition: all 0.3s ease;
-        text-decoration: none;
     }
 
     .btn-action-primary:hover {
@@ -241,16 +255,6 @@
         background: var(--bg-card);
         color: var(--text-main) !important;
         border: 1px solid var(--border-glow);
-        padding: 14px 24px;
-        border-radius: 30px;
-        font-weight: 700;
-        font-size: 0.95rem;
-        cursor: pointer;
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        transition: all 0.3s ease;
-        text-decoration: none;
     }
 
     .btn-action-secondary:hover {
@@ -267,7 +271,12 @@
         padding-bottom: 16px;
         margin-bottom: 24px;
         overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
         scrollbar-width: none;
+    }
+
+    .prod-tab-btns::-webkit-scrollbar {
+        display: none;
     }
 
     .prod-tab-btn {
@@ -281,6 +290,7 @@
         cursor: pointer;
         white-space: nowrap;
         transition: all 0.3s ease;
+        flex-shrink: 0;
     }
 
     .prod-tab-btn.active {
@@ -298,27 +308,133 @@
         animation: fadeIn 0.3s ease;
     }
 
+    /* VSATTP Box & Facility Grids */
+    .vsattp-card {
+        background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%);
+        border: 1.5px solid #bbf7d0;
+        border-radius: 24px;
+        padding: 28px;
+        margin-bottom: 40px;
+        box-shadow: 0 10px 25px rgba(16, 185, 129, 0.08);
+        position: relative;
+        overflow: hidden;
+        box-sizing: border-box;
+    }
+
+    .vsattp-grid {
+        display: grid;
+        grid-template-columns: 220px 1fr;
+        gap: 24px;
+        align-items: center;
+    }
+
+    .facility-tab-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+    }
+
+    .related-products-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        gap: 20px;
+    }
+
     @keyframes fadeIn {
         from { opacity: 0; transform: translateY(6px); }
         to { opacity: 1; transform: translateY(0); }
     }
 
-    @media (max-width: 900px) {
-        .prod-main-grid {
-            grid-template-columns: 1fr;
-            gap: 24px;
+    /* =========================================================================
+       RESPONSIVE BREAKPOINTS ACROSS 4 DEVICE TYPES
+       ========================================================================= */
+
+    /* Tier 1: Ultra-Wide & Desktop (>= 1200px) */
+    @media (min-width: 1200px) {
+        .product-detail-hero { padding-left: 20px; padding-right: 20px; }
+        .prod-image-main { height: 440px; }
+    }
+
+    /* Tier 2: Standard Laptops / Small Desktop (992px - 1199px) */
+    @media (max-width: 1199px) and (min-width: 992px) {
+        .prod-main-grid { gap: 28px; }
+        .prod-image-main { height: 380px; }
+        .prod-title { font-size: 1.9rem; }
+        .prod-glass-card { padding: 28px; }
+        .vsattp-grid { grid-template-columns: 200px 1fr; gap: 20px; }
+    }
+
+    /* Tier 3: Tablets & Mobile Landscape (576px - 991px) */
+    @media (max-width: 991px) {
+        .prod-main-grid { grid-template-columns: 1fr; gap: 24px; }
+        .prod-image-main { height: 340px; }
+        .prod-title { font-size: 1.75rem; }
+        .prod-glass-card { padding: 24px; border-radius: 20px; }
+        .vsattp-grid { grid-template-columns: 180px 1fr; gap: 20px; }
+        .facility-tab-grid { grid-template-columns: 1fr; gap: 16px; }
+        .vsattp-card { padding: 20px; border-radius: 20px; }
+        .btn-action-primary, .btn-action-secondary { flex: 1 1 auto; text-align: center; }
+    }
+
+    /* Tier 4: Mobile Portrait (< 576px - iPhones / Android) */
+    @media (max-width: 575px) {
+        .product-detail-hero { padding-top: 14px; padding-bottom: 24px; padding-left: 10px; padding-right: 10px; }
+        .prod-glass-card { padding: 16px; border-radius: 16px; margin-bottom: 24px; }
+        .prod-image-wrapper { border-radius: 14px; }
+        .prod-image-main { height: 250px; }
+        
+        .prod-badge-floating { top: 10px; left: 10px; gap: 6px; }
+        .prod-badge-floating span {
+            font-size: 0.7rem !important;
+            padding: 4px 10px !important;
         }
 
-        .prod-image-main {
-            height: 300px;
+        .prod-title { font-size: 1.35rem; margin-bottom: 8px; }
+        .prod-store-badge { font-size: 0.82rem; padding: 6px 12px; margin-bottom: 14px; }
+
+        .prod-price-box {
+            padding: 12px 14px;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 6px;
+            border-radius: 14px;
+            margin-bottom: 18px;
         }
 
-        .prod-title {
-            font-size: 1.7rem;
+        .prod-price-num { font-size: 1.55rem; }
+        .prod-highlight-item { font-size: 0.88rem; }
+
+        .prod-action-group {
+            flex-direction: column;
+            gap: 10px;
+            width: 100%;
         }
 
-        .prod-price-num {
-            font-size: 1.7rem;
+        .btn-action-primary, .btn-action-secondary {
+            width: 100% !important;
+            padding: 12px 16px;
+            font-size: 0.9rem;
+            justify-content: center;
+        }
+
+        .vsattp-card { padding: 16px; border-radius: 16px; margin-bottom: 24px; }
+        .vsattp-grid { grid-template-columns: 1fr; gap: 14px; }
+        .vsattp-grid img { height: 190px !important; }
+
+        .prod-tab-btns {
+            gap: 6px;
+            padding-bottom: 10px;
+            margin-bottom: 16px;
+        }
+
+        .prod-tab-btn {
+            padding: 8px 12px;
+            font-size: 0.8rem;
+        }
+
+        .related-products-grid {
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 12px;
         }
     }
 </style>
@@ -484,7 +600,7 @@
         $certImg = $cert?->image_path ? (\Illuminate\Support\Str::startsWith($cert->image_path, ['http://', 'https://']) ? $cert->image_path : asset($cert->image_path)) : null;
     @endphp
 
-    <div style="background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%); border: 1.5px solid #bbf7d0; border-radius: 24px; padding: 28px; margin-bottom: 40px; box-shadow: 0 10px 25px rgba(16, 185, 129, 0.08); position: relative; overflow: hidden;">
+    <div class="vsattp-card">
         
         <div style="display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; border-bottom: 1px dashed #bbf7d0; padding-bottom: 16px;">
             <h3 style="font-size: 1.35rem; font-weight: 800; color: #065f46; margin: 0; font-family: var(--font-heading); display: flex; align-items: center; gap: 10px;">
@@ -495,7 +611,7 @@
             </span>
         </div>
 
-        <div style="display: grid; grid-template-columns: {{ $certImg ? '220px 1fr' : '1fr' }}; gap: 24px; align-items: center;">
+        <div class="vsattp-grid" style="grid-template-columns: {{ $certImg ? '' : '1fr' }};">
             @if($certImg)
                 <div style="position: relative; cursor: pointer; border-radius: 16px; overflow: hidden; border: 2px solid #10b981; box-shadow: 0 8px 20px rgba(0,0,0,0.1);" onclick="openCertImageModal('{{ $certImg }}')">
                     <img src="{{ $certImg }}" alt="Giấy chứng nhận VSATTP {{ $eatery?->name }}" style="width: 100%; height: 250px; object-fit: cover; display: block; transition: transform 0.3s ease;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
@@ -585,7 +701,7 @@
         <div id="tab-facility" class="prod-tab-content">
             @if($eatery)
                 <h3 style="color: var(--text-main); font-size: 1.3rem; margin-top: 0; margin-bottom: 16px;">{{ $eatery->name }}</h3>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+                <div class="facility-tab-grid">
                     <div>
                         <p style="font-size: 1rem; color: var(--text-main); margin-bottom: 10px;"><strong>📍 Địa chỉ:</strong> {{ $eatery->address }}</p>
                         <p style="font-size: 1rem; color: var(--text-main); margin-bottom: 10px;"><strong>📞 Hotline / Zalo:</strong> {{ $eatery->phone ?: 'Chưa cập nhật' }}</p>
@@ -650,7 +766,7 @@
             <h3 style="font-size: 1.5rem; font-weight: 800; color: var(--text-main); font-family: var(--font-heading); margin-bottom: 20px;">
                 🛒 Sản phẩm khác từ {{ $eatery ? $eatery->name : 'cơ sở' }}
             </h3>
-            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px;">
+            <div class="related-products-grid">
                 @foreach($otherEstablishmentProducts as $item)
                     <div class="dish-card glass-panel" style="background: var(--bg-card); border: 1px solid var(--border-glow); border-radius: 16px; overflow: hidden; transition: all 0.3s ease; cursor: pointer;" onclick="window.location.href='{{ route('business.product.show', $item->id) }}'">
                         <img src="{{ $formatMediaUrl($item->image_path) }}" style="width: 100%; height: 180px; object-fit: cover;" alt="{{ $item->name }}">
