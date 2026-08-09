@@ -6,6 +6,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'services/api_service.dart';
 import 'services/cart_service.dart';
+import 'services/notification_state_service.dart';
 import 'screens/login_screen.dart';
 import 'screens/map_screen.dart';
 import 'screens/feed_screen.dart';
@@ -314,6 +315,7 @@ class _MainLayoutState extends State<MainLayout> with WidgetsBindingObserver {
     // Lắng nghe sự kiện Push Notification từ FCM (Event-Driven - Không dùng Short Polling)
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       debugPrint('🔔 Nhận FCM Push Notification: ${message.notification?.title}');
+      NotificationStateService.notifyNewNotification();
       if (mounted) {
         _fetchDynamicCounts();
         final title = message.notification?.title ?? 'Bản tin Đông Anh';

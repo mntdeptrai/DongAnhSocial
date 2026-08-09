@@ -1,5 +1,8 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import '../services/api_service.dart';
+import '../services/notification_state_service.dart';
 import '../widgets/custom_loader.dart';
 import 'news_bulletin_screen.dart';
 import 'feed_screen.dart';
@@ -19,15 +22,39 @@ class NotificationsScreen extends StatefulWidget {
 class _NotificationsScreenState extends State<NotificationsScreen> {
   List<dynamic> _notifications = [];
   bool _isLoading = true;
+  StreamSubscription<RemoteMessage>? _fcmSubscription;
 
   @override
   void initState() {
     super.initState();
-    _fetchNotifications();
+    _fetchNotifications(showLoader: true);
+
+    // Lắng nghe sự kiện thông báo thời gian thực từ NotificationStateService
+    NotificationStateService.refreshNotifier.addListener(_onRealtimeNotification);
+
+    // Lắng nghe trực tiếp sự kiện FCM Push Notification khi đang xem tab Thông báo
+    _fcmSubscription = FirebaseMessaging.onMessage.listen((_) {
+      _onRealtimeNotification();
+    });
   }
 
-  Future<void> _fetchNotifications() async {
-    setState(() => _isLoading = true);
+  @override
+  void dispose() {
+    NotificationStateService.refreshNotifier.removeListener(_onRealtimeNotification);
+    _fcmSubscription?.cancel();
+    super.dispose();
+  }
+
+  void _onRealtimeNotification() {
+    if (mounted) {
+      _fetchNotifications(showLoader: false);
+    }
+  }
+
+  Future<void> _fetchNotifications({bool showLoader = true}) async {
+    if (showLoader) {
+      setState(() => _isLoading = true);
+    }
     try {
       final res = await ApiService.getAppNotifications();
       if (mounted) {
