@@ -1258,7 +1258,7 @@
                                    :id="'floating-chat-input-' + chat.id" 
                                    placeholder="Nhập tin nhắn..." 
                                    x-model="chat.inputText" 
-                                   @keydown.enter.prevent="$store.chatStore.sendSubmitMessage(chat.id)"
+                                   @keydown.enter.prevent="if (!$event.isComposing && $event.keyCode !== 229) $store.chatStore.sendSubmitMessage(chat.id, $event)"
                                    autocomplete="off" 
                                    class="fchat-input-bar">
                         </div>
@@ -1383,11 +1383,14 @@
                     }, 4000);
                 },
 
-                sendSubmitMessage(friendId) {
+                sendSubmitMessage(friendId, event = null) {
+                    if (event && (event.isComposing || event.keyCode === 229)) {
+                        return;
+                    }
                     const chat = this.openChats.find(c => c.id === friendId);
-                    if (!chat || !chat.inputText.trim()) return;
+                    if (!chat || !chat.inputText || !chat.inputText.trim()) return;
                     
-                    const text = chat.inputText;
+                    const text = chat.inputText.trim();
                     chat.inputText = ''; // clear input directly
                     this.sendMessage(friendId, text);
                 },

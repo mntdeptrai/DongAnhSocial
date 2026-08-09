@@ -1534,8 +1534,27 @@ YÊU CẦU TRẢ VỀ CHỈ LÀ CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU, KHÔNG C
                     $authorAvatar = $post->user ? ($post->user->avatar ?? null) : ($post->eatery ? ($post->eatery->image_path ?? null) : null);
                     $authorRole = $post->user ? ($post->user->role ?? 'user') : 'user';
 
-                    $img = $post->image_path;
-                    $imgs = $img ? [$img] : [];
+                    $imgs = [];
+                    if (!empty($post->images)) {
+                        if (is_array($post->images)) {
+                            $imgs = $post->images;
+                        } else if (is_string($post->images)) {
+                            $decoded = json_decode($post->images, true);
+                            if (is_array($decoded)) $imgs = $decoded;
+                        }
+                    }
+                    if (empty($imgs) && !empty($post->image_paths)) {
+                        if (is_array($post->image_paths)) {
+                            $imgs = $post->image_paths;
+                        } else if (is_string($post->image_paths)) {
+                            $decoded = json_decode($post->image_paths, true);
+                            if (is_array($decoded)) $imgs = $decoded;
+                        }
+                    }
+                    if (empty($imgs) && !empty($post->image_path)) {
+                        $imgs = [$post->image_path];
+                    }
+                    $img = !empty($imgs) ? $imgs[0] : $post->image_path;
 
                     $commentsArr = [];
                     if ($post->relationLoaded('comments') && $post->comments) {
@@ -1634,6 +1653,18 @@ YÊU CẦU TRẢ VỀ CHỈ LÀ CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU, KHÔNG C
                             ->exists();
                     }
 
+                    $eduImgs = [];
+                    if (!empty($edu->images)) {
+                        if (is_array($edu->images)) $eduImgs = $edu->images;
+                        else if (is_string($edu->images)) {
+                            $decoded = json_decode($edu->images, true);
+                            if (is_array($decoded)) $eduImgs = $decoded;
+                        }
+                    }
+                    if (empty($eduImgs) && !empty($img)) {
+                        $eduImgs = [$img];
+                    }
+
                     $postsList[] = [
                         'id'               => 'edu_' . $edu->id,
                         'numeric_id'       => $edu->id,
@@ -1645,7 +1676,7 @@ YÊU CẦU TRẢ VỀ CHỈ LÀ CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU, KHÔNG C
                         'title'            => $edu->name ?? '',
                         'description'      => $edu->description ?? $edu->target_students ?? '',
                         'image_path'       => $img,
-                        'images'           => $img ? [$img] : [],
+                        'images'           => $eduImgs,
                         'likes_count'      => $realLikes,
                         'is_liked'         => $isLiked,
                         'comments_count'   => 0,
@@ -1679,6 +1710,18 @@ YÊU CẦU TRẢ VỀ CHỈ LÀ CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU, KHÔNG C
                             ->exists();
                     }
 
+                    $chkImgs = [];
+                    if (!empty($chk->images)) {
+                        if (is_array($chk->images)) $chkImgs = $chk->images;
+                        else if (is_string($chk->images)) {
+                            $decoded = json_decode($chk->images, true);
+                            if (is_array($decoded)) $chkImgs = $decoded;
+                        }
+                    }
+                    if (empty($chkImgs) && !empty($chk->image_path)) {
+                        $chkImgs = [$chk->image_path];
+                    }
+
                     $postsList[] = [
                         'id'               => 'chk_' . $chk->id,
                         'numeric_id'       => $chk->id,
@@ -1690,7 +1733,7 @@ YÊU CẦU TRẢ VỀ CHỈ LÀ CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU, KHÔNG C
                         'title'            => $chk->eatery ? ('Check-in tại ' . $chk->eatery->name) : 'Khoảnh khắc ẩm thực',
                         'description'      => $chk->comment ?? '',
                         'image_path'       => $chk->image_path,
-                        'images'           => $chk->image_path ? [$chk->image_path] : [],
+                        'images'           => $chkImgs,
                         'likes_count'      => $realLikes,
                         'is_liked'         => $isLiked,
                         'comments_count'   => 0,

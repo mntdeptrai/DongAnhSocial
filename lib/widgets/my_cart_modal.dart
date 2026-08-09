@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import '../services/cart_service.dart';
 import 'custom_loader.dart';
 import 'squircle_helper.dart';
 
@@ -58,6 +59,7 @@ class _MyCartModalState extends State<MyCartModal> {
           }
           _isLoading = false;
         });
+        CartService.updateCountLocally(_totalCartCount);
       }
     } catch (_) {
       if (mounted) setState(() => _isLoading = false);
@@ -131,6 +133,7 @@ class _MyCartModalState extends State<MyCartModal> {
       );
 
       if (mounted) {
+        CartService.refreshCartCount();
         Navigator.pop(context);
         widget.onCartUpdated?.call();
         ScaffoldMessenger.of(context).showSnackBar(

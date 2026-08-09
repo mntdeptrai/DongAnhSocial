@@ -103,6 +103,248 @@ class _NewsBulletinScreenState extends State<NewsBulletinScreen> {
     _showShareBottomSheet(context, item);
   }
 
+  List<String> _getPostImages(dynamic item) {
+    final List<String> urls = [];
+    void addUrl(dynamic raw) {
+      if (raw == null) return;
+      final s = raw.toString().trim();
+      if (s.isEmpty) return;
+      final full = s.startsWith('http')
+          ? s
+          : 'https://donganhdiscovery.xadonganh.com/${s.startsWith('/') ? s.substring(1) : s}';
+      if (!urls.contains(full)) urls.add(full);
+    }
+
+    if (item['images'] is List) {
+      for (var img in item['images']) {
+        addUrl(img);
+      }
+    } else if (item['images'] is String && item['images'].toString().isNotEmpty) {
+      try {
+        final decoded = item['images'].toString().startsWith('[') ? (item['images'] as String) : null;
+        if (decoded != null) {
+          final List list = (item['images'] as String).replaceAll('[', '').replaceAll(']', '').replaceAll('"', '').split(',');
+          for (var img in list) {
+            addUrl(img);
+          }
+        } else {
+          addUrl(item['images']);
+        }
+      } catch (_) {
+        addUrl(item['images']);
+      }
+    }
+
+    if (item['image_paths'] is List) {
+      for (var img in item['image_paths']) {
+        addUrl(img);
+      }
+    }
+
+    if (item['image_path'] != null && item['image_path'].toString().isNotEmpty) {
+      addUrl(item['image_path']);
+    }
+
+    return urls;
+  }
+
+  void _openFullscreenGallery(BuildContext context, List<String> images, int initialIndex) {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black,
+      builder: (ctx) {
+        final PageController pageController = PageController(initialPage: initialIndex);
+        int currentIndex = initialIndex;
+
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return Scaffold(
+              backgroundColor: Colors.black,
+              appBar: AppBar(
+                backgroundColor: Colors.black,
+                foregroundColor: Colors.white,
+                title: Text('${currentIndex + 1} / ${images.length}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                leading: IconButton(
+                  icon: const Icon(Icons.close_rounded, color: Colors.white),
+                  onPressed: () => Navigator.pop(ctx),
+                ),
+              ),
+              body: PageView.builder(
+                controller: pageController,
+                itemCount: images.length,
+                onPageChanged: (idx) {
+                  setDialogState(() {
+                    currentIndex = idx;
+                  });
+                },
+                itemBuilder: (context, index) {
+                  return InteractiveViewer(
+                    minScale: 0.8,
+                    maxScale: 4.0,
+                    child: Center(
+                      child: Image.network(
+                        images[index],
+                        fit: BoxFit.contain,
+                        errorBuilder: (_, __, ___) => const Icon(Icons.broken_image, color: Colors.white54, size: 64),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildMultiImageGrid(List<String> images) {
+    if (images.isEmpty) return const SizedBox.shrink();
+
+    void openGallery(int initialIndex) {
+      _openFullscreenGallery(context, images, initialIndex);
+    }
+
+    if (images.length == 1) {
+      return GestureDetector(
+        onTap: () => openGallery(0),
+        child: ClipRRect(
+          child: Image.network(
+            images[0],
+            width: double.infinity,
+            height: 250,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+          ),
+        ),
+      );
+    }
+
+    if (images.length == 2) {
+      return SizedBox(
+        height: 200,
+        child: Row(
+          children: [
+            Expanded(
+              child: GestureDetector(
+                onTap: () => openGallery(0),
+                child: Image.network(images[0], height: 200, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const SizedBox.shrink()),
+              ),
+            ),
+            const SizedBox(width: 2),
+            Expanded(
+              child: GestureDetector(
+                onTap: () => openGallery(1),
+                child: Image.network(images[1], height: 200, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const SizedBox.shrink()),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (images.length == 3) {
+      return SizedBox(
+        height: 240,
+        child: Row(
+          children: [
+            Expanded(
+              flex: 2,
+              child: GestureDetector(
+                onTap: () => openGallery(0),
+                child: Image.network(images[0], height: 240, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const SizedBox.shrink()),
+              ),
+            ),
+            const SizedBox(width: 2),
+            Expanded(
+              flex: 1,
+              child: Column(
+                children: [
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => openGallery(1),
+                      child: Image.network(images[1], width: double.infinity, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const SizedBox.shrink()),
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => openGallery(2),
+                      child: Image.network(images[2], width: double.infinity, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const SizedBox.shrink()),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // 4 or more images: 2x2 grid with +N on 4th image (Facebook / Web style)
+    final remainingCount = images.length - 4;
+    return SizedBox(
+      height: 260,
+      child: Column(
+        children: [
+          Expanded(
+            child: Row(
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => openGallery(0),
+                    child: Image.network(images[0], height: double.infinity, width: double.infinity, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const SizedBox.shrink()),
+                  ),
+                ),
+                const SizedBox(width: 2),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => openGallery(1),
+                    child: Image.network(images[1], height: double.infinity, width: double.infinity, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const SizedBox.shrink()),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 2),
+          Expanded(
+            child: Row(
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => openGallery(2),
+                    child: Image.network(images[2], height: double.infinity, width: double.infinity, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const SizedBox.shrink()),
+                  ),
+                ),
+                const SizedBox(width: 2),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => openGallery(3),
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        Image.network(images[3], height: double.infinity, width: double.infinity, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const SizedBox.shrink()),
+                        if (remainingCount > 0)
+                          Container(
+                            color: Colors.black.withValues(alpha: 0.55),
+                            alignment: Alignment.center,
+                            child: Text(
+                              '+$remainingCount',
+                              style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _showShareBottomSheet(BuildContext context, dynamic item) {
     final title = item['title'] ?? 'Bài viết trên Bản tin Đông Anh';
     const shareUrl = 'https://donganhdiscovery.xadonganh.com/ban-tin';
@@ -958,45 +1200,7 @@ class _NewsBulletinScreenState extends State<NewsBulletinScreen> {
     );
   }
 
-  Widget _buildRoleBadge(String role) {
-    Color bg;
-    String label;
 
-    switch (role) {
-      case 'admin':
-        bg = const Color(0xFFEF4444);
-        label = 'Admin';
-        break;
-      case 'principal':
-        bg = const Color(0xFFF59E0B);
-        label = 'Trường học';
-        break;
-      case 'seller':
-        bg = const Color(0xFF10B981);
-        label = 'Gian hàng';
-        break;
-      case 'manager':
-        bg = const Color(0xFF8B5CF6);
-        label = 'BQL Chợ';
-        break;
-      default:
-        bg = const Color(0xFF0EA5E9);
-        label = 'Thành viên';
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: bg.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: bg.withValues(alpha: 0.4)),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(color: bg, fontSize: 10, fontWeight: FontWeight.bold),
-      ),
-    );
-  }
 
   Widget _buildParsedRichText(String text, {TextStyle? style}) {
     final urlRegex = RegExp(
@@ -1156,7 +1360,6 @@ class _NewsBulletinScreenState extends State<NewsBulletinScreen> {
                       final authorName = item['author_name'] ?? 'Thành viên Đông Anh';
                       final role = item['author_role'] ?? 'user';
                       final timeStr = item['created_at_human'] ?? 'Vừa xong';
-                      final imagePath = item['image_path'];
 
                       final isLiked = _likedPosts.contains(postId);
                       final likesCount = _likesCounts[postId] ?? (item['likes_count'] ?? 0);
@@ -1198,8 +1401,10 @@ class _NewsBulletinScreenState extends State<NewsBulletinScreen> {
                                                 overflow: TextOverflow.ellipsis,
                                               ),
                                             ),
-                                            const SizedBox(width: 6),
-                                            _buildRoleBadge(role),
+                                            if (role == 'principal' || role == 'admin' || role == 'manager' || item['is_verified'] == true) ...[
+                                              const SizedBox(width: 4),
+                                              const Icon(Icons.star_rounded, color: Colors.amber, size: 16),
+                                            ],
                                           ],
                                         ),
                                         const SizedBox(height: 2),
@@ -1280,71 +1485,17 @@ class _NewsBulletinScreenState extends State<NewsBulletinScreen> {
 
                             const SizedBox(height: 8),
 
-                            // Post Image / Gallery (if any)
-                            if (item['images'] is List && (item['images'] as List).isNotEmpty) ...[
-                              Builder(
-                                builder: (context) {
-                                  final imgList = item['images'] as List;
-                                  final firstImg = imgList[0].toString();
-                                  final fullUrl = firstImg.startsWith('http')
-                                      ? firstImg
-                                      : 'https://donganhdiscovery.xadonganh.com/${firstImg.startsWith('/') ? firstImg.substring(1) : firstImg}';
-
-                                  return Stack(
-                                    children: [
-                                      ClipRRect(
-                                        child: Image.network(
-                                          fullUrl,
-                                          width: double.infinity,
-                                          height: 230,
-                                          fit: BoxFit.cover,
-                                          cacheWidth: 400,
-                                          filterQuality: FilterQuality.low,
-                                          errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-                                        ),
-                                      ),
-                                      if (imgList.length > 1)
-                                        Positioned(
-                                          right: 12,
-                                          bottom: 12,
-                                          child: Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                                            decoration: BoxDecoration(
-                                              color: Colors.black.withValues(alpha: 0.7),
-                                              borderRadius: BorderRadius.circular(12),
-                                            ),
-                                            child: Row(
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                const Icon(Icons.collections_rounded, color: Colors.white, size: 14),
-                                                const SizedBox(width: 4),
-                                                Text(
-                                                  '+${imgList.length - 1} ảnh',
-                                                  style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ),
-                                    ],
-                                  );
-                                },
-                              ),
-                            ] else if (imagePath != null && imagePath.toString().isNotEmpty) ...[
-                              ClipRRect(
-                                child: Image.network(
-                                  imagePath.toString().startsWith('http')
-                                      ? imagePath.toString()
-                                      : 'https://donganhdiscovery.xadonganh.com/${imagePath.toString().startsWith('/') ? imagePath.toString().substring(1) : imagePath.toString()}',
-                                  width: double.infinity,
-                                  height: 230,
-                                  fit: BoxFit.cover,
-                                  cacheWidth: 400,
-                                  filterQuality: FilterQuality.low,
-                                  errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-                                ),
-                              ),
-                            ],
+                            // Post Image / Gallery (Multi-photo Web/Facebook grid layout)
+                            Builder(
+                              builder: (context) {
+                                final postImages = _getPostImages(item);
+                                if (postImages.isEmpty) return const SizedBox.shrink();
+                                return Padding(
+                                  padding: const EdgeInsets.only(top: 8.0),
+                                  child: _buildMultiImageGrid(postImages),
+                                );
+                              },
+                            ),
 
                             // Footer Actions Row (Like & Comment)
                             Padding(

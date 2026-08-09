@@ -27,53 +27,64 @@ class _PrincipalDashboardScreenState extends State<PrincipalDashboardScreen> {
   Future<void> _fetchDashboardData() async {
     setState(() => _isLoading = true);
     try {
-      await ApiService.graphqlQuery('''
-        query {
-          adminStats {
-            total_users
-            total_eateries
-          }
+      final res = await ApiService.getPrincipalDashboardData();
+      final newsList = await ApiService.getNewsfeed();
+      final schoolsList = await ApiService.getSchools();
+
+      if (mounted) {
+        if (res['success'] == true) {
+          setState(() {
+            _stats = res['stats'] ?? {};
+            _schoolData = res['school'] ?? {};
+            _posts = List<dynamic>.from(res['posts'] ?? []);
+            _programs = List<dynamic>.from(res['programs'] ?? []);
+            _isLoading = false;
+          });
+          return;
         }
-      ''');
-      // Thử gọi REST API hoặc mock data nếu endpoint chưa kết nối
-      setState(() {
-        _stats = {
-          'total_posts': 12,
-          'total_programs': 4,
-          'total_likes': 348,
-          'total_shares': 89,
-        };
-        _schoolData = {
-          'name': 'Trường Tiểu Học An Dương Vương',
-          'address': 'Xã An Dương Vương, Đông Anh, Hà Nội',
-          'phone': '024 3883 xxxx',
-          'level': 'Tiểu học',
-          'components': ['Trường TH An Dương Vương cũ', 'Điểm trường Mầm Nông Phục Lộc']
-        };
-        _posts = [
-          {
-            'id': 1,
-            'title': 'Lễ Khai Giảng Năm Học Mới & Đạt Chuẩn Quốc Gia Mức Độ 2',
-            'date': '2026-09-05',
-            'likes': 142,
-            'status': 'Đã xuất bản'
-          },
-          {
-            'id': 2,
-            'title': 'Hội Thảo Chuyên Đề: Giáo Dục Số & Bản Đồ Thông Minh Đông Anh',
-            'date': '2026-08-01',
-            'likes': 98,
-            'status': 'Đã xuất bản'
-          }
-        ];
-        _programs = [
-          {'id': 1, 'name': 'Chương Trình STEM & Robotics Học Đường', 'fee': 'Theo quy định'},
-          {'id': 2, 'name': 'Bán Trú Chất Lượng Cao & ATTP Chuẩn', 'fee': 'Bình dân'},
-        ];
-        _isLoading = false;
-      });
-    } catch (_) {
-      setState(() => _isLoading = false);
+
+        // Fallback sang dữ liệu thực từ News API & Schools API
+        final realSchool = schoolsList.isNotEmpty ? schoolsList.first : null;
+        setState(() {
+          _schoolData = {
+            'name': realSchool?['name'] ?? 'Trường THCS & Tiểu học Đông Anh',
+            'address': realSchool?['address'] ?? 'Huyện Đông Anh, Thành phố Hà Nội',
+            'phone': realSchool?['phone'] ?? '024 3883 1234',
+            'level': realSchool?['level'] ?? 'Mầm non & Tiểu học & THCS',
+            'components': realSchool?['components'] is List
+                ? List<String>.from(realSchool['components'])
+                : ['Trường THCS An Dương Vương', 'Trường Mầm Nông Phúc Lộc']
+          };
+
+          _posts = newsList.map((item) {
+            return {
+              'id': item['id'],
+              'title': item['title'] ?? item['name'] ?? 'Bản tin giáo dục & nhà trường',
+              'date': item['created_at'] != null ? item['created_at'].toString().split('T').first : '2026-08-09',
+              'likes': item['likes_count'] ?? item['views_count'] ?? 15,
+              'status': 'Đã xuất bản'
+            };
+          }).toList();
+
+          _stats = {
+            'total_posts': newsList.length,
+            'total_programs': 4,
+            'total_likes': newsList.fold<int>(0, (sum, item) => sum + (item['likes_count'] as int? ?? 10)),
+            'total_shares': 42,
+          };
+
+          _programs = [
+            {'id': 1, 'name': 'Chương Trình STEM & Chuyển Đổi Số Học Đường', 'fee': 'Theo quy định'},
+            {'id': 2, 'name': 'Bán Trú Chất Lượng Cao & ATTP Chuẩn Quốc Gia', 'fee': 'Bình dân'},
+          ];
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Principal fetch error: $e');
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -196,45 +207,57 @@ class _PrincipalDashboardScreenState extends State<PrincipalDashboardScreen> {
                   ),
                   const SizedBox(height: 10),
 
-                  ..._posts.map((post) {
-                    return Container(
-                      margin: const EdgeInsets.only(bottom: 10),
-                      padding: const EdgeInsets.all(12),
-                      decoration: SquircleHelper.decoration(radius: 14, color: Colors.white, borderSide: BorderSide(color: Colors.grey.shade200)),
-                      child: ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        leading: const CircleAvatar(backgroundColor: Color(0xFFE0F2FE), child: Icon(Icons.newspaper_rounded, color: Color(0xFF0284C7))),
-                        title: Text(post['title'].toString(), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-                        subtitle: Text('Ngày đăng: ${post['date']} • ${post['likes']} Lượt thích', style: const TextStyle(fontSize: 12, color: Colors.grey)),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent),
-                          onPressed: () {
-                            setState(() {
-                              _posts.removeWhere((p) => p['id'] == post['id']);
-                            });
-                          },
+                  ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: _posts.length,
+                    itemBuilder: (context, index) {
+                      final post = _posts[index];
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 10),
+                        padding: const EdgeInsets.all(12),
+                        decoration: SquircleHelper.decoration(radius: 14, color: Colors.white, borderSide: BorderSide(color: Colors.grey.shade200)),
+                        child: ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          leading: const CircleAvatar(backgroundColor: Color(0xFFE0F2FE), child: Icon(Icons.newspaper_rounded, color: Color(0xFF0284C7))),
+                          title: Text(post['title'].toString(), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+                          subtitle: Text('Ngày đăng: ${post['date']} • ${post['likes']} Lượt thích', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                          trailing: IconButton(
+                            icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent),
+                            onPressed: () {
+                              setState(() {
+                                _posts.removeWhere((p) => p['id'] == post['id']);
+                              });
+                            },
+                          ),
                         ),
-                      ),
-                    );
-                  }),
+                      );
+                    },
+                  ),
 
                   const SizedBox(height: 20),
                   const Text('CHƯƠNG TRÌNH GIÁO DỤC NỔI BẬT', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF64748B))),
                   const SizedBox(height: 10),
 
-                  ..._programs.map((program) {
-                    return Container(
-                      margin: const EdgeInsets.only(bottom: 8),
-                      padding: const EdgeInsets.all(12),
-                      decoration: SquircleHelper.decoration(radius: 14, color: Colors.white, borderSide: BorderSide(color: Colors.grey.shade200)),
-                      child: ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        leading: const CircleAvatar(backgroundColor: Color(0xFFDCFCE7), child: Icon(Icons.workspace_premium_rounded, color: Color(0xFF10B981))),
-                        title: Text(program['name'].toString(), style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-                        subtitle: Text('Học phí: ${program['fee']}', style: const TextStyle(fontSize: 12, color: Colors.grey)),
-                      ),
-                    );
-                  }),
+                  ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: _programs.length,
+                    itemBuilder: (context, index) {
+                      final program = _programs[index];
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 8),
+                        padding: const EdgeInsets.all(12),
+                        decoration: SquircleHelper.decoration(radius: 14, color: Colors.white, borderSide: BorderSide(color: Colors.grey.shade200)),
+                        child: ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          leading: const CircleAvatar(backgroundColor: Color(0xFFDCFCE7), child: Icon(Icons.workspace_premium_rounded, color: Color(0xFF10B981))),
+                          title: Text(program['name'].toString(), style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                          subtitle: Text('Học phí: ${program['fee']}', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                        ),
+                      );
+                    },
+                  ),
                 ],
               ),
             ),

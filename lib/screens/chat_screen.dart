@@ -55,11 +55,42 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     super.dispose();
   }
 
+  void _sortFriendsList(List<dynamic> list) {
+    list.sort((a, b) {
+      final aUnread = (a['unread_count'] ?? (a['unread'] == true ? 1 : 0)) as int;
+      final bUnread = (b['unread_count'] ?? (b['unread'] == true ? 1 : 0)) as int;
+      if (aUnread != bUnread) {
+        return bUnread.compareTo(aUnread); // Ưu tiên chưa đọc lên đầu
+      }
+
+      final aTime = a['last_message_at'] ?? a['updated_at'] ?? a['time'];
+      final bTime = b['last_message_at'] ?? b['updated_at'] ?? b['time'];
+      if (aTime != null && bTime != null) {
+        return bTime.toString().compareTo(aTime.toString()); // Gần đây nhất lên đầu
+      } else if (aTime != null) {
+        return -1;
+      } else if (bTime != null) {
+        return 1;
+      }
+
+      final aHasMsg = (a['last_message'] != null || a['latest_message'] != null) ? 1 : 0;
+      final bHasMsg = (b['last_message'] != null || b['latest_message'] != null) ? 1 : 0;
+      if (aHasMsg != bHasMsg) {
+        return bHasMsg.compareTo(aHasMsg);
+      }
+
+      final aOnline = a['is_online'] == true ? 1 : 0;
+      final bOnline = b['is_online'] == true ? 1 : 0;
+      return bOnline.compareTo(aOnline);
+    });
+  }
+
   Future<void> _loadFriends() async {
     setState(() {
       _isLoading = true;
     });
     final friends = await ApiService.getFriends();
+    _sortFriendsList(friends);
     if (mounted) {
       setState(() {
         _friends = friends;
@@ -71,6 +102,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   Future<void> _silentRefreshFriends() async {
     if (!ApiService.isAuthenticated) return;
     final friends = await ApiService.getFriends();
+    _sortFriendsList(friends);
     if (mounted) {
       setState(() {
         _friends = friends;
@@ -112,33 +144,22 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     }
 
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text(
-          'Tin nhắn',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 20),
-        ),
-        flexibleSpace: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Color(0xFF38BDF8), Color(0xFF00A8EE), Color(0xFF0284C7)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-          ),
-        ),
-        foregroundColor: Colors.white,
-        elevation: 0,
+        title: const Text('Tin nhắn', style: TextStyle(fontWeight: FontWeight.bold)),
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.grey[800],
+        elevation: 0.5,
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh, color: Colors.white),
+            icon: const Icon(Icons.refresh),
             onPressed: _loadFriends,
-          ),
+          )
         ],
       ),
-      backgroundColor: const Color(0xFFF8FAFC),
       body: _isLoading
           ? const CustomPulseLoader(
-              message: 'Đang mở hộp thoại trò chuyện...',
+              message: 'Đang tải danh sách tin nhắn...',
               icon: Icons.chat_bubble_outline_rounded,
               primaryColor: Color(0xFF0EA5E9),
             )
@@ -156,19 +177,29 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                     ],
                   ),
                 )
-              : ListView.builder(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
+              : ListView.separated(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
                   itemCount: _friends.length,
+                  separatorBuilder: (context, index) => const Divider(height: 1, indent: 72, endIndent: 16, color: Color(0xFFF1F5F9)),
                   itemBuilder: (context, index) {
                     final friend = _friends[index];
                     final isOnline = friend['is_online'] == true;
+                    final unreadCount = (friend['unread_count'] ?? (friend['unread'] == true ? 1 : 0)) as int;
+                    final hasUnread = unreadCount > 0 || friend['is_new'] == true;
+
+                    final lastMsg = (friend['last_message'] != null && friend['last_message'].toString().isNotEmpty)
+                        ? friend['last_message'].toString()
+                        : ((friend['latest_message'] != null && friend['latest_message'].toString().isNotEmpty)
+                            ? friend['latest_message'].toString()
+                            : null);
 
                     return ListTile(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      tileColor: hasUnread ? primaryColor.withValues(alpha: 0.05) : Colors.transparent,
                       leading: Stack(
                         children: [
                           CircleAvatar(
-                            radius: 24,
+                            radius: 26,
                             backgroundColor: primaryColor.withValues(alpha: 0.1),
                             backgroundImage: ResizeImage(NetworkImage(ApiService.getAvatarUrl(friend, friend['name'])), width: 120),
                           ),
@@ -187,18 +218,66 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                           ),
                         ],
                       ),
-                      title: Text(
-                        friend['name'] ?? '',
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                      title: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              friend['name'] ?? '',
+                              style: TextStyle(
+                                fontWeight: hasUnread ? FontWeight.w900 : FontWeight.w700,
+                                fontSize: 16,
+                                color: hasUnread ? const Color(0xFF0F172A) : const Color(0xFF334155),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                      subtitle: Text(
-                        isOnline ? 'Đang hoạt động' : 'Ngoại tuyến',
-                        style: TextStyle(
-                          color: isOnline ? const Color(0xFF10B981) : Colors.grey[400],
-                          fontSize: 12,
+                      subtitle: Padding(
+                        padding: const EdgeInsets.only(top: 4.0),
+                        child: Text(
+                          lastMsg ?? (isOnline ? 'Đang hoạt động' : 'Ngoại tuyến'),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontWeight: hasUnread ? FontWeight.w800 : FontWeight.normal,
+                            color: hasUnread
+                                ? const Color(0xFF0EA5E9)
+                                : (lastMsg != null ? Colors.grey[600] : (isOnline ? const Color(0xFF10B981) : Colors.grey[400])),
+                            fontSize: 14,
+                          ),
                         ),
                       ),
-                      trailing: const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey),
+                      trailing: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          if (hasUnread)
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF0EA5E9),
+                                borderRadius: BorderRadius.circular(12),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(0xFF0EA5E9).withValues(alpha: 0.3),
+                                    blurRadius: 6,
+                                    offset: const Offset(0, 2),
+                                  )
+                                ],
+                              ),
+                              child: Text(
+                                unreadCount > 0 ? '$unreadCount tin mới' : 'Mới',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                            )
+                          else
+                            const Icon(Icons.chevron_right, size: 20, color: Colors.grey),
+                        ],
+                      ),
                       onTap: () {
                         Navigator.push(
                           context,
@@ -333,10 +412,14 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> with SingleTickerPr
     }
   }
 
+  bool _isSendingMessage = false;
+
   void _sendMessage() async {
+    if (_isSendingMessage) return;
     final text = _messageController.text.trim();
     if (text.isEmpty) return;
 
+    _isSendingMessage = true;
     _sendAnimController.forward().then((_) => _sendAnimController.reverse());
     _messageController.clear();
 
@@ -354,9 +437,13 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> with SingleTickerPr
     });
     _scrollToBottom();
 
-    final res = await ApiService.sendMessage(widget.friendId, text);
-    if (res['success'] == true) {
-      _silentRefreshMessages();
+    try {
+      final res = await ApiService.sendMessage(widget.friendId, text);
+      if (res['success'] == true) {
+        _silentRefreshMessages();
+      }
+    } finally {
+      _isSendingMessage = false;
     }
   }
 

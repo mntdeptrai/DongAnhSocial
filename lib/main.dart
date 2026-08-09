@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'services/api_service.dart';
+import 'services/cart_service.dart';
 import 'screens/login_screen.dart';
 import 'screens/map_screen.dart';
 import 'screens/feed_screen.dart';
@@ -303,11 +304,28 @@ class _MainLayoutState extends State<MainLayout> with WidgetsBindingObserver {
 
     _fetchDynamicCounts();
 
+    // Cấu hình hiển thị Thông báo nổi (Heads-up Notification Banner) trên iOS & Android
+    FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+
     // Lắng nghe sự kiện Push Notification từ FCM (Event-Driven - Không dùng Short Polling)
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       debugPrint('🔔 Nhận FCM Push Notification: ${message.notification?.title}');
       if (mounted) {
         _fetchDynamicCounts();
+        final title = message.notification?.title ?? 'Bản tin Đông Anh';
+        final body = message.notification?.body ?? 'Bạn vừa nhận được một thông báo mới';
+        _showInAppNotificationBanner(title, body, onTap: () {
+          if (message.data['target'] == 'chat') {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const ChatScreen()),
+            ).then((_) => _fetchDynamicCounts());
+          }
+        });
       }
     });
 
@@ -319,6 +337,73 @@ class _MainLayoutState extends State<MainLayout> with WidgetsBindingObserver {
         ).then((_) => _fetchDynamicCounts());
       }
     });
+  }
+
+  void _showInAppNotificationBanner(String title, String body, {VoidCallback? onTap}) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.only(top: 10, left: 14, right: 14, bottom: 20),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        duration: const Duration(seconds: 5),
+        content: GestureDetector(
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: const Color(0xFF0F172A),
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.25),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 38,
+                  height: 38,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF0EA5E9),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.notifications_active_rounded, color: Colors.white, size: 20),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        body,
+                        style: const TextStyle(color: Colors.white70, fontSize: 11),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(Icons.chevron_right_rounded, color: Colors.white54, size: 20),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -356,11 +441,8 @@ class _MainLayoutState extends State<MainLayout> with WidgetsBindingObserver {
       }).length;
 
       final unreadMsgCount = await ApiService.getUnreadMessagesCount();
-      final cartRes = await ApiService.getCart();
-      int cCount = 0;
-      if (cartRes is Map && cartRes['success'] == true && cartRes['data'] is List) {
-        cCount = (cartRes['data'] as List).length;
-      }
+      final cCount = await CartService.refreshCartCount();
+
       if (mounted) {
         setState(() {
           _unreadNotifsCount = unreadNotifs;

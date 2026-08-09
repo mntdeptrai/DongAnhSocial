@@ -17,6 +17,7 @@ class _ManagerDashboardScreenState extends State<ManagerDashboardScreen> with Si
 
   Map<String, dynamic> _managerStats = {};
   List<dynamic> _stalls = [];
+  List<dynamic> _bulletins = [];
   String _marketName = 'Chợ Trung Tâm Đông Anh';
   String _searchQuery = '';
 
@@ -37,6 +38,8 @@ class _ManagerDashboardScreenState extends State<ManagerDashboardScreen> with Si
     setState(() => _isLoading = true);
     try {
       final res = await ApiService.getManagerDashboardData();
+      final newsList = await ApiService.getNewsfeed();
+
       if (mounted) {
         if (res['success'] == true) {
           _managerStats = res['stats'] ?? {};
@@ -44,6 +47,13 @@ class _ManagerDashboardScreenState extends State<ManagerDashboardScreen> with Si
           if (res['stalls'] is List) {
             _stalls = List<dynamic>.from(res['stalls']);
           }
+          if (res['bulletins'] is List) {
+            _bulletins = List<dynamic>.from(res['bulletins']);
+          } else {
+            _bulletins = newsList;
+          }
+        } else {
+          _bulletins = newsList;
         }
       }
     } catch (e) {
@@ -286,32 +296,38 @@ class _ManagerDashboardScreenState extends State<ManagerDashboardScreen> with Si
         const Text('Danh Sách Gian Hàng Chợ Quản Lý', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
         const SizedBox(height: 10),
 
-        ..._stalls.take(10).map((stall) {
-          final id = stall['id'] is int ? stall['id'] : (int.tryParse(stall['id']?.toString() ?? '0') ?? 0);
-          final status = (stall['status'] ?? 'active').toString();
+        ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: _stalls.length,
+          itemBuilder: (context, index) {
+            final stall = _stalls[index];
+            final id = stall['id'] is int ? stall['id'] : (int.tryParse(stall['id']?.toString() ?? '0') ?? 0);
+            final status = (stall['status'] ?? 'active').toString();
 
-          return Card(
-            margin: const EdgeInsets.only(bottom: 10),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            child: ListTile(
-              leading: const CircleAvatar(backgroundColor: Color(0xFFEEF2FF), child: Icon(Icons.storefront_rounded, color: Color(0xFF4F46E5))),
-              title: Text(stall['name'] ?? 'Gian hàng chợ', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-              subtitle: Text(stall['address'] ?? 'Chợ Trung Tâm', style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
-              trailing: PopupMenuButton<String>(
-                onSelected: (val) => _updateStallStatus(id, val),
-                itemBuilder: (ctx) => const [
-                  PopupMenuItem(value: 'active', child: Text('✅ Kích hoạt hoạt động')),
-                  PopupMenuItem(value: 'suspended', child: Text('⛔ Tạm đình chỉ gian hàng')),
-                ],
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(color: (status == 'active' ? Colors.green : Colors.red).withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
-                  child: Text(status.toUpperCase(), style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: status == 'active' ? Colors.green : Colors.red)),
+            return Card(
+              margin: const EdgeInsets.only(bottom: 10),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              child: ListTile(
+                leading: const CircleAvatar(backgroundColor: Color(0xFFEEF2FF), child: Icon(Icons.storefront_rounded, color: Color(0xFF4F46E5))),
+                title: Text(stall['name'] ?? 'Gian hàng chợ', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                subtitle: Text(stall['address'] ?? 'Chợ Trung Tâm', style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
+                trailing: PopupMenuButton<String>(
+                  onSelected: (val) => _updateStallStatus(id, val),
+                  itemBuilder: (ctx) => const [
+                    PopupMenuItem(value: 'active', child: Text('✅ Kích hoạt hoạt động')),
+                    PopupMenuItem(value: 'suspended', child: Text('⛔ Tạm đình chỉ gian hàng')),
+                  ],
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(color: (status == 'active' ? Colors.green : Colors.red).withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
+                    child: Text(status.toUpperCase(), style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: status == 'active' ? Colors.green : Colors.red)),
+                  ),
                 ),
               ),
-            ),
-          );
-        }).toList(),
+            );
+          },
+        ),
       ],
     );
   }
@@ -392,12 +408,26 @@ class _ManagerDashboardScreenState extends State<ManagerDashboardScreen> with Si
               children: [
                 const Text('📢 Thông Báo BQL Chợ Mới Nhất', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
                 const SizedBox(height: 12),
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: const Icon(Icons.campaign_rounded, color: Color(0xFF4F46E5), size: 32),
-                  title: const Text('Thông báo kiểm tra ATTP đợt 3/2026', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                  subtitle: const Text('Yêu cầu tất cả các hộ tiểu thương niêm yết giá công khai và giữ vệ sinh khu vực bán hàng.', style: TextStyle(fontSize: 12)),
-                ),
+                if (_bulletins.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 12),
+                    child: Text('Chưa có thông báo nào.', style: TextStyle(color: Colors.grey)),
+                  )
+                else
+                  ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: _bulletins.length,
+                    itemBuilder: (context, index) {
+                      final item = _bulletins[index];
+                      return ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: const Icon(Icons.campaign_rounded, color: Color(0xFF4F46E5), size: 32),
+                        title: Text(item['title'] ?? item['name'] ?? 'Thông báo BQL', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                        subtitle: Text(item['content'] ?? item['description'] ?? 'Yêu cầu tiểu thương niêm yết giá công khai.', style: const TextStyle(fontSize: 12)),
+                      );
+                    },
+                  ),
                 const SizedBox(height: 12),
                 ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(

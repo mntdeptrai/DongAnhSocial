@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import '../services/cart_service.dart';
 import 'squircle_helper.dart';
 
 class FloatingIslandHeader extends StatelessWidget implements PreferredSizeWidget {
@@ -117,10 +118,15 @@ class FloatingIslandHeader extends StatelessWidget implements PreferredSizeWidge
                   ),
                   const SizedBox(width: 5),
 
-                  _buildHeaderButton(
-                    icon: Icons.shopping_bag_outlined,
-                    badgeCount: cartCount,
-                    onTap: onCartTap,
+                  ValueListenableBuilder<int>(
+                    valueListenable: CartService.cartCountNotifier,
+                    builder: (context, liveCartCount, _) {
+                      return _buildHeaderButton(
+                        icon: Icons.shopping_bag_outlined,
+                        badgeCount: liveCartCount > 0 ? liveCartCount : cartCount,
+                        onTap: onCartTap,
+                      );
+                    },
                   ),
                   const SizedBox(width: 5),
 

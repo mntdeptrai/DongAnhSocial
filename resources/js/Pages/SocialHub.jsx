@@ -390,7 +390,12 @@ export default function SocialHub() {
 
     // Handle sending a new message
     const handleSendMessage = async (e) => {
-        e.preventDefault();
+        if (e) {
+            e.preventDefault();
+            if (e.nativeEvent && (e.nativeEvent.isComposing || e.nativeEvent.keyCode === 229)) {
+                return;
+            }
+        }
         const hasText = !!newMessageText.trim();
         if (!hasText && !selectedFile) return;
         if (!activeFriend || isSending || isUploading) return;

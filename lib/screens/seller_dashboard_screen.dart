@@ -304,9 +304,12 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> with Sing
                   ],
                 ),
               )
-            : Column(
-                children: _receivedOrders.asMap().entries.map((entry) {
-                  final order = entry.value;
+            : ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: _receivedOrders.length,
+                itemBuilder: (context, index) {
+                  final order = _receivedOrders[index];
                   final orderId = order['id'] is int ? order['id'] : (int.tryParse(order['id']?.toString() ?? '0') ?? 0);
                   final status = (order['status'] ?? 'pending').toString();
 
@@ -364,7 +367,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> with Sing
                       ),
                     ),
                   );
-                }).toList(),
+                },
               ),
       ],
     );
@@ -432,29 +435,33 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> with Sing
         ),
         const SizedBox(height: 12),
 
-        ..._myProducts.asMap().entries.map((entry) {
-          final idx = entry.key;
-          final prod = entry.value;
+        ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: _myProducts.length,
+          itemBuilder: (context, index) {
+            final prod = _myProducts[index];
 
-          return Card(
-            margin: const EdgeInsets.only(bottom: 12),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            child: ListTile(
-              leading: Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(color: Colors.grey.shade200, borderRadius: BorderRadius.circular(12)),
-                child: const Icon(Icons.fastfood_rounded, color: Color(0xFF10B981)),
+            return Card(
+              margin: const EdgeInsets.only(bottom: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              child: ListTile(
+                leading: Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(color: Colors.grey.shade200, borderRadius: BorderRadius.circular(12)),
+                  child: const Icon(Icons.fastfood_rounded, color: Color(0xFF10B981)),
+                ),
+                title: Text(prod['name'] ?? 'Món ăn', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                subtitle: Text('${prod['price'] ?? '35.000'} đ', style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 12)),
+                trailing: IconButton(
+                  icon: const Icon(Icons.delete_outline_rounded, color: Colors.red),
+                  onPressed: () => _deleteDish(index),
+                ),
               ),
-              title: Text(prod['name'] ?? 'Món ăn', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-              subtitle: Text('${prod['price'] ?? '35.000'} đ', style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 12)),
-              trailing: IconButton(
-                icon: const Icon(Icons.delete_outline_rounded, color: Colors.red),
-                onPressed: () => _deleteDish(idx),
-              ),
-            ),
-          );
-        }).toList(),
+            );
+          },
+        ),
       ],
     );
   }

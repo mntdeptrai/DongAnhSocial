@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'cart_service.dart';
 
 /// Top-level function dùng cho Flutter Isolate compute()
 dynamic _parseJsonIsolate(String jsonStr) {
@@ -289,7 +290,9 @@ class ApiService {
         }),
       );
       if (response.statusCode == 200) {
-        return jsonDecode(response.body);
+        final res = jsonDecode(response.body);
+        CartService.refreshCartCount();
+        return res;
       }
     } catch (_) {}
     return {'success': false};
@@ -304,7 +307,9 @@ class ApiService {
         body: jsonEncode({'quantity': quantity}),
       );
       if (response.statusCode == 200) {
-        return jsonDecode(response.body);
+        final res = jsonDecode(response.body);
+        CartService.refreshCartCount();
+        return res;
       }
     } catch (_) {}
     return {'success': false};
@@ -318,7 +323,9 @@ class ApiService {
         headers: _getHeaders(),
       );
       if (response.statusCode == 200) {
-        return jsonDecode(response.body);
+        final res = jsonDecode(response.body);
+        CartService.refreshCartCount();
+        return res;
       }
     } catch (_) {}
     return {'success': false};
@@ -332,7 +339,9 @@ class ApiService {
         headers: _getHeaders(),
       );
       if (response.statusCode == 200) {
-        return jsonDecode(response.body);
+        final res = jsonDecode(response.body);
+        CartService.refreshCartCount();
+        return res;
       }
     } catch (_) {}
     return {'success': false};
@@ -1209,6 +1218,30 @@ class ApiService {
       return response.statusCode == 200;
     } catch (_) {}
     return false;
+  }
+
+  /// GET /principal/dashboard-data — Lấy dữ liệu quản lý trường học cho Ban Giám Hiệu
+  static Future<Map<String, dynamic>> getPrincipalDashboardData() async {
+    try {
+      final response = await http.get(Uri.parse('$baseUrl/principal/dashboard-data'), headers: _getHeaders());
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      }
+    } catch (_) {}
+    return {'success': false};
+  }
+
+  /// GET /schools — Lấy danh sách các trường học trên địa bàn
+  static Future<List<dynamic>> getSchools() async {
+    try {
+      final response = await http.get(Uri.parse('$baseUrl/schools'), headers: _getHeaders());
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data is List) return data;
+        if (data['data'] is List) return data['data'];
+      }
+    } catch (_) {}
+    return [];
   }
 
   // =========================================================================

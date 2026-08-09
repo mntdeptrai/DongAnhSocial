@@ -104,7 +104,7 @@ class FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
       if (_cameras != null && _cameras!.isNotEmpty) {
         final controller = CameraController(
           _cameras![_selectedCameraIndex % _cameras!.length],
-          ResolutionPreset.low,
+          ResolutionPreset.max,
           enableAudio: false,
           imageFormatGroup: ImageFormatGroup.jpeg,
         );
@@ -138,7 +138,7 @@ class FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
     await _cameraController?.dispose();
     _cameraController = CameraController(
       _cameras![_selectedCameraIndex],
-      ResolutionPreset.low,
+      ResolutionPreset.max,
       enableAudio: false,
       imageFormatGroup: ImageFormatGroup.jpeg,
     );

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import '../services/cart_service.dart';
 import '../widgets/squircle_helper.dart';
 
 class TopNavBar extends StatelessWidget implements PreferredSizeWidget {
@@ -109,10 +110,15 @@ class TopNavBar extends StatelessWidget implements PreferredSizeWidget {
                   ),
                   const SizedBox(width: 6),
 
-                  _buildHeaderActionButton(
-                    icon: Icons.shopping_bag_outlined,
-                    badgeCount: cartCount,
-                    onTap: onCartTap,
+                  ValueListenableBuilder<int>(
+                    valueListenable: CartService.cartCountNotifier,
+                    builder: (context, liveCartCount, _) {
+                      return _buildHeaderActionButton(
+                        icon: Icons.shopping_bag_outlined,
+                        badgeCount: liveCartCount > 0 ? liveCartCount : cartCount,
+                        onTap: onCartTap,
+                      );
+                    },
                   ),
                   const SizedBox(width: 6),
 

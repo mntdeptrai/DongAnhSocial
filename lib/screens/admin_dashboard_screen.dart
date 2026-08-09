@@ -1155,28 +1155,32 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
         const SizedBox(height: 10),
 
         // Reviews List
-        ..._reviewsList.asMap().entries.map((entry) {
-          final idx = entry.key;
-          final rev = entry.value;
-          return Card(
-            margin: const EdgeInsets.only(bottom: 10),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            child: ListTile(
-              title: Row(
-                children: [
-                  Text(rev['user_name'] ?? 'Khách hàng', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                  const SizedBox(width: 8),
-                  Text('⭐ ${rev['rating']}', style: const TextStyle(fontSize: 12, color: Colors.orange, fontWeight: FontWeight.bold)),
-                ],
+        ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: _reviewsList.length,
+          itemBuilder: (context, index) {
+            final rev = _reviewsList[index];
+            return Card(
+              margin: const EdgeInsets.only(bottom: 10),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              child: ListTile(
+                title: Row(
+                  children: [
+                    Text(rev['user_name'] ?? 'Khách hàng', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                    const SizedBox(width: 8),
+                    Text('⭐ ${rev['rating']}', style: const TextStyle(fontSize: 12, color: Colors.orange, fontWeight: FontWeight.bold)),
+                  ],
+                ),
+                subtitle: Text(rev['comment'] ?? '', style: const TextStyle(fontSize: 12, color: Color(0xFF334155))),
+                trailing: IconButton(
+                  icon: const Icon(Icons.delete_outline_rounded, color: Colors.red, size: 20),
+                  onPressed: () => _deleteReview(index),
+                ),
               ),
-              subtitle: Text(rev['comment'] ?? '', style: const TextStyle(fontSize: 12, color: Color(0xFF334155))),
-              trailing: IconButton(
-                icon: const Icon(Icons.delete_outline_rounded, color: Colors.red, size: 20),
-                onPressed: () => _deleteReview(idx),
-              ),
-            ),
-          );
-        }).toList(),
+            );
+          },
+        ),
       ],
     );
   }
@@ -1259,65 +1263,52 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
             ),
           )
         else
-          ...filtered.map((sch) {
-            return Card(
-              margin: const EdgeInsets.only(bottom: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-              child: Padding(
-                padding: const EdgeInsets.all(14),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 46,
-                      height: 46,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFE0F2FE),
-                        borderRadius: BorderRadius.circular(14),
+          ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: filtered.length,
+            itemBuilder: (context, index) {
+              final sch = filtered[index];
+              return Card(
+                margin: const EdgeInsets.only(bottom: 10),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                child: Padding(
+                  padding: const EdgeInsets.all(14),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 42,
+                        height: 42,
+                        decoration: BoxDecoration(color: crimsonColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
+                        child: Icon(Icons.school_rounded, color: crimsonColor),
                       ),
-                      child: const Icon(Icons.school_rounded, color: Color(0xFF0284C7)),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            sch['name'] ?? 'Trường Mầm Non Đông Anh',
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            '📍 ${sch['address'] ?? 'Xã Đông Anh, Huyện Đông Anh, Hà Nội'}',
-                            style: const TextStyle(fontSize: 12, color: Colors.grey),
-                          ),
-                          const SizedBox(height: 4),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: Colors.blue.shade50,
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              'Cấp: ${sch['level'] ?? 'Mầm non / Tiểu học'}',
-                              style: TextStyle(fontSize: 10, color: Colors.blue.shade700, fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                        ],
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(sch['name'] ?? 'Trường học', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                            const SizedBox(height: 2),
+                            Text('📍 ${sch['address'] ?? 'Đông Anh, Hà Nội'}', style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
+                            const SizedBox(height: 2),
+                            Text('Cấp: ${sch['level'] ?? 'Mầm Nông/Tiểu Học/THCS'}', style: TextStyle(fontSize: 10, color: crimsonColor, fontWeight: FontWeight.bold)),
+                          ],
+                        ),
                       ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.edit_note_rounded, color: Color(0xFF0284C7)),
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('✏️ Đã mở trình chỉnh sửa thông tin "${sch['name']}"')),
-                        );
-                      },
-                    ),
-                  ],
+                      IconButton(
+                        icon: const Icon(Icons.edit_rounded, color: Colors.blue, size: 20),
+                        onPressed: () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('✏️ Đã mở trình chỉnh sửa thông tin "${sch['name']}"')),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            );
-          }).toList(),
+              );
+            },
+          ),
       ],
     );
   }
@@ -1400,75 +1391,73 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
             ),
           )
         else
-          ...filtered.map((stl) {
-            final isApproved = stl['status'] == 'approved';
-            return Card(
-              margin: const EdgeInsets.only(bottom: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-              child: Padding(
-                padding: const EdgeInsets.all(14),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 46,
-                      height: 46,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFD1FAE5),
-                        borderRadius: BorderRadius.circular(14),
+          ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: filtered.length,
+            itemBuilder: (context, index) {
+              final stl = filtered[index];
+              final isApproved = stl['status'] == 'approved' || stl['status'] == 'active';
+
+              return Card(
+                margin: const EdgeInsets.only(bottom: 10),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                child: Padding(
+                  padding: const EdgeInsets.all(14),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 42,
+                        height: 42,
+                        decoration: BoxDecoration(color: const Color(0xFF059669).withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
+                        child: const Icon(Icons.storefront_rounded, color: Color(0xFF059669)),
                       ),
-                      child: const Icon(Icons.storefront_rounded, color: Color(0xFF059669)),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            stl['name'] ?? 'Gian hàng OCOP Đông Anh',
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Chủ gian: ${stl['vendor'] ?? 'Chưa xác định'} | SĐT: ${stl['phone'] ?? '0988xxx'}',
-                            style: const TextStyle(fontSize: 12, color: Colors.grey),
-                          ),
-                          const SizedBox(height: 4),
-                          Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: isApproved ? Colors.green.shade50 : Colors.amber.shade50,
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: Text(
-                                  isApproved ? '✅ Đã duyệt' : '⏳ Chờ duyệt',
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    color: isApproved ? Colors.green.shade700 : Colors.amber.shade800,
-                                    fontWeight: FontWeight.bold,
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(stl['name'] ?? 'Gian hàng OCOP', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                            const SizedBox(height: 2),
+                            Text('Chủ: ${stl['vendor'] ?? 'Tiểu thương'} - SĐT: ${stl['phone'] ?? '---'}', style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
+                            const SizedBox(height: 4),
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: isApproved ? Colors.green.shade50 : Colors.amber.shade50,
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    isApproved ? '✅ Đã duyệt' : '⏳ Chờ duyệt',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      color: isApproved ? Colors.green.shade700 : Colors.amber.shade800,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ],
-                          ),
-                        ],
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                    Switch(
-                      value: isApproved,
-                      activeColor: const Color(0xFF059669),
-                      onChanged: (val) {
-                        setState(() {
-                          stl['status'] = val ? 'approved' : 'pending';
-                        });
-                      },
-                    ),
-                  ],
+                      Switch(
+                        value: isApproved,
+                        activeThumbColor: const Color(0xFF059669),
+                        onChanged: (val) {
+                          setState(() {
+                            stl['status'] = val ? 'approved' : 'pending';
+                          });
+                        },
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            );
-          }).toList(),
+              );
+            },
+          ),
       ],
     );
   }
