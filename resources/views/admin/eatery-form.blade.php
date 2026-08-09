@@ -681,7 +681,7 @@
             <button type="button" style="position: absolute; top: 16px; right: 16px; background: transparent; border: none; color: var(--admin-text-muted); font-size: 1.25rem; cursor: pointer; z-index: 10;" onclick="closeAddOcopProductModal()">✕</button>
             
             <h3 class="admin-card-title" style="margin-bottom: 18px; font-size: 1.15rem; border-bottom: 1px solid var(--admin-border); padding-bottom: 10px; color: var(--admin-primary); display: flex; align-items: center; gap: 6px;">
-                <span>✨</span> Đăng Ký Sản Phẩm OCOP / Đặc Sản Mới
+                <span>✨</span> {{ optional($eatery->category)->slug === 'co-so-kinh-doanh' ? 'Khai Báo Sản Phẩm / Hàng Hóa Kinh Doanh Mới' : 'Đăng Ký Sản Phẩm OCOP / Đặc Sản Mới' }}
             </h3>
             
             <form action="/admin/ocop-products" method="POST" enctype="multipart/form-data">
@@ -804,7 +804,7 @@
             <button type="button" style="position: absolute; top: 16px; right: 16px; background: transparent; border: none; color: var(--admin-text-muted); font-size: 1.25rem; cursor: pointer; z-index: 10;" onclick="closeEditOcopProductModal()">✕</button>
             
             <h3 class="admin-card-title" style="margin-bottom: 18px; font-size: 1.15rem; border-bottom: 1px solid var(--admin-border); padding-bottom: 10px; color: var(--admin-primary); display: flex; align-items: center; gap: 6px;">
-                <span>✏️</span> Chỉnh Sửa Sản Phẩm OCOP / Đặc Sản
+                <span>✏️</span> {{ optional($eatery->category)->slug === 'co-so-kinh-doanh' ? 'Chỉnh Sửa Sản Phẩm / Hàng Hóa Kinh Doanh' : 'Chỉnh Sửa Sản Phẩm OCOP / Đặc Sản' }}
             </h3>
             
             <form id="editOcopProductForm" action="" method="POST" enctype="multipart/form-data">
@@ -3846,23 +3846,26 @@ function previewEateryPhotoUrl(url) {
             const defaultName = @json($eatery->name ?? '');
             const defaultPhone = @json($eatery->phone ?? '');
 
-            form.action = `/admin/ocop-products/${product.id}`;
-            const eateryIdElem = document.getElementById('edit_ocop_eatery_id');
-            if (eateryIdElem) eateryIdElem.value = product.eatery_id || @json($eatery->id ?? '');
-            document.getElementById('edit_ocop_name').value = product.name || '';
-            document.getElementById('edit_ocop_price').value = product.price || '';
-            document.getElementById('edit_ocop_stall_name').value = product.stall_name || defaultName;
-            document.getElementById('edit_ocop_seller_name').value = product.seller_name || defaultName;
-            document.getElementById('edit_ocop_seller_phone').value = product.seller_phone || defaultPhone;
-            document.getElementById('edit_ocop_star_rating').value = product.star_rating || '';
-            document.getElementById('edit_ocop_image_url').value = product.image_url || product.image_path || '';
-            document.getElementById('edit_ocop_description').value = product.description || '';
-            document.getElementById('edit_ocop_heritage_year').value = product.heritage_year || '';
-            document.getElementById('edit_ocop_story').value = product.story || '';
-            document.getElementById('edit_ocop_artisans').value = product.artisans || '';
-            document.getElementById('edit_ocop_fun_fact').value = product.fun_fact || '';
-            document.getElementById('edit_ocop_audio_narrative').value = product.audio_narrative || '';
+            const setVal = (id, val) => {
+                const el = document.getElementById(id);
+                if (el) el.value = (val !== null && val !== undefined) ? val : '';
+            };
 
+            form.action = `/admin/ocop-products/${product.id}`;
+            setVal('edit_ocop_eatery_id', product.eatery_id || @json($eatery->id ?? ''));
+            setVal('edit_ocop_name', product.name);
+            setVal('edit_ocop_price', product.price);
+            setVal('edit_ocop_stall_name', product.stall_name || defaultName);
+            setVal('edit_ocop_seller_name', product.seller_name || defaultName);
+            setVal('edit_ocop_seller_phone', product.seller_phone || defaultPhone);
+            setVal('edit_ocop_star_rating', product.star_rating);
+            setVal('edit_ocop_image_url', product.image_url || product.image_path);
+            setVal('edit_ocop_description', product.description);
+            setVal('edit_ocop_heritage_year', product.heritage_year);
+            setVal('edit_ocop_story', product.story);
+            setVal('edit_ocop_artisans', product.artisans);
+            setVal('edit_ocop_fun_fact', product.fun_fact);
+            setVal('edit_ocop_audio_narrative', product.audio_narrative);
             // Ingredients array to raw
             let ingStr = '';
             if (Array.isArray(product.ingredients)) {
@@ -3870,7 +3873,6 @@ function previewEateryPhotoUrl(url) {
             } else if (typeof product.ingredients === 'string') {
                 ingStr = product.ingredients;
             }
-            document.getElementById('edit_ocop_ingredients_raw').value = ingStr;
 
             // Timeline array to raw
             let timeStr = '';
@@ -3879,7 +3881,9 @@ function previewEateryPhotoUrl(url) {
             } else if (typeof product.timeline === 'string') {
                 timeStr = product.timeline;
             }
-            document.getElementById('edit_ocop_timeline_raw').value = timeStr;
+
+            setVal('edit_ocop_ingredients_raw', ingStr);
+            setVal('edit_ocop_timeline_raw', timeStr);
 
             // Auto-expand heritage fields if any field contains data
             const fields = document.getElementById('ocopHeritageEditFields');
