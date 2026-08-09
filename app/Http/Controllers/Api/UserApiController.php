@@ -255,4 +255,3 @@ class UserApiController extends Controller
         ], 200, [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     }
 }
-}

@@ -38,9 +38,10 @@ Route::post('/api/checkins/{id}/react', [HomeController::class, 'reactToCheckin'
 Route::get('/api/user-notifications', [HomeController::class, 'getWebNotifications'])->name('api.user.notifications');
 Route::match(['get', 'post'], '/api/user-notifications/read', [HomeController::class, 'markWebNotificationsRead'])->name('api.user.notifications.read');
 
-// URL Thân thiện chuẩn SEO Google cho địa điểm ẩm thực & đặc sản
+// URL Thân thiện chuẩn SEO Google cho địa điểm ẩm thực & đặc sản & sản phẩm cơ sở kinh doanh
 Route::get('/dia-diem/{slug}', [EateryController::class, 'show'])->name('eatery.show');
 Route::get('/san-pham-ocop/{slug}', [\App\Http\Controllers\OcopProductController::class, 'show'])->name('ocop.product.show');
+Route::get('/san-pham/{slugOrId}', [\App\Http\Controllers\BusinessProductController::class, 'show'])->name('business.product.show');
 Route::post('/dia-diem/reviews/{id}', [EateryController::class, 'storeReview'])->name('eatery.review.store');
 Route::get('/api/market-chat/{eateryId}/messages', [\App\Http\Controllers\MarketChatController::class, 'getMessages'])->name('market.chat.messages');
 Route::post('/api/market-chat/{eateryId}/send', [\App\Http\Controllers\MarketChatController::class, 'sendMessage'])->name('market.chat.send');

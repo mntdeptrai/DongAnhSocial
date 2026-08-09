@@ -174,8 +174,13 @@
         $fallbackUsage = "Thưởng thức trực tiếp làm nước chấm rau luộc, thịt luộc, cá kho hoặc nêm nếm gia đình.";
         $fallbackWarn = "⚠️ Đậy kín nắp sau khi dùng. Bảo quản nơi khô ráo, thoáng mát.";
     } else {
-        $fallbackSpec = "Đạt tiêu chuẩn chất lượng OCOP Đông Anh & An Toàn Vệ Sinh Thực Phẩm.";
-        $fallbackIng = ["Nguyên liệu nông sản bản địa Đông Anh thuần khiết"];
+        if ($product->star_rating) {
+            $fallbackSpec = "Đạt tiêu chuẩn chất lượng OCOP Đông Anh & An Toàn Vệ Sinh Thực Phẩm.";
+            $fallbackIng = ["Nguyên liệu nông sản bản địa Đông Anh thuần khiết"];
+        } else {
+            $fallbackSpec = "Đạt tiêu chuẩn chất lượng & An Toàn Vệ Sinh Thực Phẩm (VSATTP).";
+            $fallbackIng = ["Nguồn thực phẩm / hàng hóa tươi sạch chọn lọc hàng ngày"];
+        }
         $fallbackUsage = "Dùng trực tiếp hoặc chế biến món ăn ngon cho gia đình.";
         $fallbackWarn = "🛡️ Bảo quản nơi khô ráo, thoáng mát.";
     }
@@ -192,13 +197,13 @@
         $card3Icon = "🧘‍♂️";
         $card4Icon = "🛡️";
     } else {
-        $sectionHeaderTitle = "📊 Thống Kê & Chỉ Tiêu Kỹ Thuật Đặc Sản";
+        $sectionHeaderTitle = $product->star_rating ? "📊 Thống Kê & Chỉ Tiêu Kỹ Thuật Đặc Sản" : "📊 Thống Kê & Chỉ Tiêu Kỹ Thuật Sản Phẩm";
         $card1Title = "Chỉ Tiêu Chất Lượng & Kiểm Định";
-        $card2Title = "Thành Phần Nguyên Liệu Bản Địa";
+        $card2Title = $product->star_rating ? "Thành Phần Nguyên Liệu Bản Địa" : "Thành Phần & Quy Cách Thực Phẩm";
         $card3Title = "Thưởng Thức & Khuyên Dùng";
         $card4Title = "Bảo Quản & Khuyến Cáo";
         $card1Icon = "🧪";
-        $card2Icon = "🌾";
+        $card2Icon = $product->star_rating ? "🌾" : "📦";
         $card3Icon = "🥂";
         $card4Icon = "🛡️";
     }
@@ -679,8 +684,8 @@
             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
         </span>
         <a href="/?cat=dong-anh-market" class="breadcrumb-item-link">
-            <span style="font-size: 0.95rem;">🌾</span>
-            <span>Nông Sản & Đặc Sản OCOP</span>
+            <span style="font-size: 0.95rem;">{{ $product->star_rating ? '🌾' : '🏪' }}</span>
+            <span>{{ $product->star_rating ? 'Nông Sản & Đặc Sản OCOP' : 'Cơ Sở Kinh Doanh & Hàng Hóa' }}</span>
         </a>
         <span class="breadcrumb-arrow">
             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
@@ -701,8 +706,12 @@
             <div class="ocop-hero-image-col">
                 <div class="product-showcase-img-box">
                     <img src="{{ $product->image_path ?: ($eatery?->image_path ?: 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=800&q=80') }}" alt="{{ $product->name }}">
-                    <span class="ocop-badge-label">
-                        🌾 SẢN PHẨM OCOP CHỨNG NHẬN
+                    <span class="ocop-badge-label" style="{{ !$product->star_rating ? 'background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);' : '' }}">
+                        @if($product->star_rating)
+                            🌾 SẢN PHẨM OCOP CHỨNG NHẬN
+                        @else
+                            🏪 SẢN PHẨM CƠ SỞ KINH DOANH
+                        @endif
                     </span>
                 </div>
             </div>
@@ -717,8 +726,8 @@
                                 ⭐ {{ str_contains($product->star_rating, 'sao') ? $product->star_rating : $product->star_rating . ' sao' }} Cấp Quốc Gia
                             </div>
                         @else
-                            <div class="gold-crown-badge">
-                                ⭐ Chứng Nhận OCOP Cố Đô Đông Anh
+                            <div class="gold-crown-badge" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); border-color: #0284c7;">
+                                🏪 Cơ Sở Kinh Doanh Đông Anh
                             </div>
                         @endif
 
@@ -810,31 +819,55 @@
     </div>
 
     <!-- TOP HIGHLIGHT: CERTIFICATE & ORIGIN BANNER -->
-    <div class="ocop-cert-banner">
-        <div class="ocop-cert-info">
-            <div class="ocop-cert-icon" onclick="openOcopCertModal()" title="Bấm để xem Giấy Chứng Nhận OCOP">
-                📜
+    @if($product->star_rating || $decisionStr)
+        <div class="ocop-cert-banner">
+            <div class="ocop-cert-info">
+                <div class="ocop-cert-icon" onclick="openOcopCertModal()" title="Bấm để xem Giấy Chứng Nhận OCOP">
+                    📜
+                </div>
+                <div class="ocop-cert-text">
+                    <span class="ocop-cert-label">CHỨNG NHẬN CÔNG NHẬN SẢN PHẨM OCOP:</span>
+                    <h4 class="ocop-cert-title">
+                        {{ $decisionStr ?: ('Chứng nhận đạt phân hạng ' . ($product->star_rating ?: 'OCOP 3-5 sao') . ' UBND Thành Phố Hà Nội') }}
+                    </h4>
+                </div>
             </div>
-            <div class="ocop-cert-text">
-                <span class="ocop-cert-label">CHỨNG NHẬN CÔNG NHẬN SẢN PHẨM OCOP:</span>
-                <h4 class="ocop-cert-title">
-                    {{ $decisionStr ?: ('Chứng nhận đạt phân hạng ' . ($product->star_rating ?: 'OCOP 3-5 sao') . ' UBND Thành Phố Hà Nội') }}
-                </h4>
-            </div>
-        </div>
 
-        <div class="ocop-cert-actions">
-            @if($qcvnStr)
-                <span class="ocop-qcvn-badge">
-                    🛡️ BỘ Y TẾ: {{ $qcvnStr }}
-                </span>
-            @endif
-            
-            <button onclick="openOcopCertModal()" class="btn-view-ocop-cert">
-                📜 XEM GIẤY CHỨNG NHẬN OCOP ➔
-            </button>
+            <div class="ocop-cert-actions">
+                @if($qcvnStr)
+                    <span class="ocop-qcvn-badge">
+                        🛡️ BỘ Y TẾ: {{ $qcvnStr }}
+                    </span>
+                @endif
+                
+                <button onclick="openOcopCertModal()" class="btn-view-ocop-cert">
+                    📜 XEM GIẤY CHỨNG NHẬN OCOP ➔
+                </button>
+            </div>
         </div>
-    </div>
+    @else
+        <div class="ocop-cert-banner" style="background: linear-gradient(135deg, rgba(2, 132, 199, 0.08) 0%, rgba(16, 185, 129, 0.08) 100%); border: 1px solid rgba(2, 132, 199, 0.2);">
+            <div class="ocop-cert-info">
+                <div class="ocop-cert-icon" style="background: #0284c7; color: white;">
+                    🏪
+                </div>
+                <div class="ocop-cert-text">
+                    <span class="ocop-cert-label" style="color: #0284c7;">CƠ SỞ KINH DOANH THƯƠNG MẠI & DỊCH VỤ:</span>
+                    <h4 class="ocop-cert-title" style="color: #0f172a;">
+                        {{ $product->seller_name ?: ($eatery?->name ?: 'Hộ kinh doanh trên địa bàn huyện Đông Anh') }} - Cam kết nguồn gốc & chất lượng
+                    </h4>
+                </div>
+            </div>
+
+            <div class="ocop-cert-actions">
+                @if($eatery && $eatery->phone)
+                    <a href="tel:{{ $eatery->phone }}" class="btn-view-ocop-cert" style="background: #0284c7; border-color: #0284c7; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+                        📞 HOTLINE: {{ $eatery->phone }}
+                    </a>
+                @endif
+            </div>
+        </div>
+    @endif
 
     <!-- OFFICIAL INTERACTIVE OCOP CERTIFICATE MODAL -->
     <div id="ocopCertModal" style="display: none; position: fixed; inset: 0; z-index: 999999; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(6px); overflow-y: auto; padding: 20px; box-sizing: border-box; justify-content: center; align-items: flex-start;">
@@ -999,41 +1032,126 @@
         </div>
     </div>
 
-    <!-- HERITAGE STORY CALLOUT BOX -->
-    @if(count($heritageStory) > 0 || !empty($product->story))
-    <div style="background: linear-gradient(135deg, #ffffff 0%, #fffbeb 100%); border: 1.5px solid #fde68a; border-radius: 28px; padding: 32px; margin-bottom: 44px; box-shadow: 0 12px 30px rgba(245, 158, 11, 0.08); position: relative; overflow: hidden;">
-        
-        <h3 style="font-size: 1.4rem; font-weight: 800; color: #92400e; margin-bottom: 16px; font-family: var(--font-heading); display: flex; align-items: center; gap: 10px;">
-            👑 Huyền Thoại Di Sản & Bí Quyết Gia Truyền
-        </h3>
+    <!-- VSATTP FOOD SAFETY CERTIFICATE & BUSINESS SHOWCASE BOX -->
+    @php
+        $cert = $eatery?->foodSafetyCertificate;
+        $certImg = $cert?->image_path ? asset($cert->image_path) : null;
+    @endphp
 
-        <div style="font-size: 1.05rem; line-height: 1.85; color: #334155; font-style: italic;">
-            @if(!empty($product->story))
-                <p style="margin-bottom: 16px;">{!! $linkify($product->story) !!}</p>
-            @endif
+    @if($product->star_rating)
+        <!-- Heritage Story Callout Box for Certified OCOP Products -->
+        @if(count($heritageStory) > 0 || !empty($product->story))
+            <div style="background: linear-gradient(135deg, #ffffff 0%, #fffbeb 100%); border: 1.5px solid #fde68a; border-radius: 28px; padding: 32px; margin-bottom: 44px; box-shadow: 0 12px 30px rgba(245, 158, 11, 0.08); position: relative; overflow: hidden;">
+                <h3 style="font-size: 1.4rem; font-weight: 800; color: #92400e; margin-bottom: 16px; font-family: var(--font-heading); display: flex; align-items: center; gap: 10px;">
+                    👑 Huyền Thoại Di Sản & Bí Quyết Gia Truyền
+                </h3>
 
-            @foreach($heritageStory as $hs)
-                <p style="margin-bottom: 12px;">{!! $linkify($hs) !!}</p>
-            @endforeach
-        </div>
+                <div style="font-size: 1.05rem; line-height: 1.85; color: #334155; font-style: italic;">
+                    @if(!empty($product->story))
+                        <p style="margin-bottom: 16px;">{!! $linkify($product->story) !!}</p>
+                    @endif
 
-        @if(!empty($product->artisans))
-            <div style="margin-top: 20px; padding-top: 16px; border-top: 1px dashed #fde68a; display: flex; align-items: center; gap: 12px;">
-                <span style="font-size: 1.5rem;">👨‍🍳</span>
-                <div>
-                    <strong style="color: #92400e; font-size: 0.9rem; display: block;">NGHỆ NHÂN TRUYỀN NGHỀ BÀN TAY VÀNG:</strong>
-                    <span style="font-size: 1rem; color: #0f172a; font-weight: 700;">{{ $product->artisans }}</span>
+                    @foreach($heritageStory as $hs)
+                        <p style="margin-bottom: 12px;">{!! $linkify($hs) !!}</p>
+                    @endforeach
                 </div>
+
+                @if(!empty($product->artisans))
+                    <div style="margin-top: 20px; padding-top: 16px; border-top: 1px dashed #fde68a; display: flex; align-items: center; gap: 12px;">
+                        <span style="font-size: 1.5rem;">👨‍🍳</span>
+                        <div>
+                            <strong style="color: #92400e; font-size: 0.9rem; display: block;">NGHỆ NHÂN TRUYỀN NGHỀ BÀN TAY VÀNG:</strong>
+                            <span style="font-size: 1rem; color: #0f172a; font-weight: 700;">{{ $product->artisans }}</span>
+                        </div>
+                    </div>
+                @endif
             </div>
         @endif
-    </div>
+    @else
+        <!-- VSATTP Food Safety Certificate Showcase for Business Establishments -->
+        <div style="background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%); border: 1.5px solid #bbf7d0; border-radius: 28px; padding: 32px; margin-bottom: 44px; box-shadow: 0 12px 30px rgba(16, 185, 129, 0.08); position: relative; overflow: hidden;">
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; border-bottom: 1px dashed #bbf7d0; padding-bottom: 16px;">
+                <h3 style="font-size: 1.4rem; font-weight: 800; color: #065f46; margin: 0; font-family: var(--font-heading); display: flex; align-items: center; gap: 10px;">
+                    🛡️ Giấy Chứng Nhận An Toàn Vệ Sinh Thực Phẩm (VSATTP)
+                </h3>
+                <span style="background: #10b981; color: #ffffff; font-weight: 800; font-size: 0.85rem; padding: 6px 16px; border-radius: 30px; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);">
+                    ✓ Đủ Điều Kiện An Toàn VSTP
+                </span>
+            </div>
+
+            <div style="display: grid; grid-template-columns: {{ $certImg ? '220px 1fr' : '1fr' }}; gap: 24px; align-items: center;">
+                @if($certImg)
+                    <div style="position: relative; cursor: pointer; border-radius: 16px; overflow: hidden; border: 2px solid #10b981; box-shadow: 0 8px 20px rgba(0,0,0,0.1);" onclick="openCertImageModal('{{ $certImg }}')">
+                        <img src="{{ $certImg }}" alt="Giấy chứng nhận VSATTP {{ $eatery?->name }}" style="width: 100%; height: 260px; object-fit: cover; display: block; transition: transform 0.3s ease;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                        <div style="position: absolute; inset: 0; background: rgba(0,0,0,0.3); opacity: 0; transition: opacity 0.3s; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 0.85rem; text-align: center; padding: 10px;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0'">
+                            🔍 Bấm để xem ảnh Giấy chứng nhận
+                        </div>
+                    </div>
+                @endif
+
+                <div>
+                    <div style="background: #ffffff; border: 1px solid #a7f3d0; border-radius: 18px; padding: 20px; margin-bottom: 16px;">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; font-size: 0.95rem; color: #1e293b;">
+                            <div>
+                                <span style="color: #64748b; font-size: 0.82rem; font-weight: 700; display: block; text-transform: uppercase;">CƠ SỞ KINH DOANH:</span>
+                                <strong style="color: #065f46; font-size: 1.05rem;">{{ $product->seller_name ?: ($eatery?->name ?: 'Cơ sở kinh doanh Đông Anh') }}</strong>
+                            </div>
+                            <div>
+                                <span style="color: #64748b; font-size: 0.82rem; font-weight: 700; display: block; text-transform: uppercase;">SỐ GIẤY CHỨNG NHẬN:</span>
+                                <strong style="color: #0284c7; font-size: 1rem;">{{ $cert?->certificate_number ?: 'Đã xác minh QCVN / VSTP' }}</strong>
+                            </div>
+                            <div>
+                                <span style="color: #64748b; font-size: 0.82rem; font-weight: 700; display: block; text-transform: uppercase;">CƠ QUAN CẤP CHỨNG NHẬN:</span>
+                                <strong>{{ $cert?->issued_by ?: 'Chi cục An toàn Vệ sinh Thực phẩm Hà Nội' }}</strong>
+                            </div>
+                            <div>
+                                <span style="color: #64748b; font-size: 0.82rem; font-weight: 700; display: block; text-transform: uppercase;">TRẠNG THÁI HIỆU LỰC:</span>
+                                <span style="color: #10b981; font-weight: 800;">✓ Đang có hiệu lực lưu hành</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="font-size: 1rem; line-height: 1.7; color: #334155;">
+                        <p style="margin: 0 0 8px 0; font-weight: 600;">
+                            📋 <strong>Thông tin & Quy cách dịch vụ:</strong> {{ $product->description ?: 'Chuyên cung cấp thực phẩm, hải sản tươi sống cho cỗ đám tiệc, bếp ăn trường học, nhà hàng & hộ gia đình.' }}
+                        </p>
+                        <p style="margin: 0; color: #64748b; font-size: 0.88rem;">
+                            Toàn bộ nguồn hàng & quy trình cung ứng tuân thủ nghiêm ngặt quy định về An toàn vệ sinh thực phẩm trên địa bàn Đông Anh, Hà Nội.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- CERTIFICATE IMAGE ZOOM MODAL -->
+        <div id="certImgZoomModal" style="display: none; position: fixed; inset: 0; z-index: 9999999; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(8px); align-items: center; justify-content: center; padding: 20px;" onclick="closeCertImageModal()">
+            <div style="position: relative; max-width: 90vw; max-height: 90vh;" onclick="event.stopPropagation()">
+                <button onclick="closeCertImageModal()" style="position: absolute; top: -16px; right: -16px; background: #ef4444; color: white; border: none; width: 36px; height: 36px; border-radius: 50%; font-size: 1.2rem; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 10;">✕</button>
+                <img id="certImgZoomTarget" src="" style="max-width: 90vw; max-height: 85vh; border-radius: 16px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); object-fit: contain;">
+            </div>
+        </div>
+        <script>
+            function openCertImageModal(url) {
+                document.getElementById('certImgZoomTarget').src = url;
+                document.getElementById('certImgZoomModal').style.display = 'flex';
+            }
+            function closeCertImageModal() {
+                document.getElementById('certImgZoomModal').style.display = 'none';
+            }
+        </script>
     @endif
 
     <!-- Related OCOP Products Section -->
     @if(isset($relatedProducts) && $relatedProducts->count() > 0)
     <div>
         <h3 style="font-size: 1.5rem; font-weight: 800; color: #0f172a; margin-bottom: 24px; font-family: var(--font-heading); display: flex; align-items: center; gap: 10px;">
-            🌾 Sản Phẩm OCOP Cùng Khu Vực Đông Anh
+            @if($product->star_rating)
+                🌾 Sản Phẩm OCOP Cùng Khu Vực Đông Anh
+            @else
+                🛒 Sản Phẩm Khác Cùng Khu Vực Đông Anh
+            @endif
         </h3>
         
         <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px;">
@@ -1045,6 +1163,8 @@
                                 <img src="{{ $rel->image_path ?: ($rel->eatery?->image_path ?: 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=300&q=80') }}" style="width: 100%; height: 100%; object-fit: cover;" alt="{{ $rel->name }}">
                                 @if($rel->star_rating)
                                     <span style="position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.75); color: #ffb300; font-size: 0.72rem; font-weight: 800; padding: 4px 10px; border-radius: 12px;">⭐ {{ $rel->star_rating }}</span>
+                                @else
+                                    <span style="position: absolute; top: 10px; left: 10px; background: rgba(2, 132, 199, 0.85); color: #ffffff; font-size: 0.72rem; font-weight: 800; padding: 4px 10px; border-radius: 12px;">🏪 Gian hàng / Cơ sở</span>
                                 @endif
                             </div>
                             <h4 style="font-size: 1.05rem; font-weight: 800; color: #0f172a; margin: 0 0 6px 0; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">

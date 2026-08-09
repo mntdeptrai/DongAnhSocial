@@ -933,6 +933,8 @@
                                              style="background: rgba(255,255,255,0.02); flex: 0 0 calc(50% - 10px); min-width: 290px; transition: all 0.3s ease; cursor: pointer;"
                                              @if(in_array($categorySlug, ['dong-anh-market', 'traditional-market']))
                                                  onclick="window.location.href='/san-pham-ocop/{{ $item->id }}'"
+                                             @elseif($categorySlug === 'co-so-kinh-doanh')
+                                                 onclick="window.location.href='/san-pham/{{ $item->id }}'"
                                              @else
                                                  onclick="openProductHeritageModal(this)"
                                              @endif

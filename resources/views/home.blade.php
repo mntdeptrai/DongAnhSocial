@@ -4217,7 +4217,7 @@
     window.openHomeOcopModal = function(product) {
         document.getElementById('hpmName').textContent = product.name || 'Sản phẩm OCOP';
         document.getElementById('hpmImg').src = product.image || 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=300&q=80';
-        document.getElementById('hpmStars').textContent = '⭐ ' + (product.star_rating || 'Chứng nhận OCOP');
+        document.getElementById('hpmStars').textContent = product.star_rating ? ('⭐ ' + product.star_rating) : '🏪 Cơ sở kinh doanh';
         document.getElementById('hpmPrice').textContent = product.price || 'Liên hệ';
         document.getElementById('hpmSeller').textContent = product.seller_name || 'Cơ sở sản xuất Đông Anh';
         document.getElementById('hpmAddress').textContent = '📍 ' + (product.address || 'Đông Anh, Hà Nội');
