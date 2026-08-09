@@ -63,6 +63,21 @@ class FcmService
                                             'visibility' => 'PUBLIC',
                                         ],
                                     ],
+                                    'apns' => [
+                                        'headers' => [
+                                            'apns-priority' => '10',
+                                        ],
+                                        'payload' => [
+                                            'aps' => [
+                                                'alert' => [
+                                                    'title' => $title,
+                                                    'body'  => $body,
+                                                ],
+                                                'sound' => 'default',
+                                                'badge' => 1,
+                                            ],
+                                        ],
+                                    ],
                                     'data' => array_map('strval', array_merge([
                                         'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
                                     ], $data)),
