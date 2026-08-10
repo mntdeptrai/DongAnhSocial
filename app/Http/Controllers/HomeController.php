@@ -707,18 +707,82 @@ class HomeController extends Controller
     }
 
     /**
-     * API phát event thả emoji (Reactions) qua WebSocket
+     * API phát event thả emoji (Reactions) qua WebSocket & lưu vào DB
      */
     public function reactToCheckin(Request $request, $id)
     {
         $request->validate([
             'emoji' => ['required', 'string', 'max:10'],
-            'type'  => ['required', 'string', 'in:checkin,diary'],
+            'type'  => ['required', 'string', 'in:checkin,diary,post'],
         ]);
 
-        event(new \App\Events\CheckinReacted((int) $id, $request->type, $request->emoji));
+        $type = $request->input('type', 'checkin');
+        $emoji = $request->input('emoji', '👍');
 
-        return response()->json(['success' => true]);
+        $user = auth('sanctum')->user() ?: \Illuminate\Support\Facades\Auth::user();
+        $userId = $user ? $user->id : session('user_id');
+        $sessionId = session()->getId() ?: ('guest_' . md5($request->ip() . ($request->header('User-Agent') ?? '')));
+
+        $query = \App\Models\CheckinReaction::where('reactionable_type', $type)
+            ->where('reactionable_id', (int) $id);
+
+        if ($userId) {
+            $query->where('user_id', $userId);
+        } else {
+            $query->whereNull('user_id')->where('session_id', $sessionId);
+        }
+
+        $existing = $query->first();
+
+        if ($existing) {
+            if ($existing->emoji === $emoji) {
+                $existing->delete();
+            } else {
+                $existing->update(['emoji' => $emoji]);
+            }
+        } else {
+            \App\Models\CheckinReaction::create([
+                'reactionable_type' => $type,
+                'reactionable_id'   => (int) $id,
+                'user_id'           => $userId ?: null,
+                'session_id'        => $userId ? null : $sessionId,
+                'emoji'             => $emoji,
+            ]);
+
+            try {
+                \App\Services\NotificationService::notifyReaction((int) $id, $type, $emoji, $userId);
+            } catch (\Throwable $notifErr) {}
+        }
+
+        $allReactions = \App\Models\CheckinReaction::where('reactionable_type', $type)
+            ->where('reactionable_id', (int) $id)
+            ->selectRaw('emoji, count(*) as count')
+            ->groupBy('emoji')
+            ->pluck('count', 'emoji')
+            ->toArray();
+
+        $emojis = ['❤️', '🔥', '👍', '😂', '😍', '🤤'];
+        $counts = [];
+        $total = 0;
+        foreach ($emojis as $e) {
+            $cnt = (int) ($allReactions[$e] ?? 0);
+            $counts[$e] = $cnt;
+            $total += $cnt;
+        }
+
+        if ($type === 'checkin') {
+            try { \App\Models\Checkin::where('id', $id)->update(['likes_count' => $total]); } catch (\Throwable $e) {}
+        } elseif ($type === 'post') {
+            try { \App\Models\Post::where('id', $id)->update(['likes_count' => $total]); } catch (\Throwable $e) {}
+        }
+
+        event(new \App\Events\CheckinReacted((int) $id, $type, $emoji, $counts, $total));
+
+        return response()->json([
+            'success' => true,
+            'counts'  => $counts,
+            'total'   => $total,
+        ]);
     }
 
     private function removeVietnameseSign($str)
