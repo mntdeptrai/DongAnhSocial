@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../services/api_service.dart';
 
 void showPublicProfileModal(BuildContext context, dynamic userId) {
@@ -271,6 +272,28 @@ class _PublicProfileSheetState extends State<PublicProfileSheet> {
                                                 side: const BorderSide(color: Color(0xFFCBD5E1)),
                                                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            InkWell(
+                                              onTap: () {
+                                                final uid = _userData!['id'] ?? widget.userId;
+                                                final shareUrl = 'https://donganhdiscovery.xadonganh.com/profile/$uid';
+                                                Clipboard.setData(ClipboardData(text: shareUrl));
+                                                ScaffoldMessenger.of(context).showSnackBar(
+                                                  SnackBar(
+                                                    content: Text('📋 Đã sao chép liên kết trang cá nhân:\n$shareUrl'),
+                                                    behavior: SnackBarBehavior.floating,
+                                                  ),
+                                                );
+                                              },
+                                              child: Container(
+                                                padding: const EdgeInsets.all(10),
+                                                decoration: BoxDecoration(
+                                                  border: Border.all(color: const Color(0xFFCBD5E1)),
+                                                  borderRadius: BorderRadius.circular(12),
+                                                ),
+                                                child: const Icon(Icons.share, size: 18, color: Color(0xFF475569)),
                                               ),
                                             ),
                                           ],

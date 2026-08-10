@@ -310,6 +310,117 @@ class FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
     }
   }
 
+  void _openLocationPickerModal(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: const Color(0xFF1E293B),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (modalCtx) {
+        String searchQuery = '';
+        return StatefulBuilder(
+          builder: (ctx, setModalState) {
+            final filteredList = _eateries.where((eatery) {
+              final name = (eatery['name'] ?? '').toString().toLowerCase();
+              final commune = (eatery['commune']?['name'] ?? '').toString().toLowerCase();
+              return name.contains(searchQuery.toLowerCase()) || commune.contains(searchQuery.toLowerCase());
+            }).toList();
+
+            return Container(
+              height: MediaQuery.of(context).size.height * 0.7,
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        '📍 Chọn địa điểm check-in',
+                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close, color: Colors.white70),
+                        onPressed: () => Navigator.pop(modalCtx),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    style: const TextStyle(color: Colors.white, fontSize: 13),
+                    decoration: InputDecoration(
+                      hintText: '🔍 Tìm tên địa điểm, cơ sở...',
+                      hintStyle: const TextStyle(color: Colors.white54, fontSize: 13),
+                      prefixIcon: const Icon(Icons.search, color: Color(0xFF0EA5E9)),
+                      filled: true,
+                      fillColor: const Color(0xFF334155),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    ),
+                    onChanged: (val) {
+                      setModalState(() {
+                        searchQuery = val;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  Expanded(
+                    child: filteredList.isEmpty
+                        ? const Center(
+                            child: Text(
+                              'Không tìm thấy địa điểm phù hợp',
+                              style: TextStyle(color: Colors.white54, fontSize: 13),
+                            ),
+                          )
+                        : ListView.separated(
+                            itemCount: filteredList.length,
+                            separatorBuilder: (_, __) => const Divider(color: Color(0xFF334155), height: 1),
+                            itemBuilder: (context, idx) {
+                              final item = filteredList[idx];
+                              final isSelected = _selectedEateryId == item['id'];
+                              return ListTile(
+                                leading: const CircleAvatar(
+                                  backgroundColor: Color(0xFF334155),
+                                  child: Icon(Icons.storefront_rounded, color: Color(0xFF0EA5E9), size: 20),
+                                ),
+                                title: Text(
+                                  item['name'] ?? '',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                                subtitle: Text(
+                                  item['commune']?['name'] ?? 'Đông Anh',
+                                  style: const TextStyle(color: Colors.white60, fontSize: 11),
+                                ),
+                                trailing: isSelected
+                                    ? const Icon(Icons.check_circle, color: Color(0xFF0EA5E9))
+                                    : null,
+                                onTap: () {
+                                  setState(() {
+                                    _selectedEateryId = item['id'];
+                                  });
+                                  Navigator.pop(modalCtx);
+                                },
+                              );
+                            },
+                          ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   void _react(int id, String emoji, String type) async {
     final res = await ApiService.reactToCheckin(id, emoji, type);
     if (res['success'] == true && mounted) {
@@ -810,56 +921,74 @@ class FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
                         ),
                         const SizedBox(height: 6),
 
-                        // Choose eatery with GPS location button
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF334155),
-                                  border: Border.all(color: const Color(0xFF475569)),
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: DropdownButtonHideUnderline(
-                                  child: DropdownButton<int>(
-                                    dropdownColor: const Color(0xFF334155),
-                                    value: _selectedEateryId,
-                                    isExpanded: true,
-                                    style: const TextStyle(color: Colors.white, fontSize: 12),
-                                    hint: const Text('📍 Chọn địa điểm (tùy chọn)...', style: TextStyle(color: Colors.white70, fontSize: 12)),
-                                    items: _eateries.map<DropdownMenuItem<int>>((eatery) {
-                                      return DropdownMenuItem<int>(
-                                        value: eatery['id'],
+                        // Location selection button / selected location chip
+                        _selectedEateryId == null
+                            ? InkWell(
+                                onTap: () => _openLocationPickerModal(context),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF334155),
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(color: const Color(0xFF475569)),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      const Icon(Icons.add_location_alt_rounded, color: Color(0xFF0EA5E9), size: 18),
+                                      const SizedBox(width: 8),
+                                      const Expanded(
                                         child: Text(
-                                          '${eatery['name']} (${eatery['commune']?['name'] ?? 'Đông Anh'})',
-                                          style: const TextStyle(color: Colors.white, fontSize: 12),
-                                          overflow: TextOverflow.ellipsis,
+                                          'Gắn địa điểm / Cơ sở (Tùy chọn)',
+                                          style: TextStyle(color: Colors.white70, fontSize: 12),
                                         ),
-                                      );
-                                    }).toList(),
-                                    onChanged: (val) {
-                                      setState(() {
-                                        _selectedEateryId = val;
-                                      });
-                                    },
+                                      ),
+                                      IconButton(
+                                        onPressed: _autoDetectCurrentLocationAndSelectEatery,
+                                        icon: const Icon(Icons.my_location, color: Color(0xFF0EA5E9), size: 16),
+                                        tooltip: 'Định vị tự động',
+                                        padding: EdgeInsets.zero,
+                                        constraints: const BoxConstraints(),
+                                      ),
+                                    ],
                                   ),
                                 ),
+                              )
+                            : Builder(
+                                builder: (context) {
+                                  final selectedItem = _eateries.firstWhere(
+                                    (e) => e['id'] == _selectedEateryId,
+                                    orElse: () => null,
+                                  );
+                                  return Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF0EA5E9).withValues(alpha: 0.15),
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(color: const Color(0xFF0EA5E9)),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        const Icon(Icons.location_on, color: Color(0xFF0EA5E9), size: 18),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: Text(
+                                            selectedItem != null ? '${selectedItem['name']}' : 'Địa điểm đã gắn',
+                                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                        InkWell(
+                                          onTap: () => setState(() => _selectedEateryId = null),
+                                          child: const Padding(
+                                            padding: EdgeInsets.all(4.0),
+                                            child: Icon(Icons.close, color: Colors.white70, size: 18),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
                               ),
-                            ),
-                            const SizedBox(width: 6),
-                            IconButton(
-                              onPressed: _autoDetectCurrentLocationAndSelectEatery,
-                              icon: const Icon(Icons.my_location, color: Color(0xFF0EA5E9), size: 20),
-                              tooltip: 'Tự động định vị quán gần nhất',
-                              style: IconButton.styleFrom(
-                                backgroundColor: const Color(0xFF334155),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                padding: const EdgeInsets.all(10),
-                              ),
-                            ),
-                          ],
-                        ),
                         const SizedBox(height: 8),
 
                         // Stars Rating
@@ -924,7 +1053,7 @@ class FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
 
                         // Submit Button
                         ElevatedButton(
-                          onPressed: _isSendingCheckin || _selectedEateryId == null
+                          onPressed: _isSendingCheckin
                               ? null
                               : _submitCameraCheckin,
                           style: ElevatedButton.styleFrom(

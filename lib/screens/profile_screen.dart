@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import '../services/api_service.dart';
 
@@ -856,8 +857,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             const SizedBox(width: 8),
                             InkWell(
                               onTap: () {
+                                final userId = user?['id'] ?? '';
+                                final shareUrl = 'https://donganhdiscovery.xadonganh.com/profile/$userId';
+                                Clipboard.setData(ClipboardData(text: shareUrl));
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Đã sao chép liên kết hồ sơ cá nhân!')),
+                                  SnackBar(
+                                    content: Text('📋 Đã sao chép liên kết trang cá nhân:\n$shareUrl'),
+                                    behavior: SnackBarBehavior.floating,
+                                  ),
                                 );
                               },
                               child: Container(

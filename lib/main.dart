@@ -446,6 +446,7 @@ class _MainLayoutState extends State<MainLayout> with WidgetsBindingObserver {
       final cCount = await CartService.refreshCartCount();
 
       if (mounted) {
+        NotificationStateService.updateUnreadCount(unreadNotifs);
         setState(() {
           _unreadNotifsCount = unreadNotifs;
           _unreadMessagesCount = unreadMsgCount;
