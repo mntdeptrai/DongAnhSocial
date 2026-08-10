@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../services/api_service.dart';
@@ -23,33 +24,246 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _isUploadingImage = false;
   int _selectedActivityTab = 0;
 
+  void _showFullScreenImageModal(BuildContext context, String imageUrl, String title) {
+    showDialog(
+      context: context,
+      useSafeArea: false,
+      barrierDismissible: true,
+      builder: (dialogContext) {
+        return GestureDetector(
+          onTap: () => Navigator.of(dialogContext).pop(),
+          child: Scaffold(
+            backgroundColor: Colors.black,
+            body: Stack(
+              fit: StackFit.expand,
+              children: [
+                GestureDetector(
+                  onTap: () => Navigator.of(dialogContext).pop(),
+                  child: InteractiveViewer(
+                    minScale: 0.5,
+                    maxScale: 4.0,
+                    child: Center(
+                      child: Image.network(
+                        imageUrl,
+                        fit: BoxFit.contain,
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return const Center(
+                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                          );
+                        },
+                        errorBuilder: (context, error, stackTrace) {
+                          return const Center(
+                            child: Text('Không thể tải hình ảnh', style: TextStyle(color: Colors.white70)),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  top: MediaQuery.of(dialogContext).padding.top + 12,
+                  left: 16,
+                  right: 16,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.5),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          title,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: () => Navigator.of(dialogContext).pop(),
+                        behavior: HitTestBehavior.opaque,
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.close_rounded, color: Colors.white, size: 24),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showImagePreviewDialog({
+    required String title,
+    required String imagePath,
+    required bool isAvatar,
+    required Future<void> Function() onConfirm,
+  }) {
+    bool isSubmitting = false;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Dialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+              child: Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          title,
+                          style: const TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w900,
+                            color: Color(0xFF0F172A),
+                          ),
+                        ),
+                        if (!isSubmitting)
+                          IconButton(
+                            icon: const Icon(Icons.close, color: Colors.grey, size: 20),
+                            onPressed: () => Navigator.pop(dialogContext),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    if (isAvatar)
+                      Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: const Color(0xFF0EA5E9), width: 3),
+                        ),
+                        child: CircleAvatar(
+                          radius: 70,
+                          backgroundImage: FileImage(File(imagePath)),
+                        ),
+                      )
+                    else
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: Container(
+                          height: 160,
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            image: DecorationImage(
+                              image: FileImage(File(imagePath)),
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        ),
+                      ),
+                    const SizedBox(height: 24),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: isSubmitting ? null : () => Navigator.pop(dialogContext),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: const Color(0xFF64748B),
+                              side: const BorderSide(color: Color(0xFFCBD5E1)),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                            child: const Text('Hủy bỏ', style: TextStyle(fontWeight: FontWeight.bold)),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: isSubmitting
+                                ? null
+                                : () async {
+                                    setModalState(() => isSubmitting = true);
+                                    await onConfirm();
+                                    if (dialogContext.mounted) {
+                                      Navigator.pop(dialogContext);
+                                    }
+                                  },
+                            icon: isSubmitting
+                                ? const SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                  )
+                                : const Icon(Icons.check_circle_rounded, size: 18),
+                            label: Text(
+                              isSubmitting ? 'Đang lưu...' : 'Cập nhật',
+                              style: const TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF0EA5E9),
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   Future<void> _pickAndUploadAvatar(ImageSource source) async {
     try {
       final picker = ImagePicker();
       final XFile? file = await picker.pickImage(source: source, imageQuality: 95, maxWidth: 4096);
       if (file == null) return;
 
-      setState(() => _isUploadingImage = true);
-
-      final success = await ApiService.uploadAvatar(file.path);
-      if (mounted) {
-        if (success) {
-          PaintingBinding.instance.imageCache.clear();
-          PaintingBinding.instance.imageCache.clearLiveImages();
-          await ApiService.fetchUserProfile();
+      _showImagePreviewDialog(
+        title: '📸 Xem trước ảnh đại diện',
+        imagePath: file.path,
+        isAvatar: true,
+        onConfirm: () async {
+          setState(() => _isUploadingImage = true);
+          final success = await ApiService.uploadAvatar(file.path);
           if (mounted) {
-            setState(() => _isUploadingImage = false);
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('📸 Cập nhật ảnh đại diện thành công!'), backgroundColor: Color(0xFF10B981)),
-            );
+            if (success) {
+              PaintingBinding.instance.imageCache.clear();
+              PaintingBinding.instance.imageCache.clearLiveImages();
+              await ApiService.fetchUserProfile();
+              if (mounted) {
+                setState(() => _isUploadingImage = false);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('📸 Cập nhật ảnh đại diện thành công!'), backgroundColor: Color(0xFF10B981)),
+                );
+              }
+            } else {
+              setState(() => _isUploadingImage = false);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('❌ Cập nhật ảnh đại diện thất bại. Vui lòng thử lại!'), backgroundColor: Colors.red),
+              );
+            }
           }
-        } else {
-          setState(() => _isUploadingImage = false);
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('❌ Cập nhật ảnh đại diện thất bại. Vui lòng thử lại!'), backgroundColor: Colors.red),
-          );
-        }
-      }
+        },
+      );
     } catch (e) {
       if (mounted) {
         setState(() => _isUploadingImage = false);
@@ -63,27 +277,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
       final XFile? file = await picker.pickImage(source: ImageSource.gallery, imageQuality: 95, maxWidth: 4096);
       if (file == null) return;
 
-      setState(() => _isUploadingImage = true);
-
-      final success = await ApiService.uploadCoverPhoto(file.path);
-      if (mounted) {
-        if (success) {
-          PaintingBinding.instance.imageCache.clear();
-          PaintingBinding.instance.imageCache.clearLiveImages();
-          await ApiService.fetchUserProfile();
+      _showImagePreviewDialog(
+        title: '🖼️ Xem trước ảnh bìa',
+        imagePath: file.path,
+        isAvatar: false,
+        onConfirm: () async {
+          setState(() => _isUploadingImage = true);
+          final success = await ApiService.uploadCoverPhoto(file.path);
           if (mounted) {
-            setState(() => _isUploadingImage = false);
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('🖼️ Cập nhật ảnh bìa thành công!'), backgroundColor: Color(0xFF10B981)),
-            );
+            if (success) {
+              PaintingBinding.instance.imageCache.clear();
+              PaintingBinding.instance.imageCache.clearLiveImages();
+              await ApiService.fetchUserProfile();
+              if (mounted) {
+                setState(() => _isUploadingImage = false);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('🖼️ Cập nhật ảnh bìa thành công!'), backgroundColor: Color(0xFF10B981)),
+                );
+              }
+            } else {
+              setState(() => _isUploadingImage = false);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('❌ Cập nhật ảnh bìa thất bại. Vui lòng thử lại!'), backgroundColor: Colors.red),
+              );
+            }
           }
-        } else {
-          setState(() => _isUploadingImage = false);
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('❌ Cập nhật ảnh bìa thất bại. Vui lòng thử lại!'), backgroundColor: Colors.red),
-          );
-        }
-      }
+        },
+      );
     } catch (e) {
       if (mounted) {
         setState(() => _isUploadingImage = false);
@@ -428,9 +648,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Stack(
               clipBehavior: Clip.none,
               children: [
-                // Cover Photo Banner
+                // Cover Photo Banner (Tap image to view full-screen, tap badge to change)
                 GestureDetector(
-                  onTap: _pickAndUploadCoverPhoto,
+                  onTap: () => _showFullScreenImageModal(
+                    context,
+                    ApiService.getCoverUrl(user),
+                    'Ảnh bìa',
+                  ),
                   child: Container(
                     height: 140,
                     width: double.infinity,
@@ -496,13 +720,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
                     child: Column(
                       children: [
-                        // Avatar + Verified Star Badge
-                        GestureDetector(
-                          onTap: () => _showAvatarOptions(context),
-                          child: Stack(
-                            alignment: Alignment.bottomRight,
-                            children: [
-                              Container(
+                        // Avatar + Camera Edit Badge
+                        Stack(
+                          alignment: Alignment.bottomRight,
+                          children: [
+                            GestureDetector(
+                              onTap: () => _showFullScreenImageModal(
+                                context,
+                                ApiService.getAvatarUrl(user, user?['name']),
+                                'Ảnh đại diện',
+                              ),
+                              child: Container(
                                 padding: const EdgeInsets.all(4),
                                 decoration: BoxDecoration(
                                   color: Colors.white,
@@ -520,16 +748,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   ),
                                 ),
                               ),
-                              Container(
-                                padding: const EdgeInsets.all(6),
-                                decoration: const BoxDecoration(
-                                  color: Color(0xFF0EA5E9),
+                            ),
+                            GestureDetector(
+                              onTap: () => _showAvatarOptions(context),
+                              child: Container(
+                                padding: const EdgeInsets.all(7),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF0EA5E9),
                                   shape: BoxShape.circle,
+                                  border: Border.all(color: Colors.white, width: 2),
+                                  boxShadow: [
+                                    BoxShadow(color: Colors.black.withValues(alpha: 0.15), blurRadius: 4),
+                                  ],
                                 ),
-                                child: const Icon(Icons.camera_alt_rounded, color: Colors.white, size: 14),
+                                child: const Icon(Icons.camera_alt_rounded, color: Colors.white, size: 15),
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
                         const SizedBox(height: 12),
 

@@ -170,19 +170,61 @@ class UserApiController extends Controller
      */
     public function getMyCheckins(Request $request)
     {
-        $user = Auth::user() ?: auth('sanctum')->user();
+        $user = Auth::user() ?: auth('sanctum')->user() ?: $request->user('sanctum');
         if (!$user) {
             return response()->json(['success' => false, 'message' => 'Unauthenticated'], 401);
         }
 
-        $checkins = Checkin::with(['eatery', 'comments.user'])
+        $checkins = Checkin::with(['eatery.category', 'eatery.commune'])
             ->where('user_id', $user->id)
             ->latest()
-            ->get();
+            ->get()
+            ->map(function ($c) use ($user) {
+                return [
+                    'id'                => $c->id,
+                    'type'              => 'checkin',
+                    'display_name'      => $c->display_name ?: $user->name,
+                    'avatar'            => $user->avatar_url ?: $user->avatar,
+                    'rating'            => $c->rating,
+                    'comment'           => $c->comment,
+                    'image_path'        => $c->image_path,
+                    'created_at_human'  => $c->created_at ? $c->created_at->diffForHumans() : 'Vừa xong',
+                    'created_at_format' => $c->created_at ? $c->created_at->format('d/m/Y H:i') : '',
+                    'eatery_name'       => $c->eatery?->name ?? 'Địa điểm Đông Anh',
+                    'eatery'            => $c->eatery ? [
+                        'name'     => $c->eatery->name,
+                        'slug'     => $c->eatery->slug,
+                        'category' => $c->eatery->category?->name,
+                        'commune'  => $c->eatery->commune?->name,
+                    ] : null,
+                ];
+            });
+
+        $diaries = \App\Models\FoodTourDiary::with(['foodTour.stops'])
+            ->where('user_id', $user->id)
+            ->latest()
+            ->get()
+            ->map(function ($d) use ($user) {
+                return [
+                    'id'                => $d->id,
+                    'type'              => 'diary',
+                    'display_name'      => $user->name,
+                    'avatar'            => $user->avatar_url ?: $user->avatar,
+                    'rating'            => $d->rating,
+                    'comment'           => $d->comment,
+                    'image_path'        => $d->image_path,
+                    'created_at_human'  => $d->created_at ? $d->created_at->diffForHumans() : 'Vừa xong',
+                    'created_at_format' => $d->created_at ? $d->created_at->format('d/m/Y H:i') : '',
+                    'eatery_name'       => $d->foodTour?->name ?? 'Nhật ký Foodtour',
+                    'food_tour'         => $d->foodTour ? ['name' => $d->foodTour->name] : null,
+                ];
+            });
+
+        $all = $checkins->concat($diaries)->sortByDesc('created_at_human')->values();
 
         return response()->json([
             'success'  => true,
-            'checkins' => $checkins,
+            'checkins' => $all,
         ], 200, [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     }
 

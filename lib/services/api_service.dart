@@ -721,7 +721,7 @@ class ApiService {
   }
   static Future<List<dynamic>> getMyCheckins() async {
     try {
-      final response = await http.get(Uri.parse('$baseUrl/checkins/my'), headers: _getHeaders());
+      final response = await http.get(Uri.parse('$baseUrl/user/checkins'), headers: _getHeaders());
       final data = jsonDecode(response.body);
       if (response.statusCode == 200 && data['success'] == true) {
         return data['checkins'] ?? [];
