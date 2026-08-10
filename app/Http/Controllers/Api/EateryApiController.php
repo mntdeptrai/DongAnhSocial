@@ -1532,7 +1532,7 @@ YÊU CẦU TRẢ VỀ CHỈ LÀ CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU, KHÔNG C
             foreach ($userPosts as $post) {
                 try {
                     $authorName = $post->user ? $post->user->name : ($post->eatery ? $post->eatery->name : 'Thành viên Đông Anh');
-                    $authorAvatar = $post->user ? ($post->user->avatar ?? null) : ($post->eatery ? ($post->eatery->image_path ?? null) : null);
+                    $authorAvatar = $post->user ? ($post->user->avatar_url ?: $post->user->avatar) : ($post->eatery ? ($post->eatery->image_path ?? null) : null);
                     $authorRole = $post->user ? ($post->user->role ?? 'user') : 'user';
 
                     $imgs = [];

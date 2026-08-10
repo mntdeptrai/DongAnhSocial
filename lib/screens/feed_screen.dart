@@ -1017,7 +1017,7 @@ class FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
                     children: [
                       CircleAvatar(
                         backgroundColor: Colors.white.withValues(alpha: 0.9),
-                        backgroundImage: ResizeImage(NetworkImage(ApiService.getAvatarUrl(item['avatar'] ?? item, item['display_name'] ?? 'User')), width: 120),
+                        backgroundImage: ResizeImage(NetworkImage(ApiService.getAvatarUrl(item['avatar'] ?? item['author_avatar'] ?? item, item['display_name'] ?? 'User')), width: 120),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
