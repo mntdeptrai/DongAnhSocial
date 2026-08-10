@@ -92,14 +92,26 @@ class SocialHubController extends Controller
             return response()->json([]);
         }
 
-        // Tìm 15 user trước (sử dụng index users_name_index hoặc users_email_unique)
+        // Tìm kiếm sử dụng B-Tree Index: Khớp chính xác Email/SĐT/Username hoặc Prefix matching (LIKE 'query%')
         $users = User::where('id', '!=', $user->id)
             ->where(function ($q) use ($query) {
                 $q->where('email', $query)
-                  ->orWhere('username', 'like', "{$query}%")
-                  ->orWhere('name', 'like', "{$query}%");
+                  ->orWhere('phone', $query)
+                  ->orWhere('username', $query)
+                  ->orWhere('name', 'LIKE', "{$query}%")
+                  ->orWhere('username', 'LIKE', "{$query}%")
+                  ->orWhere('phone', 'LIKE', "{$query}%");
+
+                $words = array_filter(explode(' ', $query));
+                if (count($words) > 1) {
+                    $q->orWhere(function($subQ) use ($words) {
+                        foreach ($words as $w) {
+                            $subQ->where('name', 'LIKE', "{$w}%");
+                        }
+                    });
+                }
             })
-            ->limit(15)
+            ->limit(30)
             ->get();
 
         if ($users->isEmpty()) {

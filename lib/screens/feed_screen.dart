@@ -1014,52 +1014,56 @@ class FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   // Top Row: User Avatar & Stars
-                  GestureDetector(
-                    onTap: () {
-                      final uId = item['user_id'] ?? item['user']?['id'];
-                      if (uId != null) {
-                        showPublicProfileModal(context, uId);
-                      }
-                    },
-                    behavior: HitTestBehavior.opaque,
-                    child: Row(
-                      children: [
-                        CircleAvatar(
-                          backgroundColor: Colors.white.withValues(alpha: 0.9),
-                          backgroundImage: ResizeImage(NetworkImage(ApiService.getAvatarUrl(item['avatar'] ?? item['author_avatar'] ?? item, item['display_name'] ?? 'User')), width: 120),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                              children: [
-                                Text(
-                                  item['display_name'] ?? 'Ẩn danh',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 14,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                                if ((item['role'] ?? '').toString().toLowerCase() == 'admin') ...[
-                                  const SizedBox(width: 4),
-                                  const Icon(Icons.star_rounded, color: Color(0xFFEF4444), size: 16),
-                                ] else if (item['is_verified'] == true || (item['role'] != null && item['role'] != 'user' && item['role'] != 'guest')) ...[
-                                  const SizedBox(width: 4),
-                                  const Icon(Icons.star_rounded, color: Color(0xFFF59E0B), size: 16),
-                                ],
-                              ],
+                  Row(
+                    children: [
+                      GestureDetector(
+                        onTap: () {
+                          final uId = item['user_id'] ?? item['user']?['id'];
+                          if (uId != null) {
+                            showPublicProfileModal(context, uId);
+                          }
+                        },
+                        behavior: HitTestBehavior.opaque,
+                        child: Row(
+                          children: [
+                            CircleAvatar(
+                              backgroundColor: Colors.white.withValues(alpha: 0.9),
+                              backgroundImage: ResizeImage(NetworkImage(ApiService.getAvatarUrl(item['avatar'] ?? item['author_avatar'] ?? item, item['display_name'] ?? 'User')), width: 120),
                             ),
-                            const SizedBox(height: 2),
-                            Text(
-                              item['created_at_human'] ?? 'Vừa xong',
-                              style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 11),
+                            const SizedBox(width: 12),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Text(
+                                      item['display_name'] ?? 'Ẩn danh',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    if ((item['role'] ?? '').toString().toLowerCase() == 'admin') ...[
+                                      const SizedBox(width: 4),
+                                      const Icon(Icons.star_rounded, color: Color(0xFFEF4444), size: 16),
+                                    ] else if (item['is_verified'] == true || (item['role'] != null && item['role'] != 'user' && item['role'] != 'guest')) ...[
+                                      const SizedBox(width: 4),
+                                      const Icon(Icons.star_rounded, color: Color(0xFFF59E0B), size: 16),
+                                    ],
+                                  ],
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  item['created_at_human'] ?? 'Vừa xong',
+                                  style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 11),
+                                ),
+                              ],
                             ),
                           ],
                         ),
                       ),
+                      const Spacer(),
                       // Rating stars
                       Row(
                         children: List.generate(5, (index) {

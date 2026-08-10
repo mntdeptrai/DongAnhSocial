@@ -312,10 +312,23 @@ class UserApiController extends Controller
 
         if (!empty($query)) {
             $usersQuery->where(function($q) use ($query) {
-                $q->where('name', 'LIKE', "%{$query}%")
-                  ->orWhere('username', 'LIKE', "%{$query}%")
-                  ->orWhere('email', 'LIKE', "%{$query}%")
-                  ->orWhere('phone', 'LIKE', "%{$query}%");
+                // Khớp chính xác theo Email, SĐT, Username hoặc Khớp tiền tố B-Tree Index (LIKE 'query%')
+                $q->where('email', $query)
+                  ->orWhere('phone', $query)
+                  ->orWhere('username', $query)
+                  ->orWhere('name', 'LIKE', "{$query}%")
+                  ->orWhere('username', 'LIKE', "{$query}%")
+                  ->orWhere('phone', 'LIKE', "{$query}%");
+
+                // Tìm kiếm theo từng từ đơn (Tokenized prefix search)
+                $words = array_filter(explode(' ', $query));
+                if (count($words) > 1) {
+                    $q->orWhere(function($subQ) use ($words) {
+                        foreach ($words as $w) {
+                            $subQ->where('name', 'LIKE', "{$w}%");
+                        }
+                    });
+                }
             });
         }
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import 'custom_loader.dart';
+import 'public_profile_modal.dart';
 import '../screens/chat_screen.dart';
 import '../screens/eatery_detail_screen.dart';
 
@@ -27,10 +28,11 @@ class _UniversalSearchModalState extends State<UniversalSearchModal> {
   String _query = '';
   String _activeFilter = 'Tất cả';
 
-  List<dynamic> _friends = [];
+  List<dynamic> _userResults = [];
   List<dynamic> _eateries = [];
   List<dynamic> _products = [];
   bool _isLoading = true;
+  bool _isSearchingUsers = false;
 
   @override
   void initState() {
@@ -47,7 +49,7 @@ class _UniversalSearchModalState extends State<UniversalSearchModal> {
   Future<void> _fetchSearchData() async {
     setState(() => _isLoading = true);
     try {
-      final friendsFuture = ApiService.getFriends();
+      final friendsFuture = ApiService.searchUsers('');
       final eateriesFuture = ApiService.getEateries('dong-anh-food-map');
       final productsFuture = ApiService.getMarketProducts();
 
@@ -55,7 +57,7 @@ class _UniversalSearchModalState extends State<UniversalSearchModal> {
 
       if (mounted) {
         setState(() {
-          _friends = results[0];
+          _userResults = results[0];
           _eateries = results[1];
           _products = results[2];
           _isLoading = false;
@@ -66,13 +68,28 @@ class _UniversalSearchModalState extends State<UniversalSearchModal> {
     }
   }
 
-  List<dynamic> get _filteredFriends {
-    if (_query.trim().isEmpty) return _friends;
-    final q = _query.toLowerCase().trim();
-    return _friends.where((f) {
-      final name = (f['name'] ?? '').toString().toLowerCase();
-      return name.contains(q);
-    }).toList();
+  Future<void> _onSearchQueryChanged(String query) async {
+    setState(() => _query = query);
+    if (query.trim().isEmpty) {
+      final defaultUsers = await ApiService.searchUsers('');
+      if (mounted) {
+        setState(() => _userResults = defaultUsers);
+      }
+      return;
+    }
+
+    setState(() => _isSearchingUsers = true);
+    final searched = await ApiService.searchUsers(query);
+    if (mounted) {
+      setState(() {
+        _userResults = searched;
+        _isSearchingUsers = false;
+      });
+    }
+  }
+
+  List<dynamic> get _filteredUsers {
+    return _userResults;
   }
 
   List<dynamic> get _filteredEateries {
@@ -100,7 +117,7 @@ class _UniversalSearchModalState extends State<UniversalSearchModal> {
     return Container(
       height: MediaQuery.of(context).size.height * 0.88,
       decoration: BoxDecoration(
-        color: const Color(0xFFF0FDFA),
+        color: const Color(0xFFF8FAFC),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         border: Border.all(color: const Color(0xFF0EA5E9).withValues(alpha: 0.15)),
         boxShadow: [
@@ -154,21 +171,19 @@ class _UniversalSearchModalState extends State<UniversalSearchModal> {
                           autofocus: true,
                           style: const TextStyle(fontSize: 14, color: Color(0xFF0F172A), fontWeight: FontWeight.w600),
                           decoration: const InputDecoration(
-                            hintText: 'Tìm Bạn bè, Địa điểm, Quán ăn & OCOP...',
+                            hintText: 'Tìm Thành viên, Quán ăn & Sản phẩm OCOP...',
                             hintStyle: TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
                             border: InputBorder.none,
                             isDense: true,
                           ),
-                          onChanged: (val) {
-                            setState(() => _query = val);
-                          },
+                          onChanged: _onSearchQueryChanged,
                         ),
                       ),
                       if (_query.isNotEmpty)
                         GestureDetector(
                           onTap: () {
                             _searchController.clear();
-                            setState(() => _query = '');
+                            _onSearchQueryChanged('');
                           },
                           child: const Padding(
                             padding: EdgeInsets.symmetric(horizontal: 10),
@@ -185,7 +200,7 @@ class _UniversalSearchModalState extends State<UniversalSearchModal> {
                 SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: Row(
-                    children: ['Tất cả', '👥 Bạn bè', '🍲 Quán ăn', '🏆 OCOP'].map((filter) {
+                    children: ['Tất cả', '👥 Thành viên', '🍲 Quán ăn', '🏆 OCOP'].map((filter) {
                       final bool isSelected = _activeFilter == filter;
                       return GestureDetector(
                         onTap: () => setState(() => _activeFilter = filter),
@@ -220,24 +235,29 @@ class _UniversalSearchModalState extends State<UniversalSearchModal> {
           Expanded(
             child: _isLoading
                 ? const CustomPulseLoader(
-                    message: 'Đang tìm kiếm dữ liệu...',
+                    message: 'Đang kết nối dữ liệu...',
                     icon: Icons.search_rounded,
                     primaryColor: Color(0xFF0EA5E9),
                   )
                 : ListView(
                     padding: const EdgeInsets.all(16),
                     children: [
-                      // Section 1: Friends
-                      if (_activeFilter == 'Tất cả' || _activeFilter == '👥 Bạn bè') ...[
-                        if (_filteredFriends.isNotEmpty) ...[
-                          const Padding(
-                            padding: EdgeInsets.only(bottom: 10),
-                            child: Text(
-                              '👥 BẠN BÈ',
-                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF0EA5E9), letterSpacing: 0.5),
-                            ),
+                      // Section 1: Members & People (All Users)
+                      if (_activeFilter == 'Tất cả' || _activeFilter == '👥 Thành viên') ...[
+                        if (_filteredUsers.isNotEmpty) ...[
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text(
+                                '👥 THÀNH VIÊN & NGƯỜI DÙNG',
+                                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF0EA5E9), letterSpacing: 0.5),
+                              ),
+                              if (_isSearchingUsers)
+                                const SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF0EA5E9))),
+                            ],
                           ),
-                          ..._filteredFriends.map((f) => _buildFriendResultItem(f)),
+                          const SizedBox(height: 10),
+                          ..._filteredUsers.map((u) => _buildUserResultItem(u)),
                           const SizedBox(height: 16),
                         ],
                       ],
@@ -271,7 +291,7 @@ class _UniversalSearchModalState extends State<UniversalSearchModal> {
                         ],
                       ],
 
-                      if (_filteredFriends.isEmpty && _filteredEateries.isEmpty && _filteredProducts.isEmpty)
+                      if (_filteredUsers.isEmpty && _filteredEateries.isEmpty && _filteredProducts.isEmpty)
                         Container(
                           padding: const EdgeInsets.symmetric(vertical: 40),
                           child: const Column(
@@ -284,7 +304,7 @@ class _UniversalSearchModalState extends State<UniversalSearchModal> {
                               ),
                               SizedBox(height: 4),
                               Text(
-                                'Thử tìm từ khóa khác như "Bún chả", "Chợ Tó", "Thảo Loan"...',
+                                'Thử tìm từ khóa như "Ngọc Anh", "Bún chả", "Chợ Tó"...',
                                 style: TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
                               ),
                             ],
@@ -298,10 +318,13 @@ class _UniversalSearchModalState extends State<UniversalSearchModal> {
     );
   }
 
-  Widget _buildFriendResultItem(dynamic friend) {
-    final name = friend['name'] ?? 'Bạn bè';
-    final avatar = friend['avatar'] ?? (name.isNotEmpty ? name[0] : '👤');
-    final isOnline = friend['is_online'] == true;
+  Widget _buildUserResultItem(dynamic user) {
+    final String name = user['name'] ?? 'Người dùng';
+    final String email = user['email'] ?? user['phone'] ?? '';
+    final String avatar = user['avatar_url'] ?? user['avatar'] ?? '';
+    final String role = (user['role'] ?? 'user').toString().toUpperCase();
+    final bool isSeller = role.contains('SELLER') || role.contains('STALL');
+    final String status = user['friendship_status'] ?? 'none';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
@@ -311,37 +334,96 @@ class _UniversalSearchModalState extends State<UniversalSearchModal> {
         border: Border.all(color: const Color(0xFF0EA5E9).withValues(alpha: 0.1)),
       ),
       child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: const Color(0xFF0EA5E9),
-          child: Text(avatar, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-        ),
-        title: Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF0F172A))),
-        subtitle: Text(
-          isOnline ? '🟢 Đang hoạt động' : 'Ngoại tuyến',
-          style: TextStyle(fontSize: 11, color: isOnline ? const Color(0xFF10B981) : Colors.grey),
-        ),
-        trailing: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-          decoration: BoxDecoration(
-            color: const Color(0xFF0EA5E9).withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: const Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.chat_bubble_outline_rounded, size: 14, color: Color(0xFF0EA5E9)),
-              SizedBox(width: 4),
-              Text('Nhắn tin', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF0EA5E9))),
-            ],
-          ),
-        ),
         onTap: () {
           Navigator.pop(context);
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const ChatScreen()),
-          );
+          showPublicProfileModal(context, user['id']);
         },
+        leading: CircleAvatar(
+          backgroundColor: isSeller ? const Color(0xFF059669) : const Color(0xFF0EA5E9),
+          backgroundImage: avatar.startsWith('http') ? NetworkImage(avatar) : null,
+          child: !avatar.startsWith('http')
+              ? Text(name.isNotEmpty ? name[0].toUpperCase() : 'U', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold))
+              : null,
+        ),
+        title: Row(
+          children: [
+            Flexible(
+              child: Text(
+                name,
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF0F172A)),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            if (role.contains('ADMIN')) ...[
+              const SizedBox(width: 4),
+              const Icon(Icons.star_rounded, color: Color(0xFFEF4444), size: 16),
+            ] else if (isSeller || user['is_verified'] == true || (role.isNotEmpty && role != 'USER' && role != 'GUEST')) ...[
+              const SizedBox(width: 4),
+              const Icon(Icons.star_rounded, color: Color(0xFFF59E0B), size: 16),
+            ],
+          ],
+        ),
+        subtitle: Text(
+          email.isNotEmpty ? email : 'Thành viên Đông Anh Social',
+          style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        trailing: status == 'accepted'
+            ? OutlinedButton.icon(
+                onPressed: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const ChatScreen()),
+                  );
+                },
+                icon: const Icon(Icons.chat_bubble_outline_rounded, size: 13),
+                label: const Text('Nhắn tin', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFF0EA5E9),
+                  side: const BorderSide(color: Color(0xFF0EA5E9)),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                ),
+              )
+            : status == 'pending_sent'
+                ? Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: const Color(0xFFCBD5E1)),
+                    ),
+                    child: const Text('Đã gửi', style: TextStyle(fontSize: 11, color: Color(0xFF64748B), fontWeight: FontWeight.bold)),
+                  )
+                : ElevatedButton.icon(
+                    onPressed: () async {
+                      final res = await ApiService.sendFriendRequest(user['id']);
+                      if (context.mounted) {
+                        if (res['success'] == true) {
+                          setState(() {
+                            user['friendship_status'] = 'pending_sent';
+                          });
+                        }
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(res['message'] ?? 'Đã gửi lời mời kết bạn!'),
+                            backgroundColor: res['success'] == true ? const Color(0xFF10B981) : Colors.red,
+                          ),
+                        );
+                      }
+                    },
+                    icon: const Icon(Icons.person_add_alt_1_rounded, size: 13),
+                    label: const Text('Kết bạn', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF0EA5E9),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                  ),
       ),
     );
   }
