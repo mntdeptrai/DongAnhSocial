@@ -62,13 +62,19 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       final aUnread = (a['unread_count'] ?? (a['unread'] == true ? 1 : 0)) as int;
       final bUnread = (b['unread_count'] ?? (b['unread'] == true ? 1 : 0)) as int;
       if (aUnread != bUnread) {
-        return bUnread.compareTo(aUnread); // Ưu tiên chưa đọc lên đầu
+        return bUnread.compareTo(aUnread); // Ưu tiên tin chưa đọc lên đầu
+      }
+
+      final aTimestamp = (a['latest_message_timestamp'] ?? 0) as int;
+      final bTimestamp = (b['latest_message_timestamp'] ?? 0) as int;
+      if (aTimestamp != bTimestamp) {
+        return bTimestamp.compareTo(aTimestamp); // Gần đây nhất lên đầu
       }
 
       final aTime = a['last_message_at'] ?? a['updated_at'] ?? a['time'];
       final bTime = b['last_message_at'] ?? b['updated_at'] ?? b['time'];
       if (aTime != null && bTime != null) {
-        return bTime.toString().compareTo(aTime.toString()); // Gần đây nhất lên đầu
+        return bTime.toString().compareTo(aTime.toString());
       } else if (aTime != null) {
         return -1;
       } else if (bTime != null) {

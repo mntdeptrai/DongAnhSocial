@@ -355,17 +355,39 @@ class SocialHubController extends Controller
             ->pluck('user_id');
 
         $friendIds = $sentFriendIds->merge($receivedFriendIds)->unique();
-        $friends = User::whereIn('id', $friendIds)->get()->map(function($f) {
+
+        $latestMessagesMap = collect();
+        if ($friendIds->isNotEmpty()) {
+            $latestMessagesMap = Message::where(function($q) use ($user, $friendIds) {
+                    $q->where('sender_id', $user->id)->whereIn('receiver_id', $friendIds);
+                })->orWhere(function($q) use ($user, $friendIds) {
+                    $q->whereIn('sender_id', $friendIds)->where('receiver_id', $user->id);
+                })
+                ->orderBy('created_at', 'desc')
+                ->get()
+                ->groupBy(function($msg) use ($user) {
+                    return $msg->sender_id == $user->id ? $msg->receiver_id : $msg->sender_id;
+                })
+                ->map(function($messages) {
+                    return $messages->first();
+                });
+        }
+
+        $friends = User::whereIn('id', $friendIds)->get()->map(function($f) use ($latestMessagesMap) {
+            $latestMessage = $latestMessagesMap->get($f->id);
             return [
-                'id' => $f->id,
-                'name' => $f->name,
-                'email' => $f->email,
-                'avatar' => $f->avatar,
-                'avatar_url' => $f->avatar_url,
-                'is_online' => $f->is_online ?? false,
-                'role' => $f->role ?? 'user',
+                'id'                       => $f->id,
+                'name'                     => $f->name,
+                'email'                    => $f->email,
+                'avatar'                   => $f->avatar,
+                'avatar_url'               => $f->avatar_url,
+                'is_online'                => $f->is_online ?? false,
+                'role'                     => $f->role ?? 'user',
+                'latest_message'           => $latestMessage ? $latestMessage->message : null,
+                'latest_message_time'      => $latestMessage ? $latestMessage->created_at->diffForHumans() : null,
+                'latest_message_timestamp' => $latestMessage ? $latestMessage->created_at->timestamp : 0,
             ];
-        });
+        })->sortByDesc('latest_message_timestamp')->values();
 
         return response()->json($friends);
     }
