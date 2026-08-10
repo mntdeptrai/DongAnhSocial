@@ -2696,22 +2696,30 @@
 
             <!-- Section 2: Share options -->
             <div class="dash-share-subtitle">Chia sẻ lên hệ sinh thái</div>
-            <div class="dash-share-grid">
+            <div class="dash-share-grid" style="grid-template-columns: repeat(6, 1fr);">
+                <button type="button" class="dash-grid-btn zalo" onclick="shareToZaloWeb()">
+                    <div class="dash-grid-icon-box" style="background: #0068ff; color: #fff; font-weight: 800; font-size: 0.82rem;">Zalo</div>
+                    <span class="dash-grid-label">Zalo</span>
+                </button>
+                <button type="button" class="dash-grid-btn facebook" onclick="shareToFacebookWeb()">
+                    <div class="dash-grid-icon-box" style="background: #1877f2; color: #fff; font-weight: 800; font-size: 0.9rem;">FB</div>
+                    <span class="dash-grid-label">Facebook</span>
+                </button>
                 <button type="button" class="dash-grid-btn feed" onclick="shareToInternalFeed()">
                     <div class="dash-grid-icon-box">📰</div>
-                    <span class="dash-grid-label">Bảng tin cá nhân</span>
+                    <span class="dash-grid-label">Bảng tin</span>
                 </button>
                 <button type="button" class="dash-grid-btn link" onclick="copySharePostLink()">
                     <div class="dash-grid-icon-box">🔗</div>
-                    <span class="dash-grid-label">Sao chép liên kết</span>
+                    <span class="dash-grid-label">Sao chép</span>
                 </button>
                 <button type="button" class="dash-grid-btn external" onclick="triggerExternalShare()">
                     <div class="dash-grid-icon-box">🌐</div>
-                    <span class="dash-grid-label">Ứng dụng khác</span>
+                    <span class="dash-grid-label">Khác</span>
                 </button>
                 <button type="button" class="dash-grid-btn chat" onclick="openDirectMessageList()">
                     <div class="dash-grid-icon-box">💬</div>
-                    <span class="dash-grid-label">Đông Anh Chat</span>
+                    <span class="dash-grid-label">Chat</span>
                 </button>
             </div>
         </div>
@@ -2948,6 +2956,26 @@
             if (navigator.share) {
                 navigator.share(shareData).catch(() => {});
             }
+        }
+
+        function shareToFacebookWeb() {
+            closeDongAnhShareModal();
+            const shareUrl = getPostShareUrl();
+            if (currentSharingPost && currentSharingPost.id) {
+                registerPostShare(currentSharingPost.id, currentSharingPost.hashid);
+            }
+            const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
+            window.open(fbUrl, 'share-facebook', 'width=600,height=500,location=no,menubar=no,toolbar=no');
+        }
+
+        function shareToZaloWeb() {
+            closeDongAnhShareModal();
+            const shareUrl = getPostShareUrl();
+            if (currentSharingPost && currentSharingPost.id) {
+                registerPostShare(currentSharingPost.id, currentSharingPost.hashid);
+            }
+            const zaloUrl = `https://sp.zalo.me/share_inline?link=${encodeURIComponent(shareUrl)}`;
+            window.open(zaloUrl, 'share-zalo', 'width=600,height=500,location=no,menubar=no,toolbar=no');
         }
     </script>
 

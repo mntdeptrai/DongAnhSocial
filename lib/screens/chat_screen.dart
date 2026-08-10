@@ -2,6 +2,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../widgets/custom_loader.dart';
+import 'news_bulletin_screen.dart';
+import 'feed_screen.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -60,13 +62,19 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       final aUnread = (a['unread_count'] ?? (a['unread'] == true ? 1 : 0)) as int;
       final bUnread = (b['unread_count'] ?? (b['unread'] == true ? 1 : 0)) as int;
       if (aUnread != bUnread) {
-        return bUnread.compareTo(aUnread); // Ưu tiên chưa đọc lên đầu
+        return bUnread.compareTo(aUnread); // Ưu tiên tin chưa đọc lên đầu
+      }
+
+      final aTimestamp = (a['latest_message_timestamp'] ?? 0) as int;
+      final bTimestamp = (b['latest_message_timestamp'] ?? 0) as int;
+      if (aTimestamp != bTimestamp) {
+        return bTimestamp.compareTo(aTimestamp); // Gần đây nhất lên đầu
       }
 
       final aTime = a['last_message_at'] ?? a['updated_at'] ?? a['time'];
       final bTime = b['last_message_at'] ?? b['updated_at'] ?? b['time'];
       if (aTime != null && bTime != null) {
-        return bTime.toString().compareTo(aTime.toString()); // Gần đây nhất lên đầu
+        return bTime.toString().compareTo(aTime.toString());
       } else if (aTime != null) {
         return -1;
       } else if (bTime != null) {
@@ -560,15 +568,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> with SingleTickerPr
                                             bottomRight: isSelf ? const Radius.circular(4) : const Radius.circular(18),
                                           ),
                                         ),
-                                        child: Text(
-                                          msg['message'] ?? '',
-                                          style: TextStyle(
-                                            color: isSelf ? Colors.white : const Color(0xFF0F172A),
-                                            fontSize: 14,
-                                            height: 1.35,
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                        ),
+                                        child: _buildMessageBubbleWidget(msg, isSelf),
                                       ),
                                       const SizedBox(height: 3),
                                       Row(
@@ -669,6 +669,286 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> with SingleTickerPr
       ),
       backgroundColor: const Color(0xFFF8FAFC),
       body: bodyContent,
+    );
+  }
+
+  Widget _buildMessageBubbleWidget(dynamic msg, bool isSelf) {
+    final String text = msg['message'] ?? '';
+    final bool isSharedPost = text.contains('[Chia sẻ bài viết]') || text.contains('[Check-in') || (text.contains('http') && text.contains('donganhdiscovery'));
+
+    if (!isSharedPost) {
+      return Text(
+        text,
+        style: TextStyle(
+          color: isSelf ? Colors.white : const Color(0xFF0F172A),
+          fontSize: 14,
+          height: 1.35,
+          fontWeight: FontWeight.w500,
+        ),
+      );
+    }
+
+    String displayTitle = text
+        .replaceAll('📰 [Chia sẻ bài viết]', '')
+        .replaceAll('📸 [Check-in Đông Anh]', '')
+        .replaceAll('📸 [Check-in]', '')
+        .replaceAll(RegExp(r'🔗.*'), '')
+        .trim();
+
+    if (displayTitle.isEmpty) displayTitle = 'Bài viết từ Đông Anh Social';
+
+    return InkWell(
+      onTap: () => _navigateToSharedPost(context, text),
+      borderRadius: BorderRadius.circular(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                text.contains('Check-in') ? Icons.camera_alt_rounded : Icons.newspaper_rounded,
+                size: 15,
+                color: isSelf ? Colors.white : const Color(0xFF0EA5E9),
+              ),
+              const SizedBox(width: 5),
+              Text(
+                text.contains('Check-in') ? 'Check-in Đông Anh' : 'Bài viết được chia sẻ',
+                style: TextStyle(
+                  color: isSelf ? Colors.white : const Color(0xFF0EA5E9),
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            displayTitle,
+            style: TextStyle(
+              color: isSelf ? Colors.white : const Color(0xFF0F172A),
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: isSelf ? Colors.white.withValues(alpha: 0.2) : const Color(0xFFF1F5F9),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  '👁️ Chạm để xem bài viết',
+                  style: TextStyle(
+                    color: isSelf ? Colors.white : const Color(0xFF0EA5E9),
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  size: 10,
+                  color: isSelf ? Colors.white : const Color(0xFF0EA5E9),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _openSharedPostModal(BuildContext context, String messageText) {
+    String title = messageText;
+    String link = '';
+
+    final lines = messageText.split('\n');
+    for (var line in lines) {
+      if (line.contains('http')) {
+        link = line.substring(line.indexOf('http')).trim();
+      }
+    }
+
+    title = title
+        .replaceAll('📰 [Chia sẻ bài viết]', '')
+        .replaceAll('📸 [Check-in Đông Anh]', '')
+        .replaceAll('📸 [Check-in]', '')
+        .replaceAll(RegExp(r'🔗.*'), '')
+        .trim();
+
+    if (title.isEmpty) title = 'Bài viết từ Đông Anh Social';
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (modalCtx) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: Color(0xFF0F172A),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.white24,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  const CircleAvatar(
+                    backgroundColor: Color(0xFF0EA5E9),
+                    radius: 16,
+                    child: Icon(Icons.newspaper_rounded, color: Colors.white, size: 18),
+                  ),
+                  const SizedBox(width: 10),
+                  const Expanded(
+                    child: Text(
+                      'Chi Tiết Bài Viết Chia Sẻ',
+                      style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close, color: Colors.white70),
+                    onPressed: () => Navigator.pop(modalCtx),
+                  ),
+                ],
+              ),
+              const Divider(color: Color(0xFF334155), height: 24),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1E293B),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFF334155)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Row(
+                      children: [
+                        Icon(Icons.format_quote_rounded, color: Color(0xFF0EA5E9), size: 24),
+                        SizedBox(width: 6),
+                        Text('Nội dung bài viết:', style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold)),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      title,
+                      style: const TextStyle(color: Colors.white, fontSize: 15, height: 1.5, fontWeight: FontWeight.w600),
+                    ),
+                    if (link.isNotEmpty) ...[
+                      const SizedBox(height: 14),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF0EA5E9).withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: const Color(0xFF0EA5E9)),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.link_rounded, color: Color(0xFF0EA5E9), size: 16),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                link,
+                                style: const TextStyle(color: Color(0xFF38BDF8), fontSize: 11),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(modalCtx),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.white,
+                        side: const BorderSide(color: Color(0xFF475569)),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      child: const Text('Đóng'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    flex: 2,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.pop(modalCtx);
+                        _navigateToSharedPost(context, messageText);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF0EA5E9),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      icon: const Icon(Icons.arrow_forward_rounded, size: 18),
+                      label: const Text('Xem trên Bảng Tin', style: TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _navigateToSharedPost(BuildContext context, String messageText) {
+    final bool isCheckIn = messageText.contains('Check-in');
+
+    dynamic targetPostId;
+    final RegExp regExp = RegExp(r'(?:post=|checkin\/)([0-9a-zA-Z_\-]+)');
+    final match = regExp.firstMatch(messageText);
+    if (match != null) {
+      targetPostId = match.group(1);
+    }
+
+    String title = messageText
+        .replaceAll('📰 [Chia sẻ bài viết]', '')
+        .replaceAll('📸 [Check-in Đông Anh]', '')
+        .replaceAll('📸 [Check-in]', '')
+        .replaceAll(RegExp(r'🔗.*'), '')
+        .trim();
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => isCheckIn
+            ? FeedScreen(targetPostId: targetPostId, targetTitle: title)
+            : NewsBulletinScreen(targetPostId: targetPostId, targetTitle: title),
+      ),
     );
   }
 }

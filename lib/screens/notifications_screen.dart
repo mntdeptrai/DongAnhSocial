@@ -58,6 +58,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     try {
       final res = await ApiService.getAppNotifications();
       if (mounted) {
+        final unreadCount = res.where((n) => n['is_read'] != true).length;
+        NotificationStateService.updateUnreadCount(unreadCount);
         setState(() {
           _notifications = res;
           _isLoading = false;
@@ -107,6 +109,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             tooltip: 'Đánh dấu đã đọc tất cả',
             onPressed: () async {
               ApiService.markNotificationsRead();
+              NotificationStateService.clearUnreadCount();
               setState(() {
                 for (var item in _notifications) {
                   item['is_read'] = true;
@@ -212,6 +215,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                             ),
                           ),
                           onTap: () {
+                            if (item['is_read'] != true) {
+                              NotificationStateService.decrementUnreadCount();
+                            }
                             ApiService.markNotificationsRead();
                             setState(() {
                               item['is_read'] = true;

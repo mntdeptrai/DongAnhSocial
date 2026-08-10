@@ -3,13 +3,23 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:camera/camera.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:share_plus/share_plus.dart';
 import '../services/api_service.dart';
 import '../widgets/public_profile_modal.dart';
 import '../widgets/custom_loader.dart';
 import '../widgets/squircle_helper.dart';
 
 class FeedScreen extends StatefulWidget {
-  const FeedScreen({super.key});
+  final dynamic targetPostId;
+  final String? targetTitle;
+
+  const FeedScreen({
+    super.key,
+    this.targetPostId,
+    this.targetTitle,
+  });
 
   @override
   State<FeedScreen> createState() => FeedScreenState();
@@ -179,6 +189,30 @@ class FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
       if (mounted) {
         setState(() {
           _feedItems = (items is List) ? List<dynamic>.from(items) : [];
+
+          if (widget.targetPostId != null || (widget.targetTitle != null && widget.targetTitle!.isNotEmpty)) {
+            final targetIdStr = widget.targetPostId?.toString();
+            final targetTitleClean = widget.targetTitle?.toLowerCase().trim();
+
+            int targetIdx = -1;
+            for (int i = 0; i < _feedItems.length; i++) {
+              final p = _feedItems[i];
+              final pId = p['id']?.toString();
+              final pTitle = (p['comment'] ?? p['eatery']?['name'] ?? '').toString().toLowerCase().trim();
+
+              if ((targetIdStr != null && pId == targetIdStr) ||
+                  (targetTitleClean != null && targetTitleClean.isNotEmpty && pTitle.contains(targetTitleClean))) {
+                targetIdx = i;
+                break;
+              }
+            }
+
+            if (targetIdx > 0) {
+              final targetItem = _feedItems.removeAt(targetIdx);
+              _feedItems.insert(0, targetItem);
+            }
+          }
+
           _isLoading = false;
         });
       }
@@ -308,6 +342,117 @@ class FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
         _loadFeed();
       }
     }
+  }
+
+  void _openLocationPickerModal(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: const Color(0xFF1E293B),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (modalCtx) {
+        String searchQuery = '';
+        return StatefulBuilder(
+          builder: (ctx, setModalState) {
+            final filteredList = _eateries.where((eatery) {
+              final name = (eatery['name'] ?? '').toString().toLowerCase();
+              final commune = (eatery['commune']?['name'] ?? '').toString().toLowerCase();
+              return name.contains(searchQuery.toLowerCase()) || commune.contains(searchQuery.toLowerCase());
+            }).toList();
+
+            return Container(
+              height: MediaQuery.of(context).size.height * 0.7,
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        '📍 Chọn địa điểm check-in',
+                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close, color: Colors.white70),
+                        onPressed: () => Navigator.pop(modalCtx),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    style: const TextStyle(color: Colors.white, fontSize: 13),
+                    decoration: InputDecoration(
+                      hintText: '🔍 Tìm tên địa điểm, cơ sở...',
+                      hintStyle: const TextStyle(color: Colors.white54, fontSize: 13),
+                      prefixIcon: const Icon(Icons.search, color: Color(0xFF0EA5E9)),
+                      filled: true,
+                      fillColor: const Color(0xFF334155),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    ),
+                    onChanged: (val) {
+                      setModalState(() {
+                        searchQuery = val;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  Expanded(
+                    child: filteredList.isEmpty
+                        ? const Center(
+                            child: Text(
+                              'Không tìm thấy địa điểm phù hợp',
+                              style: TextStyle(color: Colors.white54, fontSize: 13),
+                            ),
+                          )
+                        : ListView.separated(
+                            itemCount: filteredList.length,
+                            separatorBuilder: (_, __) => const Divider(color: Color(0xFF334155), height: 1),
+                            itemBuilder: (context, idx) {
+                              final item = filteredList[idx];
+                              final isSelected = _selectedEateryId == item['id'];
+                              return ListTile(
+                                leading: const CircleAvatar(
+                                  backgroundColor: Color(0xFF334155),
+                                  child: Icon(Icons.storefront_rounded, color: Color(0xFF0EA5E9), size: 20),
+                                ),
+                                title: Text(
+                                  item['name'] ?? '',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                                subtitle: Text(
+                                  item['commune']?['name'] ?? 'Đông Anh',
+                                  style: const TextStyle(color: Colors.white60, fontSize: 11),
+                                ),
+                                trailing: isSelected
+                                    ? const Icon(Icons.check_circle, color: Color(0xFF0EA5E9))
+                                    : null,
+                                onTap: () {
+                                  setState(() {
+                                    _selectedEateryId = item['id'];
+                                  });
+                                  Navigator.pop(modalCtx);
+                                },
+                              );
+                            },
+                          ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   void _react(int id, String emoji, String type) async {
@@ -810,56 +955,74 @@ class FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
                         ),
                         const SizedBox(height: 6),
 
-                        // Choose eatery with GPS location button
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF334155),
-                                  border: Border.all(color: const Color(0xFF475569)),
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: DropdownButtonHideUnderline(
-                                  child: DropdownButton<int>(
-                                    dropdownColor: const Color(0xFF334155),
-                                    value: _selectedEateryId,
-                                    isExpanded: true,
-                                    style: const TextStyle(color: Colors.white, fontSize: 12),
-                                    hint: const Text('📍 Chọn địa điểm (tùy chọn)...', style: TextStyle(color: Colors.white70, fontSize: 12)),
-                                    items: _eateries.map<DropdownMenuItem<int>>((eatery) {
-                                      return DropdownMenuItem<int>(
-                                        value: eatery['id'],
+                        // Location selection button / selected location chip
+                        _selectedEateryId == null
+                            ? InkWell(
+                                onTap: () => _openLocationPickerModal(context),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF334155),
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(color: const Color(0xFF475569)),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      const Icon(Icons.add_location_alt_rounded, color: Color(0xFF0EA5E9), size: 18),
+                                      const SizedBox(width: 8),
+                                      const Expanded(
                                         child: Text(
-                                          '${eatery['name']} (${eatery['commune']?['name'] ?? 'Đông Anh'})',
-                                          style: const TextStyle(color: Colors.white, fontSize: 12),
-                                          overflow: TextOverflow.ellipsis,
+                                          'Gắn địa điểm / Cơ sở (Tùy chọn)',
+                                          style: TextStyle(color: Colors.white70, fontSize: 12),
                                         ),
-                                      );
-                                    }).toList(),
-                                    onChanged: (val) {
-                                      setState(() {
-                                        _selectedEateryId = val;
-                                      });
-                                    },
+                                      ),
+                                      IconButton(
+                                        onPressed: _autoDetectCurrentLocationAndSelectEatery,
+                                        icon: const Icon(Icons.my_location, color: Color(0xFF0EA5E9), size: 16),
+                                        tooltip: 'Định vị tự động',
+                                        padding: EdgeInsets.zero,
+                                        constraints: const BoxConstraints(),
+                                      ),
+                                    ],
                                   ),
                                 ),
+                              )
+                            : Builder(
+                                builder: (context) {
+                                  final selectedItem = _eateries.firstWhere(
+                                    (e) => e['id'] == _selectedEateryId,
+                                    orElse: () => null,
+                                  );
+                                  return Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF0EA5E9).withValues(alpha: 0.15),
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(color: const Color(0xFF0EA5E9)),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        const Icon(Icons.location_on, color: Color(0xFF0EA5E9), size: 18),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: Text(
+                                            selectedItem != null ? '${selectedItem['name']}' : 'Địa điểm đã gắn',
+                                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                        InkWell(
+                                          onTap: () => setState(() => _selectedEateryId = null),
+                                          child: const Padding(
+                                            padding: EdgeInsets.all(4.0),
+                                            child: Icon(Icons.close, color: Colors.white70, size: 18),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
                               ),
-                            ),
-                            const SizedBox(width: 6),
-                            IconButton(
-                              onPressed: _autoDetectCurrentLocationAndSelectEatery,
-                              icon: const Icon(Icons.my_location, color: Color(0xFF0EA5E9), size: 20),
-                              tooltip: 'Tự động định vị quán gần nhất',
-                              style: IconButton.styleFrom(
-                                backgroundColor: const Color(0xFF334155),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                padding: const EdgeInsets.all(10),
-                              ),
-                            ),
-                          ],
-                        ),
                         const SizedBox(height: 8),
 
                         // Stars Rating
@@ -924,7 +1087,7 @@ class FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
 
                         // Submit Button
                         ElevatedButton(
-                          onPressed: _isSendingCheckin || _selectedEateryId == null
+                          onPressed: _isSendingCheckin
                               ? null
                               : _submitCameraCheckin,
                           style: ElevatedButton.styleFrom(
@@ -976,8 +1139,7 @@ class FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
                         : 'https://donganhdiscovery.xadonganh.com/' + (item['image_path'].toString().startsWith('/') ? item['image_path'].toString().substring(1) : item['image_path'].toString()))
                     : 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=400&q=60',
                 fit: BoxFit.cover,
-                cacheWidth: 400,
-                filterQuality: FilterQuality.low,
+                filterQuality: FilterQuality.high,
                 errorBuilder: (_, __, ___) => Container(
                   decoration: const BoxDecoration(
                     gradient: LinearGradient(
@@ -1014,52 +1176,56 @@ class FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   // Top Row: User Avatar & Stars
-                  GestureDetector(
-                    onTap: () {
-                      final uId = item['user_id'] ?? item['user']?['id'];
-                      if (uId != null) {
-                        showPublicProfileModal(context, uId);
-                      }
-                    },
-                    behavior: HitTestBehavior.opaque,
-                    child: Row(
-                      children: [
-                        CircleAvatar(
-                          backgroundColor: Colors.white.withValues(alpha: 0.9),
-                          backgroundImage: ResizeImage(NetworkImage(ApiService.getAvatarUrl(item['avatar'] ?? item['author_avatar'] ?? item, item['display_name'] ?? 'User')), width: 120),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                              children: [
-                                Text(
-                                  item['display_name'] ?? 'Ẩn danh',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 14,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                                if ((item['role'] ?? '').toString().toLowerCase() == 'admin') ...[
-                                  const SizedBox(width: 4),
-                                  const Icon(Icons.star_rounded, color: Color(0xFFEF4444), size: 16),
-                                ] else if (item['is_verified'] == true || (item['role'] != null && item['role'] != 'user' && item['role'] != 'guest')) ...[
-                                  const SizedBox(width: 4),
-                                  const Icon(Icons.star_rounded, color: Color(0xFFF59E0B), size: 16),
-                                ],
-                              ],
+                  Row(
+                    children: [
+                      GestureDetector(
+                        onTap: () {
+                          final uId = item['user_id'] ?? item['user']?['id'];
+                          if (uId != null) {
+                            showPublicProfileModal(context, uId);
+                          }
+                        },
+                        behavior: HitTestBehavior.opaque,
+                        child: Row(
+                          children: [
+                            CircleAvatar(
+                              backgroundColor: Colors.white.withValues(alpha: 0.9),
+                              backgroundImage: ResizeImage(NetworkImage(ApiService.getAvatarUrl(item['avatar'] ?? item['author_avatar'] ?? item, item['display_name'] ?? 'User')), width: 120),
                             ),
-                            const SizedBox(height: 2),
-                            Text(
-                              item['created_at_human'] ?? 'Vừa xong',
-                              style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 11),
+                            const SizedBox(width: 12),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Text(
+                                      item['display_name'] ?? 'Ẩn danh',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    if ((item['role'] ?? '').toString().toLowerCase() == 'admin') ...[
+                                      const SizedBox(width: 4),
+                                      const Icon(Icons.star_rounded, color: Color(0xFFEF4444), size: 16),
+                                    ] else if (item['is_verified'] == true || item['is_verified'] == 1) ...[
+                                      const SizedBox(width: 4),
+                                      const Icon(Icons.star_rounded, color: Color(0xFFF59E0B), size: 16),
+                                    ],
+                                  ],
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  item['created_at_human'] ?? 'Vừa xong',
+                                  style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 11),
+                                ),
+                              ],
                             ),
                           ],
                         ),
                       ),
+                      const Spacer(),
                       // Rating stars
                       Row(
                         children: List.generate(5, (index) {
@@ -1157,6 +1323,20 @@ class FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
                               ),
                             ),
                           ),
+                          const SizedBox(width: 6),
+                          // Share Button (Zalo, FB, Link, System)
+                          GestureDetector(
+                            onTap: () => _showCheckinShareModal(context, item),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withOpacity(0.5),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(color: Colors.white.withOpacity(0.2)),
+                              ),
+                              child: const Icon(Icons.share_outlined, size: 16, color: Colors.white),
+                            ),
+                          ),
                         ],
                       ),
                     ],
@@ -1219,6 +1399,228 @@ class FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
                 fontWeight: FontWeight.bold,
                 color: cnt > 0 ? const Color(0xFFF97316) : Colors.white70,
               ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showCheckinShareModal(BuildContext context, dynamic item) {
+    final commentText = (item['comment'] ?? '').toString().trim();
+    final eateryName = item['eatery']?['name'] ?? 'Đông Anh Social';
+    final title = commentText.isNotEmpty ? commentText : 'Check-in tại $eateryName';
+    final shareUrl = 'https://donganhdiscovery.xadonganh.com/checkin/${item['id']}';
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.only(top: 16, left: 20, right: 20, bottom: 28),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const SizedBox(width: 36),
+                const Expanded(
+                  child: Text(
+                    'Chia sẻ bài Check-in',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF0F172A),
+                    ),
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () => Navigator.pop(ctx),
+                  child: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFF1F5F9),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.close_rounded, size: 20, color: Color(0xFF64748B)),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                GestureDetector(
+                  onTap: () async {
+                    Navigator.pop(ctx);
+                    final zaloUrl = Uri.parse('https://sp.zalo.me/share_inline?link=${Uri.encodeComponent(shareUrl)}');
+                    try {
+                      if (await canLaunchUrl(zaloUrl)) {
+                        await launchUrl(zaloUrl, mode: LaunchMode.externalApplication);
+                        return;
+                      }
+                    } catch (_) {}
+                    Share.share('📸 [Check-in Đông Anh] $title\n\n🔗 Xem chi tiết: $shareUrl');
+                  },
+                  child: SizedBox(
+                    width: 72,
+                    child: Column(
+                      children: [
+                        Container(
+                          width: 62,
+                          height: 62,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF0068FF),
+                            borderRadius: BorderRadius.circular(22),
+                          ),
+                          child: const Center(
+                            child: Text(
+                              'Zalo',
+                              style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 14),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Zalo',
+                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF334155)),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () async {
+                    Navigator.pop(ctx);
+                    final fbUrl = Uri.parse('https://www.facebook.com/sharer/sharer.php?u=${Uri.encodeComponent(shareUrl)}');
+                    try {
+                      if (await canLaunchUrl(fbUrl)) {
+                        await launchUrl(fbUrl, mode: LaunchMode.externalApplication);
+                        return;
+                      }
+                    } catch (_) {}
+                    Share.share('📸 [Check-in Đông Anh] $title\n\n🔗 Xem chi tiết: $shareUrl');
+                  },
+                  child: SizedBox(
+                    width: 72,
+                    child: Column(
+                      children: [
+                        Container(
+                          width: 62,
+                          height: 62,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF1877F2),
+                            borderRadius: BorderRadius.circular(22),
+                          ),
+                          child: const Center(
+                            child: Text(
+                              'FB',
+                              style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Facebook',
+                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF334155)),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () {
+                    Clipboard.setData(ClipboardData(text: '📸 [Check-in Đông Anh] $title\n🔗 Xem chi tiết: $shareUrl'));
+                    Navigator.pop(ctx);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: const Row(
+                          children: [
+                            Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
+                            SizedBox(width: 8),
+                            Text('Đã sao chép liên kết bài check-in!'),
+                          ],
+                        ),
+                        backgroundColor: const Color(0xFF059669),
+                        behavior: SnackBarBehavior.floating,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                    );
+                  },
+                  child: SizedBox(
+                    width: 72,
+                    child: Column(
+                      children: [
+                        Container(
+                          width: 62,
+                          height: 62,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFECFDF5),
+                            borderRadius: BorderRadius.circular(22),
+                          ),
+                          child: const Center(
+                            child: Icon(Icons.link_rounded, color: Color(0xFF059669), size: 28),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Sao chép',
+                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF334155)),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    Share.share('📸 [Check-in Đông Anh] $title\n\n🔗 Xem chi tiết: $shareUrl');
+                  },
+                  child: SizedBox(
+                    width: 72,
+                    child: Column(
+                      children: [
+                        Container(
+                          width: 62,
+                          height: 62,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFEF3C7),
+                            borderRadius: BorderRadius.circular(22),
+                          ),
+                          child: const Center(
+                            child: Icon(Icons.share_rounded, color: Color(0xFFD97706), size: 28),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Ứng dụng khác',
+                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF334155)),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         ),

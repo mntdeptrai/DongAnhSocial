@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:share_plus/share_plus.dart';
 import '../services/api_service.dart';
 
 void showPublicProfileModal(BuildContext context, dynamic userId) {
@@ -222,7 +224,7 @@ class _PublicProfileSheetState extends State<PublicProfileSheet> {
                                             if ((_userData!['role'] ?? '').toString().toLowerCase() == 'admin') ...[
                                               const SizedBox(width: 4),
                                               const Icon(Icons.star_rounded, color: Color(0xFFEF4444), size: 18),
-                                            ] else if (_userData!['is_verified'] == true || (_userData!['role'] != null && _userData!['role'] != 'user' && _userData!['role'] != 'guest')) ...[
+                                            ] else if (_userData!['is_verified'] == true || _userData!['is_verified'] == 1) ...[
                                               const SizedBox(width: 4),
                                               const Icon(Icons.star_rounded, color: Color(0xFFF59E0B), size: 18),
                                             ],
@@ -271,6 +273,24 @@ class _PublicProfileSheetState extends State<PublicProfileSheet> {
                                                 side: const BorderSide(color: Color(0xFFCBD5E1)),
                                                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            InkWell(
+                                               onTap: () {
+                                                 final uid = _userData!['id'] ?? widget.userId;
+                                                 final name = _userData!['name'] ?? 'Thành viên Đông Anh';
+                                                 final shareUrl = 'https://donganhdiscovery.xadonganh.com/profile/$uid';
+                                                 Clipboard.setData(ClipboardData(text: shareUrl));
+                                                 Share.share('👤 Trang cá nhân Đông Anh Social của $name:\n🔗 $shareUrl');
+                                               },
+                                              child: Container(
+                                                padding: const EdgeInsets.all(10),
+                                                decoration: BoxDecoration(
+                                                  border: Border.all(color: const Color(0xFFCBD5E1)),
+                                                  borderRadius: BorderRadius.circular(12),
+                                                ),
+                                                child: const Icon(Icons.share, size: 18, color: Color(0xFF475569)),
                                               ),
                                             ),
                                           ],

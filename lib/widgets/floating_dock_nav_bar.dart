@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import '../services/notification_state_service.dart';
 
 class FloatingDockNavBar extends StatelessWidget {
   final int currentIndex;
@@ -111,29 +112,60 @@ class FloatingDockNavBar extends StatelessWidget {
                                       ? Colors.white
                                       : const Color(0xFF1E293B),
                                 ),
-                                if (badge > 0)
-                                  Positioned(
-                                    top: -4,
-                                    right: -6,
-                                    child: Container(
-                                      padding: const EdgeInsets.all(2),
-                                      decoration: const BoxDecoration(
-                                        color: Color(0xFFEF4444),
-                                        shape: BoxShape.circle,
-                                      ),
-                                      constraints: const BoxConstraints(minWidth: 12, minHeight: 12),
-                                      child: Center(
-                                        child: Text(
-                                          '$badge',
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 7,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
+                                index == 4
+                                     ? ValueListenableBuilder<int>(
+                                         valueListenable: NotificationStateService.unreadCountNotifier,
+                                         builder: (context, liveNotifCount, _) {
+                                           final int count = liveNotifCount > 0 ? liveNotifCount : badge;
+                                           if (count <= 0) return const SizedBox.shrink();
+                                           return Positioned(
+                                             top: -4,
+                                             right: -6,
+                                             child: Container(
+                                               padding: const EdgeInsets.all(2),
+                                               decoration: const BoxDecoration(
+                                                 color: Color(0xFFEF4444),
+                                                 shape: BoxShape.circle,
+                                               ),
+                                               constraints: const BoxConstraints(minWidth: 12, minHeight: 12),
+                                               child: Center(
+                                                 child: Text(
+                                                   '$count',
+                                                   style: const TextStyle(
+                                                     color: Colors.white,
+                                                     fontSize: 7,
+                                                     fontWeight: FontWeight.bold,
+                                                   ),
+                                                 ),
+                                               ),
+                                             ),
+                                           );
+                                         },
+                                       )
+                                     : (badge > 0
+                                         ? Positioned(
+                                             top: -4,
+                                             right: -6,
+                                             child: Container(
+                                               padding: const EdgeInsets.all(2),
+                                               decoration: const BoxDecoration(
+                                                 color: Color(0xFFEF4444),
+                                                 shape: BoxShape.circle,
+                                               ),
+                                               constraints: const BoxConstraints(minWidth: 12, minHeight: 12),
+                                               child: Center(
+                                                 child: Text(
+                                                   '$badge',
+                                                   style: const TextStyle(
+                                                     color: Colors.white,
+                                                     fontSize: 7,
+                                                     fontWeight: FontWeight.bold,
+                                                   ),
+                                                 ),
+                                               ),
+                                             ),
+                                           )
+                                         : const SizedBox.shrink()),
                               ],
                             ),
                             const SizedBox(height: 1),

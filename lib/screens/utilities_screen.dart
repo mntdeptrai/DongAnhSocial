@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../widgets/custom_loader.dart';
 import '../widgets/squircle_helper.dart';
-import '../widgets/public_profile_modal.dart';
 import 'eatery_detail_screen.dart';
 
 class UtilitiesScreen extends StatefulWidget {
@@ -16,13 +15,10 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
   late TabController _tabController;
 
   List<dynamic> _foodEateries = [];
-  List<dynamic> _marketEateries = [];
   List<dynamic> _marketProducts = [];
-  List<dynamic> _users = [];
 
   bool _isLoadingFood = true;
   bool _isLoadingMarket = true;
-  bool _isLoadingUsers = true;
 
   String _searchQuery = '';
   String _selectedFilter = 'Tất cả';
@@ -33,10 +29,9 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 2, vsync: this);
     _fetchFoodData();
     _fetchMarketData();
-    _fetchUsersData();
     _fetchCartData();
   }
 
@@ -103,7 +98,6 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
 
       if (mounted) {
         setState(() {
-          _marketEateries = (markets is List) ? List<dynamic>.from(markets) : [];
           _marketProducts = (products is List) ? List<dynamic>.from(products) : [];
           _isLoadingMarket = false;
         });
@@ -112,30 +106,8 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
       debugPrint('_fetchMarketData API error: $e');
       if (mounted) {
         setState(() {
-          _marketEateries = [];
           _marketProducts = [];
           _isLoadingMarket = false;
-        });
-      }
-    }
-  }
-
-  Future<void> _fetchUsersData() async {
-    setState(() => _isLoadingUsers = true);
-    try {
-      final res = await ApiService.searchUsers(_searchQuery);
-      if (mounted) {
-        setState(() {
-          _users = List<dynamic>.from(res);
-          _isLoadingUsers = false;
-        });
-      }
-    } catch (e) {
-      debugPrint('_fetchUsersData API error: $e');
-      if (mounted) {
-        setState(() {
-          _users = [];
-          _isLoadingUsers = false;
         });
       }
     }
@@ -239,17 +211,6 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
       return name.contains(q) || stall.contains(q) || seller.contains(q) || phone.contains(q) || desc.contains(q) || address.contains(q) || price.contains(q) || star.contains(q);
     }).toList();
 
-    final displayUsers = _users.where((u) {
-      if (q.isEmpty) return true;
-
-      final name = normalize(u['name']?.toString() ?? '');
-      final email = normalize(u['email']?.toString() ?? '');
-      final phone = normalize(u['phone']?.toString() ?? '');
-      final role = normalize(u['role']?.toString() ?? '');
-
-      return name.contains(q) || email.contains(q) || phone.contains(q) || role.contains(q);
-    }).toList();
-
     return Scaffold(
       backgroundColor: const Color(0xFFF0FDFA),
       body: SafeArea(
@@ -276,15 +237,14 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
                     ),
                     child: LayoutBuilder(
                       builder: (context, constraints) {
-                        final tabWidth = (constraints.maxWidth - 6) / 3;
+                        final tabWidth = (constraints.maxWidth - 6) / 2;
                         return AnimatedBuilder(
                           animation: _tabController.animation!,
                           builder: (context, child) {
-                            final animValue = (_tabController.animation?.value ?? _tabController.index.toDouble()).clamp(0.0, 2.0);
+                            final animValue = (_tabController.animation?.value ?? _tabController.index.toDouble()).clamp(0.0, 1.0);
                             final leftPos = animValue * tabWidth;
                             final activeTab1Color = animValue < 0.5 ? Colors.white : Colors.grey.shade700;
-                            final activeTab2Color = (animValue >= 0.5 && animValue < 1.5) ? Colors.white : Colors.grey.shade700;
-                            final activeTab3Color = animValue >= 1.5 ? Colors.white : Colors.grey.shade700;
+                            final activeTab2Color = animValue >= 0.5 ? Colors.white : Colors.grey.shade700;
 
                             return Stack(
                               children: [
@@ -359,33 +319,6 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
                                         ),
                                       ),
                                     ),
-                                    Expanded(
-                                      child: GestureDetector(
-                                        onTap: () => _tabController.animateTo(2),
-                                        behavior: HitTestBehavior.opaque,
-                                        child: Center(
-                                          child: Row(
-                                            mainAxisAlignment: MainAxisAlignment.center,
-                                            children: [
-                                              Icon(
-                                                Icons.people_alt_rounded,
-                                                size: 13,
-                                                color: activeTab3Color,
-                                              ),
-                                              const SizedBox(width: 3),
-                                              Text(
-                                                _searchQuery.isNotEmpty ? 'NGƯỜI DÙNG (${displayUsers.length})' : 'NGƯỜI DÙNG',
-                                                style: TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: 11,
-                                                  color: activeTab3Color,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                    ),
                                   ],
                                 ),
                               ],
@@ -437,151 +370,12 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
 
                   // Tab 2: OCOP Market & Products Showcase
                   _KeepAliveTabContent(child: _buildMarketTabContent(displayProducts, primaryColor)),
-
-                  // Tab 3: Users & Members Search Showcase
-                  _KeepAliveTabContent(child: _buildUsersTabContent(displayUsers, primaryColor)),
                 ],
               ),
             ),
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildUsersTabContent(List<dynamic> users, Color primaryColor) {
-    if (_isLoadingUsers) {
-      return const CustomPulseLoader(
-        message: 'Đang tải danh sách Thành viên & Chủ gian hàng...',
-        icon: Icons.people_alt_rounded,
-        primaryColor: Color(0xFF0EA5E9),
-      );
-    }
-
-    if (users.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.person_search_rounded, size: 56, color: Colors.grey.shade400),
-            const SizedBox(height: 12),
-            Text(
-              _searchQuery.isNotEmpty ? 'Không tìm thấy người dùng trùng khớp' : 'Chưa có thông tin người dùng',
-              style: TextStyle(fontSize: 14, color: Colors.grey.shade600, fontWeight: FontWeight.bold),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return ListView.separated(
-      padding: const EdgeInsets.all(16),
-      itemCount: users.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 10),
-      itemBuilder: (context, index) {
-        final u = users[index];
-        final String name = u['name'] ?? 'Người dùng';
-        final String email = u['email'] ?? u['phone'] ?? '';
-        final String avatar = u['avatar_url'] ?? u['avatar'] ?? '';
-        final String role = (u['role'] ?? 'user').toString().toUpperCase();
-        final bool isSeller = role.contains('SELLER') || role.contains('STALL');
-        final String status = u['friendship_status'] ?? 'none';
-
-        return Card(
-          elevation: 1,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-          child: ListTile(
-            onTap: () => showPublicProfileModal(context, u['id']),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-            leading: CircleAvatar(
-              radius: 24,
-              backgroundColor: isSeller ? const Color(0xFF059669) : primaryColor,
-              backgroundImage: avatar.startsWith('http') ? NetworkImage(avatar) : null,
-              child: !avatar.startsWith('http')
-                  ? Text(
-                      name.isNotEmpty ? name[0].toUpperCase() : 'U',
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                    )
-                  : null,
-            ),
-            title: Row(
-              children: [
-                Flexible(
-                  child: Text(
-                    name,
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                if (role.contains('ADMIN')) ...[
-                  const SizedBox(width: 4),
-                  const Icon(Icons.star_rounded, color: Color(0xFFEF4444), size: 16),
-                ] else if (isSeller || u['is_verified'] == true || (role.isNotEmpty && role != 'USER' && role != 'GUEST')) ...[
-                  const SizedBox(width: 4),
-                  const Icon(Icons.star_rounded, color: Color(0xFFF59E0B), size: 16),
-                ],
-              ],
-            ),
-            subtitle: Text(
-              email.isNotEmpty ? email : 'Đông Anh Social Member',
-              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-            ),
-            trailing: status == 'accepted'
-                ? OutlinedButton.icon(
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('💬 Mở tin nhắn với $name')),
-                      );
-                    },
-                    icon: const Icon(Icons.chat_bubble_outline_rounded, size: 13),
-                    label: const Text('Nhắn tin', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: primaryColor,
-                      side: BorderSide(color: primaryColor),
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    ),
-                  )
-                : status == 'pending_sent'
-                    ? Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF1F5F9),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: const Color(0xFFCBD5E1)),
-                        ),
-                        child: const Text('Đã gửi', style: TextStyle(fontSize: 11, color: Color(0xFF64748B), fontWeight: FontWeight.bold)),
-                      )
-                    : ElevatedButton.icon(
-                        onPressed: () async {
-                          final res = await ApiService.sendFriendRequest(u['id']);
-                          if (context.mounted) {
-                            if (res['success'] == true) {
-                              setState(() {
-                                u['friendship_status'] = 'pending_sent';
-                              });
-                            }
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(res['message'] ?? 'Đã gửi lời mời kết bạn!'),
-                                backgroundColor: res['success'] == true ? const Color(0xFF10B981) : Colors.red,
-                              ),
-                            );
-                          }
-                        },
-                        icon: const Icon(Icons.person_add_alt_1_rounded, size: 13),
-                        label: const Text('Kết bạn', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: primaryColor,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                        ),
-                      ),
-          ),
-        );
-      },
     );
   }
 
@@ -599,129 +393,7 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        // Bento Grid Asymmetric Layout Header
-        Column(
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  flex: 3,
-                  child: Container(
-                    height: 140,
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF059669), Color(0xFF10B981)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(22),
-                      boxShadow: [
-                        BoxShadow(color: const Color(0xFF059669).withValues(alpha: 0.3), blurRadius: 10, offset: const Offset(0, 4)),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: const [
-                            Text('🛍️ OCOP ĐÔNG ANH', style: TextStyle(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.bold)),
-                            CircleAvatar(radius: 12, backgroundColor: Colors.white24, child: Icon(Icons.star_rounded, size: 14, color: Colors.amber)),
-                          ],
-                        ),
-                        const Text('Chợ Số & Nông Sản 4-5★', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w900)),
-                        const Text('Tương nếp, bánh chưng nương', style: TextStyle(color: Colors.white70, fontSize: 10)),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  flex: 2,
-                  child: Container(
-                    height: 140,
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFFEA580C), Color(0xFFF59E0B)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(22),
-                      boxShadow: [
-                        BoxShadow(color: const Color(0xFFEA580C).withValues(alpha: 0.3), blurRadius: 10, offset: const Offset(0, 4)),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: const [
-                        Icon(Icons.soup_kitchen_rounded, color: Colors.white, size: 24),
-                        Text('Bún Chả Cổ Loa', style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold)),
-                        Text('Chuẩn ATTP', style: TextStyle(color: Colors.white70, fontSize: 10)),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                Expanded(
-                  flex: 2,
-                  child: Container(
-                    height: 100,
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF0284C7), Color(0xFF06B6D4)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: const [
-                        Icon(Icons.school_rounded, color: Colors.white, size: 20),
-                        Text('Bản Đồ Giáo Dục', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  flex: 3,
-                  child: Container(
-                    height: 100,
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF7C3AED), Color(0xFFA855F7)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: const [
-                        Icon(Icons.account_balance_rounded, color: Colors.white, size: 20),
-                        Text('Di Sản & Cổ Loa Hub', style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold)),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-        const SizedBox(height: 20),
+
 
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -937,43 +609,7 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        // OCOP Header Banner
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFF059669), Color(0xFF10B981)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(color: const Color(0xFF059669).withValues(alpha: 0.3), blurRadius: 10, offset: const Offset(0, 4)),
-            ],
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
-                    Text('🏆 GIỜ NÔNG SẢN & OCOP ĐÔNG ANH', style: TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.bold)),
-                    SizedBox(height: 4),
-                    Text('Sản Phẩm Đạt Chuẩn OCOP 4-5 Sao', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-                    SizedBox(height: 4),
-                    Text('Trực tiếp từ hợp tác xã và hộ kinh doanh chính gốc', style: TextStyle(color: Colors.white70, fontSize: 11)),
-                  ],
-                ),
-              ),
-              const CircleAvatar(
-                radius: 28,
-                backgroundColor: Colors.white24,
-                child: Icon(Icons.workspace_premium_rounded, color: Colors.white, size: 28),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 20),
+
 
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,

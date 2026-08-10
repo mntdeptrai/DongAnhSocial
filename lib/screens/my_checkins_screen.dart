@@ -181,8 +181,7 @@ class _MyCheckinsScreenState extends State<MyCheckinsScreen> {
                   height: 160,
                   width: double.infinity,
                   fit: BoxFit.cover,
-                  cacheWidth: 400,
-                  filterQuality: FilterQuality.low,
+                  filterQuality: FilterQuality.high,
                   errorBuilder: (_, __, ___) => Container(
                     height: 100,
                     color: Colors.grey[100],

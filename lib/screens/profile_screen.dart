@@ -1,5 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:image_picker/image_picker.dart';
 import '../services/api_service.dart';
 
@@ -783,7 +785,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             if ((user?['role'] ?? '').toString().toLowerCase() == 'admin') ...[
                               const SizedBox(width: 4),
                               const Icon(Icons.star_rounded, color: Color(0xFFEF4444), size: 18),
-                            ] else if (user?['is_verified'] == true || (user?['role'] != null && user?['role'] != 'user' && user?['role'] != 'guest')) ...[
+                            ] else if (user?['is_verified'] == true || user?['is_verified'] == 1) ...[
                               const SizedBox(width: 4),
                               const Icon(Icons.star_rounded, color: Color(0xFFF59E0B), size: 18),
                             ],
@@ -856,9 +858,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             const SizedBox(width: 8),
                             InkWell(
                               onTap: () {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Đã sao chép liên kết hồ sơ cá nhân!')),
-                                );
+                                final userId = user?['id'] ?? '';
+                                final name = user?['name'] ?? 'Thành viên Đông Anh';
+                                final shareUrl = 'https://donganhdiscovery.xadonganh.com/profile/$userId';
+                                Clipboard.setData(ClipboardData(text: shareUrl));
+                                Share.share('👤 Trang cá nhân Đông Anh Social của $name:\n🔗 $shareUrl');
                               },
                               child: Container(
                                 padding: const EdgeInsets.all(10),
