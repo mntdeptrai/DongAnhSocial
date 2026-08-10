@@ -442,7 +442,7 @@ class HomeController extends Controller
 
         $emojis = ['❤️', '🔥', '👍', '😂', '😍', '🤤'];
 
-        $profilePosts->transform(function($post) use ($allCheckinReactions, $emojis, $profileCommentsGroup) {
+        $profilePosts->transform(function($post) use ($allCheckinReactions, $userReactions, $emojis, $profileCommentsGroup) {
             $key = 'post_' . $post->id;
             $reactionsGroup = $allCheckinReactions->get($key, collect());
             $counts = [];
@@ -454,11 +454,12 @@ class HomeController extends Controller
             }
             $post->reaction_counts = $counts;
             $post->reaction_total = $total;
+            $post->is_liked = $userReactions->has($key);
             $post->comments = $profileCommentsGroup->get($post->id, collect());
             return $post;
         });
 
-        $standaloneCheckins->transform(function($chk) use ($allCheckinReactions, $emojis) {
+        $standaloneCheckins->transform(function($chk) use ($allCheckinReactions, $userReactions, $emojis) {
             $key = 'checkin_' . $chk->id;
             $reactionsGroup = $allCheckinReactions->get($key, collect());
             $counts = [];
@@ -470,10 +471,11 @@ class HomeController extends Controller
             }
             $chk->reaction_counts = $counts;
             $chk->reaction_total = $total;
+            $chk->is_liked = $userReactions->has($key);
             return $chk;
         });
 
-        $diaries->transform(function($dry) use ($allCheckinReactions, $emojis) {
+        $diaries->transform(function($dry) use ($allCheckinReactions, $userReactions, $emojis) {
             $key = 'diary_' . $dry->id;
             $reactionsGroup = $allCheckinReactions->get($key, collect());
             $counts = [];
@@ -485,6 +487,7 @@ class HomeController extends Controller
             }
             $dry->reaction_counts = $counts;
             $dry->reaction_total = $total;
+            $dry->is_liked = $userReactions->has($key);
             return $dry;
         });
 

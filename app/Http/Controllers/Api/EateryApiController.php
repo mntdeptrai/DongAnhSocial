@@ -1525,7 +1525,8 @@ YÊU CẦU TRẢ VỀ CHỈ LÀ CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU, KHÔNG C
 
             $userPosts = $userPostsMysqlEdu->concat($userPostsMysql)->unique('id');
 
-            $currentUserId = auth('sanctum')->id();
+            $user = auth('sanctum')->user() ?: \Illuminate\Support\Facades\Auth::user();
+            $currentUserId = $user ? $user->id : session('user_id');
             $sessionId = session()->getId();
 
             foreach ($userPosts as $post) {
