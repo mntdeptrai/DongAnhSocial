@@ -311,23 +311,24 @@ class UserApiController extends Controller
         $usersQuery = \App\Models\User::query();
 
         if (!empty($query)) {
-            $usersQuery->where(function($q) use ($query) {
-                // Khớp chính xác theo Email, SĐT, Username hoặc Khớp tiền tố B-Tree Index (LIKE 'query%')
+            $words = array_filter(explode(' ', $query));
+            $usersQuery->where(function($q) use ($query, $words) {
+                // 1. Khớp chính xác Index (Email, SĐT, Username)
                 $q->where('email', $query)
                   ->orWhere('phone', $query)
                   ->orWhere('username', $query)
+                  // 2. Khớp tiền tố B-Tree Index (Range Scan - KHÔNG dùng % ở đầu để tránh Full Table Scan)
                   ->orWhere('name', 'LIKE', "{$query}%")
                   ->orWhere('username', 'LIKE', "{$query}%")
                   ->orWhere('phone', 'LIKE', "{$query}%");
 
-                // Tìm kiếm theo từng từ đơn (Tokenized prefix search)
-                $words = array_filter(explode(' ', $query));
-                if (count($words) > 1) {
-                    $q->orWhere(function($subQ) use ($words) {
-                        foreach ($words as $w) {
-                            $subQ->where('name', 'LIKE', "{$w}%");
+                // 3. Khớp tiền tố theo từng từ đơn trong tên (Vẫn sử dụng B-Tree Index)
+                if (!empty($words)) {
+                    foreach ($words as $w) {
+                        if (mb_strlen($w) >= 2) {
+                            $q->orWhere('name', 'LIKE', "{$w}%");
                         }
-                    });
+                    }
                 }
             });
         }

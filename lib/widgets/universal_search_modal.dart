@@ -358,7 +358,7 @@ class _UniversalSearchModalState extends State<UniversalSearchModal> {
             if (role.contains('ADMIN')) ...[
               const SizedBox(width: 4),
               const Icon(Icons.star_rounded, color: Color(0xFFEF4444), size: 16),
-            ] else if (isSeller || user['is_verified'] == true || (role.isNotEmpty && role != 'USER' && role != 'GUEST')) ...[
+            ] else if (user['is_verified'] == true || user['is_verified'] == 1) ...[
               const SizedBox(width: 4),
               const Icon(Icons.star_rounded, color: Color(0xFFF59E0B), size: 16),
             ],

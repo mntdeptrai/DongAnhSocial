@@ -1047,7 +1047,7 @@ class FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
                                     if ((item['role'] ?? '').toString().toLowerCase() == 'admin') ...[
                                       const SizedBox(width: 4),
                                       const Icon(Icons.star_rounded, color: Color(0xFFEF4444), size: 16),
-                                    ] else if (item['is_verified'] == true || (item['role'] != null && item['role'] != 'user' && item['role'] != 'guest')) ...[
+                                    ] else if (item['is_verified'] == true || item['is_verified'] == 1) ...[
                                       const SizedBox(width: 4),
                                       const Icon(Icons.star_rounded, color: Color(0xFFF59E0B), size: 16),
                                     ],

@@ -222,7 +222,7 @@ class _PublicProfileSheetState extends State<PublicProfileSheet> {
                                             if ((_userData!['role'] ?? '').toString().toLowerCase() == 'admin') ...[
                                               const SizedBox(width: 4),
                                               const Icon(Icons.star_rounded, color: Color(0xFFEF4444), size: 18),
-                                            ] else if (_userData!['is_verified'] == true || (_userData!['role'] != null && _userData!['role'] != 'user' && _userData!['role'] != 'guest')) ...[
+                                            ] else if (_userData!['is_verified'] == true || _userData!['is_verified'] == 1) ...[
                                               const SizedBox(width: 4),
                                               const Icon(Icons.star_rounded, color: Color(0xFFF59E0B), size: 18),
                                             ],

@@ -783,7 +783,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             if ((user?['role'] ?? '').toString().toLowerCase() == 'admin') ...[
                               const SizedBox(width: 4),
                               const Icon(Icons.star_rounded, color: Color(0xFFEF4444), size: 18),
-                            ] else if (user?['is_verified'] == true || (user?['role'] != null && user?['role'] != 'user' && user?['role'] != 'guest')) ...[
+                            ] else if (user?['is_verified'] == true || user?['is_verified'] == 1) ...[
                               const SizedBox(width: 4),
                               const Icon(Icons.star_rounded, color: Color(0xFFF59E0B), size: 18),
                             ],

@@ -92,23 +92,26 @@ class SocialHubController extends Controller
             return response()->json([]);
         }
 
-        // Tìm kiếm sử dụng B-Tree Index: Khớp chính xác Email/SĐT/Username hoặc Prefix matching (LIKE 'query%')
+        // Truy vấn sử dụng B-Tree Index (Range Scan - KHÔNG dùng % ở đầu để tránh Full Table Scan)
+        $words = array_filter(explode(' ', $query));
         $users = User::where('id', '!=', $user->id)
-            ->where(function ($q) use ($query) {
+            ->where(function ($q) use ($query, $words) {
+                // 1. Khớp chính xác Index
                 $q->where('email', $query)
                   ->orWhere('phone', $query)
                   ->orWhere('username', $query)
+                  // 2. Khớp tiền tố B-Tree Index (LIKE 'query%')
                   ->orWhere('name', 'LIKE', "{$query}%")
                   ->orWhere('username', 'LIKE', "{$query}%")
                   ->orWhere('phone', 'LIKE', "{$query}%");
 
-                $words = array_filter(explode(' ', $query));
-                if (count($words) > 1) {
-                    $q->orWhere(function($subQ) use ($words) {
-                        foreach ($words as $w) {
-                            $subQ->where('name', 'LIKE', "{$w}%");
+                // 3. Khớp tiền tố theo từng từ đơn (LIKE 'word%')
+                if (!empty($words)) {
+                    foreach ($words as $w) {
+                        if (mb_strlen($w) >= 2) {
+                            $q->orWhere('name', 'LIKE', "{$w}%");
                         }
-                    });
+                    }
                 }
             })
             ->limit(30)
