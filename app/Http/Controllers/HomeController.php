@@ -440,6 +440,24 @@ class HomeController extends Controller
                 return $item->reactionable_type . '_' . $item->reactionable_id;
             });
 
+        $user = auth('sanctum')->user() ?: \Illuminate\Support\Facades\Auth::user();
+        $userId = $user ? $user->id : session('user_id');
+        $sessionId = session()->getId();
+
+        $userReactions = \App\Models\CheckinReaction::where(function($q) use ($userId, $sessionId) {
+                if ($userId) {
+                    $q->where('user_id', $userId);
+                } else if (!empty($sessionId)) {
+                    $q->whereNull('user_id')->where('session_id', $sessionId);
+                } else {
+                    $q->whereRaw('1 = 0');
+                }
+            })
+            ->get()
+            ->keyBy(function($item) {
+                return $item->reactionable_type . '_' . $item->reactionable_id;
+            });
+
         $emojis = ['❤️', '🔥', '👍', '😂', '😍', '🤤'];
 
         $profilePosts->transform(function($post) use ($allCheckinReactions, $userReactions, $emojis, $profileCommentsGroup) {
