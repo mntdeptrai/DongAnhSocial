@@ -362,8 +362,10 @@ class HomeController extends Controller
         $userReactions = \App\Models\CheckinReaction::where(function($q) use ($userId, $sessionId) {
                 if ($userId) {
                     $q->where('user_id', $userId);
+                } else if (!empty($sessionId)) {
+                    $q->whereNull('user_id')->where('session_id', $sessionId);
                 } else {
-                    $q->where('session_id', $sessionId);
+                    $q->whereRaw('1 = 0');
                 }
             })
             ->get()
@@ -762,7 +764,7 @@ class HomeController extends Controller
             if ($userId) {
                 $query->where('user_id', $userId);
             } else {
-                $query->where('session_id', $sessionId);
+                $query->whereNull('user_id')->where('session_id', $sessionId);
             }
 
             $existing = $query->first();
@@ -777,8 +779,8 @@ class HomeController extends Controller
                 \App\Models\CheckinReaction::create([
                     'reactionable_type' => $type,
                     'reactionable_id'   => $id,
-                    'user_id'           => $userId,
-                    'session_id'        => $sessionId,
+                    'user_id'           => $userId ?: null,
+                    'session_id'        => $userId ? null : $sessionId,
                     'emoji'             => $emoji,
                 ]);
                 $isLiked = true;

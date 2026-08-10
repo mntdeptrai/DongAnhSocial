@@ -255,8 +255,12 @@ class CheckinApiController extends Controller
             'type'  => 'required|string|in:checkin,diary',
         ]);
 
-        $userId = Auth::id() ?? session('user_id');
-        $sessionId = $request->header('X-Session-ID') ?? session()->getId();
+        $user = Auth::user() ?: $request->user('sanctum');
+        $userId = $user ? $user->id : session('user_id');
+        $sessionId = $request->header('X-Session-ID') ?: session()->getId();
+        if (empty($sessionId)) {
+            $sessionId = 'app_' . md5($request->ip() . ($request->header('User-Agent') ?? ''));
+        }
 
         $query = CheckinReaction::where('reactionable_type', $request->type)
             ->where('reactionable_id', (int) $id);
@@ -264,7 +268,7 @@ class CheckinApiController extends Controller
         if ($userId) {
             $query->where('user_id', $userId);
         } else {
-            $query->where('session_id', $sessionId);
+            $query->whereNull('user_id')->where('session_id', $sessionId);
         }
 
         $existing = $query->first();
@@ -279,8 +283,8 @@ class CheckinApiController extends Controller
             CheckinReaction::create([
                 'reactionable_type' => $request->type,
                 'reactionable_id'   => (int) $id,
-                'user_id'           => $userId,
-                'session_id'        => $sessionId,
+                'user_id'           => $userId ?: null,
+                'session_id'        => $userId ? null : $sessionId,
                 'emoji'             => $request->emoji,
             ]);
         }

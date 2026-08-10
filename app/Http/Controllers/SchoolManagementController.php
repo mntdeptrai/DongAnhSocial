@@ -446,8 +446,10 @@ class SchoolManagementController extends Controller
                 ->whereIn('reactionable_id', $postIds);
             if ($currentUserId) {
                 $uQuery->where('user_id', $currentUserId);
+            } else if (!empty($currentSessionId)) {
+                $uQuery->whereNull('user_id')->where('session_id', $currentSessionId);
             } else {
-                $uQuery->where('session_id', $currentSessionId);
+                $uQuery->whereRaw('1 = 0');
             }
             $userLikedMap = $uQuery->pluck('reactionable_id')->toArray();
 

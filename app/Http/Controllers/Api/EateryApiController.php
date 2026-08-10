@@ -1578,9 +1578,10 @@ YÊU CẦU TRẢ VỀ CHỈ LÀ CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU, KHÔNG C
                             ->where('reactionable_id', $post->id)
                             ->where('user_id', $currentUserId)
                             ->exists();
-                    } else if ($sessionId) {
+                    } else if (!empty($sessionId)) {
                         $isLiked = \App\Models\CheckinReaction::where('reactionable_type', 'post')
                             ->where('reactionable_id', $post->id)
+                            ->whereNull('user_id')
                             ->where('session_id', $sessionId)
                             ->exists();
                     }
@@ -1761,9 +1762,12 @@ YÊU CẦU TRẢ VỀ CHỈ LÀ CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU, KHÔNG C
                 return response()->json(['success' => false, 'message' => 'Bài viết không hợp lệ'], 400);
             }
 
-            $user = auth('sanctum')->user();
-            $userId = $user ? $user->id : null;
-            $sessionId = session()->getId() ?: ('app_' . md5($request->ip() . ($request->header('User-Agent') ?? '') . microtime()));
+            $user = auth('sanctum')->user() ?: \Illuminate\Support\Facades\Auth::user();
+            $userId = $user ? $user->id : session('user_id');
+            $sessionId = session()->getId() ?: ($request->header('X-Session-ID') ?? null);
+            if (empty($sessionId)) {
+                $sessionId = 'app_' . md5($request->ip() . ($request->header('User-Agent') ?? ''));
+            }
 
             $query = \App\Models\CheckinReaction::where('reactionable_type', $type)
                 ->where('reactionable_id', $id);
@@ -1771,7 +1775,7 @@ YÊU CẦU TRẢ VỀ CHỈ LÀ CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU, KHÔNG C
             if ($userId) {
                 $query->where('user_id', $userId);
             } else {
-                $query->where('session_id', $sessionId);
+                $query->whereNull('user_id')->where('session_id', $sessionId);
             }
 
             $existing = $query->first();
@@ -1784,8 +1788,8 @@ YÊU CẦU TRẢ VỀ CHỈ LÀ CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU, KHÔNG C
                 \App\Models\CheckinReaction::create([
                     'reactionable_type' => $type,
                     'reactionable_id'   => $id,
-                    'user_id'           => $userId,
-                    'session_id'        => $sessionId ?: ('guest_' . uniqid()),
+                    'user_id'           => $userId ?: null,
+                    'session_id'        => $userId ? null : $sessionId,
                     'emoji'             => $emoji ?: '👍',
                 ]);
                 $isLiked = true;
