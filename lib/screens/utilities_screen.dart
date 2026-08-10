@@ -501,33 +501,11 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
                     )
                   : null,
             ),
-            title: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    name,
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: isSeller ? const Color(0xFFECFDF5) : const Color(0xFFF0F9FF),
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(color: isSeller ? const Color(0xFF10B981) : primaryColor),
-                  ),
-                  child: Text(
-                    isSeller ? 'CHỦ GIAN HÀNG' : 'THÀNH VIÊN',
-                    style: TextStyle(
-                      fontSize: 9.5,
-                      fontWeight: FontWeight.bold,
-                      color: isSeller ? const Color(0xFF059669) : primaryColor,
-                    ),
-                  ),
-                ),
-              ],
+            title: Text(
+              name,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
             subtitle: Text(
               email.isNotEmpty ? email : 'Đông Anh Social Member',

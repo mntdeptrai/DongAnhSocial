@@ -1439,7 +1439,7 @@ class _NewsBulletinScreenState extends State<NewsBulletinScreen> {
                                                 overflow: TextOverflow.ellipsis,
                                               ),
                                             ),
-                                            if (role == 'principal' || role == 'admin' || role == 'manager' || item['is_verified'] == true) ...[
+                                            if (item['is_verified'] == true) ...[
                                               const SizedBox(width: 4),
                                               const Icon(Icons.star_rounded, color: Colors.amber, size: 16),
                                             ],

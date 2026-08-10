@@ -585,8 +585,7 @@ class AuthController extends Controller
      */
     public function updateAvatar(Request $request)
     {
-        $userId = session('user_id') ?: Auth::id();
-        $user = User::find($userId);
+        $user = $request->user('sanctum') ?: Auth::user() ?: User::find(session('user_id'));
         if (!$user) {
             return response()->json(['success' => false, 'message' => 'Chưa đăng nhập!'], 401);
         }
@@ -643,8 +642,7 @@ class AuthController extends Controller
      */
     public function updateCoverPhoto(Request $request)
     {
-        $userId = session('user_id') ?: Auth::id();
-        $user = User::find($userId);
+        $user = $request->user('sanctum') ?: Auth::user() ?: User::find(session('user_id'));
         if (!$user) {
             return response()->json(['success' => false, 'message' => 'Chưa đăng nhập!'], 401);
         }

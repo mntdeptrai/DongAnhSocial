@@ -108,6 +108,52 @@ class ApiService {
     return currentUser;
   }
 
+  /// POST /profile/avatar — Tải lên ảnh đại diện mới
+  static Future<bool> uploadAvatar(String imagePath) async {
+    try {
+      final request = http.MultipartRequest('POST', Uri.parse('$baseUrl/profile/avatar'));
+      request.headers.addAll(_getHeaders());
+      request.files.add(await http.MultipartFile.fromPath('avatar', imagePath));
+
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = jsonDecode(response.body);
+        if (data['success'] == true) {
+          await fetchUserProfile();
+          return true;
+        }
+      }
+    } catch (e) {
+      debugPrint('[ApiService] uploadAvatar error: $e');
+    }
+    return false;
+  }
+
+  /// POST /profile/cover — Tải lên ảnh bìa mới
+  static Future<bool> uploadCoverPhoto(String imagePath) async {
+    try {
+      final request = http.MultipartRequest('POST', Uri.parse('$baseUrl/profile/cover'));
+      request.headers.addAll(_getHeaders());
+      request.files.add(await http.MultipartFile.fromPath('cover', imagePath));
+
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = jsonDecode(response.body);
+        if (data['success'] == true) {
+          await fetchUserProfile();
+          return true;
+        }
+      }
+    } catch (e) {
+      debugPrint('[ApiService] uploadCoverPhoto error: $e');
+    }
+    return false;
+  }
+
   static Future<void> setBaseUrl(String url) async {
     baseUrl = url;
     final prefs = await SharedPreferences.getInstance();

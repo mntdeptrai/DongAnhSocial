@@ -105,12 +105,6 @@ class FloatingIslandHeader extends StatelessWidget implements PreferredSizeWidge
 
                   const Spacer(),
 
-                  // Dynamic Role Switcher Island Pill
-                  if (userRole != 'user') ...[
-                    _buildRoleIslandBadge(context, userRole),
-                    const SizedBox(width: 6),
-                  ],
-
                   // Action Buttons
                   _buildHeaderButton(
                     icon: Icons.search_rounded,

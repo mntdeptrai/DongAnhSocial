@@ -474,26 +474,9 @@ class FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
 
     return Scaffold(
       appBar: AppBar(
-        title: Row(
-          children: [
-            const Text(
-              'DongAnh',
-              style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18),
-            ),
-            const Text(
-              ' Feed',
-              style: TextStyle(color: Color(0xFFFFB800), fontWeight: FontWeight.w900, fontSize: 18),
-            ),
-            const SizedBox(width: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFFB800),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Text('Locket 📸', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
-            ),
-          ],
+        title: const Text(
+          'Check-in Đông Anh',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
         ),
         flexibleSpace: Container(
           decoration: const BoxDecoration(
@@ -597,7 +580,7 @@ class FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
                   ),
                   const SizedBox(width: 8),
                   const Text(
-                    '📸 DAD CHECK-IN',
+                    '📸 CHECK-IN ĐÔNG ANH',
                     style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w900,
@@ -1051,20 +1034,6 @@ class FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
                                     color: Colors.white,
                                   ),
                                 ),
-                                if (item['role'] == 'admin') ...[
-                                  const SizedBox(width: 6),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: Colors.red,
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                    child: const Text(
-                                      'ADMIN',
-                                      style: TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold),
-                                    ),
-                                  ),
-                                ],
                               ],
                             ),
                             const SizedBox(height: 2),

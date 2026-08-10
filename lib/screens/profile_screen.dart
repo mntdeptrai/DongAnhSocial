@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import '../services/api_service.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -19,7 +20,104 @@ class _ProfileScreenState extends State<ProfileScreen> {
   List<dynamic> _myPosts = [];
   List<dynamic> _myCheckins = [];
   bool _isLoadingActivity = true;
+  bool _isUploadingImage = false;
   int _selectedActivityTab = 0;
+
+  Future<void> _pickAndUploadAvatar(ImageSource source) async {
+    try {
+      final picker = ImagePicker();
+      final XFile? file = await picker.pickImage(source: source, imageQuality: 95, maxWidth: 4096);
+      if (file == null) return;
+
+      setState(() => _isUploadingImage = true);
+
+      final success = await ApiService.uploadAvatar(file.path);
+      if (mounted) {
+        setState(() => _isUploadingImage = false);
+        if (success) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('📸 Cập nhật ảnh đại diện thành công!'), backgroundColor: Color(0xFF10B981)),
+          );
+          setState(() {});
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('❌ Cập nhật ảnh đại diện thất bại. Vui lòng thử lại!'), backgroundColor: Colors.red),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isUploadingImage = false);
+      }
+    }
+  }
+
+  Future<void> _pickAndUploadCoverPhoto() async {
+    try {
+      final picker = ImagePicker();
+      final XFile? file = await picker.pickImage(source: ImageSource.gallery, imageQuality: 95, maxWidth: 4096);
+      if (file == null) return;
+
+      setState(() => _isUploadingImage = true);
+
+      final success = await ApiService.uploadCoverPhoto(file.path);
+      if (mounted) {
+        setState(() => _isUploadingImage = false);
+        if (success) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('🖼️ Cập nhật ảnh bìa thành công!'), backgroundColor: Color(0xFF10B981)),
+          );
+          setState(() {});
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('❌ Cập nhật ảnh bìa thất bại. Vui lòng thử lại!'), backgroundColor: Colors.red),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isUploadingImage = false);
+      }
+    }
+  }
+
+  void _showAvatarOptions(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Cập nhật ảnh đại diện',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+            const SizedBox(height: 16),
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined, color: Color(0xFF0EA5E9)),
+              title: const Text('Chọn từ thư viện ảnh'),
+              onTap: () {
+                Navigator.pop(context);
+                _pickAndUploadAvatar(ImageSource.gallery);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.camera_alt_outlined, color: Color(0xFF10B981)),
+              title: const Text('Chụp ảnh từ Camera'),
+              onTap: () {
+                Navigator.pop(context);
+                _pickAndUploadAvatar(ImageSource.camera);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   @override
   void initState() {
@@ -280,12 +378,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     if (isGuest) {
       return Scaffold(
-        appBar: AppBar(
-          title: const Text('Cá nhân', style: TextStyle(fontWeight: FontWeight.bold)),
-          backgroundColor: Colors.white,
-          foregroundColor: const Color(0xFF0F172A),
-          elevation: 0,
-        ),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(24.0),
@@ -319,21 +411,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
-      appBar: AppBar(
-        title: const Text(
-          'Trang cá nhân',
-          style: TextStyle(fontWeight: FontWeight.w900, fontSize: 19, letterSpacing: -0.3),
-        ),
-        backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF0F172A),
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_outlined, color: primaryColor),
-            onPressed: () => _showNotificationsModal(context),
-          ),
-        ],
-      ),
       body: SingleChildScrollView(
         child: Column(
           children: [
@@ -342,41 +419,50 @@ class _ProfileScreenState extends State<ProfileScreen> {
               clipBehavior: Clip.none,
               children: [
                 // Cover Photo Banner
-                Container(
-                  height: 140,
-                  width: double.infinity,
-                  decoration: const BoxDecoration(
-                    image: DecorationImage(
-                      image: NetworkImage('https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=800&q=60'),
-                      fit: BoxFit.cover,
-                    ),
-                  ),
+                GestureDetector(
+                  onTap: _pickAndUploadCoverPhoto,
                   child: Container(
+                    height: 140,
+                    width: double.infinity,
                     decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          Colors.black.withValues(alpha: 0.3),
-                          Colors.black.withValues(alpha: 0.6),
-                        ],
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
+                      image: DecorationImage(
+                        image: NetworkImage(
+                          user?['cover_url'] ?? user?['cover'] ?? 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=800&q=60',
+                        ),
+                        fit: BoxFit.cover,
                       ),
                     ),
-                    padding: const EdgeInsets.all(12),
-                    alignment: Alignment.topRight,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                       decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.6),
-                        borderRadius: BorderRadius.circular(20),
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.black.withValues(alpha: 0.3),
+                            Colors.black.withValues(alpha: 0.6),
+                          ],
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                        ),
                       ),
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.camera_alt_outlined, color: Colors.white, size: 14),
-                          SizedBox(width: 4),
-                          Text('Đổi ảnh bìa', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600)),
-                        ],
+                      padding: const EdgeInsets.all(12),
+                      alignment: Alignment.topRight,
+                      child: InkWell(
+                        onTap: _pickAndUploadCoverPhoto,
+                        borderRadius: BorderRadius.circular(20),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.6),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.camera_alt_outlined, color: Colors.white, size: 14),
+                              SizedBox(width: 4),
+                              Text('Đổi ảnh bìa', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600)),
+                            ],
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -401,36 +487,39 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     child: Column(
                       children: [
                         // Avatar + Verified Star Badge
-                        Stack(
-                          alignment: Alignment.bottomRight,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(4),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                shape: BoxShape.circle,
-                                boxShadow: [
-                                  BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 8),
-                                ],
-                              ),
-                              child: CircleAvatar(
-                                radius: 42,
-                                backgroundColor: primaryColor.withValues(alpha: 0.1),
-                                backgroundImage: ResizeImage(
-                                  NetworkImage(ApiService.getAvatarUrl(user, user?['name'])),
-                                  width: 200,
+                        GestureDetector(
+                          onTap: () => _showAvatarOptions(context),
+                          child: Stack(
+                            alignment: Alignment.bottomRight,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 8),
+                                  ],
+                                ),
+                                child: CircleAvatar(
+                                  radius: 42,
+                                  backgroundColor: primaryColor.withValues(alpha: 0.1),
+                                  backgroundImage: ResizeImage(
+                                    NetworkImage(ApiService.getAvatarUrl(user, user?['name'])),
+                                    width: 200,
+                                  ),
                                 ),
                               ),
-                            ),
-                            Container(
-                              padding: const EdgeInsets.all(5),
-                              decoration: const BoxDecoration(
-                                color: Color(0xFF0EA5E9),
-                                shape: BoxShape.circle,
+                              Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: const BoxDecoration(
+                                  color: Color(0xFF0EA5E9),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(Icons.camera_alt_rounded, color: Colors.white, size: 14),
                               ),
-                              child: const Icon(Icons.verified, color: Colors.white, size: 16),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                         const SizedBox(height: 12),
 
@@ -449,18 +538,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             const SizedBox(width: 4),
                             const Icon(Icons.star, color: Color(0xFFF59E0B), size: 18),
                           ],
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          isAdmin
-                              ? '🏛️ Quản trị viên hệ thống DongAnh Social ⭐️'
-                              : '👤 Thành viên cộng đồng DongAnh Social ⭐️',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: isAdmin ? const Color(0xFFDC2626) : const Color(0xFF0284C7),
-                          ),
-                          textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 4),
                         Text(
@@ -750,31 +827,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
             const SizedBox(height: 24),
 
-            // Logout Button
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: () async {
-                    await ApiService.logout();
-                    widget.onLogout();
-                  },
-                  icon: const Icon(Icons.logout, size: 18),
-                  label: const Text('Đăng xuất tài khoản', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFFEF2F2),
-                    foregroundColor: const Color(0xFFDC2626),
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      side: const BorderSide(color: Color(0xFFFCA5A5), width: 1),
-                    ),
-                  ),
-                ),
-              ),
-            ),
+
             const SizedBox(height: 32),
           ],
         ),

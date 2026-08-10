@@ -86,6 +86,8 @@ Route::prefix('v1')->group(function () {
         Route::post('/auth/token/revoke', [AuthApiController::class, 'revokeToken']);
         Route::post('/upload', [UploadApiController::class, 'upload'])->middleware('throttle:uploads');
         Route::post('/upload-chunk', [UploadApiController::class, 'uploadChunk'])->middleware('throttle:uploads');
+        Route::post('/profile/avatar', [\App\Http\Controllers\AuthController::class, 'updateAvatar']);
+        Route::post('/profile/cover', [\App\Http\Controllers\AuthController::class, 'updateCoverPhoto']);
 
         // FCM Notification
         Route::post('/user/fcm-token', [SocialHubController::class, 'updateFcmToken']);
