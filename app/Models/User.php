@@ -26,6 +26,7 @@ class User extends Authenticatable
         'password',
         'role',
         'avatar',
+        'cover',
         'phone',
         'status',
         'latitude',
@@ -56,7 +57,27 @@ class User extends Authenticatable
      */
     protected $appends = [
         'is_online',
+        'avatar_url',
+        'cover_url',
     ];
+
+    /**
+     * Get the full public URL of the cover photo.
+     */
+    public function getCoverUrlAttribute(): ?string
+    {
+        if (empty($this->cover)) {
+            return null;
+        }
+        if (str_starts_with($this->cover, 'http://') || str_starts_with($this->cover, 'https://')) {
+            return $this->cover;
+        }
+        $r2Url = rtrim(env('R2_PUBLIC_URL', ''), '/');
+        if (!empty($r2Url)) {
+            return $r2Url . '/' . ltrim($this->cover, '/');
+        }
+        return asset('storage/' . ltrim($this->cover, '/'));
+    }
 
     /**
      * Get the attributes that should be cast.

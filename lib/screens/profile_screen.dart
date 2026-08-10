@@ -437,7 +437,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     decoration: BoxDecoration(
                       image: DecorationImage(
                         image: NetworkImage(
-                          user?['cover_url'] ?? user?['cover'] ?? 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=800&q=60',
+                          ApiService.getCoverUrl(user),
                         ),
                         fit: BoxFit.cover,
                       ),

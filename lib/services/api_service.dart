@@ -92,6 +92,35 @@ class ApiService {
     return 'https://ui-avatars.com/api/?name=$encodedName&background=0284C7&color=fff&size=256&bold=true';
   }
 
+  /// Lấy URL Ảnh Bìa chuẩn hóa từ User Data hoặc URL
+  static String getCoverUrl(dynamic userOrCover, [String? fallbackUrl]) {
+    final String defaultCover = fallbackUrl ?? 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=800&q=60';
+    String? rawCover;
+
+    if (userOrCover is Map) {
+      rawCover = userOrCover['cover_url'] ?? userOrCover['cover'] ?? userOrCover['cover_photo'];
+    } else if (userOrCover is String) {
+      rawCover = userOrCover;
+    }
+
+    if (rawCover != null && rawCover.isNotEmpty) {
+      if (rawCover.startsWith('http://') || rawCover.startsWith('https://')) {
+        return rawCover;
+      }
+      if (rawCover.startsWith('covers/') || rawCover.startsWith('uploads/')) {
+        return 'https://donganhdiscovery.xadonganh.com/uploads/$rawCover';
+      }
+      if (rawCover.startsWith('/')) {
+        final Uri uri = Uri.parse(baseUrl);
+        return '${uri.scheme}://${uri.host}${uri.hasPort ? ':${uri.port}' : ''}$rawCover';
+      }
+      final Uri uri = Uri.parse(baseUrl);
+      return '${uri.scheme}://${uri.host}${uri.hasPort ? ':${uri.port}' : ''}/$rawCover';
+    }
+
+    return defaultCover;
+  }
+
   /// GET /user/profile — Tải hồ sơ người dùng thực tế từ server
   static Future<Map<String, dynamic>?> fetchUserProfile() async {
     if (!isAuthenticated) return null;

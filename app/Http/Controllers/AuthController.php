@@ -664,6 +664,9 @@ class AuthController extends Controller
             $publicUrl = asset('storage/' . $path);
         }
 
+        $user->cover = $path;
+        $user->save();
+
         // Cập nhật ảnh bìa cho trường học / địa điểm liên kết nếu có
         $school = \App\Models\Eatery::on('mysql_education')->where('user_id', $user->id)->first();
         if (!$school) {
