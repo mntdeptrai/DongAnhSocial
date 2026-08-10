@@ -247,8 +247,8 @@ class HomeController extends Controller
                 ->get();
         } catch (\Throwable $e) {}
 
-        // Gộp tất cả bài viết
-        $allPostsCombined = $eduPosts->concat($userPosts)->concat($checkinPosts)->values();
+        // Gộp tất cả bài viết (không bao gồm bài checkin)
+        $allPostsCombined = $eduPosts->concat($userPosts)->values();
 
         // ========================================================
         // THUẬT TOÁN CÁ NHÂN HÓA BẢNG TIN (Personalized Feed)

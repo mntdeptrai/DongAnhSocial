@@ -1689,63 +1689,6 @@ YÊU CẦU TRẢ VỀ CHỈ LÀ CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU, KHÔNG C
             }
         } catch (\Throwable $e) {}
 
-        // 3. Lấy bài Checkin công khai
-        try {
-            $checkins = \App\Models\Checkin::with(['user', 'eatery'])
-                ->where('status', 'published')
-                ->orderBy('created_at', 'desc')
-                ->limit(20)
-                ->get();
-
-            foreach ($checkins as $chk) {
-                try {
-                    $authorName = $chk->user ? $chk->user->name : 'Thành viên Đông Anh';
-                    $realLikes = \App\Models\CheckinReaction::where('reactionable_type', 'checkin')
-                        ->where('reactionable_id', $chk->id)
-                        ->count();
-
-                    $isLiked = false;
-                    if ($currentUserId) {
-                        $isLiked = \App\Models\CheckinReaction::where('reactionable_type', 'checkin')
-                            ->where('reactionable_id', $chk->id)
-                            ->where('user_id', $currentUserId)
-                            ->exists();
-                    }
-
-                    $chkImgs = [];
-                    if (!empty($chk->images)) {
-                        if (is_array($chk->images)) $chkImgs = $chk->images;
-                        else if (is_string($chk->images)) {
-                            $decoded = json_decode($chk->images, true);
-                            if (is_array($decoded)) $chkImgs = $decoded;
-                        }
-                    }
-                    if (empty($chkImgs) && !empty($chk->image_path)) {
-                        $chkImgs = [$chk->image_path];
-                    }
-
-                    $postsList[] = [
-                        'id'               => 'chk_' . $chk->id,
-                        'numeric_id'       => $chk->id,
-                        'hashid'           => 'chk_' . $chk->id,
-                        'type'             => 'checkin',
-                        'author_name'      => $authorName,
-                        'author_avatar'    => $chk->user ? $chk->user->avatar : null,
-                        'author_role'      => $chk->user ? ($chk->user->role ?? 'user') : 'user',
-                        'title'            => $chk->eatery ? ('Check-in tại ' . $chk->eatery->name) : 'Khoảnh khắc ẩm thực',
-                        'description'      => $chk->comment ?? '',
-                        'image_path'       => $chk->image_path,
-                        'images'           => $chkImgs,
-                        'likes_count'      => $realLikes,
-                        'is_liked'         => $isLiked,
-                        'comments_count'   => 0,
-                        'created_at_human' => $chk->created_at ? $chk->created_at->diffForHumans() : 'Vừa xong',
-                        'comments'         => [],
-                    ];
-                } catch (\Throwable $e) {}
-            }
-        } catch (\Throwable $e) {}
-
         return response()->json($postsList, 200, [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     }
 
