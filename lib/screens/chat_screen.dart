@@ -921,10 +921,27 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> with SingleTickerPr
 
   void _navigateToSharedPost(BuildContext context, String messageText) {
     final bool isCheckIn = messageText.contains('Check-in');
+
+    dynamic targetPostId;
+    final RegExp regExp = RegExp(r'(?:post=|checkin\/)([0-9a-zA-Z_\-]+)');
+    final match = regExp.firstMatch(messageText);
+    if (match != null) {
+      targetPostId = match.group(1);
+    }
+
+    String title = messageText
+        .replaceAll('📰 [Chia sẻ bài viết]', '')
+        .replaceAll('📸 [Check-in Đông Anh]', '')
+        .replaceAll('📸 [Check-in]', '')
+        .replaceAll(RegExp(r'🔗.*'), '')
+        .trim();
+
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => isCheckIn ? const FeedScreen() : const NewsBulletinScreen(),
+        builder: (_) => isCheckIn
+            ? FeedScreen(targetPostId: targetPostId, targetTitle: title)
+            : NewsBulletinScreen(targetPostId: targetPostId, targetTitle: title),
       ),
     );
   }

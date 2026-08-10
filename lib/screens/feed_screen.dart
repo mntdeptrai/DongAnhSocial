@@ -10,7 +10,14 @@ import '../widgets/custom_loader.dart';
 import '../widgets/squircle_helper.dart';
 
 class FeedScreen extends StatefulWidget {
-  const FeedScreen({super.key});
+  final dynamic targetPostId;
+  final String? targetTitle;
+
+  const FeedScreen({
+    super.key,
+    this.targetPostId,
+    this.targetTitle,
+  });
 
   @override
   State<FeedScreen> createState() => FeedScreenState();
@@ -180,6 +187,30 @@ class FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
       if (mounted) {
         setState(() {
           _feedItems = (items is List) ? List<dynamic>.from(items) : [];
+
+          if (widget.targetPostId != null || (widget.targetTitle != null && widget.targetTitle!.isNotEmpty)) {
+            final targetIdStr = widget.targetPostId?.toString();
+            final targetTitleClean = widget.targetTitle?.toLowerCase().trim();
+
+            int targetIdx = -1;
+            for (int i = 0; i < _feedItems.length; i++) {
+              final p = _feedItems[i];
+              final pId = p['id']?.toString();
+              final pTitle = (p['comment'] ?? p['eatery']?['name'] ?? '').toString().toLowerCase().trim();
+
+              if ((targetIdStr != null && pId == targetIdStr) ||
+                  (targetTitleClean != null && targetTitleClean.isNotEmpty && pTitle.contains(targetTitleClean))) {
+                targetIdx = i;
+                break;
+              }
+            }
+
+            if (targetIdx > 0) {
+              final targetItem = _feedItems.removeAt(targetIdx);
+              _feedItems.insert(0, targetItem);
+            }
+          }
+
           _isLoading = false;
         });
       }

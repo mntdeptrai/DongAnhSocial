@@ -9,7 +9,14 @@ import '../services/api_service.dart';
 import '../widgets/squircle_helper.dart';
 
 class NewsBulletinScreen extends StatefulWidget {
-  const NewsBulletinScreen({super.key});
+  final dynamic targetPostId;
+  final String? targetTitle;
+
+  const NewsBulletinScreen({
+    super.key,
+    this.targetPostId,
+    this.targetTitle,
+  });
 
   @override
   State<NewsBulletinScreen> createState() => _NewsBulletinScreenState();
@@ -47,6 +54,38 @@ class _NewsBulletinScreenState extends State<NewsBulletinScreen> {
       if (mounted) {
         setState(() {
           _posts = feed;
+
+          if (widget.targetPostId != null || (widget.targetTitle != null && widget.targetTitle!.isNotEmpty)) {
+            final targetIdStr = widget.targetPostId?.toString();
+            final targetTitleClean = widget.targetTitle?.toLowerCase().trim();
+
+            int targetIdx = -1;
+            for (int i = 0; i < feed.length; i++) {
+              final p = feed[i];
+              final pId = p['id']?.toString();
+              final pHash = p['hashid']?.toString();
+              final pTitle = (p['title'] ?? p['content'] ?? p['name'] ?? '').toString().toLowerCase().trim();
+
+              if ((targetIdStr != null && (pId == targetIdStr || pHash == targetIdStr)) ||
+                  (targetTitleClean != null && targetTitleClean.isNotEmpty && pTitle.contains(targetTitleClean))) {
+                targetIdx = i;
+                break;
+              }
+            }
+
+            if (targetIdx > 0) {
+              final targetPost = _posts.removeAt(targetIdx);
+              _posts.insert(0, targetPost);
+            }
+
+            if (_posts.isNotEmpty) {
+              final firstId = _posts.first['id']?.toString();
+              if (firstId != null) {
+                _expandedPosts.add(firstId);
+              }
+            }
+          }
+
           _isLoading = false;
 
           for (var item in feed) {
@@ -59,6 +98,16 @@ class _NewsBulletinScreenState extends State<NewsBulletinScreen> {
             }
           }
         });
+
+        if (widget.targetPostId != null || (widget.targetTitle != null && widget.targetTitle!.isNotEmpty)) {
+          if (_posts.isNotEmpty) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) {
+                _showCommentsBottomSheet(context, _posts.first);
+              }
+            });
+          }
+        }
       }
     } catch (_) {
       if (mounted) setState(() => _isLoading = false);
