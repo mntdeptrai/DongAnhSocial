@@ -274,19 +274,13 @@ class FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
   }
 
   Future<void> _submitCameraCheckin() async {
-    if (_selectedEateryId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Vui lòng chọn địa điểm quán ăn!'), backgroundColor: Colors.red),
-      );
-      return;
-    }
     setState(() {
       _isSendingCheckin = true;
     });
 
     final isGuest = !ApiService.isAuthenticated;
     final res = await ApiService.storeCheckin(
-      eateryId: _selectedEateryId!,
+      eateryId: _selectedEateryId,
       rating: _rating,
       comment: _commentController.text,
       guestName: isGuest ? _guestNameController.text : null,
@@ -849,7 +843,7 @@ class FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
                                     value: _selectedEateryId,
                                     isExpanded: true,
                                     style: const TextStyle(color: Colors.white, fontSize: 12),
-                                    hint: const Text('Chọn địa điểm quán ăn...', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                                    hint: const Text('📍 Chọn địa điểm (tùy chọn)...', style: TextStyle(color: Colors.white70, fontSize: 12)),
                                     items: _eateries.map<DropdownMenuItem<int>>((eatery) {
                                       return DropdownMenuItem<int>(
                                         value: eatery['id'],

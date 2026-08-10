@@ -2831,24 +2831,49 @@
 
         function sendPostToFriend(friendId, friendName) {
             const shareUrl = getPostShareUrl();
-            const msg = `📰 [Chia sẻ bài viết] ${currentSharingPost.title}\n🔗 Xem tại: ${shareUrl}`;
+            const postTitle = (currentSharingPost && currentSharingPost.title) ? currentSharingPost.title : 'Bài viết';
+            const msg = `📰 [Chia sẻ bài viết] ${postTitle}\n🔗 Xem tại: ${shareUrl}`;
             
             closeDongAnhShareModal();
 
-            if (window.Alpine && Alpine.store('chatStore')) {
-                Alpine.store('chatStore').openChat(friendId, friendName, '', '', false);
-                setTimeout(() => {
-                    if (typeof Alpine.store('chatStore').sendMessage === 'function') {
-                        Alpine.store('chatStore').sendMessage(friendId, msg);
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+            fetch('/social/messages', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    receiver_id: friendId,
+                    message: msg
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success' || data.success) {
+                    if (typeof showToastNotification === 'function') {
+                        showToastNotification(`💬 Đã gửi bài viết cho ${friendName}!`);
+                    } else if (typeof window.showToast === 'function') {
+                        window.showToast(`💬 Đã gửi bài viết cho ${friendName}!`, 'success');
                     }
-                }, 500);
-            }
-
-            if (typeof showToastNotification === 'function') {
-                showToastNotification(`💬 Đã gửi bài viết cho ${friendName}!`);
-            } else if (typeof window.showToast === 'function') {
-                window.showToast(`💬 Đã gửi bài viết cho ${friendName}!`, 'success');
-            }
+                    if (window.Alpine && Alpine.store('chatStore')) {
+                        const chatStore = Alpine.store('chatStore');
+                        const chat = chatStore.openChats.find(c => c.id === friendId);
+                        if (chat && data.message) {
+                            chat.messages.push(data.message);
+                            chatStore.scrollToBottom(friendId);
+                        }
+                    }
+                } else {
+                    if (typeof window.showToast === 'function') {
+                        window.showToast(data.message || 'Không thể gửi bài viết', 'error');
+                    }
+                }
+            })
+            .catch(err => {
+                console.error('Lỗi chia sẻ tin nhắn:', err);
+            });
         }
 
         function copySharePostLink() {

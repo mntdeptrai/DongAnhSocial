@@ -700,7 +700,7 @@ class ApiService {
 
   /// POST /checkins — Gửi check-in mới (hỗ trợ cả khách vãng lai)
   static Future<Map<String, dynamic>> storeCheckin({
-    required int eateryId,
+    int? eateryId,
     required int rating,
     required String comment,
     String? guestName,
@@ -710,7 +710,9 @@ class ApiService {
       final request = http.MultipartRequest('POST', Uri.parse('$baseUrl/checkins'));
 
       // Add text fields
-      request.fields['eatery_id'] = eateryId.toString();
+      if (eateryId != null) {
+        request.fields['eatery_id'] = eateryId.toString();
+      }
       request.fields['rating'] = rating.toString();
       request.fields['comment'] = comment;
       if (guestName != null && guestName.isNotEmpty) {

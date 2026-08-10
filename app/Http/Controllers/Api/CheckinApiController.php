@@ -133,7 +133,7 @@ class CheckinApiController extends Controller
     public function storeCheckin(Request $request, CheckinService $checkinService)
     {
         $request->validate([
-            'eatery_id'  => 'required|exists:eateries,id',
+            'eatery_id'  => 'nullable|exists:eateries,id',
             'rating'     => 'required|integer|min:1|max:5',
             'comment'    => 'nullable|string|max:2000',
             'guest_name' => 'nullable|string|max:100',
@@ -141,9 +141,10 @@ class CheckinApiController extends Controller
         ]);
 
         $user = $request->user('sanctum');
+        $eateryId = $request->filled('eatery_id') ? (int) $request->input('eatery_id') : null;
 
         $data = new CheckinData(
-            eatery_id: (int) $request->input('eatery_id'),
+            eatery_id: $eateryId,
             rating: (int) $request->input('rating'),
             comment: $request->input('comment'),
             guest_name: $user ? null : $request->input('guest_name'),
@@ -156,7 +157,7 @@ class CheckinApiController extends Controller
         // Tự động gửi thông báo đẩy cho tất cả Bạn bè & Followers ngay lập tức
         if ($user) {
             try {
-                \App\Services\NotificationService::notifyNewPost($user, '', $request->input('comment') ?? 'Check-in mới', (int)$request->input('eatery_id'));
+                \App\Services\NotificationService::notifyNewPost($user, '', $request->input('comment') ?? 'Check-in mới', $eateryId);
             } catch (\Exception $e) {}
         }
 

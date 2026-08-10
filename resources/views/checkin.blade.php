@@ -508,7 +508,7 @@
                         <input type="hidden" name="image_base64" id="locketFormBase64Input">
                         
                         <div class="form-group">
-                            <label>📍 Địa điểm check-in <span style="color:#ef4444;">*</span></label>
+                            <label>📍 Địa điểm check-in <span style="color:var(--text-muted); font-weight: normal; font-size: 0.82rem;">(tùy chọn)</span></label>
                             <div style="position: relative;">
                                 <input type="text" id="locketSearchInput" placeholder="Tìm tên địa điểm, quán ăn..." autocomplete="off" oninput="searchLocketEateries(this.value)">
                                 <span style="position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted); pointer-events: none;">🔍</span>
@@ -1465,20 +1465,13 @@
         });
     }
 
-    // Submit validation
+    // Submit handler
     document.getElementById('locketCheckinForm').addEventListener('submit', function(e) {
-        const eateryId = document.getElementById('locketSelectedEateryId').value;
-        if (!eateryId) {
-            e.preventDefault();
-            document.getElementById('locketSearchInput').focus();
-            document.getElementById('locketSearchInput').style.borderColor = '#ef4444';
-            setTimeout(() => { document.getElementById('locketSearchInput').style.borderColor = 'var(--border-glow)'; }, 2000);
-            alert('⚠️ Vui lòng chọn địa điểm check-in!');
-            return;
-        }
         const submitBtn = this.querySelector('button[type="submit"]');
-        submitBtn.textContent = '⏳ Đang đăng...';
-        submitBtn.disabled = true;
+        if (submitBtn) {
+            submitBtn.textContent = '⏳ Đang đăng...';
+            submitBtn.disabled = true;
+        }
     });
 
     // Auto open camera on load & auto refresh camera when returning to page/tab

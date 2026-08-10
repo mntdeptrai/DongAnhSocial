@@ -349,14 +349,6 @@ class _NewsBulletinScreenState extends State<NewsBulletinScreen> {
     final title = item['title'] ?? 'Bài viết trên Bản tin Đông Anh';
     const shareUrl = 'https://donganhdiscovery.xadonganh.com/ban-tin';
 
-    final friendsList = [
-      {'name': 'Thành viên...', 'avatar': '👧'},
-      {'name': 'Trường M...', 'avatar': '👦'},
-      {'name': 'Trường T...', 'avatar': '🧑'},
-      {'name': 'Nguyễn Tr...', 'avatar': '👨'},
-      {'name': 'Cổ Loa Club', 'avatar': '👧'},
-    ];
-
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -424,69 +416,115 @@ class _NewsBulletinScreenState extends State<NewsBulletinScreen> {
             ),
             const SizedBox(height: 14),
 
-            SizedBox(
-              height: 98,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                itemCount: friendsList.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 14),
-                itemBuilder: (context, idx) {
-                  final friend = friendsList[idx];
-                  return GestureDetector(
-                    onTap: () {
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Row(
+            FutureBuilder<List<dynamic>>(
+              future: ApiService.getFriends(),
+              builder: (context, snapshot) {
+                final friendsList = snapshot.data ?? [];
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const SizedBox(
+                    height: 98,
+                    child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                  );
+                }
+                if (friendsList.isEmpty) {
+                  return const SizedBox(
+                    height: 50,
+                    child: Text('Chưa có bạn bè trong danh sách.', style: TextStyle(color: Colors.grey, fontSize: 13)),
+                  );
+                }
+
+                return SizedBox(
+                  height: 98,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: friendsList.length,
+                    separatorBuilder: (_, __) => const SizedBox(width: 14),
+                    itemBuilder: (context, idx) {
+                      final friend = friendsList[idx];
+                      final friendName = friend['name'] ?? 'Bạn bè';
+                      final avatarUrl = ApiService.getAvatarUrl(friend, friendName);
+
+                      return GestureDetector(
+                        onTap: () async {
+                          final friendId = friend['id'] is int
+                              ? friend['id']
+                              : int.tryParse(friend['id']?.toString() ?? '');
+                          
+                          Navigator.pop(context);
+
+                          if (friendId != null) {
+                            final shareMsg = '📰 [Chia sẻ bài viết] $title\n🔗 Xem tại: $shareUrl';
+                            final res = await ApiService.sendMessage(friendId, shareMsg);
+                            if (context.mounted) {
+                              if (res['success'] == true) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Row(
+                                      children: [
+                                        const Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
+                                        const SizedBox(width: 8),
+                                        Expanded(child: Text('Đã gửi bài viết tới $friendName!')),
+                                      ],
+                                    ),
+                                    backgroundColor: const Color(0xFF059669),
+                                    behavior: SnackBarBehavior.floating,
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                  ),
+                                );
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(res['message'] ?? 'Gửi tin nhắn thất bại'),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                              }
+                            }
+                          }
+                        },
+                        child: SizedBox(
+                          width: 72,
+                          child: Column(
                             children: [
-                              const Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
-                              const SizedBox(width: 8),
-                              Text('Đã chia sẻ trực tiếp tới ${friend['name']}!'),
+                              Container(
+                                width: 62,
+                                height: 62,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF8FAFC),
+                                  borderRadius: BorderRadius.circular(22),
+                                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                                  image: avatarUrl.isNotEmpty
+                                      ? DecorationImage(image: NetworkImage(avatarUrl), fit: BoxFit.cover)
+                                      : null,
+                                ),
+                                child: avatarUrl.isEmpty
+                                    ? Center(
+                                        child: Text(
+                                          friendName.isNotEmpty ? friendName[0].toUpperCase() : '👤',
+                                          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                                        ),
+                                      )
+                                    : null,
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                friendName,
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF334155),
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ],
                           ),
-                          backgroundColor: const Color(0xFF059669),
-                          behavior: SnackBarBehavior.floating,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
                       );
                     },
-                    child: SizedBox(
-                      width: 72,
-                      child: Column(
-                        children: [
-                          Container(
-                            width: 62,
-                            height: 62,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF8FAFC),
-                              borderRadius: BorderRadius.circular(22),
-                              border: Border.all(color: const Color(0xFFE2E8F0)),
-                            ),
-                            child: Center(
-                              child: Text(
-                                friend['avatar']!,
-                                style: const TextStyle(fontSize: 28),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            friend['name']!,
-                            style: const TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF334155),
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
+                  ),
+                );
+              },
             ),
 
             const Padding(

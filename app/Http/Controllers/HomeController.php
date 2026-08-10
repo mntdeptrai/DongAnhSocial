@@ -501,7 +501,7 @@ class HomeController extends Controller
     public function storeCheckin(Request $request, \App\Services\CheckinService $checkinService)
     {
         $request->validate([
-            'eatery_id'    => 'required|integer',
+            'eatery_id'    => 'nullable|integer',
             'eatery_slug'  => 'nullable|string',
             'rating'       => 'required|integer|min:1|max:5',
             'comment'      => 'nullable|string|max:2000',
@@ -512,17 +512,18 @@ class HomeController extends Controller
 
         $eaterySlug = $request->input('eatery_slug');
         $eateryId = $request->input('eatery_id');
-        $hasEatery = false;
 
         if (!empty($eaterySlug)) {
             $hasEatery = \App\Models\Eatery::where('slug', $eaterySlug)->exists() || 
                          !is_null(EateryApiService::getEateryBySlug($eaterySlug));
-        } else {
+            if (!$hasEatery) {
+                return back()->withErrors(['eatery_id' => 'Địa điểm check-in không hợp lệ.'])->withInput();
+            }
+        } elseif (!empty($eateryId)) {
             $hasEatery = \App\Models\Eatery::where('id', $eateryId)->exists();
-        }
-
-        if (!$hasEatery) {
-            return back()->withErrors(['eatery_id' => 'Địa điểm check-in không hợp lệ.'])->withInput();
+            if (!$hasEatery) {
+                return back()->withErrors(['eatery_id' => 'Địa điểm check-in không hợp lệ.'])->withInput();
+            }
         }
 
         $data = \App\Domain\Checkin\CheckinData::fromRequest($request);
@@ -531,7 +532,7 @@ class HomeController extends Controller
         $authUser = Auth::user();
         if ($authUser) {
             try {
-                \App\Services\NotificationService::notifyNewPost($authUser, '', $request->input('comment') ?? 'Check-in mới', (int)$eateryId);
+                \App\Services\NotificationService::notifyNewPost($authUser, '', $request->input('comment') ?? 'Check-in mới', $eateryId ? (int)$eateryId : null);
             } catch (\Exception $e) {}
         }
 
