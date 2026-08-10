@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:camera/camera.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:share_plus/share_plus.dart';
 import '../services/api_service.dart';
 import '../widgets/public_profile_modal.dart';
@@ -1322,15 +1324,9 @@ class FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
                             ),
                           ),
                           const SizedBox(width: 6),
-                          // Native Share Button (Zalo, FB, etc.)
+                          // Share Button (Zalo, FB, Link, System)
                           GestureDetector(
-                            onTap: () {
-                              final commentText = (item['comment'] ?? '').toString().trim();
-                              final eateryName = item['eatery']?['name'] ?? 'Đông Anh Social';
-                              final title = commentText.isNotEmpty ? commentText : 'Check-in tại $eateryName';
-                              final shareUrl = 'https://donganhdiscovery.xadonganh.com/checkin/${item['id']}';
-                              Share.share('📸 [Check-in Đông Anh] $title\n\n🔗 Xem chi tiết: $shareUrl');
-                            },
+                            onTap: () => _showCheckinShareModal(context, item),
                             child: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                               decoration: BoxDecoration(
@@ -1403,6 +1399,226 @@ class FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
                 fontWeight: FontWeight.bold,
                 color: cnt > 0 ? const Color(0xFFF97316) : Colors.white70,
               ),
+            ),
+          ],
+        ),
+      ),
+    );
+  void _showCheckinShareModal(BuildContext context, dynamic item) {
+    final commentText = (item['comment'] ?? '').toString().trim();
+    final eateryName = item['eatery']?['name'] ?? 'Đông Anh Social';
+    final title = commentText.isNotEmpty ? commentText : 'Check-in tại $eateryName';
+    final shareUrl = 'https://donganhdiscovery.xadonganh.com/checkin/${item['id']}';
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.only(top: 16, left: 20, right: 20, bottom: 28),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const SizedBox(width: 36),
+                const Expanded(
+                  child: Text(
+                    'Chia sẻ bài Check-in',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF0F172A),
+                    ),
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () => Navigator.pop(ctx),
+                  child: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFF1F5F9),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.close_rounded, size: 20, color: Color(0xFF64748B)),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                GestureDetector(
+                  onTap: () async {
+                    Navigator.pop(ctx);
+                    final zaloUrl = Uri.parse('https://sp.zalo.me/share_inline?link=${Uri.encodeComponent(shareUrl)}');
+                    try {
+                      if (await canLaunchUrl(zaloUrl)) {
+                        await launchUrl(zaloUrl, mode: LaunchMode.externalApplication);
+                        return;
+                      }
+                    } catch (_) {}
+                    Share.share('📸 [Check-in Đông Anh] $title\n\n🔗 Xem chi tiết: $shareUrl');
+                  },
+                  child: SizedBox(
+                    width: 72,
+                    child: Column(
+                      children: [
+                        Container(
+                          width: 62,
+                          height: 62,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF0068FF),
+                            borderRadius: BorderRadius.circular(22),
+                          ),
+                          child: const Center(
+                            child: Text(
+                              'Zalo',
+                              style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 14),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Zalo',
+                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF334155)),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () async {
+                    Navigator.pop(ctx);
+                    final fbUrl = Uri.parse('https://www.facebook.com/sharer/sharer.php?u=${Uri.encodeComponent(shareUrl)}');
+                    try {
+                      if (await canLaunchUrl(fbUrl)) {
+                        await launchUrl(fbUrl, mode: LaunchMode.externalApplication);
+                        return;
+                      }
+                    } catch (_) {}
+                    Share.share('📸 [Check-in Đông Anh] $title\n\n🔗 Xem chi tiết: $shareUrl');
+                  },
+                  child: SizedBox(
+                    width: 72,
+                    child: Column(
+                      children: [
+                        Container(
+                          width: 62,
+                          height: 62,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF1877F2),
+                            borderRadius: BorderRadius.circular(22),
+                          ),
+                          child: const Center(
+                            child: Text(
+                              'FB',
+                              style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Facebook',
+                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF334155)),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () {
+                    Clipboard.setData(ClipboardData(text: '📸 [Check-in Đông Anh] $title\n🔗 Xem chi tiết: $shareUrl'));
+                    Navigator.pop(ctx);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: const Row(
+                          children: [
+                            Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
+                            SizedBox(width: 8),
+                            Text('Đã sao chép liên kết bài check-in!'),
+                          ],
+                        ),
+                        backgroundColor: const Color(0xFF059669),
+                        behavior: SnackBarBehavior.floating,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                    );
+                  },
+                  child: SizedBox(
+                    width: 72,
+                    child: Column(
+                      children: [
+                        Container(
+                          width: 62,
+                          height: 62,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFECFDF5),
+                            borderRadius: BorderRadius.circular(22),
+                          ),
+                          child: const Center(
+                            child: Icon(Icons.link_rounded, color: Color(0xFF059669), size: 28),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Sao chép',
+                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF334155)),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    Share.share('📸 [Check-in Đông Anh] $title\n\n🔗 Xem chi tiết: $shareUrl');
+                  },
+                  child: SizedBox(
+                    width: 72,
+                    child: Column(
+                      children: [
+                        Container(
+                          width: 62,
+                          height: 62,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFEF3C7),
+                            borderRadius: BorderRadius.circular(22),
+                          ),
+                          child: const Center(
+                            child: Icon(Icons.share_rounded, color: Color(0xFFD97706), size: 28),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Ứng dụng khác',
+                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF334155)),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         ),

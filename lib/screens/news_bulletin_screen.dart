@@ -597,27 +597,61 @@ class _NewsBulletinScreenState extends State<NewsBulletinScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildShareActionItem(
-                  icon: Icons.newspaper_rounded,
-                  label: 'Bảng tin cá\nnhân',
-                  bgColor: const Color(0xFFEEF2FF),
-                  iconColor: const Color(0xFF6366F1),
-                  onTap: () {
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: const Row(
-                          children: [
-                            Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
-                            SizedBox(width: 8),
-                            Text('Đã đăng bài viết lên Bảng tin cá nhân!'),
-                          ],
-                        ),
-                        backgroundColor: const Color(0xFF059669),
-                        behavior: SnackBarBehavior.floating,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                _buildShareCustomItem(
+                  label: 'Zalo',
+                  customIcon: Container(
+                    width: 62,
+                    height: 62,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF0068FF),
+                      borderRadius: BorderRadius.circular(22),
+                    ),
+                    child: const Center(
+                      child: Text(
+                        'Zalo',
+                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 14),
                       ),
-                    );
+                    ),
+                  ),
+                  onTap: () async {
+                    Navigator.pop(context);
+                    final zaloUrl = Uri.parse('https://sp.zalo.me/share_inline?link=${Uri.encodeComponent(shareUrl)}');
+                    try {
+                      if (await canLaunchUrl(zaloUrl)) {
+                        await launchUrl(zaloUrl, mode: LaunchMode.externalApplication);
+                        return;
+                      }
+                    } catch (_) {}
+                    Share.share('$title\n\n🔗 Xem bài viết tại Đông Anh Social:\n$shareUrl');
+                  },
+                ),
+
+                _buildShareCustomItem(
+                  label: 'Facebook',
+                  customIcon: Container(
+                    width: 62,
+                    height: 62,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1877F2),
+                      borderRadius: BorderRadius.circular(22),
+                    ),
+                    child: const Center(
+                      child: Text(
+                        'FB',
+                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16),
+                      ),
+                    ),
+                  ),
+                  onTap: () async {
+                    Navigator.pop(context);
+                    final fbUrl = Uri.parse('https://www.facebook.com/sharer/sharer.php?u=${Uri.encodeComponent(shareUrl)}');
+                    try {
+                      if (await canLaunchUrl(fbUrl)) {
+                        await launchUrl(fbUrl, mode: LaunchMode.externalApplication);
+                        return;
+                      }
+                    } catch (_) {}
+                    Share.share('$title\n\n🔗 Xem bài viết tại Đông Anh Social:\n$shareUrl');
                   },
                 ),
 
@@ -648,7 +682,7 @@ class _NewsBulletinScreenState extends State<NewsBulletinScreen> {
 
                 _buildShareActionItem(
                   icon: Icons.share_rounded,
-                  label: 'Zalo / FB /\nKhác',
+                  label: 'Ứng dụng\nkhác',
                   bgColor: const Color(0xFFFEF3C7),
                   iconColor: const Color(0xFFD97706),
                   onTap: () {
@@ -659,31 +693,38 @@ class _NewsBulletinScreenState extends State<NewsBulletinScreen> {
                     );
                   },
                 ),
-
-                _buildShareActionItem(
-                  icon: Icons.chat_bubble_outline_rounded,
-                  label: 'Đông Anh\nChat',
-                  bgColor: const Color(0xFFE0F2FE),
-                  iconColor: const Color(0xFF0EA5E9),
-                  onTap: () {
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: const Row(
-                          children: [
-                            Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
-                            SizedBox(width: 8),
-                            Text('Đã gửi bài viết vào Đông Anh Chat!'),
-                          ],
-                        ),
-                        backgroundColor: const Color(0xFF059669),
-                        behavior: SnackBarBehavior.floating,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                    );
-                  },
-                ),
               ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildShareCustomItem({
+    required Widget customIcon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: SizedBox(
+        width: 72,
+        child: Column(
+          children: [
+            customIcon,
+            const SizedBox(height: 8),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF334155),
+                height: 1.2,
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),
