@@ -1404,6 +1404,8 @@ class FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
         ),
       ),
     );
+  }
+
   void _showCheckinShareModal(BuildContext context, dynamic item) {
     final commentText = (item['comment'] ?? '').toString().trim();
     final eateryName = item['eatery']?['name'] ?? 'Đông Anh Social';

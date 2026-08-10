@@ -597,6 +597,17 @@ class _NewsBulletinScreenState extends State<NewsBulletinScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                _buildShareActionItem(
+                  icon: Icons.newspaper_rounded,
+                  label: 'Bảng tin cá\nnhân',
+                  bgColor: const Color(0xFFEEF2FF),
+                  iconColor: const Color(0xFF6366F1),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _showRepostConfirmModal(context, item);
+                  },
+                ),
+
                 _buildShareCustomItem(
                   label: 'Zalo',
                   customIcon: Container(
@@ -613,16 +624,10 @@ class _NewsBulletinScreenState extends State<NewsBulletinScreen> {
                       ),
                     ),
                   ),
-                  onTap: () async {
+                  onTap: () {
                     Navigator.pop(context);
                     final zaloUrl = Uri.parse('https://sp.zalo.me/share_inline?link=${Uri.encodeComponent(shareUrl)}');
-                    try {
-                      if (await canLaunchUrl(zaloUrl)) {
-                        await launchUrl(zaloUrl, mode: LaunchMode.externalApplication);
-                        return;
-                      }
-                    } catch (_) {}
-                    Share.share('$title\n\n🔗 Xem bài viết tại Đông Anh Social:\n$shareUrl');
+                    _showExternalAppShareConfirmModal(context, 'Zalo', item, zaloUrl, shareUrl);
                   },
                 ),
 
@@ -642,16 +647,10 @@ class _NewsBulletinScreenState extends State<NewsBulletinScreen> {
                       ),
                     ),
                   ),
-                  onTap: () async {
+                  onTap: () {
                     Navigator.pop(context);
                     final fbUrl = Uri.parse('https://www.facebook.com/sharer/sharer.php?u=${Uri.encodeComponent(shareUrl)}');
-                    try {
-                      if (await canLaunchUrl(fbUrl)) {
-                        await launchUrl(fbUrl, mode: LaunchMode.externalApplication);
-                        return;
-                      }
-                    } catch (_) {}
-                    Share.share('$title\n\n🔗 Xem bài viết tại Đông Anh Social:\n$shareUrl');
+                    _showExternalAppShareConfirmModal(context, 'Facebook', item, fbUrl, shareUrl);
                   },
                 ),
 
@@ -1681,6 +1680,317 @@ class _NewsBulletinScreenState extends State<NewsBulletinScreen> {
                 ],
               ),
       ),
+    );
+  }
+
+  void _showRepostConfirmModal(BuildContext context, dynamic item) {
+    final title = item['title'] ?? item['content'] ?? item['name'] ?? 'Bài viết Đông Anh Social';
+    final author = item['user']?['name'] ?? 'Thành viên Đông Anh';
+    final TextEditingController captionController = TextEditingController();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (modalCtx) {
+        return Padding(
+          padding: EdgeInsets.only(bottom: MediaQuery.of(modalCtx).viewInsets.bottom),
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 36,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Row(
+                  children: [
+                    const Icon(Icons.repeat_rounded, color: Color(0xFF0EA5E9), size: 24),
+                    const SizedBox(width: 8),
+                    const Expanded(
+                      child: Text(
+                        'Chia sẻ bài viết lên Bảng Tin',
+                        style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close, color: Colors.grey),
+                      onPressed: () => Navigator.pop(modalCtx),
+                    ),
+                  ],
+                ),
+                const Divider(height: 20),
+                const Text(
+                  'Lời nhắn của bạn (Tùy chọn):',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF475569)),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: captionController,
+                  maxLines: 3,
+                  decoration: InputDecoration(
+                    hintText: 'Nhập suy nghĩ hoặc lời nhắn của bạn về bài viết này...',
+                    hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 13),
+                    filled: true,
+                    fillColor: const Color(0xFFF8FAFC),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: const BorderSide(color: Color(0xFF0EA5E9)),
+                    ),
+                    contentPadding: const EdgeInsets.all(12),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF1F5F9),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(Icons.format_quote_rounded, color: Color(0xFF0EA5E9), size: 18),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Bài viết gốc của $author',
+                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF0EA5E9)),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        title,
+                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF1E293B)),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(modalCtx),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        child: const Text('Hủy'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      flex: 2,
+                      child: ElevatedButton.icon(
+                        onPressed: () async {
+                          final userCaption = captionController.text.trim();
+                          final description = userCaption.isNotEmpty
+                              ? '$userCaption\n\n🔄 [Chia sẻ bài viết từ $author]: $title'
+                              : '🔄 [Chia sẻ bài viết từ $author]: $title';
+
+                          Navigator.pop(modalCtx);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('⏳ Đang chia sẻ bài viết lên Bảng tin...'),
+                              duration: Duration(seconds: 1),
+                            ),
+                          );
+
+                          final res = await ApiService.createPost(
+                            description: description,
+                            name: title,
+                          );
+
+                          if (context.mounted) {
+                            if (res['success'] != false) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Row(
+                                    children: [
+                                      Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
+                                      SizedBox(width: 8),
+                                      Text('🎉 Đã đăng chia sẻ bài viết thành công lên Bảng tin!'),
+                                    ],
+                                  ),
+                                  backgroundColor: Color(0xFF059669),
+                                  behavior: SnackBarBehavior.floating,
+                                ),
+                              );
+                              _fetchNewsfeed();
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(res['message'] ?? 'Không thể đăng bài viết'),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF0EA5E9),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        icon: const Icon(Icons.send_rounded, size: 18),
+                        label: const Text('Xác nhận Đăng bài', style: TextStyle(fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showExternalAppShareConfirmModal(
+    BuildContext context,
+    String appName,
+    dynamic item,
+    Uri targetUri,
+    String shareUrl,
+  ) {
+    final title = item['title'] ?? item['content'] ?? item['name'] ?? 'Bài viết Đông Anh Social';
+    final shareContent = '$title\n\n🔗 Xem chi tiết tại Đông Anh Social:\n$shareUrl';
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (modalCtx) {
+        return Container(
+          padding: const EdgeInsets.all(20),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  CircleAvatar(
+                    backgroundColor: appName == 'Zalo' ? const Color(0xFF0068FF) : const Color(0xFF1877F2),
+                    radius: 16,
+                    child: Text(
+                      appName == 'Zalo' ? 'Zalo' : 'FB',
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Chia sẻ bài viết qua $appName',
+                      style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close, color: Colors.grey),
+                    onPressed: () => Navigator.pop(modalCtx),
+                  ),
+                ],
+              ),
+              const Divider(height: 20),
+              const Text(
+                'Nội dung chia sẻ sẽ được tạo sẵn:',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF64748B)),
+              ),
+              const SizedBox(height: 8),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                ),
+                child: Text(
+                  shareContent,
+                  style: const TextStyle(fontSize: 13, height: 1.4, color: Color(0xFF1E293B)),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(modalCtx),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      child: const Text('Hủy'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    flex: 2,
+                    child: ElevatedButton.icon(
+                      onPressed: () async {
+                        Navigator.pop(modalCtx);
+                        try {
+                          if (await canLaunchUrl(targetUri)) {
+                            await launchUrl(targetUri, mode: LaunchMode.externalApplication);
+                            return;
+                          }
+                        } catch (_) {}
+                        Share.share(shareContent, subject: title);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: appName == 'Zalo' ? const Color(0xFF0068FF) : const Color(0xFF1877F2),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      icon: const Icon(Icons.open_in_new_rounded, size: 18),
+                      label: Text('Mở $appName & Chia sẻ', style: const TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
