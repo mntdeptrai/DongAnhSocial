@@ -16,8 +16,16 @@
                 @foreach($users as $user)
                     <tr>
                         <td style="text-align: center;">
-                            <div style="width: 40px; height: 40px; border-radius: 50%; background-color: #f1f5f9; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; border: 1.5px solid var(--admin-border);">
-                                {{ $user->avatar ?: '🧑' }}
+                            @php
+                                $isImg = !empty($user->avatar) && (str_starts_with($user->avatar, 'http') || str_contains($user->avatar, '/') || preg_match('/\.(jpg|jpeg|png|webp|gif|svg)$/i', $user->avatar));
+                                $avatarSrc = $isImg ? ($user->avatar_url ?: (str_starts_with($user->avatar, 'http') ? $user->avatar : asset('storage/' . ltrim($user->avatar, '/')))) : null;
+                            @endphp
+                            <div style="width: 40px; height: 40px; border-radius: 50%; background-color: #f1f5f9; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; border: 1.5px solid var(--admin-border); overflow: hidden; margin: 0 auto;">
+                                @if($isImg && $avatarSrc)
+                                    <img src="{{ $avatarSrc }}" alt="{{ $user->name }}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.parentElement.innerHTML='🧑'">
+                                @else
+                                    {{ $user->avatar ?: '🧑' }}
+                                @endif
                             </div>
                         </td>
                         <td>
@@ -30,14 +38,23 @@
                             @if($user->role === 'seller')
                                 @php 
                                     $stall = $user->getStall(); 
+                                    $marketId = ($stall && !empty($stall->eatery_id)) ? $stall->eatery_id : $user->eatery_id;
+                                    $marketName = (isset($marketsMap) && $marketId && isset($marketsMap[$marketId])) ? $marketsMap[$marketId]->name : null;
                                     $ownedEateries = $user->getOwnedEateries();
                                     $routeBusinesses = $user->getRouteBusinesses();
                                 @endphp
-                                @if($stall)
-                                    <div style="margin-top: 4px;">
-                                        <span style="font-size: 0.78rem; color: #0284c7; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; background: #e0f2fe; padding: 2px 8px; border-radius: 6px; border: 1px solid #bae6fd;">
-                                            🛒 {{ $stall->stall_name }}
-                                        </span>
+                                @if($stall || !empty($marketName))
+                                    <div style="margin-top: 4px; display: flex; flex-wrap: wrap; gap: 4px; align-items: center;">
+                                        @if(!empty($marketName))
+                                            <span style="font-size: 0.74rem; color: #92400e; font-weight: 700; background: #fef3c7; padding: 2px 8px; border-radius: 6px; border: 1px solid #fde68a;" title="Chợ trực thuộc">
+                                                🏛️ {{ $marketName }}
+                                            </span>
+                                        @endif
+                                        @if($stall)
+                                            <span style="font-size: 0.74rem; color: #0284c7; font-weight: 700; background: #e0f2fe; padding: 2px 8px; border-radius: 6px; border: 1px solid #bae6fd;">
+                                                🛒 {{ $stall->stall_name }}
+                                            </span>
+                                        @endif
                                     </div>
                                 @elseif(count($ownedEateries) > 0)
                                     <div style="margin-top: 6px; display: flex; flex-direction: column; gap: 4px;">

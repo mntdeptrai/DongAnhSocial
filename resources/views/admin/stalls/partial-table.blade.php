@@ -18,10 +18,17 @@
                             <img src="{{ $st->image_path ?: 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=150&q=80' }}" style="width: 52px; height: 52px; object-fit: cover; border-radius: 12px; border: 1.5px solid var(--admin-border);" alt="{{ $st->stall_name }}">
                         </td>
                         <td>
-                            <strong style="color: #0284c7; font-size: 0.94rem; display: flex; align-items: center; gap: 4px;">
-                                🛒 {{ $st->stall_name }}
-                            </strong>
-                            <span style="font-size: 0.81rem; color: var(--admin-text-main); display: block; margin-top: 3px;">
+                            <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                                <strong style="color: #0284c7; font-size: 0.94rem; display: inline-flex; align-items: center; gap: 4px;">
+                                    🛒 {{ $st->stall_name }}
+                                </strong>
+                                @if(!empty($st->eatery_name))
+                                    <span style="font-size: 0.72rem; color: #92400e; font-weight: 700; background: #fef3c7; padding: 2px 8px; border-radius: 6px; border: 1px solid #fde68a; white-space: nowrap;" title="Chợ trực thuộc">
+                                        🏛️ {{ $st->eatery_name }}
+                                    </span>
+                                @endif
+                            </div>
+                            <span style="font-size: 0.81rem; color: var(--admin-text-main); display: block; margin-top: 4px;">
                                 👤 Chủ hộ: <strong>{{ $st->seller_name ?: 'Chưa cập nhật' }}</strong>
                             </span>
                         </td>

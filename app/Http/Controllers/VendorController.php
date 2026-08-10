@@ -481,11 +481,26 @@ class VendorController extends Controller
 
         $rawOrders = collect();
         if (\Illuminate\Support\Facades\Schema::hasTable('orders')) {
-            $rawOrders = DB::table('orders')
-                ->where('stall_name', $context['stallName'])
-                ->latest()
-                ->limit(50)
-                ->get();
+            $query = DB::table('orders');
+            if ($context['stallName']) {
+                $query->where(function($q) use ($context) {
+                    $q->where('stall_name', $context['stallName']);
+                    if (!empty($context['eateryId'])) {
+                        $q->orWhere(function($sub) use ($context) {
+                            $sub->where('eatery_id', $context['eateryId'])
+                                ->where(function($s2) use ($context) {
+                                    $s2->whereNull('stall_name')
+                                       ->orWhere('stall_name', '')
+                                       ->orWhere('stall_name', $context['stallName']);
+                                });
+                        });
+                    }
+                });
+            } elseif (!empty($context['eateryId'])) {
+                $query->where('eatery_id', $context['eateryId']);
+            }
+
+            $rawOrders = $query->latest()->limit(50)->get();
 
             $orderIds = $rawOrders->pluck('id');
             $allItems = DB::table('order_items')
@@ -495,11 +510,13 @@ class VendorController extends Controller
 
             $rawOrders = $rawOrders->map(function ($ord) use ($allItems) {
                 $ord->items = $allItems->get($ord->id, collect())->values();
+                $ord->created_at_formatted = \Carbon\Carbon::parse($ord->created_at)->format('H:i d/m/Y');
                 return $ord;
             });
         }
 
         return response()->json([
+            'success'   => true,
             'stall'     => $context['stallName'],
             'orders'    => $rawOrders->values(),
             'polled_at' => now()->toDateTimeString(),
@@ -694,5 +711,265 @@ class VendorController extends Controller
         }
 
         return [null, null];
+    }
+
+    /**
+     * GET /seller/chat
+     * Trang Trò Chuyện & Nhắn Tin Khách Hàng cho Gian Hàng Số
+     */
+    public function chatIndex(Request $request)
+    {
+        $this->verifyVendor();
+        $context = $this->getVendorStallContext();
+        $selectedCustomerId = $request->query('customer_id');
+
+        return view('seller.chat', array_merge($context, [
+            'selectedCustomerId' => $selectedCustomerId
+        ]));
+    }
+
+    /**
+     * GET /seller/api/chat/conversations
+     * Lấy danh sách các cuộc hội thoại của khách hàng với gian hàng này
+     */
+    public function apiChatConversations(Request $request)
+    {
+        $this->verifyVendor();
+        $context = $this->getVendorStallContext();
+        $stallName = $context['stallName'];
+        $sellerUserId = Auth::id() ?? session('user_id');
+
+        // Tìm tất cả ID khách hàng đã từng nhắn cho sạp này hoặc sạp đã nhắn cho họ
+        $customerUserIds = \App\Models\MarketMessage::where(function($q) use ($stallName) {
+                $q->where('private_stall_name', $stallName)
+                  ->orWhere('stall_name', $stallName);
+            })
+            ->whereNotNull('user_id')
+            ->where('user_id', '!=', $sellerUserId)
+            ->pluck('user_id')
+            ->merge(
+                \App\Models\MarketMessage::where('stall_name', $stallName)
+                    ->whereNotNull('private_user_id')
+                    ->where('private_user_id', '!=', $sellerUserId)
+                    ->pluck('private_user_id')
+            )
+            ->unique()
+            ->filter();
+
+        $conversations = [];
+        foreach ($customerUserIds as $cId) {
+            $cust = \App\Models\User::find($cId);
+            $lastMsg = \App\Models\MarketMessage::where(function($q) use ($stallName, $cId) {
+                    $q->where(function($sub) use ($stallName, $cId) {
+                        $sub->where('private_stall_name', $stallName)->where('user_id', $cId);
+                    })->orWhere(function($sub) use ($stallName, $cId) {
+                        $sub->where('stall_name', $stallName)->where('private_user_id', $cId);
+                    });
+                })
+                ->latest('id')
+                ->first();
+                
+            if ($cust && $lastMsg) {
+                $conversations[] = [
+                    'customer_id' => $cust->id,
+                    'customer_name' => $cust->name,
+                    'customer_phone' => $cust->phone ?? '',
+                    'avatar_char' => mb_substr($cust->name, 0, 1, 'UTF-8'),
+                    'last_message' => $lastMsg->message_text ?: ($lastMsg->image_path ? '📷 [Hình ảnh]' : ($lastMsg->product_id ? '🏷️ [Sản phẩm đính kèm]' : '...')),
+                    'last_time' => $lastMsg->created_at ? $lastMsg->created_at->diffForHumans() : 'Vừa xong',
+                    'last_time_formatted' => $lastMsg->created_at ? $lastMsg->created_at->format('H:i d/m') : '',
+                    'last_msg_id' => $lastMsg->id,
+                    'is_from_customer' => ($lastMsg->user_id == $cust->id)
+                ];
+            }
+        }
+
+        // Sắp xếp theo tin nhắn mới nhất
+        usort($conversations, fn($a, $b) => $b['last_msg_id'] <=> $a['last_msg_id']);
+
+        return response()->json([
+            'success' => true,
+            'stall_name' => $stallName,
+            'conversations' => $conversations
+        ]);
+    }
+
+    /**
+     * GET /seller/api/chat/messages
+     * Lấy lịch sử tin nhắn với một khách hàng cụ thể hoặc phòng chat chung
+     */
+    public function apiChatMessages(Request $request)
+    {
+        $this->verifyVendor();
+        $context = $this->getVendorStallContext();
+        $stallName = $context['stallName'];
+        $eateryId = $context['eateryId'];
+        $room = $request->input('room', 'private'); // 'private' or 'public'
+        $customerId = $request->input('customer_id');
+
+        $query = \App\Models\MarketMessage::where('eatery_id', $eateryId);
+
+        if ($room === 'private') {
+            if (!$customerId) {
+                return response()->json(['success' => true, 'messages' => []]);
+            }
+
+            $query->where(function ($q) use ($stallName, $customerId) {
+                $q->where(function ($sub) use ($stallName, $customerId) {
+                    $sub->where('private_stall_name', $stallName)
+                        ->where('user_id', $customerId);
+                })
+                ->orWhere(function ($sub) use ($stallName, $customerId) {
+                    $sub->where('stall_name', $stallName)
+                        ->where('private_user_id', $customerId);
+                });
+            });
+        } else {
+            // Phòng chat chung của Chợ
+            $query->whereNull('private_stall_name')->whereNull('private_user_id');
+        }
+
+        $messages = $query->orderBy('id', 'asc')->take(80)->get();
+
+        $sellerUserId = Auth::id() ?? session('user_id');
+
+        $formatted = $messages->map(function ($msg) use ($sellerUserId, $stallName) {
+            $productData = null;
+            if ($msg->product_id && $msg->product) {
+                $p = $msg->product;
+                $productData = [
+                    'id' => $p->id,
+                    'name' => $p->name,
+                    'price' => (float)$p->price,
+                    'image' => $p->image_path ? asset($p->image_path) : 'https://placehold.co/80x80/00A86B/ffffff?text=Product',
+                    'stall_name' => $p->stall_name
+                ];
+            }
+
+            $dateGroup = 'Lịch sử';
+            if ($msg->created_at->isToday()) {
+                $dateGroup = 'Hôm nay';
+            } elseif ($msg->created_at->isYesterday()) {
+                $dateGroup = 'Hôm qua';
+            } else {
+                $dateGroup = $msg->created_at->format('d/m/Y');
+            }
+
+            $isOwn = ($msg->sender_role === 'merchant' && $msg->stall_name === $stallName) || ($msg->user_id == $sellerUserId);
+
+            return [
+                'id' => $msg->id,
+                'sender_name' => $msg->sender_name,
+                'sender_role' => $msg->sender_role,
+                'stall_name' => $msg->stall_name,
+                'message_text' => $msg->message_text,
+                'image_url' => $msg->image_path ? asset($msg->image_path) : null,
+                'product' => $productData,
+                'time_formatted' => $msg->created_at->format('H:i'),
+                'is_own' => $isOwn,
+                'date_group' => $dateGroup
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'messages' => $formatted,
+            'count' => $formatted->count()
+        ]);
+    }
+
+    /**
+     * POST /seller/api/chat/send
+     * Gửi tin nhắn từ Chủ Gian Hàng
+     */
+    public function apiChatSend(Request $request)
+    {
+        $this->verifyVendor();
+        $context = $this->getVendorStallContext();
+        $stallName = $context['stallName'];
+        $sellerName = $context['sellerName'] ?? 'Chủ sạp';
+        $eateryId = $context['eateryId'];
+        $userId = Auth::id() ?? session('user_id');
+
+        $request->validate([
+            'message_text' => 'required_without_all:product_id,image|nullable|string|max:500',
+            'product_id' => 'nullable|integer',
+            'image' => 'nullable|image|max:5120',
+            'customer_id' => 'nullable|integer',
+            'room' => 'nullable|string'
+        ]);
+
+        $room = $request->input('room', 'private');
+        $customerId = $request->input('customer_id');
+
+        $imagePath = null;
+        if ($request->hasFile('image')) {
+            $imagePath = R2Helper::upload($request->file('image'), 'market_chat');
+        }
+
+        $messageText = $request->input('message_text');
+        if (empty($messageText) && $request->filled('product_id')) {
+            $product = \App\Models\OcopProduct::on('mysql_market')->find($request->product_id);
+            if ($product) {
+                $messageText = "Sạp gửi bạn thông tin sản phẩm: {$product->name}";
+            }
+        }
+
+        $message = \App\Models\MarketMessage::create([
+            'eatery_id' => $eateryId,
+            'user_id' => $userId,
+            'sender_name' => "Chủ sạp {$sellerName}",
+            'sender_role' => 'merchant',
+            'stall_name' => $stallName,
+            'message_text' => $messageText ?: '',
+            'image_path' => $imagePath,
+            'product_id' => $request->input('product_id'),
+            'private_stall_name' => ($room === 'private') ? $stallName : null,
+            'private_user_id' => ($room === 'private' && $customerId) ? (int)$customerId : null,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => [
+                'id' => $message->id,
+                'sender_name' => $message->sender_name,
+                'sender_role' => 'merchant',
+                'stall_name' => $stallName,
+                'message_text' => $message->message_text,
+                'image_url' => $message->image_path ? asset($message->image_path) : null,
+                'time_formatted' => $message->created_at->format('H:i'),
+                'is_own' => true
+            ]
+        ]);
+    }
+
+    /**
+     * GET /seller/api/chat/unread
+     * Lấy số tin nhắn chưa đọc & tin mới nhất cho thông báo real-time
+     */
+    public function apiChatUnreadCount(Request $request)
+    {
+        $this->verifyVendor();
+        $context = $this->getVendorStallContext();
+        $stallName = $context['stallName'];
+        $sellerUserId = Auth::id() ?? session('user_id');
+
+        $latestMsg = \App\Models\MarketMessage::where('private_stall_name', $stallName)
+            ->whereNotNull('user_id')
+            ->where('user_id', '!=', $sellerUserId)
+            ->latest('id')
+            ->first();
+
+        return response()->json([
+            'success' => true,
+            'stall_name' => $stallName,
+            'latest_message' => $latestMsg ? [
+                'id' => $latestMsg->id,
+                'sender_name' => $latestMsg->sender_name,
+                'user_id' => $latestMsg->user_id,
+                'message_text' => $latestMsg->message_text ?: '📷 [Hình ảnh]',
+                'created_at_formatted' => $latestMsg->created_at ? $latestMsg->created_at->diffForHumans() : 'Vừa xong'
+            ] : null
+        ]);
     }
 }

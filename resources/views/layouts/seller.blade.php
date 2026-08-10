@@ -96,6 +96,10 @@
             <a href="/seller/orders" class="slr-menu-item {{ request()->is('seller/orders*') ? 'active' : '' }}">
                 <span>🛍️</span> Đơn Hàng Nhận
             </a>
+            <a href="/seller/chat" class="slr-menu-item {{ request()->is('seller/chat*') ? 'active' : '' }}">
+                <span>💬</span> Trò Chuyện & Nhắn Tin
+                <span id="slr-chat-sidebar-badge" style="display: none; margin-left: auto; background: #ef4444; color: #fff; font-size: 0.68rem; font-weight: 800; padding: 2px 6px; border-radius: 10px;">0</span>
+            </a>
 
             <div class="slr-sidebar-divider"></div>
 
@@ -124,10 +128,40 @@
                 </div>
 
                 <div class="slr-topbar-actions">
-                    <button class="slr-icon-btn" title="Thông báo">
-                        🔔
-                        <span class="slr-icon-btn-badge"></span>
-                    </button>
+                    <!-- Chat Messages Button -->
+                    <a href="/seller/chat" class="slr-icon-btn" title="Tin nhắn từ khách hàng" style="position: relative; text-decoration: none; display: flex; align-items: center; justify-content: center;">
+                        💬
+                        <span id="slr-chat-topbar-badge" class="slr-icon-btn-badge" style="display: none; position: absolute; top: -4px; right: -4px; background: #ef4444; color: #ffffff; font-size: 0.68rem; font-weight: 900; padding: 2px 6px; border-radius: 10px; border: 2px solid #ffffff; min-width: 18px; height: 18px; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4);">0</span>
+                    </a>
+
+                    <!-- Notification Bell with Interactive Dropdown -->
+                    <div class="slr-notification-dropdown-wrapper" style="position: relative;">
+                        <button id="slr-bell-btn" class="slr-icon-btn" title="Thông báo đơn hàng mới" onclick="toggleSellerNotifDropdown(event)" style="position: relative; cursor: pointer;">
+                            🔔
+                            <span id="slr-notif-badge" class="slr-icon-btn-badge" style="display: none; position: absolute; top: -4px; right: -4px; background: #ef4444; color: #ffffff; font-size: 0.68rem; font-weight: 900; padding: 2px 6px; border-radius: 10px; border: 2px solid #ffffff; min-width: 18px; height: 18px; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4);">0</span>
+                        </button>
+                        
+                        <!-- Notification Dropdown Menu -->
+                        <div id="slr-notif-dropdown" style="display: none; position: absolute; right: 0; top: calc(100% + 12px); width: 360px; background: #ffffff; border-radius: 20px; box-shadow: 0 16px 45px rgba(0,0,0,0.18); border: 1.5px solid #fde68a; z-index: 10000; overflow: hidden; animation: slrDropdownFade 0.25s cubic-bezier(0.16, 1, 0.3, 1);">
+                            <div style="padding: 14px 18px; background: linear-gradient(135deg, #fffbeb, #fef3c7); border-bottom: 1px solid #fde68a; display: flex; align-items: center; justify-content: space-between;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span style="font-size: 1.2rem;">🔔</span>
+                                    <strong style="font-size: 0.95rem; color: #92400e;">Thông Báo Đơn Hàng</strong>
+                                </div>
+                                <span id="slr-notif-count-text" style="font-size: 0.72rem; background: #d97706; color: #ffffff; padding: 2px 8px; border-radius: 20px; font-weight: 800;">0 mới</span>
+                            </div>
+                            <div id="slr-notif-list" style="max-height: 320px; overflow-y: auto;">
+                                <div style="text-align: center; padding: 36px 20px; color: #9ca3af; font-size: 0.85rem;">
+                                    <span>✨ Đang kết nối tải thông báo...</span>
+                                </div>
+                            </div>
+                            <div style="padding: 12px 18px; background: #fafafa; border-top: 1px solid #f3f4f6; text-align: center;">
+                                <a href="/seller/orders" style="font-size: 0.84rem; font-weight: 800; color: #d97706; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+                                    Xem tất cả đơn hàng ➔
+                                </a>
+                            </div>
+                        </div>
+                    </div>
 
                     @if(session()->has('user_id'))
                         <div class="slr-user-profile">
@@ -310,5 +344,20 @@
         if (e.target === this) closeLogoutConfirmModal();
     });
     </script>
+    <script src="{{ asset('js/seller-notifications.js') }}?v={{ time() }}"></script>
+    <style>
+    @keyframes pulse-badge {
+        0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6); }
+        50% { transform: scale(1.15); box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+    }
+    @keyframes pulse-icon {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.1) rotate(5deg); }
+    }
+    @keyframes slrDropdownFade {
+        from { opacity: 0; transform: translateY(-8px) scale(0.98); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    </style>
 </body>
 </html>

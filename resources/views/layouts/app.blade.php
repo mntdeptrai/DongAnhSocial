@@ -3142,8 +3142,8 @@
     {{-- WebRTC P2P Call Modals, Overlay & Client JS --}}
     @include('partials.webrtc-call-modal')
 
-    {{-- Laravel Echo + Reverb WebSocket client — chỉ load trên trang cần real-time --}}
-    @stack('realtime-scripts')
+    {{-- Real-time Customer Order & Status Notification Engine --}}
+    <script src="{{ asset('js/customer-notifications.js') }}?v={{ time() }}"></script>
 </body>
 </html>
 

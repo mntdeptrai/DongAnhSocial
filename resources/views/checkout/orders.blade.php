@@ -22,35 +22,55 @@
 
     <!-- Header Section -->
     <div class="orders-header-section">
+        <div style="display: inline-flex; align-items: center; gap: 8px; background: linear-gradient(135deg, #ecfdf5, #d1fae5); color: #047857; padding: 6px 14px; border-radius: 20px; font-size: 0.8rem; font-weight: 800; border: 1px solid #a7f3d0; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.1);">
+            <span style="display: inline-block; width: 8px; height: 8px; background: #10b981; border-radius: 50%; box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.3); animation: pulse-dot 1.5s infinite;"></span>
+            Đồng bộ thời gian thực 10s • Hệ thống Chợ & Đồ Ăn Đông Anh
+        </div>
         <h1 class="orders-title">
             📦 Lịch sử đơn hàng
         </h1>
         <p class="orders-subtitle">
-            Theo dõi trạng thái đơn hàng, chi tiết thanh toán và tiến trình giao hàng.
+            Theo dõi trạng thái đơn hàng, tiến trình đóng gói tại sạp và lịch sử giao nhận nhanh chóng.
         </p>
 
         <!-- Stats Dashboard (Updated dynamically by JS) -->
         <div class="stats-dashboard" id="orders-stats-dashboard">
             <!-- Loading skeletal cards initially -->
-            <div class="stat-card" style="opacity: 0.6;">
-                <div class="stat-icon">📦</div>
-                <span class="stat-value">...</span>
-                <span class="stat-label">Tổng đơn hàng</span>
+            <div class="stat-card stat-card-total">
+                <div class="stat-icon-wrapper stat-icon-emerald">
+                    <span class="stat-icon">📦</span>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-value text-emerald">...</span>
+                    <span class="stat-label">Tổng đơn hàng</span>
+                </div>
             </div>
-            <div class="stat-card" style="opacity: 0.6;">
-                <div class="stat-icon">⏳</div>
-                <span class="stat-value">...</span>
-                <span class="stat-label">Đang xử lý</span>
+            <div class="stat-card stat-card-processing">
+                <div class="stat-icon-wrapper stat-icon-blue">
+                    <span class="stat-icon">⏳</span>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-value text-blue">...</span>
+                    <span class="stat-label">Đang xử lý</span>
+                </div>
             </div>
-            <div class="stat-card" style="opacity: 0.6;">
-                <div class="stat-icon">✅</div>
-                <span class="stat-value">...</span>
-                <span class="stat-label">Hoàn thành</span>
+            <div class="stat-card stat-card-completed">
+                <div class="stat-icon-wrapper stat-icon-green">
+                    <span class="stat-icon">✅</span>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-value text-green">...</span>
+                    <span class="stat-label">Hoàn thành</span>
+                </div>
             </div>
-            <div class="stat-card" style="opacity: 0.6;">
-                <div class="stat-icon">💳</div>
-                <span class="stat-value">...</span>
-                <span class="stat-label">Tổng chi tiêu</span>
+            <div class="stat-card stat-card-spent">
+                <div class="stat-icon-wrapper stat-icon-orange">
+                    <span class="stat-icon">💳</span>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-value text-orange">...</span>
+                    <span class="stat-label">Tổng chi tiêu</span>
+                </div>
             </div>
         </div>
     </div>

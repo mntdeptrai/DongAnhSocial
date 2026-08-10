@@ -206,6 +206,9 @@ class MarketChatController extends Controller
             'private_user_id' => 'nullable|integer'
         ]);
 
+        $privateStallName = $request->input('private_stall_name');
+        $privateUserId = $request->input('private_user_id');
+
         $userId = Auth::check() ? Auth::user()->id : null;
         $role = 'user';
         $stallName = null;
@@ -215,25 +218,38 @@ class MarketChatController extends Controller
             $user = Auth::user();
             $senderName = $user->name;
 
-            // Check if user is merchant of this market
-            if ($user->phone) {
-                $merchantStall = OcopProduct::on('mysql_market')
-                    ->where('eatery_id', $eateryId)
-                    ->where('seller_phone', $user->phone)
-                    ->whereNotNull('stall_name')
-                    ->first();
+            // Trường hợp 1: Chủ sạp trả lời riêng cho khách hàng ($privateUserId)
+            if ($privateUserId && $privateStallName) {
+                $role = 'merchant';
+                $stallName = $privateStallName;
+                $senderName = 'Chủ sạp ' . ($user->name);
+            }
+            // Trường hợp 2: Chat trong phòng công khai của Chợ
+            elseif (empty($privateStallName)) {
+                if ($user->phone) {
+                    $merchantStall = OcopProduct::on('mysql_market')
+                        ->where('eatery_id', $eateryId)
+                        ->where('seller_phone', $user->phone)
+                        ->whereNotNull('stall_name')
+                        ->first();
 
-                if ($merchantStall) {
-                    $role = 'merchant';
-                    $stallName = $merchantStall->stall_name;
-                    $senderName = 'Chủ sạp ' . ($merchantStall->seller_name ?: $user->name);
+                    if ($merchantStall) {
+                        $role = 'merchant';
+                        $stallName = $merchantStall->stall_name;
+                        $senderName = 'Chủ sạp ' . ($merchantStall->seller_name ?: $user->name);
+                    }
+                }
+                
+                // Nếu là Ban Quản Lý Chợ thật sự (e.g. email/username bql)
+                if ($user->role === 'admin' && str_contains(strtolower($user->name . ' ' . $user->username), 'bql')) {
+                    $role = 'admin';
+                    $senderName = '🛡️ BQL Chợ ' . $user->name;
                 }
             }
-
-            // Check if user is admin
-            if ($user->role === 'admin') {
-                $role = 'admin';
-                $senderName = '🛡️ BQL Chợ ' . $user->name;
+            // Trường hợp 3: Khách hàng nhắn riêng cho sạp ($privateStallName không có $privateUserId)
+            else {
+                $role = 'user';
+                $senderName = $user->name;
             }
         } else {
             $senderName = $request->input('sender_name') ?: 'Khách Đông Anh';

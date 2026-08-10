@@ -295,43 +295,47 @@ document.addEventListener('DOMContentLoaded', function () {
         function renderStatsDashboard(stats) {
             statsDashboard.innerHTML = `
                 <!-- Total Orders -->
-                <div class="stat-card">
-                    <div class="stat-icon">📦</div>
-                    <span class="stat-value">${stats.total}</span>
-                    <span class="stat-label">Tổng đơn hàng</span>
-                    <svg class="sparkline-svg" viewBox="0 0 100 30">
-                        <path d="M0 25 L15 18 L30 22 L45 10 L60 14 L75 8 L90 12 L100 5 L100 30 L0 30 Z" fill="rgba(0, 168, 107, 0.05)" stroke="#00A86B" stroke-width="1.5"></path>
-                    </svg>
+                <div class="stat-card stat-card-total">
+                    <div class="stat-icon-wrapper stat-icon-emerald">
+                        <span class="stat-icon">📦</span>
+                    </div>
+                    <div class="stat-content">
+                        <span class="stat-value text-emerald">${stats.total}</span>
+                        <span class="stat-label">Tổng đơn hàng</span>
+                    </div>
                 </div>
 
                 <!-- Processing -->
-                <div class="stat-card">
-                    <div class="stat-icon" style="color: #2563eb !important;">⏳</div>
-                    <span class="stat-value">${stats.processing}</span>
-                    <span class="stat-label">Đang xử lý</span>
-                    <svg class="sparkline-svg" viewBox="0 0 100 30">
-                        <path d="M0 20 L20 22 L40 18 L60 8 L80 14 L100 5 L100 30 L0 30 Z" fill="rgba(59, 130, 246, 0.05)" stroke="#2563eb" stroke-width="1.5"></path>
-                    </svg>
+                <div class="stat-card stat-card-processing">
+                    <div class="stat-icon-wrapper stat-icon-blue">
+                        <span class="stat-icon">⏳</span>
+                    </div>
+                    <div class="stat-content">
+                        <span class="stat-value text-blue">${stats.processing}</span>
+                        <span class="stat-label">Đang xử lý</span>
+                    </div>
                 </div>
 
                 <!-- Completed -->
-                <div class="stat-card">
-                    <div class="stat-icon" style="color: #22C55E !important;">✅</div>
-                    <span class="stat-value">${stats.completed}</span>
-                    <span class="stat-label">Hoàn thành</span>
-                    <svg class="sparkline-svg" viewBox="0 0 100 30">
-                        <path d="M0 22 L15 25 L30 18 L45 20 L60 12 L75 5 L90 8 L100 2 L100 30 L0 30 Z" fill="rgba(34, 197, 94, 0.05)" stroke="#22C55E" stroke-width="1.5"></path>
-                    </svg>
+                <div class="stat-card stat-card-completed">
+                    <div class="stat-icon-wrapper stat-icon-green">
+                        <span class="stat-icon">✅</span>
+                    </div>
+                    <div class="stat-content">
+                        <span class="stat-value text-green">${stats.completed}</span>
+                        <span class="stat-label">Hoàn thành</span>
+                    </div>
                 </div>
 
                 <!-- Total spent -->
-                <div class="stat-card">
-                    <div class="stat-icon" style="color: #FF7A00 !important;">💳</div>
-                    <span class="stat-value" style="font-size: 1.35rem;">${formatCurrency(stats.spent)}</span>
-                    <span class="stat-label">Tổng chi tiêu</span>
-                    <svg class="sparkline-svg" viewBox="0 0 100 30">
-                        <path d="M0 25 L20 20 L40 22 L60 10 L80 8 L100 2 L100 30 L0 30 Z" fill="rgba(255, 122, 0, 0.05)" stroke="#FF7A00" stroke-width="1.5"></path>
-                    </svg>
+                <div class="stat-card stat-card-spent">
+                    <div class="stat-icon-wrapper stat-icon-orange">
+                        <span class="stat-icon">💳</span>
+                    </div>
+                    <div class="stat-content">
+                        <span class="stat-value text-orange" style="font-size: 1.35rem;">${formatCurrency(stats.spent)}</span>
+                        <span class="stat-label">Tổng chi tiêu</span>
+                    </div>
                 </div>
             `;
 
@@ -360,7 +364,9 @@ document.addEventListener('DOMContentLoaded', function () {
                     const itemImg = item.image ? item.image : 'https://placehold.co/80x80/ffe3d1/d97706?text=🍔';
                     itemsHtml += `
                         <div class="item-row">
-                            <img src="${itemImg}" alt="${item.name}" class="item-thumbnail">
+                            <div class="item-thumb-wrapper">
+                                <img src="${itemImg}" alt="${item.name}" class="item-thumbnail">
+                            </div>
                             <div class="item-details">
                                 <div class="item-name">${item.name}</div>
                                 <div class="item-qty-meta">
@@ -378,11 +384,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 let breakdownHtml = `
                     <div class="financial-row">
                         <span>Tạm tính (${order.items.length} ${order.category_slug === 'dong-anh-market' ? 'sản phẩm' : 'món'})</span>
-                        <span>${formatCurrency(order.subtotal)}</span>
+                        <span style="font-weight: 700;">${formatCurrency(order.subtotal)}</span>
                     </div>
                     <div class="financial-row">
                         <span>Phí giao hàng</span>
-                        <span style="${order.shipping_fee === 0 ? 'color: #22C55E; font-weight: 700;' : ''}">${order.shipping_fee === 0 ? 'Miễn phí' : '+ ' + formatCurrency(order.shipping_fee)}</span>
+                        <span style="${order.shipping_fee === 0 ? 'color: #10B981; font-weight: 700;' : 'font-weight: 600;'}">${order.shipping_fee === 0 ? 'Miễn phí' : '+ ' + formatCurrency(order.shipping_fee)}</span>
                     </div>
                 `;
 
@@ -399,9 +405,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
 
                 breakdownHtml += `
-                    <div class="financial-row total-amount-row">
-                        <span>Thành tiền</span>
-                        <span class="price-val">${formatCurrency(order.total_amount)}</span>
+                    <div class="financial-row total-amount-row" style="border-top: 1.5px dashed #e2e8f0; padding-top: 10px; margin-top: 8px;">
+                        <span style="font-weight: 800; font-size: 0.95rem; color: #1e293b;">Thành tiền</span>
+                        <span class="price-val" style="font-size: 1.35rem; font-weight: 900; color: #ea580c; font-family: var(--font-heading);">${formatCurrency(order.total_amount)}</span>
                     </div>
                 `;
 
@@ -415,31 +421,31 @@ document.addEventListener('DOMContentLoaded', function () {
                 let actionsHtml = '';
                 if (order.payment_method === 'Online' && order.status === 'pending') {
                     actionsHtml += `
-                        <a href="/checkout/payment/${order.id}" class="btn-premium-action btn-pay-now" style="background: #ff7e29; color: white; border: 1.5px solid #ff7e29; display: inline-flex; align-items: center; justify-content: center; text-decoration: none; font-weight: 700; gap: 4px; box-shadow: 0 4px 10px rgba(255, 126, 41, 0.2); padding: 8px 16px; border-radius: 12px; font-size: 0.8rem;">
-                            💳 Thanh toán QR
+                        <a href="/checkout/payment/${order.id}" class="btn-premium-action btn-pay-now" style="background: linear-gradient(135deg, #f97316, #ea580c); color: white; border: none; display: inline-flex; align-items: center; justify-content: center; text-decoration: none; font-weight: 700; gap: 6px; box-shadow: 0 4px 14px rgba(234, 88, 12, 0.35); padding: 8px 18px; border-radius: 12px; font-size: 0.82rem;">
+                            📲 Quét mã QR Thanh toán
                         </a>
                     `;
                 }
 
-                if (order.status === 'shipping' || order.status === 'delivering' || order.status === 'processing' || order.status === 'paid') {
+                if (order.status === 'shipping' || order.status === 'delivering' || order.status === 'processing' || order.status === 'paid' || order.status === 'confirmed') {
                     actionsHtml += `
-                        <button class="btn-premium-action btn-confirm-received" onclick="confirmOrderReceived(${order.id})" style="background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1.5px solid rgba(16, 185, 129, 0.3); font-weight: 700;">
+                        <button class="btn-premium-action btn-confirm-received" onclick="confirmOrderReceived(${order.id})" style="background: rgba(16, 185, 129, 0.1); color: #059669; border: 1.5px solid rgba(16, 185, 129, 0.4); font-weight: 700; border-radius: 12px; padding: 8px 16px; font-size: 0.82rem;">
                             ✅ Đã nhận được hàng
                         </button>
                     `;
                 }
 
-                if (order.status === 'pending' || order.status === 'paid') {
+                if (order.status === 'pending' || order.status === 'paid' || order.status === 'confirmed') {
                     actionsHtml += `
-                        <button class="btn-premium-action btn-cancel" data-id="${order.id}" onclick="cancelOrder(${order.id})">
-                            ❌ Hủy đơn
+                        <button class="btn-premium-action btn-cancel" data-id="${order.id}" onclick="cancelOrder(${order.id})" style="background: #fff; color: #ef4444; border: 1.5px solid #fecaca; border-radius: 12px; font-weight: 700; padding: 8px 16px; font-size: 0.82rem;">
+                            🗑️ Hủy đơn
                         </button>
                     `;
                 }
 
                 if (order.status === 'completed' || order.status === 'shipping' || order.status === 'delivering') {
                     actionsHtml += `
-                        <button class="btn-premium-action btn-return" onclick="returnOrder(${order.id})" style="background: rgba(234, 88, 12, 0.08); color: #ea580c; border: 1.5px solid rgba(234, 88, 12, 0.3); font-weight: 700;">
+                        <button class="btn-premium-action btn-return" onclick="returnOrder(${order.id})" style="background: rgba(234, 88, 12, 0.08); color: #ea580c; border: 1.5px solid rgba(234, 88, 12, 0.3); font-weight: 700; border-radius: 12px; padding: 8px 16px; font-size: 0.82rem;">
                             ↩️ Yêu cầu hoàn hàng
                         </button>
                     `;
@@ -448,7 +454,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (order.status === 'completed') {
                     if (order.is_reviewed) {
                         actionsHtml += `
-                            <button class="btn-premium-action btn-reviewed" disabled style="background: #F1F5F9; color: #94A3B8; cursor: not-allowed; border: 1.5px solid #E2E8F0; opacity: 0.85;">
+                            <button class="btn-premium-action btn-reviewed" disabled style="background: #F1F5F9; color: #94A3B8; cursor: not-allowed; border: 1.5px solid #E2E8F0; opacity: 0.85; border-radius: 12px; padding: 8px 16px; font-size: 0.82rem;">
                                 ✓ Đã đánh giá
                             </button>
                         `;
@@ -456,7 +462,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         actionsHtml += `
                             <button class="btn-premium-action btn-review" 
                                     onclick="openReviewModal(event, ${order.id}, '${order.order_code}', ${order.eatery_id}, '${order.category_slug}', \`${order.eatery_name.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`)" 
-                                    style="background: rgba(0, 168, 107, 0.08); color: #00A86B; border: 1.5px solid rgba(0, 168, 107, 0.25);">
+                                    style="background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; font-weight: 700; border-radius: 12px; padding: 8px 16px; font-size: 0.82rem; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);">
                                 ⭐ Đánh giá ngay
                             </button>
                         `;
@@ -465,7 +471,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 if (order.status === 'completed' || order.status === 'cancelled' || order.status === 'returned') {
                     actionsHtml += `
-                        <button class="btn-premium-action btn-reorder" data-id="${order.id}" onclick="reorderItems(${order.id})">
+                        <button class="btn-premium-action btn-reorder" data-id="${order.id}" onclick="reorderItems(${order.id})" style="background: #f8fafc; color: #0284c7; border: 1.5px solid #bae6fd; border-radius: 12px; font-weight: 700; padding: 8px 16px; font-size: 0.82rem;">
                             🔄 Đặt lại món
                         </button>
                     `;
@@ -473,33 +479,84 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 // Add explicit detailed view action button
                 actionsHtml += `
-                    <a href="/orders/${order.order_code_full.replace('#', '')}" class="btn-premium-action btn-detail">
+                    <a href="/orders/${order.order_code_full.replace('#', '')}" class="btn-premium-action btn-detail" style="background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; text-decoration: none; border-radius: 12px; font-weight: 700; padding: 8px 18px; font-size: 0.82rem; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);">
                         Xem chi tiết ➔
                     </a>
                 `;
 
+                // Check if this order is pickup or delivery
+                const isPickup = order.shipping_address && order.shipping_address.includes('[Ghé sạp lấy đồ]');
+                const pickupCode = `MCP-${order.id.toString().padStart(5, '0')}`;
+                
+                // Formatted address box
+                let addressBoxHtml = '';
+                if (isPickup) {
+                    const cleanAddr = order.shipping_address.replace('[Ghé sạp lấy đồ]', '').trim();
+                    addressBoxHtml = `
+                        <div class="order-delivery-address" style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(5, 150, 105, 0.04)); border: 1.8px dashed #10b981; border-radius: 14px; padding: 12px 14px; margin-top: 6px; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.06);">
+                            <div style="font-weight: 800; color: #047857; font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px;">
+                                <span style="display: flex; align-items: center; gap: 5px;">🏪 NƠI NHẬN ĐỒ (GHÉ SẠP LẤY)</span>
+                                <span style="font-family: monospace; font-size: 0.88rem; color: #047857; background: #d1fae5; padding: 2px 8px; border-radius: 6px; border: 1px solid #6ee7b7; font-weight: 900; letter-spacing: 0.5px;">${pickupCode}</span>
+                            </div>
+                            <span class="address-val" style="color: #0f172a; font-size: 0.84rem; font-weight: 600; line-height: 1.45; display: block;">${cleanAddr}</span>
+                        </div>
+                    `;
+                } else {
+                    addressBoxHtml = `
+                        <div class="order-delivery-address" style="background: linear-gradient(135deg, rgba(14, 165, 233, 0.08), rgba(2, 132, 199, 0.04)); border: 1.8px dashed #0ea5e9; border-radius: 14px; padding: 12px 14px; margin-top: 6px; box-shadow: 0 2px 8px rgba(14, 165, 233, 0.06);">
+                            <div style="font-weight: 800; color: #0369a1; font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">
+                                🛵 ĐỊA CHỈ GIAO TẬN NƠI
+                            </div>
+                            <span class="address-val" style="color: #0f172a; font-size: 0.84rem; font-weight: 600; line-height: 1.45; display: block;">${order.shipping_address}</span>
+                        </div>
+                    `;
+                }
+
+                // Market & Stall Chip
+                let marketChip = '';
+                let stallTitle = order.eatery_name;
+                if (order.eatery_name && order.eatery_name.includes(' - ')) {
+                    const parts = order.eatery_name.split(' - ');
+                    marketChip = `<span class="market-badge-chip" style="background: linear-gradient(135deg, #ede9fe, #ddd6fe); color: #6d28d9; border: 1px solid #c4b5fd; padding: 3px 8px; border-radius: 8px; font-size: 0.75rem; font-weight: 800; display: inline-flex; align-items: center; gap: 4px;">🏛️ ${parts[0]}</span>`;
+                    stallTitle = parts[1];
+                } else {
+                    marketChip = `<span class="market-badge-chip" style="background: linear-gradient(135deg, #e0f2fe, #bae6fd); color: #0369a1; border: 1px solid #7dd3fc; padding: 3px 8px; border-radius: 8px; font-size: 0.75rem; font-weight: 800; display: inline-flex; align-items: center; gap: 4px;">🏪 ${order.category_slug === 'dong-anh-market' ? 'Chợ Số' : 'Cơ sở'}</span>`;
+                }
+
                 // Build modern 60/40 card
                 html += `
-                    <div class="order-card fade-in">
+                    <div class="order-card fade-in" style="border-radius: 24px; overflow: hidden; border: 1px solid #e2e8f0; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.06); margin-bottom: 24px; background: #ffffff; position: relative;">
                         
-                        <!-- Header -->
-                        <div class="order-card-header">
-                            <div class="order-code-title">
-                                <span>🛒</span> #${order.order_code}
-                                <span class="badge-status ${order.status_class}">
-                                    ${order.status_label}
-                                </span>
-                            </div>
-                            <div class="order-meta-info">
-                                <span>${formattedTime}</span>
+                        <!-- Left vibrant accent bar -->
+                        <div style="position: absolute; left: 0; top: 0; bottom: 0; width: 6px; background: ${order.status === 'cancelled' ? '#ef4444' : (order.status === 'completed' ? '#10b981' : (order.payment_method === 'Online' ? 'linear-gradient(180deg, #0ea5e9, #6366f1)' : 'linear-gradient(180deg, #10b981, #f59e0b)'))};"></div>
+
+                        <!-- Header: Tên Gian Hàng & Chợ nổi bật -->
+                        <div class="order-card-header" style="padding: 16px 24px; background: linear-gradient(to right, #f8fafc, #ffffff); border-bottom: 1px dashed #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+                            <div style="display: flex; flex-direction: column; gap: 5px;">
+                                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                    ${marketChip}
+                                    <h4 style="font-size: 1.15rem; font-weight: 800; color: #0f172a; margin: 0; display: flex; align-items: center; gap: 6px; font-family: var(--font-heading);">
+                                        🛒 ${stallTitle}
+                                    </h4>
+                                    <span class="badge-status ${order.status_class}" style="font-size: 0.75rem; padding: 3px 10px; border-radius: 8px; font-weight: 700;">
+                                        ${order.status_label}
+                                    </span>
+                                </div>
+                                <div style="font-size: 0.78rem; color: #64748b; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                    <span>Mã đơn: <strong style="font-family: monospace; color: #2563eb; font-size: 0.85rem;">#${order.order_code}</strong></span>
+                                    <span>•</span>
+                                    <span>Đặt lúc: ${formattedTime}</span>
+                                    <span>•</span>
+                                    <span>Phương thức: <strong style="color: #334155;">${order.payment_method === 'COD' ? '💵 Tiền mặt khi nhận' : '💳 Chuyển khoản VietQR'}</strong></span>
+                                </div>
                             </div>
                         </div>
 
                         <!-- Card Body -->
-                        <div class="order-card-body">
+                        <div class="order-card-body" style="padding: 24px; display: grid; grid-template-columns: 1.4fr 1fr; gap: 28px;">
                             <!-- Left Pane: items (60%) -->
                             <div class="order-items-pane">
-                                <div class="pane-heading">📦 Sản phẩm đặt mua (${totalItemsQty} ${order.category_slug === 'dong-anh-market' ? 'sản phẩm' : 'món'})</div>
+                                <div class="pane-heading" style="font-weight: 800; font-size: 0.88rem; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 14px;">📦 Sản phẩm đặt mua (${totalItemsQty} ${order.category_slug === 'dong-anh-market' ? 'sản phẩm' : 'món'})</div>
                                 ${itemsHtml}
                                 
                                 <!-- Progress Stepper -->
@@ -507,25 +564,22 @@ document.addEventListener('DOMContentLoaded', function () {
                             </div>
 
                             <!-- Right Pane: costs (40%) -->
-                            <div class="order-info-pane">
+                            <div class="order-info-pane" style="background: #fafafa; border-radius: 16px; padding: 18px; border: 1px solid #f1f5f9; display: flex; flex-direction: column; justify-content: space-between; gap: 14px;">
                                 <div>
-                                    <div class="pane-heading">💵 Chi tiết chi phí</div>
+                                    <div class="pane-heading" style="font-weight: 800; font-size: 0.84rem; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;">💵 Chi tiết thanh toán</div>
                                     <div class="financials-list">
                                         ${breakdownHtml}
                                     </div>
                                 </div>
 
-                                <div style="border-top: 1px solid rgba(0,0,0,0.04); padding-top: 12px;">
-                                    <div class="order-delivery-address">
-                                        📍 ĐỊA CHỈ GIAO HÀNG
-                                        <span class="address-val">${order.shipping_address}</span>
-                                    </div>
+                                <div style="border-top: 1px solid #e2e8f0; padding-top: 10px;">
+                                    ${addressBoxHtml}
                                 </div>
                             </div>
                         </div>
 
                         <!-- Footer actions -->
-                        <div class="order-card-footer">
+                        <div class="order-card-footer" style="padding: 14px 24px; background: #f8fafc; border-top: 1px solid #f1f5f9; display: flex; justify-content: flex-end; gap: 10px; flex-wrap: wrap;">
                             ${actionsHtml}
                         </div>
 
@@ -907,12 +961,10 @@ document.addEventListener('DOMContentLoaded', function () {
                                     <span style="color: var(--text-muted); font-weight: 700; display: block; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px;">Ngày đặt</span>
                                     <span style="color: var(--text-main); font-weight: 600;">${order.created_at_formatted}</span>
                                 </div>
-                                ${order.stall_name ? `
                                 <div style="border-top: 1px dashed var(--border-light); padding-top: 10px;">
-                                    <span style="color: var(--text-muted); font-weight: 700; display: block; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px;">🏪 Gian hàng số</span>
-                                    <strong style="color: #d97706; font-size: 0.95rem; font-weight: 800;">${order.stall_name}</strong>
+                                    <span style="color: var(--text-muted); font-weight: 700; display: block; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px;">🏪 Thuộc Chợ & Gian hàng</span>
+                                    <strong style="color: #0369a1; font-size: 0.98rem; font-weight: 800;">${order.eatery_name}</strong>
                                 </div>
-                                ` : ''}
                                 <div style="border-top: 1px dashed var(--border-light); padding-top: 10px;">
                                     <span style="color: var(--text-muted); font-weight: 700; display: block; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px;">Người nhận</span>
                                     <strong style="color: var(--text-main); font-size: 0.92rem;">${order.customer_name}</strong>
@@ -922,13 +974,24 @@ document.addEventListener('DOMContentLoaded', function () {
                                     <span style="color: var(--text-main); font-weight: 600;">${order.customer_phone}</span>
                                 </div>
                                 <div style="border-top: 1px dashed var(--border-light); padding-top: 10px;">
-                                    <span style="color: var(--text-muted); font-weight: 700; display: block; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px;">📍 Địa chỉ nhận hàng</span>
-                                    <span style="color: var(--text-main); line-height: 1.4; display: block; word-break: break-all; font-weight: 500;">${order.shipping_address}</span>
+                                    <span style="color: var(--text-muted); font-weight: 700; display: block; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px;">
+                                        ${order.shipping_address && order.shipping_address.includes('[Ghé sạp lấy đồ]') ? '🏪 Nơi nhận đồ (Ghé sạp lấy)' : '📍 Địa chỉ nhận hàng'}
+                                    </span>
+                                    <span style="color: var(--text-main); line-height: 1.45; display: block; font-weight: 600;">
+                                        ${order.shipping_address ? order.shipping_address.replace('[Ghé sạp lấy đồ]', '').trim() : ''}
+                                    </span>
+                                    ${order.shipping_address && order.shipping_address.includes('[Ghé sạp lấy đồ]') ? `
+                                        <div style="background: rgba(16, 185, 129, 0.08); border: 1.8px dashed #10b981; border-radius: 12px; padding: 10px 14px; text-align: center; margin-top: 8px;">
+                                            <span style="font-size: 0.72rem; color: #047857; font-weight: 700; text-transform: uppercase; display: block;">MÃ HẸN LẤY ĐỒ (PICKUP CODE)</span>
+                                            <strong style="font-size: 1.45rem; color: #059669; font-family: monospace; letter-spacing: 1px; display: block; margin: 2px 0;">MCP-${String(order.id).padStart(5, '0')}</strong>
+                                            <span style="font-size: 0.75rem; color: #64748b;">Đưa mã này cho chủ sạp khi đến nhận đồ</span>
+                                        </div>
+                                    ` : ''}
                                 </div>
                                 <div style="border-top: 1px dashed var(--border-light); padding-top: 10px;">
                                     <span style="color: var(--text-muted); font-weight: 700; display: block; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px;">Phương thức thanh toán</span>
                                     <span style="color: var(--text-main); font-weight: 700; display: flex; align-items: center; flex-wrap: wrap;">
-                                        ${order.payment_method} ${paymentBadgeHtml}
+                                        ${order.payment_method === 'COD' ? 'Tiền mặt khi nhận đồ (COD)' : 'Chuyển khoản VietQR'} ${paymentBadgeHtml}
                                     </span>
                                 </div>
                                 ${order.category_slug !== 'dong-anh-market' ? `

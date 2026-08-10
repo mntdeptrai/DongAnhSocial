@@ -136,8 +136,18 @@
                 <input type="text" id="stall-search-input" value="{{ request('search') }}" class="admin-form-input" placeholder="Tìm kiếm tên Gian hàng, Chủ hộ, SĐT, Sản phẩm..." style="padding-left: 38px; border-radius: 10px; height: 42px; font-size: 0.88rem;">
             </div>
 
+            <!-- Market Filter Dropdown -->
+            @if(isset($markets) && count($markets) > 0)
+                <select id="stall-market-filter" class="admin-form-input" style="width: 200px; border-radius: 10px; height: 42px; font-size: 0.88rem;">
+                    <option value="">🏛️ Tất cả Chợ</option>
+                    @foreach($markets as $m)
+                        <option value="{{ $m->id }}" {{ request('market_id') == $m->id ? 'selected' : '' }}>{{ $m->name }}</option>
+                    @endforeach
+                </select>
+            @endif
+
             <!-- Category Filter Dropdown -->
-            <select id="stall-category-filter" class="admin-form-input" style="width: 200px; border-radius: 10px; height: 42px; font-size: 0.88rem;">
+            <select id="stall-category-filter" class="admin-form-input" style="width: 180px; border-radius: 10px; height: 42px; font-size: 0.88rem;">
                 <option value="">Tất cả Ngành hàng</option>
                 <option value="Ăn uống" {{ request('category') === 'Ăn uống' ? 'selected' : '' }}>Ăn uống / Bún phở</option>
                 <option value="Rau củ" {{ request('category') === 'Rau củ' ? 'selected' : '' }}>Rau củ sạch / Nông sản</option>
@@ -243,16 +253,19 @@ document.addEventListener("DOMContentLoaded", function() {
 
     // AJAX Instant Filtering
     const searchInput = document.getElementById('stall-search-input');
+    const marketFilter = document.getElementById('stall-market-filter');
     const categoryFilter = document.getElementById('stall-category-filter');
     const tableWrapper = document.getElementById('stalls-table-wrapper');
     let debounceTimeout = null;
 
     function fetchStalls() {
         const searchVal = searchInput.value.trim();
+        const marketVal = marketFilter ? marketFilter.value : '';
         const categoryVal = categoryFilter.value;
 
         const url = new URL(window.location.href);
         url.searchParams.set('search', searchVal);
+        url.searchParams.set('market_id', marketVal);
         url.searchParams.set('category', categoryVal);
         url.searchParams.set('page', 1);
 
@@ -273,6 +286,7 @@ document.addEventListener("DOMContentLoaded", function() {
         debounceTimeout = setTimeout(fetchStalls, 300);
     });
 
+    if (marketFilter) marketFilter.addEventListener('change', fetchStalls);
     categoryFilter.addEventListener('change', fetchStalls);
 });
 </script>

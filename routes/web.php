@@ -195,6 +195,13 @@ Route::prefix('seller')->middleware(['auth', 'role:seller,admin', 'tenant.auth']
     Route::get('/orders/{id}', [VendorController::class, 'showOrder'])->name('seller.orders.show');
     Route::put('/orders/{id}/status', [VendorController::class, 'updateOrderStatus'])->name('seller.orders.update-status');
     Route::get('/api/orders', [VendorController::class, 'ordersJson'])->name('seller.orders.json');
+    
+    // Kênh Trò Chuyện & Nhắn Tin Khách Hàng (Seller Live Chat)
+    Route::get('/chat', [VendorController::class, 'chatIndex'])->name('seller.chat.index');
+    Route::get('/api/chat/conversations', [VendorController::class, 'apiChatConversations'])->name('seller.chat.conversations');
+    Route::get('/api/chat/messages', [VendorController::class, 'apiChatMessages'])->name('seller.chat.messages');
+    Route::post('/api/chat/send', [VendorController::class, 'apiChatSend'])->name('seller.chat.send');
+    Route::get('/api/chat/unread', [VendorController::class, 'apiChatUnreadCount'])->name('seller.chat.unread');
 });
 
 

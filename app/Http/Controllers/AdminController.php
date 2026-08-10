@@ -1427,17 +1427,46 @@ class AdminController extends Controller
             });
         }
 
-        if ($request->has('search') && $request->search != '') {
-            $search = $request->search;
+        if ($request->has('search') && trim($request->search) != '') {
+            $search = trim($request->search);
             $query->where(function($q) use ($search) {
-                $q->where('phone', $search)
-                  ->orWhere('email', $search)
-                  ->orWhere('name', 'like', $search . '%');
+                $q->where('phone', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('username', 'like', "%{$search}%")
+                  ->orWhere('name', 'like', "%{$search}%")
+                  ->orWhereIn('id', function($sub) use ($search) {
+                      $sub->select('user_id')
+                          ->from('ocop_products')
+                          ->whereNotNull('user_id')
+                          ->where(function($sq) use ($search) {
+                              $sq->where('stall_name', 'like', "%{$search}%")
+                                 ->orWhere('seller_name', 'like', "%{$search}%")
+                                 ->orWhere('seller_phone', 'like', "%{$search}%");
+                          });
+                  })
+                  ->orWhereIn('eatery_id', function($sub) use ($search) {
+                      $sub->select('id')
+                          ->from('eateries')
+                          ->where('name', 'like', "%{$search}%");
+                  });
             });
         }
 
         if ($request->has('status') && $request->status != '') {
             $query->where('status', $request->status);
+        }
+
+        if ($request->has('market_id') && $request->market_id != '') {
+            $mId = (int)$request->market_id;
+            $query->where(function($q) use ($mId) {
+                $q->where('eatery_id', $mId)
+                  ->orWhereIn('id', function($sub) use ($mId) {
+                      $sub->select('user_id')->from('ocop_products')->where('eatery_id', $mId)->whereNotNull('user_id');
+                  })
+                  ->orWhereIn('stall_id', function($sub) use ($mId) {
+                      $sub->select('id')->from('ocop_products')->where('eatery_id', $mId);
+                  });
+            });
         }
 
         $totalUsers = (clone $query)->count();
@@ -1447,11 +1476,17 @@ class AdminController extends Controller
 
         $users = $query->orderBy('created_at', 'desc')->paginate(10)->withQueryString();
 
+        $markets = \Illuminate\Support\Facades\DB::table('eateries')
+            ->whereIn('id', \Illuminate\Support\Facades\DB::table('ocop_products')->select('eatery_id')->distinct())
+            ->orderBy('name')
+            ->get();
+        $marketsMap = $markets->keyBy('id');
+
         if ($request->ajax()) {
-            return view('admin.users.partial-table', compact('users'))->render();
+            return view('admin.users.partial-table', compact('users', 'markets', 'marketsMap'))->render();
         }
 
-        return view('admin.users.index', compact('users', 'totalUsers', 'adminCount', 'sellerCount', 'userCount'));
+        return view('admin.users.index', compact('users', 'totalUsers', 'adminCount', 'sellerCount', 'userCount', 'markets', 'marketsMap'));
     }
 
     /**
@@ -1492,12 +1527,28 @@ class AdminController extends Controller
             });
         }
 
-        if ($request->has('search') && $request->search != '') {
-            $search = $request->search;
+        if ($request->has('search') && trim($request->search) != '') {
+            $search = trim($request->search);
             $query->where(function($q) use ($search) {
-                $q->where('phone', $search)
-                  ->orWhere('email', $search)
-                  ->orWhere('name', 'like', $search . '%');
+                $q->where('phone', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('username', 'like', "%{$search}%")
+                  ->orWhere('name', 'like', "%{$search}%")
+                  ->orWhereIn('id', function($sub) use ($search) {
+                      $sub->select('user_id')
+                          ->from('ocop_products')
+                          ->whereNotNull('user_id')
+                          ->where(function($sq) use ($search) {
+                              $sq->where('stall_name', 'like', "%{$search}%")
+                                 ->orWhere('seller_name', 'like', "%{$search}%")
+                                 ->orWhere('seller_phone', 'like', "%{$search}%");
+                          });
+                  })
+                  ->orWhereIn('eatery_id', function($sub) use ($search) {
+                      $sub->select('id')
+                          ->from('eateries')
+                          ->where('name', 'like', "%{$search}%");
+                  });
             });
         }
 
@@ -1627,6 +1678,8 @@ class AdminController extends Controller
             abort(403, 'Bạn không có quyền thêm người dùng mới!');
         }
         $eateries = EateryApiService::getEateries();
+        $markets = \Illuminate\Support\Facades\DB::table('eateries')->get();
+        $marketsMap = $markets->keyBy('id');
         $stalls = collect();
 
         if ($role === 'manager') {
@@ -1652,8 +1705,18 @@ class AdminController extends Controller
                     })
                     ->values();
             }
+        } else {
+            // Admin có thể xem toàn bộ gian hàng của tất cả các chợ
+            $stalls = \Illuminate\Support\Facades\DB::table('ocop_products')
+                ->orderBy('eatery_id')
+                ->orderBy('stall_name')
+                ->get()
+                ->unique(function ($item) {
+                    return trim($item->stall_name) ?: trim($item->seller_name);
+                })
+                ->values();
         }
-        return view('admin.users.create', compact('eateries', 'stalls'));
+        return view('admin.users.create', compact('eateries', 'stalls', 'marketsMap'));
     }
 
     public function storeUser(Request $request)
@@ -1684,7 +1747,14 @@ class AdminController extends Controller
         ]);
 
         $eateryId = $request->eatery_id;
-        $stallId = $request->stall_id;
+        $stallId = $request->stall_id ? (int)$request->stall_id : null;
+
+        if ($stallId) {
+            $stall = \Illuminate\Support\Facades\DB::table('ocop_products')->where('id', $stallId)->first();
+            if ($stall) {
+                $eateryId = $stall->eatery_id;
+            }
+        }
 
         if ($role === 'manager') {
             $managerUserId = session('user_id');
@@ -1811,6 +1881,8 @@ class AdminController extends Controller
         }
 
         $eateries = EateryApiService::getEateries();
+        $markets = \Illuminate\Support\Facades\DB::table('eateries')->get();
+        $marketsMap = $markets->keyBy('id');
         $stalls = collect();
 
         if ($role === 'manager') {
@@ -1836,13 +1908,23 @@ class AdminController extends Controller
                     })
                     ->values();
             }
+        } else {
+            // Admin có thể xem toàn bộ gian hàng của tất cả các chợ
+            $stalls = \Illuminate\Support\Facades\DB::table('ocop_products')
+                ->orderBy('eatery_id')
+                ->orderBy('stall_name')
+                ->get()
+                ->unique(function ($item) {
+                    return trim($item->stall_name) ?: trim($item->seller_name);
+                })
+                ->values();
         }
         
         $currentEatery = $eateries->firstWhere('user_id', $user->id);
         $currentEateryId = $user->eatery_id ?: ($currentEatery ? $currentEatery->id : null);
         $currentStallId = $user->stall_id;
 
-        return view('admin.users.edit', compact('user', 'eateries', 'currentEateryId', 'stalls', 'currentStallId'));
+        return view('admin.users.edit', compact('user', 'eateries', 'currentEateryId', 'stalls', 'currentStallId', 'marketsMap'));
     }
 
     public function updateUser(Request $request, $id)
@@ -1878,8 +1960,15 @@ class AdminController extends Controller
             'phone.regex' => 'Số điện thoại Việt Nam phải có đúng 10 chữ số và bắt đầu bằng số 0!',
         ]);
 
-        $eateryId = $request->eatery_id ?: $user->eatery_id;
-        $stallId = $request->stall_id ?: $user->stall_id;
+        $eateryId = $request->filled('eatery_id') ? (int)$request->eatery_id : $user->eatery_id;
+        $stallId = $request->filled('stall_id') ? (int)$request->stall_id : null;
+
+        if ($stallId) {
+            $stall = \Illuminate\Support\Facades\DB::table('ocop_products')->where('id', $stallId)->first();
+            if ($stall) {
+                $eateryId = $stall->eatery_id;
+            }
+        }
 
         if ($role === 'manager') {
             $managerUserId = session('user_id');
@@ -1919,6 +2008,15 @@ class AdminController extends Controller
             'eatery_id' => $eateryId,
             'stall_id' => $stallId
         ]);
+
+        // Cập nhật thông tin gian hàng nếu có chọn stall_id
+        if ($stallId) {
+            \Illuminate\Support\Facades\DB::table('ocop_products')
+                ->where('id', $stallId)
+                ->update([
+                    'user_id' => $user->id,
+                ]);
+        }
 
         // Cập nhật user_id cho Trường học / Cơ sở kinh doanh được chọn
         if ($eateryId) {
@@ -2300,13 +2398,13 @@ class AdminController extends Controller
         }
 
         // Lọc theo từ khóa và phân loại
-        if ($request->has('search') && $request->search != '') {
-            $search = $request->search;
+        if ($request->has('search') && trim($request->search) != '') {
+            $search = trim($request->search);
             $query->where(function($q) use ($search) {
-                $q->where('seller_phone', $search)
-                  ->orWhere('stall_name', 'like', "{$search}%")
-                  ->orWhere('name', 'like', "{$search}%")
-                  ->orWhere('seller_name', 'like', "{$search}%");
+                $q->where('seller_phone', 'like', "%{$search}%")
+                  ->orWhere('stall_name', 'like', "%{$search}%")
+                  ->orWhere('name', 'like', "%{$search}%")
+                  ->orWhere('seller_name', 'like', "%{$search}%");
             });
         }
 
@@ -2315,13 +2413,23 @@ class AdminController extends Controller
             $query->where('stall_name', 'like', "{$catFilter}%");
         }
 
+        if ($request->has('market_id') && $request->market_id != '') {
+            $query->where('eatery_id', (int)$request->market_id);
+        }
+
         $rawProducts = $query->orderBy('id', 'desc')->get();
+
+        $markets = \Illuminate\Support\Facades\DB::table('eateries')
+            ->whereIn('id', \Illuminate\Support\Facades\DB::table('ocop_products')->select('eatery_id')->distinct())
+            ->orderBy('name')
+            ->get();
+        $marketsMap = $markets->keyBy('id');
 
         // Gom nhóm bản ghi theo từng Gian Hàng / Hộ Kinh Doanh duy nhất
         $groupedStalls = $rawProducts->groupBy(function($item) {
             $key = trim($item->stall_name);
             return $key !== '' ? $key : trim($item->seller_name);
-        })->map(function($prods, $stallKey) {
+        })->map(function($prods, $stallKey) use ($marketsMap) {
             $first = $prods->first();
             $imagePath = $prods->whereNotNull('image_path')->filter(fn($p) => !empty($p->image_path))->first()?->image_path ?: $first->image_path;
 
@@ -2332,6 +2440,8 @@ class AdminController extends Controller
 
             $phoneItem = $prods->filter(fn($p) => !empty($p->seller_phone) && $p->seller_phone !== 'Cần cập nhật thông tin')->first() ?: $first;
 
+            $marketObj = $marketsMap[$first->eatery_id] ?? null;
+
             return (object)[
                 'id' => $first->id,
                 'stall_name' => $first->stall_name ?: $stallKey,
@@ -2341,6 +2451,8 @@ class AdminController extends Controller
                 'bank_account' => $bankItem->bank_account,
                 'image_path' => $imagePath,
                 'eatery_id' => $first->eatery_id,
+                'eatery_name' => $marketObj ? $marketObj->name : null,
+                'eatery_slug' => $marketObj ? $marketObj->slug : null,
                 'products' => $prods,
                 'products_count' => $prods->count(),
             ];
@@ -2357,12 +2469,14 @@ class AdminController extends Controller
         );
 
         if ($request->ajax()) {
-            return view('admin.stalls.partial-table', compact('stalls', 'managerEatery'))->render();
+            return view('admin.stalls.partial-table', compact('stalls', 'managerEatery', 'markets', 'marketsMap'))->render();
         }
 
         return view('admin.stalls.index', compact(
             'stalls',
             'managerEatery',
+            'markets',
+            'marketsMap',
             'totalHoKinhDoanh',
             'totalMatHang',
             'hoCoQr',

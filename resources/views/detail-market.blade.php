@@ -3172,9 +3172,11 @@
                             }
                             
                             const isOwn = msg.is_own;
-                            const badgeHtml = msg.sender_role === 'admin' 
-                                ? '<span class="chat-badge badge-admin">🛡️ BQL Chợ</span>' 
-                                : (msg.sender_role === 'merchant' ? `<span class="chat-badge badge-merchant">🏪 Sạp: ${msg.stall_name}</span>` : '');
+                            const badgeHtml = msg.sender_role === 'merchant'
+                                ? `<span class="chat-badge badge-merchant" style="background: rgba(245, 158, 11, 0.12); color: #d97706; padding: 2px 6px; border-radius: 6px; font-weight: 800; font-size: 0.7rem;">🏪 ${msg.stall_name || 'Chủ sạp'}</span>`
+                                : (msg.sender_role === 'admin' 
+                                    ? '<span class="chat-badge badge-admin" style="background: rgba(239, 68, 68, 0.12); color: #ef4444; padding: 2px 6px; border-radius: 6px; font-weight: 800; font-size: 0.7rem;">🛡️ BQL Chợ</span>'
+                                    : '<span class="chat-badge" style="background: rgba(14, 165, 233, 0.1); color: #0284c7; padding: 2px 6px; border-radius: 6px; font-weight: 700; font-size: 0.7rem;">👤 Khách hàng</span>');
 
                             // Image attachment element
                             let imageAttachHtml = '';

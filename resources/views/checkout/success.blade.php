@@ -40,6 +40,30 @@
                     ? ($ord->stall_name ? $ord->eatery->name . ' - ' . $ord->stall_name : $ord->eatery->name) 
                     : 'Cửa hàng';
                 $orderCode = 'ORD' . str_pad($ord->id, 6, '0', STR_PAD_LEFT);
+
+                // Trích xuất thông tin ngân hàng của chủ sạp
+                $firstItem = $ord->items->first();
+                $prod = null;
+                if ($firstItem && $firstItem->ocop_product_id) {
+                    $prod = \App\Models\OcopProduct::on('mysql_market')->find($firstItem->ocop_product_id);
+                } elseif ($firstItem && $firstItem->dish_id) {
+                    $prod = \App\Models\Dish::on('mysql')->find($firstItem->dish_id);
+                }
+                
+                $bankName = ($prod && !empty($prod->bank_name)) ? $prod->bank_name : 'MB';
+                $bankAccount = ($prod && !empty($prod->bank_account)) ? $prod->bank_account : '';
+                $sellerName = ($prod && !empty($prod->seller_name)) ? $prod->seller_name : ($ord->stall_name ?: 'Tiểu thương');
+                
+                if (empty($bankAccount) && $prod && !empty($prod->description)) {
+                    if (preg_match('/ngân hàng (.*?)\./', $prod->description, $matches)) {
+                        $bankInfo = $matches[1];
+                        if (strpos($bankInfo, ':') !== false) {
+                            list($bName, $bAcc) = explode(':', $bankInfo);
+                            $bankName = trim($bName);
+                            $bankAccount = trim($bAcc);
+                        }
+                    }
+                }
             @endphp
             
             <div class="order-success-card" id="order-card-{{ $ord->id }}" data-aos="fade-up" style="background: var(--bg-card); border: 1px solid var(--border-glow); border-radius: 24px; padding: 24px; box-shadow: 0 10px 25px -10px rgba(0,0,0,0.05); transition: all 0.3s; position: relative; overflow: hidden;">
@@ -58,7 +82,7 @@
                     </div>
                     <!-- Status Badge -->
                     <span class="status-badge-pill status-{{ $ord->status }}" id="status-badge-{{ $ord->id }}">
-                        {{ $ord->status === 'paid' ? 'Đã thanh toán' : ($ord->status === 'cancelled' ? 'Đã hủy' : 'Chờ xác nhận') }}
+                        {{ $ord->status === 'paid' ? 'Đã thanh toán' : ($ord->status === 'cancelled' ? 'Đã hủy' : ($ord->payment_method === 'Online' ? 'Chờ quét VietQR' : 'Chờ lấy đồ')) }}
                     </span>
                 </div>
 
@@ -76,7 +100,7 @@
                 </div>
 
                 <!-- Shipping / Pickup Info -->
-                <div style="background: rgba(0,0,0,0.015); border: 1px solid var(--border-glow); border-radius: 14px; padding: 14px; font-size: 0.82rem; color: var(--text-muted); display: flex; flex-direction: column; gap: 6px; margin-bottom: 20px;">
+                <div style="background: rgba(0,0,0,0.015); border: 1px solid var(--border-glow); border-radius: 14px; padding: 14px; font-size: 0.82rem; color: var(--text-muted); display: flex; flex-direction: column; gap: 6px; margin-bottom: 18px;">
                     <div>👤 <strong>Người nhận:</strong> {{ $ord->customer_name }} ({{ $ord->customer_phone }})</div>
                     <div>📍 <strong>{{ $isMarketOrd ? 'Nơi nhận đồ:' : 'Địa chỉ giao hàng:' }}</strong> {{ $ord->shipping_address }}</div>
                     <div>💳 <strong>Phương thức:</strong> {{ $ord->payment_method === 'COD' ? 'Tiền mặt khi nhận đồ (COD)' : 'Chuyển khoản VietQR sạp tiểu thương' }}</div>
@@ -84,6 +108,42 @@
                         <div>💬 <strong>Ghi chú:</strong> <span style="font-style: italic;">"{{ $ord->notes }}"</span></div>
                     @endif
                 </div>
+
+                <!-- VietQR Payment Box for Online Orders -->
+                @if($ord->payment_method === 'Online' && $ord->status !== 'cancelled')
+                    <div style="background: linear-gradient(135deg, rgba(14, 165, 233, 0.06), rgba(59, 130, 246, 0.03)); border: 1.5px solid #38bdf8; border-radius: 18px; padding: 18px; margin-bottom: 20px;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; border-bottom: 1px dashed rgba(56, 189, 248, 0.4); padding-bottom: 8px;">
+                            <div style="font-size: 0.88rem; font-weight: 800; color: #0284c7; display: flex; align-items: center; gap: 6px;">
+                                <span>📲</span> QUÉT MÃ VIETQR THANH TOÁN (SẠP NÀY)
+                            </div>
+                            <span style="font-size: 0.72rem; background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 12px; font-weight: 700;">
+                                Chuyển khoản trực tiếp
+                            </span>
+                        </div>
+
+                        @if(!empty($bankAccount))
+                            <div style="display: flex; gap: 18px; align-items: center; flex-wrap: wrap;">
+                                <!-- QR Image -->
+                                <div style="background: #ffffff; padding: 8px; border-radius: 12px; border: 1px solid #bae6fd; box-shadow: 0 4px 12px rgba(14, 165, 233, 0.12); flex-shrink: 0; margin: 0 auto;">
+                                    <img src="https://img.vietqr.io/image/{{ urlencode($bankName) }}-{{ urlencode($bankAccount) }}-compact2.png?amount={{ $ord->total_amount }}&addInfo=DH%20DA%20{{ $ord->id }}&accountName={{ urlencode($sellerName) }}" alt="VietQR {{ $sellerName }}" style="width: 140px; height: 140px; display: block; mix-blend-mode: multiply;">
+                                </div>
+
+                                <!-- Bank details -->
+                                <div style="flex: 1; min-width: 200px; font-size: 0.84rem; display: flex; flex-direction: column; gap: 6px;">
+                                    <div>🏦 <strong>Ngân hàng:</strong> <span style="color: #0369a1; font-weight: 700;">{{ $bankName }}</span></div>
+                                    <div>💳 <strong>Số tài khoản:</strong> <code style="font-family: monospace; font-size: 0.96rem; color: #0284c7; font-weight: 800; background: #e0f2fe; padding: 2px 6px; border-radius: 6px;">{{ $bankAccount }}</code></div>
+                                    <div>👤 <strong>Chủ tài khoản:</strong> <strong>{{ $sellerName }}</strong></div>
+                                    <div>💰 <strong>Số tiền:</strong> <strong style="color: #ef4444; font-size: 1.05rem;">{{ number_format($ord->total_amount, 0, ',', '.') }}đ</strong></div>
+                                    <div>📝 <strong>Nội dung CK:</strong> <code style="background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-weight: 700;">DH DA {{ $ord->id }}</code></div>
+                                </div>
+                            </div>
+                        @else
+                            <div style="background: rgba(241, 196, 15, 0.08); border: 1px dashed rgba(241, 196, 15, 0.4); border-radius: 12px; padding: 12px; font-size: 0.84rem; color: #b45309; text-align: center;">
+                                💵 <strong>Chủ sạp này nhận tiền mặt trực tiếp tại quầy</strong> khi bạn ghé lấy đồ.
+                            </div>
+                        @endif
+                    </div>
+                @endif
 
                 <!-- Pickup Code for Markets -->
                 @if($isMarketOrd)
@@ -112,11 +172,6 @@
                         @if($ord->status === 'cancelled')
                             <span style="font-size: 0.85rem; color: #ef4444; font-weight: 700;"><i class="bi bi-x-circle-fill"></i> Đã hủy đơn hàng</span>
                         @else
-                            @if($ord->payment_method === 'Online' && $ord->status === 'pending')
-                                <a href="{{ route('checkout.payment', $ord->id) }}" class="btn-pay-stall">
-                                    <i class="bi bi-qr-code"></i> Quét QR Thanh toán
-                                </a>
-                            @endif
                             <button type="button" onclick="cancelSuccessOrder({{ $ord->id }})" class="btn-cancel-stall">
                                 <i class="bi bi-trash3"></i> Hủy đơn
                             </button>

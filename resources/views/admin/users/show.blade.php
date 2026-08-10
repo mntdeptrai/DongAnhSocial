@@ -20,8 +20,16 @@
     <!-- Large Blue/Purple Profile Header Banner -->
     <div style="background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%); padding: 32px 32px 100px 32px; position: relative;">
         <div style="display: flex; gap: 20px; align-items: center;">
-            <div style="width: 72px; height: 72px; border-radius: 50%; background-color: rgba(255, 255, 255, 0.2); display: flex; align-items: center; justify-content: center; font-size: 2.5rem; border: 2.5px solid #ffffff; backdrop-filter: blur(4px); box-shadow: 0 4px 10px rgba(0,0,0,0.15);">
-                {{ $user->avatar ?: '🧑' }}
+            @php
+                $isImg = !empty($user->avatar) && (str_starts_with($user->avatar, 'http') || str_contains($user->avatar, '/') || preg_match('/\.(jpg|jpeg|png|webp|gif|svg)$/i', $user->avatar));
+                $avatarSrc = $isImg ? ($user->avatar_url ?: (str_starts_with($user->avatar, 'http') ? $user->avatar : asset('storage/' . ltrim($user->avatar, '/')))) : null;
+            @endphp
+            <div style="width: 72px; height: 72px; border-radius: 50%; background-color: rgba(255, 255, 255, 0.2); display: flex; align-items: center; justify-content: center; font-size: 2.5rem; border: 2.5px solid #ffffff; backdrop-filter: blur(4px); box-shadow: 0 4px 10px rgba(0,0,0,0.15); overflow: hidden; flex-shrink: 0;">
+                @if($isImg && $avatarSrc)
+                    <img src="{{ $avatarSrc }}" alt="{{ $user->name }}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.parentElement.innerHTML='🧑'">
+                @else
+                    {{ $user->avatar ?: '🧑' }}
+                @endif
             </div>
             <div>
                 <h2 style="margin: 0; color: #ffffff; font-size: 1.5rem; font-weight: 800; display: flex; align-items: center; gap: 10px;">

@@ -328,28 +328,43 @@ class NotificationService
             // ========================================================
             $myOrders = DB::table('orders')
                 ->where('user_id', $userId)
-                ->latest()
-                ->take(3)
+                ->latest('updated_at')
+                ->take(5)
                 ->get();
 
             foreach ($myOrders as $ord) {
-                $statusText = match ($ord->status ?? 'pending') {
-                    'completed'  => 'giao thành công 🎉',
-                    'shipping'   => 'đang trên đường vận chuyển 🚚',
-                    'processing' => 'đang được người bán chuẩn bị 📦',
-                    default      => 'đã được xác nhận thành công ⏳',
+                $eatery = $ord->eatery_id ? Eatery::find($ord->eatery_id) : null;
+                $marketOrStall = $ord->stall_name ?: ($eatery ? $eatery->name : 'Gian hàng');
+                $codeStr = '#ORD-' . str_pad($ord->id, 5, '0', STR_PAD_LEFT);
+
+                $title = match ($ord->status ?? 'pending') {
+                    'ready'      => '🏪 SẠP ĐÃ CHUẨN BỊ XONG ĐỒ!',
+                    'completed'  => '🎉 ĐƠN HÀNG ĐÃ HOÀN THÀNH!',
+                    'shipping', 'delivering' => '🚚 ĐƠN HÀNG ĐANG ĐƯỢC GIAO!',
+                    'confirmed', 'processing' => '👨‍🍳 SẠP ĐÃ NHẬN ĐƠN & ĐANG CHUẨN BỊ!',
+                    'cancelled'  => '❌ ĐƠN HÀNG ĐÃ HỦY',
+                    default      => '📦 ĐƠN HÀNG ĐÃ GỬI THÀNH CÔNG',
+                };
+
+                $body = match ($ord->status ?? 'pending') {
+                    'ready'      => "{$marketOrStall} đã đóng gói xong túi đồ cho đơn {$codeStr}. Mời bạn ghé sạp nhận đồ (Mã: MCP-" . str_pad($ord->id, 5, '0', STR_PAD_LEFT) . ").",
+                    'completed'  => "Đơn hàng {$codeStr} tại {$marketOrStall} đã hoàn thành thành công. Cảm ơn bạn!",
+                    'shipping', 'delivering' => "Đơn hàng {$codeStr} đang trên đường giao tới bạn.",
+                    'confirmed', 'processing' => "{$marketOrStall} đang tiến hành chuẩn bị các món cho đơn {$codeStr}.",
+                    'cancelled'  => "Đơn hàng {$codeStr} đã bị hủy.",
+                    default      => "Đơn hàng {$codeStr} giá trị " . number_format($ord->total_amount, 0, ',', '.') . "đ đã được ghi nhận.",
                 };
 
                 $notifications[] = [
-                    'id'         => 'my_ord_' . $ord->id,
-                    'title'      => '📦 Đơn hàng #' . ($ord->code ?? $ord->id) . ' của bạn',
-                    'body'       => 'Đơn hàng mua đặc sản OCOP của bạn ' . $statusText,
-                    'time'       => isset($ord->created_at) ? Carbon::parse($ord->created_at)->diffForHumans() : 'Vừa xong',
-                    'time_ts'    => isset($ord->created_at) ? strtotime($ord->created_at) : time(),
+                    'id'         => 'my_ord_' . $ord->id . '_' . strtotime($ord->updated_at ?? $ord->created_at),
+                    'title'      => $title,
+                    'body'       => $body,
+                    'time'       => Carbon::parse($ord->updated_at ?? $ord->created_at)->diffForHumans(),
+                    'time_ts'    => strtotime($ord->updated_at ?? $ord->created_at),
                     'type'       => 'my_order',
                     'icon'       => 'local_shipping',
                     'is_read'    => false,
-                    'target_url' => '/orders',
+                    'target_url' => '/orders/ORD' . str_pad($ord->id, 6, '0', STR_PAD_LEFT),
                 ];
             }
 

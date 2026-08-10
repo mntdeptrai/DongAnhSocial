@@ -8,29 +8,33 @@
         $orderItems = $order->items;
         foreach ($orderItems as $item) {
             $product = \App\Models\OcopProduct::on('mysql_market')->find($item->ocop_product_id);
-            if ($product) {
-                $stallName = $product->stall_name ?: 'Gian hàng';
-                if (!isset($stallsPaymentData[$stallName])) {
-                    $sellerName = 'Tiểu thương';
-                    if (preg_match('/Chủ hộ: (.*?)\./', $product->description, $matches)) {
-                        $sellerName = $matches[1];
-                    }
-                    
-                    $bankInfo = '';
+            $stallName = ($product && $product->stall_name) ? $product->stall_name : ($order->stall_name ?: 'Gian hàng');
+            if (!isset($stallsPaymentData[$stallName])) {
+                $sellerName = ($product && $product->seller_name) ? $product->seller_name : 'Tiểu thương';
+                $bankName = ($product && $product->bank_name) ? $product->bank_name : '';
+                $bankAccount = ($product && $product->bank_account) ? $product->bank_account : '';
+                
+                if (empty($bankAccount) && $product) {
                     if (preg_match('/ngân hàng (.*?)\./', $product->description, $matches)) {
                         $bankInfo = $matches[1];
+                        if (strpos($bankInfo, ':') !== false) {
+                            list($bName, $bAcc) = explode(':', $bankInfo);
+                            $bankName = trim($bName);
+                            $bankAccount = trim($bAcc);
+                        }
                     }
-                    
-                    $stallsPaymentData[$stallName] = [
-                        'seller_name' => $sellerName,
-                        'bank_info' => $bankInfo,
-                        'items' => [],
-                        'total' => 0
-                    ];
                 }
-                $stallsPaymentData[$stallName]['items'][] = $item;
-                $stallsPaymentData[$stallName]['total'] += ($item->price * $item->quantity);
+                
+                $stallsPaymentData[$stallName] = [
+                    'seller_name' => $sellerName,
+                    'bank_name' => $bankName,
+                    'bank_account' => $bankAccount,
+                    'items' => [],
+                    'total' => 0
+                ];
             }
+            $stallsPaymentData[$stallName]['items'][] = $item;
+            $stallsPaymentData[$stallName]['total'] += ($item->price * $item->quantity);
         }
     }
 @endphp
@@ -68,18 +72,13 @@
         @if($isMarketOrder)
             <div style="display: flex; flex-direction: column; gap: 20px; margin-bottom: 30px;">
                 <p style="font-size: 0.88rem; color: var(--text-muted); text-align: left; margin: 0 0 4px 0; line-height: 1.4; background: rgba(14, 165, 233, 0.05); border: 1px dashed rgba(14, 165, 233, 0.2); border-radius: 10px; padding: 10px;">
-                    💡 Đơn đặt hàng của bạn gồm các sản phẩm từ nhiều chủ quầy khác nhau. Vui lòng quét mã chuyển khoản cho **từng chủ quầy tương ứng** để thanh toán:
+                    💡 Đơn đặt hàng của bạn gồm các sản phẩm từ các chủ quầy Chợ số. Vui lòng quét mã VietQR chuyển khoản trực tiếp cho **chủ quầy tương ứng**:
                 </p>
                 
                 @foreach($stallsPaymentData as $stallName => $stallData)
                     @php
-                        $bankId = '';
-                        $accountNo = '';
-                        if ($stallData['bank_info'] && strpos($stallData['bank_info'], ':') !== false) {
-                            list($bName, $bAcc) = explode(':', $stallData['bank_info']);
-                            $bankId = trim($bName);
-                            $accountNo = trim($bAcc);
-                        }
+                        $bankId = $stallData['bank_name'] ?: 'MB';
+                        $accountNo = $stallData['bank_account'];
                     @endphp
                     
                     <div style="background: rgba(255, 255, 255, 0.02); border: 1.5px solid var(--border-glow); border-radius: 18px; padding: 20px; text-align: left; display: flex; flex-direction: column; gap: 14px;">
@@ -102,10 +101,10 @@
                         </div>
 
                         <!-- QR Code / Cash payment -->
-                        @if($bankId && $accountNo)
+                        @if($accountNo)
                             <div style="display: flex; gap: 16px; align-items: center; background: rgba(14, 165, 233, 0.02); border: 1px solid var(--border-glow); border-radius: 12px; padding: 12px; flex-wrap: wrap;">
                                 <div style="background: #ffffff; padding: 8px; border-radius: 10px; border: 1px solid rgba(0,0,0,0.06); flex-shrink: 0; margin: 0 auto;">
-                                    <img src="https://img.vietqr.io/image/{{ $bankId }}-{{ $accountNo }}-compact2.png?amount={{ $stallData['total'] }}&addInfo=DH%20DA%20{{ $order->id }}%20{{ urlencode($stallName) }}&accountName={{ urlencode($stallData['seller_name']) }}" alt="VietQR" style="width: 130px; height: 130px; display: block; mix-blend-mode: multiply;">
+                                    <img src="https://img.vietqr.io/image/{{ urlencode($bankId) }}-{{ urlencode($accountNo) }}-compact2.png?amount={{ $stallData['total'] }}&addInfo=DH%20DA%20{{ $order->id }}%20{{ urlencode($stallName) }}&accountName={{ urlencode($stallData['seller_name']) }}" alt="VietQR" style="width: 140px; height: 140px; display: block; mix-blend-mode: multiply;">
                                 </div>
                                 <div style="font-size: 0.85rem; display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 180px;">
                                     <div>🏦 <strong>Ngân hàng:</strong> {{ $bankId }}</div>

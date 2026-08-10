@@ -35,7 +35,21 @@ class CheckoutController extends Controller
                 ? $cart->items->whereIn('id', $selectedIds) 
                 : $cart->items;
 
-            $cartItems = $itemsToCheckout->map(function ($item) {
+            $dishIds = $itemsToCheckout->pluck('dish_id')->filter()->unique()->toArray();
+            $ocopIds = $itemsToCheckout->pluck('ocop_product_id')->filter()->unique()->toArray();
+
+            $dishes = !empty($dishIds) ? Dish::on('mysql')->with('eatery')->whereIn('id', $dishIds)->get()->keyBy('id') : collect();
+            $ocopProducts = !empty($ocopIds) ? OcopProduct::on('mysql_market')->with('eatery')->whereIn('id', $ocopIds)->get()->keyBy('id') : collect();
+
+            $cartItems = $itemsToCheckout->map(function ($item) use ($dishes, $ocopProducts) {
+                $product = null;
+                if ($item->dish_id) {
+                    $product = $dishes->get($item->dish_id);
+                } elseif ($item->ocop_product_id) {
+                    $product = $ocopProducts->get($item->ocop_product_id);
+                }
+                $eatery = $product ? $product->eatery : null;
+
                 return [
                     'id'       => $item->id,
                     'dish_id'  => $item->dish_id,
@@ -45,7 +59,9 @@ class CheckoutController extends Controller
                     'quantity' => $item->quantity,
                     'image'    => $item->product_image ? asset($item->product_image) : asset('images/no-image.png'),
                     'total'    => (float)$item->thanh_tien,
-                    'eatery_id' => $item->product ? $item->product->eatery_id : null,
+                    'eatery_id' => $eatery ? $eatery->id : ($product ? $product->eatery_id : null),
+                    'eatery_name' => $eatery ? $eatery->name : 'Gian hàng Đông Anh',
+                    'stall_name' => ($product && isset($product->stall_name)) ? $product->stall_name : null,
                     'category_slug' => $item->dish_id ? 'dong-anh-food-map' : 'dong-anh-market'
                 ];
             })->toArray();
@@ -57,7 +73,10 @@ class CheckoutController extends Controller
             return redirect()->back()->with('error', 'Giỏ hàng của bạn đang trống');
         }
 
-        return view('checkout.index', compact('cartItems', 'subtotal'));
+        $distinctMarkets = collect($cartItems)->pluck('eatery_name')->filter()->unique()->values()->all();
+        $distinctStalls = collect($cartItems)->pluck('stall_name')->filter()->unique()->values()->all();
+
+        return view('checkout.index', compact('cartItems', 'subtotal', 'distinctMarkets', 'distinctStalls'));
     }
 
     public function store(Request $request)
@@ -110,6 +129,27 @@ class CheckoutController extends Controller
 
                 $totalAmount = $items->sum('thanh_tien');
 
+                // Format specific shipping/pickup address for this specific order
+                $rawAddress = $request->input('address');
+                $specificAddress = $rawAddress;
+
+                if (str_starts_with($rawAddress, '[Ghé sạp lấy đồ]')) {
+                    // Tìm tên chợ riêng biệt của đơn này
+                    $eateryObj = \App\Models\Eatery::find($eateryId);
+                    $specificMarketName = $eateryObj ? $eateryObj->name : 'Chợ';
+                    
+                    // Trích xuất khung giờ hẹn và xe nếu có
+                    $extraInfo = '';
+                    if (preg_match('/(\(Hẹn:.*?\))/u', $rawAddress, $matchTime)) {
+                        $extraInfo .= ' ' . $matchTime[1];
+                    }
+                    if (preg_match('/(Phương tiện:.*?\))/u', $rawAddress, $matchVehicle)) {
+                        $extraInfo .= ' (' . $matchVehicle[1];
+                    }
+
+                    $specificAddress = "[Ghé sạp lấy đồ] Tại " . $specificMarketName . ($stallName ? " - " . $stallName : "") . ($extraInfo ? " " . trim($extraInfo) : "");
+                }
+
                 // 1. Create order
                 $order = Order::create([
                     'user_id' => $user->id,
@@ -118,7 +158,7 @@ class CheckoutController extends Controller
                     'stall_name' => $stallName ?: null,
                     'customer_name' => $request->input('name'),
                     'customer_phone' => $request->input('phone'),
-                    'shipping_address' => $request->input('address'),
+                    'shipping_address' => $specificAddress,
                     'total_amount' => $totalAmount,
                     'payment_method' => $request->input('payment_method'),
                     'status' => 'confirmed', // Tự động chuyển thẳng sang 'Sạp nhận đơn' cho cả COD và Online!
@@ -203,15 +243,21 @@ class CheckoutController extends Controller
 
     public function payment($code)
     {
+        $userId = Auth::id() ?? session('user_id');
         $id = $this->resolveOrderId($code);
-        $order = Order::with(['items', 'payment'])->findOrFail($id);
+        $order = Order::with(['items', 'payment'])
+            ->when($userId, fn($q) => $q->where('user_id', $userId))
+            ->findOrFail($id);
         return view('checkout.payment', compact('order'));
     }
 
     public function processPayment(Request $request, $code)
     {
+        $userId = Auth::id() ?? session('user_id');
         $id = $this->resolveOrderId($code);
-        $order = Order::with('payment')->findOrFail($id);
+        $order = Order::with('payment')
+            ->when($userId, fn($q) => $q->where('user_id', $userId))
+            ->findOrFail($id);
         $success = $request->boolean('simulate_success', true);
 
         try {
@@ -245,6 +291,7 @@ class CheckoutController extends Controller
 
     public function success(Request $request, $code)
     {
+        $userId = Auth::id() ?? session('user_id');
         $orderIds = [];
         if ($code) {
             $orderIds[] = $this->resolveOrderId($code);
@@ -260,7 +307,7 @@ class CheckoutController extends Controller
         
         $orders = Order::with(['items', 'payment'])
             ->whereIn('id', $orderIds)
-            ->where('user_id', Auth::user()->id)
+            ->when($userId, fn($q) => $q->where('user_id', $userId))
             ->get();
             
         if ($orders->isEmpty()) {
@@ -274,7 +321,8 @@ class CheckoutController extends Controller
 
     public function ordersList()
     {
-        if (!Auth::check()) {
+        $userId = Auth::id() ?? session('user_id');
+        if (!$userId) {
             return redirect()->route('login')->with('error', 'Vui lòng đăng nhập để xem đơn hàng');
         }
 
@@ -284,28 +332,28 @@ class CheckoutController extends Controller
 
     public function show($code)
     {
-        if (!Auth::check()) {
+        $userId = Auth::id() ?? session('user_id');
+        if (!$userId) {
             return redirect()->route('login')->with('error', 'Vui lòng đăng nhập để xem đơn hàng');
         }
 
         $id = $this->resolveOrderId($code);
-        $order = Order::where('user_id', Auth::user()->id)->findOrFail($id);
+        $order = Order::where('user_id', $userId)->findOrFail($id);
 
         return view('checkout.show', compact('order'));
     }
 
     public function apiOrdersList(Request $request)
     {
-        if (!Auth::check()) {
+        $userId = Auth::id() ?? session('user_id');
+        if (!$userId) {
             return response()->json(['success' => false, 'message' => 'Vui lòng đăng nhập'], 401);
         }
-
-        $userId = Auth::user()->id;
 
         // Calculate global statistics for this user (before filters are applied)
         $totalCount = Order::where('user_id', $userId)->count();
         $processingCount = Order::where('user_id', $userId)
-            ->whereIn('status', ['pending', 'paid', 'processing', 'shipping', 'delivering'])
+            ->whereIn('status', ['pending', 'paid', 'processing', 'shipping', 'delivering', 'confirmed', 'ready'])
             ->count();
         $completedCount = Order::where('user_id', $userId)
             ->where('status', 'completed')
@@ -434,14 +482,15 @@ class CheckoutController extends Controller
 
     public function apiOrdersShow(Request $request, $codeOrId)
     {
-        if (!Auth::check()) {
+        $userId = Auth::id() ?? session('user_id');
+        if (!$userId) {
             return response()->json(['success' => false, 'message' => 'Vui lòng đăng nhập'], 401);
         }
 
         $id = $this->resolveOrderId($codeOrId);
 
         $order = Order::with(['items', 'payment'])
-            ->where('user_id', Auth::user()->id)
+            ->where('user_id', $userId)
             ->findOrFail($id);
 
         $items = $order->items->map(function ($item) {

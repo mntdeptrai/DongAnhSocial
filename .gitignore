@@ -41,3 +41,4 @@ ios/Flutter/flutter_export_environment.sh
 /storage/framework/cache/*
 /storage/framework/sessions/*
 scratch/
+*.sql

@@ -126,40 +126,52 @@
             <div></div>
         </div>
 
-        @if(session('user_role') === 'manager' || (isset($stalls) && count($stalls) > 0))
-            <!-- Gian Hàng Chợ Số liên kết (Dành cho Manager quản lý tiểu thương) -->
-            <div id="stall_selection_group" class="admin-form-group" style="margin-bottom: 28px;">
-                <label class="admin-form-label" style="font-weight: 700; font-size: 0.84rem; margin-bottom: 8px; display: block; color: var(--admin-text-main);">🛒 Gian Hàng Số Trong Chợ Liên Kết <span style="color: var(--admin-danger);">*</span></label>
-                <div style="position: relative;">
-                    <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--admin-text-muted);">🛒</span>
-                    <select name="stall_id" id="stall_id_select" class="admin-form-input" style="padding-left: 38px; border-radius: 10px; height: 42px; font-size: 0.86rem;" onchange="autoFillStallInfo(this)">
-                        <option value="">-- Chọn Gian Hàng Quản Lý trong Chợ --</option>
-                        @foreach($stalls as $st)
-                            <option value="{{ $st->id }}" data-seller="{{ $st->seller_name }}" data-phone="{{ $st->seller_phone }}" {{ old('stall_id') == $st->id ? 'selected' : '' }}>
-                                [{{ $st->stall_name }}] - Hộ: {{ $st->seller_name }} (SĐT: {{ $st->seller_phone ?: 'Chưa có' }})
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-                <small style="color: var(--admin-text-muted); display: block; margin-top: 6px;">Tài khoản tiểu thương sẽ trực tiếp làm chủ và quản lý dữ liệu gian hàng số này.</small>
+        <!-- Gian Hàng Chợ Số liên kết (Dành cho Tiểu Thương Chợ truyền thống) -->
+        <div id="stall_selection_group" class="admin-form-group" style="margin-bottom: 24px;">
+            <label class="admin-form-label" style="font-weight: 700; font-size: 0.84rem; margin-bottom: 8px; display: block; color: var(--admin-text-main);">
+                🛒 Gian Hàng Chợ Số Liên Kết (Dành cho Seller Chợ truyền thống)
+            </label>
+            <div style="position: relative;">
+                <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--admin-text-muted);">🛒</span>
+                <select name="stall_id" id="stall_id_select" onchange="autoFillStallInfo(this)" class="admin-form-input" style="padding-left: 38px; border-radius: 10px; height: 42px; font-size: 0.86rem;">
+                    <option value="">-- Chọn Gian Hàng Quản Lý trong Chợ --</option>
+                    @php
+                        $stallsGrouped = isset($stalls) ? $stalls->groupBy('eatery_id') : collect();
+                    @endphp
+                    @foreach($stallsGrouped as $mId => $mStalls)
+                        @php
+                            $mName = $marketsMap[$mId]->name ?? ('Chợ #' . $mId);
+                        @endphp
+                        <optgroup label="🏛️ {{ $mName }}">
+                            @foreach($mStalls as $st)
+                                <option value="{{ $st->id }}" data-seller="{{ $st->seller_name }}" data-phone="{{ $st->seller_phone }}" {{ old('stall_id') == $st->id ? 'selected' : '' }}>
+                                    [{{ $st->stall_name }}] - Hộ: {{ $st->seller_name }} (SĐT: {{ $st->seller_phone ?: 'Chưa có' }})
+                                </option>
+                            @endforeach
+                        </optgroup>
+                    @endforeach
+                </select>
             </div>
-        @else
-            <!-- Cơ sở kinh doanh (Dành cho Seller, Principal, Manager) -->
-            <div id="eatery_selection_group" class="admin-form-group" style="display: none; margin-bottom: 28px;">
-                <label class="admin-form-label" style="font-weight: 700; font-size: 0.82rem; margin-bottom: 8px; display: block; color: var(--admin-text-main);">Cơ sở kinh doanh liên kết (Dành cho Seller)</label>
-                <div style="position: relative;">
-                    <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--admin-text-muted);">🏢</span>
-                    <select name="eatery_id" id="eatery_id_select" class="admin-form-input" style="padding-left: 38px; border-radius: 10px; height: 42px; font-size: 0.86rem;">
-                        <option value="">-- Chọn cơ sở quản lý (Hoặc để trống tạo sau) --</option>
-                        @foreach($eateries as $eat)
-                            <option value="{{ $eat->id }}" data-category="{{ $eat->category->slug }}" {{ old('eatery_id') == $eat->id ? 'selected' : '' }}>
-                                [{{ $eat->category->name }}] {{ $eat->name }} ({{ $eat->address }})
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
+            <small style="color: var(--admin-text-muted); display: block; margin-top: 6px;">Tài khoản tiểu thương sẽ trực tiếp làm chủ và quản lý dữ liệu gian hàng số này (tự động gán đúng Chợ trực thuộc).</small>
+        </div>
+
+        <!-- Cơ sở kinh doanh (Dành cho Ẩm Thực, OCOP, Homestay, Trường Học, Manager Chợ) -->
+        <div id="eatery_selection_group" class="admin-form-group" style="margin-bottom: 28px;">
+            <label class="admin-form-label" id="eatery_label" style="font-weight: 700; font-size: 0.82rem; margin-bottom: 8px; display: block; color: var(--admin-text-main);">
+                🏢 Cơ sở kinh doanh / Điểm OCOP / Địa điểm liên kết
+            </label>
+            <div style="position: relative;">
+                <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--admin-text-muted);">🏢</span>
+                <select name="eatery_id" id="eatery_id_select" class="admin-form-input" style="padding-left: 38px; border-radius: 10px; height: 42px; font-size: 0.86rem;">
+                    <option value="">-- Chọn cơ sở quản lý (Hoặc để trống) --</option>
+                    @foreach($eateries as $eat)
+                        <option value="{{ $eat->id }}" data-category="{{ $eat->category ? $eat->category->slug : '' }}" {{ old('eatery_id') == $eat->id ? 'selected' : '' }}>
+                            [{{ $eat->category ? $eat->category->name : 'Cơ sở' }}] {{ $eat->name }} ({{ $eat->address }})
+                        </option>
+                    @endforeach
+                </select>
             </div>
-        @endif
+        </div>
 
         <div style="display: flex; justify-content: flex-end; gap: 12px; border-top: 1.5px solid var(--admin-border); padding-top: 20px;">
             <a href="/admin/users" class="btn-admin btn-admin-accent" style="padding: 10px 24px; border-radius: 10px; font-weight: 700; font-size: 0.84rem; text-decoration: none;">
@@ -194,71 +206,34 @@ function autoFillStallInfo(select) {
 
 document.addEventListener('DOMContentLoaded', function() {
     const roleSelect = document.querySelector('select[name="role"]');
+    const stallGroup = document.getElementById('stall_selection_group');
     const eateryGroup = document.getElementById('eatery_selection_group');
     const eaterySelect = document.getElementById('eatery_id_select');
+    const eateryLabel = document.getElementById('eatery_label');
 
     if (roleSelect && eateryGroup && eaterySelect) {
-        // Lưu danh sách options ban đầu
-        const originalOptions = Array.from(eaterySelect.options).map(option => ({
-            value: option.value,
-            text: option.text,
-            category: option.getAttribute('data-category') || ''
-        }));
-
-        const originalLabel = eateryGroup.querySelector('label');
-
-        function toggleEaterySelection() {
+        function toggleSelections() {
             const role = roleSelect.value;
-            const currentSelectedValue = eaterySelect.value;
 
-            if (role === 'seller' || role === 'principal' || role === 'manager') {
+            if (role === 'seller') {
+                if (stallGroup) stallGroup.style.display = 'block';
                 eateryGroup.style.display = 'block';
-
-                // Cập nhật tiêu đề nhãn tùy theo vai trò
-                if (role === 'manager') {
-                    originalLabel.innerHTML = '🏪 Chợ truyền thống liên kết (Dành cho Manager) <span style="color: var(--admin-danger);">*</span>';
-                } else if (role === 'principal') {
-                    originalLabel.innerHTML = '🏫 Trường học liên kết (Dành cho Principal) <span style="color: var(--admin-danger);">*</span>';
-                } else {
-                    originalLabel.innerHTML = '🏢 Cơ sở kinh doanh liên kết (Dành cho Seller)';
-                }
-
-                // Xóa các options cũ
-                eaterySelect.innerHTML = '';
-
-                // Lọc danh sách theo vai trò
-                const filtered = originalOptions.filter(opt => {
-                    if (opt.value === '') return true; // Luôn giữ placeholder
-                    if (role === 'manager') {
-                        return opt.category === 'traditional-market';
-                    }
-                    if (role === 'principal') {
-                        return opt.category === 'smart-education-map';
-                    }
-                    if (role === 'seller') {
-                        // Seller: hiển thị tất cả cơ sở (bao gồm OCOP), trừ chợ truyền thống và trường học
-                        return opt.category !== 'traditional-market' && opt.category !== 'smart-education-map';
-                    }
-                    return false;
-                });
-
-                // Thêm các option đã lọc vào select
-                filtered.forEach(opt => {
-                    const newOpt = document.createElement('option');
-                    newOpt.value = opt.value;
-                    newOpt.text = opt.text;
-                    newOpt.setAttribute('data-category', opt.category);
-                    if (opt.value === currentSelectedValue) {
-                        newOpt.selected = true;
-                    }
-                    eaterySelect.appendChild(newOpt);
-                });
+                if (eateryLabel) eateryLabel.innerHTML = '🏢 Cơ sở kinh doanh / HTX / OCOP liên kết (Nếu không phải Gian hàng Chợ)';
+            } else if (role === 'manager') {
+                if (stallGroup) stallGroup.style.display = 'none';
+                eateryGroup.style.display = 'block';
+                if (eateryLabel) eateryLabel.innerHTML = '🏪 Chợ truyền thống liên kết (Dành cho Ban Quản Lý) <span style="color: var(--admin-danger);">*</span>';
+            } else if (role === 'principal') {
+                if (stallGroup) stallGroup.style.display = 'none';
+                eateryGroup.style.display = 'block';
+                if (eateryLabel) eateryLabel.innerHTML = '🏫 Trường học liên kết (Dành cho Principal) <span style="color: var(--admin-danger);">*</span>';
             } else {
+                if (stallGroup) stallGroup.style.display = 'none';
                 eateryGroup.style.display = 'none';
             }
         }
-        roleSelect.addEventListener('change', toggleEaterySelection);
-        toggleEaterySelection();
+        roleSelect.addEventListener('change', toggleSelections);
+        toggleSelections();
     }
 });
 </script>

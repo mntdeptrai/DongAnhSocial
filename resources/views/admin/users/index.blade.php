@@ -74,8 +74,18 @@
                 <input type="text" id="user-search-input" value="{{ request('search') }}" class="admin-form-input" placeholder="Tìm kiếm theo Tên, Email, SĐT..." style="padding-left: 38px; border-radius: 10px; height: 42px; font-size: 0.88rem;">
             </div>
 
+            <!-- Market Filter Dropdown -->
+            @if(isset($markets) && count($markets) > 0)
+                <select id="user-market-filter" class="admin-form-input" style="width: 180px; border-radius: 10px; height: 42px; font-size: 0.88rem;">
+                    <option value="">🏛️ Tất cả Chợ</option>
+                    @foreach($markets as $m)
+                        <option value="{{ $m->id }}" {{ request('market_id') == $m->id ? 'selected' : '' }}>{{ $m->name }}</option>
+                    @endforeach
+                </select>
+            @endif
+
             <!-- Status Filter Dropdown -->
-            <select id="user-status-filter" class="admin-form-input" style="width: 180px; border-radius: 10px; height: 42px; font-size: 0.88rem;">
+            <select id="user-status-filter" class="admin-form-input" style="width: 160px; border-radius: 10px; height: 42px; font-size: 0.88rem;">
                 <option value="">Tất cả trạng thái</option>
                 <option value="active" {{ request('status') === 'active' ? 'selected' : '' }}>Hoạt động</option>
                 <option value="disabled" {{ request('status') === 'disabled' ? 'selected' : '' }}>Vô hiệu hóa</option>
@@ -105,6 +115,7 @@
 <script>
     document.addEventListener("DOMContentLoaded", function() {
         const searchInput = document.getElementById('user-search-input');
+        const marketFilter = document.getElementById('user-market-filter');
         const statusFilter = document.getElementById('user-status-filter');
         const tableWrapper = document.getElementById('users-table-wrapper');
 
@@ -112,11 +123,13 @@
 
         function fetchUsers() {
             const searchVal = searchInput.value.trim();
+            const marketVal = marketFilter ? marketFilter.value : '';
             const statusVal = statusFilter.value;
 
             // Xây dựng query URL
             const url = new URL(window.location.href);
             url.searchParams.set('search', searchVal);
+            url.searchParams.set('market_id', marketVal);
             url.searchParams.set('status', statusVal);
             url.searchParams.set('page', 1); // Reset to page 1 on filter
 
@@ -149,7 +162,8 @@
             debounceTimeout = setTimeout(fetchUsers, 300); // Đợi 300ms sau khi dừng gõ
         });
 
-        // Bắt sự kiện chọn bộ lọc trạng thái lập tức
+        // Bắt sự kiện chọn bộ lọc trạng thái và chợ lập tức
+        if (marketFilter) marketFilter.addEventListener('change', fetchUsers);
         statusFilter.addEventListener('change', fetchUsers);
 
         // Hỗ trợ bắt sự kiện click phân trang AJAX
@@ -161,6 +175,7 @@
 
                 // Đồng bộ từ input hiện tại
                 targetUrl.searchParams.set('search', searchInput.value.trim());
+                if (marketFilter) targetUrl.searchParams.set('market_id', marketFilter.value);
                 targetUrl.searchParams.set('status', statusFilter.value);
 
                 window.history.pushState({}, '', targetUrl);
