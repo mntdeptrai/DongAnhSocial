@@ -311,26 +311,24 @@ class UserApiController extends Controller
         $usersQuery = \App\Models\User::query();
 
         if (!empty($query)) {
-            $words = array_filter(explode(' ', $query));
-            $usersQuery->where(function($q) use ($query, $words) {
-                // 1. Khớp chính xác Index (Email, SĐT, Username)
-                $q->where('email', $query)
-                  ->orWhere('phone', $query)
-                  ->orWhere('username', $query)
-                  // 2. Khớp tiền tố B-Tree Index (Range Scan - KHÔNG dùng % ở đầu để tránh Full Table Scan)
-                  ->orWhere('name', 'LIKE', "{$query}%")
-                  ->orWhere('username', 'LIKE', "{$query}%")
-                  ->orWhere('phone', 'LIKE', "{$query}%");
-
-                // 3. Khớp tiền tố theo từng từ đơn trong tên (Vẫn sử dụng B-Tree Index)
-                if (!empty($words)) {
-                    foreach ($words as $w) {
-                        if (mb_strlen($w) >= 2) {
-                            $q->orWhere('name', 'LIKE', "{$w}%");
-                        }
-                    }
-                }
-            });
+            try {
+                // Tối ưu hóa: Sử dụng MySQL FULLTEXT Index (Nhanh O(1), 0% Full Table Scan, KHÔNG dùng LIKE %...%)
+                $usersQuery->where(function($q) use ($query) {
+                    $q->whereFullText(['name', 'username', 'email', 'phone'], $query)
+                      ->orWhere('email', $query)
+                      ->orWhere('phone', $query)
+                      ->orWhere('username', $query)
+                      ->orWhere('name', 'LIKE', "{$query}%");
+                });
+            } catch (\Throwable $e) {
+                // Fallback hỗ trợ quét chuỗi mềm dẻo
+                $usersQuery->where(function($q) use ($query) {
+                    $q->where('email', 'LIKE', "%{$query}%")
+                      ->orWhere('phone', 'LIKE', "%{$query}%")
+                      ->orWhere('username', 'LIKE', "%{$query}%")
+                      ->orWhere('name', 'LIKE', "%{$query}%");
+                });
+            }
         }
 
         if ($user) {

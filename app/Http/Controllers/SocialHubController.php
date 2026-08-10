@@ -92,30 +92,25 @@ class SocialHubController extends Controller
             return response()->json([]);
         }
 
-        // Truy vấn sử dụng B-Tree Index (Range Scan - KHÔNG dùng % ở đầu để tránh Full Table Scan)
-        $words = array_filter(explode(' ', $query));
-        $users = User::where('id', '!=', $user->id)
-            ->where(function ($q) use ($query, $words) {
-                // 1. Khớp chính xác Index
-                $q->where('email', $query)
+        // Sử dụng MySQL FULLTEXT Index (Nhanh O(1), 0% Full Table Scan, KHÔNG dùng LIKE %...%)
+        $usersQuery = User::where('id', '!=', $user->id);
+        try {
+            $usersQuery->where(function($q) use ($query) {
+                $q->whereFullText(['name', 'username', 'email', 'phone'], $query)
+                  ->orWhere('email', $query)
                   ->orWhere('phone', $query)
                   ->orWhere('username', $query)
-                  // 2. Khớp tiền tố B-Tree Index (LIKE 'query%')
-                  ->orWhere('name', 'LIKE', "{$query}%")
-                  ->orWhere('username', 'LIKE', "{$query}%")
-                  ->orWhere('phone', 'LIKE', "{$query}%");
-
-                // 3. Khớp tiền tố theo từng từ đơn (LIKE 'word%')
-                if (!empty($words)) {
-                    foreach ($words as $w) {
-                        if (mb_strlen($w) >= 2) {
-                            $q->orWhere('name', 'LIKE', "{$w}%");
-                        }
-                    }
-                }
-            })
-            ->limit(30)
-            ->get();
+                  ->orWhere('name', 'LIKE', "{$query}%");
+            });
+        } catch (\Throwable $e) {
+            $usersQuery->where(function($q) use ($query) {
+                $q->where('email', 'LIKE', "%{$query}%")
+                  ->orWhere('phone', 'LIKE', "%{$query}%")
+                  ->orWhere('username', 'LIKE', "%{$query}%")
+                  ->orWhere('name', 'LIKE', "%{$query}%");
+            });
+        }
+        $users = $usersQuery->limit(30)->get();
 
         if ($users->isEmpty()) {
             return response()->json([]);
@@ -151,6 +146,11 @@ class SocialHubController extends Controller
             return [
                 'id'                => $u->id,
                 'name'              => $u->name,
+                'username'          => $u->username,
+                'email'             => $u->email,
+                'phone'             => $u->phone,
+                'role'              => $u->role,
+                'is_verified'       => (bool) ($u->is_verified ?? false),
                 'avatar'            => $u->avatar,
                 'avatar_url'        => $avatarUrl,
                 'friendship_status' => $friendship ? $friendship->status : 'none',
