@@ -2,6 +2,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../widgets/custom_loader.dart';
+import 'news_bulletin_screen.dart';
+import 'feed_screen.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -690,7 +692,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> with SingleTickerPr
     if (displayTitle.isEmpty) displayTitle = 'Bài viết từ Đông Anh Social';
 
     return InkWell(
-      onTap: () => _openSharedPostModal(context, text),
+      onTap: () => _navigateToSharedPost(context, text),
       borderRadius: BorderRadius.circular(12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -890,12 +892,40 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> with SingleTickerPr
                       child: const Text('Đóng'),
                     ),
                   ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    flex: 2,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.pop(modalCtx);
+                        _navigateToSharedPost(context, messageText);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF0EA5E9),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      icon: const Icon(Icons.arrow_forward_rounded, size: 18),
+                      label: const Text('Xem trên Bảng Tin', style: TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                  ),
                 ],
               ),
             ],
           ),
         );
       },
+    );
+  }
+
+  void _navigateToSharedPost(BuildContext context, String messageText) {
+    final bool isCheckIn = messageText.contains('Check-in');
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => isCheckIn ? const FeedScreen() : const NewsBulletinScreen(),
+      ),
     );
   }
 }
