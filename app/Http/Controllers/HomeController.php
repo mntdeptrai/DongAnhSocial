@@ -420,17 +420,8 @@ class HomeController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        // 3. Lấy bài viết từ Profile người dùng / trường học / gian hàng
-        $profilePosts = \App\Models\Post::with(['user', 'eatery'])
-            ->orderBy('created_at', 'desc')
-            ->get();
-
-        $profilePostIds = $profilePosts->pluck('id')->toArray();
-        $profileCommentsGroup = \App\Models\Comment::with('user')
-            ->whereIn('commentable_type', ['post', 'App\Models\Post'])
-            ->whereIn('commentable_id', $profilePostIds)
-            ->get()
-            ->groupBy('commentable_id');
+        // 3. Bài viết từ Profile không hiển thị ở trang Check-in nữa (đã chuyển sang Bảng tin)
+        $profilePosts = collect();
 
         // 4. Tải tất cả bộ đếm cảm xúc (Reactions) từ DB
         $allCheckinReactions = \App\Models\CheckinReaction::selectRaw('reactionable_type, reactionable_id, emoji, count(*) as count')
@@ -459,23 +450,6 @@ class HomeController extends Controller
             });
 
         $emojis = ['❤️', '🔥', '👍', '😂', '😍', '🤤'];
-
-        $profilePosts->transform(function($post) use ($allCheckinReactions, $userReactions, $emojis, $profileCommentsGroup) {
-            $key = 'post_' . $post->id;
-            $reactionsGroup = $allCheckinReactions->get($key, collect());
-            $counts = [];
-            $total = 0;
-            foreach ($emojis as $e) {
-                $cnt = (int) ($reactionsGroup->firstWhere('emoji', $e)?->count ?? 0);
-                $counts[$e] = $cnt;
-                $total += $cnt;
-            }
-            $post->reaction_counts = $counts;
-            $post->reaction_total = $total;
-            $post->is_liked = $userReactions->has($key);
-            $post->comments = $profileCommentsGroup->get($post->id, collect());
-            return $post;
-        });
 
         $standaloneCheckins->transform(function($chk) use ($allCheckinReactions, $userReactions, $emojis) {
             $key = 'checkin_' . $chk->id;
