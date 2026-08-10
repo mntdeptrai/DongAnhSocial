@@ -86,7 +86,7 @@ class MyApp extends StatelessWidget {
     const accentColor = Color(0xFF06B6D4);
 
     return MaterialApp(
-      title: 'Đông Anh Discovery',
+      title: 'Khám phá DongAnh',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
