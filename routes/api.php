@@ -110,6 +110,9 @@ Route::prefix('v1')->group(function () {
             Route::get('/orders/{id}', [UserApiController::class, 'getOrderDetail']);
             Route::get('/checkins', [UserApiController::class, 'getMyCheckins']);
             Route::get('/posts', [UserApiController::class, 'getMyPosts']);
+            Route::get('/search', [UserApiController::class, 'searchUsers']);
+            Route::get('/{id}/public-profile', [UserApiController::class, 'getPublicProfile']);
+            Route::post('/friends/request', [UserApiController::class, 'sendFriendRequest']);
         });
 
         // ===================================================================

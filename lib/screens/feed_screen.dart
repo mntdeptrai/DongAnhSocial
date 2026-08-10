@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:camera/camera.dart';
 import 'package:geolocator/geolocator.dart';
 import '../services/api_service.dart';
+import '../widgets/public_profile_modal.dart';
 import '../widgets/custom_loader.dart';
 import '../widgets/squircle_helper.dart';
 
@@ -1013,18 +1014,26 @@ class FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   // Top Row: User Avatar & Stars
-                  Row(
-                    children: [
-                      CircleAvatar(
-                        backgroundColor: Colors.white.withValues(alpha: 0.9),
-                        backgroundImage: ResizeImage(NetworkImage(ApiService.getAvatarUrl(item['avatar'] ?? item['author_avatar'] ?? item, item['display_name'] ?? 'User')), width: 120),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
+                  GestureDetector(
+                    onTap: () {
+                      final uId = item['user_id'] ?? item['user']?['id'];
+                      if (uId != null) {
+                        showPublicProfileModal(context, uId);
+                      }
+                    },
+                    behavior: HitTestBehavior.opaque,
+                    child: Row(
+                      children: [
+                        CircleAvatar(
+                          backgroundColor: Colors.white.withValues(alpha: 0.9),
+                          backgroundImage: ResizeImage(NetworkImage(ApiService.getAvatarUrl(item['avatar'] ?? item['author_avatar'] ?? item, item['display_name'] ?? 'User')), width: 120),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
                               children: [
                                 Text(
                                   item['display_name'] ?? 'Ẩn danh',

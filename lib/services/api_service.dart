@@ -778,6 +778,54 @@ class ApiService {
     return [];
   }
 
+  /// GET /user/search — Tìm kiếm thành viên/người dùng thực tế
+  static Future<List<dynamic>> searchUsers(String query) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/user/search?q=${Uri.encodeComponent(query)}'),
+        headers: _getHeaders(),
+      );
+      final data = jsonDecode(response.body);
+      if (response.statusCode == 200 && data['success'] == true) {
+        return data['users'] ?? [];
+      }
+    } catch (_) {}
+    return [];
+  }
+
+  /// GET /user/{id}/public-profile — Hồ sơ công khai của người dùng khác
+  static Future<Map<String, dynamic>?> getPublicProfile(dynamic userId) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/user/$userId/public-profile'),
+        headers: _getHeaders(),
+      );
+      final data = jsonDecode(response.body);
+      if (response.statusCode == 200 && data['success'] == true) {
+        return data;
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  /// POST /user/friends/request — Gửi yêu cầu kết bạn
+  static Future<Map<String, dynamic>> sendFriendRequest(dynamic friendId) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/user/friends/request'),
+        headers: _getHeaders(),
+        body: jsonEncode({'friend_id': friendId}),
+      );
+      final data = jsonDecode(response.body);
+      if (response.statusCode == 200 && data['success'] == true) {
+        return {'success': true, 'message': data['message'] ?? 'Đã gửi lời mời kết bạn!', 'status': data['status']};
+      }
+      return {'success': false, 'message': data['message'] ?? 'Thao tác thất bại.'};
+    } catch (e) {
+      return {'success': false, 'message': 'Lỗi kết nối mạng.'};
+    }
+  }
+
   /// POST /checkins — Gửi check-in mới (hỗ trợ cả khách vãng lai)
   static Future<Map<String, dynamic>> storeCheckin({
     int? eateryId,

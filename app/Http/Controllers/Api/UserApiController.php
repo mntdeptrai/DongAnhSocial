@@ -299,4 +299,232 @@ class UserApiController extends Controller
             'posts'   => $formatted,
         ], 200, [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     }
+
+    /**
+     * Tìm kiếm người dùng theo từ khóa (Tên, Email, Số điện thoại, Username)
+     */
+    public function searchUsers(Request $request)
+    {
+        $user = Auth::user() ?: auth('sanctum')->user() ?: $request->user('sanctum');
+        $query = trim($request->query('q', ''));
+
+        $usersQuery = \App\Models\User::query();
+
+        if (!empty($query)) {
+            $usersQuery->where(function($q) use ($query) {
+                $q->where('name', 'LIKE', "%{$query}%")
+                  ->orWhere('username', 'LIKE', "%{$query}%")
+                  ->orWhere('email', 'LIKE', "%{$query}%")
+                  ->orWhere('phone', 'LIKE', "%{$query}%");
+            });
+        }
+
+        if ($user) {
+            $usersQuery->where('id', '!=', $user->id);
+        }
+
+        $users = $usersQuery->orderBy('name', 'asc')->limit(40)->get();
+
+        $friendshipsMap = [];
+        if ($user) {
+            $friendships = \App\Models\Friendship::where('user_id', $user->id)
+                ->orWhere('friend_id', $user->id)
+                ->get();
+            foreach ($friendships as $f) {
+                $otherId = ($f->user_id == $user->id) ? $f->friend_id : $f->user_id;
+                if ($f->status === 'accepted') {
+                    $friendshipsMap[$otherId] = 'accepted';
+                } else if ($f->status === 'pending') {
+                    $friendshipsMap[$otherId] = ($f->user_id == $user->id) ? 'pending_sent' : 'pending_received';
+                }
+            }
+        }
+
+        $result = $users->map(function($u) use ($friendshipsMap) {
+            return [
+                'id'                => $u->id,
+                'name'              => $u->name,
+                'username'          => $u->username,
+                'email'             => $u->email,
+                'phone'             => $u->phone,
+                'role'              => $u->role,
+                'avatar'            => $u->avatar ?? '👤',
+                'avatar_url'        => $u->avatar_url,
+                'cover'             => $u->cover,
+                'cover_url'         => $u->cover_url,
+                'is_verified'       => $u->is_verified ?? false,
+                'friendship_status' => $friendshipsMap[$u->id] ?? 'none',
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'users'   => $result,
+        ], 200, [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    }
+
+    /**
+     * Lấy xem hồ sơ công khai của một người dùng khác (Public Profile)
+     */
+    public function getPublicProfile(Request $request, $id)
+    {
+        $currentUser = Auth::user() ?: auth('sanctum')->user() ?: $request->user('sanctum');
+        $targetUser = \App\Models\User::find($id);
+
+        if (!$targetUser) {
+            return response()->json(['success' => false, 'message' => 'Người dùng không tồn tại.'], 404);
+        }
+
+        $friendshipStatus = 'none';
+        if ($currentUser) {
+            if ($currentUser->id == $targetUser->id) {
+                $friendshipStatus = 'self';
+            } else {
+                $f = \App\Models\Friendship::where(function($q) use ($currentUser, $targetUser) {
+                    $q->where('user_id', $currentUser->id)->where('friend_id', $targetUser->id);
+                })->orWhere(function($q) use ($currentUser, $targetUser) {
+                    $q->where('user_id', $targetUser->id)->where('friend_id', $currentUser->id);
+                })->first();
+
+                if ($f) {
+                    if ($f->status === 'accepted') {
+                        $friendshipStatus = 'accepted';
+                    } else if ($f->status === 'pending') {
+                        $friendshipStatus = ($f->user_id == $currentUser->id) ? 'pending_sent' : 'pending_received';
+                    }
+                }
+            }
+        }
+
+        // Posts
+        $postsEdu = collect();
+        $postsMysql = collect();
+        try {
+            $postsEdu = \App\Models\Post::on('mysql_education')->with(['user'])->where('user_id', $targetUser->id)->orderBy('created_at', 'desc')->get();
+        } catch (\Throwable $e) {}
+        try {
+            $postsMysql = \App\Models\Post::on('mysql')->with(['user'])->where('user_id', $targetUser->id)->orderBy('created_at', 'desc')->get();
+        } catch (\Throwable $e) {}
+        $posts = $postsEdu->concat($postsMysql)->unique('id')->sortByDesc('created_at')->values();
+
+        $r2PublicUrl = rtrim(env('R2_PUBLIC_URL', 'https://media.xadonganh.com'), '/');
+        $formattedPosts = $posts->map(function ($p) use ($r2PublicUrl) {
+            $img = $p->image_path ?: ($p->image ?? '');
+            if (!empty($img) && !str_starts_with($img, 'http')) {
+                $img = str_starts_with($img, 'posts/') ? ($r2PublicUrl . '/' . $img) : ('https://donganhdiscovery.xadonganh.com/' . ltrim($img, '/'));
+            }
+            return [
+                'id'               => $p->id,
+                'name'             => $p->name ?? $p->title ?? '',
+                'description'      => $p->description ?? $p->content ?? '',
+                'author'           => $p->user ? $p->user->name : 'Thành viên',
+                'image_path'       => $img,
+                'likes_count'      => $p->likes_count ?? 0,
+                'comments_count'   => $p->comments_count ?? 0,
+                'created_at_human' => $p->created_at ? $p->created_at->diffForHumans() : 'Vừa xong',
+            ];
+        });
+
+        // Checkins
+        $checkins = \App\Models\Checkin::with(['eatery'])
+            ->where('user_id', $targetUser->id)
+            ->latest()
+            ->get()
+            ->map(function ($c) use ($targetUser) {
+                return [
+                    'id'                => $c->id,
+                    'type'              => 'checkin',
+                    'display_name'      => $c->display_name ?: $targetUser->name,
+                    'rating'            => $c->rating,
+                    'comment'           => $c->comment,
+                    'image_path'        => $c->image_path,
+                    'created_at_human'  => $c->created_at ? $c->created_at->diffForHumans() : 'Vừa xong',
+                    'eatery_name'       => $c->eatery?->name ?? 'Địa điểm Đông Anh',
+                ];
+            });
+
+        $followersCount = \App\Models\Friendship::where('friend_id', $targetUser->id)->where('status', 'accepted')->count();
+        $followingCount = \App\Models\Friendship::where('user_id', $targetUser->id)->where('status', 'accepted')->count();
+
+        return response()->json([
+            'success' => true,
+            'user' => [
+                'id'                => $targetUser->id,
+                'name'              => $targetUser->name,
+                'username'          => $targetUser->username,
+                'email'             => $targetUser->email,
+                'phone'             => $targetUser->phone,
+                'role'              => $targetUser->role,
+                'avatar'            => $targetUser->avatar ?? '👤',
+                'avatar_url'        => $targetUser->avatar_url,
+                'cover'             => $targetUser->cover,
+                'cover_url'         => $targetUser->cover_url,
+                'is_verified'       => $targetUser->is_verified ?? false,
+                'friendship_status' => $friendshipStatus,
+                'posts_count'       => $formattedPosts->count(),
+                'checkins_count'    => $checkins->count(),
+                'followers_count'   => $followersCount,
+                'following_count'   => $followingCount,
+            ],
+            'posts'    => $formattedPosts,
+            'checkins' => $checkins,
+        ], 200, [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    }
+
+    /**
+     * Gửi yêu cầu kết bạn tới một tài khoản người dùng khác
+     */
+    public function sendFriendRequest(Request $request)
+    {
+        $user = Auth::user() ?: auth('sanctum')->user() ?: $request->user('sanctum');
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'Vui lòng đăng nhập!'], 401);
+        }
+
+        $friendId = (int) $request->input('friend_id');
+        if (!$friendId || $friendId === $user->id) {
+            return response()->json(['success' => false, 'message' => 'Tài khoản không hợp lệ.'], 400);
+        }
+
+        $existing = \App\Models\Friendship::where(function($q) use ($user, $friendId) {
+            $q->where('user_id', $user->id)->where('friend_id', $friendId);
+        })->orWhere(function($q) use ($user, $friendId) {
+            $q->where('user_id', $friendId)->where('friend_id', $user->id);
+        })->first();
+
+        if ($existing) {
+            if ($existing->status === 'accepted') {
+                return response()->json(['success' => true, 'message' => 'Hai bạn đã là bạn bè!', 'status' => 'accepted']);
+            }
+            if ($existing->status === 'pending') {
+                return response()->json(['success' => true, 'message' => 'Đã gửi lời mời kết bạn trước đó.', 'status' => 'pending_sent']);
+            }
+            $existing->status = 'pending';
+            $existing->user_id = $user->id;
+            $existing->friend_id = $friendId;
+            $existing->save();
+        } else {
+            \App\Models\Friendship::create([
+                'user_id'   => $user->id,
+                'friend_id' => $friendId,
+                'status'    => 'pending',
+            ]);
+        }
+
+        // Tự động gửi thông báo đẩy
+        try {
+            \App\Services\NotificationService::sendPushNotification(
+                userId: $friendId,
+                title: '🤝 Lời mời kết bạn mới',
+                body: "{$user->name} đã gửi cho bạn một lời mời kết bạn!",
+                data: ['type' => 'friend_request', 'sender_id' => $user->id]
+            );
+        } catch (\Throwable $e) {}
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Đã gửi lời mời kết bạn thành công!',
+            'status'  => 'pending_sent',
+        ]);
+    }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../widgets/custom_loader.dart';
 import '../widgets/squircle_helper.dart';
+import '../widgets/public_profile_modal.dart';
 import 'eatery_detail_screen.dart';
 
 class UtilitiesScreen extends StatefulWidget {
@@ -122,10 +123,10 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
   Future<void> _fetchUsersData() async {
     setState(() => _isLoadingUsers = true);
     try {
-      final res = await ApiService.getFriends();
+      final res = await ApiService.searchUsers(_searchQuery);
       if (mounted) {
         setState(() {
-          _users = (res is List) ? List<dynamic>.from(res) : [];
+          _users = List<dynamic>.from(res);
           _isLoadingUsers = false;
         });
       }
@@ -484,11 +485,13 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
         final String avatar = u['avatar_url'] ?? u['avatar'] ?? '';
         final String role = (u['role'] ?? 'user').toString().toUpperCase();
         final bool isSeller = role.contains('SELLER') || role.contains('STALL');
+        final String status = u['friendship_status'] ?? 'none';
 
         return Card(
           elevation: 1,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
           child: ListTile(
+            onTap: () => showPublicProfileModal(context, u['id']),
             contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
             leading: CircleAvatar(
               radius: 24,
@@ -524,26 +527,58 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
               email.isNotEmpty ? email : 'Đông Anh Social Member',
               style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
             ),
-            trailing: ElevatedButton.icon(
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('💬 Đã gửi yêu cầu kết nối tới $name'),
-                    backgroundColor: primaryColor,
-                    duration: const Duration(seconds: 2),
-                  ),
-                );
-              },
-              icon: const Icon(Icons.chat_bubble_outline_rounded, size: 14),
-              label: const Text('Nhắn tin', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: primaryColor,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              ),
-            ),
+            trailing: status == 'accepted'
+                ? OutlinedButton.icon(
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('💬 Mở tin nhắn với $name')),
+                      );
+                    },
+                    icon: const Icon(Icons.chat_bubble_outline_rounded, size: 13),
+                    label: const Text('Nhắn tin', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: primaryColor,
+                      side: BorderSide(color: primaryColor),
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    ),
+                  )
+                : status == 'pending_sent'
+                    ? Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF1F5F9),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: const Color(0xFFCBD5E1)),
+                        ),
+                        child: const Text('Đã gửi', style: TextStyle(fontSize: 11, color: Color(0xFF64748B), fontWeight: FontWeight.bold)),
+                      )
+                    : ElevatedButton.icon(
+                        onPressed: () async {
+                          final res = await ApiService.sendFriendRequest(u['id']);
+                          if (context.mounted) {
+                            if (res['success'] == true) {
+                              setState(() {
+                                u['friendship_status'] = 'pending_sent';
+                              });
+                            }
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(res['message'] ?? 'Đã gửi lời mời kết bạn!'),
+                                backgroundColor: res['success'] == true ? const Color(0xFF10B981) : Colors.red,
+                              ),
+                            );
+                          }
+                        },
+                        icon: const Icon(Icons.person_add_alt_1_rounded, size: 13),
+                        label: const Text('Kết bạn', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: primaryColor,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
+                      ),
           ),
         );
       },
