@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:image_picker/image_picker.dart';
 import '../services/api_service.dart';
 
@@ -858,14 +859,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             InkWell(
                               onTap: () {
                                 final userId = user?['id'] ?? '';
+                                final name = user?['name'] ?? 'Thành viên Đông Anh';
                                 final shareUrl = 'https://donganhdiscovery.xadonganh.com/profile/$userId';
                                 Clipboard.setData(ClipboardData(text: shareUrl));
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text('📋 Đã sao chép liên kết trang cá nhân:\n$shareUrl'),
-                                    behavior: SnackBarBehavior.floating,
-                                  ),
-                                );
+                                Share.share('👤 Trang cá nhân Đông Anh Social của $name:\n🔗 $shareUrl');
                               },
                               child: Container(
                                 padding: const EdgeInsets.all(10),

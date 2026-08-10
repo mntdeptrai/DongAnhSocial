@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:camera/camera.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:share_plus/share_plus.dart';
 import '../services/api_service.dart';
 import '../widgets/public_profile_modal.dart';
 import '../widgets/custom_loader.dart';
@@ -1287,6 +1288,26 @@ class FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
                                   ),
                                 ],
                               ),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          // Native Share Button (Zalo, FB, etc.)
+                          GestureDetector(
+                            onTap: () {
+                              final commentText = (item['comment'] ?? '').toString().trim();
+                              final eateryName = item['eatery']?['name'] ?? 'Đông Anh Social';
+                              final title = commentText.isNotEmpty ? commentText : 'Check-in tại $eateryName';
+                              final shareUrl = 'https://donganhdiscovery.xadonganh.com/checkin/${item['id']}';
+                              Share.share('📸 [Check-in Đông Anh] $title\n\n🔗 Xem chi tiết: $shareUrl');
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withOpacity(0.5),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(color: Colors.white.withOpacity(0.2)),
+                              ),
+                              child: const Icon(Icons.share_outlined, size: 16, color: Colors.white),
                             ),
                           ),
                         ],

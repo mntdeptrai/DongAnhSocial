@@ -4,6 +4,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:share_plus/share_plus.dart';
 import '../services/api_service.dart';
 import '../widgets/squircle_helper.dart';
 
@@ -597,26 +598,15 @@ class _NewsBulletinScreenState extends State<NewsBulletinScreen> {
                 ),
 
                 _buildShareActionItem(
-                  icon: Icons.language_rounded,
-                  label: 'Ứng dụng\nkhác',
+                  icon: Icons.share_rounded,
+                  label: 'Zalo / FB /\nKhác',
                   bgColor: const Color(0xFFFEF3C7),
                   iconColor: const Color(0xFFD97706),
                   onTap: () {
-                    Clipboard.setData(ClipboardData(text: '$title\n$shareUrl'));
                     Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: const Row(
-                          children: [
-                            Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
-                            SizedBox(width: 8),
-                            Text('Đã copy liên kết để chia sẻ qua ứng dụng khác!'),
-                          ],
-                        ),
-                        backgroundColor: const Color(0xFF059669),
-                        behavior: SnackBarBehavior.floating,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
+                    Share.share(
+                      '$title\n\n🔗 Xem bài viết tại Đông Anh Social:\n$shareUrl',
+                      subject: title,
                     );
                   },
                 ),

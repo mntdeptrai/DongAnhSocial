@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:share_plus/share_plus.dart';
 import '../services/api_service.dart';
 
 void showPublicProfileModal(BuildContext context, dynamic userId) {
@@ -276,17 +277,13 @@ class _PublicProfileSheetState extends State<PublicProfileSheet> {
                                             ),
                                             const SizedBox(width: 8),
                                             InkWell(
-                                              onTap: () {
-                                                final uid = _userData!['id'] ?? widget.userId;
-                                                final shareUrl = 'https://donganhdiscovery.xadonganh.com/profile/$uid';
-                                                Clipboard.setData(ClipboardData(text: shareUrl));
-                                                ScaffoldMessenger.of(context).showSnackBar(
-                                                  SnackBar(
-                                                    content: Text('📋 Đã sao chép liên kết trang cá nhân:\n$shareUrl'),
-                                                    behavior: SnackBarBehavior.floating,
-                                                  ),
-                                                );
-                                              },
+                                               onTap: () {
+                                                 final uid = _userData!['id'] ?? widget.userId;
+                                                 final name = _userData!['name'] ?? 'Thành viên Đông Anh';
+                                                 final shareUrl = 'https://donganhdiscovery.xadonganh.com/profile/$uid';
+                                                 Clipboard.setData(ClipboardData(text: shareUrl));
+                                                 Share.share('👤 Trang cá nhân Đông Anh Social của $name:\n🔗 $shareUrl');
+                                               },
                                               child: Container(
                                                 padding: const EdgeInsets.all(10),
                                                 decoration: BoxDecoration(
