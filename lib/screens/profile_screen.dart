@@ -33,13 +33,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
       final success = await ApiService.uploadAvatar(file.path);
       if (mounted) {
-        setState(() => _isUploadingImage = false);
         if (success) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('📸 Cập nhật ảnh đại diện thành công!'), backgroundColor: Color(0xFF10B981)),
-          );
-          setState(() {});
+          PaintingBinding.instance.imageCache.clear();
+          PaintingBinding.instance.imageCache.clearLiveImages();
+          await ApiService.fetchUserProfile();
+          if (mounted) {
+            setState(() => _isUploadingImage = false);
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('📸 Cập nhật ảnh đại diện thành công!'), backgroundColor: Color(0xFF10B981)),
+            );
+          }
         } else {
+          setState(() => _isUploadingImage = false);
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('❌ Cập nhật ảnh đại diện thất bại. Vui lòng thử lại!'), backgroundColor: Colors.red),
           );
@@ -62,13 +67,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
       final success = await ApiService.uploadCoverPhoto(file.path);
       if (mounted) {
-        setState(() => _isUploadingImage = false);
         if (success) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('🖼️ Cập nhật ảnh bìa thành công!'), backgroundColor: Color(0xFF10B981)),
-          );
-          setState(() {});
+          PaintingBinding.instance.imageCache.clear();
+          PaintingBinding.instance.imageCache.clearLiveImages();
+          await ApiService.fetchUserProfile();
+          if (mounted) {
+            setState(() => _isUploadingImage = false);
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('🖼️ Cập nhật ảnh bìa thành công!'), backgroundColor: Color(0xFF10B981)),
+            );
+          }
         } else {
+          setState(() => _isUploadingImage = false);
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('❌ Cập nhật ảnh bìa thất bại. Vui lòng thử lại!'), backgroundColor: Colors.red),
           );
@@ -535,8 +545,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                            const SizedBox(width: 4),
-                            const Icon(Icons.star, color: Color(0xFFF59E0B), size: 18),
+                            if ((user?['role'] ?? '').toString().toLowerCase() == 'admin') ...[
+                              const SizedBox(width: 4),
+                              const Icon(Icons.star_rounded, color: Color(0xFFEF4444), size: 18),
+                            ] else if (user?['is_verified'] == true || (user?['role'] != null && user?['role'] != 'user' && user?['role'] != 'guest')) ...[
+                              const SizedBox(width: 4),
+                              const Icon(Icons.star_rounded, color: Color(0xFFF59E0B), size: 18),
+                            ],
                           ],
                         ),
                         const SizedBox(height: 4),

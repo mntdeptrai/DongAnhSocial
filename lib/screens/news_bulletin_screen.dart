@@ -1439,9 +1439,12 @@ class _NewsBulletinScreenState extends State<NewsBulletinScreen> {
                                                 overflow: TextOverflow.ellipsis,
                                               ),
                                             ),
-                                            if (item['is_verified'] == true) ...[
+                                            if ((role).toString().toLowerCase() == 'admin') ...[
                                               const SizedBox(width: 4),
-                                              const Icon(Icons.star_rounded, color: Colors.amber, size: 16),
+                                              const Icon(Icons.star_rounded, color: Color(0xFFEF4444), size: 16),
+                                            ] else if (item['is_verified'] == true || (role.isNotEmpty && role != 'user' && role != 'guest')) ...[
+                                              const SizedBox(width: 4),
+                                              const Icon(Icons.star_rounded, color: Color(0xFFF59E0B), size: 16),
                                             ],
                                           ],
                                         ),

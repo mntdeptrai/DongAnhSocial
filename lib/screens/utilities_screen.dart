@@ -501,11 +501,24 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
                     )
                   : null,
             ),
-            title: Text(
-              name,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+            title: Row(
+              children: [
+                Flexible(
+                  child: Text(
+                    name,
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                if (role.contains('ADMIN')) ...[
+                  const SizedBox(width: 4),
+                  const Icon(Icons.star_rounded, color: Color(0xFFEF4444), size: 16),
+                ] else if (isSeller || u['is_verified'] == true || (role.isNotEmpty && role != 'USER' && role != 'GUEST')) ...[
+                  const SizedBox(width: 4),
+                  const Icon(Icons.star_rounded, color: Color(0xFFF59E0B), size: 16),
+                ],
+              ],
             ),
             subtitle: Text(
               email.isNotEmpty ? email : 'Đông Anh Social Member',

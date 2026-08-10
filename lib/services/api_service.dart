@@ -66,7 +66,7 @@ class ApiService {
     String name = fallbackName ?? 'User';
 
     if (userOrAvatar is Map) {
-      rawAvatar = userOrAvatar['avatar'] ?? userOrAvatar['avatar_url'] ?? userOrAvatar['image'];
+      rawAvatar = userOrAvatar['avatar_url'] ?? userOrAvatar['avatar'] ?? userOrAvatar['image'];
       name = userOrAvatar['name'] ?? userOrAvatar['username'] ?? name;
     } else if (userOrAvatar is String) {
       rawAvatar = userOrAvatar;
@@ -76,10 +76,15 @@ class ApiService {
       if (rawAvatar.startsWith('http://') || rawAvatar.startsWith('https://')) {
         return rawAvatar;
       }
+      if (rawAvatar.startsWith('avatars/')) {
+        return 'https://donganhdiscovery.xadonganh.com/uploads/$rawAvatar';
+      }
       if (rawAvatar.startsWith('/')) {
         final Uri uri = Uri.parse(baseUrl);
         return '${uri.scheme}://${uri.host}${uri.hasPort ? ':${uri.port}' : ''}$rawAvatar';
       }
+      final Uri uri = Uri.parse(baseUrl);
+      return '${uri.scheme}://${uri.host}${uri.hasPort ? ':${uri.port}' : ''}/$rawAvatar';
     }
 
     // Nếu không có avatar dạng URL hoặc là Emoji, tạo UI Avatar chính chủ theo Tên người dùng thực

@@ -74,6 +74,24 @@ class User extends Authenticatable
     }
 
     /**
+     * Get the full public URL of the avatar.
+     */
+    public function getAvatarUrlAttribute(): ?string
+    {
+        if (empty($this->avatar)) {
+            return null;
+        }
+        if (str_starts_with($this->avatar, 'http://') || str_starts_with($this->avatar, 'https://')) {
+            return $this->avatar;
+        }
+        $r2Url = rtrim(env('R2_PUBLIC_URL', ''), '/');
+        if (!empty($r2Url)) {
+            return $r2Url . '/' . ltrim($this->avatar, '/');
+        }
+        return asset('storage/' . ltrim($this->avatar, '/'));
+    }
+
+    /**
      * Check if user is currently online (active within the last 2 minutes).
      */
     public function getIsOnlineAttribute(): bool

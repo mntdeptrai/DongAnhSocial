@@ -45,6 +45,7 @@ class UserApiController extends Controller
                 'phone'           => $user->phone,
                 'role'            => $user->role,
                 'avatar'          => $user->avatar ?? '👤',
+                'avatar_url'      => $user->avatar_url,
                 'created_at'      => $user->created_at ? $user->created_at->format('Y-m-d H:i:s') : null,
                 'posts_count'     => $postsCount,
                 'checkins_count'  => $checkinsCount,
