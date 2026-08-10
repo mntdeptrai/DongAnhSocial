@@ -1105,8 +1105,7 @@ class FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
                         : 'https://donganhdiscovery.xadonganh.com/' + (item['image_path'].toString().startsWith('/') ? item['image_path'].toString().substring(1) : item['image_path'].toString()))
                     : 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=400&q=60',
                 fit: BoxFit.cover,
-                cacheWidth: 400,
-                filterQuality: FilterQuality.low,
+                filterQuality: FilterQuality.high,
                 errorBuilder: (_, __, ___) => Container(
                   decoration: const BoxDecoration(
                     gradient: LinearGradient(
