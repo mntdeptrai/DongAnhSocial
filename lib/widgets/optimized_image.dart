@@ -25,7 +25,7 @@ class OptimizedNetworkImage extends StatelessWidget {
     this.cacheHeight,
     this.placeholder,
     this.errorWidget,
-    this.filterQuality = FilterQuality.low,
+    this.filterQuality = FilterQuality.high,
     this.alignment = Alignment.center,
   });
 

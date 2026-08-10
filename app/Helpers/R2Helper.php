@@ -18,7 +18,7 @@ class R2Helper
      * @param int $maxDimension Maximum width/height for image resizing (default 1200px)
      * @return string  Public URL via R2_PUBLIC_URL domain
      */
-    public static function upload(UploadedFile $file, string $folder = 'general', int $maxDimension = 1200): string
+    public static function upload(UploadedFile $file, string $folder = 'general', int $maxDimension = 4096): string
     {
         $mimeType = $file->getClientMimeType();
         $isImage = str_starts_with($mimeType, 'image/');
@@ -250,13 +250,13 @@ class R2Helper
      * @param string $folder         Subfolder inside the bucket
      * @return string  Public URL
      */
-    public static function uploadRaw(string $binaryContent, string $extension, string $folder = 'general'): string
+    public static function uploadRaw(string $binaryContent, string $extension, string $folder = 'general', int $maxDimension = 4096): string
     {
         $safeName = $folder . '/' . time() . '_' . Str::random(8) . '.' . $extension;
 
         $resizedContent = null;
         try {
-            $resizedContent = self::resizeImageBinaryGd($binaryContent, $extension, 1200);
+            $resizedContent = self::resizeImageBinaryGd($binaryContent, $extension, $maxDimension);
         } catch (\Throwable $e) {
             Log::warning('[R2Helper] uploadRaw resize failed: ' . $e->getMessage());
         }
@@ -303,7 +303,7 @@ class R2Helper
     /**
      * Resize raw image binary using GD.
      */
-    private static function resizeImageBinaryGd(string $binaryContent, string $extension, int $maxDimension = 1200)
+    private static function resizeImageBinaryGd(string $binaryContent, string $extension, int $maxDimension = 4096)
     {
         $extension = strtolower($extension);
         if (!in_array($extension, ['jpg', 'jpeg', 'png', 'gif', 'webp'])) {
@@ -357,16 +357,16 @@ class R2Helper
         switch ($extension) {
             case 'jpg':
             case 'jpeg':
-                imagejpeg($targetImage, null, 80); // 80% quality
+                imagejpeg($targetImage, null, 100); // 100% MAXIMUM 4K Quality
                 break;
             case 'png':
-                imagepng($targetImage, null, 7); // compression level 0-9
+                imagepng($targetImage, null, 0); // 0 = uncompressed maximum quality
                 break;
             case 'gif':
                 imagegif($targetImage);
                 break;
             case 'webp':
-                imagewebp($targetImage, null, 80); // 80% quality
+                imagewebp($targetImage, null, 100); // 100% MAXIMUM 4K Quality
                 break;
         }
 
@@ -381,7 +381,7 @@ class R2Helper
     /**
      * Resize an image file using GD to a maximum dimension, preserving aspect ratio.
      */
-    private static function resizeImageGd(string $sourcePath, string $mimeType, int $maxDimension = 1200)
+    private static function resizeImageGd(string $sourcePath, string $mimeType, int $maxDimension = 4096)
     {
         $extension = 'jpg';
         switch ($mimeType) {
