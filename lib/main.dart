@@ -24,6 +24,7 @@ import 'widgets/floating_dock_nav_bar.dart';
 import 'widgets/universal_search_modal.dart';
 import 'widgets/my_cart_modal.dart';
 import 'widgets/squircle_helper.dart';
+import 'widgets/custom_loader.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -204,6 +205,7 @@ class AppEntryScreen extends StatefulWidget {
 class _AppEntryScreenState extends State<AppEntryScreen> {
   bool _isLoggedIn = false;
   bool _isSkipped = false;
+  bool _isInitializing = true;
 
   @override
   void initState() {
@@ -211,6 +213,15 @@ class _AppEntryScreenState extends State<AppEntryScreen> {
     _checkLoginStatus();
     NativeNotificationService.requestPermission();
     NativeNotificationService.requestOverlayPermission();
+
+    // App Launch Splash Loader animation delay
+    Future.delayed(const Duration(milliseconds: 1400), () {
+      if (mounted) {
+        setState(() {
+          _isInitializing = false;
+        });
+      }
+    });
   }
 
   void _checkLoginStatus() {
@@ -253,6 +264,18 @@ class _AppEntryScreenState extends State<AppEntryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isInitializing) {
+      return const Scaffold(
+        backgroundColor: Color(0xFF0F172A),
+        body: Center(
+          child: CustomPulseLoader(
+            message: 'Đang khởi động Nền tảng số Đông Anh 2026...',
+            primaryColor: Color(0xFF0EA5E9),
+          ),
+        ),
+      );
+    }
+
     if (!_isLoggedIn && !_isSkipped) {
       return LoginScreen(
         onLoginSuccess: _onLoginSuccess,

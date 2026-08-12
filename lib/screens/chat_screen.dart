@@ -255,35 +255,63 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                           ),
                         ),
                       ),
-                      trailing: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.end,
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
+                          IconButton(
+                            icon: const Icon(Icons.phone_rounded, color: Color(0xFF0EA5E9), size: 20),
+                            tooltip: 'Gọi thoại',
+                            onPressed: () {
+                              showGeneralDialog(
+                                context: context,
+                                barrierDismissible: false,
+                                barrierColor: Colors.black.withValues(alpha: 0.9),
+                                transitionDuration: const Duration(milliseconds: 300),
+                                pageBuilder: (ctx, anim1, anim2) {
+                                  return ActiveCallScreen(
+                                    friendName: friend['name'] ?? 'Bạn bè',
+                                    isVideo: false,
+                                    onCallEnded: (_) {},
+                                  );
+                                },
+                              );
+                            },
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.videocam_rounded, color: Color(0xFF0EA5E9), size: 22),
+                            tooltip: 'Gọi video HD',
+                            onPressed: () {
+                              showGeneralDialog(
+                                context: context,
+                                barrierDismissible: false,
+                                barrierColor: Colors.black.withValues(alpha: 0.9),
+                                transitionDuration: const Duration(milliseconds: 300),
+                                pageBuilder: (ctx, anim1, anim2) {
+                                  return ActiveCallScreen(
+                                    friendName: friend['name'] ?? 'Bạn bè',
+                                    isVideo: true,
+                                    onCallEnded: (_) {},
+                                  );
+                                },
+                              );
+                            },
+                          ),
                           if (hasUnread)
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
                               decoration: BoxDecoration(
                                 color: const Color(0xFF0EA5E9),
-                                borderRadius: BorderRadius.circular(12),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: const Color(0xFF0EA5E9).withValues(alpha: 0.3),
-                                    blurRadius: 6,
-                                    offset: const Offset(0, 2),
-                                  )
-                                ],
+                                borderRadius: BorderRadius.circular(10),
                               ),
                               child: Text(
-                                unreadCount > 0 ? '$unreadCount tin mới' : 'Mới',
+                                unreadCount > 0 ? '$unreadCount' : 'Mới',
                                 style: const TextStyle(
                                   color: Colors.white,
-                                  fontSize: 11,
+                                  fontSize: 10,
                                   fontWeight: FontWeight.w900,
                                 ),
                               ),
-                            )
-                          else
-                            const Icon(Icons.chevron_right, size: 20, color: Colors.grey),
+                            ),
                         ],
                       ),
                       onTap: () {
@@ -666,10 +694,64 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> with SingleTickerPr
         backgroundColor: Colors.white,
         foregroundColor: Colors.grey[800],
         elevation: 0.5,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.phone_rounded, color: Color(0xFF0EA5E9)),
+            tooltip: 'Gọi thoại',
+            onPressed: () => _startCall(isVideo: false),
+          ),
+          IconButton(
+            icon: const Icon(Icons.videocam_rounded, color: Color(0xFF0EA5E9)),
+            tooltip: 'Gọi video HD',
+            onPressed: () => _startCall(isVideo: true),
+          ),
+          const SizedBox(width: 4),
+        ],
       ),
       backgroundColor: const Color(0xFFF8FAFC),
       body: bodyContent,
     );
+  }
+
+  void _startCall({required bool isVideo}) {
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: false,
+      barrierColor: Colors.black.withValues(alpha: 0.9),
+      transitionDuration: const Duration(milliseconds: 300),
+      pageBuilder: (context, anim1, anim2) {
+        return ActiveCallScreen(
+          friendName: widget.friendName,
+          isVideo: isVideo,
+          onCallEnded: (durationSeconds) {
+            if (durationSeconds > 0) {
+              final min = (durationSeconds ~/ 60).toString().padLeft(2, '0');
+              final sec = (durationSeconds % 60).toString().padLeft(2, '0');
+              final text = isVideo ? '📹 Cuộc gọi video ($min:$sec)' : '📞 Cuộc gọi thoại ($min:$sec)';
+              _sendSystemCallMessage(text);
+            }
+          },
+        );
+      },
+    );
+  }
+
+  void _sendSystemCallMessage(String text) async {
+    final currentUserId = ApiService.currentUser?['id'];
+    final tempMsg = {
+      'id': DateTime.now().millisecondsSinceEpoch,
+      'sender_id': currentUserId,
+      'receiver_id': widget.friendId,
+      'message': text,
+      'created_at': 'Vừa xong',
+    };
+    setState(() {
+      _messages.add(tempMsg);
+    });
+    _scrollToBottom();
+    try {
+      await ApiService.sendMessage(widget.friendId, text);
+    } catch (_) {}
   }
 
   Widget _buildMessageBubbleWidget(dynamic msg, bool isSelf) {
@@ -791,6 +873,231 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> with SingleTickerPr
         builder: (_) => isCheckIn
             ? FeedScreen(targetPostId: targetPostId, targetTitle: title)
             : NewsBulletinScreen(targetPostId: targetPostId, targetTitle: title),
+      ),
+    );
+  }
+}
+
+class ActiveCallScreen extends StatefulWidget {
+  final String friendName;
+  final bool isVideo;
+  final Function(int durationSeconds) onCallEnded;
+
+  const ActiveCallScreen({
+    super.key,
+    required this.friendName,
+    required this.isVideo,
+    required this.onCallEnded,
+  });
+
+  @override
+  State<ActiveCallScreen> createState() => _ActiveCallScreenState();
+}
+
+class _ActiveCallScreenState extends State<ActiveCallScreen> {
+  bool _isMuted = false;
+  bool _isVideoOn = true;
+  bool _isSpeakerOn = true;
+  bool _isConnected = false;
+  int _secondsElapsed = 0;
+  Timer? _callTimer;
+  Timer? _connectTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _isVideoOn = widget.isVideo;
+    _connectTimer = Timer(const Duration(seconds: 2), () {
+      if (mounted) {
+        setState(() {
+          _isConnected = true;
+        });
+        _startTimer();
+      }
+    });
+  }
+
+  void _startTimer() {
+    _callTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (mounted) {
+        setState(() {
+          _secondsElapsed++;
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _connectTimer?.cancel();
+    _callTimer?.cancel();
+    super.dispose();
+  }
+
+  String _formatDuration(int totalSec) {
+    final min = (totalSec ~/ 60).toString().padLeft(2, '0');
+    final sec = (totalSec % 60).toString().padLeft(2, '0');
+    return '$min:$sec';
+  }
+
+  void _endCall() {
+    widget.onCallEnded(_secondsElapsed);
+    Navigator.of(context).pop();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFF0F172A),
+      body: SafeArea(
+        child: Stack(
+          children: [
+            // Video Background Simulation
+            if (widget.isVideo && _isVideoOn)
+              Container(
+                width: double.infinity,
+                height: double.infinity,
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Color(0xFF1E293B), Color(0xFF0F172A)],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                  ),
+                ),
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: 140,
+                        height: 140,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: const Color(0xFF38BDF8), width: 3),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF38BDF8).withValues(alpha: 0.3),
+                              blurRadius: 30,
+                              spreadRadius: 5,
+                            ),
+                          ],
+                        ),
+                        child: CircleAvatar(
+                          backgroundColor: const Color(0xFF0284C7),
+                          child: Text(
+                            widget.friendName.isNotEmpty ? widget.friendName[0].toUpperCase() : '👤',
+                            style: const TextStyle(color: Colors.white, fontSize: 50, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+            // Top Header & Controls
+            Column(
+              children: [
+                const SizedBox(height: 30),
+                Text(
+                  widget.friendName,
+                  style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: _isConnected ? const Color(0xFF10B981) : const Color(0xFFF59E0B),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      _isConnected
+                          ? '${widget.isVideo ? "Cuộc gọi video HD" : "Cuộc gọi thoại"} • ${_formatDuration(_secondsElapsed)}'
+                          : 'Đang kết nối tín hiệu 4K...',
+                      style: const TextStyle(color: Colors.white70, fontSize: 14, fontWeight: FontWeight.w500),
+                    ),
+                  ],
+                ),
+
+                const Spacer(),
+
+                // Control Action Bar
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+                  margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1E293B).withValues(alpha: 0.9),
+                    borderRadius: BorderRadius.circular(30),
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      // Mute Mic
+                      IconButton(
+                        style: IconButton.styleFrom(
+                          backgroundColor: _isMuted ? Colors.white : Colors.white24,
+                          padding: const EdgeInsets.all(12),
+                        ),
+                        icon: Icon(
+                          _isMuted ? Icons.mic_off_rounded : Icons.mic_rounded,
+                          color: _isMuted ? Colors.black : Colors.white,
+                          size: 22,
+                        ),
+                        onPressed: () => setState(() => _isMuted = !_isMuted),
+                      ),
+
+                      // Toggle Camera
+                      if (widget.isVideo)
+                        IconButton(
+                          style: IconButton.styleFrom(
+                            backgroundColor: !_isVideoOn ? Colors.white : Colors.white24,
+                            padding: const EdgeInsets.all(12),
+                          ),
+                          icon: Icon(
+                            _isVideoOn ? Icons.videocam_rounded : Icons.videocam_off_rounded,
+                            color: !_isVideoOn ? Colors.black : Colors.white,
+                            size: 22,
+                          ),
+                          onPressed: () => setState(() => _isVideoOn = !_isVideoOn),
+                        ),
+
+                      // Speaker
+                      IconButton(
+                        style: IconButton.styleFrom(
+                          backgroundColor: _isSpeakerOn ? const Color(0xFF0284C7) : Colors.white24,
+                          padding: const EdgeInsets.all(12),
+                        ),
+                        icon: Icon(
+                          _isSpeakerOn ? Icons.volume_up_rounded : Icons.volume_down_rounded,
+                          color: Colors.white,
+                          size: 22,
+                        ),
+                        onPressed: () => setState(() => _isSpeakerOn = !_isSpeakerOn),
+                      ),
+
+                      // End Call
+                      IconButton(
+                        style: IconButton.styleFrom(
+                          backgroundColor: const Color(0xFFEF4444),
+                          padding: const EdgeInsets.all(12),
+                        ),
+                        icon: const Icon(Icons.call_end_rounded, color: Colors.white, size: 26),
+                        onPressed: _endCall,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -20,7 +20,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
   Map<String, dynamic> _stats = {};
   List<dynamic> _usersList = [];
   List<dynamic> _eateriesList = [];
-  List<dynamic> _categoriesList = [];
   List<dynamic> _reviewsList = [];
   List<dynamic> _schoolsList = [];
   List<dynamic> _stallsList = [];
@@ -58,7 +57,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
             _stats = data['stats'] ?? {};
             _usersList = data['users'] ?? [];
             _eateriesList = data['eateries'] ?? [];
-            _categoriesList = data['categories'] ?? [];
             _reviewsList = data['reviews'] ?? [];
             _schoolsList = (data['schools'] is List) ? data['schools'] : [];
             _stallsList = (data['stalls'] is List) ? data['stalls'] : [];
@@ -1684,29 +1682,53 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
             children: [
               const Text('Lựa chọn cấp sao chứng nhận OCOP cho sản phẩm/gian hàng này:', style: TextStyle(fontSize: 13)),
               const SizedBox(height: 14),
-              RadioListTile<String?>(
-                title: const Text('❌ Không cấp sao (Chợ Dân Sinh)', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-                value: null,
-                groupValue: currentRating,
-                onChanged: (val) => setDialogState(() => currentRating = val),
-              ),
-              RadioListTile<String?>(
-                title: const Text('⭐⭐⭐ Cấp 3 Sao OCOP Chuẩn', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFFD97706))),
-                value: '3 sao',
-                groupValue: currentRating,
-                onChanged: (val) => setDialogState(() => currentRating = val),
-              ),
-              RadioListTile<String?>(
-                title: const Text('⭐⭐⭐⭐ Cấp 4 Sao OCOP Cao Cấp', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF059669))),
-                value: '4 sao',
-                groupValue: currentRating,
-                onChanged: (val) => setDialogState(() => currentRating = val),
-              ),
-              RadioListTile<String?>(
-                title: const Text('⭐⭐⭐⭐⭐ Cấp 5 Sao OCOP Quốc Gia', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFFDC2626))),
-                value: '5 sao',
-                groupValue: currentRating,
-                onChanged: (val) => setDialogState(() => currentRating = val),
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  {'label': '❌ Không cấp sao (Chợ Dân Sinh)', 'value': null, 'color': const Color(0xFF64748B)},
+                  {'label': '⭐⭐⭐ Cấp 3 Sao OCOP Chuẩn', 'value': '3 sao', 'color': const Color(0xFFD97706)},
+                  {'label': '⭐⭐⭐⭐ Cấp 4 Sao OCOP Cao Cấp', 'value': '4 sao', 'color': const Color(0xFF059669)},
+                  {'label': '⭐⭐⭐⭐⭐ Cấp 5 Sao OCOP Quốc Gia', 'value': '5 sao', 'color': const Color(0xFFDC2626)},
+                ].map((opt) {
+                  final String? val = opt['value'] as String?;
+                  final bool isSelected = currentRating == val;
+                  return InkWell(
+                    onTap: () => setDialogState(() => currentRating = val),
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: isSelected ? (opt['color'] as Color).withValues(alpha: 0.1) : Colors.transparent,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: isSelected ? (opt['color'] as Color) : Colors.grey.shade300,
+                          width: isSelected ? 1.5 : 1.0,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
+                            color: isSelected ? (opt['color'] as Color) : Colors.grey,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              opt['label'] as String,
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                                color: isSelected ? (opt['color'] as Color) : const Color(0xFF1E293B),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }).toList(),
               ),
             ],
           ),

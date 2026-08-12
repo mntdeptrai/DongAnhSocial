@@ -6,6 +6,7 @@ import 'package:share_plus/share_plus.dart';
 import '../services/api_service.dart';
 import '../widgets/squircle_helper.dart';
 import '../widgets/create_post_modal.dart';
+import '../widgets/custom_loader.dart';
 
 class NewsBulletinScreen extends StatefulWidget {
   final dynamic targetPostId;
@@ -1015,7 +1016,10 @@ class _NewsBulletinScreenState extends State<NewsBulletinScreen> {
         onRefresh: _fetchNewsfeed,
         color: const Color(0xFF0EA5E9),
         child: _isLoading
-            ? const Center(child: CircularProgressIndicator(color: Color(0xFF0EA5E9)))
+            ? const CustomPulseLoader(
+                message: 'Đang tải bản tin & dữ liệu khám phá Đông Anh...',
+                primaryColor: Color(0xFF0EA5E9),
+              )
             : ListView(
                 padding: const EdgeInsets.fromLTRB(14, 12, 14, 90),
                 children: [

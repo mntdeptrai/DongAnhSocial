@@ -4,7 +4,6 @@ import '../screens/my_orders_screen.dart';
 import '../screens/admin_dashboard_screen.dart';
 import '../screens/food_tour_screen.dart';
 import '../screens/video_reels_screen.dart';
-import '../screens/news_bulletin_screen.dart';
 import '../screens/exp_corner_screen.dart';
 import '../screens/about_guide_screen.dart';
 import 'squircle_helper.dart';
@@ -176,12 +175,13 @@ class RoleMenuDrawer extends StatelessWidget {
 
                   _buildDrawerShortcut(
                     icon: Icons.newspaper_rounded,
-                    title: '📰 Bản tin',
+                    title: '📰 Bản Tin Đông Anh',
                     subtitle: 'Thông báo chính thức & Bài viết đa phân quyền',
                     color: const Color(0xFF0284C7),
                     onTap: () {
                       Navigator.pop(context);
-                      Navigator.push(context, MaterialPageRoute(builder: (_) => const NewsBulletinScreen()));
+                      onRoleChanged?.call('user');
+                      onNavigateTab?.call(0); // Tab 0: News Bulletin
                     },
                   ),
                   _buildDrawerShortcut(
@@ -192,7 +192,7 @@ class RoleMenuDrawer extends StatelessWidget {
                     onTap: () {
                       Navigator.pop(context);
                       onRoleChanged?.call('user');
-                      onNavigateTab?.call(2); // Map Tab
+                      onNavigateTab?.call(2); // Tab 2: Map Screen
                     },
                   ),
                   _buildDrawerShortcut(
@@ -217,7 +217,7 @@ class RoleMenuDrawer extends StatelessWidget {
                   ),
                   _buildDrawerShortcut(
                     icon: Icons.play_circle_fill_rounded,
-                    title: '🎬 Tóp Tóp Video Reels',
+                    title: '🎬 Video Shorts & Review',
                     subtitle: 'Xem video review thực tế từ bản địa',
                     color: const Color(0xFFEA580C),
                     onTap: () {
@@ -227,13 +227,13 @@ class RoleMenuDrawer extends StatelessWidget {
                   ),
                   _buildDrawerShortcut(
                     icon: Icons.photo_camera_rounded,
-                    title: '📸 Góc Check-in Locket',
+                    title: '📸 Góc Check-in Khoảnh Khắc',
                     subtitle: 'Lưu giữ & chia sẻ khoảnh khắc ăn uống',
                     color: const Color(0xFFF59E0B),
                     onTap: () {
                       Navigator.pop(context);
                       onRoleChanged?.call('user');
-                      onNavigateTab?.call(0); // Feed Tab
+                      onNavigateTab?.call(2); // Tab 2
                     },
                   ),
                   _buildDrawerShortcut(
@@ -244,7 +244,7 @@ class RoleMenuDrawer extends StatelessWidget {
                     onTap: () {
                       Navigator.pop(context);
                       onRoleChanged?.call('user');
-                      onNavigateTab?.call(3); // Market Tab
+                      onNavigateTab?.call(3); // Tab 3: Market Tab
                     },
                   ),
                   _buildDrawerShortcut(
