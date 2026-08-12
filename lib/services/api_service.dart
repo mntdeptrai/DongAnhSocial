@@ -1739,4 +1739,22 @@ class ApiService {
     } catch (_) {}
     return {'success': false};
   }
+
+  /// POST /admin/stalls/{id}/star-rating — Cấp sao chứng nhận OCOP cho Gian hàng / Sản phẩm
+  static Future<Map<String, dynamic>> updateStallStarRating(int id, String? starRating) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/admin/stalls/$id/star-rating'),
+        headers: _getHeaders(),
+        body: jsonEncode({'star_rating': starRating}),
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data is Map<String, dynamic>) return data;
+      }
+    } catch (e) {
+      return {'success': false, 'message': 'Lỗi kết nối: $e'};
+    }
+    return {'success': false, 'message': 'Không thể cập nhật chứng nhận sao OCOP'};
+  }
 }

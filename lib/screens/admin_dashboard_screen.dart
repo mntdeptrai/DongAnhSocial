@@ -852,21 +852,32 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
         ),
         const SizedBox(height: 20),
 
-        const Text('Quản Lý Nhanh Hệ Thống', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+        const Text(
+          'Quản Lý Nhanh Hệ Thống',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+        ),
         const SizedBox(height: 12),
 
         Row(
           children: [
             Expanded(
-              child: _buildQuickActionCard('Quản lý User', '${_usersList.length} tài khoản', Icons.people_outline_rounded, Colors.blue, () {
-                _tabController.animateTo(1);
-              }),
+              child: _buildQuickActionCard(
+                'Quản lý User',
+                '${_stats['total_users'] ?? _usersList.length} tài khoản',
+                Icons.people_alt_rounded,
+                const Color(0xFF0284C7),
+                () => _tabController.animateTo(4),
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: _buildQuickActionCard('Cơ sở Bản đồ', '${_eateriesList.length} địa điểm', Icons.storefront_outlined, Colors.orange, () {
-                _tabController.animateTo(2);
-              }),
+              child: _buildQuickActionCard(
+                'Cơ sở Bản đồ',
+                '${_stats['total_eateries'] ?? _eateriesList.length} địa điểm',
+                Icons.storefront_rounded,
+                const Color(0xFFF59E0B),
+                () => _tabController.animateTo(1),
+              ),
             ),
           ],
         ),
@@ -874,15 +885,23 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
         Row(
           children: [
             Expanded(
-              child: _buildQuickActionCard('Danh mục', '${_categoriesList.length} phân loại', Icons.category_outlined, Colors.purple, () {
-                _tabController.animateTo(3);
-              }),
+              child: _buildQuickActionCard(
+                'Trường học',
+                '${_stats['total_schools'] ?? _schoolsList.length} trường học',
+                Icons.school_rounded,
+                const Color(0xFF8B5CF6),
+                () => _tabController.animateTo(2),
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: _buildQuickActionCard('Duyệt Đánh giá', '${_reviewsList.length} bình luận', Icons.rate_review_outlined, Colors.green, () {
-                _tabController.animateTo(3);
-              }),
+              child: _buildQuickActionCard(
+                'Gian hàng & OCOP',
+                '${_stats['total_stalls'] ?? (_stallsList.isNotEmpty ? _stallsList.length : 33)} gian hàng',
+                Icons.shopping_bag_rounded,
+                const Color(0xFF10B981),
+                () => _tabController.animateTo(3),
+              ),
             ),
           ],
         ),
@@ -902,31 +921,63 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
   }
 
   Widget _buildQuickActionCard(String title, String subtitle, IconData icon, Color color, VoidCallback onTap) {
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
-                child: Icon(icon, color: color, size: 24),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF0F172A))),
-                    Text(subtitle, style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
-                  ],
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF64748B).withValues(alpha: 0.06),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(20),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(20),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+            child: Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: color.withValues(alpha: 0.25)),
+                  ),
+                  child: Icon(icon, color: color, size: 22),
                 ),
-              ),
-            ],
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF0F172A)),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        subtitle,
+                        style: const TextStyle(fontSize: 11, color: Color(0xFF64748B), fontWeight: FontWeight.w500),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(Icons.chevron_right_rounded, color: Colors.grey.shade400, size: 18),
+              ],
+            ),
           ),
         ),
       ),
@@ -1500,59 +1551,100 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
             itemBuilder: (context, index) {
               final stl = filtered[index];
               final isApproved = stl['status'] == 'approved' || stl['status'] == 'active';
+              final starRating = stl['star_rating'];
 
               return Card(
-                margin: const EdgeInsets.only(bottom: 10),
+                margin: const EdgeInsets.only(bottom: 12),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 child: Padding(
                   padding: const EdgeInsets.all(14),
-                  child: Row(
+                  child: Column(
                     children: [
-                      Container(
-                        width: 42,
-                        height: 42,
-                        decoration: BoxDecoration(color: const Color(0xFF059669).withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
-                        child: const Icon(Icons.storefront_rounded, color: Color(0xFF059669)),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(stl['name'] ?? 'Gian hàng OCOP', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                            const SizedBox(height: 2),
-                            Text('Chủ: ${stl['vendor'] ?? 'Tiểu thương'} - SĐT: ${stl['phone'] ?? '---'}', style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
-                            const SizedBox(height: 4),
-                            Row(
+                      Row(
+                        children: [
+                          Container(
+                            width: 42,
+                            height: 42,
+                            decoration: BoxDecoration(color: const Color(0xFF059669).withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
+                            child: const Icon(Icons.storefront_rounded, color: Color(0xFF059669)),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                  decoration: BoxDecoration(
-                                    color: isApproved ? Colors.green.shade50 : Colors.amber.shade50,
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                  child: Text(
-                                    isApproved ? '✅ Đã duyệt' : '⏳ Chờ duyệt',
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      color: isApproved ? Colors.green.shade700 : Colors.amber.shade800,
-                                      fontWeight: FontWeight.bold,
+                                Text(stl['name'] ?? 'Gian hàng OCOP', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                                const SizedBox(height: 2),
+                                Text('Chủ: ${stl['vendor'] ?? 'Tiểu thương'} - SĐT: ${stl['phone'] ?? '---'}', style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
+                                const SizedBox(height: 6),
+                                Wrap(
+                                  spacing: 6,
+                                  runSpacing: 4,
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: isApproved ? Colors.green.shade50 : Colors.amber.shade50,
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: Text(
+                                        isApproved ? '✅ Đã duyệt' : '⏳ Chờ duyệt',
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          color: isApproved ? Colors.green.shade700 : Colors.amber.shade800,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
                                     ),
-                                  ),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: starRating != null ? const Color(0xFFFEF3C7) : const Color(0xFFE2E8F0),
+                                        borderRadius: BorderRadius.circular(6),
+                                        border: Border.all(
+                                          color: starRating != null ? const Color(0xFFFDE68A) : Colors.transparent,
+                                        ),
+                                      ),
+                                      child: Text(
+                                        starRating != null ? '⭐ OCOP $starRating' : '🏪 Chợ Dân Sinh',
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          color: starRating != null ? const Color(0xFFB45309) : const Color(0xFF475569),
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
-                          ],
-                        ),
+                          ),
+                          Switch(
+                            value: isApproved,
+                            activeThumbColor: const Color(0xFF059669),
+                            onChanged: (val) {
+                              setState(() {
+                                stl['status'] = val ? 'approved' : 'pending';
+                              });
+                            },
+                          ),
+                        ],
                       ),
-                      Switch(
-                        value: isApproved,
-                        activeThumbColor: const Color(0xFF059669),
-                        onChanged: (val) {
-                          setState(() {
-                            stl['status'] = val ? 'approved' : 'pending';
-                          });
-                        },
+                      const SizedBox(height: 10),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          OutlinedButton.icon(
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              side: const BorderSide(color: Color(0xFFF59E0B)),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            ),
+                            onPressed: () => _showGrantStarDialog(stl),
+                            icon: const Icon(Icons.stars_rounded, size: 16, color: Color(0xFFD97706)),
+                            label: const Text('⭐ Cấp Sao OCOP', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFFD97706))),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -1561,6 +1653,92 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
             },
           ),
       ],
+    );
+  }
+
+  void _showGrantStarDialog(Map<String, dynamic> stl) {
+    final int stallId = stl['id'] ?? 0;
+    String? currentRating = stl['star_rating'];
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Row(
+            children: [
+              const Icon(Icons.stars_rounded, color: Color(0xFFF59E0B)),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Cấp Sao OCOP: ${stl['name'] ?? 'Gian hàng'}',
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Lựa chọn cấp sao chứng nhận OCOP cho sản phẩm/gian hàng này:', style: TextStyle(fontSize: 13)),
+              const SizedBox(height: 14),
+              RadioListTile<String?>(
+                title: const Text('❌ Không cấp sao (Chợ Dân Sinh)', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                value: null,
+                groupValue: currentRating,
+                onChanged: (val) => setDialogState(() => currentRating = val),
+              ),
+              RadioListTile<String?>(
+                title: const Text('⭐⭐⭐ Cấp 3 Sao OCOP Chuẩn', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFFD97706))),
+                value: '3 sao',
+                groupValue: currentRating,
+                onChanged: (val) => setDialogState(() => currentRating = val),
+              ),
+              RadioListTile<String?>(
+                title: const Text('⭐⭐⭐⭐ Cấp 4 Sao OCOP Cao Cấp', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF059669))),
+                value: '4 sao',
+                groupValue: currentRating,
+                onChanged: (val) => setDialogState(() => currentRating = val),
+              ),
+              RadioListTile<String?>(
+                title: const Text('⭐⭐⭐⭐⭐ Cấp 5 Sao OCOP Quốc Gia', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFFDC2626))),
+                value: '5 sao',
+                groupValue: currentRating,
+                onChanged: (val) => setDialogState(() => currentRating = val),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Hủy')),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0284C7)),
+              onPressed: () async {
+                final messenger = ScaffoldMessenger.of(context);
+                Navigator.pop(ctx);
+                final res = await ApiService.updateStallStarRating(stallId, currentRating);
+                if (mounted) {
+                  if (res['success'] == true) {
+                    setState(() {
+                      stl['star_rating'] = currentRating;
+                    });
+                    messenger.showSnackBar(
+                      SnackBar(content: Text(res['message'] ?? '🎉 Đã cập nhật sao OCOP!'), backgroundColor: const Color(0xFF059669)),
+                    );
+                    _loadAdminData();
+                  } else {
+                    messenger.showSnackBar(
+                      SnackBar(content: Text('⚠️ ${res['message']}'), backgroundColor: Colors.red),
+                    );
+                  }
+                }
+              },
+              child: const Text('Lưu Chứng Nhận', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

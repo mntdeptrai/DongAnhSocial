@@ -170,6 +170,7 @@ Route::prefix('v1')->group(function () {
 
             Route::post('/categories', [AdminApiController::class, 'storeCategory']);
             Route::delete('/reviews/{id}', [AdminApiController::class, 'deleteReview']);
+            Route::post('/stalls/{id}/star-rating', [AdminApiController::class, 'updateStallStarRating']);
         });
     });
 

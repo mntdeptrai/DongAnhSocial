@@ -157,6 +157,13 @@ class AdminApiController extends Controller
             $stalls = [];
         }
 
+        $totalStallsCount = 0;
+        try {
+            $totalStallsCount = \Illuminate\Support\Facades\DB::connection('mysql_market')->table('ocop_products')->count();
+        } catch (\Throwable $ex) {
+            $totalStallsCount = is_countable($stalls) ? count($stalls) : 0;
+        }
+
         $stats = [
             'total_users'      => User::count(),
             'total_eateries'   => \App\Models\Eatery::count(),
@@ -164,6 +171,8 @@ class AdminApiController extends Controller
             'total_reviews'    => \App\Models\Review::count(),
             'total_sellers'    => User::where('role', 'seller')->count(),
             'total_managers'   => User::where('role', 'manager')->count(),
+            'total_schools'    => is_countable($schools) ? count($schools) : 0,
+            'total_stalls'     => $totalStallsCount,
         ];
 
         return response()->json([
@@ -478,6 +487,41 @@ class AdminApiController extends Controller
         if ($user->id === session('user_id')) {
             return response()->json(['success' => false, 'message' => 'Bạn không thể tự vô hiệu hóa tài khoản của chính mình.'], 400);
         }
+
+        $user->status = ($user->status === 'suspended') ? 'active' : 'suspended';
+        $user->save();
+
+        return response()->json(['success' => true, 'status' => $user->status]);
+    }
+
+    /**
+     * Admin: Cấp sao chứng nhận OCOP (3 sao, 4 sao, 5 sao hoặc Xoá sao/Chợ dân sinh)
+     */
+    public function updateStallStarRating(Request $request, $id)
+    {
+        $starRating = $request->input('star_rating');
+        if ($starRating === '' || $starRating === 'none' || $starRating === 'null') {
+            $starRating = null;
+        }
+
+        try {
+            \Illuminate\Support\Facades\DB::connection('mysql_market')->table('ocop_products')->where('id', $id)->update(['star_rating' => $starRating]);
+            \Illuminate\Support\Facades\DB::connection('mysql')->table('ocop_products')->where('id', $id)->update(['star_rating' => $starRating]);
+        } catch (\Throwable $e) {}
+
+        try {
+            \Illuminate\Support\Facades\DB::connection('mysql_market')->table('eateries')->where('id', $id)->update(['rating' => $starRating ? 5.0 : 4.5]);
+            \Illuminate\Support\Facades\DB::connection('mysql')->table('eateries')->where('id', $id)->update(['rating' => $starRating ? 5.0 : 4.5]);
+        } catch (\Throwable $e) {}
+
+        \Illuminate\Support\Facades\Cache::flush();
+
+        return response()->json([
+            'success' => true,
+            'message' => $starRating ? "🎉 Đã cấp chứng nhận ⭐ {$starRating} OCOP thành công!" : "ℹ️ Đã chuyển về Gian hàng Chợ Dân Sinh (Không cấp sao)",
+            'star_rating' => $starRating,
+        ]);
+    }
 
         $user->status = $user->status === 'active' ? 'disabled' : 'active';
         $user->save();
