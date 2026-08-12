@@ -1772,4 +1772,79 @@ class ApiService {
     } catch (_) {}
     return {'has_call': false};
   }
+
+  /// POST /social/call/initiate — Khởi tạo cuộc gọi tới người nhận
+  static Future<Map<String, dynamic>> initiateCall(int receiverId, String type) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/social/call/initiate'),
+        headers: _getHeaders(),
+        body: jsonEncode({
+          'receiver_id': receiverId,
+          'type': type,
+          'signal_data': '{"type":"offer","sdp":"mobile-placeholder"}',
+        }),
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data is Map<String, dynamic>) return data;
+      }
+    } catch (_) {}
+    return {'status': 'error', 'message': 'Không thể khởi tạo cuộc gọi'};
+  }
+
+  /// POST /social/call/signal — Gửi answer signal (đánh dấu đã nhận cuộc gọi)
+  static Future<Map<String, dynamic>> answerCall(int callId, int callerId) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/social/call/signal'),
+        headers: _getHeaders(),
+        body: jsonEncode({
+          'call_id': callId,
+          'target_user_id': callerId,
+          'signal_data': '{"type":"answer","sdp":"mobile-answer-placeholder"}',
+        }),
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data is Map<String, dynamic>) return data;
+      }
+    } catch (_) {}
+    return {'status': 'error'};
+  }
+
+  /// POST /social/call/hangup — Cúp máy hoặc từ chối cuộc gọi
+  static Future<Map<String, dynamic>> hangupCall(int callId, int targetUserId, String reason) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/social/call/hangup'),
+        headers: _getHeaders(),
+        body: jsonEncode({
+          'call_id': callId,
+          'target_user_id': targetUserId,
+          'reason': reason,
+        }),
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data is Map<String, dynamic>) return data;
+      }
+    } catch (_) {}
+    return {'status': 'error'};
+  }
+
+  /// GET /social/call/status/{callId} — Polling trạng thái cuộc gọi
+  static Future<Map<String, dynamic>> getCallStatus(int callId) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/social/call/status/$callId'),
+        headers: _getHeaders(),
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data is Map<String, dynamic>) return data;
+      }
+    } catch (_) {}
+    return {'status': 'ended'};
+  }
 }

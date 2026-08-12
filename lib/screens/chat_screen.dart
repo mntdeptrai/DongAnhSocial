@@ -127,6 +127,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     if (res['has_call'] == true && mounted && !_isShowingCallScreen) {
       _isShowingCallScreen = true;
       final callerName = (res['caller_name'] ?? 'Người dùng').toString();
+      final callerId = res['caller_id'] is int ? res['caller_id'] as int : int.tryParse(res['caller_id'].toString()) ?? 0;
+      final callId = res['call_id'] is int ? res['call_id'] as int : int.tryParse(res['call_id'].toString()) ?? 0;
       final isVideo = res['call_type'] == 'video';
 
       Navigator.push(
@@ -134,6 +136,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         MaterialPageRoute(
           builder: (context) => ActiveCallScreen(
             friendName: callerName,
+            friendId: callerId,
+            callId: callId,
+            isCaller: false,
             isVideo: isVideo,
             onCallEnded: (duration) {
               _isShowingCallScreen = false;
@@ -290,6 +295,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                             icon: const Icon(Icons.phone_rounded, color: Color(0xFF0EA5E9), size: 20),
                             tooltip: 'Gọi thoại',
                             onPressed: () {
+                              final fId = friend['id'] is int ? friend['id'] as int : int.tryParse(friend['id'].toString()) ?? 0;
                               showGeneralDialog(
                                 context: context,
                                 barrierDismissible: false,
@@ -298,6 +304,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                 pageBuilder: (ctx, anim1, anim2) {
                                   return ActiveCallScreen(
                                     friendName: friend['name'] ?? 'Bạn bè',
+                                    friendId: fId,
+                                    isCaller: true,
                                     isVideo: false,
                                     onCallEnded: (_) {},
                                   );
@@ -309,6 +317,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                             icon: const Icon(Icons.videocam_rounded, color: Color(0xFF0EA5E9), size: 22),
                             tooltip: 'Gọi video HD',
                             onPressed: () {
+                              final fId = friend['id'] is int ? friend['id'] as int : int.tryParse(friend['id'].toString()) ?? 0;
                               showGeneralDialog(
                                 context: context,
                                 barrierDismissible: false,
@@ -317,6 +326,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                 pageBuilder: (ctx, anim1, anim2) {
                                   return ActiveCallScreen(
                                     friendName: friend['name'] ?? 'Bạn bè',
+                                    friendId: fId,
+                                    isCaller: true,
                                     isVideo: true,
                                     onCallEnded: (_) {},
                                   );
@@ -750,6 +761,8 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> with SingleTickerPr
       pageBuilder: (context, anim1, anim2) {
         return ActiveCallScreen(
           friendName: widget.friendName,
+          friendId: widget.friendId,
+          isCaller: true,
           isVideo: isVideo,
           onCallEnded: (durationSeconds) {
             if (durationSeconds > 0) {
@@ -908,12 +921,18 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> with SingleTickerPr
 
 class ActiveCallScreen extends StatefulWidget {
   final String friendName;
+  final int friendId;
+  final int? callId; // null nếu là caller (sẽ tạo mới từ API)
+  final bool isCaller;
   final bool isVideo;
   final Function(int durationSeconds) onCallEnded;
 
   const ActiveCallScreen({
     super.key,
     required this.friendName,
+    required this.friendId,
+    this.callId,
+    required this.isCaller,
     required this.isVideo,
     required this.onCallEnded,
   });
@@ -929,35 +948,101 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
   bool _isConnected = false;
   int _secondsElapsed = 0;
   Timer? _callTimer;
-  Timer? _connectTimer;
+  Timer? _statusPollTimer;
+  int? _activeCallId;
+  bool _callEnded = false;
 
   @override
   void initState() {
     super.initState();
     _isVideoOn = widget.isVideo;
-    _connectTimer = Timer(const Duration(seconds: 2), () {
-      if (mounted) {
-        setState(() {
-          _isConnected = true;
-        });
-        _startTimer();
+    _activeCallId = widget.callId;
+
+    if (widget.isCaller) {
+      _initiateCallOnServer();
+    } else {
+      _answerCallOnServer();
+    }
+  }
+
+  /// Caller: Gọi API tạo cuộc gọi → polling chờ bên kia nhận
+  Future<void> _initiateCallOnServer() async {
+    final res = await ApiService.initiateCall(
+      widget.friendId,
+      widget.isVideo ? 'video' : 'audio',
+    );
+    if (!mounted) return;
+
+    if (res['status'] == 'success' && res['call_id'] != null) {
+      final cid = res['call_id'] is int ? res['call_id'] as int : int.tryParse(res['call_id'].toString()) ?? 0;
+      setState(() => _activeCallId = cid);
+      _startStatusPolling();
+    } else {
+      // Lỗi khởi tạo
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(res['message']?.toString() ?? 'Lỗi khởi tạo cuộc gọi')),
+      );
+      Navigator.of(context).pop();
+    }
+  }
+
+  /// Receiver: Gọi API đánh dấu đã nhận cuộc gọi → bắt đầu đàm thoại
+  Future<void> _answerCallOnServer() async {
+    if (_activeCallId != null) {
+      await ApiService.answerCall(_activeCallId!, widget.friendId);
+    }
+    if (!mounted) return;
+    setState(() => _isConnected = true);
+    _startDurationTimer();
+    _startStatusPolling();
+  }
+
+  /// Polling trạng thái cuộc gọi mỗi 2 giây
+  void _startStatusPolling() {
+    _statusPollTimer?.cancel();
+    _statusPollTimer = Timer.periodic(const Duration(seconds: 2), (timer) async {
+      if (!mounted || _activeCallId == null || _callEnded) {
+        timer.cancel();
+        return;
+      }
+      final status = await ApiService.getCallStatus(_activeCallId!);
+      if (!mounted || _callEnded) return;
+
+      final callStatus = status['status']?.toString() ?? '';
+
+      // Caller: phát hiện bên kia đã nhận
+      if (widget.isCaller && !_isConnected && callStatus == 'answered') {
+        setState(() => _isConnected = true);
+        _startDurationTimer();
+      }
+
+      // Cả 2 bên: phát hiện cuộc gọi kết thúc từ bên kia
+      if (callStatus == 'ended' || callStatus == 'rejected' || callStatus == 'missed') {
+        timer.cancel();
+        _callEnded = true;
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(callStatus == 'rejected' ? 'Cuộc gọi bị từ chối' : 'Cuộc gọi đã kết thúc')),
+          );
+          widget.onCallEnded(_secondsElapsed);
+          Navigator.of(context).pop();
+        }
       }
     });
   }
 
-  void _startTimer() {
+  void _startDurationTimer() {
+    _callTimer?.cancel();
     _callTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (mounted) {
-        setState(() {
-          _secondsElapsed++;
-        });
+        setState(() => _secondsElapsed++);
       }
     });
   }
 
   @override
   void dispose() {
-    _connectTimer?.cancel();
+    _statusPollTimer?.cancel();
     _callTimer?.cancel();
     super.dispose();
   }
@@ -968,9 +1053,15 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
     return '$min:$sec';
   }
 
-  void _endCall() {
-    widget.onCallEnded(_secondsElapsed);
-    Navigator.of(context).pop();
+  void _endCall() async {
+    if (!_callEnded && _activeCallId != null) {
+      _callEnded = true;
+      await ApiService.hangupCall(_activeCallId!, widget.friendId, 'ended');
+    }
+    if (mounted) {
+      widget.onCallEnded(_secondsElapsed);
+      Navigator.of(context).pop();
+    }
   }
 
   @override
