@@ -34,8 +34,6 @@
 	<string>Ứng dụng cần quyền truy cập micro khi quay video check-in.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Ứng dụng cần vị trí của bạn để tự động xác định địa điểm quán ăn gần nhất.</string>
-	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>Ứng dụng cần vị trí của bạn để tự động xác định địa điểm quán ăn gần nhất.</string>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsArbitraryLoads</key>
@@ -43,7 +41,6 @@
 	</dict>
 	<key>UIBackgroundModes</key>
 	<array>
-		<string>fetch</string>
 		<string>remote-notification</string>
 	</array>
 	<key>LSApplicationQueriesSchemes</key>

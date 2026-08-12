@@ -1598,11 +1598,56 @@ class ApiService {
     return [];
   }
 
-  /// POST /posts — Tạo bài viết mới lên Bản tin (Hỗ trợ Tải ảnh & Video thật)
-  static Future<Map<String, dynamic>> createPost({required String description, String? name, String? imagePath}) async {
+  /// POST /upload — Tải lên nhiều hình ảnh/video trực tiếp lên Cloudflare R2
+  static Future<List<Map<String, String>>> uploadFilesToR2(List<String> filePaths, {String folder = 'posts'}) async {
+    if (filePaths.isEmpty) return [];
+    try {
+      final request = http.MultipartRequest('POST', Uri.parse('$baseUrl/upload'));
+      request.headers.addAll(_getHeaders());
+      request.fields['folder'] = folder;
+
+      for (String path in filePaths) {
+        final file = File(path);
+        if (await file.exists()) {
+          request.files.add(await http.MultipartFile.fromPath('files[]', path));
+        }
+      }
+
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = jsonDecode(response.body);
+        if (data['success'] == true && data['files'] is List) {
+          final List<Map<String, String>> uploadedList = [];
+          for (var item in data['files']) {
+            if (item['url'] != null) {
+              uploadedList.add({
+                'url': item['url'].toString(),
+                'type': (item['file_type'] ?? item['type'] ?? 'image').toString(),
+              });
+            }
+          }
+          return uploadedList;
+        }
+      }
+    } catch (e) {
+      debugPrint('[ApiService] uploadFilesToR2 error: $e');
+    }
+    return [];
+  }
+
+  /// POST /posts — Tạo bài viết mới lên Bản tin (Hỗ trợ Tải nhiều Ảnh & Video thật lên R2)
+  static Future<Map<String, dynamic>> createPost({
+    required String description,
+    String? name,
+    String? imagePath,
+    List<String>? images,
+    List<String>? videos,
+  }) async {
     try {
       String? imageBase64;
-      if (imagePath != null && imagePath.isNotEmpty) {
+      if (imagePath != null && imagePath.isNotEmpty && (images == null || images.isEmpty)) {
         final file = File(imagePath);
         if (await file.exists()) {
           final bytes = await file.readAsBytes();
@@ -1618,8 +1663,10 @@ class ApiService {
         body: jsonEncode({
           'description': description,
           if (name != null) 'name': name,
+          if (images != null && images.isNotEmpty) 'images': images,
+          if (videos != null && videos.isNotEmpty) 'videos': videos,
           if (imageBase64 != null) 'image_base64': imageBase64,
-          if (imagePath != null && imageBase64 == null) 'image_path': imagePath,
+          if (imagePath != null && imageBase64 == null && (images == null || images.isEmpty)) 'image_path': imagePath,
         }),
       );
       if (response.statusCode == 200 || response.statusCode == 201) {

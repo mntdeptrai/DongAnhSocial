@@ -1795,9 +1795,15 @@ YÊU CẦU TRẢ VỀ CHỈ LÀ CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU, KHÔNG C
             'name'         => 'nullable|string',
             'image_path'   => 'nullable|string',
             'image_base64' => 'nullable|string',
+            'images'       => 'nullable|array',
+            'videos'       => 'nullable|array',
+            'image_urls'   => 'nullable|array',
+            'video_urls'   => 'nullable|array',
         ]);
 
         $savedImagePath = $request->image_path;
+        $images = $request->input('images', $request->input('image_urls', []));
+        $videos = $request->input('videos', $request->input('video_urls', []));
 
         if ($request->filled('image_base64')) {
             try {
@@ -1855,11 +1861,17 @@ YÊU CẦU TRẢ VỀ CHỈ LÀ CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU, KHÔNG C
             } catch (\Throwable $e) {}
         }
 
+        if (empty($savedImagePath) && !empty($images) && is_array($images)) {
+            $savedImagePath = $images[0];
+        }
+
         $post = \App\Models\Post::create([
             'user_id'     => $user->id,
             'name'        => $request->input('name') ?: (mb_substr($request->description, 0, 50) . '...'),
             'description' => $request->description,
             'image_path'  => $savedImagePath,
+            'images'      => !empty($images) ? array_values($images) : ($savedImagePath ? [$savedImagePath] : null),
+            'videos'      => !empty($videos) ? array_values($videos) : null,
             'status'      => 'published',
         ]);
 
