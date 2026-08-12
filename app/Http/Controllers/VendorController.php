@@ -304,7 +304,7 @@ class VendorController extends Controller
             'name' => $request->name,
             'price' => $numericPrice,
             'unit' => $request->unit ?: 'kg',
-            'star_rating' => $request->star_rating ?: '4 sao',
+            'star_rating' => $request->star_rating ?: null,
             'image_path' => $imagePath,
             'description' => $description,
             'created_at' => now(),

@@ -1277,7 +1277,7 @@ YÊU CẦU TRẢ VỀ CHỈ LÀ CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU, KHÔNG C
                                       str_contains($seller, 'htx') || str_contains($seller, 'hợp tác xã') || str_contains($sName, 'htx') || str_contains($sName, 'hợp tác xã') ||
                                       str_contains($desc, 'qđ số') || str_contains($desc, 'quuyết định') || str_contains($desc, 'chủ thể sản xuất');
 
-                            $starRating = $item->star_rating ?: ($isOcop ? '4 sao' : null);
+                            $starRating = $item->star_rating;
 
                             $products->push([
                                 'id'            => $item->id,
@@ -1346,8 +1346,8 @@ YÊU CẦU TRẢ VỀ CHỈ LÀ CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU, KHÔNG C
                                             'stall_name'    => !empty($p['stall_name']) ? $p['stall_name'] : $stallName,
                                             'seller_name'   => $p['seller_name'] ?? 'Chủ hộ kinh doanh',
                                             'seller_phone'  => $p['seller_phone'] ?? $sellerPhone,
-                                            'star_rating'   => $p['star_rating'] ?? '4 sao',
-                                            'is_ocop'       => true,
+                                            'star_rating'   => $p['star_rating'] ?? null,
+                                            'is_ocop'       => !empty($p['star_rating']) || !empty($p['heritage_year']),
                                             'image_path'    => $p['image_path'] ?? $eateryImg,
                                             'description'   => $p['description'] ?? ('Sản phẩm OCOP của ' . $stallName),
                                         ]);
@@ -1370,7 +1370,7 @@ YÊU CẦU TRẢ VỀ CHỈ LÀ CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU, KHÔNG C
                                             'stall_name'    => $stallName,
                                             'seller_name'   => 'Chủ hộ kinh doanh',
                                             'seller_phone'  => $sellerPhone,
-                                            'star_rating'   => '4 sao',
+                                            'star_rating'   => $isOcopDish ? '4 sao' : null,
                                             'is_ocop'       => $isOcopDish,
                                             'image_path'    => $d['image_path'] ?? $eateryImg,
                                             'description'   => $d['description'] ?? ('Đặc sản của ' . $stallName),
