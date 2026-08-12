@@ -66,19 +66,6 @@ window.DongAnhWebRTC = (function () {
         });
     }
 
-    // --- GỌI ĐI (Caller) ---
-    async function startCall(receiverId, receiverName, receiverAvatar, type) {
-        if (peer || currentCallId) {
-            alert('Bạn đang trong cuộc gọi khác.');
-            return;
-        }
-
-        callType = type || 'audio';
-        isCaller = true;
-        targetUserId = receiverId;
-        targetUserName = receiverName || 'Người dùng';
-        targetUserAvatar = receiverAvatar || '👤';
-
     /**
      * Lấy media stream (Micro / Camera) với cơ chế fallback tự động:
      * HD Video -> Basic Video -> Audio-only (nếu camera bị bận hoặc lỗi)
