@@ -977,16 +977,23 @@ class SocialHubController extends Controller
             return response()->json(['status' => 'error', 'message' => 'Unauthorized'], 401);
         }
 
-        // Nếu signal chứa SDP answer → cập nhật trạng thái cuộc gọi
+        $call = CallLog::find($request->call_id);
         $signalJson = json_decode($request->signal_data, true);
+        $isCaller = $call && $call->caller_id == $user->id;
+        $role = $isCaller ? 'caller' : 'receiver';
+
         if (isset($signalJson['type']) && $signalJson['type'] === 'answer') {
-            $call = CallLog::find($request->call_id);
+            // SDP Answer từ Receiver
             if ($call) {
                 $call->update(['status' => 'answered', 'started_at' => now()]);
             }
             \Illuminate\Support\Facades\Cache::put("call_signal_answer_{$request->call_id}", $request->signal_data, 120);
         } else {
-            \Illuminate\Support\Facades\Cache::put("call_signal_candidate_{$request->call_id}", $request->signal_data, 120);
+            // ICE candidate → thêm vào danh sách theo role
+            $cacheKey = "call_ice_{$role}_{$request->call_id}";
+            $existing = \Illuminate\Support\Facades\Cache::get($cacheKey, []);
+            $existing[] = $request->signal_data;
+            \Illuminate\Support\Facades\Cache::put($cacheKey, $existing, 120);
         }
 
         try {
@@ -1003,20 +1010,41 @@ class SocialHubController extends Controller
     }
 
     /**
-     * API Kiểm tra trạng thái cuộc gọi (dành cho Caller Polling)
+     * API Kiểm tra trạng thái cuộc gọi (dành cho cả 2 bên Polling)
+     * Caller gọi API này để lấy SDP Answer + ICE candidates từ Receiver
+     * Receiver gọi API này để lấy ICE candidates từ Caller + phát hiện hangup
      */
-    public function getCallStatus($callId)
+    public function getCallStatus($callId, Request $request)
     {
         $call = CallLog::find($callId);
         if (!$call) {
             return response()->json(['status' => 'ended']);
         }
 
+        $user = Auth::user() ?? User::find(session('user_id'));
+        $isCaller = $user && $call->caller_id == $user->id;
+
+        // Lấy SDP answer (chỉ caller cần)
         $answerSignal = \Illuminate\Support\Facades\Cache::get("call_signal_answer_{$callId}");
 
+        // Lấy ICE candidates của bên đối diện
+        // Caller lấy ICE từ receiver, Receiver lấy ICE từ caller
+        $oppositeRole = $isCaller ? 'receiver' : 'caller';
+        $iceCacheKey = "call_ice_{$oppositeRole}_{$callId}";
+
+        // Lấy offset đã đọc trước đó → chỉ trả ICE mới
+        $myRole = $isCaller ? 'caller' : 'receiver';
+        $offsetKey = "call_ice_offset_{$myRole}_{$callId}";
+        $offset = \Illuminate\Support\Facades\Cache::get($offsetKey, 0);
+
+        $allIce = \Illuminate\Support\Facades\Cache::get($iceCacheKey, []);
+        $newIce = array_slice($allIce, $offset);
+        \Illuminate\Support\Facades\Cache::put($offsetKey, count($allIce), 120);
+
         return response()->json([
-            'status'      => $call->status,
-            'signal_data' => $answerSignal,
+            'status'         => $call->status,
+            'signal_data'    => $answerSignal,
+            'ice_candidates' => $newIce,
         ]);
     }
 

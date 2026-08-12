@@ -74,8 +74,15 @@ window.DongAnhWebRTC = (function () {
 
     let callerStatusPollInterval = null;
 
-    function startCallerStatusPolling(callId) {
+    /**
+     * Unified polling: dùng cho cả Caller và Receiver.
+     * - Caller: nhận SDP Answer + ICE candidates từ Receiver + phát hiện hangup
+     * - Receiver: nhận ICE candidates từ Caller + phát hiện hangup
+     */
+    function startCallStatusPolling(callId, role) {
         if (callerStatusPollInterval) clearInterval(callerStatusPollInterval);
+        let gotAnswer = false;
+
         callerStatusPollInterval = setInterval(async () => {
             if (!currentCallId || currentCallId !== callId) {
                 clearInterval(callerStatusPollInterval);
@@ -88,10 +95,23 @@ window.DongAnhWebRTC = (function () {
                 });
                 if (!res.ok) return;
                 const data = await res.json();
-                if (data.status === 'answered' && data.signal_data) {
-                    console.log('[WebRTC Caller Polling] Cuộc gọi đã được chấp nhận! Nhận SDP Answer:', data);
+
+                // --- Phát hiện cúp máy (cả 2 bên) ---
+                if (data.status === 'rejected' || data.status === 'ended' || data.status === 'missed') {
+                    console.log('[WebRTC Polling] Cuộc gọi đã kết thúc/từ chối:', data.status);
                     clearInterval(callerStatusPollInterval);
                     callerStatusPollInterval = null;
+                    stopRingtone();
+                    hideOutgoingModal();
+                    showToast(data.status === 'rejected' ? 'Cuộc gọi đã bị từ chối.' : 'Cuộc gọi đã kết thúc.');
+                    cleanupCall();
+                    return;
+                }
+
+                // --- Caller: nhận SDP Answer ---
+                if (role === 'caller' && !gotAnswer && data.status === 'answered' && data.signal_data) {
+                    console.log('[WebRTC Caller Polling] Nhận SDP Answer!');
+                    gotAnswer = true;
 
                     let answerSignal = data.signal_data;
                     if (typeof answerSignal === 'string') {
@@ -105,15 +125,24 @@ window.DongAnhWebRTC = (function () {
                     hideOutgoingModal();
                     showActiveCallOverlay(targetUserName, targetUserAvatar, callType);
                     startDurationCounter();
-                } else if (data.status === 'rejected' || data.status === 'ended') {
-                    console.log('[WebRTC Caller Polling] Cuộc gọi bị từ chối hoặc kết thúc.');
-                    clearInterval(callerStatusPollInterval);
-                    callerStatusPollInterval = null;
-                    stopRingtone();
-                    hideOutgoingModal();
-                    showToast('Cuộc gọi đã bị từ chối.');
-                    cleanupCall();
                 }
+
+                // --- Cả 2 bên: nhận ICE candidates từ bên đối diện ---
+                if (data.ice_candidates && data.ice_candidates.length > 0) {
+                    data.ice_candidates.forEach(iceStr => {
+                        let iceSignal = iceStr;
+                        if (typeof iceSignal === 'string') {
+                            try { iceSignal = JSON.parse(iceSignal); } catch (_) {}
+                        }
+                        if (peer && iceSignal) {
+                            try {
+                                console.log('[WebRTC Polling] Áp dụng remote ICE candidate');
+                                peer.signal(iceSignal);
+                            } catch (e) { console.warn('peer.signal ICE err:', e); }
+                        }
+                    });
+                }
+
             } catch (_) {}
         }, 1500);
     }
@@ -247,7 +276,7 @@ window.DongAnhWebRTC = (function () {
                     const data = await res.json();
                     if (data.status === 'success') {
                         currentCallId = data.call_id;
-                        startCallerStatusPolling(data.call_id);
+                        startCallStatusPolling(data.call_id, 'caller');
                     } else {
                         throw new Error(data.message || 'Lỗi khởi tạo cuộc gọi');
                     }
@@ -334,6 +363,9 @@ window.DongAnhWebRTC = (function () {
 
             showActiveCallOverlay(targetUserName, targetUserAvatar, callType);
             startDurationCounter();
+
+            // Receiver cũng cần polling để nhận ICE candidates từ Caller + phát hiện cúp máy
+            startCallStatusPolling(currentCallId, 'receiver');
 
         } catch (err) {
             console.error('[WebRTC] Error accepting call:', err);
