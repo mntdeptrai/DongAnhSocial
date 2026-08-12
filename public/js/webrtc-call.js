@@ -72,6 +72,52 @@ window.DongAnhWebRTC = (function () {
         }, 2000);
     }
 
+    let callerStatusPollInterval = null;
+
+    function startCallerStatusPolling(callId) {
+        if (callerStatusPollInterval) clearInterval(callerStatusPollInterval);
+        callerStatusPollInterval = setInterval(async () => {
+            if (!currentCallId || currentCallId !== callId) {
+                clearInterval(callerStatusPollInterval);
+                callerStatusPollInterval = null;
+                return;
+            }
+            try {
+                const res = await fetch('/social/call/status/' + callId, {
+                    headers: { 'Accept': 'application/json' }
+                });
+                if (!res.ok) return;
+                const data = await res.json();
+                if (data.status === 'answered' && data.signal_data) {
+                    console.log('[WebRTC Caller Polling] Cuộc gọi đã được chấp nhận! Nhận SDP Answer:', data);
+                    clearInterval(callerStatusPollInterval);
+                    callerStatusPollInterval = null;
+
+                    let answerSignal = data.signal_data;
+                    if (typeof answerSignal === 'string') {
+                        try { answerSignal = JSON.parse(answerSignal); } catch (_) {}
+                    }
+                    if (peer && answerSignal) {
+                        try { peer.signal(answerSignal); } catch (e) { console.warn('peer.signal answer err:', e); }
+                    }
+
+                    stopRingtone();
+                    hideOutgoingModal();
+                    showActiveCallOverlay(targetUserName, targetUserAvatar, callType);
+                    startDurationCounter();
+                } else if (data.status === 'rejected' || data.status === 'ended') {
+                    console.log('[WebRTC Caller Polling] Cuộc gọi bị từ chối hoặc kết thúc.');
+                    clearInterval(callerStatusPollInterval);
+                    callerStatusPollInterval = null;
+                    stopRingtone();
+                    hideOutgoingModal();
+                    showToast('Cuộc gọi đã bị từ chối.');
+                    cleanupCall();
+                }
+            } catch (_) {}
+        }, 1500);
+    }
+
     // --- INIT (Lắng nghe WebSocket + Polling Fallback) ---
     function init(userId) {
         startPendingCallPolling();
@@ -201,6 +247,7 @@ window.DongAnhWebRTC = (function () {
                     const data = await res.json();
                     if (data.status === 'success') {
                         currentCallId = data.call_id;
+                        startCallerStatusPolling(data.call_id);
                     } else {
                         throw new Error(data.message || 'Lỗi khởi tạo cuộc gọi');
                     }
@@ -462,6 +509,11 @@ window.DongAnhWebRTC = (function () {
         if (peer) {
             peer.destroy();
             peer = null;
+        }
+
+        if (callerStatusPollInterval) {
+            clearInterval(callerStatusPollInterval);
+            callerStatusPollInterval = null;
         }
 
         currentCallId = null;

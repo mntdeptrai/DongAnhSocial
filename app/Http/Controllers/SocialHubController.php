@@ -984,6 +984,9 @@ class SocialHubController extends Controller
             if ($call) {
                 $call->update(['status' => 'answered', 'started_at' => now()]);
             }
+            \Illuminate\Support\Facades\Cache::put("call_signal_answer_{$request->call_id}", $request->signal_data, 120);
+        } else {
+            \Illuminate\Support\Facades\Cache::put("call_signal_candidate_{$request->call_id}", $request->signal_data, 120);
         }
 
         try {
@@ -997,6 +1000,24 @@ class SocialHubController extends Controller
         }
 
         return response()->json(['status' => 'success']);
+    }
+
+    /**
+     * API Kiểm tra trạng thái cuộc gọi (dành cho Caller Polling)
+     */
+    public function getCallStatus($callId)
+    {
+        $call = CallLog::find($callId);
+        if (!$call) {
+            return response()->json(['status' => 'ended']);
+        }
+
+        $answerSignal = \Illuminate\Support\Facades\Cache::get("call_signal_answer_{$callId}");
+
+        return response()->json([
+            'status'      => $call->status,
+            'signal_data' => $answerSignal,
+        ]);
     }
 
     /**

@@ -98,6 +98,7 @@ Route::prefix('v1')->group(function () {
         Route::post('/messages', [SocialHubController::class, 'sendMessage']);
         Route::get('/social/unread-check', [SocialHubController::class, 'checkUnread']);
         Route::get('/social/call/pending', [SocialHubController::class, 'getPendingCall']);
+        Route::get('/social/call/status/{callId}', [SocialHubController::class, 'getCallStatus']);
         Route::get('/search/all', [SocialHubController::class, 'searchAll']);
 
         // ===================================================================
