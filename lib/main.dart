@@ -373,6 +373,8 @@ class _MainLayoutState extends State<MainLayout> with WidgetsBindingObserver {
       if (res['has_call'] == true && mounted && !_isShowingGlobalCallScreen) {
         _isShowingGlobalCallScreen = true;
         final callerName = (res['caller_name'] ?? 'Người dùng').toString();
+        final callerId = res['caller_id'] is int ? res['caller_id'] as int : int.tryParse(res['caller_id'].toString()) ?? 0;
+        final callId = res['call_id'] is int ? res['call_id'] as int : int.tryParse(res['call_id'].toString()) ?? 0;
         final isVideo = res['call_type'] == 'video';
 
         Navigator.push(
@@ -380,6 +382,9 @@ class _MainLayoutState extends State<MainLayout> with WidgetsBindingObserver {
           MaterialPageRoute(
             builder: (context) => ActiveCallScreen(
               friendName: callerName,
+              friendId: callerId,
+              callId: callId,
+              isCaller: false,
               isVideo: isVideo,
               onCallEnded: (duration) {
                 _isShowingGlobalCallScreen = false;
