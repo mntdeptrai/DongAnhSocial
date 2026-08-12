@@ -37,8 +37,41 @@ window.DongAnhWebRTC = (function () {
         return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
     }
 
-    // --- INIT (Lắng nghe channel WebSocket) ---
+    let pollCallInterval = null;
+
+    function startPendingCallPolling() {
+        if (pollCallInterval) return;
+        pollCallInterval = setInterval(async () => {
+            if (peer || currentCallId) return; // Nếu đang trong cuộc gọi thì bỏ qua
+            try {
+                const res = await fetch('/social/call/pending', {
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': getCsrf()
+                    }
+                });
+                if (!res.ok) return;
+                const data = await res.json();
+                if (data.has_call && !peer && !currentCallId) {
+                    console.log('[WebRTC Polling] Phát hiện cuộc gọi đến:', data);
+                    currentCallId = data.call_id;
+                    targetUserId = data.caller_id;
+                    targetUserName = data.caller_name;
+                    targetUserAvatar = data.caller_avatar;
+                    callType = data.call_type || 'audio';
+                    isCaller = false;
+
+                    showIncomingModal(targetUserName, targetUserAvatar, callType);
+                    playRingtone(false);
+                }
+            } catch (_) {}
+        }, 2000);
+    }
+
+    // --- INIT (Lắng nghe WebSocket + Polling Fallback) ---
     function init(userId) {
+        startPendingCallPolling();
+
         if (!window.Echo) {
             console.warn('[WebRTC] Laravel Echo chưa sẵn sàng, chờ 1s...');
             setTimeout(() => init(userId), 1000);
@@ -47,23 +80,27 @@ window.DongAnhWebRTC = (function () {
 
         console.log('[WebRTC] Lắng nghe cuộc gọi trên channel private: call.' + userId);
 
-        const ch = window.Echo.private('call.' + userId);
+        try {
+            const ch = window.Echo.private('call.' + userId);
 
-        ch.listen('.CallOffer', (e) => {
-            console.log('[WebRTC] Nhận CallOffer:', e);
-            handleIncomingCall(e);
-        });
+            ch.listen('.CallOffer', (e) => {
+                console.log('[WebRTC] Nhận CallOffer:', e);
+                handleIncomingCall(e);
+            });
 
-        // Nhận signal data (SDP answer hoặc ICE candidates) từ đối phương
-        ch.listen('.CallSignal', (e) => {
-            console.log('[WebRTC] Nhận CallSignal:', e);
-            handleRemoteSignal(e);
-        });
+            // Nhận signal data (SDP answer hoặc ICE candidates) từ đối phương
+            ch.listen('.CallSignal', (e) => {
+                console.log('[WebRTC] Nhận CallSignal:', e);
+                handleRemoteSignal(e);
+            });
 
-        ch.listen('.CallHangup', (e) => {
-            console.log('[WebRTC] Nhận CallHangup:', e);
-            handleRemoteHangup(e);
-        });
+            ch.listen('.CallHangup', (e) => {
+                console.log('[WebRTC] Nhận CallHangup:', e);
+                handleRemoteHangup(e);
+            });
+        } catch (err) {
+            console.warn('[WebRTC] Echo listen warning:', err);
+        }
     }
 
     /**

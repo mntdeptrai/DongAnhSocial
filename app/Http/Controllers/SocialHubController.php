@@ -892,9 +892,67 @@ class SocialHubController extends Controller
             \Illuminate\Support\Facades\Log::warning('CallOffer broadcast warning: ' . $e->getMessage());
         }
 
+        // Gửi FCM Push Notification cuộc gọi tới điện thoại người nhận
+        try {
+            $receiver = User::find($request->receiver_id);
+            if ($receiver && !empty($receiver->fcm_token)) {
+                $callTitle = $request->type === 'video' ? "📹 Cuộc gọi video từ {$caller->name}" : "📞 Cuộc gọi thoại từ {$caller->name}";
+                $callBody = "Nhấn để trả lời cuộc gọi đàm thoại từ {$caller->name}";
+                \App\Services\FcmService::sendNotification(
+                    $receiver->fcm_token,
+                    $callTitle,
+                    $callBody,
+                    [
+                        'type'          => 'incoming_call',
+                        'call_id'       => (string)$call->id,
+                        'caller_id'     => (string)$caller->id,
+                        'caller_name'   => (string)$caller->name,
+                        'caller_avatar' => (string)$callerAvatar,
+                        'call_type'     => (string)$request->type,
+                        'signal_data'   => (string)$request->signal_data,
+                    ]
+                );
+            }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('FCM Call Notification error: ' . $e->getMessage());
+        }
+
         return response()->json([
             'status'  => 'success',
             'call_id' => $call->id,
+        ]);
+    }
+
+    /**
+     * API Kiểm tra Cuộc gọi đến đang đổ chuông (dành cho Flutter App & Mobile Web)
+     */
+    public function getPendingCall(Request $request)
+    {
+        $userId = Auth::id() ?? session('user_id');
+        if (!$userId) {
+            return response()->json(['has_call' => false]);
+        }
+
+        $pendingCall = CallLog::where('receiver_id', $userId)
+            ->where('status', 'ringing')
+            ->where('created_at', '>=', now()->subSeconds(30))
+            ->latest()
+            ->first();
+
+        if (!$pendingCall) {
+            return response()->json(['has_call' => false]);
+        }
+
+        $caller = User::find($pendingCall->caller_id);
+        $callerAvatar = $caller && $caller->avatar ? asset($caller->avatar) : '👤';
+
+        return response()->json([
+            'has_call'      => true,
+            'call_id'       => $pendingCall->id,
+            'caller_id'     => $pendingCall->caller_id,
+            'caller_name'   => $caller ? $caller->name : 'Người dùng',
+            'caller_avatar' => $callerAvatar,
+            'call_type'     => $pendingCall->type,
         ]);
     }
 

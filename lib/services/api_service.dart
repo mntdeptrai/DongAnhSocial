@@ -1757,4 +1757,19 @@ class ApiService {
     }
     return {'success': false, 'message': 'Không thể cập nhật chứng nhận sao OCOP'};
   }
+
+  /// GET /social/call/pending — Kiểm tra có cuộc gọi thoại/video nào đang đến không
+  static Future<Map<String, dynamic>> checkPendingCall() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/social/call/pending'),
+        headers: _getHeaders(),
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data is Map<String, dynamic>) return data;
+      }
+    } catch (_) {}
+    return {'has_call': false};
+  }
 }

@@ -107,6 +107,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/social/call/signal', [SocialHubController::class, 'signalCall'])->name('social.call.signal');
     Route::post('/social/call/hangup', [SocialHubController::class, 'hangupCall'])->name('social.call.hangup');
     Route::get('/social/call/history', [SocialHubController::class, 'callHistory'])->name('social.call.history');
+    Route::get('/social/call/pending', [SocialHubController::class, 'getPendingCall'])->name('social.call.pending');
 
     
     // AI Food Tour Generation (authenticated and rate-limited)

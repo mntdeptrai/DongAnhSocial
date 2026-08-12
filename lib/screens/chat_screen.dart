@@ -26,10 +26,13 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     _startTimer();
   }
 
+  bool _isShowingCallScreen = false;
+
   void _startTimer() {
     _friendsTimer?.cancel();
-    _friendsTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
+    _friendsTimer = Timer.periodic(const Duration(seconds: 3), (timer) {
       _silentRefreshFriends();
+      _checkIncomingCall();
     });
   }
 
@@ -114,6 +117,31 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     if (mounted) {
       setState(() {
         _friends = friends;
+      });
+    }
+  }
+
+  Future<void> _checkIncomingCall() async {
+    if (_isShowingCallScreen || !ApiService.isAuthenticated) return;
+    final res = await ApiService.checkPendingCall();
+    if (res['has_call'] == true && mounted && !_isShowingCallScreen) {
+      _isShowingCallScreen = true;
+      final callerName = (res['caller_name'] ?? 'Người dùng').toString();
+      final isVideo = res['call_type'] == 'video';
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ActiveCallScreen(
+            friendName: callerName,
+            isVideo: isVideo,
+            onCallEnded: (duration) {
+              _isShowingCallScreen = false;
+            },
+          ),
+        ),
+      ).then((_) {
+        _isShowingCallScreen = false;
       });
     }
   }

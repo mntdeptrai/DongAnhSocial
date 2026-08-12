@@ -324,6 +324,7 @@ class _MainLayoutState extends State<MainLayout> with WidgetsBindingObserver {
     _activeRole = 'user';
 
     _fetchDynamicCounts();
+    _startCallPollTimer();
 
     // Cấu hình hiển thị Thông báo nổi (Heads-up Notification Banner) trên iOS & Android
     FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
@@ -357,6 +358,37 @@ class _MainLayoutState extends State<MainLayout> with WidgetsBindingObserver {
           context,
           MaterialPageRoute(builder: (context) => const ChatScreen()),
         ).then((_) => _fetchDynamicCounts());
+      }
+    });
+  }
+
+  Timer? _callPollTimer;
+  bool _isShowingGlobalCallScreen = false;
+
+  void _startCallPollTimer() {
+    _callPollTimer?.cancel();
+    _callPollTimer = Timer.periodic(const Duration(seconds: 3), (timer) async {
+      if (_isShowingGlobalCallScreen || !ApiService.isAuthenticated) return;
+      final res = await ApiService.checkPendingCall();
+      if (res['has_call'] == true && mounted && !_isShowingGlobalCallScreen) {
+        _isShowingGlobalCallScreen = true;
+        final callerName = (res['caller_name'] ?? 'Người dùng').toString();
+        final isVideo = res['call_type'] == 'video';
+
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ActiveCallScreen(
+              friendName: callerName,
+              isVideo: isVideo,
+              onCallEnded: (duration) {
+                _isShowingGlobalCallScreen = false;
+              },
+            ),
+          ),
+        ).then((_) {
+          _isShowingGlobalCallScreen = false;
+        });
       }
     });
   }
@@ -450,6 +482,7 @@ class _MainLayoutState extends State<MainLayout> with WidgetsBindingObserver {
 
   @override
   void dispose() {
+    _callPollTimer?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
