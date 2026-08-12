@@ -519,6 +519,7 @@
                             <option value="xuan-canh">📍 Đường Xuân Canh</option>
                             <option value="dan-di">📍 Đường Đản Dị</option>
                             <option value="mai-lam">📍 Đường Dốc Vân</option>
+                            <option value="duc-tu">📍 Đường Phía Nam Dục Tú</option>
                         </select>
                     </div>
                 </div>
@@ -746,7 +747,8 @@
                 { id: 'cao-lo', name: 'Đường Cao Lỗ', routeName: 'Đường Cao Lỗ', color: '#EC4899' },
                 { id: 'xuan-canh', name: 'Đường Xuân Canh', routeName: 'Đường Xuân Canh', color: '#8B5CF6' },
                 { id: 'dan-di', name: 'Đường Đản Dị', routeName: 'Đường Đản Dị', color: '#06B6D4' },
-                { id: 'mai-lam', name: 'Đường Dốc Vân', routeName: 'Đường Dốc Vân', color: '#10B981' }
+                { id: 'mai-lam', name: 'Đường Dốc Vân', routeName: 'Đường Dốc Vân', color: '#10B981' },
+                { id: 'duc-tu', name: 'Đường Phía Nam Dục Tú', routeName: 'Đường Phía Nam Dục Tú', color: '#F43F5E' }
             ],
 
             routes: @json($dbRoutes ?? []).length > 0 ? @json($dbRoutes) : [
@@ -858,6 +860,20 @@
                         [21.0735, 105.8770],
                         [21.0750, 105.8790]
                     ]
+                },
+                {
+                    id: 'route-phia-nam-duc-tu',
+                    name: 'Tuyến 9: Tuyến Đường 4.0 Phía Nam Dục Tú',
+                    length: '1.0km',
+                    color: '#F43F5E',
+                    villages: ['duc-tu'],
+                    animClass: 'route-path-animated-1',
+                    pathCoords: [
+                        [21.1145, 105.8940],
+                        [21.1160, 105.8955],
+                        [21.1175, 105.8970],
+                        [21.1190, 105.8985]
+                    ]
                 }
             ],
 
@@ -870,7 +886,8 @@
                     'cao-lo': 'Đường Cao Lỗ',
                     'xuan-canh': 'Đường Xuân Canh',
                     'dan-di': 'Đường Đản Dị',
-                    'mai-lam': 'Đường Dốc Vân'
+                    'mai-lam': 'Đường Dốc Vân',
+                    'duc-tu': 'Đường Phía Nam Dục Tú'
                 };
 
                 if (villageNameMap[loc.village]) {
@@ -928,7 +945,7 @@
                     const routeMap = {};
                     this.routes.forEach(r => { routeMap[r.id] = r.pathCoords; });
 
-                    const locsByVillage = { 'phu-loc': [], 'dong-anh-cum-3': [], 'duc-noi': [], 'viet-hung': [], 'cao-lo': [], 'xuan-canh': [], 'dan-di': [], 'mai-lam': [] };
+                    const locsByVillage = { 'phu-loc': [], 'dong-anh-cum-3': [], 'duc-noi': [], 'viet-hung': [], 'cao-lo': [], 'xuan-canh': [], 'dan-di': [], 'mai-lam': [], 'duc-tu': [] };
                     this.locations.forEach(loc => { if (locsByVillage[loc.village]) locsByVillage[loc.village].push(loc); });
 
                     function getPointOnPath(coords, t) {
@@ -952,7 +969,8 @@
                         'cao-lo': 'route-cao-lo',
                         'xuan-canh': 'route-xuan-canh',
                         'dan-di': 'route-dan-di',
-                        'mai-lam': 'route-doc-van'
+                        'mai-lam': 'route-doc-van',
+                        'duc-tu': 'route-phia-nam-duc-tu'
                     };
 
                     Object.keys(locsByVillage).forEach(vKey => {

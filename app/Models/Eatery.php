@@ -26,7 +26,8 @@ class Eatery extends Model
         'is_featured',
         'rating',
         'status',
-        'storytelling_data'
+        'storytelling_data',
+        'announcements'
     ];
 
     protected $casts = [

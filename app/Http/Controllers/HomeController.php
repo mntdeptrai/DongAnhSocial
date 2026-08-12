@@ -100,6 +100,7 @@ class HomeController extends Controller
                 'xuan-canh' => 'Đường Xuân Canh',
                 'dan-di' => 'Đường Đản Dị',
                 'mai-lam' => 'Đường Dốc Vân',
+                'duc-tu' => 'Đường Phía Nam Dục Tú',
             ];
             if (isset($vMap[$b->village_key])) {
                 $vName = $vMap[$b->village_key];
