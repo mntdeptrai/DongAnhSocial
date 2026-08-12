@@ -917,6 +917,9 @@ class SocialHubController extends Controller
             \Illuminate\Support\Facades\Log::warning('FCM Call Notification error: ' . $e->getMessage());
         }
 
+        // Lưu signal_data (SDP Offer) vào Cache 2 phút để Receiver dùng khi đàm thoại
+        \Illuminate\Support\Facades\Cache::put("call_signal_{$call->id}", $request->signal_data, 120);
+
         return response()->json([
             'status'  => 'success',
             'call_id' => $call->id,
@@ -945,6 +948,7 @@ class SocialHubController extends Controller
 
         $caller = User::find($pendingCall->caller_id);
         $callerAvatar = $caller && $caller->avatar ? asset($caller->avatar) : '👤';
+        $signalData = \Illuminate\Support\Facades\Cache::get("call_signal_{$pendingCall->id}");
 
         return response()->json([
             'has_call'      => true,
@@ -953,6 +957,7 @@ class SocialHubController extends Controller
             'caller_name'   => $caller ? $caller->name : 'Người dùng',
             'caller_avatar' => $callerAvatar,
             'call_type'     => $pendingCall->type,
+            'signal_data'   => $signalData,
         ]);
     }
 

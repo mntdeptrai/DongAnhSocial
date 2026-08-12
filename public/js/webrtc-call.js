@@ -61,6 +61,10 @@ window.DongAnhWebRTC = (function () {
                     callType = data.call_type || 'audio';
                     isCaller = false;
 
+                    if (data.signal_data) {
+                        window._pendingSignalData = data.signal_data;
+                    }
+
                     showIncomingModal(targetUserName, targetUserAvatar, callType);
                     playRingtone(false);
                 }
@@ -270,7 +274,15 @@ window.DongAnhWebRTC = (function () {
             setupPeerEvents();
 
             // Nhập SDP Offer từ Caller → simple-peer tự tạo Answer
-            peer.signal(window._pendingSignalData);
+            let offerSignal = window._pendingSignalData;
+            if (typeof offerSignal === 'string') {
+                try {
+                    offerSignal = JSON.parse(offerSignal);
+                } catch (_) {}
+            }
+            if (offerSignal) {
+                peer.signal(offerSignal);
+            }
             window._pendingSignalData = null;
 
             showActiveCallOverlay(targetUserName, targetUserAvatar, callType);
