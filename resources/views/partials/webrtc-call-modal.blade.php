@@ -185,6 +185,7 @@
     }
     .webrtc-toast.show { opacity: 1; transform: translateY(0); }
 </style>
+@endif
 
 <script src="https://cdn.jsdelivr.net/npm/pusher-js@8.4.0/dist/web/pusher.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/simple-peer@9.11.1/simplepeer.min.js"></script>
@@ -236,11 +237,9 @@
             })();
         }
 
-        // Init WebRTC for current logged in user
         var currentUserId = {{ Auth::id() ?? session('user_id') ?? 0 }};
         if (currentUserId && window.DongAnhWebRTC) {
             window.DongAnhWebRTC.init(currentUserId);
         }
     });
 </script>
-@endif
