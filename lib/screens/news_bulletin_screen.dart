@@ -35,12 +35,7 @@ class _NewsBulletinScreenState extends State<NewsBulletinScreen> {
     _fetchNewsfeed();
   }
 
-  @override
-  void dispose() {
-    _postController.dispose();
-    _titleController.dispose();
-    super.dispose();
-  }
+
 
   Future<void> _fetchNewsfeed() async {
     setState(() => _isLoading = true);

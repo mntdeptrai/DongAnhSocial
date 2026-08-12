@@ -133,7 +133,7 @@ class _EateryDetailScreenState extends State<EateryDetailScreen> {
     final String pImgUrl = pImgRaw.startsWith('http')
         ? pImgRaw
         : (pImgRaw.isNotEmpty
-            ? 'https://donganhdiscovery.xadonganh.com/' + (pImgRaw.startsWith('/') ? pImgRaw.substring(1) : pImgRaw)
+            ? 'https://donganhdiscovery.xadonganh.com/${pImgRaw.startsWith('/') ? pImgRaw.substring(1) : pImgRaw}'
             : 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=400&q=80');
 
     final int salesCount = int.tryParse(item['sales_count']?.toString() ?? item['sold_count']?.toString() ?? '0') ?? 0;
@@ -142,7 +142,7 @@ class _EateryDetailScreenState extends State<EateryDetailScreen> {
       if (price <= 0) return 'Liên hệ';
       final String str = price.toInt().toString();
       final String formatted = str.replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.');
-      return '${formatted}đ';
+      return '$formattedđ';
     }
 
     return Container(
@@ -152,7 +152,7 @@ class _EateryDetailScreenState extends State<EateryDetailScreen> {
         border: Border.all(color: const Color(0xFFE2E8F0)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 8,
             offset: const Offset(0, 3),
           ),
@@ -390,7 +390,7 @@ class _EateryDetailScreenState extends State<EateryDetailScreen> {
     final String fullImgUrl = rawPath.startsWith('http')
         ? rawPath
         : (rawPath.isNotEmpty
-            ? 'https://donganhdiscovery.xadonganh.com/' + (rawPath.startsWith('/') ? rawPath.substring(1) : rawPath)
+            ? 'https://donganhdiscovery.xadonganh.com/${rawPath.startsWith('/') ? rawPath.substring(1) : rawPath}'
             : 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=800&q=80');
 
     final double? lat = double.tryParse(eatery?['latitude']?.toString() ?? '');
@@ -445,7 +445,7 @@ class _EateryDetailScreenState extends State<EateryDetailScreen> {
                               )
                             else
                               Container(
-                                color: catColor.withOpacity(0.85),
+                                color: catColor.withValues(alpha: 0.85),
                                 child: Center(
                                   child: Text(catIcon, style: const TextStyle(fontSize: 70)),
                                 ),
@@ -801,7 +801,7 @@ class _EateryDetailScreenState extends State<EateryDetailScreen> {
                                                     child: Container(
                                                       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                                                       decoration: BoxDecoration(
-                                                        color: Colors.black.withOpacity(0.5),
+                                                        color: Colors.black.withValues(alpha: 0.5),
                                                         borderRadius: BorderRadius.circular(4),
                                                       ),
                                                       child: Text(
@@ -867,7 +867,7 @@ class _EateryDetailScreenState extends State<EateryDetailScreen> {
                                         final String revImgUrl = imgPath.startsWith('http')
                                             ? imgPath
                                             : (imgPath.isNotEmpty
-                                                ? 'https://donganhdiscovery.xadonganh.com/' + imgPath
+                                                ? 'https://donganhdiscovery.xadonganh.com/$imgPath'
                                                 : '');
 
                                         return Container(

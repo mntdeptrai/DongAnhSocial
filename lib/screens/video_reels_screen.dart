@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
-import '../widgets/squircle_helper.dart';
 
 class VideoReelsScreen extends StatefulWidget {
   const VideoReelsScreen({super.key});

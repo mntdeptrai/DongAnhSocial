@@ -1,3 +1,4 @@
+// ignore_for_file: deprecated_member_use
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../widgets/custom_loader.dart';
@@ -568,7 +569,7 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> with SingleTickerProvid
         border: Border.all(color: Colors.grey.shade200),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 10,
             offset: const Offset(0, 3),
           ),

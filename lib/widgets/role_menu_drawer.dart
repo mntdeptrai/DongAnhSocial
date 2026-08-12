@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+  import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../screens/my_orders_screen.dart';
 import '../screens/admin_dashboard_screen.dart';
@@ -169,73 +169,10 @@ class RoleMenuDrawer extends StatelessWidget {
                         );
                       },
                     ),
-                    const SizedBox(height: 12),
-                    const Text(
-                      'QUẢN TRỊ HỆ THỐNG',
-                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF64748B), letterSpacing: 0.8),
-                    ),
-                    const SizedBox(height: 8),
-                    _buildDrawerShortcut(
-                      icon: Icons.location_on_rounded,
-                      title: 'Quản Lý Địa Điểm & Cơ Sở',
-                      subtitle: 'Đăng ký cơ sở, ghim nổi bật & duyệt bản đồ số',
-                      color: const Color(0xFFDC2626),
-                      onTap: () {
-                        Navigator.pop(context);
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (_) => const AdminDashboardScreen(initialTabIndex: 1)),
-                        );
-                      },
-                    ),
-                    _buildDrawerShortcut(
-                      icon: Icons.school_rounded,
-                      title: 'Quản Lý Trường Học & Sáp Nhập',
-                      subtitle: 'Trường học, bản đồ giáo dục & tuyến tuyển sinh',
-                      color: const Color(0xFF0284C7),
-                      onTap: () {
-                        Navigator.pop(context);
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (_) => const AdminDashboardScreen(initialTabIndex: 2)),
-                        );
-                      },
-                    ),
-                    _buildDrawerShortcut(
-                      icon: Icons.shopping_bag_rounded,
-                      title: 'Quản Lý Gian Hàng',
-                      subtitle: 'Duyệt gian hàng OCOP, đặc sản & người bán',
-                      color: const Color(0xFF059669),
-                      onTap: () {
-                        Navigator.pop(context);
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (_) => const AdminDashboardScreen(initialTabIndex: 3)),
-                        );
-                      },
-                    ),
-                    _buildDrawerShortcut(
-                      icon: Icons.people_alt_rounded,
-                      title: 'Quản Lý Tài Khoản',
-                      subtitle: 'Phân quyền Admin/Seller/User, khóa & tạo user mới',
-                      color: const Color(0xFF8B5CF6),
-                      onTap: () {
-                        Navigator.pop(context);
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (_) => const AdminDashboardScreen(initialTabIndex: 4)),
-                        );
-                      },
-                    ),
                     const Divider(height: 24),
                   ],
 
-                  // Standard Consumer Services Section
-                  const Text(
-                    'TÍNH NĂNG ĐẦY ĐỦ NHƯ WEB',
-                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF64748B), letterSpacing: 0.8),
-                  ),
-                  const SizedBox(height: 10),
+
 
                   _buildDrawerShortcut(
                     icon: Icons.newspaper_rounded,

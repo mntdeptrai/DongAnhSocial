@@ -933,12 +933,16 @@ class ApiService {
   // CHAT: Bạn bè & Tin nhắn
   // =========================================================================
 
-  /// GET /friends — Danh sách bạn bè (cần đăng nhập)
-  static Future<List<dynamic>> getFriends() async {
+  /// GET /friends — Danh sách bạn bè / Tìm kiếm người dùng (cần đăng nhập)
+  static Future<List<dynamic>> getFriends({String? search}) async {
     try {
-      final response = await http.get(Uri.parse('$baseUrl/friends'), headers: _getHeaders());
+      final url = (search != null && search.isNotEmpty)
+          ? '$baseUrl/friends?q=${Uri.encodeComponent(search)}'
+          : '$baseUrl/friends';
+      final response = await http.get(Uri.parse(url), headers: _getHeaders());
       if (response.statusCode == 200) {
-        return jsonDecode(response.body);
+        final data = jsonDecode(response.body);
+        if (data is List) return data;
       }
     } catch (_) {}
     return [];
@@ -1117,6 +1121,20 @@ class ApiService {
       return response.statusCode == 200;
     } catch (_) {}
     return false;
+  }
+
+  /// PUT /admin/users/{id} — Cập nhật thông tin tài khoản người dùng
+  static Future<Map<String, dynamic>> updateUserWeb(int id, Map<String, dynamic> data) async {
+    try {
+      final response = await http.put(
+        Uri.parse('$baseUrl/admin/users/$id'),
+        headers: _getHeaders(),
+        body: jsonEncode(data),
+      );
+      return jsonDecode(response.body);
+    } catch (e) {
+      return {'success': false, 'message': 'Lỗi kết nối máy chủ: $e'};
+    }
   }
 
   /// GET /admin/dashboard — Lấy dữ liệu quản trị tổng quan đầy đủ
@@ -1636,6 +1654,8 @@ class ApiService {
     }
     return [];
   }
+
+
 
   /// POST /posts — Tạo bài viết mới lên Bản tin (Hỗ trợ Tải nhiều Ảnh & Video thật lên R2)
   static Future<Map<String, dynamic>> createPost({

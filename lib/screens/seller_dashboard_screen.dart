@@ -27,8 +27,8 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> with Sing
   final _bankNameController = TextEditingController();
   final _phoneController = TextEditingController();
 
-  bool _hasSmartphone = true;
-  bool _hasAttpCertificate = true;
+  final bool _hasSmartphone = true;
+  final bool _hasAttpCertificate = true;
 
   @override
   void initState() {
@@ -141,7 +141,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> with Sing
                 final imgUrl = imageCtrl.text.trim();
                 Navigator.pop(ctx);
                 final res = await ApiService.storeDish(name: name, price: price, description: desc, imageUrl: imgUrl.isNotEmpty ? imgUrl : null);
-                if (res['success'] == true) {
+                if (mounted && res['success'] == true) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text('🎉 ${res['message']}'), backgroundColor: const Color(0xFF10B981)),
                   );

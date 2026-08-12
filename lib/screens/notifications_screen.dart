@@ -183,10 +183,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                       }
 
                       return Container(
-                        color: isRead ? Colors.transparent : primaryColor.withOpacity(0.05),
+                        color: isRead ? Colors.transparent : primaryColor.withValues(alpha: 0.05),
                         child: ListTile(
                           leading: CircleAvatar(
-                            backgroundColor: iconColor.withOpacity(0.15),
+                            backgroundColor: iconColor.withValues(alpha: 0.15),
                             child: Icon(iconData, color: iconColor, size: 22),
                           ),
                           title: Text(

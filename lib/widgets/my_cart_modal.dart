@@ -52,7 +52,7 @@ class _MyCartModalState extends State<MyCartModal> {
       final res = await ApiService.getCart();
       if (mounted) {
         setState(() {
-          if (res is Map && res['success'] == true && res['data'] is List) {
+          if (res['success'] == true && res['data'] is List) {
             _cartItems = List<dynamic>.from(res['data']);
           } else {
             _cartItems = [];
@@ -200,7 +200,7 @@ class _MyCartModalState extends State<MyCartModal> {
                         style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: Color(0xFF0F172A), letterSpacing: 0.3),
                       ),
                       Text(
-                        '${_totalCartCount} sản phẩm trong giỏ',
+                        '$_totalCartCount sản phẩm trong giỏ',
                         style: const TextStyle(fontSize: 12, color: Color(0xFF64748B), fontWeight: FontWeight.w600),
                       ),
                     ],
@@ -309,7 +309,7 @@ class _MyCartModalState extends State<MyCartModal> {
                             final String imgRaw = item['image_path'] ?? item['image'] ?? item['avatar'] ?? '';
                             final String imgUrl = imgRaw.startsWith('http')
                                 ? imgRaw
-                                : (imgRaw.isNotEmpty ? 'https://donganhdiscovery.xadonganh.com/' + (imgRaw.startsWith('/') ? imgRaw.substring(1) : imgRaw) : '');
+                                : (imgRaw.isNotEmpty ? 'https://donganhdiscovery.xadonganh.com/${imgRaw.startsWith('/') ? imgRaw.substring(1) : imgRaw}' : '');
 
                             return Container(
                               margin: const EdgeInsets.only(bottom: 10),

@@ -188,7 +188,7 @@ class FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
       final items = await ApiService.getFeed();
       if (mounted) {
         setState(() {
-          _feedItems = (items is List) ? List<dynamic>.from(items) : [];
+          _feedItems = List<dynamic>.from(items);
 
           if (widget.targetPostId != null || (widget.targetTitle != null && widget.targetTitle!.isNotEmpty)) {
             final targetIdStr = widget.targetPostId?.toString();
@@ -232,7 +232,7 @@ class FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
       final eateries = await ApiService.getAllEateries();
       if (mounted) {
         setState(() {
-          _eateries = (eateries is List) ? List<dynamic>.from(eateries) : [];
+          _eateries = List<dynamic>.from(eateries);
           if (_eateries.isNotEmpty) {
             _selectedEateryId = _eateries[0]['id'];
           }
@@ -530,7 +530,7 @@ class FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
                                   children: [
                                     CircleAvatar(
                                       radius: 14,
-                                      backgroundColor: const Color(0xFF0EA5E9).withOpacity(0.1),
+                                      backgroundColor: const Color(0xFF0EA5E9).withValues(alpha: 0.1),
                                       child: Text(
                                         (comment['display_name'] ?? 'U').toString().substring(0, 1).toUpperCase(),
                                         style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF0EA5E9)),
@@ -597,7 +597,7 @@ class FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
 
                             if (res['success'] == true) {
                               textController.clear();
-                              Navigator.pop(context);
+                              if (context.mounted) Navigator.pop(context);
                               _loadFeed();
                             }
                           },
@@ -616,7 +616,7 @@ class FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    final primaryColor = const Color(0xFF0EA5E9);
+    const primaryColor = Color(0xFF0EA5E9);
 
     return Scaffold(
       appBar: AppBar(
@@ -684,7 +684,7 @@ class FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
       padding: const EdgeInsets.all(10),
       child: Card(
         elevation: 6,
-        shadowColor: const Color(0xFF0EA5E9).withOpacity(0.25),
+        shadowColor: const Color(0xFF0EA5E9).withValues(alpha: 0.25),
         shape: SquircleHelper.shape(
           radius: 22,
           side: BorderSide(color: const Color(0xFF0EA5E9).withValues(alpha: 0.2), width: 1.2),
@@ -783,7 +783,7 @@ class FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
                                     Text(
                                       'Chạm vào đây để tải lại',
                                       style: TextStyle(
-                                        color: Colors.white.withOpacity(0.6),
+                                        color: Colors.white.withValues(alpha: 0.6),
                                         fontSize: 10,
                                       ),
                                     ),
@@ -891,7 +891,7 @@ class FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
                               color: Colors.white,
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.08),
+                                  color: Colors.black.withValues(alpha: 0.08),
                                   blurRadius: 5,
                                   offset: const Offset(0, 2),
                                 ),
@@ -1136,7 +1136,7 @@ class FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
                 (item['image_path'] != null && item['image_path'].toString().isNotEmpty)
                     ? (item['image_path'].toString().startsWith('http')
                         ? item['image_path'].toString()
-                        : 'https://donganhdiscovery.xadonganh.com/' + (item['image_path'].toString().startsWith('/') ? item['image_path'].toString().substring(1) : item['image_path'].toString()))
+                        : 'https://donganhdiscovery.xadonganh.com/${item['image_path'].toString().startsWith('/') ? item['image_path'].toString().substring(1) : item['image_path'].toString()}')
                     : 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=400&q=60',
                 fit: BoxFit.cover,
                 filterQuality: FilterQuality.high,
@@ -1218,7 +1218,7 @@ class FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
                                 const SizedBox(height: 2),
                                 Text(
                                   item['created_at_human'] ?? 'Vừa xong',
-                                  style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 11),
+                                  style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 11),
                                 ),
                               ],
                             ),
@@ -1247,9 +1247,9 @@ class FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                           decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.5),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.white.withOpacity(0.2), width: 1),
+                            color: Colors.black.withValues(alpha: 0.5),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: Colors.white.withValues(alpha: 0.2), width: 1),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
@@ -1263,7 +1263,7 @@ class FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
                               const SizedBox(width: 6),
                               Text(
                                 '• ${item['eatery']['commune']}',
-                                style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 11),
+                                style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 11),
                               ),
                             ],
                           ),
@@ -1307,9 +1307,9 @@ class FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
                             child: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                               decoration: BoxDecoration(
-                                color: Colors.black.withOpacity(0.5),
+                                color: Colors.black.withValues(alpha: 0.5),
                                 borderRadius: BorderRadius.circular(20),
-                                border: Border.all(color: Colors.white.withOpacity(0.2)),
+                                border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
                               ),
                               child: Row(
                                 children: [
@@ -1330,9 +1330,9 @@ class FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
                             child: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                               decoration: BoxDecoration(
-                                color: Colors.black.withOpacity(0.5),
+                                color: Colors.black.withValues(alpha: 0.5),
                                 borderRadius: BorderRadius.circular(20),
-                                border: Border.all(color: Colors.white.withOpacity(0.2)),
+                                border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
                               ),
                               child: const Icon(Icons.share_outlined, size: 16, color: Colors.white),
                             ),
@@ -1362,7 +1362,7 @@ class FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
       decoration: BoxDecoration(
         color: bgColor,
         shape: BoxShape.circle,
-        border: Border.all(color: Colors.white.withOpacity(0.1)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
       ),
       child: IconButton(
         icon: Icon(icon, color: color, size: 20),
@@ -1383,9 +1383,9 @@ class FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
         margin: const EdgeInsets.only(right: 5),
         decoration: BoxDecoration(
-          color: Colors.black.withOpacity(0.4),
+          color: Colors.black.withValues(alpha: 0.4),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.white.withOpacity(0.2)),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,

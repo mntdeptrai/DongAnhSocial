@@ -11,7 +11,7 @@ class CartService {
     try {
       final cartRes = await ApiService.getCart();
       int totalQty = 0;
-      if (cartRes is Map && cartRes['success'] == true && cartRes['data'] is List) {
+      if (cartRes['success'] == true && cartRes['data'] is List) {
         final List items = cartRes['data'];
         for (var item in items) {
           final int q = item['quantity'] is int

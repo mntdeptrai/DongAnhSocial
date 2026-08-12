@@ -322,8 +322,8 @@ class TopNavBar extends StatelessWidget implements PreferredSizeWidget {
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
         decoration: SquircleHelper.decoration(
           radius: 12,
-          color: color.withOpacity(0.12),
-          borderSide: BorderSide(color: color.withOpacity(0.4), width: 1),
+          color: color.withValues(alpha: 0.12),
+          borderSide: BorderSide(color: color.withValues(alpha: 0.4), width: 1),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,

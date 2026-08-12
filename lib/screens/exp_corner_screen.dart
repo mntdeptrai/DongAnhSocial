@@ -187,7 +187,7 @@ class _ExpCornerScreenState extends State<ExpCornerScreen> {
                                   imgPath != null && imgPath.toString().isNotEmpty
                                       ? (imgPath.toString().startsWith('http')
                                           ? imgPath.toString()
-                                          : 'https://donganhdiscovery.xadonganh.com/' + (imgPath.toString().startsWith('/') ? imgPath.toString().substring(1) : imgPath.toString()))
+                                          : 'https://donganhdiscovery.xadonganh.com/${imgPath.toString().startsWith('/') ? imgPath.toString().substring(1) : imgPath.toString()}')
                                       : 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=400&q=60',
                                   width: double.infinity,
                                   height: 180,

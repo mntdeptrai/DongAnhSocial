@@ -399,14 +399,15 @@ class _UniversalSearchModalState extends State<UniversalSearchModal> {
                   )
                 : ElevatedButton.icon(
                     onPressed: () async {
+                      final messenger = ScaffoldMessenger.of(context);
                       final res = await ApiService.sendFriendRequest(user['id']);
-                      if (context.mounted) {
+                      if (mounted) {
                         if (res['success'] == true) {
                           setState(() {
                             user['friendship_status'] = 'pending_sent';
                           });
                         }
-                        ScaffoldMessenger.of(context).showSnackBar(
+                        messenger.showSnackBar(
                           SnackBar(
                             content: Text(res['message'] ?? 'Đã gửi lời mời kết bạn!'),
                             backgroundColor: res['success'] == true ? const Color(0xFF10B981) : Colors.red,

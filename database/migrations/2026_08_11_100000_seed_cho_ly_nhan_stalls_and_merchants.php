@@ -528,7 +528,7 @@ return new class extends Migration
                     'unit'          => $p['unit'],
                     'description'   => $descFull,
                     'image_path'    => null,
-                    'star_rating'   => '4 sao',
+                    'star_rating'   => null,
                     'created_at'    => now(),
                     'updated_at'    => now(),
                 ];

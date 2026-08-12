@@ -34,7 +34,7 @@ class _MyCheckinsScreenState extends State<MyCheckinsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final primaryColor = const Color(0xFF0EA5E9);
+    const primaryColor = Color(0xFF0EA5E9);
 
     return Scaffold(
       appBar: AppBar(
@@ -113,7 +113,7 @@ class _MyCheckinsScreenState extends State<MyCheckinsScreen> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey[200]!.withOpacity(0.4),
+            color: Colors.grey[200]!.withValues(alpha: 0.4),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -177,7 +177,7 @@ class _MyCheckinsScreenState extends State<MyCheckinsScreen> {
                 child: Image.network(
                   item['image_path'].toString().startsWith('http')
                       ? item['image_path']
-                      : 'https://donganhdiscovery.xadonganh.com/' + (item['image_path'].toString().startsWith('/') ? item['image_path'].toString().substring(1) : item['image_path'].toString()),
+                      : 'https://donganhdiscovery.xadonganh.com/${item['image_path'].toString().startsWith('/') ? item['image_path'].toString().substring(1) : item['image_path'].toString()}',
                   height: 160,
                   width: double.infinity,
                   fit: BoxFit.cover,

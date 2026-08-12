@@ -83,7 +83,7 @@ class AboutGuideScreen extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          CircleAvatar(backgroundColor: color.withOpacity(0.12), radius: 22, child: Icon(icon, color: color, size: 22)),
+          CircleAvatar(backgroundColor: color.withValues(alpha: 0.12), radius: 22, child: Icon(icon, color: color, size: 22)),
           const SizedBox(width: 14),
           Expanded(
             child: Column(

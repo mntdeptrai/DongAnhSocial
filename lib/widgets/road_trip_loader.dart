@@ -94,10 +94,10 @@ class _RoadTripLoaderState extends State<RoadTripLoader> with SingleTickerProvid
               child: Text(
                 activeMessage,
                 textAlign: TextAlign.center,
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w800,
-                  color: const Color(0xFF0F172A),
+                  color: Color(0xFF0F172A),
                   letterSpacing: -0.2,
                 ),
               ),
@@ -183,7 +183,7 @@ class _RoadTripPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2.5;
 
-    final double wheelRadius = 9;
+    const double wheelRadius = 9;
     final Offset frontWheel = Offset(scooterX + 44, scooterY + 12);
     final Offset backWheel = Offset(scooterX + 8, scooterY + 12);
 

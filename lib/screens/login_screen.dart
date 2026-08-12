@@ -56,10 +56,10 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ],
         ),
-        content: SingleChildScrollView(
+        content: const SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: const [
+            children: [
               Text('1. Mục Đích Thu Thập Thông Tin Cá Nhân', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
               SizedBox(height: 4),
               Text(
@@ -393,7 +393,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         const SizedBox(height: 14),
 
                         DropdownButtonFormField<String>(
-                          value: _selectedRole,
+                          initialValue: _selectedRole,
                           decoration: InputDecoration(
                             labelText: 'Vai trò tài khoản *',
                             prefixIcon: const Icon(Icons.badge_outlined, color: primaryColor),

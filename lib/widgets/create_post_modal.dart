@@ -31,13 +31,173 @@ class _CreatePostModalState extends State<CreatePostModal> {
   String _selectedPrivacy = 'Công khai';
   String? _selectedMusic;
   String? _selectedAlbum;
-  bool _isTaggingFriends = false;
+  List<dynamic> _taggedFriends = [];
   String? _locationTag;
 
   @override
   void dispose() {
     _textController.dispose();
     super.dispose();
+  }
+
+  void _openTagFriendsModal() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        String searchQuery = '';
+        List<dynamic> friendsList = [];
+        bool isLoadingFriends = true;
+        List<dynamic> tempSelected = List.from(_taggedFriends);
+
+        return StatefulBuilder(
+          builder: (modalCtx, setModalState) {
+            void loadFriends([String? query]) async {
+              setModalState(() => isLoadingFriends = true);
+              final res = await ApiService.getFriends(search: query);
+              if (modalCtx.mounted) {
+                setModalState(() {
+                  friendsList = res;
+                  isLoadingFriends = false;
+                });
+              }
+            }
+
+            if (isLoadingFriends && friendsList.isEmpty && searchQuery.isEmpty) {
+              loadFriends();
+            }
+
+            return Container(
+              height: MediaQuery.of(context).size.height * 0.75,
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(modalCtx).viewInsets.bottom + 16,
+                top: 16,
+                left: 16,
+                right: 16,
+              ),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              child: Column(
+                children: [
+                  Center(
+                    child: Container(
+                      width: 38,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade300,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        '🏷️ Gắn thẻ bạn bè',
+                        style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                      ),
+                      ElevatedButton(
+                        onPressed: () {
+                          setState(() {
+                            _taggedFriends = tempSelected;
+                          });
+                          Navigator.pop(modalCtx);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF0EA5E9),
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        ),
+                        child: Text(
+                          'Xong (${tempSelected.length})',
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+
+                  TextField(
+                    decoration: InputDecoration(
+                      hintText: '🔍 Tìm tên bạn bè, người dùng...',
+                      hintStyle: const TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
+                      filled: true,
+                      fillColor: const Color(0xFFF1F5F9),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                    ),
+                    onChanged: (val) {
+                      searchQuery = val;
+                      loadFriends(val);
+                    },
+                  ),
+                  const SizedBox(height: 12),
+
+                  Expanded(
+                    child: isLoadingFriends
+                        ? const Center(child: CircularProgressIndicator(color: Color(0xFF0EA5E9)))
+                        : friendsList.isEmpty
+                            ? const Center(
+                                child: Text('Không tìm thấy bạn bè nào', style: TextStyle(color: Color(0xFF64748B))),
+                              )
+                            : ListView.separated(
+                                itemCount: friendsList.length,
+                                separatorBuilder: (_, __) => const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                                itemBuilder: (ctx, idx) {
+                                  final friend = friendsList[idx];
+                                  final friendId = friend['id'];
+                                  final friendName = friend['name'] ?? 'Bạn bè';
+                                  final friendAvatar = ApiService.getAvatarUrl(friend, friendName);
+                                  final isChecked = tempSelected.any((f) => f['id'] == friendId);
+
+                                  return ListTile(
+                                    contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                                    leading: CircleAvatar(
+                                      backgroundImage: NetworkImage(friendAvatar),
+                                    ),
+                                    title: Text(friendName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                                    subtitle: Text(friend['email'] ?? friend['role'] ?? 'Thành viên', style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                                    trailing: Checkbox(
+                                      value: isChecked,
+                                      activeColor: const Color(0xFF0EA5E9),
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                                      onChanged: (val) {
+                                        setModalState(() {
+                                          if (val == true) {
+                                            tempSelected.add(friend);
+                                          } else {
+                                            tempSelected.removeWhere((f) => f['id'] == friendId);
+                                          }
+                                        });
+                                      },
+                                    ),
+                                    onTap: () {
+                                      setModalState(() {
+                                        if (isChecked) {
+                                          tempSelected.removeWhere((f) => f['id'] == friendId);
+                                        } else {
+                                          tempSelected.add(friend);
+                                        }
+                                      });
+                                    },
+                                  );
+                                },
+                              ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   Future<void> _pickMultiImages() async {
@@ -143,6 +303,10 @@ class _CreatePostModalState extends State<CreatePostModal> {
     });
 
     String fullDescription = text;
+    if (_taggedFriends.isNotEmpty) {
+      final names = _taggedFriends.map((f) => (f['name'] ?? 'Bạn bè').toString()).join(', ');
+      fullDescription += '\n🏷️ Cùng với $names';
+    }
     if (_locationTag != null) {
       fullDescription += '\n📍 tại $_locationTag';
     }
@@ -273,7 +437,7 @@ class _CreatePostModalState extends State<CreatePostModal> {
                     children: [
                       CircleAvatar(
                         radius: 22,
-                        backgroundColor: const Color(0xFF0EA5E9).withOpacity(0.1),
+                        backgroundColor: const Color(0xFF0EA5E9).withValues(alpha: 0.1),
                         backgroundImage: NetworkImage(avatarUrl),
                       ),
                       const SizedBox(width: 12),
@@ -329,6 +493,35 @@ class _CreatePostModalState extends State<CreatePostModal> {
                       ),
                     ],
                   ),
+                  if (_taggedFriends.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEFF6FF),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: const Color(0xFFBAE6FD)),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.local_offer_rounded, size: 14, color: Color(0xFF0EA5E9)),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              'Cùng với ${_taggedFriends.map((f) => f['name'] ?? 'Bạn bè').join(', ')}',
+                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF0284C7)),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          GestureDetector(
+                            onTap: () => setState(() => _taggedFriends.clear()),
+                            child: const Icon(Icons.close_rounded, size: 16, color: Color(0xFF0284C7)),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 14),
 
                   // Text Input ("Bạn đang nghĩ gì?")
@@ -518,14 +711,21 @@ class _CreatePostModalState extends State<CreatePostModal> {
                                 },
                               ),
                               const SizedBox(width: 8),
-                              _buildActionChip(
-                                icon: Icons.local_offer_rounded,
-                                label: _isTaggingFriends ? 'Đã gắn thẻ' : 'Với bạn bè',
-                                isSelected: _isTaggingFriends,
-                                onTap: () {
-                                  setState(() {
-                                    _isTaggingFriends = !_isTaggingFriends;
-                                  });
+                              Builder(
+                                builder: (context) {
+                                  String tagLabel = 'Với bạn bè';
+                                  if (_taggedFriends.length == 1) {
+                                    tagLabel = 'Cùng với ${_taggedFriends[0]['name']}';
+                                  } else if (_taggedFriends.length > 1) {
+                                    tagLabel = 'Cùng với ${_taggedFriends[0]['name']} +${_taggedFriends.length - 1}';
+                                  }
+
+                                  return _buildActionChip(
+                                    icon: Icons.local_offer_rounded,
+                                    label: tagLabel,
+                                    isSelected: _taggedFriends.isNotEmpty,
+                                    onTap: _openTagFriendsModal,
+                                  );
                                 },
                               ),
                             ],
@@ -691,7 +891,7 @@ class _CreatePostModalState extends State<CreatePostModal> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF0EA5E9).withOpacity(0.12) : const Color(0xFFFFFFFF),
+          color: isSelected ? const Color(0xFF0EA5E9).withValues(alpha: 0.12) : const Color(0xFFFFFFFF),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: isSelected ? const Color(0xFF0EA5E9) : const Color(0xFFE2E8F0),

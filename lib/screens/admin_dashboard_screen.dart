@@ -29,7 +29,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
   String _eaterySearchQuery = '';
   String _schoolSearchQuery = '';
   String _stallSearchQuery = '';
-  String _selectedCategoryFilter = 'Tất cả';
+  final String _selectedCategoryFilter = 'Tất cả';
 
   @override
   void initState() {
@@ -188,21 +188,253 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
                   final email = emailCtrl.text.trim();
                   final pass = passCtrl.text.trim();
                   final phone = phoneCtrl.text.trim();
+                  final messenger = ScaffoldMessenger.of(context);
                   Navigator.pop(ctx);
                   final res = await ApiService.storeUser(name: name, email: email, password: pass, role: selectedRole, phone: phone);
-                  if (res['success'] == true) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('🎉 ${res['message']}'), backgroundColor: const Color(0xFF10B981)),
-                    );
-                    _loadAdminData();
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('⚠️ ${res['message']}'), backgroundColor: Colors.red),
-                    );
+                  if (mounted) {
+                    if (res['success'] == true) {
+                      messenger.showSnackBar(
+                        SnackBar(content: Text('🎉 ${res['message']}'), backgroundColor: const Color(0xFF10B981)),
+                      );
+                      _loadAdminData();
+                    } else {
+                      messenger.showSnackBar(
+                        SnackBar(content: Text('⚠️ ${res['message']}'), backgroundColor: Colors.red),
+                      );
+                    }
                   }
                 }
               },
               child: const Text('Thêm User Mới', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showEditUserDialog(Map<String, dynamic> user) {
+    final nameCtrl = TextEditingController(text: user['name'] ?? '');
+    final emailCtrl = TextEditingController(text: user['email'] ?? '');
+    final phoneCtrl = TextEditingController(text: user['phone'] ?? '');
+    String selectedRole = user['role'] ?? 'user';
+    String selectedStatus = user['status'] ?? 'active';
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Row(
+            children: [
+              Icon(Icons.edit_note_rounded, color: Color(0xFFDC2626)),
+              SizedBox(width: 8),
+              Text('✏️ Chỉnh Sửa Tài Khoản', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: nameCtrl,
+                  decoration: const InputDecoration(labelText: 'Họ và Tên *'),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: emailCtrl,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: const InputDecoration(labelText: 'Email *'),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: phoneCtrl,
+                  keyboardType: TextInputType.phone,
+                  decoration: const InputDecoration(labelText: 'Số điện thoại'),
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  initialValue: selectedRole,
+                  decoration: const InputDecoration(labelText: 'Phân quyền (Role)'),
+                  items: const [
+                    DropdownMenuItem(value: 'user', child: Text('👤 Customer (Người dùng)')),
+                    DropdownMenuItem(value: 'seller', child: Text('🛍️ Seller (Chủ gian hàng)')),
+                    DropdownMenuItem(value: 'manager', child: Text('🏛️ Manager (Ban QL Chợ)')),
+                    DropdownMenuItem(value: 'admin', child: Text('🛡️ Administrator')),
+                  ],
+                  onChanged: (val) {
+                    if (val != null) setDialogState(() => selectedRole = val);
+                  },
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  initialValue: selectedStatus,
+                  decoration: const InputDecoration(labelText: 'Trạng thái tài khoản'),
+                  items: const [
+                    DropdownMenuItem(value: 'active', child: Text('🟢 Hoạt động (Active)')),
+                    DropdownMenuItem(value: 'disabled', child: Text('🔴 Khóa tài khoản (Disabled)')),
+                  ],
+                  onChanged: (val) {
+                    if (val != null) setDialogState(() => selectedStatus = val);
+                  },
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Hủy')),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFDC2626)),
+              onPressed: () async {
+                if (nameCtrl.text.trim().isNotEmpty && emailCtrl.text.trim().isNotEmpty) {
+                  final name = nameCtrl.text.trim();
+                  final email = emailCtrl.text.trim();
+                  final phone = phoneCtrl.text.trim();
+                  final messenger = ScaffoldMessenger.of(context);
+                  Navigator.pop(ctx);
+                  final res = await ApiService.updateUserWeb(user['id'], {
+                    'name': name,
+                    'email': email,
+                    'role': selectedRole,
+                    'phone': phone,
+                    'status': selectedStatus,
+                  });
+                  if (mounted) {
+                    if (res['id'] != null || res['success'] == true) {
+                      messenger.showSnackBar(
+                        const SnackBar(content: Text('🎉 Cập nhật tài khoản thành công!'), backgroundColor: Color(0xFF10B981)),
+                      );
+                      _loadAdminData();
+                    } else {
+                      messenger.showSnackBar(
+                        SnackBar(content: Text('⚠️ ${res['message'] ?? 'Lỗi cập nhật'}'), backgroundColor: Colors.red),
+                      );
+                    }
+                  }
+                }
+              },
+              child: const Text('Lưu Thay Đổi', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showEditEateryDialog(Map<String, dynamic> eatery) {
+    final nameCtrl = TextEditingController(text: eatery['name'] ?? '');
+    final addressCtrl = TextEditingController(text: eatery['address'] ?? '');
+    final phoneCtrl = TextEditingController(text: eatery['phone'] ?? '');
+    final hoursCtrl = TextEditingController(text: eatery['opening_hours'] ?? '06:00 - 22:00');
+    final priceCtrl = TextEditingController(text: eatery['price_range'] ?? '');
+    final imageCtrl = TextEditingController(text: eatery['image_path'] ?? eatery['image'] ?? '');
+    bool isFeatured = eatery['is_featured'] ?? false;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Row(
+            children: [
+              Icon(Icons.edit_location_alt_rounded, color: Color(0xFFDC2626)),
+              SizedBox(width: 8),
+              Text('✏️ Chỉnh Sửa Địa Điểm', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: nameCtrl,
+                  decoration: const InputDecoration(labelText: 'Tên Cơ sở / Địa điểm *'),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: addressCtrl,
+                  decoration: const InputDecoration(labelText: 'Địa chỉ đầy đủ *'),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: phoneCtrl,
+                        keyboardType: TextInputType.phone,
+                        decoration: const InputDecoration(labelText: 'Số điện thoại'),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: TextField(
+                        controller: hoursCtrl,
+                        decoration: const InputDecoration(labelText: 'Giờ mở cửa'),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: priceCtrl,
+                  decoration: const InputDecoration(labelText: 'Mức giá tham khảo'),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: imageCtrl,
+                  decoration: const InputDecoration(labelText: 'URL Ảnh đại diện cơ sở'),
+                ),
+                const SizedBox(height: 8),
+                CheckboxListTile(
+                  title: const Text('⭐ Đánh dấu địa điểm Nổi bật', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                  value: isFeatured,
+                  contentPadding: EdgeInsets.zero,
+                  activeColor: const Color(0xFFDC2626),
+                  onChanged: (val) => setDialogState(() => isFeatured = val ?? false),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Hủy')),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFDC2626)),
+              onPressed: () async {
+                if (nameCtrl.text.trim().isNotEmpty && addressCtrl.text.trim().isNotEmpty) {
+                  final name = nameCtrl.text.trim();
+                  final address = addressCtrl.text.trim();
+                  final phone = phoneCtrl.text.trim();
+                  final hours = hoursCtrl.text.trim();
+                  final price = priceCtrl.text.trim();
+                  final imgUrl = imageCtrl.text.trim();
+
+                  final messenger = ScaffoldMessenger.of(context);
+                  Navigator.pop(ctx);
+                  final res = await ApiService.updateEatery(eatery['id'], {
+                    'name': name,
+                    'address': address,
+                    'phone': phone,
+                    'opening_hours': hours,
+                    'price_range': price,
+                    'is_featured': isFeatured,
+                    if (imgUrl.isNotEmpty) 'image_url': imgUrl,
+                  });
+
+                  if (mounted) {
+                    if (res['eatery'] != null || res['success'] == true) {
+                      messenger.showSnackBar(
+                        const SnackBar(content: Text('🎉 Cập nhật địa điểm thành công!'), backgroundColor: Color(0xFF10B981)),
+                      );
+                      _loadAdminData();
+                    } else {
+                      messenger.showSnackBar(
+                        SnackBar(content: Text('⚠️ ${res['message'] ?? 'Lỗi cập nhật'}'), backgroundColor: Colors.red),
+                      );
+                    }
+                  }
+                }
+              },
+              child: const Text('Lưu Thay Đổi', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
             ),
           ],
         ),
@@ -380,6 +612,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
                   final imgUrl = imageCtrl.text.trim();
 
                   Navigator.pop(ctx);
+                  final messenger = ScaffoldMessenger.of(context);
                   final res = await ApiService.storeEatery(
                     name: name,
                     categoryId: 1,
@@ -394,8 +627,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
                     imageUrl: imgUrl.isNotEmpty ? imgUrl : null,
                   );
 
-                  if (res['success'] == true) {
-                    ScaffoldMessenger.of(context).showSnackBar(
+                  if (mounted && res['success'] == true) {
+                    messenger.showSnackBar(
                       SnackBar(content: Text('🎉 ${res['message']}'), backgroundColor: const Color(0xFF10B981)),
                     );
                     _loadAdminData();
@@ -450,63 +683,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
       });
       await ApiService.deleteEatery(id);
     }
-  }
-
-  void _deleteReview(int index) async {
-    final review = _reviewsList[index];
-    final int id = review['id'] is int ? review['id'] : (int.tryParse(review['id']?.toString() ?? '0') ?? 0);
-
-    setState(() {
-      _reviewsList.removeAt(index);
-    });
-
-    if (id > 0) {
-      await ApiService.deleteReview(id);
-    }
-  }
-
-  void _showAddCategoryDialog() {
-    final nameCtrl = TextEditingController();
-    final descCtrl = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Thêm Danh mục Mới', style: TextStyle(fontWeight: FontWeight.bold)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: nameCtrl,
-              decoration: const InputDecoration(labelText: 'Tên danh mục', hintText: 'Ví dụ: Cà Phê & Trà Sữa'),
-            ),
-            const SizedBox(height: 10),
-            TextField(
-              controller: descCtrl,
-              decoration: const InputDecoration(labelText: 'Mô tả ngắn', hintText: 'Các địa điểm cà phê chill'),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Hủy')),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFDC2626)),
-            onPressed: () async {
-              if (nameCtrl.text.trim().isNotEmpty) {
-                final name = nameCtrl.text.trim();
-                final desc = descCtrl.text.trim();
-                Navigator.pop(ctx);
-                final success = await ApiService.createCategory(name, desc, '📍');
-                if (success) {
-                  _loadAdminData();
-                }
-              }
-            },
-            child: const Text('Thêm Danh Mục', style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
-    );
   }
 
   void _handleBack() {
@@ -768,9 +944,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
       return name.contains(q) || email.contains(q);
     }).toList();
 
-    final totalUsers = _usersList.length;
+    final totalUsers = _stats['total_users'] ?? _usersList.length;
     final adminUsers = _usersList.where((u) => u['role'] == 'admin').length;
-    final sellerUsers = _usersList.where((u) => u['role'] == 'seller' || u['role'] == 'manager').length;
+    final sellerUsers = _stats['total_sellers'] ?? _usersList.where((u) => u['role'] == 'seller' || u['role'] == 'manager').length;
     final customerUsers = _usersList.where((u) => u['role'] == 'user' || u['role'] == null).length;
 
     return Column(
@@ -918,6 +1094,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
                             ],
                           ),
                         ),
+                      ),
+                      IconButton(
+                        constraints: const BoxConstraints(),
+                        padding: const EdgeInsets.all(4),
+                        icon: const Icon(Icons.edit_rounded, color: Color(0xFF0284C7), size: 20),
+                        tooltip: 'Chỉnh sửa user',
+                        onPressed: () => _showEditUserDialog(user),
                       ),
                       IconButton(
                         constraints: const BoxConstraints(),
@@ -1080,6 +1263,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
                         onPressed: () => _toggleFeatured(index),
                       ),
                       IconButton(
+                        icon: const Icon(Icons.edit_location_alt_rounded, color: Color(0xFF0284C7)),
+                        tooltip: 'Chỉnh sửa địa điểm',
+                        onPressed: () => _showEditEateryDialog(eatery),
+                      ),
+                      IconButton(
                         icon: const Icon(Icons.delete_outline_rounded, color: Colors.red),
                         tooltip: 'Xóa địa điểm',
                         onPressed: () => _deleteEatery(index),
@@ -1097,93 +1285,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
 
   // =========================================================================
   // TAB 4: 🏷️ DANH MỤC & ĐÁNH GIÁ (REVIEWS MODERATION)
-  // =========================================================================
-  Widget _buildCategoriesAndReviewsTab(Color crimsonColor) {
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text('Danh Mục Hệ Thống', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
-            ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: crimsonColor,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              onPressed: _showAddCategoryDialog,
-              icon: const Icon(Icons.add, size: 16, color: Colors.white),
-              label: const Text('Thêm Danh Mục', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
-            ),
-          ],
-        ),
-        const SizedBox(height: 10),
 
-        // Categories List
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: _categoriesList.map((cat) {
-              return Container(
-                margin: const EdgeInsets.only(right: 10),
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.grey.shade200),
-                ),
-                child: Row(
-                  children: [
-                    Text(cat['icon'] ?? '📍', style: const TextStyle(fontSize: 16)),
-                    const SizedBox(width: 8),
-                    Text(cat['name'] ?? '', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                  ],
-                ),
-              );
-            }).toList(),
-          ),
-        ),
-        const SizedBox(height: 24),
-
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text('Duyệt Đánh Giá Bài Viết (${_reviewsList.length})', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
-            const Text('Mới nhất', style: TextStyle(fontSize: 12, color: Colors.grey)),
-          ],
-        ),
-        const SizedBox(height: 10),
-
-        // Reviews List
-        ListView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: _reviewsList.length,
-          itemBuilder: (context, index) {
-            final rev = _reviewsList[index];
-            return Card(
-              margin: const EdgeInsets.only(bottom: 10),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              child: ListTile(
-                title: Row(
-                  children: [
-                    Text(rev['user_name'] ?? 'Khách hàng', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                    const SizedBox(width: 8),
-                    Text('⭐ ${rev['rating']}', style: const TextStyle(fontSize: 12, color: Colors.orange, fontWeight: FontWeight.bold)),
-                  ],
-                ),
-                subtitle: Text(rev['comment'] ?? '', style: const TextStyle(fontSize: 12, color: Color(0xFF334155))),
-                trailing: IconButton(
-                  icon: const Icon(Icons.delete_outline_rounded, color: Colors.red, size: 20),
-                  onPressed: () => _deleteReview(index),
-                ),
-              ),
-            );
-          },
-        ),
-      ],
-    );
-  }
 
   // =========================================================================
   // TAB 3: 🏫 QUẢN LÝ TRƯỜNG HỌC & SÁP NHẬP

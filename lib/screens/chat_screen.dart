@@ -120,7 +120,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    final primaryColor = const Color(0xFF0EA5E9);
+    const primaryColor = Color(0xFF0EA5E9);
     final isGuest = !ApiService.isAuthenticated;
 
     if (isGuest) {
@@ -479,7 +479,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> with SingleTickerPr
 
   @override
   Widget build(BuildContext context) {
-    final primaryColor = const Color(0xFF0EA5E9);
+    const primaryColor = Color(0xFF0EA5E9);
     final currentUserId = ApiService.currentUser?['id'];
 
     final bodyContent = Column(
@@ -499,7 +499,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> with SingleTickerPr
                               color: primaryColor.withValues(alpha: 0.1),
                               shape: BoxShape.circle,
                             ),
-                            child: Icon(Icons.chat_bubble_outline, size: 48, color: primaryColor),
+                            child: const Icon(Icons.chat_bubble_outline, size: 48, color: primaryColor),
                           ),
                           const SizedBox(height: 12),
                           Text(
@@ -766,164 +766,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> with SingleTickerPr
     );
   }
 
-  void _openSharedPostModal(BuildContext context, String messageText) {
-    String title = messageText;
-    String link = '';
 
-    final lines = messageText.split('\n');
-    for (var line in lines) {
-      if (line.contains('http')) {
-        link = line.substring(line.indexOf('http')).trim();
-      }
-    }
-
-    title = title
-        .replaceAll('📰 [Chia sẻ bài viết]', '')
-        .replaceAll('📸 [Check-in Đông Anh]', '')
-        .replaceAll('📸 [Check-in]', '')
-        .replaceAll(RegExp(r'🔗.*'), '')
-        .trim();
-
-    if (title.isEmpty) title = 'Bài viết từ Đông Anh Social';
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (modalCtx) {
-        return Container(
-          decoration: const BoxDecoration(
-            color: Color(0xFF0F172A),
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.white24,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  const CircleAvatar(
-                    backgroundColor: Color(0xFF0EA5E9),
-                    radius: 16,
-                    child: Icon(Icons.newspaper_rounded, color: Colors.white, size: 18),
-                  ),
-                  const SizedBox(width: 10),
-                  const Expanded(
-                    child: Text(
-                      'Chi Tiết Bài Viết Chia Sẻ',
-                      style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close, color: Colors.white70),
-                    onPressed: () => Navigator.pop(modalCtx),
-                  ),
-                ],
-              ),
-              const Divider(color: Color(0xFF334155), height: 24),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1E293B),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFF334155)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Row(
-                      children: [
-                        Icon(Icons.format_quote_rounded, color: Color(0xFF0EA5E9), size: 24),
-                        SizedBox(width: 6),
-                        Text('Nội dung bài viết:', style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold)),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      title,
-                      style: const TextStyle(color: Colors.white, fontSize: 15, height: 1.5, fontWeight: FontWeight.w600),
-                    ),
-                    if (link.isNotEmpty) ...[
-                      const SizedBox(height: 14),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF0EA5E9).withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: const Color(0xFF0EA5E9)),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.link_rounded, color: Color(0xFF0EA5E9), size: 16),
-                            const SizedBox(width: 6),
-                            Expanded(
-                              child: Text(
-                                link,
-                                style: const TextStyle(color: Color(0xFF38BDF8), fontSize: 11),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.pop(modalCtx),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.white,
-                        side: const BorderSide(color: Color(0xFF475569)),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                      child: const Text('Đóng'),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    flex: 2,
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        Navigator.pop(modalCtx);
-                        _navigateToSharedPost(context, messageText);
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF0EA5E9),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                      icon: const Icon(Icons.arrow_forward_rounded, size: 18),
-                      label: const Text('Xem trên Bảng Tin', style: TextStyle(fontWeight: FontWeight.bold)),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
 
   void _navigateToSharedPost(BuildContext context, String messageText) {
     final bool isCheckIn = messageText.contains('Check-in');

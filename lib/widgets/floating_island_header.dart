@@ -1,8 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import '../services/api_service.dart';
 import '../services/cart_service.dart';
-import 'squircle_helper.dart';
 
 class FloatingIslandHeader extends StatelessWidget implements PreferredSizeWidget {
   final int currentIndex;
@@ -35,9 +33,6 @@ class FloatingIslandHeader extends StatelessWidget implements PreferredSizeWidge
 
   @override
   Widget build(BuildContext context) {
-    final user = ApiService.currentUser;
-    final userRole = user?['role'] ?? 'user';
-
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -133,66 +128,6 @@ class FloatingIslandHeader extends StatelessWidget implements PreferredSizeWidge
               ),
             ),
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildRoleIslandBadge(BuildContext context, String role) {
-    IconData icon = Icons.space_dashboard_rounded;
-    String label = 'Dashboard';
-    Color color = const Color(0xFF0EA5E9);
-
-    if (role == 'seller') {
-      icon = Icons.storefront_rounded;
-      label = 'Gian Hàng';
-      color = const Color(0xFF059669);
-    } else if (role == 'principal') {
-      icon = Icons.school_rounded;
-      label = 'Trường Học';
-      color = const Color(0xFF0284C7);
-    } else if (role == 'manager') {
-      icon = Icons.admin_panel_settings_rounded;
-      label = 'BQL Chợ';
-      color = const Color(0xFF4F46E5);
-    } else if (role == 'admin') {
-      icon = Icons.dashboard_customize_rounded;
-      label = 'Admin';
-      color = const Color(0xFF8B5CF6);
-    }
-
-    return GestureDetector(
-      onTap: () {
-        if (onRoleDashboardTap != null) {
-          onRoleDashboardTap!(role);
-        } else {
-          Scaffold.of(context).openDrawer();
-        }
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [color.withValues(alpha: 0.15), color.withValues(alpha: 0.25)],
-          ),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: color.withValues(alpha: 0.5), width: 1.2),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 15, color: color),
-            const SizedBox(width: 4),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w900,
-                color: color,
-              ),
-            ),
-          ],
         ),
       ),
     );

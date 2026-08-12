@@ -125,7 +125,7 @@ class _PrincipalDashboardScreenState extends State<PrincipalDashboardScreen> {
                       radius: 20,
                       color: const Color(0xFF0284C7),
                       boxShadow: [
-                        BoxShadow(color: const Color(0xFF0284C7).withOpacity(0.25), blurRadius: 10, offset: const Offset(0, 4))
+                        BoxShadow(color: const Color(0xFF0284C7).withValues(alpha: 0.25), blurRadius: 10, offset: const Offset(0, 4))
                       ],
                     ),
                     child: Column(

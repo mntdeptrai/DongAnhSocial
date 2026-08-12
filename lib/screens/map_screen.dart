@@ -200,7 +200,7 @@ class _LoginCheckinModalState extends State<_LoginCheckinModal> {
                       isGuest ? _guestNameController.text : null,
                       _imagePath,
                     );
-                    if (mounted) {
+                    if (mounted && context.mounted) {
                       setState(() {
                         _isSending = false;
                       });
@@ -548,7 +548,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin, Wi
     final String imagePath = eatery['image_path'] ?? '';
     final String fullImgUrl = imagePath.startsWith('http')
         ? imagePath
-        : (imagePath.isNotEmpty ? 'https://donganhdiscovery.xadonganh.com/' + imagePath : '');
+        : (imagePath.isNotEmpty ? 'https://donganhdiscovery.xadonganh.com/$imagePath' : '');
 
     showModalBottomSheet(
       context: context,
@@ -787,7 +787,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin, Wi
               guestName: guestName,
               imagePath: imagePath,
             );
-            if (mounted) {
+            if (mounted && context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(res['message'] ?? 'Thành công'),
@@ -803,7 +803,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin, Wi
 
   @override
   Widget build(BuildContext context) {
-    final primaryColor = const Color(0xFF0EA5E9);
+    const primaryColor = Color(0xFF0EA5E9);
     final groupedData = _groupEateriesByCategory();
 
     // Build map markers
@@ -873,7 +873,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin, Wi
                     width: 32 * _pulseAnimation.value,
                     height: 32 * _pulseAnimation.value,
                     decoration: BoxDecoration(
-                      color: Colors.blue.withOpacity(0.35 / _pulseAnimation.value),
+                      color: Colors.blue.withValues(alpha: 0.35 / _pulseAnimation.value),
                       shape: BoxShape.circle,
                     ),
                   ),
@@ -1131,7 +1131,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin, Wi
                                                 Container(
                                                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                                                   decoration: BoxDecoration(
-                                                    color: color.withOpacity(0.12),
+                                                    color: color.withValues(alpha: 0.12),
                                                     borderRadius: BorderRadius.circular(10),
                                                   ),
                                                   child: Text(
@@ -1167,7 +1167,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin, Wi
                                               final String img = eat['image_path'] ?? '';
                                               final String thumbUrl = img.startsWith('http')
                                                   ? img
-                                                  : (img.isNotEmpty ? 'https://donganhdiscovery.xadonganh.com/' + img : '');
+                                                  : (img.isNotEmpty ? 'https://donganhdiscovery.xadonganh.com/$img' : '');
 
                                               final double? lat = double.tryParse(eat['latitude']?.toString() ?? '');
                                               final double? lng = double.tryParse(eat['longitude']?.toString() ?? '');
@@ -1182,7 +1182,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin, Wi
                                                     child: Container(
                                                       width: 42,
                                                       height: 42,
-                                                      color: color.withOpacity(0.1),
+                                                      color: color.withValues(alpha: 0.1),
                                                       child: thumbUrl.isNotEmpty
                                                           ? Image.network(
                                                               thumbUrl,

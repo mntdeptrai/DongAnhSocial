@@ -21,7 +21,7 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
   bool _isLoadingMarket = true;
 
   String _searchQuery = '';
-  String _selectedFilter = 'Tất cả';
+  final String _selectedFilter = 'Tất cả';
 
   // Synchronized Cart State
   final Map<String, Map<String, dynamic>> _cartItems = {};
@@ -44,7 +44,7 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
   Future<void> _fetchCartData() async {
     try {
       final res = await ApiService.getCart();
-      if (res is Map && res['success'] == true && res['data'] is List) {
+      if (res['success'] == true && res['data'] is List) {
         final List items = res['data'];
         final Map<String, Map<String, dynamic>> loadedCart = {};
         for (var item in items) {
@@ -75,7 +75,7 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
       final res = await ApiService.getAllEateries();
       if (mounted) {
         setState(() {
-          _foodEateries = (res is List) ? List<dynamic>.from(res) : [];
+          _foodEateries = List<dynamic>.from(res);
           _isLoadingFood = false;
         });
       }
@@ -93,12 +93,11 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
   Future<void> _fetchMarketData() async {
     setState(() => _isLoadingMarket = true);
     try {
-      final markets = await ApiService.getEateries('dong-anh-market');
       final products = await ApiService.getMarketProducts();
 
       if (mounted) {
         setState(() {
-          _marketProducts = (products is List) ? List<dynamic>.from(products) : [];
+          _marketProducts = List<dynamic>.from(products);
           _isLoadingMarket = false;
         });
       }
@@ -412,7 +411,7 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
         ),
         const SizedBox(height: 12),
 
-        ...eateries.map((item) => _buildEateryCard(item)).toList(),
+        ...eateries.map((item) => _buildEateryCard(item)),
       ],
     );
   }
@@ -656,7 +655,7 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> with SingleTickerProv
       if (s.startsWith('http')) {
         imgUrl = s;
       } else {
-        imgUrl = 'https://donganhdiscovery.xadonganh.com/' + (s.startsWith('/') ? s.substring(1) : s);
+        imgUrl = 'https://donganhdiscovery.xadonganh.com/${s.startsWith('/') ? s.substring(1) : s}';
       }
     } else {
       // Clean agricultural product fallback photo
