@@ -37,6 +37,13 @@ window.DongAnhWebRTC = (function () {
         return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
     }
 
+    function isValidWebRTCSignal(signalData) {
+        if (!signalData) return false;
+        const str = typeof signalData === 'string' ? signalData : JSON.stringify(signalData);
+        if (str.includes('mobile-') || str.includes('placeholder')) return false;
+        return true;
+    }
+
     let pollCallInterval = null;
 
     function startPendingCallPolling() {
@@ -117,7 +124,7 @@ window.DongAnhWebRTC = (function () {
                     if (typeof answerSignal === 'string') {
                         try { answerSignal = JSON.parse(answerSignal); } catch (_) {}
                     }
-                    if (peer && answerSignal) {
+                    if (peer && answerSignal && isValidWebRTCSignal(answerSignal)) {
                         try { peer.signal(answerSignal); } catch (e) { console.warn('peer.signal answer err:', e); }
                     }
 
@@ -134,7 +141,7 @@ window.DongAnhWebRTC = (function () {
                         if (typeof iceSignal === 'string') {
                             try { iceSignal = JSON.parse(iceSignal); } catch (_) {}
                         }
-                        if (peer && iceSignal) {
+                        if (peer && iceSignal && isValidWebRTCSignal(iceSignal)) {
                             try {
                                 console.log('[WebRTC Polling] Áp dụng remote ICE candidate');
                                 peer.signal(iceSignal);
@@ -356,8 +363,12 @@ window.DongAnhWebRTC = (function () {
                     offerSignal = JSON.parse(offerSignal);
                 } catch (_) {}
             }
-            if (offerSignal) {
-                peer.signal(offerSignal);
+            if (offerSignal && isValidWebRTCSignal(offerSignal)) {
+                try {
+                    peer.signal(offerSignal);
+                } catch (e) {
+                    console.warn('[WebRTC] Signal offer parse skipped:', e);
+                }
             }
             window._pendingSignalData = null;
 
@@ -393,8 +404,10 @@ window.DongAnhWebRTC = (function () {
         if (!peer || e.call_id !== currentCallId) return;
         try {
             const signalData = typeof e.signal_data === 'string' ? JSON.parse(e.signal_data) : e.signal_data;
-            console.log('[WebRTC] Áp dụng remote signal:', signalData.type || 'candidate');
-            peer.signal(signalData);
+            if (isValidWebRTCSignal(signalData)) {
+                console.log('[WebRTC] Áp dụng remote signal:', signalData.type || 'candidate');
+                peer.signal(signalData);
+            }
 
             // Nếu là answer → caller nhận được, chuyển sang overlay active
             if (signalData.type === 'answer' && isCaller) {
@@ -442,7 +455,12 @@ window.DongAnhWebRTC = (function () {
 
         peer.on('error', (err) => {
             console.error('[WebRTC] Peer Error:', err);
-            showToast('Lỗi kết nối: ' + err.message);
+            const msg = err.message || '';
+            if (msg.includes('mobile-') || msg.includes('placeholder') || msg.includes('SessionDescription')) {
+                console.warn('[WebRTC] Skipping non-standard WebRTC error for mobile connection.');
+                return;
+            }
+            showToast('Lỗi kết nối: ' + msg);
         });
 
         peer.on('close', () => {

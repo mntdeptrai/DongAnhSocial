@@ -1774,7 +1774,7 @@ class ApiService {
   }
 
   /// POST /social/call/initiate — Khởi tạo cuộc gọi tới người nhận
-  static Future<Map<String, dynamic>> initiateCall(int receiverId, String type) async {
+  static Future<Map<String, dynamic>> initiateCall(int receiverId, String type, {String? signalData}) async {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/social/call/initiate'),
@@ -1782,7 +1782,7 @@ class ApiService {
         body: jsonEncode({
           'receiver_id': receiverId,
           'type': type,
-          'signal_data': '{"type":"offer","sdp":"mobile-placeholder"}',
+          'signal_data': signalData ?? '{"type":"offer","sdp":""}',
         }),
       );
       if (response.statusCode == 200) {
@@ -1793,16 +1793,16 @@ class ApiService {
     return {'status': 'error', 'message': 'Không thể khởi tạo cuộc gọi'};
   }
 
-  /// POST /social/call/signal — Gửi answer signal (đánh dấu đã nhận cuộc gọi)
-  static Future<Map<String, dynamic>> answerCall(int callId, int callerId) async {
+  /// POST /social/call/signal — Gửi signal (SDP answer / ICE candidate)
+  static Future<Map<String, dynamic>> sendSignal(int callId, int targetUserId, String signalData) async {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/social/call/signal'),
         headers: _getHeaders(),
         body: jsonEncode({
           'call_id': callId,
-          'target_user_id': callerId,
-          'signal_data': '{"type":"answer","sdp":"mobile-answer-placeholder"}',
+          'target_user_id': targetUserId,
+          'signal_data': signalData,
         }),
       );
       if (response.statusCode == 200) {
@@ -1811,6 +1811,14 @@ class ApiService {
       }
     } catch (_) {}
     return {'status': 'error'};
+  }
+
+  /// POST /social/call/signal — Gửi answer signal (đánh dấu đã nhận cuộc gọi)
+  static Future<Map<String, dynamic>> answerCall(int callId, int callerId, {String? signalData}) async {
+    if (signalData != null) {
+      return sendSignal(callId, callerId, signalData);
+    }
+    return sendSignal(callId, callerId, '{"type":"answer","sdp":""}');
   }
 
   /// POST /social/call/hangup — Cúp máy hoặc từ chối cuộc gọi

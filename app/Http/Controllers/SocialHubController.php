@@ -1024,8 +1024,10 @@ class SocialHubController extends Controller
         $user = Auth::user() ?? User::find(session('user_id'));
         $isCaller = $user && $call->caller_id == $user->id;
 
-        // Lấy SDP answer (chỉ caller cần)
+        // Lấy SDP signal (Caller lấy SDP Answer, Receiver lấy SDP Offer)
+        $offerSignal = \Illuminate\Support\Facades\Cache::get("call_signal_{$callId}");
         $answerSignal = \Illuminate\Support\Facades\Cache::get("call_signal_answer_{$callId}");
+        $targetSignal = $isCaller ? $answerSignal : $offerSignal;
 
         // Lấy ICE candidates của bên đối diện
         // Caller lấy ICE từ receiver, Receiver lấy ICE từ caller
@@ -1043,7 +1045,7 @@ class SocialHubController extends Controller
 
         return response()->json([
             'status'         => $call->status,
-            'signal_data'    => $answerSignal,
+            'signal_data'    => $targetSignal,
             'ice_candidates' => $newIce,
         ]);
     }
