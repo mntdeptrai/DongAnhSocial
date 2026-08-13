@@ -987,11 +987,12 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
     final configuration = <String, dynamic>{
       'iceServers': [
         {'urls': 'stun:stun.l.google.com:19302'},
-        {'urls': 'stun:stun1.l.google.com:19302'},
-        {'urls': 'stun:stun2.l.google.com:19302'},
-        {'urls': 'stun:stun3.l.google.com:19302'},
-        {'urls': 'stun:stun4.l.google.com:19302'},
-      ]
+        {'urls': 'stun:openrelay.metered.ca:80'},
+        {'urls': 'turn:openrelay.metered.ca:80', 'username': 'openrelayproject', 'credential': 'openrelayproject'},
+        {'urls': 'turn:openrelay.metered.ca:443', 'username': 'openrelayproject', 'credential': 'openrelayproject'},
+        {'urls': 'turn:openrelay.metered.ca:443?transport=tcp', 'username': 'openrelayproject', 'credential': 'openrelayproject'},
+      ],
+      'iceCandidatePoolSize': 10,
     };
 
     try {
@@ -1024,6 +1025,23 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
           _remoteStream = stream;
           _remoteRenderer.srcObject = stream;
         });
+      };
+
+      _peerConnection?.onIceConnectionState = (state) {
+        debugPrint('[WebRTC] ICE Connection State: $state');
+        if (state == RTCIceConnectionState.RTCIceConnectionStateConnected ||
+            state == RTCIceConnectionState.RTCIceConnectionStateCompleted) {
+          if (mounted && !_isConnected) {
+            setState(() => _isConnected = true);
+            _startDurationTimer();
+          }
+        } else if (state == RTCIceConnectionState.RTCIceConnectionStateFailed) {
+          debugPrint('[WebRTC] ICE Connection FAILED - P2P không thể kết nối!');
+        }
+      };
+
+      _peerConnection?.onConnectionState = (state) {
+        debugPrint('[WebRTC] Peer Connection State: $state');
       };
 
       final mediaConstraints = <String, dynamic>{
@@ -1113,8 +1131,7 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
     }
 
     if (!mounted) return;
-    setState(() => _isConnected = true);
-    _startDurationTimer();
+    // Don't set _isConnected here — let onIceConnectionState handle it
     _startStatusPolling();
   }
 
@@ -1145,8 +1162,7 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
             debugPrint('[WebRTC] Set remote answer error: $e');
           }
         }
-        setState(() => _isConnected = true);
-        _startDurationTimer();
+        // Don't set _isConnected here — let onIceConnectionState handle it
       }
 
       // Receiver: Nếu chưa có Remote Description -> Thử nạp SDP Offer từ Caller nếu có sẵn

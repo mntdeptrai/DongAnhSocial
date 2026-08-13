@@ -982,6 +982,8 @@ class SocialHubController extends Controller
         $isCaller = $call && $call->caller_id == $user->id;
         $role = $isCaller ? 'caller' : 'receiver';
 
+        \Illuminate\Support\Facades\Log::info("[WebRTC signalCall] User={$user->id} Role={$role} CallId={$request->call_id} SignalType=" . ($signalJson['type'] ?? 'ice_candidate'));
+
         if (isset($signalJson['type']) && $signalJson['type'] === 'answer') {
             // SDP Answer từ Receiver
             if ($call) {
@@ -1042,6 +1044,8 @@ class SocialHubController extends Controller
         $allIce = \Illuminate\Support\Facades\Cache::get($iceCacheKey, []);
         $newIce = array_slice($allIce, $offset);
         \Illuminate\Support\Facades\Cache::put($offsetKey, count($allIce), 120);
+
+        \Illuminate\Support\Facades\Log::info("[WebRTC getCallStatus] User=" . ($user ? $user->id : 'null') . " IsCaller=" . ($isCaller ? 'Y' : 'N') . " CallId={$callId} Status={$call->status} HasSignal=" . ($targetSignal ? 'Y' : 'N') . " NewICE=" . count($newIce));
 
         return response()->json([
             'status'         => $call->status,
