@@ -267,11 +267,8 @@ class FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
       if (mounted) {
         setState(() {
           _eateries = List<dynamic>.from(eateries);
-          if (_eateries.isNotEmpty) {
-            _selectedEateryId = _eateries[0]['id'];
-          }
+          // Mặc định không tự gán cơ sở — chỉ gán khi người dùng chủ động chọn
         });
-        _autoDetectCurrentLocationAndSelectEatery();
       }
     } catch (e) {
       debugPrint('Eateries API fetch error: $e');
