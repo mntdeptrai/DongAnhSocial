@@ -522,10 +522,4 @@ class AdminApiController extends Controller
             'star_rating' => $starRating,
         ]);
     }
-
-        $user->status = $user->status === 'active' ? 'disabled' : 'active';
-        $user->save();
-
-        return response()->json(['success' => true, 'status' => $user->status]);
-    }
 }

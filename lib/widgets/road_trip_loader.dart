@@ -1,15 +1,25 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
-/// 🛵💨 Ultra Premium Road Trip Loader — Phượt Vi Vu Đông Anh 2026
+/// 🌄☀️🌇🌙 Time-of-Day Period Enum for RoadTripLoader
+enum RoadTripTimePeriod {
+  morning,   // 05:00 - 10:59 (Bình minh rạng rỡ - Amber Gold & Sky Cyan)
+  noon,      // 11:00 - 13:59 (Trưa nắng vàng - Bright Azure & Solar Yellow)
+  afternoon, // 14:00 - 17:59 (Hoàng hôn lãng mạn - Sunset Magenta & Orange Coral)
+  night,     // 18:00 - 04:59 (Đêm lung linh ngàn sao - Cosmic Midnight Indigo & Neon Purple)
+}
+
+/// 🛵💨 Ultra Premium Road Trip Loader — Phượt Vi Vu Đông Anh Theo Khung Giờ 2026
 class RoadTripLoader extends StatefulWidget {
   final String? message;
-  final Color primaryColor;
+  final Color? primaryColor;
+  final DateTime? forcedTime; // Hỗ trợ test hoặc ép khung giờ cụ thể
 
   const RoadTripLoader({
     super.key,
     this.message,
-    this.primaryColor = const Color(0xFF0EA5E9),
+    this.primaryColor,
+    this.forcedTime,
   });
 
   @override
@@ -20,14 +30,6 @@ class _RoadTripLoaderState extends State<RoadTripLoader> with TickerProviderStat
   late AnimationController _controller;
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
-
-  final List<String> _travelQuotes = [
-    '🛵 Đang cùng hội bạn phượt vi vu Đông Anh...',
-    '🍲 Sắp tới điểm dừng chân quán ngon đặc sản...',
-    '🏰 Đang băng qua cổng thành di sản Cổ Loa...',
-    '🌾 Khám phá Chợ số & Nông sản OCOP Đông Anh...',
-    '✨ Đang tối ưu kết nối dữ liệu siêu tốc 4K...',
-  ];
 
   @override
   void initState() {
@@ -42,7 +44,7 @@ class _RoadTripLoaderState extends State<RoadTripLoader> with TickerProviderStat
       duration: const Duration(milliseconds: 2000),
     )..repeat(reverse: true);
 
-    _pulseAnimation = Tween<double>(begin: 0.95, end: 1.05).animate(
+    _pulseAnimation = Tween<double>(begin: 0.96, end: 1.04).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
   }
@@ -54,10 +56,27 @@ class _RoadTripLoaderState extends State<RoadTripLoader> with TickerProviderStat
     super.dispose();
   }
 
+  RoadTripTimePeriod _getPeriod(DateTime now) {
+    final hour = now.hour;
+    if (hour >= 5 && hour < 11) {
+      return RoadTripTimePeriod.morning;
+    } else if (hour >= 11 && hour < 14) {
+      return RoadTripTimePeriod.noon;
+    } else if (hour >= 14 && hour < 18) {
+      return RoadTripTimePeriod.afternoon;
+    } else {
+      return RoadTripTimePeriod.night;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final now = widget.forcedTime ?? DateTime.now();
+    final period = _getPeriod(now);
+    final theme = _RoadTripTheme.fromPeriod(period, overridePrimary: widget.primaryColor);
+
     final String activeMessage = widget.message ??
-        _travelQuotes[(DateTime.now().second ~/ 3) % _travelQuotes.length];
+        theme.quotes[(now.second ~/ 3) % theme.quotes.length];
 
     return Center(
       child: ScaleTransition(
@@ -66,22 +85,22 @@ class _RoadTripLoaderState extends State<RoadTripLoader> with TickerProviderStat
           padding: const EdgeInsets.all(24),
           margin: const EdgeInsets.symmetric(horizontal: 24),
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
+            gradient: LinearGradient(
+              colors: theme.gradientColors,
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
             borderRadius: BorderRadius.circular(32),
-            border: Border.all(color: widget.primaryColor.withValues(alpha: 0.4), width: 1.5),
+            border: Border.all(color: theme.accentColor.withValues(alpha: theme.isDark ? 0.5 : 0.6), width: 1.5),
             boxShadow: [
               BoxShadow(
-                color: widget.primaryColor.withValues(alpha: 0.35),
+                color: theme.accentColor.withValues(alpha: theme.isDark ? 0.38 : 0.25),
                 blurRadius: 36,
                 spreadRadius: 2,
                 offset: const Offset(0, 12),
               ),
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.5),
+                color: theme.isDark ? Colors.black.withValues(alpha: 0.55) : Colors.black.withValues(alpha: 0.08),
                 blurRadius: 20,
                 offset: const Offset(0, 8),
               ),
@@ -90,13 +109,13 @@ class _RoadTripLoaderState extends State<RoadTripLoader> with TickerProviderStat
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Top Glowing Pill Badge
+              // Top Glowing Time-of-Day Pill Badge
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
                 decoration: BoxDecoration(
-                  color: widget.primaryColor.withValues(alpha: 0.2),
+                  color: theme.badgeBgColor,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: widget.primaryColor.withValues(alpha: 0.5)),
+                  border: Border.all(color: theme.accentColor.withValues(alpha: 0.5)),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -104,17 +123,24 @@ class _RoadTripLoaderState extends State<RoadTripLoader> with TickerProviderStat
                     Container(
                       width: 8,
                       height: 8,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFF10B981),
+                      decoration: BoxDecoration(
+                        color: theme.statusDotColor,
                         shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: theme.statusDotColor.withValues(alpha: 0.8),
+                            blurRadius: 6,
+                            spreadRadius: 1,
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: 8),
                     Text(
-                      'ĐÔNG ANH LIVE SMART',
+                      theme.badgeText,
                       style: TextStyle(
-                        color: widget.primaryColor,
-                        fontSize: 10,
+                        color: theme.badgeTextColor,
+                        fontSize: 11,
                         fontWeight: FontWeight.w900,
                         letterSpacing: 0.8,
                       ),
@@ -125,17 +151,18 @@ class _RoadTripLoaderState extends State<RoadTripLoader> with TickerProviderStat
 
               const SizedBox(height: 14),
 
-              // Custom Painter Canvas for Road & Riding Scooter Friends
+              // Custom Painter Canvas for Road, Celestial Sky & Vespa Scooter
               SizedBox(
                 width: 240,
-                height: 120,
+                height: 125,
                 child: AnimatedBuilder(
                   animation: _controller,
                   builder: (context, child) {
                     return CustomPaint(
                       painter: _RoadTripPainter(
                         progress: _controller.value,
-                        primaryColor: widget.primaryColor,
+                        period: period,
+                        theme: theme,
                       ),
                     );
                   },
@@ -144,21 +171,28 @@ class _RoadTripLoaderState extends State<RoadTripLoader> with TickerProviderStat
 
               const SizedBox(height: 16),
 
-              // Animated Travel Message Banner with Shimmer Effect
+              // Animated Travel Message Banner
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.08),
+                  color: theme.bannerBgColor,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
+                  border: Border.all(color: theme.accentColor.withValues(alpha: 0.3)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: theme.isDark ? 0.2 : 0.05),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
                 child: Text(
                   activeMessage,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
-                    color: Colors.white,
+                    color: theme.textColor,
                     height: 1.3,
                   ),
                 ),
@@ -171,11 +205,137 @@ class _RoadTripLoaderState extends State<RoadTripLoader> with TickerProviderStat
   }
 }
 
+/// 🎨 Time-of-Day Visual Theme Configuration
+class _RoadTripTheme {
+  final List<Color> gradientColors;
+  final Color accentColor;
+  final Color badgeTextColor;
+  final Color badgeBgColor;
+  final Color statusDotColor;
+  final Color textColor;
+  final Color bannerBgColor;
+  final Color skyBgColor;
+  final bool isDark;
+  final String badgeText;
+  final List<String> quotes;
+
+  _RoadTripTheme({
+    required this.gradientColors,
+    required this.accentColor,
+    required this.badgeTextColor,
+    required this.badgeBgColor,
+    required this.statusDotColor,
+    required this.textColor,
+    required this.bannerBgColor,
+    required this.skyBgColor,
+    required this.isDark,
+    required this.badgeText,
+    required this.quotes,
+  });
+
+  factory _RoadTripTheme.fromPeriod(RoadTripTimePeriod period, {Color? overridePrimary}) {
+    switch (period) {
+      case RoadTripTimePeriod.morning:
+        final accent = overridePrimary ?? const Color(0xFFD97706);
+        return _RoadTripTheme(
+          gradientColors: const [Color(0xFFFFFBEB), Color(0xFFFEF3C7), Color(0xFFFDE68A)],
+          accentColor: accent,
+          badgeTextColor: const Color(0xFF92400E),
+          badgeBgColor: const Color(0xFFFEF3C7),
+          statusDotColor: const Color(0xFF10B981),
+          textColor: const Color(0xFF1E293B),
+          bannerBgColor: Colors.white.withValues(alpha: 0.8),
+          skyBgColor: const Color(0xFFBAE6FD).withValues(alpha: 0.4),
+          isDark: false,
+          badgeText: '🌅 BÌNH MINH • ĐÔNG ANH LIVE',
+          quotes: const [
+            '🌅 Bình minh rực rỡ, phượt vi vu Đông Anh...',
+            '🍲 Ghé ăn bún mạch Trạ & bánh chưng Lỗ Khê...',
+            '🏰 Đang băng qua cổng thành Cổ Loa sáng sớm...',
+            '🌾 Khám phá Chợ số & Nông sản OCOP Đông Anh...',
+            '✨ Đang nạp dữ liệu chuyến đi ngày mới...',
+          ],
+        );
+
+      case RoadTripTimePeriod.noon:
+        final accent = overridePrimary ?? const Color(0xFF0284C7);
+        return _RoadTripTheme(
+          gradientColors: const [Color(0xFFF0F9FF), Color(0xFFE0F2FE), Color(0xFFBAE6FD)],
+          accentColor: accent,
+          badgeTextColor: const Color(0xFF0369A1),
+          badgeBgColor: const Color(0xFFE0F2FE),
+          statusDotColor: const Color(0xFFFACC15),
+          textColor: const Color(0xFF0F172A),
+          bannerBgColor: Colors.white.withValues(alpha: 0.85),
+          skyBgColor: const Color(0xFF7DD3FC).withValues(alpha: 0.35),
+          isDark: false,
+          badgeText: '☀️ NẮNG TRƯA • ĐÔNG ANH LIVE',
+          quotes: const [
+            '☀️ Nắng trưa rạng rỡ ghé đầm sen thưởng trà...',
+            '🍲 Trạm dừng chân ẩm thực sinh thái Cổ Loa...',
+            '🛵 Vi vu dạo quanh làng nghề mây tre đan...',
+            '🌾 Sắp tới gian hàng OCOP Đông Anh uy tín...',
+            '✨ Đang tối ưu kết nối dữ liệu tốc độ cao...',
+          ],
+        );
+
+      case RoadTripTimePeriod.afternoon:
+        final accent = overridePrimary ?? const Color(0xFFE11D48);
+        return _RoadTripTheme(
+          gradientColors: const [Color(0xFFFFF1F2), Color(0xFFFCE7F3), Color(0xFFFBCFE8)],
+          accentColor: accent,
+          badgeTextColor: const Color(0xFF9F1239),
+          badgeBgColor: const Color(0xFFFFE4E6),
+          statusDotColor: const Color(0xFFFB923C),
+          textColor: const Color(0xFF1E293B),
+          bannerBgColor: Colors.white.withValues(alpha: 0.85),
+          skyBgColor: const Color(0xFFFDBA74).withValues(alpha: 0.35),
+          isDark: false,
+          badgeText: '🌇 HOÀNG HÔN • ĐÔNG ANH LIVE',
+          quotes: const [
+            '🌇 Hoàng hôn tuyệt đẹp trên sông Hoàng Giang...',
+            '📸 Check-in sống ảo hoàng hôn thành Cổ Loa...',
+            '☕ Thưởng trà chiều tại không gian sinh thái...',
+            '🛵 Lướt nhẹ qua những con đường rợp bóng cây...',
+            '✨ Đang tải nhanh danh sách điểm đến hoàng hôn...',
+          ],
+        );
+
+      case RoadTripTimePeriod.night:
+        final accent = overridePrimary ?? const Color(0xFFA855F7);
+        return _RoadTripTheme(
+          gradientColors: const [Color(0xFF0F172A), Color(0xFF1E1B4B), Color(0xFF312E81)],
+          accentColor: accent,
+          badgeTextColor: const Color(0xFFE9D5FF),
+          badgeBgColor: const Color(0xFFA855F7).withValues(alpha: 0.2),
+          statusDotColor: const Color(0xFFA855F7),
+          textColor: Colors.white,
+          bannerBgColor: Colors.white.withValues(alpha: 0.1),
+          skyBgColor: Colors.transparent,
+          isDark: true,
+          badgeText: '🌙 ĐÊM PHỐ CỔ • ĐÔNG ANH LIVE',
+          quotes: const [
+            '🌙 Đêm phố cổ lung linh ánh đèn huyền ảo...',
+            '🍢 Khám phá ẩm thực đêm & đồ nướng Cổ Loa...',
+            '✨ Dạo bước dưới bầu trời ngàn sao Đông Anh...',
+            '🎧 Vi vu phố đêm chill cùng âm nhạc...',
+            '🚀 Đang truyền dữ liệu siêu tốc 4K về đêm...',
+          ],
+        );
+    }
+  }
+}
+
 class _RoadTripPainter extends CustomPainter {
   final double progress;
-  final Color primaryColor;
+  final RoadTripTimePeriod period;
+  final _RoadTripTheme theme;
 
-  _RoadTripPainter({required this.progress, required this.primaryColor});
+  _RoadTripPainter({
+    required this.progress,
+    required this.period,
+    required this.theme,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -184,35 +344,39 @@ class _RoadTripPainter extends CustomPainter {
 
     // 1. Draw Glowing Background Neon Aura
     final auraPaint = Paint()
-      ..color = primaryColor.withValues(alpha: 0.12)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 20);
+      ..color = theme.accentColor.withValues(alpha: 0.18)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 22);
     canvas.drawCircle(Offset(w / 2, h / 2), 65, auraPaint);
 
-    // 2. Draw Moving Stars & Sparkles in sky
-    final starPaint = Paint()..color = const Color(0xFF38BDF8);
-    for (int i = 0; i < 6; i++) {
-      double starX = ((i * 45) - (progress * 60)) % (w + 20) - 10;
-      double starY = 10.0 + (i * 6) % 30;
-      double starRadius = 1.5 + (i % 3) * 0.8;
-      canvas.drawCircle(Offset(starX, starY), starRadius, starPaint..color = Colors.white.withValues(alpha: 0.8));
-    }
+    // 2. Draw Celestial Sky Objects (Sun / Moon / Stars / Rays)
+    _drawSkyElements(canvas, size);
 
     // 3. Draw Cloud Silhouettes
+    final cloudColor = period == RoadTripTimePeriod.afternoon
+        ? const Color(0xFFF472B6).withValues(alpha: 0.25)
+        : (period == RoadTripTimePeriod.night
+            ? Colors.white.withValues(alpha: 0.08)
+            : Colors.white.withValues(alpha: 0.2));
+
     final cloudPaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.15)
+      ..color = cloudColor
       ..style = PaintingStyle.fill;
 
     for (int i = 0; i < 3; i++) {
       double cloudX = ((i * 95) - (progress * 45)) % (w + 40) - 20;
-      double cloudY = 20.0 + (i * 7);
+      double cloudY = 18.0 + (i * 7);
       canvas.drawCircle(Offset(cloudX, cloudY), 11, cloudPaint);
       canvas.drawCircle(Offset(cloudX + 8, cloudY - 4), 9, cloudPaint);
       canvas.drawCircle(Offset(cloudX + 15, cloudY), 10, cloudPaint);
     }
 
     // 4. Draw Background Heritage Monuments / Ancient Trees
+    final treeColor = period == RoadTripTimePeriod.night
+        ? const Color(0xFF1E293B)
+        : const Color(0xFF334155);
+
     final treePaint = Paint()
-      ..color = const Color(0xFF334155)
+      ..color = treeColor
       ..style = PaintingStyle.fill;
 
     for (int i = 0; i < 4; i++) {
@@ -236,13 +400,17 @@ class _RoadTripPainter extends CustomPainter {
       Offset(0, h - 24),
       Offset(w, h - 24),
       Paint()
-        ..color = primaryColor.withValues(alpha: 0.6)
+        ..color = theme.accentColor.withValues(alpha: 0.7)
         ..strokeWidth = 2,
     );
 
     // Animated Dashed Golden Lane Line
+    final dashColor = period == RoadTripTimePeriod.night
+        ? const Color(0xFFA855F7)
+        : const Color(0xFFF59E0B);
+
     final dashPaint = Paint()
-      ..color = const Color(0xFFF59E0B)
+      ..color = dashColor
       ..strokeWidth = 3
       ..strokeCap = StrokeCap.round;
 
@@ -260,7 +428,7 @@ class _RoadTripPainter extends CustomPainter {
 
     // Speed Blur Trail Lines behind Vespa
     final speedTrailPaint = Paint()
-      ..color = primaryColor.withValues(alpha: 0.4)
+      ..color = theme.accentColor.withValues(alpha: 0.45)
       ..strokeWidth = 2
       ..strokeCap = StrokeCap.round;
 
@@ -275,7 +443,7 @@ class _RoadTripPainter extends CustomPainter {
       ..color = const Color(0xFF0F172A)
       ..style = PaintingStyle.fill;
     final rimPaint = Paint()
-      ..color = const Color(0xFF38BDF8)
+      ..color = theme.accentColor
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2.5;
 
@@ -306,7 +474,7 @@ class _RoadTripPainter extends CustomPainter {
 
     // 8. Draw Vespa Body
     final bodyPaint = Paint()
-      ..color = primaryColor
+      ..color = theme.accentColor
       ..style = PaintingStyle.fill;
 
     final bodyPath = Path()
@@ -318,9 +486,10 @@ class _RoadTripPainter extends CustomPainter {
       ..close();
     canvas.drawPath(bodyPath, bodyPaint);
 
-    // Headlight Lens Beam
+    // Headlight Lens Beam (Stronger beam at night & afternoon)
+    final double beamOpacity = period == RoadTripTimePeriod.night ? 0.55 : 0.35;
     final headlightBeamPaint = Paint()
-      ..color = const Color(0xFFFEF08A).withValues(alpha: 0.35)
+      ..color = const Color(0xFFFEF08A).withValues(alpha: beamOpacity)
       ..style = PaintingStyle.fill;
 
     final beamPath = Path()
@@ -333,9 +502,7 @@ class _RoadTripPainter extends CustomPainter {
     final headlightPaint = Paint()..color = const Color(0xFFFEF08A);
     canvas.drawCircle(Offset(scooterX + 48, scooterY - 14), 4.5, headlightPaint);
 
-    // 9. Draw Group of 3 Friends Riding Vespa
-
-    // Friend 3 (Back Passenger - Waving Arm & Smiling)
+    // 9. Draw Group of 3 Friends Riding Vespa (Colors adapt dynamically)
     _drawFriend(
       canvas: canvas,
       center: Offset(scooterX + 6, scooterY - 18),
@@ -345,7 +512,6 @@ class _RoadTripPainter extends CustomPainter {
       armProgress: progress,
     );
 
-    // Friend 2 (Middle Passenger - Embracing)
     _drawFriend(
       canvas: canvas,
       center: Offset(scooterX + 20, scooterY - 21),
@@ -355,12 +521,11 @@ class _RoadTripPainter extends CustomPainter {
       armProgress: progress,
     );
 
-    // Friend 1 (Driver - Golden Amber Shirt)
     _drawFriend(
       canvas: canvas,
       center: Offset(scooterX + 34, scooterY - 23),
-      shirtColor: const Color(0xFFF59E0B), // Amber
-      helmetColor: const Color(0xFFD97706),
+      shirtColor: period == RoadTripTimePeriod.night ? const Color(0xFF8B5CF6) : const Color(0xFFF59E0B),
+      helmetColor: period == RoadTripTimePeriod.night ? const Color(0xFF7C3AED) : const Color(0xFFD97706),
       isWaving: false,
       armProgress: progress,
     );
@@ -376,6 +541,109 @@ class _RoadTripPainter extends CustomPainter {
       ..close();
     canvas.drawPath(pinPath, pinPaint);
     canvas.drawCircle(Offset(w / 2 + 30, pinY), 3, Paint()..color = Colors.white);
+  }
+
+  /// Draw Sky Celestial Elements (Sunrise, High Sun, Sunset, Night Moon & Constellations)
+  void _drawSkyElements(Canvas canvas, Size size) {
+    final double w = size.width;
+
+    switch (period) {
+      case RoadTripTimePeriod.morning:
+        // Rising Golden Sun with Rays 🌅
+        final sunCenter = Offset(w - 36, 26);
+        final sunGlow = Paint()
+          ..color = const Color(0xFFF59E0B).withValues(alpha: 0.3)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 12);
+        canvas.drawCircle(sunCenter, 18, sunGlow);
+
+        final sunPaint = Paint()..color = const Color(0xFFFBBF24);
+        canvas.drawCircle(sunCenter, 11, sunPaint);
+
+        // Sun Rays
+        final rayPaint = Paint()
+          ..color = const Color(0xFFFDE68A).withValues(alpha: 0.6)
+          ..strokeWidth = 1.5;
+        for (int i = 0; i < 8; i++) {
+          double a = (i * math.pi / 4) + (progress * math.pi / 6);
+          canvas.drawLine(
+            Offset(sunCenter.dx + math.cos(a) * 14, sunCenter.dy + math.sin(a) * 14),
+            Offset(sunCenter.dx + math.cos(a) * 19, sunCenter.dy + math.sin(a) * 19),
+            rayPaint,
+          );
+        }
+        break;
+
+      case RoadTripTimePeriod.noon:
+        // High Radiant Sun ☀️
+        final sunCenter = Offset(w - 42, 22);
+        final sunGlow = Paint()
+          ..color = const Color(0xFFFACC15).withValues(alpha: 0.4)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 16);
+        canvas.drawCircle(sunCenter, 20, sunGlow);
+
+        final sunPaint = Paint()..color = const Color(0xFFFACC15);
+        canvas.drawCircle(sunCenter, 12, sunPaint);
+
+        // Spinning Sunbeams
+        final rayPaint = Paint()
+          ..color = const Color(0xFFFEF08A).withValues(alpha: 0.8)
+          ..strokeWidth = 2
+          ..strokeCap = StrokeCap.round;
+
+        final rayAngle = progress * math.pi * 2;
+        for (int i = 0; i < 8; i++) {
+          double a = rayAngle + (i * math.pi / 4);
+          canvas.drawLine(
+            Offset(sunCenter.dx + math.cos(a) * 15, sunCenter.dy + math.sin(a) * 15),
+            Offset(sunCenter.dx + math.cos(a) * 21, sunCenter.dy + math.sin(a) * 21),
+            rayPaint,
+          );
+        }
+        break;
+
+      case RoadTripTimePeriod.afternoon:
+        // Sunset Crimson Sun 🌇
+        final sunCenter = Offset(w - 40, 32);
+        final sunGlow = Paint()
+          ..color = const Color(0xFFF43F5E).withValues(alpha: 0.35)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 14);
+        canvas.drawCircle(sunCenter, 18, sunGlow);
+
+        final sunPaint = Paint()..color = const Color(0xFFFB923C);
+        canvas.drawCircle(sunCenter, 11, sunPaint);
+
+        // Sunset Horizon Glow Lines
+        final glowLinePaint = Paint()
+          ..color = const Color(0xFFF43F5E).withValues(alpha: 0.3)
+          ..strokeWidth = 1.5;
+        canvas.drawLine(Offset(sunCenter.dx - 22, sunCenter.dy + 8), Offset(sunCenter.dx + 22, sunCenter.dy + 8), glowLinePaint);
+        canvas.drawLine(Offset(sunCenter.dx - 16, sunCenter.dy + 12), Offset(sunCenter.dx + 16, sunCenter.dy + 12), glowLinePaint);
+        break;
+
+      case RoadTripTimePeriod.night:
+        // Crescent Moon 🌙
+        final moonCenter = Offset(w - 36, 24);
+        final moonGlow = Paint()
+          ..color = const Color(0xFFA855F7).withValues(alpha: 0.35)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 14);
+        canvas.drawCircle(moonCenter, 16, moonGlow);
+
+        final moonPaint = Paint()..color = const Color(0xFFFEF08A);
+        canvas.drawCircle(moonCenter, 10, moonPaint);
+
+        // Cutout for crescent shape
+        canvas.drawCircle(Offset(moonCenter.dx - 4, moonCenter.dy - 3), 9, Paint()..color = const Color(0xFF0F172A));
+
+        // Twinkling Night Stars & Constellations ⭐
+        final starPaint = Paint()..color = Colors.white;
+        for (int i = 0; i < 7; i++) {
+          double starX = ((i * 38) - (progress * 50)) % (w + 20) - 10;
+          double starY = 8.0 + (i * 5) % 28;
+          double alpha = (0.4 + math.sin((progress * math.pi * 4) + i) * 0.4).clamp(0.2, 1.0);
+          canvas.drawCircle(Offset(starX, starY), 1.5, starPaint..color = Colors.white.withValues(alpha: alpha));
+        }
+        break;
+    }
   }
 
   void _drawFriend({
@@ -436,6 +704,6 @@ class _RoadTripPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _RoadTripPainter oldDelegate) {
-    return oldDelegate.progress != progress;
+    return oldDelegate.progress != progress || oldDelegate.period != period;
   }
 }
