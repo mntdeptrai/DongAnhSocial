@@ -1,5 +1,8 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter_webrtc/flutter_webrtc.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../services/api_service.dart';
 import '../widgets/custom_loader.dart';
 import 'news_bulletin_screen.dart';
@@ -952,11 +955,109 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
   int? _activeCallId;
   bool _callEnded = false;
 
+  final _localRenderer = RTCVideoRenderer();
+  final _remoteRenderer = RTCVideoRenderer();
+  RTCPeerConnection? _peerConnection;
+  MediaStream? _localStream;
+  MediaStream? _remoteStream;
+
   @override
   void initState() {
     super.initState();
     _isVideoOn = widget.isVideo;
     _activeCallId = widget.callId;
+
+    _initWebRTC();
+  }
+
+  Future<void> _initWebRTC() async {
+    // Xin quyền Micro & Camera hiển thị Dialog của iOS/Android
+    try {
+      await [
+        Permission.microphone,
+        if (widget.isVideo) Permission.camera,
+      ].request();
+    } catch (e) {
+      debugPrint('[Permissions] Error requesting permissions: $e');
+    }
+
+    await _localRenderer.initialize();
+    await _remoteRenderer.initialize();
+
+    final configuration = <String, dynamic>{
+      'iceServers': [
+        {'urls': 'stun:stun.l.google.com:19302'},
+        {'urls': 'stun:openrelay.metered.ca:80'},
+        {'urls': 'turn:openrelay.metered.ca:80', 'username': 'openrelayproject', 'credential': 'openrelayproject'},
+        {'urls': 'turn:openrelay.metered.ca:443', 'username': 'openrelayproject', 'credential': 'openrelayproject'},
+        {'urls': 'turn:openrelay.metered.ca:443?transport=tcp', 'username': 'openrelayproject', 'credential': 'openrelayproject'},
+      ],
+      'iceCandidatePoolSize': 10,
+    };
+
+    try {
+      _peerConnection = await createPeerConnection(configuration);
+
+      _peerConnection?.onIceCandidate = (candidate) {
+        if (_activeCallId != null && candidate.candidate != null && candidate.candidate!.isNotEmpty) {
+          final candMap = {
+            'candidate': {
+              'candidate': candidate.candidate,
+              'sdpMid': candidate.sdpMid,
+              'sdpMLineIndex': candidate.sdpMLineIndex,
+            }
+          };
+          ApiService.sendSignal(_activeCallId!, widget.friendId, jsonEncode(candMap));
+        }
+      };
+
+      _peerConnection?.onTrack = (event) {
+        if (event.streams.isNotEmpty) {
+          setState(() {
+            _remoteStream = event.streams[0];
+            _remoteRenderer.srcObject = _remoteStream;
+          });
+        }
+      };
+
+      _peerConnection?.onAddStream = (stream) {
+        setState(() {
+          _remoteStream = stream;
+          _remoteRenderer.srcObject = stream;
+        });
+      };
+
+      _peerConnection?.onIceConnectionState = (state) {
+        debugPrint('[WebRTC] ICE Connection State: $state');
+        if (state == RTCIceConnectionState.RTCIceConnectionStateConnected ||
+            state == RTCIceConnectionState.RTCIceConnectionStateCompleted) {
+          if (mounted && !_isConnected) {
+            setState(() => _isConnected = true);
+            _startDurationTimer();
+          }
+        } else if (state == RTCIceConnectionState.RTCIceConnectionStateFailed) {
+          debugPrint('[WebRTC] ICE Connection FAILED - P2P không thể kết nối!');
+        }
+      };
+
+      _peerConnection?.onConnectionState = (state) {
+        debugPrint('[WebRTC] Peer Connection State: $state');
+      };
+
+      final mediaConstraints = <String, dynamic>{
+        'audio': true,
+        'video': widget.isVideo ? {'facingMode': 'user'} : false,
+      };
+
+      _localStream = await navigator.mediaDevices.getUserMedia(mediaConstraints);
+      _localRenderer.srcObject = _localStream;
+
+      _localStream?.getTracks().forEach((track) {
+        _peerConnection?.addTrack(track, _localStream!);
+      });
+    } catch (e) {
+      debugPrint('[WebRTC] Native setup warning: $e');
+    }
 
     if (widget.isCaller) {
       _initiateCallOnServer();
@@ -965,11 +1066,26 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
     }
   }
 
-  /// Caller: Gọi API tạo cuộc gọi → polling chờ bên kia nhận
+  /// Caller: Tạo SDP Offer → Gọi API khởi tạo cuộc gọi → Polling chờ Receiver
   Future<void> _initiateCallOnServer() async {
+    String offerSdpStr = '';
+    if (_peerConnection != null) {
+      try {
+        final offer = await _peerConnection!.createOffer({
+          'offerToReceiveAudio': 1,
+          'offerToReceiveVideo': widget.isVideo ? 1 : 0,
+        });
+        await _peerConnection!.setLocalDescription(offer);
+        offerSdpStr = jsonEncode({'type': offer.type, 'sdp': offer.sdp});
+      } catch (e) {
+        debugPrint('[WebRTC] Create offer error: $e');
+      }
+    }
+
     final res = await ApiService.initiateCall(
       widget.friendId,
       widget.isVideo ? 'video' : 'audio',
+      signalData: offerSdpStr.isNotEmpty ? offerSdpStr : null,
     );
     if (!mounted) return;
 
@@ -978,7 +1094,6 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
       setState(() => _activeCallId = cid);
       _startStatusPolling();
     } else {
-      // Lỗi khởi tạo
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(res['message']?.toString() ?? 'Lỗi khởi tạo cuộc gọi')),
       );
@@ -986,18 +1101,41 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
     }
   }
 
-  /// Receiver: Gọi API đánh dấu đã nhận cuộc gọi → bắt đầu đàm thoại
+  /// Receiver: Lấy SDP Offer từ Caller → Tạo SDP Answer → Gửi Answer lên server
   Future<void> _answerCallOnServer() async {
-    if (_activeCallId != null) {
+    if (_activeCallId != null && _peerConnection != null) {
+      try {
+        final status = await ApiService.getCallStatus(_activeCallId!);
+        if (status['signal_data'] != null) {
+          final offerMap = jsonDecode(status['signal_data']);
+          if (offerMap['sdp'] != null && offerMap['sdp'].toString().isNotEmpty) {
+            await _peerConnection!.setRemoteDescription(
+              RTCSessionDescription(offerMap['sdp'], offerMap['type'] ?? 'offer'),
+            );
+
+            final answer = await _peerConnection!.createAnswer({
+              'offerToReceiveAudio': 1,
+              'offerToReceiveVideo': widget.isVideo ? 1 : 0,
+            });
+            await _peerConnection!.setLocalDescription(answer);
+
+            final answerMap = {'type': answer.type, 'sdp': answer.sdp};
+            await ApiService.answerCall(_activeCallId!, widget.friendId, signalData: jsonEncode(answerMap));
+          }
+        }
+      } catch (e) {
+        debugPrint('[WebRTC] Answer error: $e');
+      }
+    } else if (_activeCallId != null) {
       await ApiService.answerCall(_activeCallId!, widget.friendId);
     }
+
     if (!mounted) return;
-    setState(() => _isConnected = true);
-    _startDurationTimer();
+    // Don't set _isConnected here — let onIceConnectionState handle it
     _startStatusPolling();
   }
 
-  /// Polling trạng thái cuộc gọi mỗi 2 giây
+  /// Polling trạng thái cuộc gọi + Trao đổi SDP Answer & ICE candidates mỗi 2 giây
   void _startStatusPolling() {
     _statusPollTimer?.cancel();
     _statusPollTimer = Timer.periodic(const Duration(seconds: 2), (timer) async {
@@ -1010,13 +1148,57 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
 
       final callStatus = status['status']?.toString() ?? '';
 
-      // Caller: phát hiện bên kia đã nhận
+      // Caller: Phát hiện Receiver đã chấp nhận -> nạp SDP Answer từ Receiver
       if (widget.isCaller && !_isConnected && callStatus == 'answered') {
-        setState(() => _isConnected = true);
-        _startDurationTimer();
+        if (status['signal_data'] != null && _peerConnection != null) {
+          try {
+            final ansMap = jsonDecode(status['signal_data']);
+            if (ansMap['sdp'] != null && ansMap['sdp'].toString().isNotEmpty) {
+              await _peerConnection!.setRemoteDescription(
+                RTCSessionDescription(ansMap['sdp'], ansMap['type'] ?? 'answer'),
+              );
+            }
+          } catch (e) {
+            debugPrint('[WebRTC] Set remote answer error: $e');
+          }
+        }
+        // Don't set _isConnected here — let onIceConnectionState handle it
       }
 
-      // Cả 2 bên: phát hiện cuộc gọi kết thúc từ bên kia
+      // Receiver: Nếu chưa có Remote Description -> Thử nạp SDP Offer từ Caller nếu có sẵn
+      if (!widget.isCaller && _peerConnection != null) {
+        final remoteDesc = await _peerConnection!.getRemoteDescription();
+        if (remoteDesc == null && status['signal_data'] != null) {
+          try {
+            final offerMap = jsonDecode(status['signal_data']);
+            if (offerMap['sdp'] != null && offerMap['sdp'].toString().isNotEmpty) {
+              await _peerConnection!.setRemoteDescription(
+                RTCSessionDescription(offerMap['sdp'], offerMap['type'] ?? 'offer'),
+              );
+
+              final answer = await _peerConnection!.createAnswer({
+                'offerToReceiveAudio': 1,
+                'offerToReceiveVideo': widget.isVideo ? 1 : 0,
+              });
+              await _peerConnection!.setLocalDescription(answer);
+
+              final answerMap = {'type': answer.type, 'sdp': answer.sdp};
+              await ApiService.answerCall(_activeCallId!, widget.friendId, signalData: jsonEncode(answerMap));
+            }
+          } catch (e) {
+            debugPrint('[WebRTC] Receiver polling offer setup error: $e');
+          }
+        }
+      }
+
+      // Cả 2 bên: Nạp ICE candidates nhận được từ đối phương
+      if (status['ice_candidates'] != null && status['ice_candidates'] is List) {
+        for (var iceItem in status['ice_candidates']) {
+          _applyIceCandidate(iceItem);
+        }
+      }
+
+      // Phát hiện cúp máy từ đối phương
       if (callStatus == 'ended' || callStatus == 'rejected' || callStatus == 'missed') {
         timer.cancel();
         _callEnded = true;
@@ -1029,6 +1211,36 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
         }
       }
     });
+  }
+
+  void _applyIceCandidate(dynamic iceData) {
+    try {
+      Map<String, dynamic> map;
+      if (iceData is String) {
+        map = jsonDecode(iceData);
+      } else {
+        map = Map<String, dynamic>.from(iceData);
+      }
+
+      Map<String, dynamic> candObj = map;
+      if (map.containsKey('candidate') && map['candidate'] is Map) {
+        candObj = Map<String, dynamic>.from(map['candidate']);
+      }
+
+      final candidateStr = candObj['candidate']?.toString();
+      if (candidateStr != null && candidateStr.isNotEmpty) {
+        final sdpMid = candObj['sdpMid']?.toString();
+        final sdpMLineIndex = candObj['sdpMLineIndex'] is int
+            ? candObj['sdpMLineIndex'] as int
+            : int.tryParse(candObj['sdpMLineIndex']?.toString() ?? '0') ?? 0;
+
+        _peerConnection?.addCandidate(
+          RTCIceCandidate(candidateStr, sdpMid, sdpMLineIndex),
+        );
+      }
+    } catch (e) {
+      debugPrint('[WebRTC] Candidate parse error: $e');
+    }
   }
 
   void _startDurationTimer() {
@@ -1044,6 +1256,13 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
   void dispose() {
     _statusPollTimer?.cancel();
     _callTimer?.cancel();
+    try {
+      _localStream?.getTracks().forEach((track) => track.stop());
+      _remoteStream?.getTracks().forEach((track) => track.stop());
+      _localRenderer.dispose();
+      _remoteRenderer.dispose();
+      _peerConnection?.close();
+    } catch (_) {}
     super.dispose();
   }
 
@@ -1064,6 +1283,27 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
     }
   }
 
+  void _toggleMute() {
+    setState(() => _isMuted = !_isMuted);
+    _localStream?.getAudioTracks().forEach((track) {
+      track.enabled = !_isMuted;
+    });
+  }
+
+  void _toggleVideo() {
+    setState(() => _isVideoOn = !_isVideoOn);
+    _localStream?.getVideoTracks().forEach((track) {
+      track.enabled = _isVideoOn;
+    });
+  }
+
+  void _toggleSpeaker() {
+    setState(() => _isSpeakerOn = !_isSpeakerOn);
+    _localStream?.getAudioTracks().forEach((track) {
+      track.enableSpeakerphone(_isSpeakerOn);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -1071,8 +1311,15 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
       body: SafeArea(
         child: Stack(
           children: [
-            // Video Background Simulation
-            if (widget.isVideo && _isVideoOn)
+            // Remote Video Background Stream
+            if (widget.isVideo && _remoteStream != null)
+              Positioned.fill(
+                child: RTCVideoView(
+                  _remoteRenderer,
+                  objectFit: RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
+                ),
+              )
+            else if (widget.isVideo && _isVideoOn)
               Container(
                 width: double.infinity,
                 height: double.infinity,
@@ -1114,6 +1361,29 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
                 ),
               ),
 
+            // Local Camera Stream Floating Preview
+            if (widget.isVideo && _isVideoOn && _localStream != null)
+              Positioned(
+                top: 40,
+                right: 16,
+                width: 110,
+                height: 160,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.white24, width: 2),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: RTCVideoView(
+                      _localRenderer,
+                      mirror: true,
+                      objectFit: RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
+                    ),
+                  ),
+                ),
+              ),
+
             // Top Header & Controls
             Column(
               children: [
@@ -1138,7 +1408,7 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
                     Text(
                       _isConnected
                           ? '${widget.isVideo ? "Cuộc gọi video HD" : "Cuộc gọi thoại"} • ${_formatDuration(_secondsElapsed)}'
-                          : 'Đang kết nối tín hiệu 4K...',
+                          : 'Đang kết nối tín hiệu...',
                       style: const TextStyle(color: Colors.white70, fontSize: 14, fontWeight: FontWeight.w500),
                     ),
                   ],
@@ -1169,7 +1439,7 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
                           color: _isMuted ? Colors.black : Colors.white,
                           size: 22,
                         ),
-                        onPressed: () => setState(() => _isMuted = !_isMuted),
+                        onPressed: _toggleMute,
                       ),
 
                       // Toggle Camera
@@ -1184,7 +1454,7 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
                             color: !_isVideoOn ? Colors.black : Colors.white,
                             size: 22,
                           ),
-                          onPressed: () => setState(() => _isVideoOn = !_isVideoOn),
+                          onPressed: _toggleVideo,
                         ),
 
                       // Speaker
@@ -1198,7 +1468,7 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
                           color: Colors.white,
                           size: 22,
                         ),
-                        onPressed: () => setState(() => _isSpeakerOn = !_isSpeakerOn),
+                        onPressed: _toggleSpeaker,
                       ),
 
                       // End Call

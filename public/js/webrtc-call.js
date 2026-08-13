@@ -26,15 +26,24 @@ window.DongAnhWebRTC = (function () {
         iceServers: [
             { urls: 'stun:stun.l.google.com:19302' },
             { urls: 'stun:stun1.l.google.com:19302' },
-            { urls: 'stun:stun2.l.google.com:19302' },
-            { urls: 'stun:stun3.l.google.com:19302' },
-            { urls: 'stun:stun4.l.google.com:19302' }
-        ]
+            { urls: 'stun:openrelay.metered.ca:80' },
+            { urls: 'turn:openrelay.metered.ca:80', username: 'openrelayproject', credential: 'openrelayproject' },
+            { urls: 'turn:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' },
+            { urls: 'turn:openrelay.metered.ca:443?transport=tcp', username: 'openrelayproject', credential: 'openrelayproject' }
+        ],
+        iceCandidatePoolSize: 10
     };
 
     // --- CSRF Helper ---
     function getCsrf() {
         return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+    }
+
+    function isValidWebRTCSignal(signalData) {
+        if (!signalData) return false;
+        const str = typeof signalData === 'string' ? signalData : JSON.stringify(signalData);
+        if (str.includes('mobile-') || str.includes('placeholder')) return false;
+        return true;
     }
 
     let pollCallInterval = null;
@@ -117,7 +126,7 @@ window.DongAnhWebRTC = (function () {
                     if (typeof answerSignal === 'string') {
                         try { answerSignal = JSON.parse(answerSignal); } catch (_) {}
                     }
-                    if (peer && answerSignal) {
+                    if (peer && answerSignal && isValidWebRTCSignal(answerSignal)) {
                         try { peer.signal(answerSignal); } catch (e) { console.warn('peer.signal answer err:', e); }
                     }
 
@@ -134,7 +143,7 @@ window.DongAnhWebRTC = (function () {
                         if (typeof iceSignal === 'string') {
                             try { iceSignal = JSON.parse(iceSignal); } catch (_) {}
                         }
-                        if (peer && iceSignal) {
+                        if (peer && iceSignal && isValidWebRTCSignal(iceSignal)) {
                             try {
                                 console.log('[WebRTC Polling] Áp dụng remote ICE candidate');
                                 peer.signal(iceSignal);
@@ -356,8 +365,12 @@ window.DongAnhWebRTC = (function () {
                     offerSignal = JSON.parse(offerSignal);
                 } catch (_) {}
             }
-            if (offerSignal) {
-                peer.signal(offerSignal);
+            if (offerSignal && isValidWebRTCSignal(offerSignal)) {
+                try {
+                    peer.signal(offerSignal);
+                } catch (e) {
+                    console.warn('[WebRTC] Signal offer parse skipped:', e);
+                }
             }
             window._pendingSignalData = null;
 
@@ -393,8 +406,10 @@ window.DongAnhWebRTC = (function () {
         if (!peer || e.call_id !== currentCallId) return;
         try {
             const signalData = typeof e.signal_data === 'string' ? JSON.parse(e.signal_data) : e.signal_data;
-            console.log('[WebRTC] Áp dụng remote signal:', signalData.type || 'candidate');
-            peer.signal(signalData);
+            if (isValidWebRTCSignal(signalData)) {
+                console.log('[WebRTC] Áp dụng remote signal:', signalData.type || 'candidate');
+                peer.signal(signalData);
+            }
 
             // Nếu là answer → caller nhận được, chuyển sang overlay active
             if (signalData.type === 'answer' && isCaller) {
@@ -431,7 +446,7 @@ window.DongAnhWebRTC = (function () {
     // --- SETUP PEER EVENTS ---
     function setupPeerEvents() {
         peer.on('stream', (stream) => {
-            console.log('[WebRTC] Nhận remote stream!');
+            console.log('[WebRTC] Nhận remote stream! Tracks:', stream.getTracks().map(t => t.kind + ':' + t.readyState));
             remoteStream = stream;
             setRemoteStreamUI(stream);
         });
@@ -440,9 +455,18 @@ window.DongAnhWebRTC = (function () {
             console.log('[WebRTC] ✅ P2P Connection Established!');
         });
 
+        peer.on('iceStateChange', (iceConnectionState, iceGatheringState) => {
+            console.log('[WebRTC] ICE State:', iceConnectionState, '| Gathering:', iceGatheringState);
+        });
+
         peer.on('error', (err) => {
             console.error('[WebRTC] Peer Error:', err);
-            showToast('Lỗi kết nối: ' + err.message);
+            const msg = err.message || '';
+            if (msg.includes('mobile-') || msg.includes('placeholder') || msg.includes('SessionDescription')) {
+                console.warn('[WebRTC] Skipping non-standard WebRTC error for mobile connection.');
+                return;
+            }
+            showToast('Lỗi kết nối: ' + msg);
         });
 
         peer.on('close', () => {
