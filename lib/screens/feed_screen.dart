@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:camera/camera.dart';
@@ -34,6 +35,12 @@ class FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
   List<CameraDescription>? _cameras;
   bool _isCameraInitialized = false;
   int _selectedCameraIndex = 0;
+
+  // Camera Zoom States
+  double _minZoomLevel = 1.0;
+  double _maxZoomLevel = 1.0;
+  double _currentZoomLevel = 1.0;
+  double _baseZoomLevel = 1.0;
 
   List<dynamic> _eateries = [];
   int? _selectedEateryId;
@@ -122,6 +129,12 @@ class FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
         _cameraController = controller;
 
         await controller.initialize();
+        try {
+          _minZoomLevel = await controller.getMinZoomLevel();
+          _maxZoomLevel = await controller.getMaxZoomLevel();
+          _currentZoomLevel = _minZoomLevel;
+        } catch (_) {}
+
         if (mounted) {
           setState(() {
             _isCameraInitialized = true;
@@ -135,6 +148,21 @@ class FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
           _isCameraInitialized = false;
         });
       }
+    }
+  }
+
+  Future<void> _setZoomLevel(double zoom) async {
+    if (_cameraController == null || !_isCameraInitialized) return;
+    final clamped = zoom.clamp(_minZoomLevel, _maxZoomLevel);
+    try {
+      await _cameraController!.setZoomLevel(clamped);
+      if (mounted) {
+        setState(() {
+          _currentZoomLevel = clamped;
+        });
+      }
+    } catch (e) {
+      debugPrint('Lỗi setZoomLevel: $e');
     }
   }
 
@@ -156,6 +184,12 @@ class FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
 
     try {
       await _cameraController!.initialize();
+      try {
+        _minZoomLevel = await _cameraController!.getMinZoomLevel();
+        _maxZoomLevel = await _cameraController!.getMaxZoomLevel();
+        _currentZoomLevel = _minZoomLevel;
+      } catch (_) {}
+
       if (mounted) {
         setState(() {
           _isCameraInitialized = true;
@@ -619,60 +653,40 @@ class FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
     const primaryColor = Color(0xFF0EA5E9);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Check-in Đông Anh',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
-        ),
-        flexibleSpace: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Color(0xFF38BDF8), Color(0xFF00A8EE), Color(0xFF0284C7)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-          ),
-        ),
-        foregroundColor: Colors.white,
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh, color: Colors.white),
-            onPressed: _loadFeed,
-          ),
-        ],
+      appBar: null,
+      backgroundColor: const Color(0xFF0F172A),
+      body: SafeArea(
+        child: _isLoading
+            ? const CustomPulseLoader(
+                message: 'Đang kết nối khoảnh khắc check-in...',
+                icon: Icons.photo_camera_rounded,
+                primaryColor: Color(0xFF0EA5E9),
+              )
+            : LayoutBuilder(
+                builder: (context, constraints) {
+                  final height = constraints.maxHeight;
+                  return PageView.builder(
+                    controller: PageController(keepPage: false),
+                    scrollDirection: Axis.vertical,
+                    itemCount: _feedItems.length + 1,
+                    onPageChanged: (pageIndex) {
+                      if (pageIndex == 0) {
+                        resumeCamera();
+                      } else {
+                        pauseCamera();
+                      }
+                    },
+                    itemBuilder: (context, index) {
+                      if (index == 0) {
+                        return _buildTikTokCameraPage(primaryColor, height);
+                      }
+                      final item = _feedItems[index - 1];
+                      return _buildTikTokFeedCard(item, primaryColor, height);
+                    },
+                  );
+                },
+              ),
       ),
-      backgroundColor: const Color(0xFF0F172A), // Dark mode background for TikTok feel
-      body: _isLoading
-          ? const CustomPulseLoader(
-              message: 'Đang tải khoảnh khắc check-in...',
-              icon: Icons.photo_camera_rounded,
-              primaryColor: Color(0xFF0EA5E9),
-            )
-          : LayoutBuilder(
-              builder: (context, constraints) {
-                final height = constraints.maxHeight;
-                return PageView.builder(
-                  controller: PageController(keepPage: false),
-                  scrollDirection: Axis.vertical,
-                  itemCount: _feedItems.length + 1,
-                  onPageChanged: (pageIndex) {
-                    if (pageIndex == 0) {
-                      resumeCamera();
-                    } else {
-                      pauseCamera();
-                    }
-                  },
-                  itemBuilder: (context, index) {
-                    if (index == 0) {
-                      return _buildTikTokCameraPage(primaryColor, height);
-                    }
-                    final item = _feedItems[index - 1];
-                    return _buildTikTokFeedCard(item, primaryColor, height);
-                  },
-                );
-              },
-            ),
     );
   }
 
@@ -724,15 +738,6 @@ class FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
                     onPressed: _initializeCamera,
                     tooltip: 'Làm mới Camera',
                   ),
-                  const SizedBox(width: 8),
-                  const Text(
-                    '📸 CHECK-IN ĐÔNG ANH',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w900,
-                      fontSize: 11,
-                    ),
-                  ),
                 ],
               ),
               const SizedBox(height: 8),
@@ -752,14 +757,27 @@ class FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
                       fit: StackFit.expand,
                       children: [
                         if (_checkinImagePath == null) ...[
-                          // Real Camera Preview
+                          // Real Camera Preview with Pinch-to-Zoom & Double Tap
                           if (_isCameraInitialized && _cameraController != null && _cameraController!.value.isInitialized)
-                            FittedBox(
-                              fit: BoxFit.cover,
-                              child: SizedBox(
-                                width: _cameraController!.value.previewSize?.height ?? 720,
-                                height: _cameraController!.value.previewSize?.width ?? 1280,
-                                child: CameraPreview(_cameraController!),
+                            GestureDetector(
+                              onScaleStart: (details) {
+                                _baseZoomLevel = _currentZoomLevel;
+                              },
+                              onScaleUpdate: (details) {
+                                double newZoom = _baseZoomLevel * details.scale;
+                                _setZoomLevel(newZoom);
+                              },
+                              onDoubleTap: () {
+                                double target = (_currentZoomLevel > 1.5) ? _minZoomLevel : math.min(2.0, _maxZoomLevel);
+                                _setZoomLevel(target);
+                              },
+                              child: FittedBox(
+                                fit: BoxFit.cover,
+                                child: SizedBox(
+                                  width: _cameraController!.value.previewSize?.height ?? 720,
+                                  height: _cameraController!.value.previewSize?.width ?? 1280,
+                                  child: CameraPreview(_cameraController!),
+                                ),
                               ),
                             )
                           else
@@ -849,6 +867,41 @@ class FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
                               ),
                             ),
                           ),
+                          // Quick Zoom Buttons Overlay (1x, 2x, 3x)
+                          if (_isCameraInitialized && _checkinImagePath == null && _maxZoomLevel > 1.0)
+                            Positioned(
+                              bottom: 12,
+                              left: 0,
+                              right: 0,
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [1.0, 2.0, 3.0, 5.0]
+                                    .where((z) => z <= _maxZoomLevel || z == 1.0)
+                                    .map((zoomVal) {
+                                  final isSelected = (_currentZoomLevel - zoomVal).abs() < 0.3;
+                                  return GestureDetector(
+                                    onTap: () => _setZoomLevel(zoomVal),
+                                    child: Container(
+                                      margin: const EdgeInsets.symmetric(horizontal: 4),
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                      decoration: BoxDecoration(
+                                        color: isSelected ? const Color(0xFF0EA5E9) : Colors.black.withValues(alpha: 0.6),
+                                        borderRadius: BorderRadius.circular(20),
+                                        border: Border.all(color: isSelected ? Colors.white : Colors.white30, width: 1.2),
+                                      ),
+                                      child: Text(
+                                        '${zoomVal.toInt()}x',
+                                        style: TextStyle(
+                                          color: isSelected ? Colors.white : Colors.white70,
+                                          fontWeight: FontWeight.w800,
+                                          fontSize: 11,
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
+                            ),
                         ] else ...[
                           // Captured image preview
                           Image.file(
