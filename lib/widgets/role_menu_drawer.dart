@@ -6,6 +6,7 @@ import '../screens/food_tour_screen.dart';
 import '../screens/video_reels_screen.dart';
 import '../screens/exp_corner_screen.dart';
 import '../screens/about_guide_screen.dart';
+import '../screens/my_checkins_screen.dart';
 import 'squircle_helper.dart';
 
 class RoleMenuDrawer extends StatelessWidget {
@@ -232,8 +233,7 @@ class RoleMenuDrawer extends StatelessWidget {
                     color: const Color(0xFFF59E0B),
                     onTap: () {
                       Navigator.pop(context);
-                      onRoleChanged?.call('user');
-                      onNavigateTab?.call(2); // Tab 2
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => const MyCheckinsScreen()));
                     },
                   ),
                   _buildDrawerShortcut(
