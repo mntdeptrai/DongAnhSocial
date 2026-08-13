@@ -494,6 +494,7 @@ return new class extends Migration
             } else {
                 $user->update([
                     'name'         => $stall['seller_name'],
+                    'email'        => null,
                     'phone'        => $rawPhone,
                     'bank_account' => $stall['bank_account'] ?: $user->bank_account,
                     'bank_name'    => $stall['bank_name'] ?: $user->bank_name,

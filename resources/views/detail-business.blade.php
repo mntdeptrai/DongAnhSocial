@@ -343,8 +343,40 @@
 </div>
 
 @php
-    $formatMediaUrl = function($url) {
-        if (!$url) return asset('images/ocop-placeholder.png');
+    $getSmartBusinessImg = function($name, $desc = '') {
+        $text = mb_strtolower($name . ' ' . $desc);
+        if (preg_match('/(thuốc|y tế|phòng khám|bác sĩ|nha khoa|pharmacy|clinic|medical|dược)/ui', $text)) {
+            return 'https://images.unsplash.com/photo-1587854692152-cbe660dbde88?auto=format&fit=crop&w=800&q=80';
+        }
+        if (preg_match('/(spa|cắt tóc|làm đầu|gội đầu|nail|beauty|salon|barber|massage|thẩm mỹ)/ui', $text)) {
+            return 'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=800&q=80';
+        }
+        if (preg_match('/(cơ khí|sửa chữa|ô tô|mô tô|xe máy|phụ tùng|kim loại|hàn|nhôm kính|đúc|sắt)/ui', $text)) {
+            return 'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?auto=format&fit=crop&w=800&q=80';
+        }
+        if (preg_match('/(may mặc|quần áo|thời trang|giày|dép|vải|boutique|clothing|fashion)/ui', $text)) {
+            return 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=800&q=80';
+        }
+        if (preg_match('/(điện tử|máy tính|điện thoại|laptop|mobile|viễn thông|điện máy|điện gia dụng|camera)/ui', $text)) {
+            return 'https://images.unsplash.com/photo-1550009158-9ebf69173e03?auto=format&fit=crop&w=800&q=80';
+        }
+        if (preg_match('/(cà phê|cafe|coffee|trà|đồ uống|bánh|bakery|quán ăn|ẩm thực|nhà hàng|bún|phở|cơm|lẩu|nướng)/ui', $text)) {
+            return 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=800&q=80';
+        }
+        if (preg_match('/(xây dựng|vật liệu|xi măng|gạch|sơn|nội thất|gỗ|kính)/ui', $text)) {
+            return 'https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=800&q=80';
+        }
+        if (preg_match('/(nhà đất|bất động sản|cho thuê|quản lý nhà|mặt bằng|văn phòng|land|real estate)/ui', $text)) {
+            return 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=800&q=80';
+        }
+        if (preg_match('/(công ty|tnhh|cổ phần|doanh nghiệp|tập đoàn|enterprise)/ui', $text)) {
+            return 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=800&q=80';
+        }
+        return 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?auto=format&fit=crop&w=800&q=80';
+    };
+
+    $formatMediaUrl = function($url) use ($getSmartBusinessImg, $eatery) {
+        if (!$url) return $getSmartBusinessImg($eatery->name, $eatery->description);
         if (\Illuminate\Support\Str::startsWith($url, ['http://', 'https://'])) return $url;
         return asset(ltrim($url, '/'));
     };
@@ -380,9 +412,9 @@
         }
     }
 
-    // 5. Nếu không có ảnh nào: dùng ảnh placeholder trung lập
+    // 5. Nếu không có ảnh nào: dùng ảnh thông minh theo ngành nghề
     if (empty($allMedia)) {
-        $allMedia[] = ['type' => 'image', 'url' => asset('images/ocop-placeholder.png')];
+        $allMedia[] = ['type' => 'image', 'url' => $getSmartBusinessImg($eatery->name, $eatery->description)];
     }
 
     // 6. Pad đủ 5 ô cho grid (lặp lại ảnh đầu tiên nếu thiếu)

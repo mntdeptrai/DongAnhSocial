@@ -166,13 +166,19 @@ class User extends Authenticatable
             'mysql_culture' => 'Văn hóa / Di sản'
         ];
 
+        $seenIds = [];
         $owned = [];
         foreach ($connections as $conn => $typeName) {
             try {
                 $eateries = Eatery::on($conn)->where('user_id', $this->id)->with('category')->get();
                 foreach ($eateries as $eatery) {
+                    if (isset($seenIds[$eatery->id])) {
+                        continue;
+                    }
+                    $seenIds[$eatery->id] = true;
                     $catName = ($eatery->category) ? $eatery->category->name : $typeName;
                     $owned[] = [
+                        'id' => $eatery->id,
                         'name' => $eatery->name,
                         'type' => $catName,
                         'slug' => $eatery->slug,
@@ -189,9 +195,11 @@ class User extends Authenticatable
             foreach ($connections as $conn => $typeName) {
                 try {
                     $eatery = Eatery::on($conn)->where('id', $this->eatery_id)->with('category')->first();
-                    if ($eatery) {
+                    if ($eatery && !isset($seenIds[$eatery->id])) {
+                        $seenIds[$eatery->id] = true;
                         $catName = ($eatery->category) ? $eatery->category->name : $typeName;
                         $owned[] = [
+                            'id' => $eatery->id,
                             'name' => $eatery->name,
                             'type' => $catName,
                             'slug' => $eatery->slug,
@@ -251,10 +259,10 @@ class User extends Authenticatable
         if (\Illuminate\Support\Facades\Schema::hasTable('route_businesses')) {
             $businesses = \App\Models\RouteBusiness::where('user_id', $this->id)->get();
             if ($businesses->count() > 0) {
-                return $businesses;
+                return $businesses->unique('id');
             }
             if (!empty($this->phone)) {
-                return \App\Models\RouteBusiness::where('phone', $this->phone)->get();
+                return \App\Models\RouteBusiness::where('phone', $this->phone)->get()->unique('id');
             }
         }
         return collect([]);

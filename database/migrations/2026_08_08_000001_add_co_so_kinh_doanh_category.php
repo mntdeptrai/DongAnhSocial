@@ -15,9 +15,9 @@ return new class extends Migration
             DB::table('categories')->updateOrInsert(
                 ['slug' => 'co-so-kinh-doanh'],
                 [
-                    'name'        => 'Cơ sở kinh doanh',
+                    'name'        => 'Cơ sở kinh doanh, Doanh nghiệp',
                     'icon'        => '🏪',
-                    'description' => 'Cơ sở kinh doanh độc lập, cửa hàng, siêu thị mini và dịch vụ bán lẻ trên địa bàn.',
+                    'description' => 'Cơ sở kinh doanh độc lập, cửa hàng, siêu thị mini, doanh nghiệp và dịch vụ bán lẻ trên địa bàn.',
                     'created_at'  => now(),
                     'updated_at'  => now(),
                 ]

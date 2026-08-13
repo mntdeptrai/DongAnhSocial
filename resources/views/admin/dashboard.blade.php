@@ -124,6 +124,9 @@
                         } elseif ($cat->slug === 'discover-dong-anh-community-culture-hub') {
                             $displayNameEn = 'Discover Dong Anh Community & Culture Hub';
                             $displayNameVi = 'Khám phá thiết chế văn hóa - thể thao Đông Anh';
+                        } elseif ($cat->slug === 'co-so-kinh-doanh') {
+                            $displayNameEn = 'Business & Enterprise';
+                            $displayNameVi = 'Cơ sở kinh doanh, Doanh nghiệp';
                         }
                     @endphp
                     <option value="{{ $cat->name }}" {{ request('category') == $cat->name ? 'selected' : '' }}>

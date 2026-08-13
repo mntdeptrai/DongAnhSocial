@@ -1596,6 +1596,179 @@
     }
 }
 
+/* ==================== CƠ SỞ KINH DOANH & DOANH NGHIỆP ==================== */
+.business-hero-box {
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #f8fafc 100%) !important;
+    border: 1.5px solid #bae6fd !important;
+    border-radius: 24px !important;
+    padding: 24px 28px !important;
+    margin-bottom: 24px !important;
+    position: relative !important;
+    overflow: hidden !important;
+    box-shadow: 0 10px 30px rgba(2, 132, 199, 0.08) !important;
+}
+
+.business-hero-box::before {
+    content: '' !important;
+    position: absolute !important;
+    top: -40% !important;
+    right: -15% !important;
+    width: 240px !important;
+    height: 240px !important;
+    background: radial-gradient(circle, rgba(2, 132, 199, 0.15) 0%, rgba(255, 255, 255, 0) 70%) !important;
+    border-radius: 50% !important;
+    pointer-events: none !important;
+}
+
+.business-badge-chip {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    font-size: 0.78rem !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.5px !important;
+    text-transform: uppercase !important;
+    color: #0284c7 !important;
+    background: #ffffff !important;
+    border: 1.5px solid #7dd3fc !important;
+    padding: 6px 14px !important;
+    border-radius: 30px !important;
+    box-shadow: 0 2px 8px rgba(14, 165, 233, 0.1) !important;
+}
+
+.business-hero-title {
+    font-family: var(--font-heading) !important;
+    font-size: 1.8rem !important;
+    font-weight: 900 !important;
+    line-height: 1.25 !important;
+    margin: 12px 0 8px 0 !important;
+    color: #0f172a !important;
+}
+
+.business-stats-pills {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+    margin-top: 16px !important;
+}
+
+.business-stat-pill {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    padding: 7px 14px !important;
+    background: #ffffff !important;
+    border: 1.5px solid #bae6fd !important;
+    border-radius: 12px !important;
+    font-size: 0.82rem !important;
+    font-weight: 700 !important;
+    color: #0369a1 !important;
+    box-shadow: 0 2px 6px rgba(2, 132, 199, 0.08) !important;
+    transition: all 0.2s ease !important;
+}
+
+.business-stat-pill:hover {
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 10px rgba(2, 132, 199, 0.15) !important;
+}
+
+.business-stat-pill span.icon {
+    font-size: 1rem !important;
+}
+
+.eatery-card.business-card-highlight {
+    border: 1.5px solid #e2e8f0 !important;
+    background: #ffffff !important;
+    border-radius: 20px !important;
+    padding: 16px !important;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.04) !important;
+    transition: all 0.3s cubic-bezier(0.32, 0.72, 0, 1) !important;
+    position: relative !important;
+    overflow: hidden !important;
+}
+
+.eatery-card.business-card-highlight:hover {
+    transform: translateY(-4px) !important;
+    border-color: #38bdf8 !important;
+    box-shadow: 0 12px 28px rgba(2, 132, 199, 0.18) !important;
+}
+
+.business-title-badge {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    font-size: 0.64rem !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.4px !important;
+    text-transform: uppercase !important;
+    color: #0284c7 !important;
+    background: rgba(14, 165, 233, 0.1) !important;
+    border: 1px solid rgba(14, 165, 233, 0.28) !important;
+    padding: 3px 8px !important;
+    border-radius: 8px !important;
+}
+
+.business-mst-tag {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    font-size: 0.7rem !important;
+    font-weight: 700 !important;
+    color: #334155 !important;
+    background: #f1f5f9 !important;
+    border: 1px solid #cbd5e1 !important;
+    padding: 2px 7px !important;
+    border-radius: 6px !important;
+}
+
+.business-phone-tag {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    font-size: 0.75rem !important;
+    font-weight: 800 !important;
+    color: #0284c7 !important;
+    background: #e0f2fe !important;
+    border: 1px solid #bae6fd !important;
+    padding: 3px 9px !important;
+    border-radius: 8px !important;
+    text-decoration: none !important;
+    transition: all 0.2s !important;
+}
+
+.business-phone-tag:hover {
+    background: #0284c7 !important;
+    color: #ffffff !important;
+    border-color: #0284c7 !important;
+}
+
+.business-explore-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    width: 100% !important;
+    margin-top: 12px !important;
+    padding: 11px 18px !important;
+    background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%) !important;
+    color: #ffffff !important;
+    font-weight: 800 !important;
+    font-size: 0.86rem !important;
+    border-radius: 12px !important;
+    border: none !important;
+    box-shadow: 0 4px 14px rgba(2, 132, 199, 0.25) !important;
+    transition: all 0.25s cubic-bezier(0.32, 0.72, 0, 1) !important;
+    text-decoration: none !important;
+    cursor: pointer !important;
+}
+
+.business-explore-btn:hover {
+    background: linear-gradient(135deg, #0369a1 0%, #075985 100%) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 18px rgba(2, 132, 199, 0.38) !important;
+    color: #ffffff !important;
+}
+
 /* OCOP Product detail popup CSS classes to prevent layout squishing on mobile */
 .ocop-popup-hero {
     display: flex;
@@ -2253,6 +2426,10 @@
                     $displayIcon = '🏛️';
                     $displayNameEn = 'Community & Culture Hub';
                     $displayNameVi = 'Thiết chế văn hóa - thể thao';
+                } elseif ($cat->slug === 'co-so-kinh-doanh') {
+                    $displayIcon = '🏢';
+                    $displayNameEn = 'Business & Enterprise';
+                    $displayNameVi = 'Cơ sở kinh doanh, Doanh nghiệp';
                 }
             @endphp
             @if($cat->slug === 'hanh-trinh-di-san')
@@ -2477,6 +2654,40 @@
                         <div class="edu-stat-pill"><span class="icon">🗺️</span> Chỉ đường trường học</div>
                     </div>
                 </div>
+            @elseif($selectedCatSlug === 'co-so-kinh-doanh')
+                <div class="business-hero-box">
+                    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                        <span class="business-badge-chip">
+                            <span>🏪</span> CƠ SỞ KINH DOANH & DOANH NGHIỆP
+                        </span>
+                        <span id="resultsCountSpan" style="font-size: 0.85rem; font-weight: 700; color: #0284c7; background: #ffffff; padding: 5px 14px; border-radius: 20px; border: 1.5px solid #7dd3fc; box-shadow: 0 2px 8px rgba(14, 165, 233, 0.1);">
+                            📍 {{ $eateries->count() }} Hộ Kinh Doanh & Doanh Nghiệp Trên Địa Bàn
+                        </span>
+                    </div>
+                    
+                    <h2 class="business-hero-title">
+                        Hệ Thống Cơ Sở Kinh Doanh & Doanh Nghiệp Đông Anh
+                    </h2>
+                    
+                    <p style="font-size: 0.92rem; color: #334155; line-height: 1.65; margin: 0;">
+                        Tra cứu danh bạ Hộ kinh doanh cá thể, Cửa hàng dịch vụ, Siêu thị mini và Doanh nghiệp trên địa bàn xã Đông Anh. Kết nối giao thương số, công khai minh bạch mã số thuế và hỗ trợ chuyển đổi số bán lẻ toàn diện.
+                    </p>
+
+                    <div class="business-stats-pills">
+                        <div class="business-stat-pill">
+                            <span class="icon">🏢</span> 100% Xác thực MST & Ngành nghề
+                        </div>
+                        <div class="business-stat-pill">
+                            <span class="icon">📞</span> Hotline liên hệ trực tiếp
+                        </div>
+                        <div class="business-stat-pill">
+                            <span class="icon">💳</span> Thanh toán VietQR số
+                        </div>
+                        <div class="business-stat-pill">
+                            <span class="icon">🗺️</span> Bản đồ số & Chỉ đường
+                        </div>
+                    </div>
+                </div>
             @else
                 <h2 style="font-size: 1.25rem; margin: 6px 0 0 0; font-family: var(--font-heading); font-weight: 700; line-height: 1.4; color: var(--text-main);">
                     <span style="margin-right: 4px;">📍</span> 
@@ -2509,6 +2720,9 @@
                             } elseif ($selectedCatSlug === 'discover-dong-anh-community-culture-hub') {
                                 $selEn = 'Discover Dong Anh Community & Culture Hub';
                                 $selVi = 'Khám phá thiết chế văn hóa - thể thao Đông Anh';
+                            } elseif ($selectedCatSlug === 'co-so-kinh-doanh') {
+                                $selEn = 'Business & Enterprise';
+                                $selVi = 'Cơ sở kinh doanh, Doanh nghiệp';
                             }
                         @endphp
                         {{ $selVi }} <span style="font-size: 0.9rem; color: var(--text-muted); font-weight: 500; font-style: italic;">({{ $selEn }})</span>
@@ -2524,6 +2738,41 @@
         
         <div id="eateriesListContainer" style="display: flex; flex-direction: column; gap: 24px; width: 100%;">
             @if($eateries->count() > 0)
+                @php
+                    if (!function_exists('getSmartBusinessImgHelper')) {
+                        function getSmartBusinessImgHelper($name, $desc = '') {
+                            $text = mb_strtolower($name . ' ' . $desc);
+                            if (preg_match('/(thuốc|y tế|phòng khám|bác sĩ|nha khoa|pharmacy|clinic|medical|dược)/ui', $text)) {
+                                return 'https://images.unsplash.com/photo-1587854692152-cbe660dbde88?auto=format&fit=crop&w=600&q=80';
+                            }
+                            if (preg_match('/(spa|cắt tóc|làm đầu|gội đầu|nail|beauty|salon|barber|massage|thẩm mỹ)/ui', $text)) {
+                                return 'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=600&q=80';
+                            }
+                            if (preg_match('/(cơ khí|sửa chữa|ô tô|mô tô|xe máy|phụ tùng|kim loại|hàn|nhôm kính|đúc|sắt)/ui', $text)) {
+                                return 'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?auto=format&fit=crop&w=600&q=80';
+                            }
+                            if (preg_match('/(may mặc|quần áo|thời trang|giày|dép|vải|boutique|clothing|fashion)/ui', $text)) {
+                                return 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=600&q=80';
+                            }
+                            if (preg_match('/(điện tử|máy tính|điện thoại|laptop|mobile|viễn thông|điện máy|điện gia dụng|camera)/ui', $text)) {
+                                return 'https://images.unsplash.com/photo-1550009158-9ebf69173e03?auto=format&fit=crop&w=600&q=80';
+                            }
+                            if (preg_match('/(cà phê|cafe|coffee|trà|đồ uống|bánh|bakery|quán ăn|ẩm thực|nhà hàng|bún|phở|cơm|lẩu|nướng)/ui', $text)) {
+                                return 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=600&q=80';
+                            }
+                            if (preg_match('/(xây dựng|vật liệu|xi măng|gạch|sơn|nội thất|gỗ|kính)/ui', $text)) {
+                                return 'https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=600&q=80';
+                            }
+                            if (preg_match('/(nhà đất|bất động sản|cho thuê|quản lý nhà|mặt bằng|văn phòng|land|real estate)/ui', $text)) {
+                                return 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=600&q=80';
+                            }
+                            if (preg_match('/(công ty|tnhh|cổ phần|doanh nghiệp|tập đoàn|enterprise)/ui', $text)) {
+                                return 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=600&q=80';
+                            }
+                            return 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?auto=format&fit=crop&w=600&q=80';
+                        }
+                    }
+                @endphp
                 @foreach($eateries as $eat)
                     @php
                         $isMarket = ($eat->category->slug === 'traditional-market');
@@ -2581,11 +2830,19 @@
                                 ];
                             }
                         } else {
+                            $cardImg = $eat->image_path;
+                            if (!$cardImg) {
+                                if ($eat->category->slug === 'co-so-kinh-doanh') {
+                                    $cardImg = getSmartBusinessImgHelper($eat->name, $eat->description);
+                                } else {
+                                    $cardImg = 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=300&q=80';
+                                }
+                            }
                             $displayCards[] = [
                                 'title' => $eat->name,
                                 'subtitle' => null,
                                 'desc' => $eat->description,
-                                'image' => $eat->image_path ?: 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=300&q=80',
+                                'image' => $cardImg,
                                 'stars' => $eat->average_rating ?: '5.0',
                                 'price' => $eat->price_range,
                                 'badgeText' => $eat->category->name,
@@ -2602,9 +2859,10 @@
                             $isWellnessItem = ($eat->category->slug === 'wellness-care');
                             $isCultureItem = ($eat->category->slug === 'discover-dong-anh-community-culture-hub');
                             $isEduItem = ($eat->category->slug === 'smart-education-map');
-                            $isCustomStyled = ($isMarket || $isOcopItem || $isFoodItem || $isStayItem || $isWellnessItem || $isCultureItem || $isEduItem);
+                            $isBusinessItem = ($eat->category->slug === 'co-so-kinh-doanh');
+                            $isCustomStyled = ($isMarket || $isOcopItem || $isFoodItem || $isStayItem || $isWellnessItem || $isCultureItem || $isEduItem || $isBusinessItem);
                         @endphp
-                        <div class="eatery-card glass-panel reveal reveal-fade-up hover-lift {{ $isOcopItem ? 'ocop-card-highlight' : '' }} {{ $isMarket ? 'market-card-highlight' : '' }} {{ $isFoodItem ? 'food-card-highlight' : '' }} {{ $isStayItem ? 'stay-card-highlight' : '' }} {{ $isWellnessItem ? 'wellness-card-highlight' : '' }} {{ $isCultureItem ? 'culture-card-highlight' : '' }} {{ $isEduItem ? 'edu-card-highlight' : '' }}" 
+                        <div class="eatery-card glass-panel reveal reveal-fade-up hover-lift {{ $isOcopItem ? 'ocop-card-highlight' : '' }} {{ $isMarket ? 'market-card-highlight' : '' }} {{ $isFoodItem ? 'food-card-highlight' : '' }} {{ $isStayItem ? 'stay-card-highlight' : '' }} {{ $isWellnessItem ? 'wellness-card-highlight' : '' }} {{ $isCultureItem ? 'culture-card-highlight' : '' }} {{ $isEduItem ? 'edu-card-highlight' : '' }} {{ $isBusinessItem ? 'business-card-highlight' : '' }}" 
                              data-slug="{{ $eat->slug }}"
                              data-name="{{ $card['title'] }}"
                              data-address="{{ $eat->address }}"
@@ -2692,6 +2950,27 @@
                                             <span>⭐</span> {{ $card['stars'] }}
                                         </div>
                                     </div>
+                                @elseif($isBusinessItem)
+                                    @php
+                                        $taxCode = $eat->storytelling_data['tax_code'] ?? null;
+                                        $isEnterprise = str_contains(mb_strtoupper($eat->name), 'CÔNG TY') || ($eat->storytelling_data['business_type'] ?? '') === 'Doanh nghiệp';
+                                    @endphp
+                                    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px; margin-bottom: 4px;">
+                                        <span class="business-title-badge" style="background: linear-gradient(135deg, #0284c7, #0369a1); color: #fff; font-size: 0.68rem; font-weight: 800; padding: 2px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;">
+                                            {{ $isEnterprise ? '🏢 DOANH NGHIỆP' : '🏪 HỘ KINH DOANH' }}
+                                        </span>
+                                        @if($taxCode)
+                                            <span class="business-mst-tag" style="font-size: 0.68rem; color: #0284c7; background: rgba(2, 132, 199, 0.1); padding: 2px 8px; border-radius: 6px;">
+                                                🆔 MST: {{ $taxCode }}
+                                            </span>
+                                        @endif
+                                    </div>
+                                    <div class="eatery-header" style="align-items: center; margin-bottom: 6px;">
+                                        <h3 class="eatery-title" style="color: #0f172a; font-size: 1.18rem; font-weight: 900; letter-spacing: -0.2px;">{{ $card['title'] }}</h3>
+                                        <div class="rating-stars" style="color: #0284c7; font-weight: 800;">
+                                            <span>⭐</span> {{ $card['stars'] }}
+                                        </div>
+                                    </div>
                                 @else
                                     <div class="eatery-header">
                                         <h3 class="eatery-title">{{ $card['title'] }}</h3>
@@ -2715,7 +2994,11 @@
                                     <div class="eatery-meta-item">
                                         <span>📍</span> {{ $eat->commune?->name ?? 'Đông Anh' }}
                                     </div>
-                                    @if(!in_array($eat->category->slug, ['smart-education-map', 'hanh-trinh-di-san', 'discover-dong-anh-community-culture-hub']))
+                                    @if($isBusinessItem && $eat->phone)
+                                        <a href="tel:{{ $eat->phone }}" class="business-phone-tag" onclick="event.stopPropagation();" style="color: #0284c7; font-weight: 700; text-decoration: none; font-size: 0.8rem;">
+                                            <span>📞</span> {{ $eat->phone }}
+                                        </a>
+                                    @elseif(!in_array($eat->category->slug, ['smart-education-map', 'hanh-trinh-di-san', 'discover-dong-anh-community-culture-hub']))
                                     <div class="eatery-meta-item {{ $isOcopItem ? 'ocop-price-tag' : '' }}" style="{{ !$isOcopItem ? 'color: var(--primary); font-weight: 700;' : '' }}">
                                         {{ $card['price'] }}
                                     </div>
@@ -2754,6 +3037,14 @@
                                             <span>🎓 Tra Cứu Thông Tin Trường</span> ➔
                                         </a>
                                     </div>
+                                @elseif($isBusinessItem)
+                                    <a href="{{ route('eatery.show', $eat->slug) }}" class="business-explore-btn" onclick="event.stopPropagation();" style="display: flex; align-items: center; justify-content: space-between; padding: 8px 14px; background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: #ffffff; border-radius: 8px; font-size: 0.78rem; font-weight: 700; text-decoration: none; margin-top: 10px; transition: all 0.2s;">
+                                        <span>🏪 Xem Chi Tiết Cơ Sở & Dịch Vụ</span> ➔
+                                    </a>
+                                @else
+                                    <a href="{{ route('eatery.show', $eat->slug) }}" class="btn-primary" onclick="event.stopPropagation();" style="display: flex; align-items: center; justify-content: space-between; padding: 8px 14px; border-radius: 8px; font-size: 0.78rem; font-weight: 700; text-decoration: none; margin-top: 10px;">
+                                        <span>Xem Chi Tiết</span> ➔
+                                    </a>
                                 @endif
                             </div>
                         </div>
@@ -3015,6 +3306,38 @@
         });
     }
 
+    window.getSmartBusinessImgJS = function(name, desc) {
+        const text = ((name || '') + ' ' + (desc || '')).toLowerCase();
+        if (/thuốc|y tế|phòng khám|bác sĩ|nha khoa|pharmacy|clinic|medical|dược/i.test(text)) {
+            return 'https://images.unsplash.com/photo-1587854692152-cbe660dbde88?auto=format&fit=crop&w=600&q=80';
+        }
+        if (/spa|cắt tóc|làm đầu|gội đầu|nail|beauty|salon|barber|massage|thẩm mỹ/i.test(text)) {
+            return 'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=600&q=80';
+        }
+        if (/cơ khí|sửa chữa|ô tô|mô tô|xe máy|phụ tùng|kim loại|hàn|nhôm kính|đúc|sắt/i.test(text)) {
+            return 'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?auto=format&fit=crop&w=600&q=80';
+        }
+        if (/may mặc|quần áo|thời trang|giày|dép|vải|boutique|clothing|fashion/i.test(text)) {
+            return 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=600&q=80';
+        }
+        if (/điện tử|máy tính|điện thoại|laptop|mobile|viễn thông|điện máy|điện gia dụng|camera/i.test(text)) {
+            return 'https://images.unsplash.com/photo-1550009158-9ebf69173e03?auto=format&fit=crop&w=600&q=80';
+        }
+        if (/cà phê|cafe|coffee|trà|đồ uống|bánh|bakery|quán ăn|ẩm thực|nhà hàng|bún|phở|cơm|lẩu|nướng/i.test(text)) {
+            return 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=600&q=80';
+        }
+        if (/xây dựng|vật liệu|xi măng|gạch|sơn|nội thất|gỗ|kính/i.test(text)) {
+            return 'https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=600&q=80';
+        }
+        if (/nhà đất|bất động sản|cho thuê|quản lý nhà|mặt bằng|văn phòng|land|real estate/i.test(text)) {
+            return 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=600&q=80';
+        }
+        if (/công ty|tnhh|cổ phần|doanh nghiệp|tập đoàn|enterprise/i.test(text)) {
+            return 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=600&q=80';
+        }
+        return 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?auto=format&fit=crop&w=600&q=80';
+    };
+
     document.addEventListener("DOMContentLoaded", function() {
         // 1. Kích hoạt cuộn bằng kéo chuột (Drag to scroll) cho máy tính & hỗ trợ vuốt chạm trên điện thoại
         const slider = document.querySelector('.categories-slider');
@@ -3137,9 +3460,18 @@
                         ? `<button onclick="event.stopPropagation(); window.openSchoolStoryteller('${eat.slug}', '/dia-diem/${eat.slug}'); return false;" class="btn-secondary" style="padding: 4px 10px; font-size: 0.75rem; border-radius: 6px; font-family: var(--font-heading); background: rgba(99, 102, 241, 0.12); border: 1px solid rgba(99, 102, 241, 0.3); color: #4f46e5; display: inline-flex; align-items: center; gap: 4px; cursor: pointer; transition: all 0.2s; font-weight: 700;" onmouseover="this.style.background='rgba(99, 102, 241, 0.2)'" onmouseout="this.style.background='rgba(99, 102, 241, 0.12)'">📖 Story</button>` 
                         : (isOcopMarker ? `<button onclick="event.stopPropagation(); window.openOcopStoryteller('${eat.slug}'); return false;" class="btn-secondary" style="padding: 4px 10px; font-size: 0.75rem; border-radius: 6px; font-family: var(--font-heading); background: rgba(217, 119, 6, 0.15); border: 1px solid rgba(251, 191, 36, 0.4); color: #d97706; display: inline-flex; align-items: center; gap: 4px; cursor: pointer; transition: all 0.2s; font-weight: 700;" onmouseover="this.style.background='rgba(217, 119, 6, 0.25)'" onmouseout="this.style.background='rgba(217, 119, 6, 0.15)'">🌾 Story</button>` : '');
 
+                    let markerImg = eat.image_path;
+                    if (!markerImg) {
+                        if (catSlug === 'co-so-kinh-doanh') {
+                            markerImg = window.getSmartBusinessImgJS(eat.name, eat.description);
+                        } else {
+                            markerImg = 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=300&q=80';
+                        }
+                    }
+
                     const popupContent = `
                         <div class="map-popup-card">
-                            <img src="${eat.image_path ? eat.image_path : 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=300&q=80'}" class="map-popup-img">
+                            <img src="${markerImg}" class="map-popup-img">
                             <h4 class="map-popup-title">${eat.name}</h4>
                             <p style="font-size: 0.8rem; color: var(--text-muted); margin: 2px 0;">📍 ${communeName}</p>
                             <div class="map-popup-footer">
@@ -3365,7 +3697,7 @@
             }
 
             if (pName && pImg) {
-                const isOcop = pName.includes('OCOP') || pStars || sellerName;
+                const isOcop = (pName && (pName.includes('OCOP') || pName.includes('Đặc sản'))) || (sellerName && sellerName.includes('Chủ thể')) || (pStars && typeof pStars === 'string' && pStars.includes('sao'));
                 const imgHtml = `<div style="position: relative; width: 100%; height: 155px; border-radius: 10px; overflow: hidden; border: 1px solid rgba(0,0,0,0.08);">
                     <img src="${pImg}" class="map-popup-img" style="width: 100%; height: 100%; object-fit: cover; object-position: center;" alt="${pName}">
                     ${isOcop ? '<span style="position: absolute; top: 8px; left: 8px; background: linear-gradient(135deg, #059669, #10b981); color: #fff; font-size: 0.65rem; font-weight: 800; padding: 3px 9px; border-radius: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.25);">🌾 OCOP</span>' : ''}
@@ -3627,6 +3959,42 @@
                                 </div>
                             </div>
                         `;
+                    } else if (slug === 'co-so-kinh-doanh') {
+                        headerContainer.innerHTML = `
+                            <div class="business-hero-box">
+                                <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                                    <span class="business-badge-chip">
+                                        <span>🏪</span> CƠ SỞ KINH DOANH & DOANH NGHIỆP
+                                    </span>
+                                    <span id="resultsCountSpan" style="font-size: 0.85rem; font-weight: 700; color: #0284c7; background: #ffffff; padding: 5px 14px; border-radius: 20px; border: 1.5px solid #7dd3fc; box-shadow: 0 2px 8px rgba(14, 165, 233, 0.1);">
+                                        📍 ${data.eateries.length} Hộ Kinh Doanh & Doanh Nghiệp Trên Địa Bàn
+                                    </span>
+                                </div>
+                                
+                                <h2 class="business-hero-title">
+                                    Hệ Thống Cơ Sở Kinh Doanh & Doanh Nghiệp Đông Anh
+                                </h2>
+                                
+                                <p style="font-size: 0.92rem; color: #334155; line-height: 1.65; margin: 0;">
+                                    Tra cứu danh bạ Hộ kinh doanh cá thể, Cửa hàng dịch vụ, Siêu thị mini và Doanh nghiệp trên địa bàn xã Đông Anh. Kết nối giao thương số, công khai minh bạch mã số thuế và hỗ trợ chuyển đổi số bán lẻ toàn diện.
+                                </p>
+
+                                <div class="business-stats-pills">
+                                    <div class="business-stat-pill">
+                                        <span class="icon">🏢</span> 100% Xác thực MST & Ngành nghề
+                                    </div>
+                                    <div class="business-stat-pill">
+                                        <span class="icon">📞</span> Hotline liên hệ trực tiếp
+                                    </div>
+                                    <div class="business-stat-pill">
+                                        <span class="icon">💳</span> Thanh toán VietQR số
+                                    </div>
+                                    <div class="business-stat-pill">
+                                        <span class="icon">🗺️</span> Bản đồ số & Chỉ đường
+                                    </div>
+                                </div>
+                            </div>
+                        `;
                     } else {
                         const activeCard = document.querySelector('.category-card.active');
                         let titleText = 'Địa điểm nổi bật <span style="font-size: 0.9rem; color: var(--text-muted); font-weight: 500; font-style: italic;">(Featured Places)</span>';
@@ -3648,6 +4016,36 @@
                     }
                 }
                 
+                // Helper chọn hình ảnh thông minh theo ngành nghề cho JS
+                function getSmartBusinessImgJS(name, desc) {
+                    const text = ((name || '') + ' ' + (desc || '')).toLowerCase();
+                    if (/thuốc|y tế|phòng khám|bác sĩ|nha khoa|pharmacy|clinic|medical|dược/i.test(text)) {
+                        return 'https://images.unsplash.com/photo-1586015555751-63c25aa43048?auto=format&fit=crop&w=400&q=80';
+                    }
+                    if (/spa|cắt tóc|làm đầu|gội đầu|nail|beauty|salon|barber|massage|thẩm mỹ/i.test(text)) {
+                        return 'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=400&q=80';
+                    }
+                    if (/cơ khí|sửa chữa|ô tô|mô tô|xe máy|phụ tùng|kim loại|hàn|nhôm kính|đúc|sắt/i.test(text)) {
+                        return 'https://images.unsplash.com/photo-1486006920555-c77dce18193b?auto=format&fit=crop&w=400&q=80';
+                    }
+                    if (/may mặc|quần áo|thời trang|giày|dép|vải|boutique|clothing|fashion/i.test(text)) {
+                        return 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=400&q=80';
+                    }
+                    if (/điện tử|máy tính|điện thoại|laptop|mobile|viễn thông|điện máy|điện gia dụng|camera/i.test(text)) {
+                        return 'https://images.unsplash.com/photo-1550009158-9ebf69173e03?auto=format&fit=crop&w=400&q=80';
+                    }
+                    if (/cà phê|cafe|coffee|trà|đồ uống|bánh|bakery|quán ăn|ẩm thực|nhà hàng|bún|phở|cơm|lẩu|nướng/i.test(text)) {
+                        return 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=400&q=80';
+                    }
+                    if (/xây dựng|vật liệu|xi măng|gạch|sơn|nội thất|gỗ|kính/i.test(text)) {
+                        return 'https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=400&q=80';
+                    }
+                    if (/công ty|tnhh|cổ phần|doanh nghiệp|tập đoàn|enterprise/i.test(text)) {
+                        return 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=400&q=80';
+                    }
+                    return 'https://images.unsplash.com/photo-1604719312566-8912e9227c6a?auto=format&fit=crop&w=400&q=80';
+                }
+
                 // Re-render danh sách
                 if (isOcopCategory && ocopProductsList.length > 0) {
                     let cardsHtml = '';
@@ -3803,7 +4201,16 @@
                                 `;
                             });
                         } else {
-                            const imgUrl = eat.image_path ? eat.image_path : 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=300&q=80';
+                            const isBusinessItem = (categorySlug === 'co-so-kinh-doanh' || slug === 'co-so-kinh-doanh');
+                            let imgUrl = eat.image_path;
+                            if (!imgUrl) {
+                                if (isBusinessItem) {
+                                    imgUrl = getSmartBusinessImgJS(eat.name, eat.description);
+                                } else {
+                                    imgUrl = 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=300&q=80';
+                                }
+                            }
+
                             const ratingVal = eat.average_rating || (eat.rating ? parseFloat(eat.rating).toFixed(1) : '5.0');
                             const communeName = eat.commune ? (eat.commune.name || eat.commune) : '';
                             const categoryIcon = eat.category ? (eat.category.icon || '') : '';
@@ -3814,10 +4221,19 @@
                             const isWellnessItem = (categorySlug === 'wellness-care' || slug === 'wellness-care');
                             const isCultureItem = (categorySlug === 'discover-dong-anh-community-culture-hub' || slug === 'discover-dong-anh-community-culture-hub');
                             const isEduItem = (categorySlug === 'smart-education-map' || slug === 'smart-education-map');
-                            const isCustomStyled = (isMarket || isFoodItem || isStayItem || isWellnessItem || isCultureItem || isEduItem);
+                            const isCustomStyled = (isMarket || isFoodItem || isStayItem || isWellnessItem || isCultureItem || isEduItem || isBusinessItem);
+
+                            // Metadata xử lý cho Doanh nghiệp / Hộ kinh doanh
+                            let storyData = eat.storytelling_data;
+                            if (typeof storyData === 'string') {
+                                try { storyData = JSON.parse(storyData); } catch(e) { storyData = {}; }
+                            }
+                            storyData = storyData || {};
+                            const taxCode = storyData.tax_code || '';
+                            const isEnterprise = (eat.name || '').toUpperCase().includes('CÔNG TY') || (storyData.business_type === 'Doanh nghiệp');
 
                             cardsHtml += `
-                                <div class="eatery-card glass-panel revealed hover-lift ${isMarket ? 'market-card-highlight' : ''} ${isFoodItem ? 'food-card-highlight' : ''} ${isStayItem ? 'stay-card-highlight' : ''} ${isWellnessItem ? 'wellness-card-highlight' : ''} ${isCultureItem ? 'culture-card-highlight' : ''} ${isEduItem ? 'edu-card-highlight' : ''}" 
+                                <div class="eatery-card glass-panel revealed hover-lift ${isMarket ? 'market-card-highlight' : ''} ${isFoodItem ? 'food-card-highlight' : ''} ${isStayItem ? 'stay-card-highlight' : ''} ${isWellnessItem ? 'wellness-card-highlight' : ''} ${isCultureItem ? 'culture-card-highlight' : ''} ${isEduItem ? 'edu-card-highlight' : ''} ${isBusinessItem ? 'business-card-highlight' : ''}" 
                                      data-slug="${eat.slug}"
                                      data-name="${eat.name}"
                                      data-address="${eat.address}"
@@ -3860,10 +4276,17 @@
                                             <div style="margin-bottom: 4px;">
                                                 <span class="edu-title-badge">🎓 CƠ SỞ GIÁO DỤC</span>
                                             </div>
+                                        ` : isBusinessItem ? `
+                                            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px; margin-bottom: 4px;">
+                                                <span class="business-title-badge">
+                                                    ${isEnterprise ? '🏢 DOANH NGHIỆP' : '🏪 HỘ KINH DOANH'}
+                                                </span>
+                                                ${taxCode ? `<span class="business-mst-tag">🆔 MST: ${taxCode}</span>` : ''}
+                                            </div>
                                         ` : ''}
                                         <div class="eatery-header" ${isCustomStyled ? 'style="align-items: center; margin-bottom: 6px;"' : ''}>
-                                            <h3 class="eatery-title">${eat.name}</h3>
-                                            <div class="rating-stars" ${isFoodItem ? 'style="color: #f59e0b; font-weight: 800;"' : isStayItem ? 'style="color: #db2777; font-weight: 800;"' : isWellnessItem ? 'style="color: #059669; font-weight: 800;"' : isCultureItem ? 'style="color: #d97706; font-weight: 800;"' : isEduItem ? 'style="color: #4f46e5; font-weight: 800;"' : ''}>
+                                            <h3 class="eatery-title" ${isBusinessItem ? 'style="color: #0f172a; font-size: 1.18rem; font-weight: 900; letter-spacing: -0.2px;"' : ''}>${eat.name}</h3>
+                                            <div class="rating-stars" ${isFoodItem ? 'style="color: #f59e0b; font-weight: 800;"' : isStayItem ? 'style="color: #db2777; font-weight: 800;"' : isWellnessItem ? 'style="color: #059669; font-weight: 800;"' : isCultureItem ? 'style="color: #d97706; font-weight: 800;"' : isEduItem ? 'style="color: #4f46e5; font-weight: 800;"' : isBusinessItem ? 'style="color: #0284c7; font-weight: 800;"' : ''}>
                                                 <span>⭐</span> ${ratingVal}
                                             </div>
                                         </div>
@@ -3872,10 +4295,14 @@
                                             <div class="eatery-meta-item">
                                                 <span>📍</span> ${communeName}
                                             </div>
-                                            ${!['smart-education-map', 'hanh-trinh-di-san', 'discover-dong-anh-community-culture-hub'].includes(categorySlug) ? `
-                                            <div class="eatery-meta-item" style="${isFoodItem ? 'color: #ea580c; font-weight: 700;' : 'color: var(--primary); font-weight: 600;'}">
-                                                ${eat.price_range}
-                                            </div>
+                                            ${isBusinessItem && eat.phone ? `
+                                                <a href="tel:${eat.phone}" class="business-phone-tag" onclick="event.stopPropagation();">
+                                                    <span>📞</span> ${eat.phone}
+                                                </a>
+                                            ` : !['smart-education-map', 'hanh-trinh-di-san', 'discover-dong-anh-community-culture-hub'].includes(categorySlug) ? `
+                                                <div class="eatery-meta-item" style="${isFoodItem ? 'color: #ea580c; font-weight: 700;' : 'color: var(--primary); font-weight: 600;'}">
+                                                    ${eat.price_range}
+                                                </div>
                                             ` : ''}
                                         </div>
                                         ${isMarket ? `
@@ -3907,7 +4334,15 @@
                                                     <span>🎓 Tra Cứu Thông Tin Trường</span> ➔
                                                 </a>
                                             </div>
-                                        ` : ''}
+                                        ` : isBusinessItem ? `
+                                            <a href="/dia-diem/${eat.slug}" class="business-explore-btn" onclick="event.stopPropagation();">
+                                                <span>🏪 Xem Chi Tiết Cơ Sở & Dịch Vụ</span> ➔
+                                            </a>
+                                        ` : `
+                                            <a href="/dia-diem/${eat.slug}" class="btn-primary" onclick="event.stopPropagation();" style="display: flex; align-items: center; justify-content: space-between; padding: 8px 14px; border-radius: 8px; font-size: 0.78rem; font-weight: 700; text-decoration: none; margin-top: 10px;">
+                                                <span>Xem Chi Tiết</span> ➔
+                                            </a>
+                                        `}
                                     </div>
                                 </div>
                             `;

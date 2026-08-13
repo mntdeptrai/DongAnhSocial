@@ -185,7 +185,7 @@
         <!-- Cơ sở kinh doanh (Dành cho Ẩm Thực, OCOP, Homestay, Trường Học, Manager Chợ) -->
         <div id="eatery_selection_group" class="admin-form-group" style="margin-bottom: 28px;">
             <label class="admin-form-label" id="eatery_label" style="font-weight: 700; font-size: 0.82rem; margin-bottom: 8px; display: block; color: var(--admin-text-main);">
-                🏢 Cơ sở kinh doanh / Điểm OCOP / Địa điểm liên kết
+                🏢 Cơ sở kinh doanh / Doanh nghiệp / Điểm OCOP / Địa điểm liên kết
             </label>
             <div style="position: relative;">
                 <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--admin-text-muted);">🏢</span>
@@ -226,7 +226,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (role === 'seller') {
                 if (stallGroup) stallGroup.style.display = 'block';
                 eateryGroup.style.display = 'block';
-                if (eateryLabel) eateryLabel.innerHTML = '🏢 Cơ sở kinh doanh / HTX / OCOP liên kết (Nếu không phải Gian hàng Chợ)';
+                if (eateryLabel) eateryLabel.innerHTML = '🏢 Cơ sở kinh doanh / Doanh nghiệp / HTX / OCOP liên kết (Nếu không phải Gian hàng Chợ)';
             } else if (role === 'manager') {
                 if (stallGroup) stallGroup.style.display = 'none';
                 eateryGroup.style.display = 'block';

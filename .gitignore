@@ -42,3 +42,19 @@ ios/Flutter/flutter_export_environment.sh
 /storage/framework/sessions/*
 scratch/
 *.sql
+
+# ============================================================
+# FILE LOCAL - CHỈ DÙNG TRÊN MÁY, KHÔNG PUSH LÊN GIT
+# ============================================================
+# File PDF gốc (nặng, không cần deploy)
+*.pdf
+
+# Scripts trích xuất dữ liệu local (build/sync HKD)
+/scripts/
+
+# File JSON tổng hợp HKD (lưu trên máy, không cần trên server)
+/database/data/
+
+# File check tạm thời
+check.php
+extract_pdf.cjs

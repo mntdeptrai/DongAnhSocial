@@ -163,9 +163,9 @@
                                             $displayNameEn = 'Discover Dong Anh Community & Culture Hub';
                                             $displayNameVi = 'Khám phá thiết chế văn hóa - thể thao Đông Anh';
                                         } elseif ($cat->slug === 'co-so-kinh-doanh') {
-                                            $displayIcon = '🏪';
-                                            $displayNameEn = 'Cơ sở kinh doanh';
-                                            $displayNameVi = 'Cơ sở kinh doanh';
+                                            $displayIcon = '🏢';
+                                            $displayNameEn = 'Business & Enterprise';
+                                            $displayNameVi = 'Cơ sở kinh doanh, Doanh nghiệp';
                                         }
                                     @endphp
                                     <option value="{{ $cat->id }}" data-slug="{{ $cat->slug }}" {{ old('category_id', $eatery ? $eatery->category_id : '') == $cat->id ? 'selected' : '' }}>

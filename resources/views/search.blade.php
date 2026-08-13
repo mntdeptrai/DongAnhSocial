@@ -460,7 +460,7 @@
             case 'dong-anh-market': return 'CHỢ TRUYỀN THỐNG & SIÊU THỊ';
             case 'dong-anh-food-map': return 'ĐỊA ĐIỂM ẨM THỰC';
             case 'discover-dong-anh-community-culture-hub': return 'NHÀ VĂN HÓA & THỂ THAO';
-            case 'co-so-kinh-doanh': return 'CƠ SỞ KINH DOANH';
+            case 'co-so-kinh-doanh': return 'CƠ SỞ KINH DOANH, DOANH NGHIỆP';
             default: return originalName.toUpperCase();
         }
     }
