@@ -52,8 +52,6 @@ scratch/
 # Scripts trích xuất dữ liệu local (build/sync HKD)
 /scripts/
 
-# File JSON tổng hợp HKD (lưu trên máy, không cần trên server)
-/database/data/
 
 # File check tạm thời
 check.php
