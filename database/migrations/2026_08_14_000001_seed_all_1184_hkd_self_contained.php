@@ -1229,7 +1229,7 @@ return new class extends Migration
                 $userId = $user->id;
             }
 
-            // Build storytelling_data JSON
+            // Build storytelling_data JSON (metadata)
             $storyData = json_encode([
                 'mst'          => $item['mst'],
                 'industry'     => $item['industry'],
@@ -1237,8 +1237,14 @@ return new class extends Migration
                 'phone'        => $phone,
             ], JSON_UNESCAPED_UNICODE);
 
+            // Plain text description = ngành nghề kinh doanh
+            $descText = $item['industry'] ?: ($item['type'] ?: 'Hộ kinh doanh');
+
             // Slug
             $slug = Str::slug($item['name']) . '-' . Str::upper(Str::random(5));
+
+            // Match commune from address
+            $communeId = $defaultCommuneId;
 
             // Upsert eatery
             $existing = DB::table('eateries')
@@ -1251,9 +1257,11 @@ return new class extends Migration
                     'name'             => $item['name'],
                     'slug'             => $slug,
                     'address'          => $item['address'],
-                    'description'      => $storyData,
+                    'phone'            => $phone,
+                    'description'      => $descText,
+                    'storytelling_data'=> $storyData,
                     'category_id'      => $catId,
-                    'commune_id'       => $defaultCommuneId,
+                    'commune_id'       => $communeId,
                     'user_id'          => $userId,
                     'latitude'         => $item['lat'],
                     'longitude'        => $item['lng'],
@@ -1265,9 +1273,12 @@ return new class extends Migration
                 ]);
             } else {
                 DB::table('eateries')->where('id', $existing->id)->update([
-                    'latitude'    => $item['lat'],
-                    'longitude'   => $item['lng'],
-                    'updated_at'  => now(),
+                    'phone'            => $phone,
+                    'description'      => $descText,
+                    'storytelling_data'=> $storyData,
+                    'latitude'         => $item['lat'],
+                    'longitude'        => $item['lng'],
+                    'updated_at'       => now(),
                 ]);
             }
         }
