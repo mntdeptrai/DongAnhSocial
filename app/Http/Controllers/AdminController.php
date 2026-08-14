@@ -1847,10 +1847,15 @@ class AdminController extends Controller
 
         $eateryId = $user->eatery_id ?: ($stall ? $stall->eatery_id : null);
         if ($eateryId) {
-            $market = \Illuminate\Support\Facades\DB::connection('mysql_market')
-                ->table('eateries')
-                ->where('id', $eateryId)
-                ->first();
+            $market = \Illuminate\Support\Facades\DB::table('eateries')->where('id', $eateryId)->first();
+            if (!$market) {
+                try {
+                    $market = \Illuminate\Support\Facades\DB::connection('mysql_market')->table('eateries')->where('id', $eateryId)->first();
+                } catch (\Exception $e) {}
+            }
+        }
+        if (!$market) {
+            $market = \Illuminate\Support\Facades\DB::table('eateries')->where('user_id', $user->id)->first();
         }
 
         if ($stall) {

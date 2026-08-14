@@ -119,14 +119,14 @@
                         @endif
                     </div>
 
-                    <!-- Chợ Quản Lý -->
+                    <!-- Chợ Quản Lý / Cơ sở liên kết -->
                     <div style="padding: 12px 16px; background: #ffffff; border: 1px solid var(--admin-border); border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
                         <span style="font-size: 0.75rem; color: var(--admin-text-muted); display: block; font-weight: 700; text-transform: uppercase;">🏢 Thuộc Chợ / Cơ sở</span>
                         <strong style="font-size: 0.95rem; color: #166534; display: block; margin-top: 2px;">
-                            {{ $market ? $market->name : 'Chợ Mạch Tràng' }}
+                            {{ $market ? $market->name : ($stall ? 'Chợ Mạch Tràng' : 'Cơ sở độc lập') }}
                         </strong>
                         <span style="font-size: 0.78rem; color: var(--admin-text-muted); display: block; margin-top: 2px;">
-                            📍 Khu vực Đông Anh, Hà Nội
+                            📍 {{ $market && !empty($market->address) ? $market->address : 'Khu vực Đông Anh, Hà Nội' }}
                         </span>
                     </div>
                 </div>
