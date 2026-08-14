@@ -1089,7 +1089,7 @@ return new class extends Migration
         ['name'=>'HỘ KINH DOANH ĐÀO PHƯƠNG NGUYỄN','address'=>'Tổ 4, Xã Đông Anh','phone'=>'0352916521','mst'=>'','industry'=>'Giáo dục khác chưa được phân vào đâu','type'=>'Ho Kinh Doanh','lat'=>21.14044,'lng'=>105.84942],
         ['name'=>'NGUYỄN THỊ THOA 101963','address'=>'Thôn Nghĩa Vũ, Xã Đông Anh','phone'=>'0832154452','mst'=>'','industry'=>'Bán buôn thực phẩm','type'=>'Ho Kinh Doanh','lat'=>21.1352,'lng'=>105.8458],
         ['name'=>'HỘ KINH DOANH HOÀNG LINH LINH 2002','address'=>'Khu tái định cư Bắc sông Thiếp, Xã Đông Anh','phone'=>'0963418628','mst'=>'','industry'=>'Nhà hàng và các dịch vụ ăn uống phục vụ lưu động','type'=>'Ho Kinh Doanh','lat'=>21.14025,'lng'=>105.84927],
-        ['name'=>'HỘ KINH DOANH NGUYỄN THỊ THU THẢO 1991','address'=>'Thôn Mai Hiên, Xã Đông Anh','phone'=>'0962601611','mst'=>'','industry'=>'Bán lẻ thực phẩm trong các cửa hàng chuyên doanh','type'=>'Ho Kinh Doanh','lat'=>21.11393,'lng'=>105.89815],
+        ['name'=>'HỘ KINH DOANH NGUYỄN THỊ THU PHƯƠNG 1989','address'=>'Tổ 4, Xã Đông Anh','phone'=>'0962601611','mst'=>'','industry'=>'Bán lẻ thực phẩm trong các cửa hàng chuyên doanh','type'=>'Ho Kinh Doanh','lat'=>21.11393,'lng'=>105.89815],
         ['name'=>'NGUYỄN THỊ THÌN','address'=>'Số 124 Đường Việt Hùng, Xã Đông Anh','phone'=>'0963124335','mst'=>'','industry'=>'Bán lẻ hàng may mặc đã qua sử dụng trong các cửa hàng chuyên doanh','type'=>'Ho Kinh Doanh','lat'=>21.15828,'lng'=>105.88193],
         ['name'=>'NGUYỄN HUY VẬN 66','address'=>'Thôn Vạn Lộc, Xã Đông Anh','phone'=>'0974781366','mst'=>'','industry'=>'Bán buôn vật liệu, thiết bị lắp đặt khác trong xây dựng','type'=>'Ho Kinh Doanh','lat'=>21.10798,'lng'=>105.83619],
         ['name'=>'HỘ KINH DOANH HOÀNG THỊ MỸ 93','address'=>'Ô số 7, Cầu số 15, Chợ Tó, Xã Đông Anh','phone'=>'0968521255','mst'=>'','industry'=>'Bán lẻ hàng dệt, may sẵn, giày dép lưu động hoặc tại chợ','type'=>'Ho Kinh Doanh','lat'=>21.13784,'lng'=>105.85286],
@@ -1204,11 +1204,21 @@ return new class extends Migration
         ];
 
         $defaultCommuneId = DB::table('communes')->value('id') ?? 1;
+        $communes = DB::table('communes')->get();
 
         foreach ($data as $item) {
             if (empty($item['phone'])) continue;
             $phone = preg_replace('/[^0-9]/', '', $item['phone']);
             if (strlen($phone) < 8) continue;
+
+            // Match commune từ địa chỉ (giống sync_all_hkd_to_db.php)
+            $communeId = $defaultCommuneId;
+            foreach ($communes as $c) {
+                if (mb_stripos($item['address'], $c->name) !== false) {
+                    $communeId = $c->id;
+                    break;
+                }
+            }
 
             // Upsert user
             $user = DB::table('users')->where('phone', $phone)->orWhere('username', $phone)->first();
@@ -1227,55 +1237,62 @@ return new class extends Migration
                 ]);
             } else {
                 $userId = $user->id;
+                if ($user->role !== 'admin') {
+                    DB::table('users')->where('id', $userId)->update([
+                        'status'      => 'active',
+                        'is_verified' => true,
+                    ]);
+                }
             }
 
-            // Build storytelling_data JSON (metadata)
+            // storytelling_data đúng định dạng (giống sync script)
             $storyData = json_encode([
-                'mst'          => $item['mst'],
-                'industry'     => $item['industry'],
-                'section_type' => $item['type'],
-                'phone'        => $phone,
+                'tax_code'      => $item['mst'] ?: null,
+                'business_type' => 'Cơ sở kinh doanh, Doanh nghiệp',
+                'stt'           => null,
             ], JSON_UNESCAPED_UNICODE);
 
-            // Plain text description = ngành nghề kinh doanh
-            $descText = $item['industry'] ?: ($item['type'] ?: 'Hộ kinh doanh');
+            // description = ngành nghề plain text (giống sync script)
+            $descText = $item['industry'] ?: 'Cơ sở kinh doanh trên địa bàn xã Đông Anh';
 
-            // Slug
-            $slug = Str::slug($item['name']) . '-' . Str::upper(Str::random(5));
+            // Slug lowercase (giống sync script)
+            $baseSlug = Str::slug($item['name']) ?: ('hkd-' . $phone);
+            $slug = $baseSlug . '-' . strtolower(Str::random(5));
 
-            // Match commune from address
-            $communeId = $defaultCommuneId;
-
-            // Upsert eatery
-            $existing = DB::table('eateries')
-                ->where('category_id', $catId)
-                ->where('user_id', $userId)
-                ->first();
+            // Tìm eatery theo phone (giống sync script)
+            $existing = DB::table('eateries')->where('phone', $phone)->first();
 
             if (!$existing) {
                 DB::table('eateries')->insert([
+                    'user_id'          => $userId,
                     'name'             => $item['name'],
                     'slug'             => $slug,
+                    'category_id'      => $catId,
+                    'commune_id'       => $communeId,
                     'address'          => $item['address'],
                     'phone'            => $phone,
                     'description'      => $descText,
-                    'storytelling_data'=> $storyData,
-                    'category_id'      => $catId,
-                    'commune_id'       => $communeId,
-                    'user_id'          => $userId,
-                    'latitude'         => $item['lat'],
-                    'longitude'        => $item['lng'],
+                    'price_range'      => 'Liên hệ',
                     'status'           => 'active',
                     'is_featured'      => false,
-                    'rating'           => 0,
+                    'latitude'         => $item['lat'],
+                    'longitude'        => $item['lng'],
+                    'storytelling_data'=> $storyData,
                     'created_at'       => now(),
                     'updated_at'       => now(),
                 ]);
             } else {
+                $existingStory = json_decode($existing->storytelling_data ?? '{}', true) ?: [];
+                if (!empty($item['mst'])) {
+                    $existingStory['tax_code'] = $item['mst'];
+                }
+                $existingStory['business_type'] = 'Cơ sở kinh doanh, Doanh nghiệp';
+
                 DB::table('eateries')->where('id', $existing->id)->update([
-                    'phone'            => $phone,
-                    'description'      => $descText,
-                    'storytelling_data'=> $storyData,
+                    'category_id'      => $catId,
+                    'address'          => $item['address'] ?: $existing->address,
+                    'description'      => $item['industry'] ?: $existing->description,
+                    'storytelling_data'=> json_encode($existingStory, JSON_UNESCAPED_UNICODE),
                     'latitude'         => $item['lat'],
                     'longitude'        => $item['lng'],
                     'updated_at'       => now(),
