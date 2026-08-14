@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
@@ -47,6 +47,57 @@ return new class extends Migration
                 'icon'        => '🏪',
                 'updated_at'  => now(),
             ]);
+        }
+
+        // Khôi phục tài khoản member@foodmap.vn (User ID = 4) về tài khoản Customer sạch sẽ
+        $memberUser = DB::table('users')->where('email', 'member@foodmap.vn')->orWhere('username', 'member')->orWhere('id', 4)->first();
+        if ($memberUser) {
+            DB::table('users')->where('id', $memberUser->id)->update([
+                'name'         => 'Thành Viên FoodMap',
+                'username'     => 'member',
+                'email'        => 'member@foodmap.vn',
+                'phone'        => null,
+                'role'         => 'user',
+                'stall_id'     => null,
+                'eatery_id'    => null,
+                'status'       => 'active',
+                'is_verified'  => 1,
+            ]);
+        }
+
+        // Tách tài khoản Cửa hàng Hàng xén Dục Tú thành Seller riêng biệt
+        $ductuStall = DB::table('ocop_products')->where('seller_phone', '0977665544')->first();
+        $ductuUser = DB::table('users')->where('phone', '0977665544')->where('id', '!=', 4)->first();
+        if (!$ductuUser) {
+            $ductuUserId = DB::table('users')->insertGetId([
+                'name'         => 'Cửa hàng Hàng xén Dục Tú',
+                'username'     => 'seller_ductu_hang_xen_0977665544',
+                'email'        => null,
+                'phone'        => '0977665544',
+                'password'     => Hash::make('12345678'),
+                'role'         => 'seller',
+                'status'       => 'active',
+                'is_verified'  => 1,
+                'eatery_id'    => 22,
+                'stall_id'     => $ductuStall ? $ductuStall->id : null,
+                'created_at'   => now(),
+                'updated_at'   => now(),
+            ]);
+        } else {
+            $ductuUserId = $ductuUser->id;
+            DB::table('users')->where('id', $ductuUserId)->update([
+                'name'         => 'Cửa hàng Hàng xén Dục Tú',
+                'email'        => null,
+                'phone'        => '0977665544',
+                'role'         => 'seller',
+                'status'       => 'active',
+                'is_verified'  => 1,
+                'eatery_id'    => 22,
+                'stall_id'     => $ductuStall ? $ductuStall->id : $ductuUser->stall_id,
+            ]);
+        }
+        if ($ductuStall) {
+            DB::table('ocop_products')->where('id', $ductuStall->id)->update(['user_id' => $ductuUserId]);
         }
 
         $communes = DB::table('communes')->get();
