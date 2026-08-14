@@ -1090,15 +1090,6 @@ return new class extends Migration
         ['name'=>'NGUYỄN THỊ THOA 101963','address'=>'Thôn Nghĩa Vũ, Xã Đông Anh','phone'=>'0832154452','mst'=>'','industry'=>'Bán buôn thực phẩm','type'=>'Ho Kinh Doanh','lat'=>21.1352,'lng'=>105.8458],
         ['name'=>'HỘ KINH DOANH HOÀNG LINH LINH 2002','address'=>'Khu tái định cư Bắc sông Thiếp, Xã Đông Anh','phone'=>'0963418628','mst'=>'','industry'=>'Nhà hàng và các dịch vụ ăn uống phục vụ lưu động','type'=>'Ho Kinh Doanh','lat'=>21.14025,'lng'=>105.84927],
         ['name'=>'HỘ KINH DOANH NGUYỄN THỊ THU THẢO 1991','address'=>'Thôn Mai Hiên, Xã Đông Anh','phone'=>'0962601611','mst'=>'','industry'=>'Bán lẻ thực phẩm trong các cửa hàng chuyên doanh','type'=>'Ho Kinh Doanh','lat'=>21.11393,'lng'=>105.89815],
-        ['name'=>'Nguyễn Thị Hoài','address'=>'Xóm 4, Thái Bình, Xã Đông Anh','phone'=>'0392557870','mst'=>'','industry'=>'May trang phục (trừ trang phục từ da lông thú)','type'=>'Ho Kinh Doanh','lat'=>21.11294,'lng'=>105.89122],
-        ['name'=>'Nguyễn Văn Hùng','address'=>'TRUNG THÔN, Xã Đông Anh','phone'=>'0345282899','mst'=>'','industry'=>'Bán lẻ theo yêu cầu đặt hàng qua bưu điện hoặc internet','type'=>'Ho Kinh Doanh','lat'=>21.09872,'lng'=>105.86725],
-        ['name'=>'Hoàng Mạnh Hùng','address'=>'Xóm Ngoài Xã Đông Anh','phone'=>'0335511866','mst'=>'','industry'=>'Bán lẻ theo yêu cầu đặt hàng qua bưu điện hoặc internet','type'=>'Ho Kinh Doanh','lat'=>21.13996,'lng'=>105.85399],
-        ['name'=>'HỘ KINH DOANH LÊ QUANG TÂM 1969','address'=>'Thôn Nghĩa Lại, Xã Đông Anh','phone'=>'0977075414','mst'=>'','industry'=>'Sản xuất giường, tủ, bàn, ghế','type'=>'Ho Kinh Doanh','lat'=>21.14323,'lng'=>105.85709],
-        ['name'=>'BÙI THỊ NGỌC LAN','address'=>'Thôn Lực Canh, Xã Đông Anh','phone'=>'0974341991','mst'=>'','industry'=>'Quán cà phê, giải khát','type'=>'Ho Kinh Doanh','lat'=>21.11256,'lng'=>105.8425],
-        ['name'=>'NGUYỄN ANH ĐỨC','address'=>'Thôn Lực Canh, Xã Đông Anh','phone'=>'0384542992','mst'=>'','industry'=>'Bán lẻ đồng hồ, kính mắt trong các cửa hàng chuyên doanh','type'=>'Ho Kinh Doanh','lat'=>21.1128,'lng'=>105.84258],
-        ['name'=>'HỘ KINH DOANH NGUYỄN THỊ BÍCH 1967','address'=>'Thôn Vĩnh Tinh, Xã Đông Anh','phone'=>'0364924741','mst'=>'','industry'=>'Nhà hàng và các dịch vụ ăn uống phục vụ lưu động','type'=>'Ho Kinh Doanh','lat'=>21.1352,'lng'=>105.8458],
-        ['name'=>'HỘ KINH DOANH KHẮC THỰC 1958','address'=>'Thôn Lại Đà, Xã Đông Anh','phone'=>'0396552823','mst'=>'','industry'=>'Giáo dục khác chưa được phân vào đâu','type'=>'Ho Kinh Doanh','lat'=>21.10119,'lng'=>105.87282],
-        ['name'=>'HỘ KINH DOANH NGUYỄN THỊ THIÊU 1980','address'=>'Thôn Phan Xá, Xã Đông Anh','phone'=>'0964994805','mst'=>'','industry'=>'Bán lẻ khác trong các cửa hàng kinh doanh tổng hợp','type'=>'Ho Kinh Doanh','lat'=>21.14373,'lng'=>105.85813],
         ['name'=>'NGUYỄN THỊ THÌN','address'=>'Số 124 Đường Việt Hùng, Xã Đông Anh','phone'=>'0963124335','mst'=>'','industry'=>'Bán lẻ hàng may mặc đã qua sử dụng trong các cửa hàng chuyên doanh','type'=>'Ho Kinh Doanh','lat'=>21.15828,'lng'=>105.88193],
         ['name'=>'NGUYỄN HUY VẬN 66','address'=>'Thôn Vạn Lộc, Xã Đông Anh','phone'=>'0974781366','mst'=>'','industry'=>'Bán buôn vật liệu, thiết bị lắp đặt khác trong xây dựng','type'=>'Ho Kinh Doanh','lat'=>21.10798,'lng'=>105.83619],
         ['name'=>'HỘ KINH DOANH HOÀNG THỊ MỸ 93','address'=>'Ô số 7, Cầu số 15, Chợ Tó, Xã Đông Anh','phone'=>'0968521255','mst'=>'','industry'=>'Bán lẻ hàng dệt, may sẵn, giày dép lưu động hoặc tại chợ','type'=>'Ho Kinh Doanh','lat'=>21.13784,'lng'=>105.85286],
@@ -1212,6 +1203,8 @@ return new class extends Migration
         ['name'=>'CÔNG TY CỔ PHẦN DƯỢC PHẨM VÀ THIẾT BỊ Y TẾ THỦ ĐÔ','address'=>'Khu Tái định cư Đồng Hội, Xã Đông Anh','phone'=>'02439656789','mst'=>'','industry'=>'Bán buôn dược phẩm và dụng cụ y tế','type'=>'Ho Kinh Doanh','lat'=>21.10211,'lng'=>105.86776]
         ];
 
+        $defaultCommuneId = DB::table('communes')->value('id') ?? 1;
+
         foreach ($data as $item) {
             if (empty($item['phone'])) continue;
             $phone = preg_replace('/[^0-9]/', '', $item['phone']);
@@ -1260,9 +1253,13 @@ return new class extends Migration
                     'address'          => $item['address'],
                     'description'      => $storyData,
                     'category_id'      => $catId,
+                    'commune_id'       => $defaultCommuneId,
                     'user_id'          => $userId,
                     'latitude'         => $item['lat'],
                     'longitude'        => $item['lng'],
+                    'status'           => 'active',
+                    'is_featured'      => false,
+                    'rating'           => 0,
                     'created_at'       => now(),
                     'updated_at'       => now(),
                 ]);
