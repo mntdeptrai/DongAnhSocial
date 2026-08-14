@@ -2871,7 +2871,7 @@
                              data-category="{{ $eat->category->slug }}"
                              onclick="focusOnEatery({{ number_format($eat->latitude, 6, '.', '') }}, {{ number_format($eat->longitude, 6, '.', '') }}, '{{ $eat->slug }}', '{{ addslashes($card['title']) }}', '{{ $card['image'] }}', '{{ $card['price'] }}', '{{ $card['stars'] }}', '{{ addslashes($card['subtitle'] ?? '') }}')">
                             <div class="eatery-img-wrapper hover-zoom-container">
-                                <img src="{{ $card['image'] }}" class="eatery-img hover-zoom-img" alt="{{ $card['title'] }}">
+                                <img src="{{ $card['image'] }}" class="eatery-img hover-zoom-img" alt="{{ $card['title'] }}" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1578916171728-46686eac8d58?auto=format&fit=crop&w=600&q=80';">
                                 @if(!$isCustomStyled)
                                     <div style="position: absolute; top: 8px; left: 8px; max-width: calc(100% - 16px); display: flex; align-items: center; gap: 4px; font-size: 0.68rem; font-weight: 700; color: #ffffff; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(4px); padding: 4px 8px; border-radius: 6px; box-shadow: 0 2px 10px rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1);">
                                         <span>{{ $card['badgeIcon'] }}</span>
@@ -4018,32 +4018,10 @@
                 
                 // Helper chọn hình ảnh thông minh theo ngành nghề cho JS
                 function getSmartBusinessImgJS(name, desc) {
-                    const text = ((name || '') + ' ' + (desc || '')).toLowerCase();
-                    if (/thuốc|y tế|phòng khám|bác sĩ|nha khoa|pharmacy|clinic|medical|dược/i.test(text)) {
-                        return 'https://images.unsplash.com/photo-1586015555751-63c25aa43048?auto=format&fit=crop&w=400&q=80';
+                    if (typeof window.getSmartBusinessImgJS === 'function') {
+                        return window.getSmartBusinessImgJS(name, desc);
                     }
-                    if (/spa|cắt tóc|làm đầu|gội đầu|nail|beauty|salon|barber|massage|thẩm mỹ/i.test(text)) {
-                        return 'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=400&q=80';
-                    }
-                    if (/cơ khí|sửa chữa|ô tô|mô tô|xe máy|phụ tùng|kim loại|hàn|nhôm kính|đúc|sắt/i.test(text)) {
-                        return 'https://images.unsplash.com/photo-1486006920555-c77dce18193b?auto=format&fit=crop&w=400&q=80';
-                    }
-                    if (/may mặc|quần áo|thời trang|giày|dép|vải|boutique|clothing|fashion/i.test(text)) {
-                        return 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=400&q=80';
-                    }
-                    if (/điện tử|máy tính|điện thoại|laptop|mobile|viễn thông|điện máy|điện gia dụng|camera/i.test(text)) {
-                        return 'https://images.unsplash.com/photo-1550009158-9ebf69173e03?auto=format&fit=crop&w=400&q=80';
-                    }
-                    if (/cà phê|cafe|coffee|trà|đồ uống|bánh|bakery|quán ăn|ẩm thực|nhà hàng|bún|phở|cơm|lẩu|nướng/i.test(text)) {
-                        return 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=400&q=80';
-                    }
-                    if (/xây dựng|vật liệu|xi măng|gạch|sơn|nội thất|gỗ|kính/i.test(text)) {
-                        return 'https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=400&q=80';
-                    }
-                    if (/công ty|tnhh|cổ phần|doanh nghiệp|tập đoàn|enterprise/i.test(text)) {
-                        return 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=400&q=80';
-                    }
-                    return 'https://images.unsplash.com/photo-1604719312566-8912e9227c6a?auto=format&fit=crop&w=400&q=80';
+                    return 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?auto=format&fit=crop&w=600&q=80';
                 }
 
                 // Re-render danh sách
@@ -4072,7 +4050,7 @@
                                  style="animation: fadeIn 0.4s ease forwards;"
                                  onclick="focusOnEatery(${lat}, ${lng}, '${slug}', '${pName.replace(/'/g, "\\'")}', '${imgUrl}', '${formattedPrice}', '${stars}', '${sellerName.replace(/'/g, "\\'")}')">
                                 <div class="eatery-img-wrapper hover-zoom-container">
-                                    <img src="${imgUrl}" class="eatery-img hover-zoom-img" alt="${pName}">
+                                    <img src="${imgUrl}" class="eatery-img hover-zoom-img" alt="${pName}" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1578916171728-46686eac8d58?auto=format&fit=crop&w=600&q=80';">
                                 </div>
                                 <div class="eatery-info">
                                     <div style="margin-bottom: 4px;">
@@ -4169,7 +4147,7 @@
                                          style="animation: fadeIn 0.4s ease forwards;"
                                          onclick="focusOnEatery(${eat.latitude || 21.1352}, ${eat.longitude || 105.8458}, '${eat.slug || ''}', '${card.title.replace(/'/g, "\\'")}', '${card.image}', '${card.price}', '${card.stars}', '${card.subtitle.replace(/'/g, "\\'")}')">
                                         <div class="eatery-img-wrapper hover-zoom-container">
-                                            <img src="${card.image}" class="eatery-img hover-zoom-img" alt="${card.title}">
+                                            <img src="${card.image}" class="eatery-img hover-zoom-img" alt="${card.title}" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1578916171728-46686eac8d58?auto=format&fit=crop&w=600&q=80';">
                                         </div>
                                         <div class="eatery-info">
                                             <div style="margin-bottom: 4px;">
@@ -4243,7 +4221,7 @@
                                      style="animation: fadeIn 0.4s ease forwards;"
                                      onclick="focusOnEatery(${eat.latitude}, ${eat.longitude}, '${eat.slug}')">
                                     <div class="eatery-img-wrapper hover-zoom-container">
-                                        <img src="${imgUrl}" class="eatery-img hover-zoom-img" alt="${eat.name}">
+                                        <img src="${imgUrl}" class="eatery-img hover-zoom-img" alt="${eat.name}" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1578916171728-46686eac8d58?auto=format&fit=crop&w=600&q=80';">
                                         ${!isCustomStyled ? `
                                             <div style="position: absolute; top: 8px; left: 8px; max-width: calc(100% - 16px); display: flex; align-items: center; gap: 4px; font-size: 0.68rem; font-weight: 700; color: #ffffff; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(4px); padding: 4px 8px; border-radius: 6px; box-shadow: 0 2px 10px rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1);">
                                                 <span>${categoryIcon}</span>
