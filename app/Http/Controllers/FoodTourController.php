@@ -219,8 +219,7 @@ YÊU CẦU TRẢ VỀ CHỈ LÀ CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU, KHÔNG C
                 'is_ai_generated' => true,      // Đánh dấu đây là AI Tour
             ]);
             
-            $allEateries = \App\Models\Eatery::all();
-            $validEateryIds = $allEateries->pluck('id')->toArray();
+            $validEateryIds = \App\Models\Eatery::pluck('id')->toArray();
             $usedEateryIds = [];
 
             foreach ($aiData['stops'] as $index => $stop) {

@@ -54,6 +54,11 @@
     min-height: 560px;
     perspective: 1200px;
     transform-style: preserve-3d;
+    contain: layout style; /* CSS Containment for max render performance */
+}
+
+.custom-hero-banner.hero-paused * {
+    animation-play-state: paused !important;
 }
 
 /* ✈️ 3D REALISTIC AIRPLANE & JET CONTRAIL TRAIL */
@@ -66,14 +71,17 @@
     will-change: transform;
     animation: flightPath3D 26s cubic-bezier(0.4, 0, 0.2, 1) infinite;
     transform-style: preserve-3d;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    transform: translateZ(0);
 }
 
 .hero-airplane-svg-wrap {
     position: relative;
     width: 200px;
     height: 84px;
-    filter: drop-shadow(0 20px 22px rgba(15, 23, 42, 0.35));
     animation: airplaneBank3D 4s ease-in-out infinite alternate;
+    backface-visibility: hidden;
 }
 
 /* Contrail Jet Smoke Trail behind airplane */
@@ -4701,5 +4709,22 @@
             document.body.style.overflow = '';
         }, 300);
     };
+
+    // 🚀 Performance Optimizer: Pause background 3D animations when scrolled out of viewport
+    document.addEventListener('DOMContentLoaded', () => {
+        const heroBanner = document.querySelector('.custom-hero-banner');
+        if (heroBanner && 'IntersectionObserver' in window) {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        heroBanner.classList.remove('hero-paused');
+                    } else {
+                        heroBanner.classList.add('hero-paused');
+                    }
+                });
+            }, { threshold: 0.05 });
+            observer.observe(heroBanner);
+        }
+    });
 </script>
 @endsection

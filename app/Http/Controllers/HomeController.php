@@ -14,12 +14,17 @@ class HomeController extends Controller
 {
     public function index(Request $request)
     {
-        $categories = EateryApiService::getCategories();
-        $communes = EateryApiService::getCommunes();
-        
         $selectedCatSlug = $request->query('cat');
         $selectedComSlug = $request->query('com');
-        
+
+        $categories = \Illuminate\Support\Facades\Cache::remember('home_categories', 1800, function() {
+            return EateryApiService::getCategories();
+        });
+
+        $communes = \Illuminate\Support\Facades\Cache::remember('home_communes', 1800, function() {
+            return EateryApiService::getCommunes();
+        });
+
         $selectedComId = null;
         if ($selectedComSlug) {
             $commune = $communes->firstWhere('slug', $selectedComSlug);
@@ -27,7 +32,7 @@ class HomeController extends Controller
                 $selectedComId = $commune->id;
             }
         }
-        
+
         $eateries = EateryApiService::getEateries($selectedCatSlug, [
             'commune_id' => $selectedComId
         ]);
@@ -38,12 +43,6 @@ class HomeController extends Controller
                 'commune_id' => $selectedComId
             ]);
         }
-        
-        $featuredEateries = EateryApiService::getEateries(null, [
-            'is_featured' => true
-        ]);
-            
-        $specialties = EateryApiService::getEateries('dong-anh-market');
 
         if ($request->has('ajax')) {
             return response()->json([
@@ -56,10 +55,8 @@ class HomeController extends Controller
         return view('home', compact(
             'categories', 
             'communes', 
-            'eateries', 
+            'eateries',
             'ocopProducts',
-            'featuredEateries', 
-            'specialties', 
             'selectedCatSlug', 
             'selectedComSlug'
         ));
@@ -77,7 +74,7 @@ class HomeController extends Controller
      */
     public function tuyenDuong40()
     {
-        $dbRoutes = \App\Models\DigitalRoute::all()->map(function($r) {
+        $dbRoutes = \App\Models\DigitalRoute::select('route_key', 'name', 'length', 'color', 'village_key', 'anim_class', 'path_coords')->get()->map(function($r) {
             return [
                 'id' => $r->route_key,
                 'name' => $r->name,
@@ -89,7 +86,7 @@ class HomeController extends Controller
             ];
         });
 
-        $dbLocations = \App\Models\RouteBusiness::all()->map(function($b) {
+        $dbLocations = \App\Models\RouteBusiness::select('id', 'route_key', 'name', 'owner', 'village_key', 'village_name', 'type', 'rating', 'address', 'phone', 'bank_account', 'bank_name', 'is_open', 'menu', 'image_url', 'lat', 'lng')->get()->map(function($b) {
             $vName = $b->village_name;
             $vMap = [
                 'phu-loc' => 'Đường Phúc Lộc',

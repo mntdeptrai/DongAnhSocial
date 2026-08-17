@@ -275,7 +275,7 @@ class AuthController extends Controller
 
             // 3. Tìm theo slug tên người dùng (VD: /profile/tuan-anh)
             if (!$user) {
-                $allUsers = User::all();
+                $allUsers = User::select('id', 'name', 'username', 'email', 'avatar', 'phone', 'role', 'status', 'eatery_id')->get();
                 foreach ($allUsers as $u) {
                     if (\Illuminate\Support\Str::slug($u->name) === $identifier || \Illuminate\Support\Str::slug($u->username ?? '') === $identifier) {
                         $user = $u;

@@ -235,7 +235,7 @@ class EateryApiService
             return Category::hydrate($response->json());
         }
 
-        return Category::all();
+        return Category::select('id', 'name', 'slug', 'icon', 'description')->get();
     }
 
     /**
@@ -248,7 +248,7 @@ class EateryApiService
             return Commune::hydrate($response->json());
         }
 
-        return Commune::all();
+        return Commune::select('id', 'name', 'slug')->get();
     }
 
     /**
@@ -260,7 +260,39 @@ class EateryApiService
             return self::fetchEateriesFromCategory($categorySlug, $filters);
         }
 
-        // Aggregate eateries across all 9 categories (including business facilities)
+        // Nếu ở chế độ database nội bộ, query 1 lần toàn bộ bảng để giảm từ 63 queries xuống 6 queries
+        if (self::getMode() !== 'http') {
+            $query = Eatery::on('mysql')->with([
+                'category:id,name,slug,icon',
+                'commune:id,name,slug',
+                'ocopProducts:id,eatery_id,name,price,description,image_path,star_rating',
+                'dishes:id,eatery_id,name,price,description,image_path,is_signature',
+                'reviewVideos' => function($q) {
+                    $q->select('id', 'eatery_id', 'user_id', 'title', 'video_url', 'video_type', 'thumbnail_path', 'likes_count', 'status')->where('status', 'approved');
+                }
+            ])->withCount('reviews')->active();
+
+            if (isset($filters['is_featured'])) {
+                $query->where('is_featured', $filters['is_featured']);
+            }
+
+            if (isset($filters['commune_id']) && $filters['commune_id']) {
+                $query->where('commune_id', $filters['commune_id']);
+            }
+
+            if (isset($filters['q']) && $filters['q']) {
+                $keyword = trim($filters['q']);
+                $query->where(function($q) use ($keyword) {
+                    $q->orWhere('slug', 'like', "{$keyword}%")
+                      ->orWhere('name', 'like', "{$keyword}%")
+                      ->orWhere('address', 'like', "{$keyword}%");
+                });
+            }
+
+            return $query->get();
+        }
+
+        // Aggregate eateries across all 9 categories (HTTP mode fallback)
         $categories = ['dong-anh-food-map', 'hanh-trinh-di-san', 'stay-in-dong-anh', 'wellness-care', 'dong-anh-market', 'traditional-market', 'smart-education-map', 'discover-dong-anh-community-culture-hub', 'co-so-kinh-doanh'];
         $allEateries = collect();
         foreach ($categories as $cat) {
@@ -292,9 +324,15 @@ class EateryApiService
         }
 
         $conn = self::getConnection($categorySlug);
-        $query = Eatery::on($conn)->with(['category', 'commune', 'ocopProducts', 'dishes', 'reviewVideos' => function($q) {
-            $q->where('status', 'approved');
-        }])->withCount('reviews')->active();
+        $query = Eatery::on($conn)->with([
+            'category:id,name,slug,icon',
+            'commune:id,name,slug',
+            'ocopProducts:id,eatery_id,name,price,description,image_path,star_rating',
+            'dishes:id,eatery_id,name,price,description,image_path,is_signature',
+            'reviewVideos' => function($q) {
+                $q->select('id', 'eatery_id', 'user_id', 'title', 'video_url', 'video_type', 'thumbnail_path', 'likes_count', 'status')->where('status', 'approved');
+            }
+        ])->withCount('reviews')->active();
 
         if ($categorySlug) {
             $query->whereHas('category', function($q) use ($categorySlug) {
@@ -392,7 +430,9 @@ class EateryApiService
     {
         $activities = collect();
         try {
-            $connActivities = \App\Models\CulturalActivity::with(['eatery.category'])->get();
+            $connActivities = \App\Models\CulturalActivity::select('id', 'eatery_id', 'name', 'type', 'price', 'unit', 'discount_note', 'description', 'image_path')
+                ->with(['eatery:id,name,slug,category_id,address,phone,latitude,longitude,rating', 'eatery.category:id,name,slug,icon'])
+                ->get();
             foreach ($connActivities as $activity) {
                 if ($activity->eatery) {
                     $activity->eatery->category_slug = $activity->eatery->category->slug ?? 'hanh-trinh-di-san';
@@ -1418,7 +1458,7 @@ class EateryApiService
             return User::hydrate($response->json());
         }
 
-        return User::orderBy('created_at', 'desc')->get();
+        return User::select('id', 'name', 'username', 'phone', 'email', 'avatar', 'role', 'status', 'created_at')->orderBy('created_at', 'desc')->get();
     }
 
     public static function storeUser(array $data)

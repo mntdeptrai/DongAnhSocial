@@ -106,12 +106,12 @@ class EateryApiController extends Controller
 
     public function getCategories()
     {
-        return response()->json(Category::all());
+        return response()->json(Category::select('id', 'name', 'slug', 'icon', 'description')->get());
     }
 
     public function getCommunes()
     {
-        return response()->json(Commune::all());
+        return response()->json(Commune::select('id', 'name', 'slug')->get());
     }
 
     public function getVideos()
@@ -1035,8 +1035,7 @@ YÊU CẦU TRẢ VỀ CHỈ LÀ CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU, KHÔNG C
                 'is_ai_generated' => true,
             ]);
             
-            $allEateries = \App\Models\Eatery::all();
-            $validEateryIds = $allEateries->pluck('id')->toArray();
+            $validEateryIds = \App\Models\Eatery::pluck('id')->toArray();
             $usedEateryIds = [];
 
             foreach ($aiData['stops'] as $index => $stop) {
