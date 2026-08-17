@@ -10,6 +10,7 @@ import 'services/notification_state_service.dart';
 import 'screens/login_screen.dart';
 import 'screens/map_screen.dart';
 import 'screens/feed_screen.dart';
+import 'screens/food_tour_screen.dart';
 import 'screens/news_bulletin_screen.dart';
 import 'screens/chat_screen.dart';
 import 'screens/profile_screen.dart';
@@ -343,24 +344,49 @@ class _MainLayoutState extends State<MainLayout> with WidgetsBindingObserver {
         final title = message.notification?.title ?? 'Bản tin Đông Anh';
         final body = message.notification?.body ?? 'Bạn vừa nhận được một thông báo mới';
         _showInAppNotificationBanner(title, body, onTap: () {
-          if (message.data['target'] == 'chat') {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const ChatScreen()),
-            ).then((_) => _fetchDynamicCounts());
-          }
+          _navigateByNotificationData(message.data);
         });
       }
     });
 
     NativeNotificationService.initialize((data) {
-      if (data['target'] == 'chat' && mounted) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const ChatScreen()),
-        ).then((_) => _fetchDynamicCounts());
+      if (mounted) {
+        _navigateByNotificationData(data);
       }
     });
+  }
+
+  void _navigateByNotificationData(Map<String, dynamic> data) {
+    final type = data['type'] ?? data['target'] ?? '';
+    final postType = data['post_type'] ?? '';
+
+    if (type == 'chat' || data['target'] == 'chat') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const ChatScreen()),
+      ).then((_) => _fetchDynamicCounts());
+    } else if (postType == 'checkin' || type == 'checkin') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const FeedScreen()),
+      );
+    } else if (postType == 'diary') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const FoodTourScreen()),
+      );
+    } else if (postType == 'eatery' || type == 'review') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const SellerDashboardScreen()),
+      );
+    } else {
+      // comment on post, reaction, share, new_post → go to Notifications tab
+      setState(() {
+        _currentIndex = 4;
+        _activeRole = 'user';
+      });
+    }
   }
 
   Timer? _callPollTimer;

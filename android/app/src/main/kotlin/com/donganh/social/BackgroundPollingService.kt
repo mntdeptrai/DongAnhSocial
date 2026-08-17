@@ -25,6 +25,10 @@ class BackgroundPollingService : Service() {
     private var isPollingActive = false
     private var lastNotifiedMsgId: Long = 0
 
+    override fun onBind(intent: Intent?): IBinder? {
+        return null
+    }
+
     override fun onCreate() {
         super.onCreate()
         clearNotification()

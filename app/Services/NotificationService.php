@@ -117,12 +117,13 @@ class NotificationService
                         default => '/ban-tin?post=' . (optional(\App\Models\Post::find($first->reactionable_id))->hashid ?? $first->reactionable_id),
                     };
 
+                    $ts = Carbon::parse($first->created_at)->timestamp;
                     $notifications[] = [
-                        'id'         => 'react_' . $key . '_' . strtotime($first->created_at),
+                        'id'         => 'react_' . $key . '_' . $ts,
                         'title'      => '👍 Cảm xúc mới bài ' . $postTypeLabel,
                         'body'       => $body,
                         'time'       => Carbon::parse($first->created_at)->diffForHumans(),
-                        'time_ts'    => strtotime($first->created_at),
+                        'time_ts'    => $ts,
                         'type'       => 'reaction',
                         'icon'       => 'favorite',
                         'is_read'    => false,
@@ -205,12 +206,13 @@ class NotificationService
                         default => '/ban-tin?post=' . (optional(\App\Models\Post::find($first->commentable_id))->hashid ?? $first->commentable_id),
                     };
 
+                    $ts = Carbon::parse($first->created_at)->timestamp;
                     $notifications[] = [
-                        'id'         => 'comment_' . $key . '_' . strtotime($first->created_at),
+                        'id'         => 'comment_' . $key . '_' . $ts,
                         'title'      => '💬 Bình luận mới bài ' . $postTypeLabel,
                         'body'       => $body,
                         'time'       => Carbon::parse($first->created_at)->diffForHumans(),
-                        'time_ts'    => strtotime($first->created_at),
+                        'time_ts'    => $ts,
                         'type'       => 'comment',
                         'icon'       => 'comment',
                         'is_read'    => false,
@@ -227,12 +229,13 @@ class NotificationService
             if (!empty($myPostIds)) {
                 $sharedPosts = DB::table('posts')->whereIn('id', $myPostIds)->where('shares_count', '>', 0)->get();
                 foreach ($sharedPosts as $sp) {
+                    $ts = isset($sp->updated_at) ? Carbon::parse($sp->updated_at)->timestamp : (isset($sp->created_at) ? Carbon::parse($sp->created_at)->timestamp : 0);
                     $notifications[] = [
                         'id'         => 'share_post_' . $sp->id,
                         'title'      => '🔄 Lượt chia sẻ bài viết mới',
                         'body'       => "Bài viết của bạn đã đạt {$sp->shares_count} lượt chia sẻ từ cộng đồng!",
                         'time'       => isset($sp->updated_at) ? Carbon::parse($sp->updated_at)->diffForHumans() : 'Vừa xong',
-                        'time_ts'    => isset($sp->updated_at) ? strtotime($sp->updated_at) : time(),
+                        'time_ts'    => $ts,
                         'type'       => 'share',
                         'icon'       => 'share',
                         'is_read'    => false,
@@ -246,12 +249,13 @@ class NotificationService
             if (!empty($myCheckinIds)) {
                 $sharedCheckins = Checkin::whereIn('id', $myCheckinIds)->where('shares_count', '>', 0)->get();
                 foreach ($sharedCheckins as $sc) {
+                    $ts = Carbon::parse($sc->updated_at ?? $sc->created_at)->timestamp;
                     $notifications[] = [
                         'id'         => 'share_checkin_' . $sc->id,
                         'title'      => '🔄 Lượt chia sẻ bài viết check-in',
                         'body'       => "Bài viết check-in của bạn đã đạt {$sc->shares_count} lượt chia sẻ từ cộng đồng!",
                         'time'       => Carbon::parse($sc->updated_at ?? $sc->created_at)->diffForHumans(),
-                        'time_ts'    => strtotime($sc->updated_at ?? $sc->created_at),
+                        'time_ts'    => $ts,
                         'type'       => 'share',
                         'icon'       => 'share',
                         'is_read'    => false,
@@ -284,12 +288,13 @@ class NotificationService
                         $body = "{$latestUser} đã gửi đánh giá {$first->rating}⭐ về gian hàng/sản phẩm của bạn.";
                     }
 
+                    $ts = Carbon::parse($first->created_at)->timestamp;
                     $notifications[] = [
-                        'id'         => 'review_' . $eateryId . '_' . strtotime($first->created_at),
+                        'id'         => 'review_' . $eateryId . '_' . $ts,
                         'title'      => '⭐ Đánh giá mới cho gian hàng của bạn',
                         'body'       => $body,
                         'time'       => Carbon::parse($first->created_at)->diffForHumans(),
-                        'time_ts'    => strtotime($first->created_at),
+                        'time_ts'    => $ts,
                         'type'       => 'review',
                         'icon'       => 'star',
                         'is_read'    => false,
@@ -309,12 +314,13 @@ class NotificationService
                     ->get();
 
                 foreach ($sellerOrders as $ord) {
+                    $ts = isset($ord->created_at) ? Carbon::parse($ord->created_at)->timestamp : 0;
                     $notifications[] = [
                         'id'         => 'seller_ord_' . $ord->id,
                         'title'      => '🛒 Đơn hàng mới cho cửa hàng!',
                         'body'       => 'Khách hàng vừa đặt đơn #' . ($ord->code ?? $ord->id) . ' với giá trị ' . number_format($ord->total_amount ?? $ord->total ?? 150000) . 'đ.',
                         'time'       => isset($ord->created_at) ? Carbon::parse($ord->created_at)->diffForHumans() : 'Vừa xong',
-                        'time_ts'    => isset($ord->created_at) ? strtotime($ord->created_at) : time(),
+                        'time_ts'    => $ts,
                         'type'       => 'seller_order',
                         'icon'       => 'storefront',
                         'is_read'    => false,
@@ -355,12 +361,13 @@ class NotificationService
                     default      => "Đơn hàng {$codeStr} giá trị " . number_format($ord->total_amount, 0, ',', '.') . "đ đã được ghi nhận.",
                 };
 
+                $ts = Carbon::parse($ord->updated_at ?? $ord->created_at)->timestamp;
                 $notifications[] = [
-                    'id'         => 'my_ord_' . $ord->id . '_' . strtotime($ord->updated_at ?? $ord->created_at),
+                    'id'         => 'my_ord_' . $ord->id . '_' . $ts,
                     'title'      => $title,
                     'body'       => $body,
                     'time'       => Carbon::parse($ord->updated_at ?? $ord->created_at)->diffForHumans(),
-                    'time_ts'    => strtotime($ord->updated_at ?? $ord->created_at),
+                    'time_ts'    => $ts,
                     'type'       => 'my_order',
                     'icon'       => 'local_shipping',
                     'is_read'    => false,
@@ -381,12 +388,13 @@ class NotificationService
             foreach ($friendRequests as $fr) {
                 $sender = User::find($fr->user_id);
                 if ($sender) {
+                    $ts = isset($fr->created_at) ? Carbon::parse($fr->created_at)->timestamp : 0;
                     $notifications[] = [
                         'id'         => 'fr_' . $fr->id,
                         'title'      => '👥 Lời mời kết bạn mới',
                         'body'       => $sender->name . ' đã gửi cho bạn một lời mời kết bạn mới.',
                         'time'       => isset($fr->created_at) ? Carbon::parse($fr->created_at)->diffForHumans() : 'Vừa xong',
-                        'time_ts'    => isset($fr->created_at) ? strtotime($fr->created_at) : time(),
+                        'time_ts'    => $ts,
                         'type'       => 'friend',
                         'icon'       => 'person_add',
                         'is_read'    => false,
@@ -701,6 +709,7 @@ class NotificationService
             if (!empty($author->fcm_token)) {
                 FcmService::sendNotification($author->fcm_token, $title, $body, [
                     'type' => 'comment',
+                    'post_type' => $type,
                     'post_id' => (string)$comment->commentable_id,
                 ]);
             }

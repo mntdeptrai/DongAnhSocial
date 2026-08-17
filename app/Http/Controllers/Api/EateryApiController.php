@@ -1440,8 +1440,15 @@ YÊU CẦU TRẢ VỀ CHỈ LÀ CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU, KHÔNG C
 
         try {
             $user = $request->user('sanctum') 
-                ?? \Illuminate\Support\Facades\Auth::guard('sanctum')->user() 
-                ?? \Illuminate\Support\Facades\Auth::user();
+                ?: \Illuminate\Support\Facades\Auth::guard('sanctum')->user() 
+                ?: \Illuminate\Support\Facades\Auth::user();
+
+            if (!$user && $request->bearerToken()) {
+                $pat = \Laravel\Sanctum\PersonalAccessToken::findToken($request->bearerToken());
+                if ($pat) {
+                    $user = $pat->tokenable;
+                }
+            }
 
             if ($user) {
                 $notifications = \App\Services\NotificationService::getNotificationsForUser($user->id);
@@ -1484,8 +1491,15 @@ YÊU CẦU TRẢ VỀ CHỈ LÀ CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU, KHÔNG C
     {
         try {
             $user = $request->user('sanctum') 
-                ?? \Illuminate\Support\Facades\Auth::guard('sanctum')->user() 
-                ?? \Illuminate\Support\Facades\Auth::user();
+                ?: \Illuminate\Support\Facades\Auth::guard('sanctum')->user() 
+                ?: \Illuminate\Support\Facades\Auth::user();
+
+            if (!$user && $request->bearerToken()) {
+                $pat = \Laravel\Sanctum\PersonalAccessToken::findToken($request->bearerToken());
+                if ($pat) {
+                    $user = $pat->tokenable;
+                }
+            }
 
             if ($user) {
                 \App\Services\NotificationService::markAsRead($user->id);
