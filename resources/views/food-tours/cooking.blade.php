@@ -425,7 +425,7 @@
                                 @endif
                             </div>
                             <div class="tour-thumbnail-wrapper">
-                                <img src="{{ $activity->image_path ?: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80' }}" class="tour-thumbnail" alt="{{ $activity->name }}">
+                                <img src="{{ $activity->image_path ?: asset('images/ocop-placeholder.png') }}" class="tour-thumbnail" alt="{{ $activity->name }}">
                                 <div class="tour-card-overlay">
                                     <span class="tour-difficulty-tag" style="background: #0284c7; box-shadow: 0 2px 8px rgba(3, 105, 161, 0.3);">📍 {{ $activity->eatery->name }}</span>
                                 </div>

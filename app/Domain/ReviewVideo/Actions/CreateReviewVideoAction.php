@@ -15,7 +15,7 @@ class CreateReviewVideoAction
             'title' => $data->title,
             'video_url' => $videoUrl,
             'video_type' => $videoType,
-            'thumbnail_path' => 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=400&q=80',
+            'thumbnail_path' => '/images/ocop-placeholder.png',
             'likes_count' => 0,
             'status' => $status
         ]);

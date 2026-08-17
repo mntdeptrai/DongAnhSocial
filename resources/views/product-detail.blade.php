@@ -9,7 +9,7 @@
 <!-- SEO Keywords -->
 @section('meta_keywords', $product->name . ', ' . ($eatery ? $eatery->name : 'Cơ sở kinh doanh') . ', sản phẩm Đông Anh, hải sản Đông Anh, nông sản thực phẩm Đông Anh, mua ' . $product->name . ', giá ' . $product->name)
 
-@section('og_image', $product->image_path ? asset($product->image_path) : ($eatery?->image_path ?: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80'))
+@section('og_image', $product->image_path ? asset($product->image_path) : ($eatery?->image_path ?: asset('images/ocop-placeholder.png')))
 @section('og_type', 'product')
 @section('canonical_url', route('business.product.show', $product->id))
 
@@ -21,7 +21,7 @@
   "@@type": "Product",
   "name": "{{ addslashes($product->name) }}",
   "image": [
-    "{{ $product->image_path ? asset($product->image_path) : ($eatery?->image_path ?: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80') }}"
+    "{{ $product->image_path ? asset($product->image_path) : ($eatery?->image_path ?: asset('images/ocop-placeholder.png')) }}"
   ],
   "description": "{{ addslashes(preg_replace('/\s+/', ' ', strip_tags($product->description ?: 'Sản phẩm kinh doanh chất lượng cao tại ' . ($eatery ? $eatery->name : 'Đông Anh')))) }}",
   "brand": {
@@ -70,7 +70,7 @@
 
 @php
     $formatMediaUrl = function($url) {
-        if (!$url) return 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80';
+        if (!$url) return asset('images/ocop-placeholder.png');
         if (\Illuminate\Support\Str::startsWith($url, ['http://', 'https://'])) return $url;
         return asset(ltrim($url, '/'));
     };
