@@ -3,11 +3,15 @@
      ========================================================== -->
 <div class="pro-header-card">
     <!-- Cover Image -->
-    <div class="pro-cover-box">
+    <div class="pro-cover-box" style="background: #ffffff; min-height: 220px;">
         @php
-            $coverSrc = optional($school)->image_path ?: 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=1600&q=80';
+            $coverSrc = $user->cover_url ?: (optional($school)->image_path ?: null);
         @endphp
-        <img src="{{ $coverSrc }}" class="pro-cover-img" id="pro-cover-img-el" alt="Cover" style="cursor: pointer;" onclick="openSingleImageLightbox(this.src, '🖼️ Ảnh bìa - {{ addslashes(optional($school)->standardized_name ?: $user->name) }}')">
+        @if($coverSrc)
+            <img src="{{ $coverSrc }}" class="pro-cover-img" id="pro-cover-img-el" alt="Cover" style="cursor: pointer;" onclick="openSingleImageLightbox(this.src, '🖼️ Ảnh bìa - {{ addslashes(optional($school)->standardized_name ?: $user->name) }}')">
+        @else
+            <div style="width: 100%; height: 100%; min-height: 220px; background: #ffffff;"></div>
+        @endif
         @if($isOwner)
             <label class="pro-cover-btn" style="cursor: pointer;" onclick="event.stopPropagation();">
                 📷 Đổi ảnh bìa

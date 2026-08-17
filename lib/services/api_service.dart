@@ -94,7 +94,7 @@ class ApiService {
 
   /// Lấy URL Ảnh Bìa chuẩn hóa từ User Data hoặc URL
   static String getCoverUrl(dynamic userOrCover, [String? fallbackUrl]) {
-    final String defaultCover = fallbackUrl ?? 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=800&q=60';
+    final String defaultCover = fallbackUrl ?? '';
     String? rawCover;
 
     if (userOrCover is Map) {

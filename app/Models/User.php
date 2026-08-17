@@ -113,6 +113,24 @@ class User extends Authenticatable
     }
 
     /**
+     * Get the full public URL of the cover photo.
+     */
+    public function getCoverUrlAttribute(): ?string
+    {
+        if (empty($this->cover)) {
+            return null;
+        }
+        if (str_starts_with($this->cover, 'http://') || str_starts_with($this->cover, 'https://')) {
+            return $this->cover;
+        }
+        $r2Url = rtrim(config('filesystems.disks.r2.url') ?: env('R2_PUBLIC_URL', ''), '/');
+        if (!empty($r2Url)) {
+            return $r2Url . '/' . ltrim($this->cover, '/');
+        }
+        return asset('storage/' . ltrim($this->cover, '/'));
+    }
+
+    /**
      * Check if user is currently online (active within the last 2 minutes).
      */
     public function getIsOnlineAttribute(): bool

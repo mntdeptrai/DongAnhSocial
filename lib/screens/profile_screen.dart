@@ -530,57 +530,82 @@ class _ProfileScreenState extends State<ProfileScreen> {
               clipBehavior: Clip.none,
               children: [
                 // Cover Photo Banner (Tap image to view full-screen, tap badge to change)
-                GestureDetector(
-                  onTap: () => _showFullScreenImageModal(
-                    context,
-                    ApiService.getCoverUrl(user),
-                    'Ảnh bìa',
-                  ),
-                  child: Container(
-                    height: 140,
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      image: DecorationImage(
-                        image: NetworkImage(
-                          ApiService.getCoverUrl(user),
+                Builder(
+                  builder: (context) {
+                    final coverUrl = ApiService.getCoverUrl(user);
+                    final bool hasCover = coverUrl.isNotEmpty;
+
+                    return GestureDetector(
+                      onTap: hasCover
+                          ? () => _showFullScreenImageModal(
+                                context,
+                                coverUrl,
+                                'Ảnh bìa',
+                              )
+                          : null,
+                      child: Container(
+                        height: 140,
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          image: hasCover
+                              ? DecorationImage(
+                                  image: NetworkImage(coverUrl),
+                                  fit: BoxFit.cover,
+                                )
+                              : null,
+                          border: Border(
+                            bottom: BorderSide(
+                              color: Colors.grey.withValues(alpha: 0.15),
+                              width: 1,
+                            ),
+                          ),
                         ),
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            Colors.black.withValues(alpha: 0.3),
-                            Colors.black.withValues(alpha: 0.6),
-                          ],
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                        ),
-                      ),
-                      padding: const EdgeInsets.all(12),
-                      alignment: Alignment.topRight,
-                      child: InkWell(
-                        onTap: _pickAndUploadCoverPhoto,
-                        borderRadius: BorderRadius.circular(20),
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.6),
+                          decoration: hasCover
+                              ? BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      Colors.black.withValues(alpha: 0.3),
+                                      Colors.black.withValues(alpha: 0.6),
+                                    ],
+                                    begin: Alignment.topCenter,
+                                    end: Alignment.bottomCenter,
+                                  ),
+                                )
+                              : null,
+                          padding: const EdgeInsets.all(12),
+                          alignment: Alignment.topRight,
+                          child: InkWell(
+                            onTap: _pickAndUploadCoverPhoto,
                             borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: const Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.camera_alt_outlined, color: Colors.white, size: 14),
-                              SizedBox(width: 4),
-                              Text('Đổi ảnh bìa', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600)),
-                            ],
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                              decoration: BoxDecoration(
+                                color: hasCover ? Colors.black.withValues(alpha: 0.6) : const Color(0xFF0F172A).withValues(alpha: 0.08),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.camera_alt_outlined, color: hasCover ? Colors.white : const Color(0xFF334155), size: 14),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'Đổi ảnh bìa',
+                                    style: TextStyle(
+                                      color: hasCover ? Colors.white : const Color(0xFF334155),
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ),
+                    );
+                  },
                 ),
 
                 // Main Profile Card (Floating)
