@@ -339,7 +339,7 @@
                         @foreach($eatery->dishes as $dish)
                             <div class="admin-dish-item" style="display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px; border: 1.5px solid var(--admin-border); border-radius: 12px; background-color: #ffffff;">
                                 <div style="display: flex; align-items: center; gap: 14px; flex: 1; min-width: 0;">
-                                    <img src="{{ $dish->image_path ?: asset('images/ocop-placeholder.png') }}" class="admin-dish-img" style="width: 56px; height: 56px; border-radius: 10px; object-fit: cover;">
+                                    <img src="{{ $dish->image_path ?: asset('images/placeholder.svg') }}" class="admin-dish-img" style="width: 56px; height: 56px; border-radius: 10px; object-fit: cover;">
                                     <div style="flex: 1; min-width: 0;">
                                         <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
                                             <h4 class="admin-dish-title" style="margin: 0; font-weight: 700; font-size: 0.92rem; color: var(--admin-text-main);">{{ $dish->name }}</h4>
@@ -362,7 +362,7 @@
                                     </form>
 
                                     <!-- View Details Button -->
-                                    <button type="button" class="btn-admin btn-admin-secondary" style="padding: 6px 10px; font-size: 0.72rem; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;" onclick="openViewDishModal('{{ addslashes($dish->name) }}', '{{ number_format($dish->price, 0, ',', '.') }}đ', '{{ addslashes($dish->description) }}', '{{ $dish->image_path ?: asset('images/ocop-placeholder.png') }}', '{{ $dish->is_signature ? 1 : 0 }}')">
+                                    <button type="button" class="btn-admin btn-admin-secondary" style="padding: 6px 10px; font-size: 0.72rem; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;" onclick="openViewDishModal('{{ addslashes($dish->name) }}', '{{ number_format($dish->price, 0, ',', '.') }}đ', '{{ addslashes($dish->description) }}', '{{ $dish->image_path ?: asset('images/placeholder.svg') }}', '{{ $dish->is_signature ? 1 : 0 }}')">
                                         👁️ Xem
                                     </button>
 
@@ -1781,7 +1781,7 @@ function previewEateryPhotoUrl(url) {
                                         <td>
                                             <div style="display: flex; align-items: center; gap: 10px;">
                                                 <div style="position: relative; width: 38px; height: 50px; border-radius: 6px; overflow: hidden; background: #000; flex-shrink: 0; border: 1px solid var(--admin-border); cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.08)'" onmouseout="this.style.transform='scale(1)'" onclick="openWatchVideoModal('{{ addslashes($vid->title) }}', '{{ $vid->video_url }}', '{{ $vid->video_type }}')" title="Bấm để xem video">
-                                                    <img src="{{ $vid->thumbnail_path ?: asset('images/ocop-placeholder.png') }}" style="width: 100%; height: 100%; object-fit: cover; opacity: 0.85;">
+                                                    <img src="{{ $vid->thumbnail_path ?: asset('images/placeholder.svg') }}" style="width: 100%; height: 100%; object-fit: cover; opacity: 0.85;">
                                                     <span style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 10px;">▶️</span>
                                                 </div>
                                                 <div style="display: flex; flex-direction: column; min-width: 0;">

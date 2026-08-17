@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="100%" height="100%">
+  <defs>
+    <linearGradient id="phGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e293b"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#phGrad)"/>
+  <g transform="translate(160, 110)" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <rect x="0" y="0" width="80" height="64" rx="10" fill="rgba(255,255,255,0.03)"/>
+    <circle cx="26" cy="22" r="7" fill="#475569" stroke="none"/>
+    <path d="M6 54 L26 34 L44 50 L56 38 L74 54"/>
+  </g>
+</svg>

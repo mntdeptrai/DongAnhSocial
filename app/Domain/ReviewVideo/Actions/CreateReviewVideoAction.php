@@ -15,7 +15,7 @@ class CreateReviewVideoAction
             'title' => $data->title,
             'video_url' => $videoUrl,
             'video_type' => $videoType,
-            'thumbnail_path' => '/images/ocop-placeholder.png',
+            'thumbnail_path' => '/images/placeholder.svg',
             'likes_count' => 0,
             'status' => $status
         ]);
