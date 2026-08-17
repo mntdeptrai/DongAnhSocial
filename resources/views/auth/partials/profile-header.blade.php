@@ -23,15 +23,10 @@
             <div class="pro-left-details">
                 <div class="pro-avatar-box">
                     @php
-                        $avatarSrc = '';
-                        if ($user->avatar && str_starts_with($user->avatar, 'avatars/')) {
-                            $avatarSrc = rtrim(env('R2_PUBLIC_URL'), '/') . '/' . $user->avatar;
-                        } elseif (optional($school)->image_path) {
-                            $avatarSrc = optional($school)->image_path;
-                        }
+                        $avatarSrc = $user->avatar_url ?: optional($school)->image_path;
                     @endphp
                     @if($avatarSrc)
-                        <img src="{{ $avatarSrc }}" class="pro-avatar-img" id="pro-avatar-img-el" alt="{{ $user->name }}" style="cursor: pointer;" onclick="openSingleImageLightbox(this.src, '🧑 Ảnh đại diện - {{ addslashes(optional($school)->standardized_name ?: $user->name) }}')">
+                        <img src="{{ $avatarSrc }}" class="pro-avatar-img" id="pro-avatar-img-el" alt="{{ $user->name }}" style="cursor: pointer;" onclick="openSingleImageLightbox(this.src, '🧑 Ảnh đại diện - {{ addslashes(optional($school)->standardized_name ?: $user->name) }}')" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name={{ urlencode($user->name ?? 'User') }}&background=0ea5e9&color=fff';">
                     @else
                         <div style="width:100%;height:100%;background:#e2e8f0;display:flex;align-items:center;justify-content:center;font-size:3rem;border-radius:20px;">👤</div>
                     @endif

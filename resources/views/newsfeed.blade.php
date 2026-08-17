@@ -18,8 +18,8 @@
             @php $authUser = auth()->user(); @endphp
             <div class="pro-creator-card" style="background: #ffffff; border-radius: 20px; padding: 20px; border: 1px solid #e2e8f0; box-shadow: 0 4px 15px rgba(15,23,42,0.03);">
                 <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 16px;">
-                    @if($authUser->avatar && str_starts_with($authUser->avatar, 'avatars/'))
-                        <img src="{{ rtrim(env('R2_PUBLIC_URL'), '/') . '/' . $authUser->avatar }}" style="width: 44px; height: 44px; border-radius: 50%; object-fit: cover;" alt="Avatar">
+                    @if($authUser->avatar_url)
+                        <img src="{{ $authUser->avatar_url }}" style="width: 44px; height: 44px; border-radius: 50%; object-fit: cover;" alt="Avatar" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name={{ urlencode($authUser->name ?? 'User') }}&background=0ea5e9&color=fff';">
                     @else
                         <div style="width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, #0284c7, #0369a1); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.1rem; flex-shrink: 0;">
                             {{ mb_substr($authUser->name, 0, 1, 'UTF-8') }}
@@ -292,8 +292,8 @@
 
             <!-- User Header Row -->
             <div class="fb-modal-user-row">
-                @if($authUser->avatar && str_starts_with($authUser->avatar, 'avatars/'))
-                    <img src="{{ rtrim(env('R2_PUBLIC_URL'), '/') . '/' . $authUser->avatar }}" class="fb-modal-user-avatar">
+                @if($authUser->avatar_url)
+                    <img src="{{ $authUser->avatar_url }}" class="fb-modal-user-avatar" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name={{ urlencode($authUser->name ?? 'User') }}&background=0ea5e9&color=fff';">
                 @else
                     <div class="fb-modal-user-avatar" style="background: linear-gradient(135deg, #0284c7, #0369a1); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.1rem;">
                         {{ mb_substr($authUser->name, 0, 1, 'UTF-8') }}

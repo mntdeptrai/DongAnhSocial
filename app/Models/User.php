@@ -105,7 +105,7 @@ class User extends Authenticatable
         if (str_starts_with($this->avatar, 'http://') || str_starts_with($this->avatar, 'https://')) {
             return $this->avatar;
         }
-        $r2Url = rtrim(env('R2_PUBLIC_URL', ''), '/');
+        $r2Url = rtrim(config('filesystems.disks.r2.url') ?: env('R2_PUBLIC_URL', ''), '/');
         if (!empty($r2Url)) {
             return $r2Url . '/' . ltrim($this->avatar, '/');
         }

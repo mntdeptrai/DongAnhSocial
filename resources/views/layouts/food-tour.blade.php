@@ -332,8 +332,8 @@
                             <button @click="open = !open" class="profile-trigger-btn">
                                 @php $navUser = Auth::user() ?? \App\Models\User::find(session('user_id')); @endphp
                                 <div class="profile-avatar-container">
-                                    @if($navUser && $navUser->avatar && str_starts_with($navUser->avatar, 'avatars/'))
-                                        <img onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=800&q=80';" src="{{ rtrim(env('R2_PUBLIC_URL'), '/') . '/' . $navUser->avatar }}" alt="avatar" style="width: 100%; height: 100%; object-fit: cover;">
+                                    @if($navUser && $navUser->avatar_url)
+                                        <img onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name={{ urlencode($navUser->name ?? 'User') }}&background=0ea5e9&color=fff';" src="{{ $navUser->avatar_url }}" alt="avatar" style="width: 100%; height: 100%; object-fit: cover;">
                                     @else
                                         <span style="font-size: 1.2rem;">{{ $navUser->avatar ?? '👤' }}</span>
                                     @endif
