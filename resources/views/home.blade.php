@@ -2738,7 +2738,7 @@
                         Địa điểm nổi bật <span style="font-size: 0.9rem; color: var(--text-muted); font-weight: 500; font-style: italic;">(Featured Places)</span>
                     @endif
                     <span id="resultsCountSpan" style="font-size: 0.8rem; color: var(--text-muted); font-weight: normal; margin-left: 6px; display: inline-block; white-space: nowrap;">
-                        ({{ $eateries->count() }} địa điểm / places)
+                        ({{ $totalCount ?? $eateries->count() }} địa điểm / places)
                     </span>
                 </h2>
             @endif
@@ -3065,6 +3065,15 @@
                     <a href="/" class="btn-primary" style="margin-top: 16px; padding: 8px 16px; text-decoration: none; display: inline-block;">Xem tất cả</a>
                 </div>
             @endif
+        </div>
+
+        <!-- Infinite Scroll Sentinel & Loading Indicator -->
+        <div id="infiniteScrollSentinel" style="width: 100%; height: 20px; margin-top: 10px;"></div>
+        <div id="infiniteScrollLoader" style="display: none; padding: 18px 16px; text-align: center; color: var(--primary); font-weight: 700; font-size: 0.9rem; background: rgba(var(--primary-rgb), 0.05); border-radius: 12px; margin-top: 10px; border: 1px dashed rgba(var(--primary-rgb), 0.3);">
+            <span style="display: inline-block; animation: spin 1s linear infinite; margin-right: 8px;">⏳</span> Đang tải thêm địa điểm tiếp theo...
+        </div>
+        <div id="allLoadedIndicator" style="{{ (isset($totalCount) && count($eateries) >= $totalCount) ? 'display: block;' : 'display: none;' }} padding: 16px; text-align: center; color: var(--text-muted); font-size: 0.85rem; font-weight: 600; background: rgba(0,0,0,0.03); border-radius: 12px; margin-top: 10px;">
+            ✨ Bạn đã xem toàn bộ <span id="totalLoadedSpan">{{ $totalCount ?? count($eateries) }}</span> địa điểm tại Đông Anh!
         </div>
     </div>
     
@@ -3416,7 +3425,83 @@
             }).addTo(map);
         });
 
-        // 4. Định nghĩa hàm vẽ các địa điểm lên Bản đồ (Hỗ trợ gọi lại khi lọc AJAX)
+        // 4. Định nghĩa hàm vẽ các địa điểm lên Bản đồ (Hỗ trợ gọi lại khi lọc AJAX và cuộn vô tận)
+        function createSingleMarker(eat) {
+            if (!eat.latitude || !eat.longitude || markers[eat.slug]) return;
+
+            let categoryColor = '#0ea5e9'; // Mặc định xanh đại dương
+            const catSlug = eat.category ? (eat.category.slug || eat.category) : '';
+            
+            if (catSlug === 'dong-anh-food-map') categoryColor = '#ff3366';
+            else if (catSlug === 'stay-in-dong-anh') categoryColor = '#9d4edd';
+            else if (catSlug === 'wellness-care') categoryColor = '#20b2aa';
+            else if (catSlug === 'dong-anh-market') categoryColor = '#38b000';
+            else if (catSlug === 'smart-education-map') categoryColor = '#4361ee';
+            else if (catSlug === 'hanh-trinh-di-san') categoryColor = '#e63946';
+
+            const catIcon = eat.category ? (eat.category.icon || '📍') : '📍';
+            const catName = eat.category ? (eat.category.name || '') : '';
+            const communeName = eat.commune ? (eat.commune.name || eat.commune) : '';
+            const ratingVal = eat.average_rating || (eat.rating ? parseFloat(eat.rating).toFixed(1) : '5.0');
+
+            const customIcon = L.divIcon({
+                html: `<div style="background-color: ${categoryColor}; width: 28px; height: 28px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 10px rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; font-size: 1.1rem;">${catIcon}</div>`,
+                className: 'custom-leaflet-marker',
+                iconSize: [28, 28],
+                iconAnchor: [14, 14]
+            });
+
+            const signatureDishName = catSlug === 'dong-anh-food-map' ? 'Món ngon khám phá Đông Anh' : 
+                                     (catSlug === 'dong-anh-market' ? 'Đặc sản OCOP vùng cố đô' : 
+                                     (catSlug === 'wellness-care' ? 'Dịch vụ chăm sóc sức khỏe' : 
+                                     (catSlug === 'smart-education-map' ? 'Học tập & Giáo dục thông minh' : 'Địa điểm nổi bật')));
+
+            // Nội dung popup hiển thị nhanh
+            const approvedVideos = eat.review_videos || eat.reviewVideos || [];
+            const hasVideo = approvedVideos.length > 0;
+            const videoBtn = hasVideo 
+                ? `<button onclick="openReelsModal('${eat.slug}', '${eat.name.replace(/'/g, "\\'")}', '${signatureDishName}', '${eat.image_path}')" class="btn-secondary" style="padding: 4px 10px; font-size: 0.75rem; border-radius: 6px; font-family: var(--font-heading); background: rgba(var(--primary-rgb), 0.08); border-color: rgba(var(--primary-rgb), 0.25); color: var(--primary); display: inline-flex; align-items: center; gap: 4px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(var(--primary-rgb), 0.15)'" onmouseout="this.style.background='rgba(var(--primary-rgb), 0.08)'">🎬 Video</button>`
+                : '';
+
+            const isEduMarker = (catSlug === 'smart-education-map' || (window.STORYTELLING_SCHOOLS && window.STORYTELLING_SCHOOLS[eat.slug]));
+            const isOcopMarker = (catSlug === 'dong-anh-market' || (window.STORYTELLING_OCOP && window.STORYTELLING_OCOP[eat.slug]));
+            
+            const storyBtn = isEduMarker 
+                ? `<button onclick="event.stopPropagation(); window.openSchoolStoryteller('${eat.slug}', '/dia-diem/${eat.slug}'); return false;" class="btn-secondary" style="padding: 4px 10px; font-size: 0.75rem; border-radius: 6px; font-family: var(--font-heading); background: rgba(99, 102, 241, 0.12); border: 1px solid rgba(99, 102, 241, 0.3); color: #4f46e5; display: inline-flex; align-items: center; gap: 4px; cursor: pointer; transition: all 0.2s; font-weight: 700;" onmouseover="this.style.background='rgba(99, 102, 241, 0.2)'" onmouseout="this.style.background='rgba(99, 102, 241, 0.12)'">📖 Story</button>` 
+                : (isOcopMarker ? `<button onclick="event.stopPropagation(); window.openOcopStoryteller('${eat.slug}'); return false;" class="btn-secondary" style="padding: 4px 10px; font-size: 0.75rem; border-radius: 6px; font-family: var(--font-heading); background: rgba(217, 119, 6, 0.15); border: 1px solid rgba(251, 191, 36, 0.4); color: #d97706; display: inline-flex; align-items: center; gap: 4px; cursor: pointer; transition: all 0.2s; font-weight: 700;" onmouseover="this.style.background='rgba(217, 119, 6, 0.25)'" onmouseout="this.style.background='rgba(217, 119, 6, 0.15)'">🌾 Story</button>` : '');
+
+            let markerImg = eat.image_path;
+            if (!markerImg) {
+                if (catSlug === 'co-so-kinh-doanh') {
+                    markerImg = window.getSmartBusinessImgJS(eat.name, eat.description);
+                } else {
+                    markerImg = 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=300&q=80';
+                }
+            }
+
+            const popupContent = `
+                <div class="map-popup-card">
+                    <img src="${markerImg}" class="map-popup-img">
+                    <h4 class="map-popup-title">${eat.name}</h4>
+                    <p style="font-size: 0.8rem; color: var(--text-muted); margin: 2px 0;">📍 ${communeName}</p>
+                    <div class="map-popup-footer">
+                        <span class="rating-stars">⭐ ${ratingVal}</span>
+                        <div style="display: flex; gap: 6px; align-items: center;">
+                            ${videoBtn}
+                            ${storyBtn}
+                            ${catSlug === 'dong-anh-market' ? `<button onclick="event.stopPropagation(); window.openHomeOcopModalFromPopup('${eat.slug}', '${eat.name.replace(/'/g, "\\'")}')" class="btn-primary" style="padding: 4px 10px; font-size: 0.75rem; border-radius: 6px; font-family: var(--font-heading); background: linear-gradient(135deg, #059669, #10b981); border: none; color: #ffffff; cursor: pointer;">Xem chi tiết</button>` : `<a href="/dia-diem/${eat.slug}" class="btn-primary" style="padding: 4px 10px; font-size: 0.75rem; border-radius: 6px; font-family: var(--font-heading);">Xem chi tiết</a>`}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            const marker = L.marker([eat.latitude, eat.longitude], { icon: customIcon })
+                .bindPopup(popupContent)
+                .addTo(map);
+                
+            markers[eat.slug] = marker;
+        }
+
         window.renderEateryMarkers = function(eateriesList) {
             // Xóa toàn bộ markers cũ trên bản đồ
             Object.values(markers).forEach(marker => {
@@ -3424,82 +3509,19 @@
             });
             markers = {};
 
-            eateriesList.forEach(function(eat) {
-                if (eat.latitude && eat.longitude) {
-                    // Biểu tượng Marker tùy chỉnh dựa trên danh mục để người dùng phân biệt trực quan
-                    let categoryColor = '#0ea5e9'; // Mặc định xanh đại dương
-                    const catSlug = eat.category ? (eat.category.slug || eat.category) : '';
-                    
-                    if (catSlug === 'dong-anh-food-map') categoryColor = '#ff3366';
-                    else if (catSlug === 'stay-in-dong-anh') categoryColor = '#9d4edd';
-                    else if (catSlug === 'wellness-care') categoryColor = '#20b2aa';
-                    else if (catSlug === 'dong-anh-market') categoryColor = '#38b000';
-                    else if (catSlug === 'smart-education-map') categoryColor = '#4361ee';
-                    else if (catSlug === 'hanh-trinh-di-san') categoryColor = '#e63946';
+            if (Array.isArray(eateriesList)) {
+                eateriesList.forEach(function(eat) {
+                    createSingleMarker(eat);
+                });
+            }
+        };
 
-                    const catIcon = eat.category ? (eat.category.icon || '📍') : '📍';
-                    const catName = eat.category ? (eat.category.name || '') : '';
-                    const communeName = eat.commune ? (eat.commune.name || eat.commune) : '';
-                    const ratingVal = eat.average_rating || (eat.rating ? parseFloat(eat.rating).toFixed(1) : '5.0');
-
-                    const customIcon = L.divIcon({
-                        html: `<div style="background-color: ${categoryColor}; width: 28px; height: 28px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 10px rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; font-size: 1.1rem;">${catIcon}</div>`,
-                        className: 'custom-leaflet-marker',
-                        iconSize: [28, 28],
-                        iconAnchor: [14, 14]
-                    });
-
-                    const signatureDishName = catSlug === 'dong-anh-food-map' ? 'Món ngon khám phá Đông Anh' : 
-                                             (catSlug === 'dong-anh-market' ? 'Đặc sản OCOP vùng cố đô' : 
-                                             (catSlug === 'wellness-care' ? 'Dịch vụ chăm sóc sức khỏe' : 
-                                             (catSlug === 'smart-education-map' ? 'Học tập & Giáo dục thông minh' : 'Địa điểm nổi bật')));
-
-                    // Nội dung popup hiển thị nhanh
-                    const approvedVideos = eat.review_videos || eat.reviewVideos || [];
-                    const hasVideo = approvedVideos.length > 0;
-                    const videoBtn = hasVideo 
-                        ? `<button onclick="openReelsModal('${eat.slug}', '${eat.name.replace(/'/g, "\\'")}', '${signatureDishName}', '${eat.image_path}')" class="btn-secondary" style="padding: 4px 10px; font-size: 0.75rem; border-radius: 6px; font-family: var(--font-heading); background: rgba(var(--primary-rgb), 0.08); border-color: rgba(var(--primary-rgb), 0.25); color: var(--primary); display: inline-flex; align-items: center; gap: 4px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(var(--primary-rgb), 0.15)'" onmouseout="this.style.background='rgba(var(--primary-rgb), 0.08)'">🎬 Video</button>`
-                        : '';
-
-                    const isEduMarker = (catSlug === 'smart-education-map' || (window.STORYTELLING_SCHOOLS && window.STORYTELLING_SCHOOLS[eat.slug]));
-                    const isOcopMarker = (catSlug === 'dong-anh-market' || (window.STORYTELLING_OCOP && window.STORYTELLING_OCOP[eat.slug]));
-                    
-                    const storyBtn = isEduMarker 
-                        ? `<button onclick="event.stopPropagation(); window.openSchoolStoryteller('${eat.slug}', '/dia-diem/${eat.slug}'); return false;" class="btn-secondary" style="padding: 4px 10px; font-size: 0.75rem; border-radius: 6px; font-family: var(--font-heading); background: rgba(99, 102, 241, 0.12); border: 1px solid rgba(99, 102, 241, 0.3); color: #4f46e5; display: inline-flex; align-items: center; gap: 4px; cursor: pointer; transition: all 0.2s; font-weight: 700;" onmouseover="this.style.background='rgba(99, 102, 241, 0.2)'" onmouseout="this.style.background='rgba(99, 102, 241, 0.12)'">📖 Story</button>` 
-                        : (isOcopMarker ? `<button onclick="event.stopPropagation(); window.openOcopStoryteller('${eat.slug}'); return false;" class="btn-secondary" style="padding: 4px 10px; font-size: 0.75rem; border-radius: 6px; font-family: var(--font-heading); background: rgba(217, 119, 6, 0.15); border: 1px solid rgba(251, 191, 36, 0.4); color: #d97706; display: inline-flex; align-items: center; gap: 4px; cursor: pointer; transition: all 0.2s; font-weight: 700;" onmouseover="this.style.background='rgba(217, 119, 6, 0.25)'" onmouseout="this.style.background='rgba(217, 119, 6, 0.15)'">🌾 Story</button>` : '');
-
-                    let markerImg = eat.image_path;
-                    if (!markerImg) {
-                        if (catSlug === 'co-so-kinh-doanh') {
-                            markerImg = window.getSmartBusinessImgJS(eat.name, eat.description);
-                        } else {
-                            markerImg = 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=300&q=80';
-                        }
-                    }
-
-                    const popupContent = `
-                        <div class="map-popup-card">
-                            <img src="${markerImg}" class="map-popup-img">
-                            <h4 class="map-popup-title">${eat.name}</h4>
-                            <p style="font-size: 0.8rem; color: var(--text-muted); margin: 2px 0;">📍 ${communeName}</p>
-                            <div class="map-popup-footer">
-                                <span class="rating-stars">⭐ ${ratingVal}</span>
-                                <div style="display: flex; gap: 6px; align-items: center;">
-                                    ${videoBtn}
-                                    ${storyBtn}
-                                    ${catSlug === 'dong-anh-market' ? `<button onclick="event.stopPropagation(); window.openHomeOcopModalFromPopup('${eat.slug}', '${eat.name.replace(/'/g, "\\'")}')" class="btn-primary" style="padding: 4px 10px; font-size: 0.75rem; border-radius: 6px; font-family: var(--font-heading); background: linear-gradient(135deg, #059669, #10b981); border: none; color: #ffffff; cursor: pointer;">Xem chi tiết</button>` : `<a href="/dia-diem/${eat.slug}" class="btn-primary" style="padding: 4px 10px; font-size: 0.75rem; border-radius: 6px; font-family: var(--font-heading);">Xem chi tiết</a>`}
-                                </div>
-                            </div>
-                        </div>
-                    `;
-
-                    const marker = L.marker([eat.latitude, eat.longitude], { icon: customIcon })
-                        .bindPopup(popupContent)
-                        .addTo(map);
-                        
-                    markers[eat.slug] = marker;
-                }
-            });
+        window.appendEateryMarkers = function(eateriesList) {
+            if (Array.isArray(eateriesList)) {
+                eateriesList.forEach(function(eat) {
+                    createSingleMarker(eat);
+                });
+            }
         };
 
         // Vẽ danh sách quán ăn ban đầu lên Bản đồ
@@ -4032,68 +4054,14 @@
                     return 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?auto=format&fit=crop&w=600&q=80';
                 }
 
-                // Re-render danh sách
-                if (isOcopCategory && ocopProductsList.length > 0) {
+                // Hàm sinh HTML danh sách Card
+                window.buildEateryCardsHtml = function(eateriesList, catSlug) {
                     let cardsHtml = '';
-                    ocopProductsList.forEach(p => {
-                        const eat = p.eatery || {};
-                        const pName = p.name || 'Sản phẩm OCOP';
-                        const sellerName = p.seller_name || eat.name || 'Đông Anh';
-                        const imgUrl = p.image_path ? p.image_path : (eat.image_path ? eat.image_path : 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=300&q=80');
-                        const stars = p.star_rating ? (p.star_rating.includes('sao') ? p.star_rating : p.star_rating + ' sao') : 'Đặc sản OCOP';
-                        const formattedPrice = p.price ? (isFinite(p.price) ? Number(p.price).toLocaleString('vi-VN') + 'đ' : p.price) : (eat.price_range || 'Liên hệ');
-                        const communeName = eat.commune ? (eat.commune.name || eat.commune) : 'Đông Anh';
-                        const slug = eat.slug || '';
-                        const lat = eat.latitude || 21.1352;
-                        const lng = eat.longitude || 105.8458;
+                    const isTraditionalMarket = (catSlug === 'traditional-market');
+                    const isOcopCategory = (catSlug === 'dong-anh-market');
 
-                        cardsHtml += `
-                            <div class="eatery-card glass-panel revealed hover-lift ocop-card-highlight" 
-                                 data-slug="${slug}"
-                                 data-name="${pName}"
-                                 data-address="${eat.address || ''}"
-                                 data-desc="${p.description || eat.description || ''}"
-                                 data-commune="${communeName}"
-                                 data-category="dong-anh-market"
-                                 style="animation: fadeIn 0.4s ease forwards;"
-                                 onclick="focusOnEatery(${lat}, ${lng}, '${slug}', '${pName.replace(/'/g, "\\'")}', '${imgUrl}', '${formattedPrice}', '${stars}', '${sellerName.replace(/'/g, "\\'")}')">
-                                <div class="eatery-img-wrapper hover-zoom-container">
-                                    <img src="${imgUrl}" class="eatery-img hover-zoom-img" alt="${pName}" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1578916171728-46686eac8d58?auto=format&fit=crop&w=600&q=80';">
-                                </div>
-                                <div class="eatery-info">
-                                    <div style="margin-bottom: 4px;">
-                                        <span class="ocop-title-badge">🌾 ĐẶC SẢN OCOP</span>
-                                    </div>
-                                    <div class="eatery-header" style="align-items: center; margin-bottom: 6px;">
-                                        <h3 class="eatery-title ocop-product-title">${pName}</h3>
-                                        <div class="ocop-star-tag">
-                                            <span>⭐</span> ${stars}
-                                        </div>
-                                    </div>
-                                    <div class="ocop-seller-badge">
-                                        🏛️ Chủ thể sản xuất: ${sellerName}
-                                    </div>
-                                    ${p.description || eat.description ? `<p class="eatery-desc">${p.description || eat.description}</p>` : ''}
-                                    <div class="eatery-footer">
-                                        <div class="eatery-meta-item">
-                                            <span>📍</span> ${communeName}
-                                        </div>
-                                        <div class="eatery-meta-item ocop-price-tag">
-                                            ${formattedPrice}
-                                        </div>
-                                    </div>
-                                    <a href="/san-pham-ocop/${p.id}" class="ocop-explore-btn" onclick="event.stopPropagation();">
-                                        <span>🌾 Xem Chi Tiết Sản Phẩm OCOP</span> ➔
-                                    </a>
-                                </div>
-                            </div>
-                        `;
-                    });
-                    eateriesContainer.innerHTML = cardsHtml;
-                } else if (data.eateries.length > 0) {
-                    let cardsHtml = '';
-                    data.eateries.forEach(eat => {
-                        const categorySlug = eat.category ? (eat.category.slug || '') : '';
+                    eateriesList.forEach(eat => {
+                        const categorySlug = eat.category ? (eat.category.slug || '') : (catSlug || '');
                         const isMarket = (categorySlug === 'traditional-market' || isTraditionalMarket);
                         const isOcopItem = (categorySlug === 'dong-anh-market' || isOcopCategory);
 
@@ -4187,7 +4155,7 @@
                                 `;
                             });
                         } else {
-                            const isBusinessItem = (categorySlug === 'co-so-kinh-doanh' || slug === 'co-so-kinh-doanh');
+                            const isBusinessItem = (categorySlug === 'co-so-kinh-doanh' || catSlug === 'co-so-kinh-doanh');
                             let imgUrl = eat.image_path;
                             if (!imgUrl) {
                                 if (isBusinessItem) {
@@ -4202,11 +4170,11 @@
                             const categoryIcon = eat.category ? (eat.category.icon || '') : '';
                             const categoryName = eat.category ? (eat.category.name || '') : '';
                             
-                            const isFoodItem = (categorySlug === 'dong-anh-food-map' || slug === 'dong-anh-food-map');
-                            const isStayItem = (categorySlug === 'stay-in-dong-anh' || slug === 'stay-in-dong-anh');
-                            const isWellnessItem = (categorySlug === 'wellness-care' || slug === 'wellness-care');
-                            const isCultureItem = (categorySlug === 'discover-dong-anh-community-culture-hub' || slug === 'discover-dong-anh-community-culture-hub');
-                            const isEduItem = (categorySlug === 'smart-education-map' || slug === 'smart-education-map');
+                            const isFoodItem = (categorySlug === 'dong-anh-food-map' || catSlug === 'dong-anh-food-map');
+                            const isStayItem = (categorySlug === 'stay-in-dong-anh' || catSlug === 'stay-in-dong-anh');
+                            const isWellnessItem = (categorySlug === 'wellness-care' || catSlug === 'wellness-care');
+                            const isCultureItem = (categorySlug === 'discover-dong-anh-community-culture-hub' || catSlug === 'discover-dong-anh-community-culture-hub');
+                            const isEduItem = (categorySlug === 'smart-education-map' || catSlug === 'smart-education-map');
                             const isCustomStyled = (isMarket || isFoodItem || isStayItem || isWellnessItem || isCultureItem || isEduItem || isBusinessItem);
 
                             // Metadata xử lý cho Doanh nghiệp / Hộ kinh doanh
@@ -4334,7 +4302,69 @@
                             `;
                         }
                     });
+                    return cardsHtml;
+                };
+
+                // Re-render danh sách khi lọc qua AJAX
+                if (isOcopCategory && ocopProductsList.length > 0) {
+                    let cardsHtml = '';
+                    ocopProductsList.forEach(p => {
+                        const eat = p.eatery || {};
+                        const pName = p.name || 'Sản phẩm OCOP';
+                        const sellerName = p.seller_name || eat.name || 'Đông Anh';
+                        const imgUrl = p.image_path ? p.image_path : (eat.image_path ? eat.image_path : 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=300&q=80');
+                        const stars = p.star_rating ? (p.star_rating.includes('sao') ? p.star_rating : p.star_rating + ' sao') : 'Đặc sản OCOP';
+                        const formattedPrice = p.price ? (isFinite(p.price) ? Number(p.price).toLocaleString('vi-VN') + 'đ' : p.price) : (eat.price_range || 'Liên hệ');
+                        const communeName = eat.commune ? (eat.commune.name || eat.commune) : 'Đông Anh';
+                        const slug = eat.slug || '';
+                        const lat = eat.latitude || 21.1352;
+                        const lng = eat.longitude || 105.8458;
+
+                        cardsHtml += `
+                            <div class="eatery-card glass-panel revealed hover-lift ocop-card-highlight" 
+                                 data-slug="${slug}"
+                                 data-name="${pName}"
+                                 data-address="${eat.address || ''}"
+                                 data-desc="${p.description || eat.description || ''}"
+                                 data-commune="${communeName}"
+                                 data-category="dong-anh-market"
+                                 style="animation: fadeIn 0.4s ease forwards;"
+                                 onclick="focusOnEatery(${lat}, ${lng}, '${slug}', '${pName.replace(/'/g, "\\'")}', '${imgUrl}', '${formattedPrice}', '${stars}', '${sellerName.replace(/'/g, "\\'")}')">
+                                <div class="eatery-img-wrapper hover-zoom-container">
+                                    <img src="${imgUrl}" class="eatery-img hover-zoom-img" alt="${pName}" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1578916171728-46686eac8d58?auto=format&fit=crop&w=600&q=80';">
+                                </div>
+                                <div class="eatery-info">
+                                    <div style="margin-bottom: 4px;">
+                                        <span class="ocop-title-badge">🌾 ĐẶC SẢN OCOP</span>
+                                    </div>
+                                    <div class="eatery-header" style="align-items: center; margin-bottom: 6px;">
+                                        <h3 class="eatery-title ocop-product-title">${pName}</h3>
+                                        <div class="ocop-star-tag">
+                                            <span>⭐</span> ${stars}
+                                        </div>
+                                    </div>
+                                    <div class="ocop-seller-badge">
+                                        🏛️ Chủ thể sản xuất: ${sellerName}
+                                    </div>
+                                    ${p.description || eat.description ? `<p class="eatery-desc">${p.description || eat.description}</p>` : ''}
+                                    <div class="eatery-footer">
+                                        <div class="eatery-meta-item">
+                                            <span>📍</span> ${communeName}
+                                        </div>
+                                        <div class="eatery-meta-item ocop-price-tag">
+                                            ${formattedPrice}
+                                        </div>
+                                    </div>
+                                    <a href="/san-pham-ocop/${p.id}" class="ocop-explore-btn" onclick="event.stopPropagation();">
+                                        <span>🌾 Xem Chi Tiết Sản Phẩm OCOP</span> ➔
+                                    </a>
+                                </div>
+                            </div>
+                        `;
+                    });
                     eateriesContainer.innerHTML = cardsHtml;
+                } else if (data.eateries.length > 0) {
+                    eateriesContainer.innerHTML = window.buildEateryCardsHtml(data.eateries, slug);
                 } else {
                     eateriesContainer.innerHTML = `
                         <div class="glass-panel" style="padding: 40px; text-align: center; color: var(--text-muted); width: 100%;">
@@ -4343,7 +4373,6 @@
                             <a href="/" class="btn-primary" style="margin-top: 16px; padding: 8px 16px; text-decoration: none; display: inline-block;">Xem tất cả</a>
                         </div>
                     `;
-                    // Tự động gắn sự kiện click cho nút "Xem tất cả" vừa tạo mới qua ajax
                     const viewAllBtn = eateriesContainer.querySelector('a');
                     if (viewAllBtn) {
                         viewAllBtn.addEventListener('click', function(evt) {
@@ -4351,6 +4380,23 @@
                             const allCatCard = document.querySelector('.category-card[href="/"]');
                             if (allCatCard) allCatCard.click();
                         });
+                    }
+                }
+
+                // Cập nhật lại Infinite Scroll State cho danh mục mới
+                if (window.infiniteScrollState) {
+                    window.infiniteScrollState.currentPage = data.page || 1;
+                    window.infiniteScrollState.currentCat = slug || '';
+                    window.infiniteScrollState.totalCount = data.total || data.eateries.length;
+                    window.infiniteScrollState.loadedCount = data.eateries.length;
+                    window.infiniteScrollState.hasMore = data.has_more !== undefined ? data.has_more : false;
+                    window.infiniteScrollState.isLoading = false;
+
+                    const allLoadedInd = document.getElementById('allLoadedIndicator');
+                    if (allLoadedInd) {
+                        allLoadedInd.style.display = !window.infiniteScrollState.hasMore ? 'block' : 'none';
+                        const totalLoadedSpan = document.getElementById('totalLoadedSpan');
+                        if (totalLoadedSpan) totalLoadedSpan.innerText = window.infiniteScrollState.totalCount;
                     }
                 }
                 
@@ -4373,6 +4419,132 @@
                 eateriesContainer.style.opacity = '1';
             });
     };
+
+    // ==========================================================================
+    // INFINITE SCROLL ENGINE (TỰ ĐỘNG NẠP TIẾP ĐỊA ĐIỂM KHI CUỘN CHUỘT)
+    // ==========================================================================
+    window.infiniteScrollState = {
+        currentPage: {{ $page ?? 1 }},
+        perPage: {{ $perPage ?? 24 }},
+        totalCount: {{ $totalCount ?? count($eateries) }},
+        hasMore: {{ (isset($totalCount) && count($eateries) < $totalCount) ? 'true' : 'false' }},
+        isLoading: false,
+        currentCat: '{{ $selectedCatSlug ?? "" }}',
+        currentCom: '{{ $selectedComSlug ?? "" }}',
+        loadedCount: {{ count($eateries) }}
+    };
+
+    window.loadNextInfinitePage = function() {
+        if (window.infiniteScrollState.isLoading || !window.infiniteScrollState.hasMore) return;
+
+        window.infiniteScrollState.isLoading = true;
+        const loader = document.getElementById('infiniteScrollLoader');
+        const allLoadedInd = document.getElementById('allLoadedIndicator');
+        if (loader) loader.style.display = 'block';
+
+        const nextPage = window.infiniteScrollState.currentPage + 1;
+        let url = `/?ajax=1&page=${nextPage}`;
+        if (window.infiniteScrollState.currentCat) url += `&cat=${encodeURIComponent(window.infiniteScrollState.currentCat)}`;
+        if (window.infiniteScrollState.currentCom) url += `&com=${encodeURIComponent(window.infiniteScrollState.currentCom)}`;
+
+        fetch(url)
+            .then(res => res.json())
+            .then(data => {
+                const eateriesContainer = document.getElementById('eateriesListContainer');
+                if (data.eateries && data.eateries.length > 0 && eateriesContainer) {
+                    const newCardsHtml = window.buildEateryCardsHtml(data.eateries, window.infiniteScrollState.currentCat);
+                    const tempWrapper = document.createElement('div');
+                    tempWrapper.innerHTML = newCardsHtml;
+                    while (tempWrapper.firstChild) {
+                        eateriesContainer.appendChild(tempWrapper.firstChild);
+                    }
+
+                    // Thêm markers mới vào bản đồ Leaflet
+                    if (window.appendEateryMarkers) {
+                        window.appendEateryMarkers(data.eateries);
+                    }
+
+                    window.infiniteScrollState.currentPage = nextPage;
+                    window.infiniteScrollState.loadedCount += data.eateries.length;
+                    window.infiniteScrollState.hasMore = data.has_more;
+                    window.infiniteScrollState.totalCount = data.total;
+
+                    // Cập nhật số lượng đếm trên header
+                    const countSpan = document.getElementById('resultsCountSpan');
+                    if (countSpan) {
+                        countSpan.innerText = `(${window.infiniteScrollState.loadedCount} / ${window.infiniteScrollState.totalCount} địa điểm / places)`;
+                    }
+                } else {
+                    window.infiniteScrollState.hasMore = false;
+                }
+
+                if (loader) loader.style.display = 'none';
+                if (!window.infiniteScrollState.hasMore && allLoadedInd) {
+                    const totalLoadedSpan = document.getElementById('totalLoadedSpan');
+                    if (totalLoadedSpan) totalLoadedSpan.innerText = window.infiniteScrollState.totalCount;
+                    allLoadedInd.style.display = 'block';
+                }
+                window.infiniteScrollState.isLoading = false;
+            })
+            .catch(err => {
+                console.error("Infinite scroll error:", err);
+                if (loader) loader.style.display = 'none';
+                window.infiniteScrollState.isLoading = false;
+            });
+    };
+
+    // Kích hoạt Infinite Scroll đa nền tảng (Desktop .split-list và Mobile window)
+    function initInfiniteScroll() {
+        const sentinel = document.getElementById('infiniteScrollSentinel');
+        const splitList = document.querySelector('.split-list');
+
+        if (sentinel && 'IntersectionObserver' in window) {
+            // 1. Observer cho vùng cuộn riêng .split-list (Desktop)
+            if (splitList) {
+                const listObserver = new IntersectionObserver((entries) => {
+                    if (entries[0].isIntersecting) {
+                        window.loadNextInfinitePage();
+                    }
+                }, { root: splitList, rootMargin: '400px' });
+                listObserver.observe(sentinel);
+            }
+
+            // 2. Observer cho viewport toàn trang (Mobile)
+            const winObserver = new IntersectionObserver((entries) => {
+                if (entries[0].isIntersecting) {
+                    window.loadNextInfinitePage();
+                }
+            }, { rootMargin: '400px' });
+            winObserver.observe(sentinel);
+        }
+
+        // 3. Scroll listener trực tiếp trên .split-list (Desktop)
+        if (splitList) {
+            splitList.addEventListener('scroll', function() {
+                if (window.infiniteScrollState.isLoading || !window.infiniteScrollState.hasMore) return;
+                if (splitList.scrollTop + splitList.clientHeight >= splitList.scrollHeight - 450) {
+                    window.loadNextInfinitePage();
+                }
+            }, { passive: true });
+        }
+
+        // 4. Scroll listener trực tiếp trên window (Mobile)
+        window.addEventListener('scroll', function() {
+            if (window.infiniteScrollState.isLoading || !window.infiniteScrollState.hasMore) return;
+            const scrollY = window.scrollY || window.pageYOffset;
+            const docHeight = document.documentElement.scrollHeight;
+            const winHeight = window.innerHeight;
+            if (scrollY + winHeight >= docHeight - 450) {
+                window.loadNextInfinitePage();
+            }
+        }, { passive: true });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initInfiniteScroll);
+    } else {
+        initInfiniteScroll();
+    }
 
     // ==========================================================================
     // DYNAMIC TIKTOK REELS-STYLE PLAYER FOR TÓP TÓP FOOD TOUR

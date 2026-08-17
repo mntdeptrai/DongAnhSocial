@@ -16,6 +16,8 @@ class HomeController extends Controller
     {
         $selectedCatSlug = $request->query('cat');
         $selectedComSlug = $request->query('com');
+        $page = max(1, (int) $request->query('page', 1));
+        $perPage = 24;
 
         $categories = \Illuminate\Support\Facades\Cache::remember('home_categories', 1800, function() {
             return EateryApiService::getCategories();
@@ -33,8 +35,14 @@ class HomeController extends Controller
             }
         }
 
-        $eateries = EateryApiService::getEateries($selectedCatSlug, [
+        $totalCount = EateryApiService::countEateries($selectedCatSlug, [
             'commune_id' => $selectedComId
+        ]);
+
+        $eateries = EateryApiService::getEateries($selectedCatSlug, [
+            'commune_id' => $selectedComId,
+            'page' => $page,
+            'per_page' => $perPage,
         ]);
 
         $ocopProducts = collect();
@@ -48,7 +56,11 @@ class HomeController extends Controller
             return response()->json([
                 'eateries' => $eateries,
                 'ocopProducts' => $ocopProducts,
-                'selectedCatSlug' => $selectedCatSlug
+                'selectedCatSlug' => $selectedCatSlug,
+                'page' => $page,
+                'per_page' => $perPage,
+                'has_more' => ($page * $perPage) < $totalCount,
+                'total' => $totalCount,
             ]);
         }
 
@@ -58,7 +70,10 @@ class HomeController extends Controller
             'eateries',
             'ocopProducts',
             'selectedCatSlug', 
-            'selectedComSlug'
+            'selectedComSlug',
+            'totalCount',
+            'page',
+            'perPage'
         ));
     }
 

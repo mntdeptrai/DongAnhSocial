@@ -252,7 +252,40 @@ class EateryApiService
     }
 
     /**
-     * Get eateries.
+     * Đếm tổng số địa điểm theo danh mục và bộ lọc.
+     */
+    public static function countEateries($categorySlug = null, array $filters = [])
+    {
+        if (self::getMode() === 'http') {
+            return 1252;
+        }
+
+        $query = Eatery::on('mysql')->active();
+
+        if ($categorySlug) {
+            $query->whereHas('category', function($q) use ($categorySlug) {
+                $q->where('slug', $categorySlug);
+            });
+        }
+
+        if (isset($filters['commune_id']) && $filters['commune_id']) {
+            $query->where('commune_id', $filters['commune_id']);
+        }
+
+        if (isset($filters['q']) && $filters['q']) {
+            $keyword = trim($filters['q']);
+            $query->where(function($q) use ($keyword) {
+                $q->orWhere('slug', 'like', "{$keyword}%")
+                  ->orWhere('name', 'like', "{$keyword}%")
+                  ->orWhere('address', 'like', "{$keyword}%");
+            });
+        }
+
+        return $query->count();
+    }
+
+    /**
+     * Get eateries with pagination and filtering support.
      */
     public static function getEateries($categorySlug = null, array $filters = [])
     {
@@ -260,7 +293,7 @@ class EateryApiService
             return self::fetchEateriesFromCategory($categorySlug, $filters);
         }
 
-        // Nếu ở chế độ database nội bộ, query 1 lần toàn bộ bảng để giảm từ 63 queries xuống 6 queries
+        // Nếu ở chế độ database nội bộ, query trực tiếp bảng eateries
         if (self::getMode() !== 'http') {
             $query = Eatery::on('mysql')->with([
                 'category:id,name,slug,icon',
@@ -287,6 +320,16 @@ class EateryApiService
                       ->orWhere('name', 'like', "{$keyword}%")
                       ->orWhere('address', 'like', "{$keyword}%");
                 });
+            }
+
+            $query->orderByDesc('is_featured')->orderByDesc('rating')->orderBy('id', 'desc');
+
+            if (isset($filters['page']) && isset($filters['per_page'])) {
+                $page = max(1, (int)$filters['page']);
+                $perPage = max(1, (int)$filters['per_page']);
+                $query->skip(($page - 1) * $perPage)->take($perPage);
+            } elseif (isset($filters['limit'])) {
+                $query->limit((int) $filters['limit']);
             }
 
             return $query->get();
