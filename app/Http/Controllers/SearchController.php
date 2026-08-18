@@ -36,8 +36,15 @@ class SearchController extends Controller
         
         // API phục vụ tính năng tự động gợi ý (Autocomplete Suggestions) khi gõ ô tìm kiếm
         if ($request->query('ajax') === 'suggest' && $keyword) {
-            $suggestions = EateryApiService::getEateries(null, ['q' => $keyword])
-                ->take(6)
+            $suggestions = Eatery::select('id', 'name', 'slug', 'address')
+                ->active()
+                ->where(function($q) use ($keyword) {
+                    $q->where('name', 'like', "{$keyword}%")
+                      ->orWhere('slug', 'like', "{$keyword}%")
+                      ->orWhere('address', 'like', "{$keyword}%");
+                })
+                ->limit(6)
+                ->get()
                 ->map(function($e) {
                     return [
                         'id' => $e->id,

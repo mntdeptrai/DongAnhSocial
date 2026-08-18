@@ -3496,31 +3496,65 @@
             `;
 
             const marker = L.marker([eat.latitude, eat.longitude], { icon: customIcon })
-                .bindPopup(popupContent)
-                .addTo(map);
+                .bindPopup(popupContent);
                 
             markers[eat.slug] = marker;
+            return marker;
+        }
+
+        // MarkerCluster: gom nhóm markers để tránh tạo 1200+ DOM elements cùng lúc
+        let markerClusterGroup = (typeof L.markerClusterGroup === 'function')
+            ? L.markerClusterGroup({ maxClusterRadius: 50, chunkedLoading: true, chunkInterval: 100, chunkDelay: 20 })
+            : null;
+        if (markerClusterGroup) {
+            map.addLayer(markerClusterGroup);
         }
 
         window.renderEateryMarkers = function(eateriesList) {
             // Xóa toàn bộ markers cũ trên bản đồ
-            Object.values(markers).forEach(marker => {
-                map.removeLayer(marker);
-            });
+            if (markerClusterGroup) {
+                markerClusterGroup.clearLayers();
+            } else {
+                Object.values(markers).forEach(marker => {
+                    map.removeLayer(marker);
+                });
+            }
             markers = {};
 
             if (Array.isArray(eateriesList)) {
+                const newMarkers = [];
                 eateriesList.forEach(function(eat) {
-                    createSingleMarker(eat);
+                    const m = createSingleMarker(eat);
+                    if (m) {
+                        if (markerClusterGroup) {
+                            newMarkers.push(m);
+                        } else {
+                            m.addTo(map);
+                        }
+                    }
                 });
+                if (markerClusterGroup && newMarkers.length > 0) {
+                    markerClusterGroup.addLayers(newMarkers);
+                }
             }
         };
 
         window.appendEateryMarkers = function(eateriesList) {
             if (Array.isArray(eateriesList)) {
+                const newMarkers = [];
                 eateriesList.forEach(function(eat) {
-                    createSingleMarker(eat);
+                    const m = createSingleMarker(eat);
+                    if (m) {
+                        if (markerClusterGroup) {
+                            newMarkers.push(m);
+                        } else {
+                            m.addTo(map);
+                        }
+                    }
                 });
+                if (markerClusterGroup && newMarkers.length > 0) {
+                    markerClusterGroup.addLayers(newMarkers);
+                }
             }
         };
 

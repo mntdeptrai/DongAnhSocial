@@ -23,11 +23,16 @@ use App\Models\User;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 
 class EateryApiService
 {
+    /**
+     * In-memory cache for getEateries() without filters (called 50+ times per request).
+     */
+    protected static $cachedAllEateries = null;
     protected static function getMode()
     {
         return env('API_SERVICE_MODE', 'database');
@@ -260,28 +265,32 @@ class EateryApiService
             return 1252;
         }
 
-        $query = Eatery::on('mysql')->active();
+        $cacheKey = 'count_eateries_' . ($categorySlug ?? 'all') . '_' . md5(json_encode($filters));
 
-        if ($categorySlug) {
-            $query->whereHas('category', function($q) use ($categorySlug) {
-                $q->where('slug', $categorySlug);
-            });
-        }
+        return Cache::remember($cacheKey, 300, function() use ($categorySlug, $filters) {
+            $query = Eatery::on('mysql')->active();
 
-        if (isset($filters['commune_id']) && $filters['commune_id']) {
-            $query->where('commune_id', $filters['commune_id']);
-        }
+            if ($categorySlug) {
+                $query->whereHas('category', function($q) use ($categorySlug) {
+                    $q->where('slug', $categorySlug);
+                });
+            }
 
-        if (isset($filters['q']) && $filters['q']) {
-            $keyword = trim($filters['q']);
-            $query->where(function($q) use ($keyword) {
-                $q->orWhere('slug', 'like', "{$keyword}%")
-                  ->orWhere('name', 'like', "{$keyword}%")
-                  ->orWhere('address', 'like', "{$keyword}%");
-            });
-        }
+            if (isset($filters['commune_id']) && $filters['commune_id']) {
+                $query->where('commune_id', $filters['commune_id']);
+            }
 
-        return $query->count();
+            if (isset($filters['q']) && $filters['q']) {
+                $keyword = trim($filters['q']);
+                $query->where(function($q) use ($keyword) {
+                    $q->orWhere('slug', 'like', "{$keyword}%")
+                      ->orWhere('name', 'like', "{$keyword}%")
+                      ->orWhere('address', 'like', "{$keyword}%");
+                });
+            }
+
+            return $query->count();
+        });
     }
 
     /**
@@ -295,6 +304,12 @@ class EateryApiService
 
         // Nếu ở chế độ database nội bộ, query trực tiếp bảng eateries
         if (self::getMode() !== 'http') {
+            // In-memory cache: nếu không có filter thì dùng cache tránh query lại
+            $hasFilters = !empty(array_filter($filters, fn($v) => !is_null($v) && $v !== ''));
+            if (!$hasFilters && self::$cachedAllEateries !== null) {
+                return self::$cachedAllEateries;
+            }
+
             $query = Eatery::on('mysql')->with([
                 'category:id,name,slug,icon',
                 'commune:id,name,slug',
@@ -332,7 +347,14 @@ class EateryApiService
                 $query->limit((int) $filters['limit']);
             }
 
-            return $query->get();
+            $result = $query->get();
+
+            // Cache kết quả nếu không có filter (dùng cho các lần gọi tiếp theo trong cùng request)
+            if (!$hasFilters) {
+                self::$cachedAllEateries = $result;
+            }
+
+            return $result;
         }
 
         // Aggregate eateries across all 9 categories (HTTP mode fallback)
@@ -1397,7 +1419,7 @@ class EateryApiService
             if (!empty($review['eatery_id'])) {
                 $user = User::find($userId);
                 $userName = $user ? $user->name : 'Thực khách Food Tour';
-                $eatery = self::getEateries()->firstWhere('id', $review['eatery_id']);
+                $eatery = Eatery::with('category:id,slug')->find($review['eatery_id']);
                 if ($eatery) {
                     $mediaFiles = [];
                     if (!empty($review['image_path'])) {

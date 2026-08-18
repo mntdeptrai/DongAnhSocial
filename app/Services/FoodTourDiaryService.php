@@ -49,8 +49,7 @@ class FoodTourDiaryService
                     $user = auth()->user();
                     $userName = $user ? $user->name : 'Thực khách Food Tour';
                     
-                    $eateries = EateryApiService::getEateries();
-                    $eatery = $eateries->firstWhere('id', $review['eatery_id']);
+                    $eatery = \App\Models\Eatery::with('category:id,slug')->find($review['eatery_id']);
                     if ($eatery) {
                         $mediaFiles = [];
                         if (!empty($review['image_path'])) {

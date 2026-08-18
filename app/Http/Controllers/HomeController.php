@@ -412,7 +412,8 @@ class HomeController extends Controller
             ->take(10)
             ->get();
 
-        $allEateries = EateryApiService::getEateries()->sortBy('name')->values();
+        $allEateries = Eatery::select('id', 'name', 'slug', 'address', 'image_path', 'rating')
+            ->active()->orderBy('name')->get();
 
         return view('newsfeed', compact('posts', 'featuredUsers', 'allEateries'));
     }
@@ -496,11 +497,10 @@ class HomeController extends Controller
             return $dry;
         });
 
-        $eateries = EateryApiService::getEateries();
-        $eateriesMap = $eateries->keyBy('id');
-
-        // 5. Danh sách địa điểm cho modal tạo check-in
-        $allEateries = EateryApiService::getEateries()->sortBy('name')->values();
+        $allEateries = Eatery::select('id', 'name', 'slug', 'address', 'image_path', 'rating', 'category_id', 'commune_id')
+            ->with('category:id,name,slug,icon', 'commune:id,name,slug')
+            ->active()->orderBy('name')->get();
+        $eateriesMap = $allEateries->keyBy('id');
 
         return view('checkin', compact('diaries', 'eateriesMap', 'standaloneCheckins', 'profilePosts', 'allEateries'));
     }
@@ -555,22 +555,22 @@ class HomeController extends Controller
     public function searchEateries(Request $request)
     {
         $q = trim($request->query('q', ''));
-        $eateries = EateryApiService::getEateries();
+
+        $query = Eatery::select('id', 'name', 'slug', 'address', 'image_path', 'rating', 'category_id', 'commune_id')
+            ->with('category:id,name', 'commune:id,name')
+            ->active();
 
         if ($q !== '') {
             $qNormalized = mb_strtolower($this->removeVietnameseSign($q));
-            $eateries = $eateries->filter(function($e) use ($qNormalized) {
-                $nameNormalized = mb_strtolower($this->removeVietnameseSign($e->name));
-                $addressNormalized = mb_strtolower($this->removeVietnameseSign($e->address ?? ''));
-                $descNormalized = mb_strtolower($this->removeVietnameseSign($e->description ?? ''));
-
-                return str_contains($nameNormalized, $qNormalized) || 
-                       str_contains($addressNormalized, $qNormalized) ||
-                       str_contains($descNormalized, $qNormalized);
+            $query->where(function($qb) use ($q, $qNormalized) {
+                $qb->where('name', 'like', "%{$q}%")
+                   ->orWhere('address', 'like', "%{$q}%")
+                   ->orWhere('slug', 'like', "%{$qNormalized}%")
+                   ->orWhere('description', 'like', "%{$q}%");
             });
         }
 
-        $eateries = $eateries->sortBy('name')->take(20);
+        $eateries = $query->orderBy('name')->limit(20)->get();
 
         return response()->json($eateries->map(function($e) {
             return [
@@ -599,33 +599,21 @@ class HomeController extends Controller
             return response()->json(['error' => 'Missing coordinates'], 422);
         }
 
-        // Lấy tất cả các địa điểm trên cả 7 cơ sở dữ liệu và tính khoảng cách bằng PHP
-        $eateries = EateryApiService::getEateries()
-            ->filter(function($e) use ($lat, $lng, $radius) {
-                if (is_null($e->latitude) || is_null($e->longitude)) {
-                    return false;
-                }
-
-                $earthRadius = 6371; // km
-                $latFrom = deg2rad($lat);
-                $lonFrom = deg2rad($lng);
-                $latTo = deg2rad((float) $e->latitude);
-                $lonTo = deg2rad((float) $e->longitude);
-
-                $latDelta = $latTo - $latFrom;
-                $lonDelta = $lonTo - $lonFrom;
-
-                $angle = 2 * asin(sqrt(pow(sin($latDelta / 2), 2) +
-                    cos($latFrom) * cos($latTo) * pow(sin($lonDelta / 2), 2)));
-
-                $distance = $angle * $earthRadius;
-                $e->distance = $distance;
-
-                return $distance <= $radius;
-            })
-            ->sortBy('distance')
-            ->take(10)
-            ->values();
+        // Sử dụng Haversine formula trong SQL thay vì load tất cả rồi filter PHP
+        $eateries = Eatery::select('id', 'name', 'slug', 'address', 'image_path', 'rating',
+                'latitude', 'longitude', 'category_id', 'commune_id')
+            ->selectRaw(
+                "(6371 * acos(cos(radians(?)) * cos(radians(latitude)) * cos(radians(longitude) - radians(?)) + sin(radians(?)) * sin(radians(latitude)))) AS distance",
+                [$lat, $lng, $lat]
+            )
+            ->with('category:id,name', 'commune:id,name')
+            ->whereNotNull('latitude')
+            ->whereNotNull('longitude')
+            ->active()
+            ->having('distance', '<=', $radius)
+            ->orderBy('distance')
+            ->limit(10)
+            ->get();
 
         return response()->json($eateries->map(function($e) {
             return [
