@@ -6,6 +6,10 @@
 <!-- Tối ưu hóa SEO: Thẻ mô tả Meta tự sinh chân thực -->
 @section('meta_description', 'Khám phá sản phẩm OCOP & nông sản đặc sản tại ' . $eatery->name . ', địa chỉ: ' . $eatery->address . ', ' . ($eatery->commune?->name ?? 'Đông Anh') . ', Đông Anh. Xem chứng nhận sao OCOP, hồ sơ di sản, nghệ nhân giữ lửa và đặt mua trực tiếp.')
 
+<!-- SEO Keywords Đa Chiều -->
+@section('meta_keywords', \App\Helpers\VietnameseSeoHelper::generateKeywords($eatery->name, $eatery->category?->slug ?? 'dong-anh-market', $eatery->commune?->name ?? 'Đông Anh'))
+@section('canonical_url', route('eatery.show', $eatery->slug))
+
 @section('og_image', $eatery->image_path ?: 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=800&q=80')
 
 <!-- Tối ưu hóa SEO Google: Nhúng mã JSON-LD Schema.org động sinh từ Controller -->

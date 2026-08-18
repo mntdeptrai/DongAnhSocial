@@ -79,8 +79,17 @@ class HomeController extends Controller
 
     public function sitemap()
     {
-        $eateries = EateryApiService::getEateries();
-        return response()->view('sitemap', compact('eateries'))
+        $eateries = Eatery::select('id', 'name', 'slug', 'category_id', 'updated_at')->active()->get();
+        
+        $ocopProducts = \App\Models\OcopProduct::select('id', 'name', 'slug', 'star_rating', 'eatery_id', 'stall_name', 'updated_at')
+            ->whereNotNull('slug')
+            ->get();
+
+        $dishes = \App\Models\Dish::select('id', 'name', 'slug', 'eatery_id', 'updated_at')
+            ->whereNotNull('slug')
+            ->get();
+
+        return response()->view('sitemap', compact('eateries', 'ocopProducts', 'dishes'))
                          ->header('Content-Type', 'text/xml');
     }
 

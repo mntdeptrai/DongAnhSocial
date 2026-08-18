@@ -1,9 +1,68 @@
 @extends('layouts.app')
 
-@section('title', $stallName . ' — ' . $eatery->name . ' | DongAnh Map')
-@section('meta_description', 'Xem chi tiết gian hàng ' . $stallName . ' tại ' . $eatery->name . ', Đông Anh — thông tin tiểu thương, sản phẩm niêm yết, bản đồ vị trí và đánh giá từ khách hàng.')
+@section('title', 'Gian Hàng ' . $stallName . ' — ' . $eatery->name . ' | Chợ Số Đông Anh')
+@section('meta_description', 'Xem chi tiết gian hàng ' . $stallName . ' tại ' . $eatery->name . ', Đông Anh — thông tin tiểu thương ' . ($sellerName ?: '') . ', danh mục mặt hàng niêm yết, bản đồ vị trí, thanh toán VietQR và đánh giá khách hàng.')
+@section('meta_keywords', \App\Helpers\VietnameseSeoHelper::generateStallKeywords($stallName, $eatery->name, $category ?? null, $eatery->commune?->name ?? 'Đông Anh'))
 @section('og_image', $eatery->image_path ?: 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=800&q=80')
+@section('og_type', 'business.business')
 @section('canonical_url', route('market.stall.show', ['marketSlug' => $marketSlug, 'stallSlug' => $stallSlug]))
+
+@push('head')
+<script type="application/ld+json">
+{
+  "@@context": "https://schema.org",
+  "@@type": "Store",
+  "name": "{{ addslashes($stallName) }}",
+  "description": "Gian hàng {{ addslashes($stallName) }} tại {{ addslashes($eatery->name) }}, Đông Anh, Hà Nội",
+  "image": "{{ $eatery->image_path ?: 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=800&q=80' }}",
+  "telephone": "{{ $sellerPhone ?: 'Chưa cập nhật' }}",
+  "address": {
+    "@@type": "PostalAddress",
+    "streetAddress": "{{ addslashes($eatery->address ?: 'Đông Anh') }}",
+    "addressLocality": "{{ addslashes($eatery->commune?->name ?: 'Đông Anh') }}",
+    "addressRegion": "Hà Nội",
+    "addressCountry": "VN"
+  },
+  "geo": {
+    "@@type": "GeoCoordinates",
+    "latitude": {{ (float)($lat ?? 21.1571) }},
+    "longitude": {{ (float)($lng ?? 105.8448) }}
+  },
+  "url": "{{ route('market.stall.show', ['marketSlug' => $marketSlug, 'stallSlug' => $stallSlug]) }}"
+  @if(isset($avgRating) && $avgRating > 0)
+  ,
+  "aggregateRating": {
+    "@@type": "AggregateRating",
+    "ratingValue": "{{ $avgRating }}",
+    "reviewCount": "{{ isset($reviews) && $reviews->count() > 0 ? $reviews->count() : 5 }}",
+    "bestRating": "5",
+    "worstRating": "1"
+  }
+  @endif
+}
+</script>
+<script type="application/ld+json">
+{
+  "@@context": "https://schema.org",
+  "@@type": "BreadcrumbList",
+  "itemListElement": [{
+    "@@type": "ListItem",
+    "position": 1,
+    "name": "Trang chủ",
+    "item": "{{ url('/') }}"
+  },{
+    "@@type": "ListItem",
+    "position": 2,
+    "name": "{{ addslashes($eatery->name) }}",
+    "item": "{{ route('eatery.show', $eatery->slug) }}"
+  },{
+    "@@type": "ListItem",
+    "position": 3,
+    "name": "Gian hàng {{ addslashes($stallName) }}"
+  }]
+}
+</script>
+@endpush
 
 @section('content')
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">

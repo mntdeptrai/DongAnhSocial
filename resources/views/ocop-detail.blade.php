@@ -1,13 +1,13 @@
 @extends('layouts.app')
 
-<!-- Tối ưu hóa SEO: Tiêu đề động cho Sản phẩm OCOP -->
-@section('title', $product->name . ' - Chứng Nhận OCOP Cấp Quốc Gia | ' . ($eatery ? $eatery->name : 'Đông Anh'))
+<!-- Tối ưu hóa SEO: Tiêu đề động chuẩn Google cho Sản phẩm OCOP -->
+@section('title', $product->name . ' - Đặc Sản OCOP ' . ($product->star_rating ? $product->star_rating . ' Sao' : '') . ' | ' . ($eatery ? $eatery->name : 'Đông Anh, Hà Nội'))
 
 <!-- Tối ưu hóa SEO Meta Description -->
-@section('meta_description', 'Khám phá sản phẩm OCOP ' . $product->name . ' thuộc ' . ($eatery ? $eatery->name : 'Đông Anh') . ', địa chỉ: ' . ($eatery ? $eatery->address : 'Đông Anh, Hà Nội') . '. Xem thông số kỹ thuật, chứng nhận QCVN, thành phần và hotline đặt mua.')
+@section('meta_description', \App\Helpers\VietnameseSeoHelper::generateProductMetaDescription($product->name, $eatery?->name, $eatery?->address, (string)($product->price ?? ''), (string)($product->star_rating ?? ''), $product->description ?: $product->story))
 
-<!-- Tối ưu hóa SEO Từ Khóa Tìm Kiếm Google (Keywords) -->
-@section('meta_keywords', $product->name . ', Sản phẩm OCOP ' . $product->name . ', OCOP ' . ($product->star_rating ? $product->star_rating . ' sao' : 'Đông Anh') . ', đặc sản OCOP Đông Anh, ' . $product->name . ' Hà Nội, mua ' . $product->name . ', giá ' . $product->name . ', ' . ($eatery ? $eatery->name : 'Đông Anh'))
+<!-- Tối ưu hóa SEO Từ Khóa Tìm Kiếm Google (Keywords) Đa Chiều -->
+@section('meta_keywords', \App\Helpers\VietnameseSeoHelper::generateProductKeywords($product->name, $eatery?->name, $eatery?->commune?->name ?? 'Đông Anh', 'ocop', (string)($product->star_rating ?? ''), (string)($product->price ?? '')))
 
 @section('og_image', $product->image_path ?: ($eatery?->image_path ?: 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=800&q=80'))
 @section('og_type', 'product')

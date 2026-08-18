@@ -4,6 +4,10 @@
 
 @section('meta_description', 'Nền tảng quản lý Chợ số hiện đại tại ' . $eatery->name . ', Đông Anh. Tích hợp thanh toán số VietQR, sơ đồ phân khu tương tác, thông tin nông sản sạch và ATTP.')
 
+<!-- SEO Keywords Đa Chiều -->
+@section('meta_keywords', \App\Helpers\VietnameseSeoHelper::generateKeywords($eatery->name, 'traditional-market', $eatery->commune?->name ?? 'Đông Anh'))
+@section('canonical_url', route('eatery.show', $eatery->slug))
+
 @section('og_image', $eatery->image_path ?: 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=800&q=80')
 
 @section('seo_schema')
