@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Services\CommentService;
+use App\Services\SpamProtectionService;
 use App\Domain\Comment\CommentData;
 
 class CommentController extends Controller
@@ -21,8 +22,22 @@ class CommentController extends Controller
             'guest_name'       => 'nullable|string|max:100',
         ]);
 
+        $content = (string) $request->input('content');
+
+        // Kiểm tra chống bot và lọc spam toàn diện
+        $spamCheck = SpamProtectionService::check($request, $content, 'comment');
+        if ($spamCheck['is_spam']) {
+            return redirect()->back()
+                ->withErrors(['content' => $spamCheck['reason']])
+                ->with('error', $spamCheck['reason'])
+                ->withInput();
+        }
+
         $data = CommentData::fromRequest($request);
         $this->commentService->createComment($data);
+
+        // Ghi nhận bình luận thành công (kích hoạt cooldown 4s và chống gửi trùng lặp)
+        SpamProtectionService::recordSuccess($request, $content, 'comment');
 
         return redirect()->back()->with('success', 'Bình luận của bạn đã được gửi thành công! 💬');
     }

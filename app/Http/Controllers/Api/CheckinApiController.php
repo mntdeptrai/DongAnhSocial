@@ -189,17 +189,31 @@ class CheckinApiController extends Controller
             'guest_name'       => 'nullable|string|max:100',
         ]);
 
+        $content = (string) $request->input('content');
+
+        // Kiểm tra chống bot và lọc spam toàn diện
+        $spamCheck = \App\Services\SpamProtectionService::check($request, $content, 'comment');
+        if ($spamCheck['is_spam']) {
+            return response()->json([
+                'success' => false,
+                'message' => $spamCheck['reason']
+            ], $spamCheck['code']);
+        }
+
         $user = $request->user('sanctum');
 
         $data = new CommentData(
             user_id: $user ? $user->id : null,
             guest_name: $user ? null : ($request->input('guest_name') ?? 'Khách vãng lai'),
-            content: $request->input('content'),
+            content: $content,
             commentable_id: (int) $request->input('commentable_id'),
             commentable_type: $request->input('commentable_type')
         );
 
         $comment = $commentService->createComment($data);
+
+        // Ghi nhận bình luận thành công (kích hoạt cooldown 4s và chống gửi trùng lặp)
+        \App\Services\SpamProtectionService::recordSuccess($request, $content, 'comment');
 
         return response()->json([
             'success' => true,

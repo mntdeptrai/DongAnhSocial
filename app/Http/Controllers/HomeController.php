@@ -983,6 +983,17 @@ class HomeController extends Controller
             'content' => 'required|string|max:1000'
         ]);
 
+        $content = (string) $request->input('content');
+
+        // Kiểm tra chống bot và lọc spam toàn diện
+        $spamCheck = \App\Services\SpamProtectionService::check($request, $content, 'comment');
+        if ($spamCheck['is_spam']) {
+            return response()->json([
+                'success' => false,
+                'message' => $spamCheck['reason']
+            ], $spamCheck['code']);
+        }
+
         $userId = \Illuminate\Support\Facades\Auth::id() ?? session('user_id');
         $user = $userId ? \App\Models\User::find($userId) : null;
         $guestName = $user ? null : ($request->input('guest_name') ?? 'Khách vãng lai');
@@ -992,8 +1003,11 @@ class HomeController extends Controller
             'guest_name'       => $guestName,
             'commentable_id'   => (int) $request->input('id'),
             'commentable_type' => $request->input('type'),
-            'content'          => $request->input('content')
+            'content'          => $content
         ]);
+
+        // Ghi nhận bình luận thành công (kích hoạt cooldown 4s và chống gửi trùng lặp)
+        \App\Services\SpamProtectionService::recordSuccess($request, $content, 'comment');
 
         $totalCommentsCount = \App\Models\Comment::where('commentable_type', $request->input('type'))
             ->where('commentable_id', $request->input('id'))
