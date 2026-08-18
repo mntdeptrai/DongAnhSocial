@@ -434,9 +434,8 @@ class EateryApiService
             });
         }
 
-        $results = $query->get();
-
         if ($categorySlug === 'smart-education-map' && !isset($filters['q'])) {
+            $results = $query->get();
             $orderedSlugs = [
                 'th-an-duong-vuong',
                 'thcs-nguyen-huy-tuong',
@@ -458,12 +457,29 @@ class EateryApiService
                 'truong-lien-cap-uy-no',
             ];
             $slugOrderMap = array_flip($orderedSlugs);
-            return $results->sortBy(function($item) use ($slugOrderMap) {
+            $sorted = $results->sortBy(function($item) use ($slugOrderMap) {
                 return $slugOrderMap[$item->slug] ?? 999;
             })->values();
+
+            if (isset($filters['page']) && isset($filters['per_page'])) {
+                $page = max(1, (int)$filters['page']);
+                $perPage = max(1, (int)$filters['per_page']);
+                return $sorted->slice(($page - 1) * $perPage, $perPage)->values();
+            }
+            return $sorted;
         }
 
-        return $results;
+        $query->orderByDesc('is_featured')->orderByDesc('rating')->orderBy('id', 'desc');
+
+        if (isset($filters['page']) && isset($filters['per_page'])) {
+            $page = max(1, (int)$filters['page']);
+            $perPage = max(1, (int)$filters['per_page']);
+            $query->skip(($page - 1) * $perPage)->take($perPage);
+        } elseif (isset($filters['limit'])) {
+            $query->limit((int) $filters['limit']);
+        }
+
+        return $query->get();
     }
 
     /**
