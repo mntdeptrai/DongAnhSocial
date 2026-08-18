@@ -85,8 +85,7 @@ class HomeController extends Controller
             ->whereNotNull('slug')
             ->get();
 
-        $dishes = \App\Models\Dish::select('id', 'name', 'slug', 'eatery_id', 'updated_at')
-            ->whereNotNull('slug')
+        $dishes = \App\Models\Dish::select('id', 'name', 'eatery_id', 'updated_at')
             ->get();
 
         return response()->view('sitemap', compact('eateries', 'ocopProducts', 'dishes'))

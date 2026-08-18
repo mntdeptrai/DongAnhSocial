@@ -88,14 +88,12 @@
     {{-- Dishes & Menu Items --}}
     @if(isset($dishes))
         @foreach ($dishes as $dish)
-            @if(!empty($dish->slug))
-                <url>
-                    <loc>{{ url('/san-pham/' . $dish->slug) }}</loc>
-                    <lastmod>{{ $dish->updated_at ? $dish->updated_at->tz('UTC')->toAtomString() : now()->tz('UTC')->toAtomString() }}</lastmod>
-                    <changefreq>weekly</changefreq>
-                    <priority>0.75</priority>
-                </url>
-            @endif
+            <url>
+                <loc>{{ url('/san-pham/' . $dish->id) }}</loc>
+                <lastmod>{{ $dish->updated_at ? $dish->updated_at->tz('UTC')->toAtomString() : now()->tz('UTC')->toAtomString() }}</lastmod>
+                <changefreq>weekly</changefreq>
+                <priority>0.75</priority>
+            </url>
         @endforeach
     @endif
 </urlset>
