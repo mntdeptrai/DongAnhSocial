@@ -1,10 +1,19 @@
 @extends('layouts.app')
 
+@php
+    $catSlug = $eatery->category?->slug ?? 'hanh-trinh-di-san';
+    $comName = $eatery->commune?->name ?? 'Đông Anh';
+    $seoKeywords = \App\Helpers\VietnameseSeoHelper::generateKeywords($eatery->name, $catSlug, $comName);
+@endphp
+
 <!-- Tối ưu hóa SEO: Tiêu đề động chính xác cho Hành trình Di sản & Văn hóa Đông Anh -->
-@section('title', $eatery->name . ' - Di sản văn hóa & Thiết chế Thể thao tại ' . ($eatery->commune?->name ?? 'Đông Anh') . ', Đông Anh')
+@section('title', $eatery->name . ' - Di sản văn hóa & Thiết chế Thể thao tại ' . $comName . ', Đông Anh')
 
 <!-- Tối ưu hóa SEO: Thẻ mô tả Meta tự sinh chân thực -->
-@section('meta_description', 'Khám phá di sản văn hóa, lễ hội truyền thống & thiết chế thể thao tại ' . $eatery->name . ', địa chỉ: ' . $eatery->address . ', ' . ($eatery->commune?->name ?? 'Đông Anh') . ', Đông Anh. Xem lịch trình di sản và thông tin sự kiện.')
+@section('meta_description', 'Khám phá di sản văn hóa, lễ hội truyền thống & thiết chế thể thao tại ' . $eatery->name . ', địa chỉ: ' . $eatery->address . ', ' . $comName . ', Đông Anh. Xem lịch trình di sản và thông tin sự kiện.')
+
+@section('meta_keywords', $seoKeywords)
+@section('canonical_url', route('eatery.show', $eatery->slug))
 
 @section('og_image', $eatery->image_path ?: 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=800&q=80')
 

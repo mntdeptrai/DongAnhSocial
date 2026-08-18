@@ -42,6 +42,33 @@
     <meta name="twitter:image" content="@yield('og_image')">
     @endif
     
+    <!-- Structured Data JSON-LD WebSite & SearchAction for Google / Bing / Brave Search -->
+    <script type="application/ld+json">
+    {
+      "@@context": "https://schema.org",
+      "@@type": "WebSite",
+      "name": "Khám phá Đông Anh",
+      "alternateName": [
+        "Khám phá Xã Đông Anh",
+        "DongAnh Discovery",
+        "Đông Anh Social",
+        "Bản đồ số Đông Anh",
+        "Xã Đông Anh",
+        "Du lịch Đông Anh"
+      ],
+      "url": "{{ url('/') }}",
+      "description": "Nền tảng số hóa dịch vụ, tra cứu trường học, ẩm thực, y tế, chợ truyền thống và đặc sản OCOP Xã Đông Anh, Hà Nội",
+      "potentialAction": {
+        "@@type": "SearchAction",
+        "target": {
+          "@@type": "EntryPoint",
+          "urlTemplate": "{{ url('/tim-kiem') }}?q={search_term_string}"
+        },
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
+    
     @stack('head')
     
     <!-- Leaflet.js Map Assets -->

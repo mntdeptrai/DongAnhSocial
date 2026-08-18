@@ -1,12 +1,19 @@
 @extends('layouts.app')
 
+@php
+    $stdSchoolName = \App\Helpers\VietnameseSeoHelper::standardizeSchoolName($eatery->name);
+    $comName = $eatery->commune?->name ?? 'Đông Anh';
+    $seoKeywords = \App\Helpers\VietnameseSeoHelper::generateKeywords($eatery->name, 'smart-education-map', $comName);
+@endphp
+
 <!-- Tối ưu hóa SEO Google: Tiêu đề động chính xác cho Smart Education (Trường học chuẩn hóa) -->
-@section('title', \App\Helpers\VietnameseSeoHelper::standardizeSchoolName($eatery->name) . ' - Trường học & Bản đồ Giáo dục thông minh tại ' . ($eatery->commune?->name ?? 'Đông Anh') . ', Xã Đông Anh')
+@section('title', $stdSchoolName . ' - Trường học & Bản đồ Giáo dục thông minh tại ' . $comName . ', Đông Anh')
 
 <!-- Tối ưu hóa SEO: Thẻ mô tả Meta giàu từ khóa tiếng Việt (Mầm non, Tiểu học, Sáp nhập) -->
-@section('meta_description', 'Thông tin tuyển sinh, quy mô sáp nhập & chương trình đào tạo tại ' . \App\Helpers\VietnameseSeoHelper::standardizeSchoolName($eatery->name) . ', địa chỉ: ' . $eatery->address . ', ' . ($eatery->commune?->name ?? 'Đông Anh') . ', Xã Đông Anh. Số điện thoại liên hệ: ' . ($eatery->phone ?: '024 3883 xxx') . '. Tra cứu bản đồ chỉ đường & sơ đồ điểm trường.')
+@section('meta_description', 'Thông tin tuyển sinh, quy mô sáp nhập & chương trình đào tạo tại ' . $stdSchoolName . ', địa chỉ: ' . $eatery->address . ', ' . $comName . ', Đông Anh. Số điện thoại liên hệ: ' . ($eatery->phone ?: '024 3883 xxx') . '. Tra cứu bản đồ chỉ đường & sơ đồ điểm trường.')
 
-@section('meta_keywords', \App\Helpers\VietnameseSeoHelper::generateKeywords($eatery->name, 'smart-education-map', $eatery->commune?->name ?? 'Xã Đông Anh'))
+@section('meta_keywords', $seoKeywords)
+@section('canonical_url', route('eatery.show', $eatery->slug))
 
 @section('og_image', $eatery->image_path ?: 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=800&q=80')
 

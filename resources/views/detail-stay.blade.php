@@ -1,10 +1,18 @@
 @extends('layouts.app')
 
+@php
+    $comName = $eatery->commune?->name ?? 'Đông Anh';
+    $seoKeywords = \App\Helpers\VietnameseSeoHelper::generateKeywords($eatery->name, 'stay-in-dong-anh', $comName);
+@endphp
+
 <!-- Tối ưu hóa SEO: Tiêu đề động chính xác cho Stay in Đông Anh (Lưu trú) -->
-@section('title', $eatery->name . ' - Khách sạn, Homestay & Lưu trú tại ' . ($eatery->commune?->name ?? 'Đông Anh') . ', Đông Anh')
+@section('title', $eatery->name . ' - Khách sạn, Homestay & Lưu trú tại ' . $comName . ', Đông Anh')
 
 <!-- Tối ưu hóa SEO: Thẻ mô tả Meta tự sinh chân thực -->
-@section('meta_description', 'Đặt phòng nghỉ tại ' . $eatery->name . ', địa chỉ: ' . $eatery->address . ', ' . ($eatery->commune?->name ?? 'Đông Anh') . ', Đông Anh. Số điện thoại đặt phòng: ' . $eatery->phone . '. Xem bảng giá phòng nghỉ, tiện ích lưu trú và hướng dẫn đường đi.')
+@section('meta_description', 'Đặt phòng nghỉ tại ' . $eatery->name . ', địa chỉ: ' . $eatery->address . ', ' . $comName . ', Đông Anh. Số điện thoại đặt phòng: ' . ($eatery->phone ?: 'Đang cập nhật') . '. Xem bảng giá phòng nghỉ, tiện ích lưu trú và hướng dẫn đường đi.')
+
+@section('meta_keywords', $seoKeywords)
+@section('canonical_url', route('eatery.show', $eatery->slug))
 
 @section('og_image', $eatery->image_path ?: 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=800&q=80')
 

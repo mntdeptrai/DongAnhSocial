@@ -1,10 +1,18 @@
 @extends('layouts.app')
 
+@php
+    $comName = $eatery->commune?->name ?? 'Đông Anh';
+    $seoKeywords = \App\Helpers\VietnameseSeoHelper::generateKeywords($eatery->name, 'wellness-care', $comName);
+@endphp
+
 <!-- Tối ưu hóa SEO: Tiêu đề động chính xác cho Wellness & Care (Y tế & Spa) -->
-@section('title', $eatery->name . ' - Y tế, Spa & Chăm sóc sức khỏe tại ' . ($eatery->commune?->name ?? 'Đông Anh') . ', Đông Anh')
+@section('title', $eatery->name . ' - Y tế, Spa & Chăm sóc sức khỏe tại ' . $comName . ', Đông Anh')
 
 <!-- Tối ưu hóa SEO: Thẻ mô tả Meta tự sinh chân thực -->
-@section('meta_description', 'Tìm hiểu dịch vụ y tế & chăm sóc sức khỏe tại ' . $eatery->name . ', địa chỉ: ' . $eatery->address . ', ' . ($eatery->commune?->name ?? 'Đông Anh') . ', Đông Anh. Số điện thoại tư vấn: ' . $eatery->phone . '. Xem gói dịch vụ, bảng giá và đánh giá từ khách hàng.')
+@section('meta_description', 'Tìm hiểu dịch vụ y tế & chăm sóc sức khỏe tại ' . $eatery->name . ', địa chỉ: ' . $eatery->address . ', ' . $comName . ', Đông Anh. Số điện thoại tư vấn: ' . ($eatery->phone ?: 'Đang cập nhật') . '. Xem gói dịch vụ, bảng giá và đánh giá từ khách hàng.')
+
+@section('meta_keywords', $seoKeywords)
+@section('canonical_url', route('eatery.show', $eatery->slug))
 
 @section('og_image', $eatery->image_path ?: 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=800&q=80')
 

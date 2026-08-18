@@ -1,4 +1,5 @@
 User-agent: *
 Allow: /
 
+Sitemap: https://donganhdiscovery.xadonganh.com/sitemap.xml
 Sitemap: https://xadonganh.com/sitemap.xml
