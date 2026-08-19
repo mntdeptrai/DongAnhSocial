@@ -412,7 +412,13 @@ class HomeController extends Controller
             ->take(10)
             ->get();
 
-        $allEateries = EateryApiService::getEateries()->sortBy('name')->values();
+        $allEateries = \Illuminate\Support\Facades\Cache::remember('all_eateries_dropdown', 3600, function() {
+            return \App\Models\Eatery::active()
+                ->with('category:id,name')
+                ->select('id', 'name', 'slug', 'address', 'category_id')
+                ->orderBy('name')
+                ->get();
+        });
 
         return view('newsfeed', compact('posts', 'featuredUsers', 'allEateries'));
     }
@@ -496,11 +502,14 @@ class HomeController extends Controller
             return $dry;
         });
 
-        $eateries = EateryApiService::getEateries();
-        $eateriesMap = $eateries->keyBy('id');
-
-        // 5. Danh sách địa điểm cho modal tạo check-in
-        $allEateries = EateryApiService::getEateries()->sortBy('name')->values();
+        $allEateries = \Illuminate\Support\Facades\Cache::remember('all_eateries_dropdown', 3600, function() {
+            return \App\Models\Eatery::active()
+                ->with('category:id,name')
+                ->select('id', 'name', 'slug', 'address', 'category_id')
+                ->orderBy('name')
+                ->get();
+        });
+        $eateriesMap = $allEateries->keyBy('id');
 
         return view('checkin', compact('diaries', 'eateriesMap', 'standaloneCheckins', 'profilePosts', 'allEateries'));
     }

@@ -28,6 +28,8 @@ class User extends Authenticatable
         'avatar',
         'cover',
         'phone',
+        'bank_account',
+        'bank_name',
         'status',
         'latitude',
         'longitude',

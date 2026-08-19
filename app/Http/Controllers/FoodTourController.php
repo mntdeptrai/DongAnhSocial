@@ -81,13 +81,13 @@ class FoodTourController extends Controller
             }, 'stops.eatery.category', 'stops.eatery.commune'])
             ->firstOrFail();
 
-        // Hydrate stops eateries if multi-db connection returns null
-        $allEateries = EateryApiService::getEateries();
-        foreach ($tour->stops as $stop) {
-            if (!$stop->eatery) {
-                $eatery = $allEateries->firstWhere('id', $stop->eatery_id);
-                if ($eatery) {
-                    $stop->setRelation('eatery', $eatery);
+        // Hydrate stops eateries if needed
+        $missingIds = $tour->stops->filter(fn($s) => !$s->eatery)->pluck('eatery_id')->filter()->unique();
+        if ($missingIds->isNotEmpty()) {
+            $foundEateries = Eatery::with(['category', 'commune'])->whereIn('id', $missingIds)->get()->keyBy('id');
+            foreach ($tour->stops as $stop) {
+                if (!$stop->eatery && isset($foundEateries[$stop->eatery_id])) {
+                    $stop->setRelation('eatery', $foundEateries[$stop->eatery_id]);
                 }
             }
         }
@@ -321,7 +321,13 @@ YÊU CẦU TRẢ VỀ CHỈ LÀ CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU, KHÔNG C
      */
     public function create()
     {
-        $eateries = EateryApiService::getEateries();
+        $eateries = \Illuminate\Support\Facades\Cache::remember('all_eateries_dropdown', 3600, function() {
+            return \App\Models\Eatery::active()
+                ->with('category:id,name')
+                ->select('id', 'name', 'slug', 'address', 'category_id')
+                ->orderBy('name')
+                ->get();
+        });
         return view('food-tours.form', compact('eateries'));
     }
 
@@ -416,7 +422,13 @@ YÊU CẦU TRẢ VỀ CHỈ LÀ CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU, KHÔNG C
             abort(403, 'Bạn không có quyền chỉnh sửa lộ trình ẩm thực này.');
         }
 
-        $eateries = EateryApiService::getEateries();
+        $eateries = \Illuminate\Support\Facades\Cache::remember('all_eateries_dropdown', 3600, function() {
+            return \App\Models\Eatery::active()
+                ->with('category:id,name')
+                ->select('id', 'name', 'slug', 'address', 'category_id')
+                ->orderBy('name')
+                ->get();
+        });
         return view('food-tours.form', compact('tour', 'eateries'));
     }
 

@@ -77,7 +77,17 @@
                     <div style="font-size: 0.68rem; color: rgba(255,255,255,0.45); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700; margin-bottom: 3px;">Gian hàng của tôi</div>
                     <div class="slr-stall-badge-name">🏪 {{ Str::limit($stallName, 22, '...') }}</div>
                     @if(isset($market) && $market)
-                        <div class="slr-stall-badge-market">📍 {{ Str::limit($market->name, 22, '...') }}</div>
+                        <div class="slr-stall-badge-market" style="color: #fbbf24; font-weight: 700;">🏛️ {{ Str::limit($market->name, 22, '...') }}</div>
+                    @endif
+                    @php
+                        $userRouteBiz = isset($routeBusinesses) ? $routeBusinesses : (auth()->check() ? auth()->user()->getRouteBusinesses() : collect());
+                    @endphp
+                    @if($userRouteBiz && $userRouteBiz->count() > 0)
+                        @foreach($userRouteBiz as $rb)
+                            <div class="slr-stall-badge-market" style="color: #6ee7b7; font-weight: 700; margin-top: 3px;">
+                                🛣️ Tuyến 4.0 ({{ $rb->village_name }})
+                            </div>
+                        @endforeach
                     @endif
                 </div>
             @endif

@@ -13,6 +13,7 @@
     $currentSellerName = $p->seller_name ?? $sellerName;
     $currentSellerPhone = $p->seller_phone ?? $sellerPhone;
     $currentStallName = $p->stall_name ?? $stallName;
+    $currentStallImage = $p->image_path ?? ($user->avatar ?? '');
     
     // Parse description for origin & attp
     $rawDesc = $p->description ?? '';
@@ -137,7 +138,7 @@
                 Cấu Hình Gian Hàng & VietQR 4.0
             </h1>
             <p style="margin: 0; color: #cbd5e1; font-size: 0.92rem;">
-                Cập nhật thông tin tài khoản ngân hàng, mã VietQR, SĐT Zalo & Giấy cam kết An toàn thực phẩm
+                Cập nhật ảnh đại diện gian hàng, thông tin tài khoản ngân hàng, mã VietQR, SĐT Zalo & Giấy cam kết An toàn thực phẩm
             </p>
         </div>
         <div>
@@ -148,8 +149,88 @@
     </div>
 </div>
 
-<form action="{{ route('seller.profile.update') }}" method="POST">
+<form action="{{ route('seller.profile.update') }}" method="POST" enctype="multipart/form-data">
     @csrf
+
+    <!-- SECTION 0: HÌNH ẢNH ĐẠI DIỆN GIAN HÀNG -->
+    <div class="slr-card">
+        <div class="slr-card-header">
+            <span style="font-size: 1.4rem;">📸</span>
+            <h2 class="slr-card-title">Hình Ảnh Đại Diện Gian Hàng (Chợ Dân Sinh & Tuyến Đường 4.0)</h2>
+        </div>
+
+        <div style="display: flex; gap: 24px; align-items: flex-start; flex-wrap: wrap;">
+            <!-- Ảnh xem trước -->
+            <div style="flex-shrink: 0; text-align: center;">
+                <div id="stall_image_preview_box" style="width: 200px; height: 160px; border-radius: 16px; overflow: hidden; border: 2px solid #e2e8f0; background: #f8fafc; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 14px rgba(0,0,0,0.06); position: relative;">
+                    @if(!empty($currentStallImage))
+                        <img id="stall_image_preview" src="{{ $currentStallImage }}" alt="Ảnh Gian Hàng" style="width: 100%; height: 100%; object-fit: cover;">
+                        <div id="stall_image_placeholder" style="display: none;"></div>
+                    @else
+                        <div id="stall_image_placeholder" style="color: #94a3b8; text-align: center; padding: 12px;">
+                            <span style="font-size: 2.4rem; display: block; margin-bottom: 4px;">🏪</span>
+                            <span style="font-size: 0.78rem; font-weight: 700;">Chưa có ảnh đại diện</span>
+                        </div>
+                        <img id="stall_image_preview" src="" alt="Ảnh Gian Hàng" style="width: 100%; height: 100%; object-fit: cover; display: none;">
+                    @endif
+                </div>
+                <div style="font-size: 0.75rem; color: #64748b; margin-top: 6px; font-weight: 600;">Ảnh hiện tại</div>
+            </div>
+
+            <!-- Khu vực tải ảnh lên -->
+            <div style="flex: 1; min-width: 280px;">
+                <div class="slr-form-group" style="margin-bottom: 14px;">
+                    <label class="slr-label">📁 Tải Ảnh Mới Từ Điện Thoại / Máy Tính</label>
+                    <input type="file" name="stall_image" id="stall_image_input" accept="image/*" class="slr-input" style="padding: 10px 14px; background: #fff;" onchange="previewStallFile(this)">
+                    <div style="font-size: 0.78rem; color: #64748b; margin-top: 4px;">
+                        Hỗ trợ: JPG, PNG, WEBP (Tối đa 10MB). Khuyến nghị chụp mặt tiền sạp hoặc các món hàng chủ đạo.
+                    </div>
+                </div>
+
+                <div class="slr-form-group" style="margin-bottom: 12px;">
+                    <label class="slr-label" style="font-size: 0.8rem; color: #64748b;">HOẶC DÁN ĐƯỜNG LINK ẢNH TRỰC TIẾP (URL)</label>
+                    <input type="text" name="stall_image_url" id="stall_image_url_input" class="slr-input" value="{{ old('stall_image_url', $currentStallImage) }}" placeholder="https://..." oninput="previewStallUrl(this.value)">
+                </div>
+
+                <div style="padding: 10px 14px; background: #f0fdf4; border-radius: 10px; border: 1px solid #bbf7d0; font-size: 0.82rem; color: #166534; font-weight: 600;">
+                    ✨ Ảnh này sẽ hiển thị làm ảnh bìa đại diện cho sạp hàng của bạn trên <strong>Danh mục Chợ {{ $market ? $market->name : '' }}</strong> và trên <strong>Bản đồ Tuyến đường 4.0</strong>.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function previewStallFile(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const preview = document.getElementById('stall_image_preview');
+                    const placeholder = document.getElementById('stall_image_placeholder');
+                    if (preview) {
+                        preview.src = e.target.result;
+                        preview.style.display = 'block';
+                    }
+                    if (placeholder) {
+                        placeholder.style.display = 'none';
+                    }
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+        function previewStallUrl(url) {
+            if (url && url.trim().length > 5) {
+                const preview = document.getElementById('stall_image_preview');
+                const placeholder = document.getElementById('stall_image_placeholder');
+                if (preview) {
+                    preview.src = url.trim();
+                    preview.style.display = 'block';
+                }
+                if (placeholder) {
+                    placeholder.style.display = 'none';
+                }
+            }
+        }
+    </script>
 
     <!-- SECTION 1: THÔNG TIN TIỂU THƯƠNG & GIAN HÀNG -->
     <div class="slr-card">
@@ -177,8 +258,24 @@
             </div>
 
             <div class="slr-form-group">
-                <label class="slr-label">Chợ Trực Thuộc</label>
-                <input type="text" class="slr-input" value="{{ $market ? $market->name : 'Chợ Truyền Thống Số' }}" readonly style="background: #f1f5f9; color: #64748b; cursor: not-allowed;">
+                <label class="slr-label">Địa Điểm / Chợ & Tuyến Đường Trực Thuộc</label>
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                    @if($market)
+                        <div style="padding: 10px 14px; background: #fef3c7; border: 1px solid #fde68a; border-radius: 10px; font-size: 0.88rem; font-weight: 800; color: #92400e; display: flex; align-items: center; gap: 8px;">
+                            🏛️ Chợ trực thuộc: {{ $market->name }}
+                        </div>
+                    @endif
+                    @php
+                        $profRouteBiz = isset($routeBusinesses) ? $routeBusinesses : (auth()->check() ? auth()->user()->getRouteBusinesses() : collect());
+                    @endphp
+                    @if($profRouteBiz && $profRouteBiz->count() > 0)
+                        @foreach($profRouteBiz as $rb)
+                            <div style="padding: 10px 14px; background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 10px; font-size: 0.88rem; font-weight: 800; color: #065f46; display: flex; align-items: center; gap: 8px;">
+                                🛣️ Tuyến đường 4.0 ({{ $rb->village_name }}): {{ $rb->name }}
+                            </div>
+                        @endforeach
+                    @endif
+                </div>
             </div>
 
             <!-- ĐỊA CHỈ CHI TIẾT & VỊ TRÍ PHÂN KHU HÀNG (HIỂN THỊ MAP) -->

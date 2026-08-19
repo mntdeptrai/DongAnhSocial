@@ -205,8 +205,7 @@ class EateryController extends Controller
             'media.*' => 'nullable|file|mimes:jpeg,png,jpg,gif,mp4,mov,avi|max:20480'
         ]);
         
-        $eateries = EateryApiService::getEateries();
-        $eatery = $eateries->firstWhere('id', $id);
+        $eatery = Eatery::with('category')->find($id);
         if (!$eatery) {
             abort(404);
         }

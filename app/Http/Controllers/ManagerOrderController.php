@@ -37,9 +37,11 @@ class ManagerOrderController extends Controller
 
         if ($role === 'manager') {
             // Manager: lấy chợ mà họ quản lý
-            $eatery = EateryApiService::getEateries()->firstWhere('user_id', $user->id);
+            $eatery = Eatery::where('user_id', $user->id)->first();
             if (!$eatery) {
-                $eatery = DB::connection('mysql_market')->table('eateries')->where('user_id', $user->id)->first();
+                try {
+                    $eatery = DB::connection('mysql_market')->table('eateries')->where('user_id', $user->id)->first();
+                } catch (\Throwable $e) {}
             }
         } elseif ($role === 'admin') {
             // Admin: lấy tất cả (tenant_id từ session nếu có)

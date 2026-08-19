@@ -39,10 +39,12 @@ class TenantAuthMiddleware
 
         // 2. Ban Quản lý Chợ (Market Tenant Manager): Scoped to single Market
         if ($role === 'manager') {
-            $market = EateryApiService::getEateries()->firstWhere('user_id', $userId);
+            $market = Eatery::where('user_id', $userId)->first();
             if (!$market) {
                 // Fallback attempt: find market where slug or id matches
-                $market = DB::connection('mysql_market')->table('eateries')->where('user_id', $userId)->first();
+                try {
+                    $market = DB::connection('mysql_market')->table('eateries')->where('user_id', $userId)->first();
+                } catch (\Throwable $e) {}
             }
 
             $tenantId = $market ? $market->id : null;

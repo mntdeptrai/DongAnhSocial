@@ -91,8 +91,24 @@
             <h1 style="font-size: 1.85rem; font-weight: 900; margin: 0 0 8px 0; letter-spacing: -0.02em; color: #ffffff;">
                 {{ $stallName }}
             </h1>
-            <p style="margin: 0; color: #ffedd5; font-size: 0.94rem;">
-                📍 Trực thuộc: <strong>{{ $market ? $market->name : 'Chợ Truyền Thống Số' }}</strong> | Chủ gian: <strong>{{ $sellerName }}</strong> (📞 {{ $sellerPhone }})
+            <p style="margin: 0; color: #ffedd5; font-size: 0.94rem; display: flex; flex-wrap: wrap; align-items: center; gap: 8px;">
+                <span>📍 Trực thuộc:</span>
+                @if($market)
+                    <span style="background: rgba(255,255,255,0.22); padding: 3px 10px; border-radius: 8px; font-weight: 800; border: 1px solid rgba(255,255,255,0.35); color: #ffffff;">
+                        🏛️ {{ $market->name }}
+                    </span>
+                @endif
+                @php
+                    $dashRouteBiz = isset($routeBusinesses) ? $routeBusinesses : (auth()->check() ? auth()->user()->getRouteBusinesses() : collect());
+                @endphp
+                @if($dashRouteBiz && $dashRouteBiz->count() > 0)
+                    @foreach($dashRouteBiz as $rb)
+                        <span style="background: rgba(16, 185, 129, 0.3); color: #ecfdf5; padding: 3px 10px; border-radius: 8px; font-weight: 800; border: 1px solid rgba(16, 185, 129, 0.5);">
+                            🛣️ Tuyến 4.0 {{ $rb->village_name }}: {{ $rb->name }}
+                        </span>
+                    @endforeach
+                @endif
+                <span>| Chủ gian: <strong>{{ $sellerName }}</strong> (📞 {{ $sellerPhone }})</span>
             </p>
         </div>
         <div style="display: flex; gap: 12px; flex-wrap: wrap;">

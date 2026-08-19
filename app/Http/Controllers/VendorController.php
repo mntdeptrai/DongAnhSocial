@@ -132,6 +132,8 @@ class VendorController extends Controller
             }
         }
 
+        $routeBusinesses = $user ? $user->getRouteBusinesses() : collect();
+
         return [
             'stallName' => $stallName,
             'sellerName' => $sellerName,
@@ -142,6 +144,7 @@ class VendorController extends Controller
             'isOcopSeller' => $isOcopSeller,
             'primaryProduct' => $primaryProduct,
             'categorySlug' => $categorySlug,
+            'routeBusinesses' => $routeBusinesses,
         ];
     }
 
@@ -601,6 +604,13 @@ class VendorController extends Controller
             $qrCodeUrl = "https://img.vietqr.io/image/{$bankName}-{$bankAccount}-compact.png?accountName=" . urlencode($holderUpper) . "&addInfo=" . urlencode($addInfo);
         }
 
+        $stallImagePath = null;
+        if ($request->hasFile('stall_image')) {
+            $stallImagePath = R2Helper::upload($request->file('stall_image'), 'stalls');
+        } elseif ($request->filled('stall_image_url')) {
+            $stallImagePath = trim($request->input('stall_image_url'));
+        }
+
         // 1. Cập nhật thông tin trên bảng User hiện tại
         if ($user) {
             $userUpdate = [
@@ -610,20 +620,27 @@ class VendorController extends Controller
                 'bank_name' => $bankName ?: null,
                 'updated_at' => now()
             ];
+            if ($stallImagePath) {
+                $userUpdate['avatar'] = $stallImagePath;
+            }
             DB::table('users')->where('id', $user->id)->update($userUpdate);
 
             // Cập nhật đồng bộ Hộ kinh doanh Tuyến đường 4.0 (RouteBusiness)
             try {
+                $routeUpdate = [
+                    'user_id' => $user->id,
+                    'owner' => $sellerName,
+                    'phone' => $sellerPhone,
+                    'bank_account' => $bankAccount ?: null,
+                    'bank_name' => $bankName ?: null,
+                    'updated_at' => now(),
+                ];
+                if ($stallImagePath) {
+                    $routeUpdate['image_url'] = $stallImagePath;
+                }
                 \App\Models\RouteBusiness::where('user_id', $user->id)
                     ->orWhere('phone', $sellerPhone)
-                    ->update([
-                        'user_id' => $user->id,
-                        'owner' => $sellerName,
-                        'phone' => $sellerPhone,
-                        'bank_account' => $bankAccount ?: null,
-                        'bank_name' => $bankName ?: null,
-                        'updated_at' => now(),
-                    ]);
+                    ->update($routeUpdate);
             } catch (\Exception $ex) {}
         }
 
@@ -653,6 +670,9 @@ class VendorController extends Controller
             'qr_code_path' => $qrCodeUrl,
             'updated_at'   => now(),
         ];
+        if ($stallImagePath) {
+            $ocopData['image_path'] = $stallImagePath;
+        }
 
         // Tạo chuỗi mô tả kết hợp đầy đủ Nguồn gốc & ATTP
         if (!empty($origin) || !empty($attp) || !empty($description)) {

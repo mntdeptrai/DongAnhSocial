@@ -40,48 +40,68 @@
                                     $stall = $user->getStall(); 
                                     $marketId = ($stall && !empty($stall->eatery_id)) ? $stall->eatery_id : $user->eatery_id;
                                     $marketName = (isset($marketsMap) && $marketId && isset($marketsMap[$marketId])) ? $marketsMap[$marketId]->name : null;
-                                    $ownedEateries = $user->getOwnedEateries();
+                                    $rawOwnedEateries = $user->getOwnedEateries();
+                                    $ownedEateries = collect($rawOwnedEateries)->reject(function($oe) use ($marketId, $marketName) {
+                                        return !empty($marketName) && (($marketId && isset($oe['id']) && $oe['id'] == $marketId) || (isset($oe['name']) && $oe['name'] === $marketName));
+                                    })->values();
                                     $routeBusinesses = $user->getRouteBusinesses();
                                 @endphp
-                                @if($stall || !empty($marketName))
-                                    <div style="margin-top: 4px; display: flex; flex-wrap: wrap; gap: 4px; align-items: center;">
-                                        @if(!empty($marketName))
-                                            <span style="font-size: 0.74rem; color: #92400e; font-weight: 700; background: #fef3c7; padding: 2px 8px; border-radius: 6px; border: 1px solid #fde68a;" title="Chợ trực thuộc">
-                                                🏛️ {{ $marketName }}
-                                            </span>
-                                        @endif
-                                        @if($stall)
-                                            <span style="font-size: 0.74rem; color: #0284c7; font-weight: 700; background: #e0f2fe; padding: 2px 8px; border-radius: 6px; border: 1px solid #bae6fd;">
-                                                🛒 {{ $stall->stall_name }}
-                                            </span>
-                                        @endif
+                                <div style="margin-top: 4px; display: flex; flex-direction: column; gap: 4px;">
+                                    {{-- 1. Chợ trực thuộc & Gian hàng số --}}
+                                    @if(!empty($marketName) || $stall)
+                                        <div style="display: flex; flex-wrap: wrap; gap: 4px; align-items: center;">
+                                            @if(!empty($marketName))
+                                                <span style="font-size: 0.74rem; color: #92400e; font-weight: 700; background: #fef3c7; padding: 2px 8px; border-radius: 6px; border: 1px solid #fde68a;" title="Chợ trực thuộc">
+                                                    🏛️ {{ $marketName }}
+                                                </span>
+                                            @endif
+                                            @if($stall)
+                                                <span style="font-size: 0.74rem; color: #0284c7; font-weight: 700; background: #e0f2fe; padding: 2px 8px; border-radius: 6px; border: 1px solid #bae6fd;" title="Gian hàng trong chợ">
+                                                    🛒 {{ $stall->stall_name }}
+                                                </span>
+                                            @endif
+                                        </div>
+                                    @endif
+
+                                    {{-- 2. Tuyến đường 4.0 trực thuộc --}}
+                                    @if($routeBusinesses && $routeBusinesses->count() > 0)
+                                        <div style="display: flex; flex-wrap: wrap; gap: 4px; align-items: center;">
+                                            @foreach($routeBusinesses as $rb)
+                                                <span style="font-size: 0.74rem; color: #065f46; font-weight: 700; background: #ecfdf5; padding: 2px 8px; border-radius: 6px; border: 1px solid #a7f3d0;" title="Thuộc Tuyến đường 4.0 {{ $rb->village_name }}">
+                                                    🛣️ Tuyến 4.0 ({{ $rb->village_name }}): {{ $rb->name }}
+                                                </span>
+                                            @endforeach
+                                        </div>
+                                    @endif
+
+                                    {{-- 3. Cơ sở kinh doanh / Doanh nghiệp độc lập --}}
+                                    @if(count($ownedEateries) > 0)
+                                        <div style="display: flex; flex-wrap: wrap; gap: 4px; align-items: center;">
+                                            @foreach($ownedEateries as $oe)
+                                                <span style="font-size: 0.74rem; color: #4f46e5; font-weight: 700; background: #eef2ff; padding: 2px 8px; border-radius: 6px; border: 1px solid #c7d2fe;" title="Phân loại: {{ $oe['type'] }}">
+                                                    🏢 {{ $oe['name'] }}
+                                                </span>
+                                            @endforeach
+                                        </div>
+                                    @endif
+
+                                    {{-- 4. Nếu chưa gán bất kỳ đâu --}}
+                                    @if(empty($marketName) && !$stall && (!$routeBusinesses || $routeBusinesses->count() === 0) && count($ownedEateries) === 0)
+                                        <span style="font-size: 0.72rem; color: #ef4444; font-style: italic;">
+                                            ⚠️ Chưa gán gian hàng
+                                        </span>
+                                    @endif
+                                </div>
+                            @elseif($user->role === 'manager')
+                                @php
+                                    $marketName = (isset($marketsMap) && $user->eatery_id && isset($marketsMap[$user->eatery_id])) ? $marketsMap[$user->eatery_id]->name : null;
+                                @endphp
+                                @if($marketName)
+                                    <div style="margin-top: 4px;">
+                                        <span style="font-size: 0.74rem; color: #92400e; font-weight: 700; background: #fef3c7; padding: 2px 8px; border-radius: 6px; border: 1px solid #fde68a;" title="Ban Quản Lý Chợ">
+                                            🏛️ Phụ trách quản lý: {{ $marketName }}
+                                        </span>
                                     </div>
-                                @elseif(count($ownedEateries) > 0)
-                                    <div style="margin-top: 6px; display: flex; flex-direction: column; gap: 4px;">
-                                        @foreach($ownedEateries as $oe)
-                                            <span style="font-size: 0.76rem; color: #4f46e5; display: inline-flex; align-items: center; gap: 4px; font-weight: 600;" title="Phân loại: {{ $oe['type'] }}">
-                                                🏢 {{ $oe['name'] }}
-                                                <small style="color: #6b7280; font-weight: normal; background: #f3f4f6; padding: 1px 6px; border-radius: 10px; font-size: 0.65rem;">
-                                                    {{ $oe['type'] }}
-                                                </small>
-                                            </span>
-                                        @endforeach
-                                    </div>
-                                @elseif($routeBusinesses && $routeBusinesses->count() > 0)
-                                    <div style="margin-top: 6px; display: flex; flex-direction: column; gap: 4px;">
-                                        @foreach($routeBusinesses as $rb)
-                                            <span style="font-size: 0.76rem; color: #059669; display: inline-flex; align-items: center; gap: 4px; font-weight: 700;" title="Tuyến: {{ $rb->village_name }}">
-                                                🛣️ {{ $rb->name }}
-                                                <small style="color: #047857; font-weight: 700; background: #ecfdf5; padding: 1px 6px; border-radius: 10px; font-size: 0.65rem; border: 1px solid #a7f3d0;">
-                                                    Tuyến 4.0 ({{ $rb->village_name }})
-                                                </small>
-                                            </span>
-                                        @endforeach
-                                    </div>
-                                @else
-                                    <span style="font-size: 0.72rem; color: #ef4444; display: block; margin-top: 4px; font-style: italic;">
-                                        ⚠️ Chưa gán gian hàng
-                                    </span>
                                 @endif
                             @endif
                         </td>

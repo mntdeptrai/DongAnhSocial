@@ -1003,10 +1003,18 @@
                             $pCat = $prodCatAssoc[$product->id] ?? 'other';
                             $starRating = $product->star_rating ?? '4 sao';
                         @endphp
+                        @php
+                            $prodImgUrl = $product->image_path;
+                            if (!empty($prodImgUrl)) {
+                                if (!str_starts_with($prodImgUrl, 'http://') && !str_starts_with($prodImgUrl, 'https://')) {
+                                    $prodImgUrl = asset($prodImgUrl);
+                                }
+                            }
+                        @endphp
                         <div class="product-card" data-name="{{ mb_strtolower($product->name) }}" data-category="{{ $pCat }}" style="padding: 14px 16px; align-items: flex-start;">
                             {{-- Thumbnail --}}
-                            @if($product->image_path)
-                                <img src="{{ asset($product->image_path) }}" alt="{{ $product->name }}" class="product-img" style="width: 76px; height: 76px; cursor: pointer;" onclick="openPublicDetailModal({{ json_encode($product->name) }}, {{ intval($product->price) }}, {{ json_encode($product->unit ?: 'kg') }}, {{ json_encode($product->description ?: '') }}, {{ json_encode(asset($product->image_path)) }}, {{ json_encode($starRating) }}, {{ $product->id }})">
+                            @if(!empty($prodImgUrl))
+                                <img src="{{ $prodImgUrl }}" alt="{{ $product->name }}" class="product-img" style="width: 76px; height: 76px; cursor: pointer;" onclick="openPublicDetailModal({{ json_encode($product->name) }}, {{ intval($product->price) }}, {{ json_encode($product->unit ?: 'kg') }}, {{ json_encode($product->description ?: '') }}, {{ json_encode($prodImgUrl) }}, {{ json_encode($starRating) }}, {{ $product->id }})">
                             @else
                                 <div class="product-img-placeholder" style="width: 76px; height: 76px; font-size: 1.8rem; cursor: pointer;" onclick="openPublicDetailModal({{ json_encode($product->name) }}, {{ intval($product->price) }}, {{ json_encode($product->unit ?: 'kg') }}, {{ json_encode($product->description ?: '') }}, '', {{ json_encode($starRating) }}, {{ $product->id }})">{{ $prodEmoji }}</div>
                             @endif
@@ -1014,7 +1022,7 @@
                             {{-- Info --}}
                             <div style="flex: 1; min-width: 0; padding-right: 10px;">
                                 <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 2px;">
-                                    <div class="product-name" style="cursor: pointer;" onclick="openPublicDetailModal({{ json_encode($product->name) }}, {{ intval($product->price) }}, {{ json_encode($product->unit ?: 'kg') }}, {{ json_encode($product->description ?: '') }}, {{ json_encode($product->image_path ? asset($product->image_path) : '') }}, {{ json_encode($starRating) }}, {{ $product->id }})">{{ $product->name }}</div>
+                                    <div class="product-name" style="cursor: pointer;" onclick="openPublicDetailModal({{ json_encode($product->name) }}, {{ intval($product->price) }}, {{ json_encode($product->unit ?: 'kg') }}, {{ json_encode($product->description ?: '') }}, {{ json_encode($prodImgUrl ?: '') }}, {{ json_encode($starRating) }}, {{ $product->id }})">{{ $product->name }}</div>
                                     <span style="background: #fef3c7; color: #92400e; font-size: 0.68rem; font-weight: 700; padding: 2px 7px; border-radius: 8px; border: 1px solid #fde68a;">⭐ {{ $starRating }}</span>
                                 </div>
 
@@ -1041,7 +1049,7 @@
                                         style="height: 38px; padding: 0 14px; border-radius: 20px; border: 1.5px solid #7dd3fc; background: #f0f9ff; color: #0284c7; font-size: 0.8rem; font-weight: 700; display: inline-flex; align-items: center; gap: 5px; cursor: pointer; transition: all 0.2s;"
                                         onmouseover="this.style.background='#e0f2fe'; this.style.borderColor='#0284c7'"
                                         onmouseout="this.style.background='#f0f9ff'; this.style.borderColor='#7dd3fc'"
-                                        onclick="openPublicDetailModal({{ json_encode($product->name) }}, {{ intval($product->price) }}, {{ json_encode($product->unit ?: 'kg') }}, {{ json_encode($product->description ?: '') }}, {{ json_encode($product->image_path ? asset($product->image_path) : '') }}, {{ json_encode($starRating) }}, {{ $product->id }})">
+                                        onclick="openPublicDetailModal({{ json_encode($product->name) }}, {{ intval($product->price) }}, {{ json_encode($product->unit ?: 'kg') }}, {{ json_encode($product->description ?: '') }}, {{ json_encode($prodImgUrl ?: '') }}, {{ json_encode($starRating) }}, {{ $product->id }})">
                                     <i class="bi bi-eye-fill"></i> Xem
                                 </button>
                                 <button class="btn-order add-to-cart-btn"

@@ -26,6 +26,7 @@
 @php
     $products = $eatery->ocopProducts;
     $groupedStalls = $products->groupBy('stall_name');
+    $sellerUsersMap = \App\Models\User::whereIn('id', $products->pluck('user_id')->filter())->get()->keyBy('id');
     
     $stallReviews = \App\Models\Review::on($eatery->getConnectionName())->where('eatery_id', $eatery->id)
         ->whereNotNull('stall_name')
@@ -53,10 +54,11 @@
     foreach ($groupedStalls as $name => $stallProducts) {
         $first = $stallProducts->first();
         $desc = $first->description ?? '';
+        $sUser = $first->user_id ? ($sellerUsersMap[$first->user_id] ?? null) : null;
         
-        $hasQr = (!empty($first->qr_code_path) || str_contains($desc, 'Hỗ trợ thanh toán VietQR')) && !str_contains($desc, 'ngân hàng tiền mặt');
-        $hasBank = (!empty($first->bank_account) || !empty($first->bank_name) || str_contains($desc, 'ngân hàng')) && !str_contains($desc, 'ngân hàng tiền mặt');
-        $hasSmartphone = (!empty($first->seller_phone) || str_contains($desc, 'Có sử dụng smartphone') || str_contains($desc, 'Có sử dụng điện thoại thông minh'));
+        $hasBank = (!empty($first->bank_account) || !empty($first->bank_name) || ($sUser && !empty($sUser->bank_account)) || str_contains($desc, 'ngân hàng')) && !str_contains($desc, 'ngân hàng tiền mặt');
+        $hasQr = (!empty($first->qr_code_path) || !empty($first->bank_account) || ($sUser && (!empty($sUser->bank_account) || !empty($sUser->qr_code))) || str_contains($desc, 'VietQR') || str_contains($desc, 'mã QR') || $hasBank);
+        $hasSmartphone = (!empty($first->seller_phone) || ($sUser && !empty($sUser->phone)) || str_contains($desc, 'Có sử dụng smartphone') || str_contains($desc, 'Có sử dụng điện thoại thông minh'));
         
         if ($hasQr) $stallsWithQr++;
         if ($hasBank) $stallsWithBank++;
@@ -1480,12 +1482,14 @@
             @foreach($groupedStalls as $stallName => $stallProducts)
                 @php
                     $first = $stallProducts->first();
-                    $sellerName = $first->seller_name;
-                    $sellerPhone = $first->seller_phone;
+                    $sellerUser = $first->user_id ? ($sellerUsersMap[$first->user_id] ?? null) : null;
+                    $sellerName = $first->seller_name ?: ($sellerUser?->name ?: 'Tiểu thương');
+                    $sellerPhone = $first->seller_phone ?: ($sellerUser?->phone ?: '');
+                    $desc = $first->description ?? '';
                     
-                    $hasQr = str_contains($first->description, 'Hỗ trợ thanh toán VietQR') && !str_contains($first->description, 'ngân hàng tiền mặt');
-                    $hasBank = str_contains($first->description, 'ngân hàng') && !str_contains($first->description, 'ngân hàng tiền mặt');
-                    $hasSmartphone = str_contains($first->description, 'Có sử dụng smartphone');
+                    $hasBank = (!empty($first->bank_account) || !empty($first->bank_name) || ($sellerUser && !empty($sellerUser->bank_account)) || str_contains($desc, 'ngân hàng')) && !str_contains($desc, 'ngân hàng tiền mặt');
+                    $hasQr = (!empty($first->qr_code_path) || !empty($first->bank_account) || ($sellerUser && (!empty($sellerUser->bank_account) || !empty($sellerUser->qr_code))) || str_contains($desc, 'VietQR') || str_contains($desc, 'mã QR') || $hasBank);
+                    $hasSmartphone = (!empty($sellerPhone) || ($sellerUser && !empty($sellerUser->phone)) || str_contains($desc, 'Có sử dụng smartphone') || str_contains($desc, 'Có sử dụng điện thoại thông minh'));
                     
                     $category = 'Khác';
                     if (str_contains($stallName, 'Ăn uống') || str_contains($stallName, 'Ăn sáng') || str_contains($stallName, 'Ẩm thực')) {
@@ -1499,12 +1503,16 @@
                     }
                     
                     $bankInfo = '';
-                    if (preg_match('/ngân hàng (.*?)\./', $first->description, $matches)) {
+                    if ($sellerUser && !empty($sellerUser->bank_account)) {
+                        $bankInfo = $sellerUser->bank_account . ($sellerUser->bank_name ? " ({$sellerUser->bank_name})" : '');
+                    } elseif (preg_match('/ngân hàng (.*?)\./i', $desc, $matches)) {
                         $bankInfo = $matches[1];
+                    } elseif (!empty($first->bank_account)) {
+                        $bankInfo = $first->bank_account . ($first->bank_name ? " ({$first->bank_name})" : '');
                     }
                     
                     $originText = 'Tự sản xuất';
-                    if (preg_match('/Nguồn gốc: (.*?)\./', $first->description, $match)) {
+                    if (preg_match('/Nguồn gốc: (.*?)\./i', $desc, $match)) {
                         $originText = trim($match[1]);
                     }
 
@@ -1537,12 +1545,18 @@
                                 $coverImg = asset('images/stalls/meat.png');
                             }
 
-                            // Ưu tiên hiển thị ảnh do Admin tải lên trong Trang Quản Trị (nếu có)
-                            if (!empty($first->image_path)) {
-                                if (str_starts_with($first->image_path, 'http')) {
-                                    $coverImg = $first->image_path;
-                                } elseif (file_exists(public_path(ltrim($first->image_path, '/')))) {
-                                    $coverImg = asset(ltrim($first->image_path, '/'));
+                            // Ưu tiên hiển thị ảnh do Seller/Admin tải lên (nếu có)
+                            $customImg = $first->image_path;
+                            if (empty($customImg)) {
+                                $customImg = $stallProducts->first(fn($p) => !empty($p->image_path))?->image_path;
+                            }
+                            if (!empty($customImg)) {
+                                if (str_starts_with($customImg, 'http')) {
+                                    $coverImg = $customImg;
+                                } elseif (file_exists(public_path(ltrim($customImg, '/')))) {
+                                    $coverImg = asset(ltrim($customImg, '/'));
+                                } else {
+                                    $coverImg = asset($customImg);
                                 }
                             }
                         @endphp
@@ -1582,8 +1596,14 @@
                                 ];
                                 $grad = $gradients[abs(crc32($sellerName)) % count($gradients)];
                             @endphp
-                            <div class="stall-avatar" style="background: {!! $grad !!}; width: 40px; height: 40px; font-size: 1rem;">
-                                {{ mb_substr($sellerName, 0, 1) }}
+                            <div class="stall-avatar" style="width: 42px; height: 42px; border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.12); border: 2px solid #ffffff; background: {!! $grad !!};">
+                                @if(!empty($customImg) && !str_contains($customImg, 'images/stalls/'))
+                                    <img src="{{ $coverImg }}" alt="{{ $sellerName }}" style="width: 100%; height: 100%; object-fit: cover;">
+                                @else
+                                    <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 1rem;">
+                                        {{ mb_substr($sellerName, 0, 1) }}
+                                    </div>
+                                @endif
                             </div>
                             <div style="flex: 1; min-width: 0;">
                                 <span style="font-size: 0.85rem; color: var(--text-main); font-weight: 700; display: block;">👤 Chủ hộ: {{ $sellerName }}</span>
@@ -4060,31 +4080,60 @@
         const qrLoader = document.getElementById('mdQrLoader');
         const qrBankText = document.getElementById('mdBankInfo');
 
-        if (bankInfo) {
+        if (bankInfo && bankInfo.trim()) {
             qrBankText.textContent = `Ngân hàng: ${bankInfo}`;
-            const parts = bankInfo.split(':');
-            const bank = parts[0].trim().toLowerCase();
-            const account = parts[1].trim();
             
-            const bankMap = {
-                'mb': 'MB',
-                'techcombank': 'TCB',
-                'tpbank': 'TPB',
-                'vietinbank': 'ICB'
-            };
-            const bankId = bankMap[bank] || 'MB';
+            // Smart extraction of bank name and account number
+            let account = '';
+            const accMatch = bankInfo.match(/(\d{6,22})/);
+            if (accMatch) {
+                account = accMatch[1];
+            }
             
-            const memo = encodeURIComponent(`Thanh toan quay ${stallName}`);
-            const qrUrl = `https://img.vietqr.io/image/${bankId}-${account}-compact2.jpg?amount=${products[0].price}&addInfo=${memo}`;
+            const bankLower = bankInfo.toLowerCase();
+            let bankId = 'MB';
+            if (bankLower.includes('vietcom') || bankLower.includes('vcb')) bankId = 'VCB';
+            else if (bankLower.includes('vietin') || bankLower.includes('icb') || bankLower.includes('ctg')) bankId = 'CTG';
+            else if (bankLower.includes('techcom') || bankLower.includes('tcb')) bankId = 'TCB';
+            else if (bankLower.includes('bidv')) bankId = 'BIDV';
+            else if (bankLower.includes('agri') || bankLower.includes('vba')) bankId = 'VBA';
+            else if (bankLower.includes('sacom') || bankLower.includes('stb')) bankId = 'STB';
+            else if (bankLower.includes('momo')) bankId = 'MOMO';
+            else if (bankLower.includes('msb')) bankId = 'MSB';
+            else if (bankLower.includes('vp')) bankId = 'VPB';
+            else if (bankLower.includes('tp')) bankId = 'TPB';
+            else bankId = 'MB';
             
-            qrImage.src = qrUrl;
-            qrLoader.style.display = 'flex';
-            qrImage.style.display = 'none';
+            if (!account && bankInfo.includes(':')) {
+                const parts = bankInfo.split(':');
+                account = parts[1].trim();
+            }
             
-            qrImage.onload = function() {
-                qrLoader.style.display = 'none';
-                qrImage.style.display = 'block';
-            };
+            if (account) {
+                const memo = encodeURIComponent(`Thanh toan quay ${stallName}`);
+                const price = (products && products[0] && products[0].price) ? products[0].price : '';
+                const qrUrl = `https://img.vietqr.io/image/${bankId}-${account}-compact2.jpg?amount=${price}&addInfo=${memo}`;
+                
+                qrImage.src = qrUrl;
+                qrLoader.style.display = 'flex';
+                qrImage.style.display = 'none';
+                
+                qrImage.onload = function() {
+                    qrLoader.style.display = 'none';
+                    qrImage.style.display = 'block';
+                };
+                qrImage.onerror = function() {
+                    qrLoader.style.display = 'flex';
+                    qrLoader.textContent = '💳 Chuyển khoản: ' + account;
+                    qrImage.style.display = 'none';
+                };
+            } else {
+                qrBankText.textContent = `Thanh toán: ${bankInfo}`;
+                qrImage.src = '';
+                qrLoader.style.display = 'flex';
+                qrLoader.textContent = '💳 ' + bankInfo;
+                qrImage.style.display = 'none';
+            }
         } else {
             qrBankText.textContent = 'Thanh toán tiền mặt';
             qrImage.src = '';

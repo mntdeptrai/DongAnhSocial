@@ -137,6 +137,22 @@
                     </div>
                 @endif
 
+                @php
+                    $routeBusinesses = $user->getRouteBusinesses();
+                @endphp
+                @if($routeBusinesses && $routeBusinesses->count() > 0)
+                    <div style="margin-bottom: 16px; padding: 14px 18px; background: #ecfdf5; border: 1.5px solid #a7f3d0; border-radius: 12px;">
+                        <span style="font-size: 0.78rem; color: #065f46; font-weight: 800; text-transform: uppercase; display: block; margin-bottom: 6px;">
+                            🛣️ LIÊN KẾT TUYẾN ĐƯỜNG 4.0
+                        </span>
+                        @foreach($routeBusinesses as $rb)
+                            <div style="font-size: 0.88rem; color: #047857; font-weight: 700; margin-bottom: 4px;">
+                                • {{ $rb->name }} — Tuyến 4.0 ({{ $rb->village_name }}) | Địa chỉ: {{ $rb->address }}
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
+
                 <!-- Danh sách sản phẩm của gian hàng -->
                 <div>
                     <span style="font-size: 0.8rem; color: var(--admin-text-main); font-weight: 700; display: block; margin-bottom: 8px;">

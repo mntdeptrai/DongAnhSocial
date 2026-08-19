@@ -28,26 +28,41 @@ class SearchController extends Controller
             }
         }
         
-        // Tìm địa điểm thông qua API Service
-        $eateries = EateryApiService::getEateries($selectedCategorySlug, [
-            'commune_id' => $comId,
-            'q' => $keyword
-        ]);
-        
-        // API phục vụ tính năng tự động gợi ý (Autocomplete Suggestions) khi gõ ô tìm kiếm
+        // API phục vụ tính năng tự động gợi ý (Autocomplete Suggestions) khi gõ ô tìm kiếm - Truy vấn siêu nhanh có limit trực tiếp từ DB
         if ($request->query('ajax') === 'suggest' && $keyword) {
-            $suggestions = EateryApiService::getEateries(null, ['q' => $keyword])
-                ->take(6)
-                ->map(function($e) {
-                    return [
-                        'id' => $e->id,
-                        'name' => $e->name,
-                        'slug' => $e->slug,
-                        'address' => $e->address
-                    ];
-                });
+            $suggestions = Eatery::active()
+                ->where(function($q) use ($keyword) {
+                    $q->where('slug', 'like', "{$keyword}%")
+                      ->orWhere('name', 'like', "{$keyword}%")
+                      ->orWhere('address', 'like', "{$keyword}%");
+                })
+                ->select('id', 'name', 'slug', 'address')
+                ->limit(6)
+                ->get();
             return response()->json($suggestions);
         }
+        
+        // Tìm địa điểm cho bản đồ (chỉ chọn các trường cần thiết cho marker & sidebar, tránh load toàn bộ quan hệ nặng)
+        $query = Eatery::active()->with(['category:id,name,slug,icon', 'commune:id,name,slug'])
+            ->select('id', 'name', 'slug', 'category_id', 'commune_id', 'address', 'latitude', 'longitude', 'rating', 'image_path', 'price_range', 'opening_hours', 'phone', 'is_featured');
+        
+        if ($selectedCategorySlug) {
+            $query->whereHas('category', function($q) use ($selectedCategorySlug) {
+                $q->where('slug', $selectedCategorySlug);
+            });
+        }
+        if ($comId) {
+            $query->where('commune_id', $comId);
+        }
+        if ($keyword) {
+            $query->where(function($q) use ($keyword) {
+                $q->where('slug', 'like', "{$keyword}%")
+                  ->orWhere('name', 'like', "{$keyword}%")
+                  ->orWhere('address', 'like', "{$keyword}%");
+            });
+        }
+        
+        $eateries = $query->orderByDesc('is_featured')->orderByDesc('rating')->get();
         
         // Trả về JSON nếu yêu cầu API (cập nhật marker bản đồ thời gian thực)
         if ($request->expectsJson() || $request->query('json') === '1') {
