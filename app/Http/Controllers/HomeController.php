@@ -79,8 +79,16 @@ class HomeController extends Controller
 
     public function sitemap()
     {
-        $eateries = EateryApiService::getEateries();
-        return response()->view('sitemap', compact('eateries'))
+        $eateries = Eatery::select('id', 'name', 'slug', 'category_id', 'updated_at')->active()->get();
+        
+        $ocopProducts = \App\Models\OcopProduct::select('id', 'name', 'slug', 'star_rating', 'eatery_id', 'stall_name', 'updated_at')
+            ->whereNotNull('slug')
+            ->get();
+
+        $dishes = \App\Models\Dish::select('id', 'name', 'eatery_id', 'updated_at')
+            ->get();
+
+        return response()->view('sitemap', compact('eateries', 'ocopProducts', 'dishes'))
                          ->header('Content-Type', 'text/xml');
     }
 
@@ -415,7 +423,7 @@ class HomeController extends Controller
         $allEateries = \Illuminate\Support\Facades\Cache::remember('all_eateries_dropdown', 3600, function() {
             return \App\Models\Eatery::active()
                 ->with('category:id,name')
-                ->select('id', 'name', 'slug', 'address', 'category_id')
+                ->select('id', 'name', 'slug', 'address', 'image_path', 'rating', 'category_id')
                 ->orderBy('name')
                 ->get();
         });
@@ -502,13 +510,9 @@ class HomeController extends Controller
             return $dry;
         });
 
-        $allEateries = \Illuminate\Support\Facades\Cache::remember('all_eateries_dropdown', 3600, function() {
-            return \App\Models\Eatery::active()
-                ->with('category:id,name')
-                ->select('id', 'name', 'slug', 'address', 'category_id')
-                ->orderBy('name')
-                ->get();
-        });
+        $allEateries = Eatery::select('id', 'name', 'slug', 'address', 'image_path', 'rating', 'category_id', 'commune_id')
+            ->with('category:id,name,slug,icon', 'commune:id,name,slug')
+            ->active()->orderBy('name')->get();
         $eateriesMap = $allEateries->keyBy('id');
 
         return view('checkin', compact('diaries', 'eateriesMap', 'standaloneCheckins', 'profilePosts', 'allEateries'));
@@ -564,22 +568,22 @@ class HomeController extends Controller
     public function searchEateries(Request $request)
     {
         $q = trim($request->query('q', ''));
-        $eateries = EateryApiService::getEateries();
+
+        $query = Eatery::select('id', 'name', 'slug', 'address', 'image_path', 'rating', 'category_id', 'commune_id')
+            ->with('category:id,name', 'commune:id,name')
+            ->active();
 
         if ($q !== '') {
             $qNormalized = mb_strtolower($this->removeVietnameseSign($q));
-            $eateries = $eateries->filter(function($e) use ($qNormalized) {
-                $nameNormalized = mb_strtolower($this->removeVietnameseSign($e->name));
-                $addressNormalized = mb_strtolower($this->removeVietnameseSign($e->address ?? ''));
-                $descNormalized = mb_strtolower($this->removeVietnameseSign($e->description ?? ''));
-
-                return str_contains($nameNormalized, $qNormalized) || 
-                       str_contains($addressNormalized, $qNormalized) ||
-                       str_contains($descNormalized, $qNormalized);
+            $query->where(function($qb) use ($q, $qNormalized) {
+                $qb->where('name', 'like', "%{$q}%")
+                   ->orWhere('address', 'like', "%{$q}%")
+                   ->orWhere('slug', 'like', "%{$qNormalized}%")
+                   ->orWhere('description', 'like', "%{$q}%");
             });
         }
 
-        $eateries = $eateries->sortBy('name')->take(20);
+        $eateries = $query->orderBy('name')->limit(20)->get();
 
         return response()->json($eateries->map(function($e) {
             return [
@@ -608,33 +612,21 @@ class HomeController extends Controller
             return response()->json(['error' => 'Missing coordinates'], 422);
         }
 
-        // Lấy tất cả các địa điểm trên cả 7 cơ sở dữ liệu và tính khoảng cách bằng PHP
-        $eateries = EateryApiService::getEateries()
-            ->filter(function($e) use ($lat, $lng, $radius) {
-                if (is_null($e->latitude) || is_null($e->longitude)) {
-                    return false;
-                }
-
-                $earthRadius = 6371; // km
-                $latFrom = deg2rad($lat);
-                $lonFrom = deg2rad($lng);
-                $latTo = deg2rad((float) $e->latitude);
-                $lonTo = deg2rad((float) $e->longitude);
-
-                $latDelta = $latTo - $latFrom;
-                $lonDelta = $lonTo - $lonFrom;
-
-                $angle = 2 * asin(sqrt(pow(sin($latDelta / 2), 2) +
-                    cos($latFrom) * cos($latTo) * pow(sin($lonDelta / 2), 2)));
-
-                $distance = $angle * $earthRadius;
-                $e->distance = $distance;
-
-                return $distance <= $radius;
-            })
-            ->sortBy('distance')
-            ->take(10)
-            ->values();
+        // Sử dụng Haversine formula trong SQL thay vì load tất cả rồi filter PHP
+        $eateries = Eatery::select('id', 'name', 'slug', 'address', 'image_path', 'rating',
+                'latitude', 'longitude', 'category_id', 'commune_id')
+            ->selectRaw(
+                "(6371 * acos(cos(radians(?)) * cos(radians(latitude)) * cos(radians(longitude) - radians(?)) + sin(radians(?)) * sin(radians(latitude)))) AS distance",
+                [$lat, $lng, $lat]
+            )
+            ->with('category:id,name', 'commune:id,name')
+            ->whereNotNull('latitude')
+            ->whereNotNull('longitude')
+            ->active()
+            ->having('distance', '<=', $radius)
+            ->orderBy('distance')
+            ->limit(10)
+            ->get();
 
         return response()->json($eateries->map(function($e) {
             return [
@@ -1004,6 +996,17 @@ class HomeController extends Controller
             'content' => 'required|string|max:1000'
         ]);
 
+        $content = (string) $request->input('content');
+
+        // Kiểm tra chống bot và lọc spam toàn diện
+        $spamCheck = \App\Services\SpamProtectionService::check($request, $content, 'comment');
+        if ($spamCheck['is_spam']) {
+            return response()->json([
+                'success' => false,
+                'message' => $spamCheck['reason']
+            ], $spamCheck['code']);
+        }
+
         $userId = \Illuminate\Support\Facades\Auth::id() ?? session('user_id');
         $user = $userId ? \App\Models\User::find($userId) : null;
         $guestName = $user ? null : ($request->input('guest_name') ?? 'Khách vãng lai');
@@ -1013,8 +1016,11 @@ class HomeController extends Controller
             'guest_name'       => $guestName,
             'commentable_id'   => (int) $request->input('id'),
             'commentable_type' => $request->input('type'),
-            'content'          => $request->input('content')
+            'content'          => $content
         ]);
+
+        // Ghi nhận bình luận thành công (kích hoạt cooldown 4s và chống gửi trùng lặp)
+        \App\Services\SpamProtectionService::recordSuccess($request, $content, 'comment');
 
         $totalCommentsCount = \App\Models\Comment::where('commentable_type', $request->input('type'))
             ->where('commentable_id', $request->input('id'))

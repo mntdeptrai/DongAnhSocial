@@ -6,6 +6,10 @@
 <!-- Tối ưu hóa SEO: Thẻ mô tả Meta tự sinh chân thực -->
 @section('meta_description', 'Khám phá sản phẩm OCOP & nông sản đặc sản tại ' . $eatery->name . ', địa chỉ: ' . $eatery->address . ', ' . ($eatery->commune?->name ?? 'Đông Anh') . ', Đông Anh. Xem chứng nhận sao OCOP, hồ sơ di sản, nghệ nhân giữ lửa và đặt mua trực tiếp.')
 
+<!-- SEO Keywords Đa Chiều -->
+@section('meta_keywords', \App\Helpers\VietnameseSeoHelper::generateKeywords($eatery->name, $eatery->category?->slug ?? 'dong-anh-market', $eatery->commune?->name ?? 'Đông Anh'))
+@section('canonical_url', route('eatery.show', $eatery->slug))
+
 @section('og_image', $eatery->image_path ?: 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=800&q=80')
 
 <!-- Tối ưu hóa SEO Google: Nhúng mã JSON-LD Schema.org động sinh từ Controller -->
@@ -923,7 +927,7 @@
                                              @endif
                                              onmouseover="this.style.borderColor='var(--primary)'; this.style.boxShadow='0 0 15px rgba(255, 126, 41, 0.15)'"
                                              onmouseout="this.style.borderColor='rgba(255,255,255,0.08)'; this.style.boxShadow='none'">
-                                            <img src="{{ $item->image_path ?: ($categorySlug === 'smart-education-map' ? 'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?auto=format&fit=crop&w=150&q=80' : ($categorySlug === 'wellness-care' ? 'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?auto=format&fit=crop&w=150&q=80' : ($categorySlug === 'stay-in-dong-anh' ? 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=150&q=80' : ($categorySlug === 'dong-anh-market' ? 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=150&q=80' : asset('images/placeholder.svg')))) }}" class="dish-img" alt="{{ $item->name }}">
+                                            <img src="{{ $item->image_path ?: asset('images/placeholder.svg') }}" class="dish-img" alt="{{ $item->name }}">
                                             <div class="dish-info" style="flex: 1;">
                                                 <div>
                                                     @if(in_array($categorySlug, ['dong-anh-market', 'traditional-market']))
@@ -1189,7 +1193,7 @@
                                          onclick="closeFullMenuModal(); openProductHeritageModal(this);"
                                          onmouseover="this.style.borderColor='var(--primary)'; this.style.boxShadow='0 0 15px rgba(255, 126, 41, 0.15)'"
                                          onmouseout="this.style.borderColor='var(--border-glow)'; this.style.boxShadow='none'">
-                                        <img src="{{ $item->image_path ?: ($categorySlug === 'smart-education-map' ? 'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?auto=format&fit=crop&w=150&q=80' : ($categorySlug === 'wellness-care' ? 'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?auto=format&fit=crop&w=150&q=80' : ($categorySlug === 'stay-in-dong-anh' ? 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=150&q=80' : ($categorySlug === 'dong-anh-market' ? 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=150&q=80' : asset('images/placeholder.svg')))) }}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; flex-shrink: 0;" alt="{{ $item->name }}">
+                                        <img src="{{ $item->image_path ?: asset('images/placeholder.svg') }}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; flex-shrink: 0;" alt="{{ $item->name }}">
                                         <div style="display: flex; flex-direction: column; justify-content: space-between; flex: 1;">
                                             <div>
                                                 @if(in_array($categorySlug, ['dong-anh-market', 'traditional-market']))

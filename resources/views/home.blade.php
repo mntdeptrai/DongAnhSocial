@@ -2509,7 +2509,7 @@
                             <span>🏪</span> CHỢ SỐ
                         </span>
                         <span id="resultsCountSpan" style="font-size: 0.85rem; font-weight: 700; color: #0284c7; background: rgba(14, 165, 233, 0.1); padding: 4px 12px; border-radius: 20px;">
-                            📍 {{ $eateries->count() }} Chợ Quê & Trung Tâm Thương Mại
+                            📍 {{ $totalCount ?? $eateries->count() }} Chợ Quê & Trung Tâm Thương Mại
                         </span>
                     </div>
                     
@@ -2543,7 +2543,7 @@
                             <span>🍜</span> ẨM THỰC ĐÔNG ANH
                         </span>
                         <span id="resultsCountSpan" style="font-size: 0.85rem; font-weight: 700; color: #ea580c; background: #ffffff; padding: 5px 14px; border-radius: 20px; border: 1.5px solid #fdba74; box-shadow: 0 2px 8px rgba(249, 115, 22, 0.1);">
-                            📍 {{ $eateries->count() }} Quán Ngon & Nhà Hàng Nổi Tiếng
+                            📍 {{ $totalCount ?? $eateries->count() }} Quán Ngon & Nhà Hàng Nổi Tiếng
                         </span>
                     </div>
                     
@@ -2577,7 +2577,7 @@
                             <span>🏨</span> STAY IN ĐÔNG ANH
                         </span>
                         <span id="resultsCountSpan" style="font-size: 0.85rem; font-weight: 700; color: #be185d; background: #ffffff; padding: 5px 14px; border-radius: 20px; border: 1.5px solid #fbcfe8; box-shadow: 0 2px 8px rgba(219, 39, 119, 0.1);">
-                            📍 {{ $eateries->count() }} Địa Điểm Lưu Trú & Khách Sạn
+                            📍 {{ $totalCount ?? $eateries->count() }} Địa Điểm Lưu Trú & Khách Sạn
                         </span>
                     </div>
                     <h2 class="stay-hero-title">
@@ -2600,7 +2600,7 @@
                             <span>🩺</span> WELLNESS & CARE
                         </span>
                         <span id="resultsCountSpan" style="font-size: 0.85rem; font-weight: 700; color: #047857; background: #ffffff; padding: 5px 14px; border-radius: 20px; border: 1.5px solid #a7f3d0; box-shadow: 0 2px 8px rgba(5, 150, 105, 0.1);">
-                            📍 {{ $eateries->count() }} Cơ Sở Y Tế & Spa Chăm Sóc Sức Khỏe
+                            📍 {{ $totalCount ?? $eateries->count() }} Cơ Sở Y Tế & Spa Chăm Sóc Sức Khỏe
                         </span>
                     </div>
                     <h2 class="wellness-hero-title">
@@ -2623,7 +2623,7 @@
                             <span>🏛️</span> COMMUNITY & CULTURE HUB
                         </span>
                         <span id="resultsCountSpan" style="font-size: 0.85rem; font-weight: 700; color: #b45309; background: #ffffff; padding: 5px 14px; border-radius: 20px; border: 1.5px solid #fde047; box-shadow: 0 2px 8px rgba(217, 119, 6, 0.1);">
-                            📍 {{ $eateries->count() }} Thiết Chế Văn Hóa - Thể Thao
+                            📍 {{ $totalCount ?? $eateries->count() }} Thiết Chế Văn Hóa - Thể Thao
                         </span>
                     </div>
                     <h2 class="culture-hero-title">
@@ -2646,7 +2646,7 @@
                             <span>🎓</span> SMART EDUCATION MAP
                         </span>
                         <span id="resultsCountSpan" style="font-size: 0.85rem; font-weight: 700; color: #4338ca; background: #ffffff; padding: 5px 14px; border-radius: 20px; border: 1.5px solid #a5b4fc; box-shadow: 0 2px 8px rgba(79, 70, 229, 0.1);">
-                            📍 {{ $eateries->count() }} Trường Học & Cơ Sở Giáo Dục
+                            📍 {{ $totalCount ?? $eateries->count() }} Trường Học & Cơ Sở Giáo Dục
                         </span>
                     </div>
                     <h2 class="edu-hero-title">
@@ -2669,7 +2669,7 @@
                             <span>🏪</span> CƠ SỞ KINH DOANH & DOANH NGHIỆP
                         </span>
                         <span id="resultsCountSpan" style="font-size: 0.85rem; font-weight: 700; color: #0284c7; background: #ffffff; padding: 5px 14px; border-radius: 20px; border: 1.5px solid #7dd3fc; box-shadow: 0 2px 8px rgba(14, 165, 233, 0.1);">
-                            📍 {{ $eateries->count() }} Hộ Kinh Doanh & Doanh Nghiệp Trên Địa Bàn
+                            📍 {{ $totalCount ?? $eateries->count() }} Hộ Kinh Doanh & Doanh Nghiệp Trên Địa Bàn
                         </span>
                     </div>
                     
@@ -3496,31 +3496,65 @@
             `;
 
             const marker = L.marker([eat.latitude, eat.longitude], { icon: customIcon })
-                .bindPopup(popupContent)
-                .addTo(map);
+                .bindPopup(popupContent);
                 
             markers[eat.slug] = marker;
+            return marker;
+        }
+
+        // MarkerCluster: gom nhóm markers để tránh tạo 1200+ DOM elements cùng lúc
+        let markerClusterGroup = (typeof L.markerClusterGroup === 'function')
+            ? L.markerClusterGroup({ maxClusterRadius: 50, chunkedLoading: true, chunkInterval: 100, chunkDelay: 20 })
+            : null;
+        if (markerClusterGroup) {
+            map.addLayer(markerClusterGroup);
         }
 
         window.renderEateryMarkers = function(eateriesList) {
             // Xóa toàn bộ markers cũ trên bản đồ
-            Object.values(markers).forEach(marker => {
-                map.removeLayer(marker);
-            });
+            if (markerClusterGroup) {
+                markerClusterGroup.clearLayers();
+            } else {
+                Object.values(markers).forEach(marker => {
+                    map.removeLayer(marker);
+                });
+            }
             markers = {};
 
             if (Array.isArray(eateriesList)) {
+                const newMarkers = [];
                 eateriesList.forEach(function(eat) {
-                    createSingleMarker(eat);
+                    const m = createSingleMarker(eat);
+                    if (m) {
+                        if (markerClusterGroup) {
+                            newMarkers.push(m);
+                        } else {
+                            m.addTo(map);
+                        }
+                    }
                 });
+                if (markerClusterGroup && newMarkers.length > 0) {
+                    markerClusterGroup.addLayers(newMarkers);
+                }
             }
         };
 
         window.appendEateryMarkers = function(eateriesList) {
             if (Array.isArray(eateriesList)) {
+                const newMarkers = [];
                 eateriesList.forEach(function(eat) {
-                    createSingleMarker(eat);
+                    const m = createSingleMarker(eat);
+                    if (m) {
+                        if (markerClusterGroup) {
+                            newMarkers.push(m);
+                        } else {
+                            m.addTo(map);
+                        }
+                    }
                 });
+                if (markerClusterGroup && newMarkers.length > 0) {
+                    markerClusterGroup.addLayers(newMarkers);
+                }
             }
         };
 
@@ -3857,7 +3891,7 @@
                                         <span>🏪</span> CHỢ SỐ
                                     </span>
                                     <span id="resultsCountSpan" style="font-size: 0.85rem; font-weight: 700; color: #0284c7; background: #ffffff; padding: 5px 14px; border-radius: 20px; border: 1.5px solid #7dd3fc; box-shadow: 0 2px 8px rgba(14, 165, 233, 0.1);">
-                                        📍 ${data.eateries.length} Chợ Quê & Trung Tâm Thương Mại
+                                        📍 ${data.total || data.eateries.length} Chợ Quê & Trung Tâm Thương Mại
                                     </span>
                                 </div>
                                 
@@ -3893,7 +3927,7 @@
                                         <span>🍜</span> ẨM THỰC ĐÔNG ANH
                                     </span>
                                     <span id="resultsCountSpan" style="font-size: 0.85rem; font-weight: 700; color: #ea580c; background: #ffffff; padding: 5px 14px; border-radius: 20px; border: 1.5px solid #fdba74; box-shadow: 0 2px 8px rgba(249, 115, 22, 0.1);">
-                                        📍 ${data.eateries.length} Quán Ngon & Nhà Hàng Nổi Tiếng
+                                        📍 ${data.total || data.eateries.length} Quán Ngon & Nhà Hàng Nổi Tiếng
                                     </span>
                                 </div>
                                 
@@ -3926,7 +3960,7 @@
                             <div class="stay-hero-box">
                                 <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
                                     <span class="stay-badge-chip"><span>🏨</span> STAY IN ĐÔNG ANH</span>
-                                    <span id="resultsCountSpan" style="font-size: 0.85rem; font-weight: 700; color: #be185d; background: #ffffff; padding: 5px 14px; border-radius: 20px; border: 1.5px solid #fbcfe8;">📍 ${data.eateries.length} Địa Điểm Lưu Trú & Khách Sạn</span>
+                                    <span id="resultsCountSpan" style="font-size: 0.85rem; font-weight: 700; color: #be185d; background: #ffffff; padding: 5px 14px; border-radius: 20px; border: 1.5px solid #fbcfe8;">📍 ${data.total || data.eateries.length} Địa Điểm Lưu Trú & Khách Sạn</span>
                                 </div>
                                 <h2 class="stay-hero-title">Không Gian Lưu Trú & Nghỉ Dưỡng Đông Anh</h2>
                                 <p style="font-size: 0.92rem; color: #831843; line-height: 1.65; margin: 0;">Trải nghiệm dịch vụ nghỉ dưỡng cao cấp, khách sạn đạt chuẩn, homestay ấm cúng ngợp tràn không gian xanh.</p>
@@ -3943,7 +3977,7 @@
                             <div class="wellness-hero-box">
                                 <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
                                     <span class="wellness-badge-chip"><span>🩺</span> WELLNESS & CARE</span>
-                                    <span id="resultsCountSpan" style="font-size: 0.85rem; font-weight: 700; color: #047857; background: #ffffff; padding: 5px 14px; border-radius: 20px; border: 1.5px solid #a7f3d0;">📍 ${data.eateries.length} Cơ Sở Y Tế & Spa Chăm Sóc Sức Khỏe</span>
+                                    <span id="resultsCountSpan" style="font-size: 0.85rem; font-weight: 700; color: #047857; background: #ffffff; padding: 5px 14px; border-radius: 20px; border: 1.5px solid #a7f3d0;">📍 ${data.total || data.eateries.length} Cơ Sở Y Tế & Spa Chăm Sóc Sức Khỏe</span>
                                 </div>
                                 <h2 class="wellness-hero-title">Hệ Thống Y Tế & Chăm Sóc Sức Khỏe Đông Anh</h2>
                                 <p style="font-size: 0.92rem; color: #064e3b; line-height: 1.65; margin: 0;">Tra cứu các bệnh viện uy tín, phòng khám đa khoa chất lượng cao, trung tâm spa & phục hồi sức khỏe được cấp phép.</p>
@@ -3960,7 +3994,7 @@
                             <div class="culture-hero-box">
                                 <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
                                     <span class="culture-badge-chip"><span>🏛️</span> COMMUNITY & CULTURE HUB</span>
-                                    <span id="resultsCountSpan" style="font-size: 0.85rem; font-weight: 700; color: #b45309; background: #ffffff; padding: 5px 14px; border-radius: 20px; border: 1.5px solid #fde047;">📍 ${data.eateries.length} Thiết Chế Văn Hóa - Thể Thao</span>
+                                    <span id="resultsCountSpan" style="font-size: 0.85rem; font-weight: 700; color: #b45309; background: #ffffff; padding: 5px 14px; border-radius: 20px; border: 1.5px solid #fde047;">📍 ${data.total || data.eateries.length} Thiết Chế Văn Hóa - Thể Thao</span>
                                 </div>
                                 <h2 class="culture-hero-title">Trung Tâm Văn Hóa, Thể Thao & Sinh Hoạt Cộng Đồng</h2>
                                 <p style="font-size: 0.92rem; color: #78350f; line-height: 1.65; margin: 0;">Không gian giao lưu văn hóa, nhà văn hóa huyện, sân vận động và các điểm sinh hoạt cộng đồng năng động.</p>
@@ -3977,7 +4011,7 @@
                             <div class="edu-hero-box">
                                 <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
                                     <span class="edu-badge-chip"><span>🎓</span> SMART EDUCATION MAP</span>
-                                    <span id="resultsCountSpan" style="font-size: 0.85rem; font-weight: 700; color: #4338ca; background: #ffffff; padding: 5px 14px; border-radius: 20px; border: 1.5px solid #a5b4fc;">📍 ${data.eateries.length} Trường Học & Cơ Sở Giáo Dục</span>
+                                    <span id="resultsCountSpan" style="font-size: 0.85rem; font-weight: 700; color: #4338ca; background: #ffffff; padding: 5px 14px; border-radius: 20px; border: 1.5px solid #a5b4fc;">📍 ${data.total || data.eateries.length} Trường Học & Cơ Sở Giáo Dục</span>
                                 </div>
                                 <h2 class="edu-hero-title">Hệ Thống Mạng Lưới Giáo Dục & Trường Học Đông Anh</h2>
                                 <p style="font-size: 0.92rem; color: #1e1b4b; line-height: 1.65; margin: 0;">Bản đồ thông minh tra cứu hệ thống các trường mầm non, tiểu học, THCS, THPT và trung tâm giáo dục chất lượng cao.</p>
@@ -3997,7 +4031,7 @@
                                         <span>🏪</span> CƠ SỞ KINH DOANH & DOANH NGHIỆP
                                     </span>
                                     <span id="resultsCountSpan" style="font-size: 0.85rem; font-weight: 700; color: #0284c7; background: #ffffff; padding: 5px 14px; border-radius: 20px; border: 1.5px solid #7dd3fc; box-shadow: 0 2px 8px rgba(14, 165, 233, 0.1);">
-                                        📍 ${data.eateries.length} Hộ Kinh Doanh & Doanh Nghiệp Trên Địa Bàn
+                                        📍 ${data.total || data.eateries.length} Hộ Kinh Doanh & Doanh Nghiệp Trên Địa Bàn
                                     </span>
                                 </div>
                                 

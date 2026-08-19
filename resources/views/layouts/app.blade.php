@@ -42,10 +42,39 @@
     <meta name="twitter:image" content="@yield('og_image')">
     @endif
     
+    <!-- Structured Data JSON-LD WebSite & SearchAction for Google / Bing / Brave Search -->
+    <script type="application/ld+json">
+    {
+      "@@context": "https://schema.org",
+      "@@type": "WebSite",
+      "name": "Khám phá Đông Anh",
+      "alternateName": [
+        "Khám phá Xã Đông Anh",
+        "DongAnh Discovery",
+        "Đông Anh Social",
+        "Bản đồ số Đông Anh",
+        "Xã Đông Anh",
+        "Du lịch Đông Anh"
+      ],
+      "url": "{{ url('/') }}",
+      "description": "Nền tảng số hóa dịch vụ, tra cứu trường học, ẩm thực, y tế, chợ truyền thống và đặc sản OCOP Xã Đông Anh, Hà Nội",
+      "potentialAction": {
+        "@@type": "SearchAction",
+        "target": {
+          "@@type": "EntryPoint",
+          "urlTemplate": "{{ url('/tim-kiem') }}?q={search_term_string}"
+        },
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
+    
     @stack('head')
     
     <!-- Leaflet.js Map Assets -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
     
     <!-- Google Fonts Preload: Be Vietnam Pro (Vietnamese Primary) + Outfit & Plus Jakarta Sans -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -692,6 +721,7 @@
 
     <!-- Leaflet.js Map Library -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
     
     <script>
         document.addEventListener("DOMContentLoaded", function() {

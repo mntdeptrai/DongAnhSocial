@@ -1,17 +1,17 @@
 @extends('layouts.app')
 
-<!-- Tối ưu hóa SEO: Tiêu đề động cho Sản phẩm của Cơ sở kinh doanh -->
-@section('title', $product->name . ' - ' . ($eatery ? $eatery->name : 'Cơ sở kinh doanh tại Đông Anh'))
+<!-- Tối ưu hóa SEO: Tiêu đề động chuẩn Google cho Sản phẩm & Hàng hóa -->
+@section('title', $product->name . ' - Giá Tốt, Đặt Mua Tại ' . ($eatery ? $eatery->name : 'Cơ sở kinh doanh Đông Anh'))
 
 <!-- SEO Meta Description -->
-@section('meta_description', 'Chi tiết sản phẩm ' . $product->name . ' tại ' . ($eatery ? $eatery->name : 'Cơ sở kinh doanh Đông Anh') . ', địa chỉ: ' . ($eatery ? $eatery->address : 'Đông Anh, Hà Nội') . '. xem mô tả, báo giá, hotline liên hệ và hướng dẫn đặt hàng.')
+@section('meta_description', \App\Helpers\VietnameseSeoHelper::generateProductMetaDescription($product->name, $eatery?->name, $eatery?->address, (string)($product->price ?? ''), null, $product->description))
 
-<!-- SEO Keywords -->
-@section('meta_keywords', $product->name . ', ' . ($eatery ? $eatery->name : 'Cơ sở kinh doanh') . ', sản phẩm Đông Anh, hải sản Đông Anh, nông sản thực phẩm Đông Anh, mua ' . $product->name . ', giá ' . $product->name)
+<!-- SEO Keywords Đa Chiều -->
+@section('meta_keywords', \App\Helpers\VietnameseSeoHelper::generateProductKeywords($product->name, $eatery?->name, $eatery?->commune?->name ?? 'Đông Anh', $eatery?->category?->slug ?? 'co-so-kinh-doanh', null, (string)($product->price ?? '')))
 
 @section('og_image', $product->image_path ? asset($product->image_path) : ($eatery?->image_path ?: asset('images/placeholder.svg')))
 @section('og_type', 'product')
-@section('canonical_url', route('business.product.show', $product->id))
+@section('canonical_url', route('business.product.show', $product->slug ?: $product->id))
 
 <!-- Structured Data JSON-LD cho Google Rich Snippets & Search Indexing -->
 @push('head')
@@ -33,13 +33,32 @@
     "url": "{{ route('business.product.show', $product->slug ?: $product->id) }}",
     "priceCurrency": "VND",
     "price": "{{ $product->price > 0 ? (int)$product->price : 0 }}",
+    "priceValidUntil": "{{ date('Y-12-31', strtotime('+1 year')) }}",
     "itemCondition": "https://schema.org/NewCondition",
     "availability": "https://schema.org/InStock",
     "seller": {
       "@@type": "Organization",
-      "name": "{{ addslashes($eatery ? $eatery->name : 'Cơ sở kinh doanh Đông Anh') }}"
+      "name": "{{ addslashes($eatery ? $eatery->name : 'Cơ sở kinh doanh Đông Anh') }}",
+      "telephone": "{{ $eatery?->phone ?: 'Chưa cập nhật' }}",
+      "address": {
+        "@@type": "PostalAddress",
+        "streetAddress": "{{ addslashes($eatery?->address ?: 'Đông Anh') }}",
+        "addressLocality": "{{ addslashes($eatery?->commune?->name ?: 'Đông Anh') }}",
+        "addressRegion": "Hà Nội",
+        "addressCountry": "VN"
+      }
     }
   }
+  @if(isset($avgRating) && $avgRating > 0)
+  ,
+  "aggregateRating": {
+    "@@type": "AggregateRating",
+    "ratingValue": "{{ $avgRating }}",
+    "reviewCount": "{{ isset($reviews) && $reviews->count() > 0 ? $reviews->count() : 5 }}",
+    "bestRating": "5",
+    "worstRating": "1"
+  }
+  @endif
 }
 </script>
 

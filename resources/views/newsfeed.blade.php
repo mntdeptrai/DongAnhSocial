@@ -248,6 +248,10 @@
                             @csrf
                             <input type="hidden" name="commentable_id" value="{{ $p->id }}">
                             <input type="hidden" name="commentable_type" value="App\Models\Post">
+                            {{-- Honeypot chống bot tự động điền form --}}
+                            <div style="position: absolute; left: -9999px; top: -9999px; opacity: 0; pointer-events: none; height: 0; width: 0; overflow: hidden;" aria-hidden="true">
+                                <input type="text" name="_hp_author_url" tabindex="-1" autocomplete="off" value="">
+                            </div>
 
                             <div style="display: flex; gap: 10px; align-items: center;">
                                 <input type="text" name="content" placeholder="Viết bình luận của bạn..." required

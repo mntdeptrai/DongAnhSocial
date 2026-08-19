@@ -2167,6 +2167,17 @@
                     const sharesPart = parts.length > 1 ? parts[1] : ' 0 chia sẻ';
                     rightStat.innerHTML = `💬 ${data.total_comments} bình luận •${sharesPart}`;
                 }
+            } else {
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Không thể gửi bình luận',
+                        text: data.message || 'Bình luận không hợp lệ hoặc bạn đang gửi quá nhanh.',
+                        confirmButtonColor: '#0284c7'
+                    });
+                } else {
+                    alert(data.message || 'Bình luận không hợp lệ hoặc bạn đang gửi quá nhanh.');
+                }
             }
         })
         .catch(err => {

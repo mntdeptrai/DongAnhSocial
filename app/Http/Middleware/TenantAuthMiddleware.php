@@ -6,6 +6,7 @@ use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Illuminate\Support\Facades\DB;
+use App\Models\Eatery;
 use App\Services\EateryApiService;
 
 class TenantAuthMiddleware

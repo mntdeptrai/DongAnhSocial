@@ -205,6 +205,17 @@ class EateryController extends Controller
             'media.*' => 'nullable|file|mimes:jpeg,png,jpg,gif,mp4,mov,avi|max:20480'
         ]);
         
+        $commentText = (string) ($request->input('comment') ?? '');
+        if (!empty($commentText)) {
+            $spamCheck = \App\Services\SpamProtectionService::check($request, $commentText, 'review');
+            if ($spamCheck['is_spam']) {
+                return redirect()->back()
+                    ->withErrors(['comment' => $spamCheck['reason']])
+                    ->with('error', $spamCheck['reason'])
+                    ->withInput();
+            }
+        }
+
         $eatery = Eatery::with('category')->find($id);
         if (!$eatery) {
             abort(404);

@@ -75,8 +75,8 @@
             @php
                 $mgrEatery = null;
                 try {
-                    $mgrEatery = \App\Services\EateryApiService::getEateries()
-                        ->firstWhere('user_id', session('user_id'));
+                    $mgrEatery = \App\Models\Eatery::where('user_id', session('user_id'))
+                        ->select('id', 'name', 'slug')->first();
                 } catch (\Throwable $e) {}
             @endphp
 
