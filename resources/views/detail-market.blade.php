@@ -99,25 +99,56 @@
     $stallsWithCashless = max($stallsWithQr, $stallsWithBank);
     $cashlessPercentage = $totalStalls > 0 ? round(($stallsWithCashless / $totalStalls) * 100) : 0;
 
+    // Helper function for media URL formatting
+    $formatMediaUrl = function($url) {
+        if (!$url) return null;
+        if (\Illuminate\Support\Str::startsWith($url, ['http://', 'https://'])) return $url;
+        return asset(ltrim($url, '/'));
+    };
+
     // Build media gallery list
     $allMedia = [];
+
+    // 1. Ảnh đại diện chính của cơ sở
     if ($eatery->image_path) {
-        $allMedia[] = ['type' => 'image', 'url' => $eatery->image_path];
+        $url = $formatMediaUrl($eatery->image_path);
+        if ($url) $allMedia[] = ['type' => 'image', 'url' => $url];
     }
-    if (isset($checkinPhotos)) {
-        foreach ($checkinPhotos as $photo) {
-            $allMedia[] = ['type' => 'image', 'url' => $photo->image_path];
+
+    // 2. Ảnh gallery do Admin/Chủ sạp tải lên trong Quản trị cơ sở (EateryPhoto)
+    $eateryPhotos = $eatery->relationLoaded('photos') ? $eatery->photos : collect();
+    foreach ($eateryPhotos as $photo) {
+        if ($photo->image_path) {
+            $url = $formatMediaUrl($photo->image_path);
+            if ($url) $allMedia[] = ['type' => 'image', 'url' => $url, 'caption' => $photo->caption];
         }
     }
+
+    // 3. Ảnh check-in từ người dùng
+    if (isset($checkinPhotos)) {
+        foreach ($checkinPhotos as $photo) {
+            if ($photo->image_path) {
+                $url = $formatMediaUrl($photo->image_path);
+                if ($url) $allMedia[] = ['type' => 'image', 'url' => $url];
+            }
+        }
+    }
+
+    // 4. Ảnh từ các bài đánh giá của khách hàng
     if ($eatery->reviews) {
         foreach ($eatery->reviews as $rev) {
             if ($rev->media) {
                 foreach ($rev->media as $m) {
-                    $allMedia[] = ['type' => $m->file_type, 'url' => $m->file_path];
+                    if ($m->file_path) {
+                        $url = $formatMediaUrl($m->file_path);
+                        if ($url) $allMedia[] = ['type' => $m->file_type, 'url' => $url];
+                    }
                 }
             }
         }
     }
+
+    // 5. Fallback nếu chưa đủ 5 ảnh
     $fallbacks = [
         ['type' => 'image', 'url' => 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=800&q=80'],
         ['type' => 'image', 'url' => 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=800&q=80'],
@@ -2506,7 +2537,7 @@
                 <form id="marketChatForm" onsubmit="sendChatMessage(event)" style="border-top: 1px solid var(--border-glow); padding-top: 12px; display: flex; flex-direction: column; gap: 10px;">
                     
                     <!-- Quick Replies Row -->
-                    <div class="quick-replies-wrap" style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 2px;">
+                    <div class="quick-replies-wrap">
                         <span class="quick-reply-pill" onclick="sendQuickReply('Sản phẩm này còn hàng không ạ?')">Sản phẩm này còn không?</span>
                         <span class="quick-reply-pill" onclick="sendQuickReply('Giá bao nhiêu vậy ạ?')">Giá bao nhiêu vậy ạ?</span>
                         <span class="quick-reply-pill" onclick="sendQuickReply('Hàng có sẵn để qua lấy luôn không ạ?')">Có sẵn không ạ?</span>
@@ -2568,25 +2599,40 @@
 
 <!-- Additional styles for Market Group Chat -->
 <style>
+    .quick-replies-wrap {
+        display: flex;
+        gap: 8px;
+        overflow-x: auto;
+        white-space: nowrap;
+        padding: 4px 2px 6px 2px;
+        margin-bottom: 2px;
+        scrollbar-width: none;
+    }
+
+    .quick-replies-wrap::-webkit-scrollbar {
+        display: none;
+    }
+
     .quick-reply-pill {
-        font-size: 0.74rem;
-        font-weight: 700;
-        background: rgba(255, 122, 0, 0.05);
-        border: 1px solid rgba(255, 122, 0, 0.16);
-        color: var(--primary);
+        font-size: 0.75rem;
+        font-weight: 600;
+        background: rgba(255, 122, 0, 0.06);
+        border: 1px solid rgba(255, 122, 0, 0.2);
+        color: #e66000;
         padding: 6px 14px;
         border-radius: 20px;
         cursor: pointer;
-        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         display: inline-block;
         user-select: none;
-        box-shadow: 0 1px 3px rgba(255, 122, 0, 0.02);
+        box-shadow: 0 1px 3px rgba(255, 122, 0, 0.04);
+        flex-shrink: 0;
     }
     .quick-reply-pill:hover {
         background: linear-gradient(135deg, #FF9F43, #FF7A00);
         color: white;
-        border-color: var(--primary);
-        transform: translateY(-2px) scale(1.02);
+        border-color: #FF7A00;
+        transform: translateY(-1.5px);
         box-shadow: 0 4px 12px rgba(255, 122, 0, 0.25);
     }
 
@@ -2710,35 +2756,78 @@
         flex: 1;
         overflow-y: auto;
         border: 1px solid var(--border-glow);
-        border-radius: 16px;
+        border-radius: 18px;
         padding: 16px;
         display: flex;
         flex-direction: column;
-        gap: 12px;
-        background: rgba(0, 0, 0, 0.015);
+        gap: 14px;
+        background: rgba(248, 250, 252, 0.65);
         margin-bottom: 12px;
         scrollbar-width: thin;
     }
 
     .chat-bubble-row {
         display: flex;
-        flex-direction: column;
-        max-width: 75%;
+        align-items: flex-start;
+        gap: 10px;
+        max-width: 80%;
         margin-bottom: 2px;
         align-self: flex-start;
     }
 
     .chat-bubble-row.own-message {
         align-self: flex-end;
+        flex-direction: row-reverse;
+    }
+
+    .chat-avatar-circle {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.95rem;
+        flex-shrink: 0;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.06);
+    }
+
+    .chat-avatar-merchant {
+        background: linear-gradient(135deg, #FEF3C7, #FDE68A);
+        border: 1px solid #FCD34D;
+        color: #D97706;
+    }
+
+    .chat-avatar-user {
+        background: linear-gradient(135deg, #E0F2FE, #BAE6FD);
+        border: 1px solid #7DD3FC;
+        color: #0284C7;
+    }
+
+    .chat-avatar-admin {
+        background: linear-gradient(135deg, #FEE2E2, #FCA5A5);
+        border: 1px solid #F87171;
+        color: #DC2626;
+    }
+
+    .chat-bubble-content-wrap {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+    }
+
+    .own-message .chat-bubble-content-wrap {
+        align-items: flex-end;
     }
 
     .chat-bubble-header {
-        font-size: 0.72rem;
+        font-size: 0.73rem;
         color: var(--text-muted);
         margin-bottom: 4px;
         display: flex;
         align-items: center;
         gap: 6px;
+        flex-wrap: wrap;
     }
 
     .own-message .chat-bubble-header {
@@ -2746,38 +2835,52 @@
     }
 
     .chat-badge {
-        font-size: 0.62rem;
-        font-weight: 800;
-        padding: 1px 5px;
-        border-radius: 4px;
-        color: white;
-        text-transform: uppercase;
+        font-size: 0.64rem;
+        font-weight: 700;
+        padding: 2px 7px;
+        border-radius: 10px;
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
     }
 
-    .badge-admin { background: #ef4444; }
-    .badge-merchant { background: #10b981; }
-    .badge-user { background: #64748b; }
+    .badge-admin {
+        background: rgba(239, 68, 68, 0.1);
+        color: #dc2626;
+        border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+    .badge-merchant {
+        background: rgba(245, 158, 11, 0.12);
+        color: #d97706;
+        border: 1px solid rgba(245, 158, 11, 0.25);
+    }
+    .badge-user {
+        background: rgba(14, 165, 233, 0.1);
+        color: #0284c7;
+        border: 1px solid rgba(14, 165, 233, 0.2);
+    }
 
     .chat-bubble-text {
-        background: var(--bg-card);
-        border: 1px solid var(--border-glow);
-        color: var(--text-main);
-        padding: 10px 14px;
-        border-radius: 16px;
+        background: #ffffff;
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        color: #1e293b;
+        padding: 10px 15px;
+        border-radius: 18px;
         border-top-left-radius: 4px;
-        font-size: 0.85rem;
-        line-height: 1.4;
+        font-size: 0.86rem;
+        line-height: 1.45;
         word-break: break-word;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.01);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
     }
 
     .own-message .chat-bubble-text {
         background: linear-gradient(135deg, #FF9F43, #FF7A00);
-        border-color: #FF7A00;
-        color: white;
-        border-radius: 16px;
+        border: 1px solid #FF7A00;
+        color: #ffffff;
+        border-radius: 18px;
         border-top-right-radius: 4px;
-        box-shadow: 0 3px 8px rgba(255, 122, 0, 0.15);
+        border-top-left-radius: 18px;
+        box-shadow: 0 4px 14px rgba(255, 122, 0, 0.22);
     }
 
     .chat-product-card-msg {
@@ -3196,11 +3299,35 @@
                             }
                             
                             const isOwn = msg.is_own;
-                            const badgeHtml = msg.sender_role === 'merchant'
-                                ? `<span class="chat-badge badge-merchant" style="background: rgba(245, 158, 11, 0.12); color: #d97706; padding: 2px 6px; border-radius: 6px; font-weight: 800; font-size: 0.7rem;">🏪 ${msg.stall_name || 'Chủ sạp'}</span>`
-                                : (msg.sender_role === 'admin' 
-                                    ? '<span class="chat-badge badge-admin" style="background: rgba(239, 68, 68, 0.12); color: #ef4444; padding: 2px 6px; border-radius: 6px; font-weight: 800; font-size: 0.7rem;">🛡️ BQL Chợ</span>'
-                                    : '<span class="chat-badge" style="background: rgba(14, 165, 233, 0.1); color: #0284c7; padding: 2px 6px; border-radius: 6px; font-weight: 700; font-size: 0.7rem;">👤 Khách hàng</span>');
+                            
+                            // Clean up sender name
+                            let rawName = msg.sender_name || 'Khách vãng lai';
+                            let cleanName = rawName.replace(/^Chủ sạp\s+/i, '').trim();
+
+                            let avatarEmoji = '👤';
+                            let avatarClass = 'chat-avatar-user';
+                            let badgeHtml = '';
+                            let displayName = cleanName;
+
+                            if (msg.sender_role === 'merchant') {
+                                avatarEmoji = '🏪';
+                                avatarClass = 'chat-avatar-merchant';
+                                displayName = msg.stall_name || cleanName;
+                                const subName = (msg.stall_name && cleanName && msg.stall_name !== cleanName) ? ` (${cleanName})` : '';
+                                badgeHtml = `<span class="chat-badge badge-merchant">🏪 Chủ sạp</span>`;
+                                if (subName) {
+                                    displayName += `<span style="font-weight: 500; opacity: 0.85; font-size: 0.7rem;">${subName}</span>`;
+                                }
+                            } else if (msg.sender_role === 'admin') {
+                                avatarEmoji = '🛡️';
+                                avatarClass = 'chat-avatar-admin';
+                                displayName = msg.sender_name || 'BQL Chợ';
+                                badgeHtml = `<span class="chat-badge badge-admin">🛡️ BQL</span>`;
+                            } else {
+                                avatarEmoji = '👤';
+                                avatarClass = 'chat-avatar-user';
+                                badgeHtml = `<span class="chat-badge badge-user">👤 Khách</span>`;
+                            }
 
                             // Image attachment element
                             let imageAttachHtml = '';
@@ -3230,17 +3357,30 @@
                                 `;
                             }
 
+                            const headerHtml = isOwn ? `
+                                <div class="chat-bubble-header">
+                                    <span style="font-size: 0.68rem; color: var(--text-muted); margin-right: 2px;">${msg.time_formatted}</span>
+                                    <strong style="color: var(--text-main); font-weight: 700;">${cleanName}</strong>
+                                    ${badgeHtml}
+                                </div>
+                            ` : `
+                                <div class="chat-bubble-header">
+                                    ${badgeHtml}
+                                    <strong style="color: var(--text-main); font-weight: 700;">${displayName}</strong>
+                                    <span style="font-size: 0.68rem; color: var(--text-muted); margin-left: 2px;">${msg.time_formatted}</span>
+                                </div>
+                            `;
+
                             html += `
                                 <div class="chat-bubble-row ${isOwn ? 'own-message' : ''}">
-                                    <div class="chat-bubble-header">
-                                        ${badgeHtml}
-                                        <strong style="color: var(--text-main); font-weight: 700;">${msg.sender_name}</strong>
-                                        <span>${msg.time_formatted}</span>
-                                    </div>
-                                    <div class="chat-bubble-text">
-                                        ${msg.message_text ? `<div>${msg.message_text}</div>` : ''}
-                                        ${imageAttachHtml}
-                                        ${productCardHtml}
+                                    <div class="chat-avatar-circle ${avatarClass}">${avatarEmoji}</div>
+                                    <div class="chat-bubble-content-wrap">
+                                        ${headerHtml}
+                                        <div class="chat-bubble-text">
+                                            ${msg.message_text ? `<div>${msg.message_text}</div>` : ''}
+                                            ${imageAttachHtml}
+                                            ${productCardHtml}
+                                        </div>
                                     </div>
                                 </div>
                             `;

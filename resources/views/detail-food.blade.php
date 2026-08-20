@@ -352,24 +352,37 @@
 </div>
 
 @php
+    $formatMediaUrl = function($url) {
+        if (!$url) return null;
+        if (\Illuminate\Support\Str::startsWith($url, ['http://', 'https://'])) return $url;
+        return asset(ltrim($url, '/'));
+    };
+
     $allMedia = [];
 
     // 1. Ảnh đại diện chính của cơ sở
     if ($eatery->image_path) {
-        $allMedia[] = ['type' => 'image', 'url' => $eatery->image_path];
+        $url = $formatMediaUrl($eatery->image_path);
+        if ($url) $allMedia[] = ['type' => 'image', 'url' => $url];
     }
 
     // 2. Ảnh gallery đã upload bởi admin/seller
     $eateryPhotos = $eatery->relationLoaded('photos') ? $eatery->photos : collect();
     foreach ($eateryPhotos as $photo) {
-        $allMedia[] = ['type' => 'image', 'url' => $photo->image_path, 'caption' => $photo->caption];
+        if ($photo->image_path) {
+            $url = $formatMediaUrl($photo->image_path);
+            if ($url) $allMedia[] = ['type' => 'image', 'url' => $url, 'caption' => $photo->caption];
+        }
     }
 
     // 3. Ảnh từ các bài đánh giá của khách hàng
     foreach ($eatery->reviews as $rev) {
         if ($rev->media) {
             foreach ($rev->media as $m) {
-                $allMedia[] = ['type' => $m->file_type, 'url' => $m->file_path];
+                if ($m->file_path) {
+                    $url = $formatMediaUrl($m->file_path);
+                    if ($url) $allMedia[] = ['type' => $m->file_type, 'url' => $url];
+                }
             }
         }
     }

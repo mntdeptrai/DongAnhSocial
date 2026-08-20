@@ -439,20 +439,27 @@
         $mergedList = $mergedSchoolsDataMap[$schoolSlugKey] ?? [];
     }
 
+    $formatMediaUrl = function($url) {
+        if (!$url) return null;
+        if (\Illuminate\Support\Str::startsWith($url, ['http://', 'https://'])) return $url;
+        return asset(ltrim($url, '/'));
+    };
+
     $allMedia = [];
 
     // 1. Ảnh đại diện chính của cơ sở
     if ($eatery->image_path) {
-        $allMedia[] = ['type' => 'image', 'url' => $eatery->image_path, 'caption' => $eatery->name];
+        $url = $formatMediaUrl($eatery->image_path);
+        if ($url) $allMedia[] = ['type' => 'image', 'url' => $url, 'caption' => $eatery->name];
     }
 
     // 2. Tự động lấy tất cả ảnh từ các điểm trường sáp nhập vào gallery grid
     if (!empty($mergedList) && is_array($mergedList)) {
         foreach ($mergedList as $comp) {
             if (!empty($comp['photo'])) {
-                $photoUrl = $comp['photo'];
+                $photoUrl = $formatMediaUrl($comp['photo']);
                 $existingUrls = array_column($allMedia, 'url');
-                if (!in_array($photoUrl, $existingUrls)) {
+                if ($photoUrl && !in_array($photoUrl, $existingUrls)) {
                     $allMedia[] = [
                         'type' => 'image',
                         'url' => $photoUrl,
@@ -466,9 +473,12 @@
     // 3. Ảnh gallery đã upload bởi admin/seller
     $eateryPhotos = $eatery->relationLoaded('photos') ? $eatery->photos : collect();
     foreach ($eateryPhotos as $photo) {
-        $existingUrls = array_column($allMedia, 'url');
-        if (!in_array($photo->image_path, $existingUrls)) {
-            $allMedia[] = ['type' => 'image', 'url' => $photo->image_path, 'caption' => $photo->caption];
+        if ($photo->image_path) {
+            $photoUrl = $formatMediaUrl($photo->image_path);
+            $existingUrls = array_column($allMedia, 'url');
+            if ($photoUrl && !in_array($photoUrl, $existingUrls)) {
+                $allMedia[] = ['type' => 'image', 'url' => $photoUrl, 'caption' => $photo->caption];
+            }
         }
     }
 
@@ -476,9 +486,12 @@
     foreach ($eatery->reviews as $rev) {
         if ($rev->media) {
             foreach ($rev->media as $m) {
-                $existingUrls = array_column($allMedia, 'url');
-                if (!in_array($m->file_path, $existingUrls)) {
-                    $allMedia[] = ['type' => $m->file_type, 'url' => $m->file_path];
+                if ($m->file_path) {
+                    $mUrl = $formatMediaUrl($m->file_path);
+                    $existingUrls = array_column($allMedia, 'url');
+                    if ($mUrl && !in_array($mUrl, $existingUrls)) {
+                        $allMedia[] = ['type' => $m->file_type, 'url' => $mUrl];
+                    }
                 }
             }
         }
