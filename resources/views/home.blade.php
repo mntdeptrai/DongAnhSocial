@@ -1839,10 +1839,10 @@
 .categories-slider {
     display: flex !important;
     flex-wrap: nowrap !important;
-    justify-content: center !important;
+    justify-content: flex-start !important;
     align-items: center !important;
     gap: 12px !important;
-    padding: 12px 16px 16px !important;
+    padding: 12px 16px 14px !important;
     width: 100% !important;
     max-width: 100% !important;
     box-sizing: border-box !important;
@@ -1851,28 +1851,40 @@
     scroll-behavior: smooth !important;
     -webkit-overflow-scrolling: touch !important;
     touch-action: pan-x pan-y !important;
-    scrollbar-width: none !important;
-    -ms-overflow-style: none !important;
+    scrollbar-width: thin !important;
+    scrollbar-color: #cbd5e1 rgba(0, 0, 0, 0.04) !important;
     cursor: grab;
 }
 
-@media (max-width: 1350px) {
-    .categories-slider {
-        justify-content: flex-start !important;
-    }
+/* Thanh cuộn ngang thanh lịch, mảnh mai & tinh tế */
+.categories-slider::-webkit-scrollbar {
+    height: 5px !important;
+    display: block !important;
 }
 
-.categories-slider::-webkit-scrollbar {
-    display: none !important;
+.categories-slider::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.04) !important;
+    border-radius: 10px !important;
+    margin: 0 16px !important;
+}
+
+.categories-slider::-webkit-scrollbar-thumb {
+    background: #cbd5e1 !important;
+    border-radius: 10px !important;
+    transition: background 0.2s ease !important;
+}
+
+.categories-slider::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8 !important;
 }
 
 .category-card {
     flex: 0 0 auto !important;
-    min-width: 110px !important;
-    max-width: 130px !important;
-    width: 120px !important;
-    height: 108px !important;
-    padding: 12px 8px !important;
+    min-width: 148px !important;
+    max-width: 172px !important;
+    width: 154px !important;
+    height: 114px !important;
+    padding: 10px 6px 8px !important;
     text-align: center !important;
     cursor: pointer !important;
     transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
@@ -1880,10 +1892,9 @@
     flex-direction: column !important;
     align-items: center !important;
     justify-content: center !important;
-    gap: 6px !important;
+    gap: 4px !important;
     border: 1.5px solid rgba(14, 165, 233, 0.22) !important;
     border-radius: 20px !important;
-    white-space: nowrap !important;
     background: #ffffff !important;
     box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05) !important;
     text-decoration: none !important;
@@ -1904,8 +1915,15 @@
 }
 
 .category-card .cat-icon {
-    font-size: 1.6rem !important;
+    font-size: 1.5rem !important;
     line-height: 1 !important;
+}
+
+.category-card .cat-icon-img {
+    width: 38px !important;
+    height: 38px !important;
+    border-radius: 50% !important;
+    object-fit: cover !important;
 }
 
 .category-card .cat-name {
@@ -1915,31 +1933,31 @@
     text-align: center !important;
     gap: 2px !important;
     width: 100% !important;
-    overflow: hidden !important;
 }
 
 .category-card .cat-title-en {
     color: #0f172a !important;
     font-weight: 800 !important;
-    font-size: 0.72rem !important;
-    line-height: 1.15 !important;
+    font-size: 0.68rem !important;
+    line-height: 1.2 !important;
     text-transform: uppercase !important;
-    letter-spacing: 0.3px !important;
+    letter-spacing: 0px !important;
     white-space: nowrap !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
+    text-align: center !important;
     max-width: 100% !important;
+    overflow: visible !important;
 }
 
 .category-card .cat-title-vi {
     color: #64748b !important;
     font-weight: 600 !important;
-    font-size: 0.65rem !important;
-    line-height: 1.15 !important;
+    font-size: 0.64rem !important;
+    line-height: 1.2 !important;
     white-space: nowrap !important;
+    text-align: center !important;
+    max-width: 100% !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
-    max-width: 100% !important;
 }
 
 .category-card.active .cat-title-en,
@@ -2382,8 +2400,8 @@
         <a href="/" class="category-card glass-panel {{ !$selectedCatSlug ? 'active' : '' }}">
             <span class="cat-icon">🗺️</span>
             <span class="cat-name">
-                <span class="cat-title-en">All Places</span>
-                <span class="cat-title-vi">Tất cả địa điểm</span>
+                <span class="cat-title-en">TẤT CẢ ĐỊA ĐIỂM</span>
+                <span class="cat-title-vi">Toàn bộ bản đồ</span>
             </span>
         </a>
         <a href="/tuyen-duong-40" class="category-card glass-panel tuyen-duong-highlight-card" style="background: linear-gradient(135deg, #059669 0%, #10b981 100%) !important; color: #ffffff !important; border: 1.5px solid #34d399 !important; position: relative;">
@@ -2392,6 +2410,14 @@
             <span class="cat-name">
                 <span class="cat-title-en" style="color: #ffffff !important; font-weight: 800; text-shadow: 0 1px 2px rgba(0,0,0,0.3); background: none !important; -webkit-text-fill-color: #ffffff !important;">TUYẾN ĐƯỜNG 4.0</span>
                 <span class="cat-title-vi" style="color: rgba(255,255,255,0.95) !important; font-weight: 600;">Bản đồ tuyến đường số</span>
+            </span>
+        </a>
+        <a href="https://sapxepthon.xadonganh.com/" target="_blank" rel="noopener noreferrer" class="category-card glass-panel digital-map-highlight-card" id="digital-map-external-tab" style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important; color: #ffffff !important; border: 1.5px solid #60a5fa !important; position: relative;" title="Bấm để mở Bản đồ số Xã Đông Anh">
+            <span class="badge-tag" style="position: absolute; top: 6px; right: 6px; background: #38bdf8; color: #0c4a6e; font-size: 0.65rem; font-weight: 900; padding: 2px 7px; border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.25); letter-spacing: 0.5px; z-index: 2;">3D LINK</span>
+            <span class="cat-icon">🌐</span>
+            <span class="cat-name">
+                <span class="cat-title-en" style="color: #ffffff !important; font-weight: 800; text-shadow: 0 1px 2px rgba(0,0,0,0.3); background: none !important; -webkit-text-fill-color: #ffffff !important;">BẢN ĐỒ SỐ</span>
+                <span class="cat-title-vi" style="color: rgba(255,255,255,0.95) !important; font-weight: 600;">Xã Đông Anh</span>
             </span>
         </a>
         @foreach($categories as $cat)
@@ -2404,40 +2430,40 @@
                 $displayNameVi = $cat->name;
                 if ($cat->slug === 'dong-anh-food-map') {
                     $displayIcon = '🍜';
-                    $displayNameEn = 'DONGANH DISCOVERY';
-                    $displayNameVi = 'Bản đồ khám phá đông anh';
+                    $displayNameEn = 'ẨM THỰC & ĐIỂM ĐẾN';
+                    $displayNameVi = 'Quán ăn & nhà hàng';
                 } elseif ($cat->slug === 'stay-in-dong-anh') {
                     $displayIcon = '🛌';
-                    $displayNameEn = 'Stay in Đông Anh';
-                    $displayNameVi = 'Nhà nghỉ, khách sạn, khu nghỉ dưỡng';
+                    $displayNameEn = 'LƯU TRÚ & KHÁCH SẠN';
+                    $displayNameVi = 'Khách sạn & resort';
                 } elseif ($cat->slug === 'wellness-care') {
                     $displayIcon = '🩺';
-                    $displayNameEn = 'Wellness & Care';
-                    $displayNameVi = 'Y tế – chăm sóc sức khỏe – spa';
+                    $displayNameEn = 'Y TẾ & CHĂM SÓC';
+                    $displayNameVi = 'Sức khỏe & spa';
                 } elseif ($cat->slug === 'dong-anh-market') {
                     $displayIcon = '🌾';
-                    $displayNameEn = 'Nông sản số';
-                    $displayNameVi = 'OCOP – quà tặng – đặc sản';
+                    $displayNameEn = 'NÔNG SẢN & OCOP';
+                    $displayNameVi = 'Đặc sản OCOP';
                 } elseif ($cat->slug === 'traditional-market') {
                     $displayIcon = '🏪';
-                    $displayNameEn = 'Traditional Market';
-                    $displayNameVi = 'Chợ truyền thống';
+                    $displayNameEn = 'CHỢ TRUYỀN THỐNG';
+                    $displayNameVi = '15 Chợ số Đông Anh';
                 } elseif ($cat->slug === 'smart-education-map') {
                     $displayIcon = '🎓';
-                    $displayNameEn = 'Smart Education Map';
-                    $displayNameVi = 'Trường học';
+                    $displayNameEn = 'TRƯỜNG HỌC SỐ';
+                    $displayNameVi = 'Giáo dục số';
                 } elseif ($cat->slug === 'hanh-trinh-di-san') {
                     $displayIcon = '⛩️';
-                    $displayNameEn = 'Heritage Journey';
-                    $displayNameVi = 'Hành trình di sản';
+                    $displayNameEn = 'HÀNH TRÌNH DI SẢN';
+                    $displayNameVi = 'Di tích lịch sử 360';
                 } elseif ($cat->slug === 'discover-dong-anh-community-culture-hub') {
                     $displayIcon = '🏛️';
-                    $displayNameEn = 'Community & Culture Hub';
-                    $displayNameVi = 'Thiết chế văn hóa - thể thao';
+                    $displayNameEn = 'THIẾT CHẾ VĂN HÓA';
+                    $displayNameVi = 'Văn hóa & thể thao';
                 } elseif ($cat->slug === 'co-so-kinh-doanh') {
                     $displayIcon = '🏢';
-                    $displayNameEn = 'Business & Enterprise';
-                    $displayNameVi = 'Cơ sở kinh doanh, Doanh nghiệp';
+                    $displayNameEn = 'CƠ SỞ KINH DOANH';
+                    $displayNameVi = 'HKD & doanh nghiệp';
                 }
             @endphp
             @if($cat->slug === 'hanh-trinh-di-san')
@@ -2744,6 +2770,18 @@
             @endif
         </div>
         
+        <!-- Thanh Tìm Kiếm Trực Tiếp Tại Khu Vực Danh Mục -->
+        <div class="inline-section-search-wrapper" style="margin-bottom: 20px; width: 100%;">
+            <form action="/tim-kiem" method="GET" class="inline-search-form" onsubmit="return handleInlineSearchSubmit(event)">
+                <div class="inline-search-box" style="position: relative; display: flex; align-items: center; background: #ffffff; border: 2px solid #0284c7; border-radius: 16px; padding: 4px 6px 4px 16px; box-shadow: 0 4px 20px rgba(2, 132, 199, 0.12); transition: all 0.25s ease;">
+                    <span style="font-size: 1.2rem; margin-right: 10px; color: #0284c7;">🔍</span>
+                    <input type="text" name="q" id="inlineSectionSearchInput" class="inline-search-input" placeholder="Nhập để tìm kiếm..." autocomplete="off" style="flex: 1; border: none; outline: none; font-size: 0.95rem; font-weight: 600; color: #0f172a; background: transparent; padding: 10px 0;">
+                    <button type="button" id="inlineSearchClearBtn" onclick="clearInlineSearch()" style="display: none; background: #f1f5f9; border: none; color: #64748b; font-weight: 700; font-size: 0.85rem; border-radius: 50%; width: 28px; height: 28px; cursor: pointer; margin-right: 8px; align-items: center; justify-content: center;" title="Xóa từ khóa">✕</button>
+                    <button type="submit" class="inline-search-submit-btn" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: #ffffff; border: none; font-weight: 800; font-size: 0.88rem; padding: 10px 22px; border-radius: 12px; cursor: pointer; box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25); transition: transform 0.2s ease;">Tìm kiếm</button>
+                </div>
+            </form>
+        </div>
+
         <div id="eateriesListContainer" style="display: flex; flex-direction: column; gap: 24px; width: 100%;">
             @if($eateries->count() > 0)
                 @php
@@ -2876,6 +2914,9 @@
                              data-address="{{ $eat->address }}"
                              data-desc="{{ $card['desc'] }}"
                              data-commune="{{ $eat->commune?->name ?? 'Đông Anh' }}"
+                             data-taxcode="{{ $eat->storytelling_data['tax_code'] ?? '' }}"
+                             data-owner="{{ $eat->storytelling_data['owner_name'] ?? '' }}"
+                             data-phone="{{ $eat->phone ?? '' }}"
                              data-category="{{ $eat->category->slug }}"
                              onclick="focusOnEatery({{ number_format($eat->latitude, 6, '.', '') }}, {{ number_format($eat->longitude, 6, '.', '') }}, '{{ $eat->slug }}', '{{ addslashes($card['title']) }}', '{{ $card['image'] }}', '{{ $card['price'] }}', '{{ $card['stars'] }}', '{{ addslashes($card['subtitle'] ?? '') }}')">
                             <div class="eatery-img-wrapper hover-zoom-container">
@@ -3363,6 +3404,14 @@
             let startX;
             let scrollLeft;
 
+            // Hỗ trợ cuộn ngang bằng lăn con lăn chuột
+            slider.addEventListener('wheel', (e) => {
+                if (e.deltaY !== 0) {
+                    e.preventDefault();
+                    slider.scrollLeft += e.deltaY * 0.9;
+                }
+            }, { passive: false });
+
             slider.addEventListener('mousedown', (e) => {
                 isDown = true;
                 slider.style.cursor = 'grabbing';
@@ -3567,31 +3616,45 @@
         const cards = document.querySelectorAll('.split-list .eatery-card');
         const countSpan = document.getElementById("resultsCountSpan");
         
-        // Hàm chuyển đổi tiếng Việt có dấu thành không dấu để tìm kiếm thông minh hơn
-        const removeSign = (str) => {
-            return str.normalize("NFD")
-                      .replace(/[\u0300-\u036f]/g, "")
-                      .replace(/đ/g, "d")
-                      .replace(/Đ/g, "D");
+        // Hàm chuyển đổi tiếng Việt có dấu thành không dấu chính xác 100%
+        const removeVietnameseTones = (str) => {
+            if (!str) return '';
+            str = str.toLowerCase();
+            str = str.replace(/à|á|ạ|ả|ã|â|ầ|ấ|ậ|ẩ|ẫ|ă|ằ|ắ|ặ|ẳ|ẵ/g, "a");
+            str = str.replace(/è|é|ẹ|ẻ|ẽ|ê|ề|ế|ệ|ể|ễ/g, "e");
+            str = str.replace(/ì|í|ị|ỉ|ĩ/g, "i");
+            str = str.replace(/ò|ó|ọ|ỏ|õ|ô|ồ|ố|ộ|ổ|ỗ|ơ|ờ|ớ|ợ|ở|ỡ/g, "o");
+            str = str.replace(/ù|ú|ụ|ủ|ũ|ư|ừ|ứ|ự|ử|ữ/g, "u");
+            str = str.replace(/ỳ|ý|ỵ|ỷ|ỹ/g, "y");
+            str = str.replace(/đ/g, "d");
+            return str;
         };
 
         function filterEateries(query) {
-            query = query.trim().toLowerCase();
-            const queryNoSign = removeSign(query);
+            query = query.trim();
+            const queryClean = removeVietnameseTones(query);
+            const queryWords = queryClean.split(/\s+/).filter(w => w.length > 0);
             let matchCount = 0;
 
-            cards.forEach(card => {
+            const currentCards = document.querySelectorAll('.split-list .eatery-card, #eateriesListContainer .eatery-card, .eatery-card-item');
+
+            currentCards.forEach(card => {
                 const name = card.getAttribute('data-name') || '';
                 const address = card.getAttribute('data-address') || '';
                 const desc = card.getAttribute('data-desc') || '';
+                const commune = card.getAttribute('data-commune') || '';
+                const taxCode = card.getAttribute('data-taxcode') || '';
+                const owner = card.getAttribute('data-owner') || '';
+                const phone = card.getAttribute('data-phone') || '';
                 const slug = card.getAttribute('data-slug') || '';
-                
-                const textToSearch = `${name} ${address} ${desc}`.toLowerCase();
-                const textNoSign = removeSign(textToSearch);
-                
-                const isMatch = textToSearch.includes(query) || textNoSign.includes(queryNoSign);
-                
-                if (isMatch || query === '') {
+
+                const rawText = `${name} ${address} ${desc} ${commune} ${taxCode} ${owner} ${phone}`;
+                const textClean = removeVietnameseTones(rawText);
+
+                // Mọi từ trong câu truy vấn tìm kiếm phải trùng khớp hoàn toàn (ALL words match)
+                const isMatch = (queryWords.length === 0) || queryWords.every(word => textClean.includes(word));
+
+                if (isMatch) {
                     card.style.setProperty('display', 'flex', 'important');
                     matchCount++;
                     if (markers[slug]) {
@@ -3607,28 +3670,31 @@
 
             // Cập nhật số lượng kết quả hiển thị
             if (countSpan) {
-                countSpan.innerText = `(${matchCount} kết quả)`;
+                countSpan.innerText = `📍 (${matchCount} địa điểm phù hợp)`;
             }
 
             // Hiển thị hoặc ẩn phần thông báo không tìm thấy kết quả
             let noResultDiv = document.getElementById('noResultsPlaceholder');
-            if (matchCount === 0) {
+            if (matchCount === 0 && queryWords.length > 0) {
                 if (!noResultDiv) {
                     noResultDiv = document.createElement('div');
                     noResultDiv.id = 'noResultsPlaceholder';
                     noResultDiv.className = 'glass-panel';
-                    noResultDiv.style.padding = '40px';
+                    noResultDiv.style.padding = '40px 20px';
                     noResultDiv.style.textAlign = 'center';
                     noResultDiv.style.color = 'var(--text-muted)';
                     noResultDiv.style.width = '100%';
                     noResultDiv.innerHTML = `
-                        <p style="font-size: 1.2rem; margin-bottom: 8px; color: var(--text-main);">😔 Không tìm thấy địa điểm nào phù hợp</p>
-                        <p style="font-size: 0.9rem;">Hãy thử từ khóa khác hoặc xóa ô tìm kiếm để hiển thị lại toàn bộ!</p>
-                        <button onclick="clearSearch()" class="btn-primary" style="margin-top: 16px; padding: 8px 16px; cursor: pointer;">Xem tất cả</button>
+                        <p style="font-size: 1.2rem; margin-bottom: 8px; color: var(--text-main); font-weight: 800;">😔 Không tìm thấy kết quả phù hợp cho "${query}"</p>
+                        <p style="font-size: 0.9rem;">Hãy kiểm tra lại từ khóa hoặc bấm nút bên dưới để xem toàn bộ danh sách!</p>
+                        <button onclick="clearInlineSearch()" class="btn-primary" style="margin-top: 16px; padding: 10px 24px; cursor: pointer; border-radius: 12px; font-weight: 700;">Xem tất cả địa điểm</button>
                     `;
-                    document.querySelector('.split-list').appendChild(noResultDiv);
+                    const container = document.querySelector('.split-list') || document.getElementById('eateriesListContainer');
+                    if (container) container.appendChild(noResultDiv);
                 } else {
                     noResultDiv.style.display = 'block';
+                    const pTag = noResultDiv.querySelector('p');
+                    if (pTag) pTag.innerText = `😔 Không tìm thấy kết quả phù hợp cho "${query}"`;
                 }
             } else {
                 if (noResultDiv) {
@@ -3643,7 +3709,45 @@
             filterEateries('');
         };
 
-        // Lọc real-time khi đang gõ
+        // Xử lý lọc real-time trên thanh tìm kiếm trực tiếp ở khu vực danh mục
+        const inlineSearchInput = document.getElementById('inlineSectionSearchInput');
+        const inlineClearBtn = document.getElementById('inlineSearchClearBtn');
+
+        if (inlineSearchInput) {
+            inlineSearchInput.addEventListener('input', function() {
+                const query = this.value;
+                if (inlineClearBtn) {
+                    inlineClearBtn.style.display = query.trim().length > 0 ? 'inline-flex' : 'none';
+                }
+                const mainSearchInput = document.getElementById('searchInput');
+                if (mainSearchInput) mainSearchInput.value = query;
+                
+                filterEateries(query);
+            });
+        }
+
+        window.clearInlineSearch = function() {
+            if (inlineSearchInput) {
+                inlineSearchInput.value = '';
+                if (inlineClearBtn) inlineClearBtn.style.display = 'none';
+            }
+            const mainSearchInput = document.getElementById('searchInput');
+            if (mainSearchInput) mainSearchInput.value = '';
+            
+            filterEateries('');
+        };
+
+        window.handleInlineSearchSubmit = function(e) {
+            if (e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            const query = inlineSearchInput ? inlineSearchInput.value.trim() : '';
+            filterEateries(query);
+            return false;
+        };
+
+        // Lọc real-time khi đang gõ trên ô tìm kiếm chính
         searchInput.addEventListener("input", function() {
             const query = this.value;
             filterEateries(query);

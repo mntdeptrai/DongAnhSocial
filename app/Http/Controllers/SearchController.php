@@ -63,10 +63,26 @@ class SearchController extends Controller
             $query->where('commune_id', $comId);
         }
         if ($keyword) {
-            $query->where(function($q) use ($keyword) {
-                $q->where('slug', 'like', "{$keyword}%")
-                  ->orWhere('name', 'like', "{$keyword}%")
-                  ->orWhere('address', 'like', "{$keyword}%");
+            $words = array_filter(explode(' ', trim($keyword)));
+            $query->where(function($qBuilder) use ($keyword, $words) {
+                $qBuilder->where('name', 'like', "%{$keyword}%")
+                         ->orWhere('slug', 'like', "%{$keyword}%")
+                         ->orWhere('address', 'like', "%{$keyword}%")
+                         ->orWhere('description', 'like', "%{$keyword}%")
+                         ->orWhere('storytelling_data', 'like', "%{$keyword}%");
+                         
+                if (count($words) > 1) {
+                    $qBuilder->orWhere(function($subQ) use ($words) {
+                        foreach ($words as $w) {
+                            $subQ->where(function($wGroup) use ($w) {
+                                $wGroup->where('name', 'like', "%{$w}%")
+                                       ->orWhere('address', 'like', "%{$w}%")
+                                       ->orWhere('description', 'like', "%{$w}%")
+                                       ->orWhere('storytelling_data', 'like', "%{$w}%");
+                            });
+                        }
+                    });
+                }
             });
         }
         
