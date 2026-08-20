@@ -1391,6 +1391,9 @@ class AdminController extends Controller
     /**
      * Danh sách tài khoản User / Tiểu thương Chợ
      */
+    /**
+     * Danh sách tài khoản User / Tiểu thương Chợ / Hộ kinh doanh
+     */
     public function indexUsers(Request $request)
     {
         $this->verifyAdmin();
@@ -1427,7 +1430,8 @@ class AdminController extends Controller
             });
         }
 
-        if ($request->has('search') && trim($request->search) != '') {
+        // 1. Lọc theo Tìm kiếm nhanh (search)
+        if ($request->filled('search')) {
             $search = trim($request->search);
             $query->where(function($q) use ($search) {
                 $q->where('phone', 'like', "%{$search}%")
@@ -1444,6 +1448,12 @@ class AdminController extends Controller
                                  ->orWhere('seller_phone', 'like', "%{$search}%");
                           });
                   })
+                  ->orWhereIn('id', function($sub) use ($search) {
+                      $sub->select('user_id')
+                          ->from('eateries')
+                          ->whereNotNull('user_id')
+                          ->where('name', 'like', "%{$search}%");
+                  })
                   ->orWhereIn('eatery_id', function($sub) use ($search) {
                       $sub->select('id')
                           ->from('eateries')
@@ -1452,11 +1462,49 @@ class AdminController extends Controller
             });
         }
 
-        if ($request->has('status') && $request->status != '') {
-            $query->where('status', $request->status);
+        // 2. Lọc theo Nhóm tài khoản (user_type)
+        if ($request->filled('user_type')) {
+            $type = $request->user_type;
+            if ($type === 'market_seller') {
+                // Tiểu thương Chợ truyền thống
+                $query->where('role', 'seller')->where(function($q) {
+                    $q->whereNotNull('stall_id')
+                      ->orWhereIn('eatery_id', function($sub) {
+                          $sub->select('id')->from('eateries')->where('category_id', 8);
+                      })
+                      ->orWhereIn('id', function($sub) {
+                          $sub->select('user_id')->from('ocop_products')->whereNotNull('user_id');
+                      });
+                });
+            } elseif ($type === 'cskd_seller') {
+                // Chủ Hộ kinh doanh & Doanh nghiệp
+                $query->where('role', 'seller')->where(function($q) {
+                    $q->whereIn('eatery_id', function($sub) {
+                        $sub->select('id')->from('eateries')->where('category_id', 9);
+                    })
+                    ->orWhereIn('id', function($sub) {
+                        $sub->select('user_id')->from('eateries')->where('category_id', 9)->whereNotNull('user_id');
+                    });
+                });
+            } elseif ($type === 'principal') {
+                // Ban giám hiệu / Trường học
+                $query->where(function($q) {
+                    $q->where('role', 'principal')
+                      ->orWhereIn('eatery_id', function($sub) {
+                          $sub->select('id')->from('eateries')->where('category_id', 5);
+                      });
+                });
+            } elseif ($type === 'admin_group') {
+                // Ban quản trị (Admin & Manager)
+                $query->whereIn('role', ['admin', 'manager']);
+            } elseif ($type === 'customer') {
+                // Khách hàng / Du khách
+                $query->where('role', 'user');
+            }
         }
 
-        if ($request->has('market_id') && $request->market_id != '') {
+        // 3. Lọc theo Chợ truyền thống cụ thể (market_id)
+        if ($request->filled('market_id')) {
             $mId = (int)$request->market_id;
             $query->where(function($q) use ($mId) {
                 $q->where('eatery_id', $mId)
@@ -1469,24 +1517,54 @@ class AdminController extends Controller
             });
         }
 
+        // 4. Lọc theo Xã / Địa bàn cho Hộ kinh doanh (commune_id)
+        if ($request->filled('commune_id')) {
+            $cId = (int)$request->commune_id;
+            $query->where(function($q) use ($cId) {
+                $q->whereIn('eatery_id', function($sub) use ($cId) {
+                    $sub->select('id')->from('eateries')->where('commune_id', $cId);
+                })
+                ->orWhereIn('id', function($sub) use ($cId) {
+                    $sub->select('user_id')->from('eateries')->where('commune_id', $cId)->whereNotNull('user_id');
+                });
+            });
+        }
+
+        // 5. Lọc theo Trạng thái (status)
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
         $totalUsers = (clone $query)->count();
-        $adminCount = $role === 'admin' ? User::where('role', 'admin')->count() : 0;
-        $sellerCount = (clone $query)->where('role', 'seller')->count();
-        $userCount = $role === 'admin' ? User::where('role', 'user')->count() : 0;
+        
+        // Thống kê nhanh toàn hệ thống
+        $adminCount = User::whereIn('role', ['admin', 'manager'])->count();
+        $marketSellerCount = \Illuminate\Support\Facades\DB::table('ocop_products')->whereNotNull('user_id')->distinct('user_id')->count('user_id');
+        $cskdSellerCount = \Illuminate\Support\Facades\DB::table('eateries')->where('category_id', 9)->whereNotNull('user_id')->distinct('user_id')->count('user_id');
+        $userCount = User::where('role', 'user')->count();
 
         $users = $query->orderBy('created_at', 'desc')->paginate(10)->withQueryString();
 
-        $markets = \Illuminate\Support\Facades\DB::table('eateries')
+        // Danh sách 15 Chợ truyền thống có gian hàng
+        $markets = Eatery::where('category_id', 8)
             ->whereIn('id', \Illuminate\Support\Facades\DB::table('ocop_products')->select('eatery_id')->distinct())
             ->orderBy('name')
             ->get();
-        $marketsMap = $markets->keyBy('id');
+        $marketsMap = Eatery::where('category_id', 8)->get()->keyBy('id');
+
+        // Danh sách Xã / Thôn có Hộ kinh doanh
+        $communes = Commune::whereIn('id', function($sub) {
+            $sub->select('commune_id')->from('eateries')->where('category_id', 9)->whereNotNull('commune_id')->distinct();
+        })->orderBy('name')->get();
 
         if ($request->ajax()) {
-            return view('admin.users.partial-table', compact('users', 'markets', 'marketsMap'))->render();
+            return view('admin.users.partial-table', compact('users', 'markets', 'marketsMap', 'communes'))->render();
         }
 
-        return view('admin.users.index', compact('users', 'totalUsers', 'adminCount', 'sellerCount', 'userCount', 'markets', 'marketsMap'));
+        return view('admin.users.index', compact(
+            'users', 'totalUsers', 'adminCount', 'marketSellerCount', 'cskdSellerCount', 'userCount',
+            'markets', 'marketsMap', 'communes'
+        ));
     }
 
     /**
