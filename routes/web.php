@@ -204,6 +204,11 @@ Route::prefix('seller')->middleware(['auth', 'role:seller,admin', 'tenant.auth']
     Route::get('/api/chat/messages', [VendorController::class, 'apiChatMessages'])->name('seller.chat.messages');
     Route::post('/api/chat/send', [VendorController::class, 'apiChatSend'])->name('seller.chat.send');
     Route::get('/api/chat/unread', [VendorController::class, 'apiChatUnreadCount'])->name('seller.chat.unread');
+
+    // Quản lý Cơ sở kinh doanh & Chuyển đổi Đa thực thể
+    Route::post('/switch-entity', [VendorController::class, 'switchEntity'])->name('seller.switch-entity');
+    Route::get('/business-profile', [VendorController::class, 'showBusinessProfile'])->name('seller.business-profile');
+    Route::post('/business-profile', [VendorController::class, 'updateBusinessProfile'])->name('seller.business-profile.update');
 });
 
 

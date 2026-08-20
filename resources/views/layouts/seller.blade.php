@@ -71,13 +71,36 @@
                 </div>
             </a>
 
+            {{-- Multi-Entity Switcher Widget (When seller has both Market Stall & CSKD / Digital Route) --}}
+            @if(isset($managedEntities) && count($managedEntities) > 1)
+                <div style="margin: 0 16px 14px 16px; padding: 12px; background: rgba(255,255,255,0.06); border: 1.5px solid rgba(251,191,36,0.3); border-radius: 12px;">
+                    <div style="font-size: 0.65rem; color: #fbbf24; text-transform: uppercase; font-weight: 800; letter-spacing: 0.05em; margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between;">
+                        <span>🔄 Chuyển Đổi Quản Lý</span>
+                        <span style="background: #fbbf24; color: #1c1007; font-size: 0.6rem; padding: 1px 6px; border-radius: 6px; font-weight: 900;">{{ count($managedEntities) }} Cơ Sở</span>
+                    </div>
+                    <form action="{{ route('seller.switch-entity') }}" method="POST">
+                        @csrf
+                        <select name="entity_key" onchange="this.form.submit()" style="width: 100%; background: #26170c; color: #ffffff; border: 1px solid rgba(251,191,36,0.4); border-radius: 8px; padding: 8px; font-size: 0.8rem; font-weight: 600; cursor: pointer; outline: none;">
+                            @foreach($managedEntities as $ent)
+                                <option value="{{ $ent['key'] }}" {{ ($activeEntityKey ?? '') === $ent['key'] ? 'selected' : '' }}>
+                                    {{ $ent['badge'] }}: {{ Str::limit($ent['name'], 22) }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </form>
+                </div>
+            @endif
+
             {{-- Stall Info Badge --}}
             @if(isset($stallName))
                 <div class="slr-stall-badge">
-                    <div style="font-size: 0.68rem; color: rgba(255,255,255,0.45); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700; margin-bottom: 3px;">Gian hàng của tôi</div>
-                    <div class="slr-stall-badge-name">🏪 {{ Str::limit($stallName, 22, '...') }}</div>
-                    @if(isset($market) && $market)
+                    <div style="font-size: 0.68rem; color: rgba(255,255,255,0.45); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700; margin-bottom: 3px;">Đang quản lý</div>
+                    <div class="slr-stall-badge-name">{{ !empty($isBusinessMode) ? '🏢' : '🏪' }} {{ Str::limit($stallName, 22, '...') }}</div>
+                    @if(isset($market) && $market && empty($isBusinessMode))
                         <div class="slr-stall-badge-market" style="color: #fbbf24; font-weight: 700;">🏛️ {{ Str::limit($market->name, 22, '...') }}</div>
+                    @endif
+                    @if(isset($businessEatery) && $businessEatery && !empty($isBusinessMode))
+                        <div class="slr-stall-badge-market" style="color: #c084fc; font-weight: 700;">📍 {{ Str::limit($businessEatery->address ?: 'Cơ sở độc lập', 22, '...') }}</div>
                     @endif
                     @php
                         $userRouteBiz = isset($routeBusinesses) ? $routeBusinesses : (auth()->check() ? auth()->user()->getRouteBusinesses() : collect());
@@ -92,7 +115,7 @@
                 </div>
             @endif
 
-            <div class="slr-sidebar-section-title">Quản Lý Gian Hàng</div>
+            <div class="slr-sidebar-section-title">Quản Lý Cơ Sở</div>
 
             <a href="/seller/dashboard" class="slr-menu-item {{ request()->is('seller/dashboard') ? 'active' : '' }}">
                 <span>📊</span> Tổng Quan Gian Hàng
@@ -100,6 +123,11 @@
             <a href="/seller/profile" class="slr-menu-item {{ request()->is('seller/profile') ? 'active' : '' }}">
                 <span>⚙️</span> Cấu Hình Gian Hàng & VietQR
             </a>
+            @if(isset($businessEatery) && $businessEatery)
+                <a href="/seller/business-profile" class="slr-menu-item {{ request()->is('seller/business-profile*') ? 'active' : '' }}">
+                    <span>🏢</span> Hồ Sơ Cơ Sở Kinh Doanh
+                </a>
+            @endif
             <a href="/seller/products" class="slr-menu-item {{ request()->is('seller/products*') ? 'active' : '' }}">
                 <span>📦</span> Sản Phẩm & Thực Đơn
             </a>
@@ -113,10 +141,15 @@
 
             <div class="slr-sidebar-divider"></div>
 
-            <div class="slr-sidebar-section-title">Khách Hàng</div>
-            @if(isset($market) && $market)
+            <div class="slr-sidebar-section-title">Khách Hàng & Bản Đồ</div>
+            @if(isset($market) && $market && $stallRecord)
                 <a href="/dia-diem/{{ $market->slug }}" target="_blank" class="slr-menu-item">
-                    <span>👁️</span> Xem Gian Hàng Trên Bản Đồ
+                    <span>🛒</span> Xem Sạp Trên Bản Đồ Chợ
+                </a>
+            @endif
+            @if(isset($businessEatery) && $businessEatery)
+                <a href="/dia-diem/{{ $businessEatery->slug }}" target="_blank" class="slr-menu-item">
+                    <span>🏢</span> Xem HKD Bản Đồ Toàn Huyện
                 </a>
             @endif
             <a href="/" class="slr-menu-item" target="_blank">

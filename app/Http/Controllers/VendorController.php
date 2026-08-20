@@ -31,54 +31,115 @@ class VendorController extends Controller
         $userPhone = $user->phone ?? session('user_phone') ?? '';
         $userName = $user->name ?? session('user_name') ?? '';
 
-        $eatery = null;
-        $stallRecord = null; // Bản ghi sản phẩm đại diện cho gian hàng của seller
-        $resolvedStallName = null;
-
-        // === BƯỚC 1: Xác định gian hàng cụ thể của Seller ===
         $db = DB::connection('mysql_market');
 
-        // 1a. Ưu tiên dùng stall_id từ bảng users (nếu đã gán)
+        // === BƯỚC 1: Thu thập tất cả các thực thể kinh doanh thuộc sở hữu của User ===
+        $stallRecord = null;
+        $market = null;
+        $businessEatery = null;
+        $managedEntities = [];
+
+        // 1a. Tìm Gian hàng Chợ (ocop_products)
         if ($user && $user->stall_id) {
             $stallRecord = $db->table('ocop_products')->where('id', $user->stall_id)->first();
-            if ($stallRecord) {
-                $resolvedStallName = $stallRecord->stall_name;
-                $eatery = $db->table('eateries')->where('id', $stallRecord->eatery_id)->first();
-            }
         }
-
-        // 1b. Tìm theo seller_phone
+        if (!$stallRecord && $userId) {
+            $stallRecord = $db->table('ocop_products')->where('user_id', $userId)->first();
+        }
         if (!$stallRecord && !empty($userPhone)) {
             $stallRecord = $db->table('ocop_products')->where('seller_phone', $userPhone)->first();
-            if ($stallRecord) {
-                $resolvedStallName = $stallRecord->stall_name;
-                $eatery = $db->table('eateries')->where('id', $stallRecord->eatery_id)->first();
+        }
+
+        if ($stallRecord) {
+            $market = $db->table('eateries')->where('id', $stallRecord->eatery_id)->first();
+            $managedEntities[] = [
+                'key' => 'stall_' . $stallRecord->id,
+                'type' => 'market_stall',
+                'badge' => '🛒 Gian hàng Chợ',
+                'name' => $stallRecord->stall_name,
+                'sub' => $market ? ('🏛️ ' . $market->name) : 'Chợ truyền thống',
+                'id' => $stallRecord->id,
+                'market_id' => $market ? $market->id : null,
+                'market_slug' => $market ? $market->slug : '',
+            ];
+        }
+
+        // 1b. Tìm Cơ sở kinh doanh / Doanh nghiệp độc lập (Category 9 hoặc khác chợ)
+        if ($userId) {
+            $businessEatery = $db->table('eateries')
+                ->where('user_id', $userId)
+                ->where('category_id', 9)
+                ->first();
+        }
+        if (!$businessEatery && !empty($userPhone)) {
+            $businessEatery = $db->table('eateries')
+                ->where('phone', $userPhone)
+                ->where('category_id', 9)
+                ->first();
+        }
+        if (!$businessEatery && $user && $user->eatery_id) {
+            $eateryCandidate = $db->table('eateries')->where('id', $user->eatery_id)->first();
+            if ($eateryCandidate && $eateryCandidate->category_id == 9) {
+                $businessEatery = $eateryCandidate;
             }
         }
 
-
-        // 1d. Fallback: Tìm eatery sở hữu bởi User (qua user_id trên eateries)
-        if (!$eatery && $userId) {
-            $eatery = $db->table('eateries')->where('user_id', $userId)->first();
+        if ($businessEatery) {
+            $managedEntities[] = [
+                'key' => 'business_' . $businessEatery->id,
+                'type' => 'business',
+                'badge' => '🏢 Hộ kinh doanh / Doanh nghiệp',
+                'name' => $businessEatery->name,
+                'sub' => '📍 ' . ($businessEatery->address ?: 'Đông Anh, Hà Nội'),
+                'id' => $businessEatery->id,
+                'slug' => $businessEatery->slug,
+            ];
         }
 
-        // 1e. Tìm eatery qua eatery_id được gắn cho user (khi admin cấp tài khoản)
-        if (!$eatery && $user && $user->eatery_id) {
-            $eatery = $db->table('eateries')->where('id', $user->eatery_id)->first();
+        // 1c. Tuyến đường 4.0
+        $routeBusinesses = $user ? $user->getRouteBusinesses() : collect();
+        if ($routeBusinesses && $routeBusinesses->count() > 0) {
+            foreach ($routeBusinesses as $rb) {
+                $managedEntities[] = [
+                    'key' => 'route_' . $rb->id,
+                    'type' => 'route',
+                    'badge' => '🛣️ Tuyến đường 4.0',
+                    'name' => $rb->name,
+                    'sub' => '🛣️ Tuyến ' . $rb->village_name,
+                    'id' => $rb->id,
+                ];
+            }
         }
 
-        // 1f. Session stall_name (được set bởi TenantAuthMiddleware)
-        if (!$resolvedStallName && session('stall_name')) {
-            $resolvedStallName = session('stall_name');
+        // Xác định thực thể đang kích hoạt (Active Entity)
+        $activeEntityKey = session('active_seller_entity');
+        if (!$activeEntityKey || !collect($managedEntities)->contains('key', $activeEntityKey)) {
+            $activeEntityKey = !empty($managedEntities) ? $managedEntities[0]['key'] : null;
         }
 
-        // 1g. Nếu vẫn không có, lấy địa điểm mặc định đầu tiên
-        if (!$eatery) {
+        // === BƯỚC 2: Cấu hình dữ liệu hiển thị theo Active Entity ===
+        $isBusinessMode = str_starts_with($activeEntityKey ?? '', 'business_');
+        $eatery = null;
+        $stallName = null;
+
+        if ($isBusinessMode && $businessEatery) {
+            $eatery = $businessEatery;
+            $stallName = $businessEatery->name;
+            $eateryId = $businessEatery->id;
+        } elseif ($stallRecord && $market) {
+            $eatery = $market;
+            $stallName = $stallRecord->stall_name;
+            $eateryId = $market->id;
+        } elseif ($businessEatery) {
+            $eatery = $businessEatery;
+            $stallName = $businessEatery->name;
+            $eateryId = $businessEatery->id;
+        } else {
             $eatery = $db->table('eateries')->first();
+            $stallName = $eatery ? $eatery->name : 'Gian hàng Số của tôi';
+            $eateryId = $eatery ? $eatery->id : 1;
         }
 
-        $eateryId = $eatery ? $eatery->id : 1;
-        $stallName = $resolvedStallName ?: ($eatery ? $eatery->name : 'Gian hàng Số của tôi');
         $sellerName = $userName ?: ($eatery ? $eatery->name : 'Chủ gian hàng');
         $sellerPhone = $userPhone ?: ($eatery ? $eatery->phone : '');
 
@@ -88,64 +149,128 @@ class VendorController extends Controller
             $category = $db->table('categories')->where('id', $eatery->category_id)->first();
         }
         $categorySlug = $category ? $category->slug : '';
-
-        // Phân biệt chính xác:
-        // - Doanh nghiệp / HTX Đặc sản OCOP (categorySlug === 'dong-anh-market') → $isOcopSeller = true
-        // - Tiểu thương kinh doanh trong Chợ truyền thống (categorySlug === 'traditional-market') → $isOcopSeller = false
         $isOcopSeller = ($categorySlug === 'dong-anh-market');
 
-        // === BƯỚC 2: Query sản phẩm ===
+        // Query sản phẩm
         $products = collect();
-        if ($isOcopSeller) {
-            // OCOP seller: lấy TẤT CẢ sản phẩm thuộc cơ sở kinh doanh
-            $products = $db->table('ocop_products')->where('eatery_id', $eateryId)->get();
-        } elseif ($resolvedStallName) {
-            // Chợ truyền thống: chỉ lấy sản phẩm của gian hàng cụ thể
+        if ($stallRecord && !$isBusinessMode) {
             $products = $db->table('ocop_products')
                 ->where('eatery_id', $eateryId)
-                ->where('stall_name', $resolvedStallName)
+                ->where('stall_name', $stallName)
                 ->get();
+        } elseif ($isBusinessMode && $businessEatery) {
+            $dishes = $db->table('dishes')->where('eatery_id', $businessEatery->id)->get();
+            $products = $dishes->map(function($d) use ($businessEatery) {
+                return (object)[
+                    'id' => $d->id,
+                    'eatery_id' => $businessEatery->id,
+                    'stall_name' => $businessEatery->name,
+                    'seller_name' => $businessEatery->name,
+                    'seller_phone' => $businessEatery->phone,
+                    'name' => $d->name,
+                    'price' => $d->price,
+                    'unit' => 'mặt hàng',
+                    'description' => $d->description,
+                    'image_path' => $d->image_path,
+                    'star_rating' => null,
+                ];
+            });
         } else {
-            // Fallback
             $products = $db->table('ocop_products')->where('eatery_id', $eateryId)->get();
         }
         $primaryProduct = $products->first();
-
-        if ($products->isEmpty() && $eatery) {
-            $dishes = DB::connection('mysql_market')->table('dishes')->where('eatery_id', $eatery->id)->get();
-            if ($dishes->isNotEmpty()) {
-                $products = $dishes->map(function($d) use ($eatery) {
-                    return (object)[
-                        'id' => $d->id,
-                        'eatery_id' => $eatery->id,
-                        'stall_name' => $eatery->name,
-                        'seller_name' => $eatery->name,
-                        'seller_phone' => $eatery->phone,
-                        'name' => $d->name,
-                        'price' => $d->price,
-                        'unit' => 'suất',
-                        'description' => $d->description,
-                        'image_path' => $d->image_path,
-                        'star_rating' => null,
-                    ];
-                });
-            }
-        }
-
-        $routeBusinesses = $user ? $user->getRouteBusinesses() : collect();
 
         return [
             'stallName' => $stallName,
             'sellerName' => $sellerName,
             'sellerPhone' => $sellerPhone,
             'eateryId' => $eateryId,
-            'market' => $eatery,
+            'market' => $market ?: $eatery,
+            'businessEatery' => $businessEatery,
+            'stallRecord' => $stallRecord,
+            'managedEntities' => $managedEntities,
+            'activeEntityKey' => $activeEntityKey,
+            'isBusinessMode' => $isBusinessMode,
             'products' => $products,
             'isOcopSeller' => $isOcopSeller,
             'primaryProduct' => $primaryProduct,
             'categorySlug' => $categorySlug,
             'routeBusinesses' => $routeBusinesses,
         ];
+    }
+
+    /**
+     * Chuyển đổi thực thể kinh doanh đang quản lý (Gian hàng Chợ <-> Cơ sở kinh doanh <-> Tuyến đường)
+     */
+    public function switchEntity(Request $request)
+    {
+        $this->verifyVendor();
+        $entityKey = $request->input('entity_key');
+        if ($entityKey) {
+            session(['active_seller_entity' => $entityKey]);
+        }
+        return redirect()->back()->with('success', 'Đã chuyển đổi sang quản lý: ' . ($request->input('entity_name') ?: 'Cơ sở được chọn'));
+    }
+
+    /**
+     * Xem & Cập nhật Thông tin Hồ Sơ Cơ Sở Kinh Doanh / Doanh Nghiệp
+     */
+    public function showBusinessProfile()
+    {
+        $this->verifyVendor();
+        $context = $this->getVendorStallContext();
+        return view('seller.business-profile', $context);
+    }
+
+    /**
+     * Lưu cập nhật Hồ Sơ Cơ Sở Kinh Doanh
+     */
+    public function updateBusinessProfile(Request $request)
+    {
+        $this->verifyVendor();
+        $context = $this->getVendorStallContext();
+        $businessEatery = $context['businessEatery'];
+
+        if (!$businessEatery) {
+            return redirect()->back()->with('error', 'Không tìm thấy thông tin Cơ sở kinh doanh thuộc tài khoản này!');
+        }
+
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'phone' => 'nullable|string|max:30',
+            'address' => 'nullable|string|max:255',
+            'opening_hours' => 'nullable|string|max:100',
+            'price_range' => 'nullable|string|max:100',
+            'description' => 'nullable|string',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:10240',
+        ]);
+
+        $updateData = [
+            'name' => $request->name,
+            'phone' => $request->phone,
+            'address' => $request->address,
+            'opening_hours' => $request->opening_hours,
+            'price_range' => $request->price_range,
+            'description' => $request->description,
+            'updated_at' => now(),
+        ];
+
+        if ($request->hasFile('image')) {
+            $updateData['image_path'] = R2Helper::upload($request->file('image'), 'eateries');
+        }
+
+        DB::table('eateries')->where('id', $businessEatery->id)->update($updateData);
+
+        // Đồng bộ số điện thoại vào tài khoản nếu cần
+        if ($request->filled('phone') && Auth::user()) {
+            Auth::user()->update([
+                'phone' => preg_replace('/[^0-9]/', '', $request->phone),
+            ]);
+        }
+
+        \Illuminate\Support\Facades\Cache::flush();
+
+        return redirect()->back()->with('success', '🎉 Đã cập nhật thông tin Cơ sở kinh doanh thành công! Toàn bộ thông tin đã được đồng bộ lên Bản đồ số toàn huyện.');
     }
 
     /**

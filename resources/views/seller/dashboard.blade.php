@@ -93,9 +93,14 @@
             </h1>
             <p style="margin: 0; color: #ffedd5; font-size: 0.94rem; display: flex; flex-wrap: wrap; align-items: center; gap: 8px;">
                 <span>📍 Trực thuộc:</span>
-                @if($market)
+                @if($market && empty($isBusinessMode))
                     <span style="background: rgba(255,255,255,0.22); padding: 3px 10px; border-radius: 8px; font-weight: 800; border: 1px solid rgba(255,255,255,0.35); color: #ffffff;">
                         🏛️ {{ $market->name }}
+                    </span>
+                @endif
+                @if(isset($businessEatery) && $businessEatery)
+                    <span style="background: rgba(192, 132, 252, 0.3); color: #f3e8ff; padding: 3px 10px; border-radius: 8px; font-weight: 800; border: 1px solid rgba(192, 132, 252, 0.5);">
+                        🏢 {{ $businessEatery->name }}
                     </span>
                 @endif
                 @php
@@ -111,15 +116,20 @@
                 <span>| Chủ gian: <strong>{{ $sellerName }}</strong> (📞 {{ $sellerPhone }})</span>
             </p>
         </div>
-        <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-            <a href="{{ route('seller.profile') }}" class="btn-admin" style="background: #ffffff; color: #c2410c; border: none; padding: 12px 22px; border-radius: 12px; font-weight: 900; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 8px 20px rgba(0,0,0,0.15);">
-                ⚙️ Cấu Hình Gian Hàng & VietQR
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            @if(isset($businessEatery) && $businessEatery)
+                <a href="{{ route('seller.business-profile') }}" class="btn-admin" style="background: linear-gradient(135deg, #6366f1, #4f46e5); color: #ffffff; border: none; padding: 12px 20px; border-radius: 12px; font-weight: 800; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 8px 16px rgba(79, 70, 229, 0.35);">
+                    🏢 Hồ Sơ Cơ Sở KD
+                </a>
+            @endif
+            <a href="{{ route('seller.profile') }}" class="btn-admin" style="background: #ffffff; color: #c2410c; border: none; padding: 12px 20px; border-radius: 12px; font-weight: 900; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 8px 20px rgba(0,0,0,0.15);">
+                ⚙️ Cấu Hình VietQR
             </a>
-            <a href="{{ route('seller.products.index') }}" class="btn-admin" style="background: rgba(255,255,255,0.2); color: #fff; border: 1px solid rgba(255,255,255,0.35); padding: 12px 22px; border-radius: 12px; font-weight: 800; text-decoration: none; display: inline-flex; align-items: center; gap: 8px;">
+            <a href="{{ route('seller.products.index') }}" class="btn-admin" style="background: rgba(255,255,255,0.2); color: #fff; border: 1px solid rgba(255,255,255,0.35); padding: 12px 20px; border-radius: 12px; font-weight: 800; text-decoration: none; display: inline-flex; align-items: center; gap: 8px;">
                 ➕ Đổi Giá & Đăng Món
             </a>
-            <a href="{{ route('seller.orders.index') }}" class="btn-admin" style="background: rgba(255,255,255,0.2); color: #fff; border: 1px solid rgba(255,255,255,0.35); padding: 12px 22px; border-radius: 12px; font-weight: 800; text-decoration: none; display: inline-flex; align-items: center; gap: 8px;">
-                📦 Xử Lý Đơn Hàng
+            <a href="{{ route('seller.orders.index') }}" class="btn-admin" style="background: rgba(255,255,255,0.2); color: #fff; border: 1px solid rgba(255,255,255,0.35); padding: 12px 20px; border-radius: 12px; font-weight: 800; text-decoration: none; display: inline-flex; align-items: center; gap: 8px;">
+                📦 Đơn Hàng
             </a>
         </div>
     </div>
