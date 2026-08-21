@@ -2264,6 +2264,11 @@ async function handleNewsfeedPostSubmit(e, form) {
         uploadedImageUrls.forEach(url => {
             formData.append('image_urls[]', url);
         });
+    } else if (typeof selectedMediaFiles !== 'undefined' && selectedMediaFiles.length > 0) {
+        // Fallback an toàn: nếu batch upload không có URL, nạp trực tiếp danh sách tệp đính kèm
+        selectedMediaFiles.forEach(file => {
+            formData.append('images[]', file);
+        });
     }
 
     fetch(form.action, {

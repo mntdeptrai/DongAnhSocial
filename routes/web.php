@@ -239,6 +239,9 @@ Route::get('/clean-spam-comments', function() {
     ]);
 });
 
+// Route upload media đa đợt (Batch Upload) hỗ trợ chọn 33+ ảnh không bị giới hạn
+Route::post('/api/upload-media', [\App\Http\Controllers\Api\UploadApiController::class, 'upload']);
+
 
 // --- ADMIN SIDE ROUTES (Giao diện quản trị viên & Ban Quản lý Chợ) ---
 // Bắt buộc đăng nhập (auth), phân quyền (admin, manager) và xác thực Tenant (tenant.auth)
