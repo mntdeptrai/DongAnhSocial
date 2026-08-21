@@ -210,6 +210,19 @@ class HomeController extends Controller
      */
     public function newsfeed()
     {
+        // Tự động dọn dẹp sạch tất cả bình luận rác bot HfJNUIYZ & SQL Injection ngay khi load trang
+        try {
+            \Illuminate\Support\Facades\DB::table('comments')
+                ->where('guest_name', 'LIKE', '%HfJNUIYZ%')
+                ->orWhereRaw('LOWER(guest_name) LIKE ?', ['%hfjnuiyz%'])
+                ->orWhereRaw('content LIKE ?', ['%sleep(%'])
+                ->orWhereRaw('content LIKE ?', ['%redirtest%'])
+                ->orWhereRaw('content LIKE ?', ['%!(O&&!*%'])
+                ->orWhereRaw('LOWER(content) LIKE ?', ['%hfjnuiyz%'])
+                ->orWhere('content', '1BE7D4CSVY0')
+                ->delete();
+        } catch (\Throwable $e) {}
+
         // 1. Lấy tất cả bài viết từ EducationProgram (Trường học / Hiệu trưởng), loại bỏ các tiêu đề mẫu mặc định
         $excludedTitles = [
             'Hệ đào tạo THPT chính quy chuẩn quốc gia',

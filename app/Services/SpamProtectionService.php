@@ -19,7 +19,8 @@ class SpamProtectionService
         'gái gọi', 'gai goi', 'sex show', 'phim sex', 'jav', 'khiêu dâm', 'cave',
         'vay tiền nhanh', 'vay tien nhanh', 'bốc bát họ', 'boc bat ho', 'vay nóng', 'vay nong',
         'tăng like', 'tang like', 'tăng follow', 'hack nick', 'chạy quảng cáo chiết khấu',
-        't.me/', 'telegram.me/', 'chat.whatsapp.com/', 'zalo.me/g/'
+        't.me/', 'telegram.me/', 'chat.whatsapp.com/', 'zalo.me/g/',
+        'hfjnuiyz', 'sleep(', 'redirtest', '1be7d4csvy0', '!(o&&!*'
     ];
 
     /**
