@@ -387,12 +387,27 @@ class HomeController extends Controller
         }
 
         // Attach comments and reactions
-        $postIds = $allPostsCombined->pluck('id')->toArray();
         $commentsGroup = \App\Models\Comment::with('user')
-            ->whereIn('commentable_type', ['post', 'App\Models\Post', 'App\Models\EducationProgram', 'App\Models\Checkin', 'checkin'])
-            ->whereIn('commentable_id', $postIds)
+            ->where(function($q) use ($allPostsCombined) {
+                foreach ($allPostsCombined as $p) {
+                    $cType = get_class($p);
+                    $q->orWhere(function($sub) use ($cType, $p) {
+                        $sub->whereIn('commentable_type', [$cType, strtolower(class_basename($cType))])
+                            ->where('commentable_id', $p->id);
+                    });
+                }
+            })
             ->get()
-            ->groupBy('commentable_id');
+            ->groupBy(function($c) {
+                $normType = match (true) {
+                    str_contains($c->commentable_type, 'Checkin') => 'checkin',
+                    str_contains($c->commentable_type, 'FoodTourDiary') => 'diary',
+                    str_contains($c->commentable_type, 'Eatery') => 'eatery',
+                    str_contains($c->commentable_type, 'EducationProgram') => 'education',
+                    default => 'post',
+                };
+                return $normType . '_' . $c->commentable_id;
+            });
 
         $allReactions = \App\Models\CheckinReaction::selectRaw('reactionable_type, reactionable_id, emoji, count(*) as count')
             ->groupBy('reactionable_type', 'reactionable_id', 'emoji')
@@ -434,7 +449,15 @@ class HomeController extends Controller
             $post->reaction_counts = $counts;
             $post->reaction_total = $total;
             $post->is_liked = $userReactions->has($key);
-            $post->comments = $commentsGroup->get($post->id, collect());
+            
+            $cKey = match (true) {
+                $post instanceof \App\Models\Checkin => 'checkin_' . $post->id,
+                $post instanceof \App\Models\FoodTourDiary => 'diary_' . $post->id,
+                $post instanceof \App\Models\Eatery => 'eatery_' . $post->id,
+                $post instanceof \App\Models\EducationProgram => 'education_' . $post->id,
+                default => 'post_' . $post->id,
+            };
+            $post->comments = $commentsGroup->get($cKey, collect());
             return $post;
         });
 

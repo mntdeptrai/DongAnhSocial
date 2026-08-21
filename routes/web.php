@@ -223,6 +223,8 @@ Route::get('/clean-spam-comments', function() {
         ->orWhere('content', '1')
         ->orWhere('content', '1BE7D4CSVY0')
         ->orWhere('content', ')')
+        ->orWhereRaw('content LIKE ?', ['%sleep(%'])
+        ->orWhereRaw('content LIKE ?', ['%redirtest%'])
         ->orWhereRaw('content LIKE ?', ['%!(O&&!*%'])
         ->orWhereRaw('LOWER(content) LIKE ?', ['%hfjnuiyz%'])
         ->delete();
