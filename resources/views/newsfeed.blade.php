@@ -654,8 +654,30 @@
                                     <span>•</span>
                                     <span>🌐 Công khai</span>
                                 </div>
-                            </div>
                         </a>
+
+                        @php
+                            $currentUserId = Auth::id() ?? session('user_id');
+                            $canManagePost = $currentUserId && ($isAdminAuthor || (isset($p->user_id) && $p->user_id == $currentUserId) || (isset($authUser) && $authUser->role === 'admin'));
+                        @endphp
+
+                        <!-- Post Action Options (3 Dots Menu) -->
+                        <div x-data="{ menuOpen: false }" @click.outside="menuOpen = false" style="position: relative; margin-left: auto; flex-shrink: 0;">
+                            <button type="button" @click="menuOpen = !menuOpen" style="background: none; border: none; padding: 6px 10px; border-radius: 50%; color: #64748b; font-size: 1.1rem; cursor: pointer; transition: background 0.15s;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='none'" title="Tùy chọn bài viết">
+                                •••
+                            </button>
+
+                            <div x-cloak x-show="menuOpen" x-transition style="position: absolute; right: 0; top: 100%; margin-top: 4px; width: 175px; background: #ffffff; border: 1px solid rgba(0,0,0,0.08); border-radius: 16px; box-shadow: 0 12px 30px rgba(15,23,42,0.18); z-index: 99; overflow: hidden; padding: 5px 0;">
+                                @if($canManagePost)
+                                    <button type="button" onclick="deletePostAjax('{{ $p->id }}', '{{ $postDomKey }}')" style="width: 100%; text-align: left; padding: 10px 16px; background: none; border: none; font-size: 0.85rem; font-weight: 700; color: #ef4444; cursor: pointer; display: flex; align-items: center; gap: 8px;" onmouseover="this.style.background='#fef2f2'" onmouseout="this.style.background='none'">
+                                        🗑️ Xóa bài viết
+                                    </button>
+                                @endif
+                                <button type="button" onclick="copyPostLink('{{ $p->hashid ?? $p->id }}')" style="width: 100%; text-align: left; padding: 10px 16px; background: none; border: none; font-size: 0.85rem; font-weight: 700; color: #334155; cursor: pointer; display: flex; align-items: center; gap: 8px;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='none'">
+                                    🔗 Sao chép liên kết
+                                </button>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Post Content Body -->
@@ -2307,6 +2329,61 @@ async function handleNewsfeedPostSubmit(e, form) {
         }
         console.error('Submit post error:', err);
     });
+}
+
+// Hàm xóa bài viết AJAX mượt mà
+function deletePostAjax(postId, domKey) {
+    if (!confirm('Bạn có chắc chắn muốn xóa bài viết này không? Bài viết và ảnh/video đính kèm sẽ bị xóa hoàn toàn.')) {
+        return;
+    }
+
+    const cardEl = document.getElementById('post-card-' + domKey) || document.querySelector(`[data-post-id="${postId}"]`);
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+
+    fetch('/posts/' + postId, {
+        method: 'DELETE',
+        headers: {
+            'X-CSRF-TOKEN': csrfToken || '',
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json'
+        }
+    })
+    .then(async res => {
+        let data = null;
+        try { data = await res.json(); } catch(e) {}
+
+        if (res.ok || (data && data.success)) {
+            if (cardEl) {
+                cardEl.style.transition = 'all 0.4s ease';
+                cardEl.style.opacity = '0';
+                cardEl.style.transform = 'translateY(-20px)';
+                setTimeout(() => cardEl.remove(), 400);
+            }
+            if (typeof window.showToast === 'function') {
+                window.showToast('🗑️ Đã xóa bài viết thành công!', 'success');
+            } else {
+                alert('🗑️ Đã xóa bài viết thành công!');
+            }
+        } else {
+            const msg = (data && data.message) ? data.message : 'Không thể xóa bài viết này.';
+            alert(msg);
+        }
+    })
+    .catch(err => {
+        console.error('Delete post error:', err);
+        alert('Lỗi kết nối khi xóa bài viết.');
+    });
+}
+
+function copyPostLink(postId) {
+    const fullUrl = window.location.origin + '/ban-tin?post=' + postId;
+    navigator.clipboard.writeText(fullUrl).then(() => {
+        if (typeof window.showToast === 'function') {
+            window.showToast('🔗 Đã sao chép liên kết bài viết!', 'success');
+        } else {
+            alert('🔗 Đã sao chép liên kết bài viết!');
+        }
+    }).catch(() => {});
 }
 
 document.addEventListener('DOMContentLoaded', function() {
