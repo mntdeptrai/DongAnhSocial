@@ -123,8 +123,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/principal/schools/{id}/edit', [SchoolManagementController::class, 'edit'])->name('principal.schools.edit');
     Route::put('/principal/schools/{id}', [SchoolManagementController::class, 'update'])->name('principal.schools.update');
 
-    // Post Management Actions (Edit, Delete)
     Route::post('/principal/posts', [SchoolManagementController::class, 'storePost'])->name('principal.posts.store');
+    Route::post('/stories', [SchoolManagementController::class, 'storeStory'])->name('stories.store');
     Route::post('/principal/posts/{id}/update', [SchoolManagementController::class, 'updatePost'])->name('principal.posts.update');
     Route::delete('/principal/posts/{id}', [SchoolManagementController::class, 'destroyPost'])->name('principal.posts.destroy');
     Route::post('/posts/{id}/update', [SchoolManagementController::class, 'updatePost'])->name('posts.update');

@@ -484,7 +484,7 @@ class SchoolManagementController extends Controller
             return response()->json(['error' => 'Vui lòng đăng nhập để thực hiện chức năng này.'], 401);
         }
 
-        $request->validate([
+        $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
             'eatery_id' => 'nullable|integer',
             'name' => 'required|string|max:1000',
             'description' => 'required|string',
@@ -494,6 +494,14 @@ class SchoolManagementController extends Controller
             'images.*' => 'nullable|file|max:512000',
             'videos.*' => 'nullable|file|max:512000',
         ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => $validator->errors()->first(),
+                'errors' => $validator->errors()
+            ], 422);
+        }
 
         $school = null;
         if ($request->eatery_id) {
@@ -516,13 +524,15 @@ class SchoolManagementController extends Controller
         // Single file check (image or video)
         if ($request->hasFile('image')) {
             $file = $request->file('image');
-            $mime = $file->getMimeType() ?: '';
-            $path = R2Helper::upload($file, 'education');
-            if ($path) {
-                if (str_contains($mime, 'video') || in_array(strtolower($file->getClientOriginalExtension()), ['mp4', 'mov', 'avi', 'mkv', 'webm'])) {
-                    $uploadedVideos[] = $path;
-                } else {
-                    $uploadedImages[] = $path;
+            if ($file && $file->isValid()) {
+                $mime = $file->getClientMimeType() ?: '';
+                $path = R2Helper::upload($file, 'education');
+                if ($path) {
+                    if (str_contains($mime, 'video') || in_array(strtolower($file->getClientOriginalExtension()), ['mp4', 'mov', 'avi', 'mkv', 'webm'])) {
+                        $uploadedVideos[] = $path;
+                    } else {
+                        $uploadedImages[] = $path;
+                    }
                 }
             }
         }
@@ -530,7 +540,10 @@ class SchoolManagementController extends Controller
         // Multi files in images[] (can contain photos or videos!)
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $file) {
-                $mime = $file->getMimeType() ?: '';
+                if (!$file || !($file instanceof \Illuminate\Http\UploadedFile) || !$file->isValid()) {
+                    continue;
+                }
+                $mime = $file->getClientMimeType() ?: '';
                 $path = R2Helper::upload($file, 'education');
                 if ($path) {
                     if (str_contains($mime, 'video') || in_array(strtolower($file->getClientOriginalExtension()), ['mp4', 'mov', 'avi', 'mkv', 'webm'])) {
@@ -545,6 +558,9 @@ class SchoolManagementController extends Controller
         // Dedicated videos[] files
         if ($request->hasFile('videos')) {
             foreach ($request->file('videos') as $file) {
+                if (!$file || !($file instanceof \Illuminate\Http\UploadedFile) || !$file->isValid()) {
+                    continue;
+                }
                 $path = R2Helper::upload($file, 'education');
                 if ($path) {
                     $uploadedVideos[] = $path;
@@ -555,57 +571,68 @@ class SchoolManagementController extends Controller
         $imagePath = !empty($uploadedImages) ? $uploadedImages[0] : null;
         $videoPath = !empty($uploadedVideos) ? $uploadedVideos[0] : null;
 
-        if ($school) {
-            // Giữ nguyên logic cũ cho Trường học / Principal -> Đăng vào EducationProgram
-            $postData = [
-                'eatery_id' => $school->id,
-                'name' => $request->name,
-                'description' => $request->description,
-                'duration' => $request->duration,
-                'tuition_fee' => $request->tuition_fee,
-                'image_path' => $imagePath,
-                'images' => $uploadedImages,
-                'video_path' => $videoPath,
-                'videos' => $uploadedVideos,
-            ];
+        $post = null;
+        try {
+            if ($school) {
+                // Đăng vào EducationProgram
+                $postData = [
+                    'eatery_id' => $school->id,
+                    'name' => $request->name,
+                    'description' => $request->description,
+                    'duration' => $request->duration,
+                    'tuition_fee' => $request->tuition_fee,
+                    'image_path' => $imagePath,
+                    'images' => $uploadedImages,
+                    'video_path' => $videoPath,
+                    'videos' => $uploadedVideos,
+                ];
 
-            try {
-                $post = \App\Models\EducationProgram::on('mysql_education')->create($postData);
-            } catch (\Exception $e) {
-                $post = \App\Models\EducationProgram::on('mysql')->create($postData);
-            }
-        } else {
-            // Bảng mới posts dành cho cá nhân Admin / Người dùng
-            $postData = [
-                'user_id' => $user->id,
-                'name' => $request->name,
-                'description' => $request->description,
-                'image_path' => $imagePath,
-                'images' => $uploadedImages,
-                'video_path' => $videoPath,
-                'videos' => $uploadedVideos,
-                'status' => 'active',
-            ];
+                try {
+                    $post = \App\Models\EducationProgram::on('mysql_education')->create($postData);
+                } catch (\Throwable $e) {
+                    $post = \App\Models\EducationProgram::on('mysql')->create($postData);
+                }
+            } else {
+                // Đăng vào Post
+                $postData = [
+                    'user_id' => $user->id,
+                    'name' => $request->name,
+                    'description' => $request->description,
+                    'image_path' => $imagePath,
+                    'images' => $uploadedImages,
+                    'video_path' => $videoPath,
+                    'videos' => $uploadedVideos,
+                    'status' => 'active',
+                ];
 
-            try {
-                $post = \App\Models\Post::on('mysql_education')->create($postData);
-            } catch (\Exception $e) {
-                $post = \App\Models\Post::on('mysql')->create($postData);
+                try {
+                    $post = \App\Models\Post::on('mysql_education')->create($postData);
+                } catch (\Throwable $e) {
+                    $post = \App\Models\Post::on('mysql')->create($postData);
+                }
             }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('[storePost] Exception: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Có lỗi xảy ra khi lưu bài viết: ' . $e->getMessage()
+            ], 500);
         }
 
         // Tự động gửi thông báo đến tất cả Bạn bè & Followers ngay lập tức
         try {
             \App\Services\NotificationService::notifyNewPost($user, $request->name ?? '', $request->description ?? '', $school->id ?? null);
-        } catch (\Exception $e) {}
+        } catch (\Throwable $e) {}
 
         if ($request->wantsJson() || $request->ajax() || $request->header('X-Requested-With') === 'XMLHttpRequest') {
-            $post->all_images = $post->all_images;
-            $post->formatted_created_at = 'Vừa xong';
-            $post->real_likes_count = 0;
-            $post->is_liked = false;
-            $post->real_comments_count = 0;
-            $post->real_shares_count = 0;
+            if ($post) {
+                $post->all_images = $post->all_images;
+                $post->formatted_created_at = 'Vừa xong';
+                $post->real_likes_count = 0;
+                $post->is_liked = false;
+                $post->real_comments_count = 0;
+                $post->real_shares_count = 0;
+            }
 
             return response()->json([
                 'success' => true,
@@ -620,6 +647,47 @@ class SchoolManagementController extends Controller
         }
 
         return redirect()->back()->with('success', 'Đăng bài viết mới thành công!');
+    }
+
+    /**
+     * Đăng Story tin mới (Facebook / Instagram Style)
+     */
+    public function storeStory(\Illuminate\Http\Request $request)
+    {
+        $user = auth()->user() ?? (\App\Models\User::find(session('user_id')));
+
+        $mediaUrl = null;
+        $type = $request->input('type', 'image');
+
+        if ($request->hasFile('media_file')) {
+            $file = $request->file('media_file');
+            if ($file->isValid()) {
+                $uploaded = \App\Helpers\R2Helper::upload($file, 'stories');
+                if ($uploaded) {
+                    $mediaUrl = $uploaded;
+                    $mime = $file->getMimeType();
+                    if (str_contains($mime, 'video')) {
+                        $type = 'video';
+                    }
+                }
+            }
+        }
+
+        $story = \App\Models\Story::create([
+            'user_id' => $user ? $user->id : null,
+            'author_name' => $user ? $user->name : ($request->input('author_name') ?: 'Thành viên Đông Anh'),
+            'author_avatar' => $user ? ($user->avatar_url ?? $user->avatar) : null,
+            'media_url' => $mediaUrl,
+            'caption' => $request->input('caption'),
+            'bg_gradient' => $request->input('bg_gradient', 'linear-gradient(135deg, #0ea5e9, #0284c7)'),
+            'type' => $type
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Đã chia sẻ Story tin mới thành công! ✨',
+            'story' => $story
+        ]);
     }
 
     /**

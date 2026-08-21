@@ -20,28 +20,37 @@ class R2Helper
      */
     public static function upload(UploadedFile $file, string $folder = 'general', int $maxDimension = 4096): string
     {
-        $mimeType = $file->getClientMimeType();
+        if (!$file->isValid() || !$file->getRealPath()) {
+            Log::warning('[R2Helper] Upload file invalid or exceeds PHP upload limits: ' . $file->getClientOriginalName());
+            return '';
+        }
+
+        $mimeType = $file->getClientMimeType() ?: '';
         $isImage = str_starts_with($mimeType, 'image/');
         $extension = $file->getClientOriginalExtension() ?: 'jpg';
         $safeName  = $folder . '/' . time() . '_' . Str::random(8) . '.' . $extension;
 
         $resizedContent = null;
-        if ($isImage) {
+        $realPath = $file->getRealPath();
+
+        if ($isImage && $realPath) {
             try {
-                $resizedContent = self::resizeImageGd($file->getRealPath(), $mimeType, $maxDimension);
+                $resizedContent = self::resizeImageGd($realPath, $mimeType, $maxDimension);
             } catch (\Throwable $e) {
                 Log::warning('[R2Helper] Resize image failed, using original: ' . $e->getMessage());
             }
         }
 
-        $content = $resizedContent !== null ? $resizedContent : file_get_contents($file->getRealPath());
+        $content = $resizedContent !== null ? $resizedContent : ($realPath ? @file_get_contents($realPath) : null);
+        if ($content === null || $content === false) {
+            return '';
+        }
 
         try {
             Storage::disk('r2')->put($safeName, $content, 'public');
             return rtrim(env('R2_PUBLIC_URL'), '/') . '/' . $safeName;
         } catch (\Throwable $e) {
             Log::error('[R2Helper] Upload failed: ' . $e->getMessage());
-            // Fallback to local public storage
             return self::fallbackLocal($file, $folder, $resizedContent);
         }
     }

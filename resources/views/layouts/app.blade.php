@@ -495,9 +495,15 @@
                             open: false, 
                             items: [],
                             loading: false,
-                            markedRead: false,
+                            filterTab: 'all',
                             get unreadCount() {
                                 return this.items.filter(i => !i.is_read).length;
+                            },
+                            get filteredItems() {
+                                if (this.filterTab === 'unread') {
+                                    return this.items.filter(i => !i.is_read);
+                                }
+                                return this.items;
                             },
                             init() {
                                 this.fetchNotifications();
@@ -514,18 +520,16 @@
                             },
                             async doMarkAndRefresh() {
                                 this.items.forEach(i => i.is_read = true);
-                                this.markedRead = true;
                                 try {
                                     await fetch('/api/user-notifications/read', { 
                                         method: 'POST', 
                                         headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]')?.content || '' } 
                                     });
                                 } catch(e) {}
-                                this.fetchNotifications();
                             }
                         }" @click.outside="open = false" style="position: relative; display: flex; align-items: center;">
                             
-                            <button @click="open = !open; if(open) { doMarkAndRefresh(); }" class="header-action-btn" title="Thông báo" style="outline: none; border: none; background: rgba(0, 0, 0, 0.05); cursor: pointer; position: relative;">
+                            <button @click="open = !open; if(open) { fetchNotifications(); }" class="header-action-btn" title="Thông báo" style="outline: none; border: none; background: rgba(0, 0, 0, 0.05); cursor: pointer; position: relative;">
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
                                     <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
@@ -535,7 +539,7 @@
                                 </template>
                             </button>
 
-                            <!-- Dropdown Menu -->
+                            <!-- Dropdown Menu (Nền Đục 100% Thuần Khiết) -->
                             <div x-cloak
                                  x-show="open" 
                                  x-transition:enter="transition ease-out duration-150"
@@ -545,47 +549,81 @@
                                  x-transition:leave-start="opacity-100 transform scale-100"
                                  x-transition:leave-end="opacity-0 transform scale-95"
                                  class="notif-dropdown-menu" 
-                                 style="position: absolute; right: 0; top: 100%; margin-top: 10px; width: 340px; background: var(--bg-card, #ffffff); border: 1px solid var(--border-glow, rgba(0,0,0,0.08)); border-radius: 20px; box-shadow: 0 12px 40px rgba(0,0,0,0.15); z-index: 10000; overflow: hidden; text-align: left; display: flex; flex-direction: column; white-space: normal;">
+                                 style="position: absolute; right: 0; top: 100%; margin-top: 10px; width: 390px; max-width: 92vw; background: #ffffff !important; opacity: 1 !important; border: 1px solid rgba(0,0,0,0.08); border-radius: 24px; box-shadow: 0 20px 60px -10px rgba(15, 23, 42, 0.3); z-index: 999999 !important; overflow: hidden; text-align: left; display: flex; flex-direction: column; white-space: normal; backdrop-filter: none !important;">
                                 
-                                <div style="padding: 16px 18px; border-bottom: 1px solid rgba(0,0,0,0.06); display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.015);">
-                                    <h4 style="margin: 0; font-size: 1.05rem; font-weight: 800; color: var(--text-main, #1e293b); font-family: var(--font-heading);">Thông báo</h4>
-                                    <template x-if="unreadCount > 0">
-                                        <span style="font-size: 0.78rem; color: #ea580c; font-weight: 700; background: rgba(234,88,12,0.1); padding: 3px 8px; border-radius: 12px;" x-text="unreadCount + ' mới'"></span>
-                                    </template>
+                                <!-- Header với Segment Controls chuẩn Facebook -->
+                                <div style="padding: 18px 20px 14px 20px; border-bottom: 1px solid #f1f5f9; background: #ffffff;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                        <h4 style="margin: 0; font-size: 1.18rem; font-weight: 800; color: #0f172a; font-family: 'Be Vietnam Pro', sans-serif;">
+                                            Thông báo
+                                        </h4>
+                                        <button type="button" @click="doMarkAndRefresh()" style="background: rgba(14,165,233,0.08); border: none; font-size: 0.78rem; font-weight: 800; color: #0ea5e9; cursor: pointer; padding: 6px 12px; border-radius: 20px; transition: all 0.15s;" onmouseover="this.style.background='rgba(14,165,233,0.16)'" onmouseout="this.style.background='rgba(14,165,233,0.08)'">
+                                            ✓ Đánh dấu tất cả đã đọc
+                                        </button>
+                                    </div>
+                                    
+                                    <!-- Segment Control Pills -->
+                                    <div style="background: #f1f5f9; padding: 4px; border-radius: 30px; display: inline-flex; gap: 4px;">
+                                        <button type="button" @click="filterTab = 'all'" :style="filterTab === 'all' ? 'background: #0ea5e9; color: #ffffff; box-shadow: 0 3px 10px rgba(14,165,233,0.3);' : 'background: transparent; color: #64748b;'" style="border: none; padding: 6px 18px; border-radius: 20px; font-size: 0.8rem; font-weight: 800; cursor: pointer; transition: all 0.15s;">
+                                            Tất cả
+                                        </button>
+                                        <button type="button" @click="filterTab = 'unread'" :style="filterTab === 'unread' ? 'background: #0ea5e9; color: #ffffff; box-shadow: 0 3px 10px rgba(14,165,233,0.3);' : 'background: transparent; color: #64748b;'" style="border: none; padding: 6px 18px; border-radius: 20px; font-size: 0.8rem; font-weight: 800; cursor: pointer; transition: all 0.15s;">
+                                            Chưa đọc <span x-show="unreadCount > 0" x-text="'(' + unreadCount + ')'"></span>
+                                        </button>
+                                    </div>
                                 </div>
 
-                                <div style="max-height: 380px; overflow-y: auto; display: flex; flex-direction: column; padding: 8px 0; -webkit-overflow-scrolling: touch;">
-                                    <div x-show="loading" style="padding: 30px; text-align: center; color: var(--text-muted, #64748b); font-size: 0.88rem;">
+                                <!-- Scrollable Notification List -->
+                                <div style="max-height: 400px; overflow-y: auto; display: flex; flex-direction: column; padding: 6px 0; background: #ffffff; -webkit-overflow-scrolling: touch;">
+                                    <div x-show="loading" style="padding: 40px; text-align: center; color: #64748b; font-size: 0.88rem;">
                                         <span style="display: inline-block; animation: spin 1s linear infinite; margin-right: 6px;">⏳</span> Đang tải...
                                     </div>
 
-                                    <template x-if="!loading && items.length > 0">
+                                    <template x-if="!loading && filteredItems.length > 0">
                                         <div style="display: flex; flex-direction: column;">
-                                            <template x-for="item in items" :key="item.id">
-                                                <a :href="item.target_url || item.url || (item.type === 'my_order' ? '/orders' : (item.type === 'seller_order' ? '/seller/orders' : (item.type === 'friend' ? '/social' : '/ban-tin')))" style="display: flex; align-items: flex-start; gap: 12px; padding: 12px 18px; text-decoration: none; color: inherit; border-bottom: 1px solid rgba(0,0,0,0.03); transition: background 0.15s; white-space: normal;" onmouseover="this.style.background='rgba(0,0,0,0.02)'" onmouseout="this.style.background='transparent'">
-                                                    <div style="width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0; background: rgba(14,165,233,0.1);">
-                                                        <span x-text="item.type === 'reaction' ? '👍' : (item.type === 'comment' ? '💬' : (item.type === 'share' ? '🔄' : (item.type === 'review' ? '⭐' : (item.type === 'friend' ? '👥' : (item.type === 'new_post' ? '📣' : '📦')))))"></span>
+                                            <template x-for="item in filteredItems" :key="item.id">
+                                                <a :href="item.target_url || item.url || '/ban-tin'" 
+                                                   @click="handleNotifItemClick(item.target_url || item.url || '/ban-tin', $event); open = false;" 
+                                                   :style="item.is_read ? 'background: #ffffff;' : 'background: #f0f9ff; border-left: 3.5px solid #0ea5e9;'" 
+                                                   style="display: flex; align-items: center; gap: 14px; padding: 12px 18px; text-decoration: none; color: inherit; border-bottom: 1px solid #f1f5f9; transition: background 0.15s; white-space: normal; position: relative; width: 100%; box-sizing: border-box;" 
+                                                   onmouseover="this.style.background='#f8fafc'" 
+                                                   onmouseout="this.style.background=this.getAttribute('data-bg') || (this.style.borderLeft ? '#f0f9ff' : '#ffffff')">
+                                                    
+                                                    <!-- Left Avatar Circle với Mini Badge -->
+                                                    <div style="position: relative; width: 44px; height: 44px; flex-shrink: 0;">
+                                                        <div :class="'notif-icon-circle notif-type-' + (item.type || 'default')" style="width: 44px !important; height: 44px !important; min-width: 44px !important; min-height: 44px !important; border-radius: 50% !important;">
+                                                            <span x-text="item.type === 'reaction' ? '👍' : (item.type === 'comment' ? '💬' : (item.type === 'reply' ? '↩️' : (item.type === 'share' ? '🔄' : (item.type === 'message' ? '✉️' : (item.type === 'review' ? '⭐' : (item.type === 'friend' ? '👥' : (item.type === 'new_post' ? '📣' : '📦')))))))"></span>
+                                                        </div>
                                                     </div>
-                                                    <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; text-align: left;">
-                                                        <span style="font-size: 0.84rem; font-weight: 800; color: var(--text-main, #0f172a); white-space: normal; word-break: break-word;" x-text="item.title"></span>
-                                                        <span style="font-size: 0.8rem; color: var(--text-muted, #475569); line-height: 1.35; white-space: normal; word-break: break-word;" x-text="item.body"></span>
-                                                        <span style="font-size: 0.72rem; color: #94a3b8; margin-top: 2px; white-space: normal;" x-text="item.time"></span>
+
+                                                    <!-- Main Content Text -->
+                                                    <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; text-align: left;">
+                                                        <span style="font-size: 0.88rem; font-weight: 800; color: #0f172a; white-space: normal; word-break: break-word; line-height: 1.35; margin: 0;" x-text="item.title ? item.title.replace(/^[\p{Emoji}\u200d\ufe0f\s]+/u, '') : ''"></span>
+                                                        <span style="font-size: 0.82rem; color: #475569; line-height: 1.4; white-space: normal; word-break: break-word; margin: 0;" x-text="item.body"></span>
+                                                        <span style="font-size: 0.72rem; color: #0284c7; font-weight: 700; margin-top: 3px;" x-text="item.time"></span>
                                                     </div>
+
+                                                    <!-- Unread Dot Indicator -->
+                                                    <template x-if="!item.is_read">
+                                                        <span style="width: 9px; height: 9px; border-radius: 50%; background: #0ea5e9; flex-shrink: 0; margin-left: 6px; box-shadow: 0 0 10px rgba(14,165,233,0.8);"></span>
+                                                    </template>
                                                 </a>
                                             </template>
                                         </div>
                                     </template>
 
-                                    <template x-if="!loading && items.length === 0">
-                                        <div style="padding: 40px 20px; text-align: center; color: var(--text-muted, #64748b); font-size: 0.88rem; display: flex; flex-direction: column; align-items: center; gap: 8px;">
-                                            <span style="font-size: 2rem;">🔔</span>
-                                            <span>Hiện chưa có thông báo mới nào.</span>
+                                    <template x-if="!loading && filteredItems.length === 0">
+                                        <div style="padding: 45px 20px; text-align: center; color: #64748b; font-size: 0.88rem; display: flex; flex-direction: column; align-items: center; gap: 10px;">
+                                            <span style="font-size: 2.5rem;">🔔</span>
+                                            <span style="font-weight: 700; color: #334155;">Hiện tại chưa có thông báo nào.</span>
                                         </div>
                                     </template>
                                 </div>
 
-                                <div style="border-top: 1px solid rgba(0,0,0,0.06); text-align: center; background: rgba(0,0,0,0.015);">
-                                    
+                                <div style="padding: 12px; border-top: 1px solid #f1f5f9; text-align: center; background: #fafafa;">
+                                    <button type="button" @click="fetchNotifications()" style="background: none; border: none; font-size: 0.8rem; font-weight: 800; color: #0ea5e9; cursor: pointer; padding: 4px 12px; border-radius: 12px;" onmouseover="this.style.background='#e0f2fe'" onmouseout="this.style.background='none'">
+                                        🔄 Tải lại thông báo
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -2543,6 +2581,8 @@
         </div>
     </div>
 
+
+
     <script>
         let activeCustomConfirmForm = null;
         let activeCustomConfirmCallback = null;
@@ -2643,6 +2683,74 @@
          DONGANH SOCIAL IN-APP SHARE MODAL (LIGHT & FRESH THEME)
          ========================================================== -->
     <style>
+        .notif-icon-circle {
+            width: 42px !important;
+            height: 42px !important;
+            min-width: 42px !important;
+            min-height: 42px !important;
+            border-radius: 50% !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            font-size: 1.15rem !important;
+            flex-shrink: 0 !important;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06) !important;
+            margin: 0 !important;
+        }
+        .notif-type-reaction { background: #eff6ff !important; color: #2563eb !important; }
+        .notif-type-comment { background: #e0f2fe !important; color: #0284c7 !important; }
+        .notif-type-reply { background: #ecfdf5 !important; color: #10b981 !important; }
+        .notif-type-message { background: #e0e7ff !important; color: #4338ca !important; }
+        .notif-type-share { background: #f3e8ff !important; color: #7e22ce !important; }
+        .notif-type-friend { background: #fef3c7 !important; color: #d97706 !important; }
+        .notif-type-review { background: #fef9c3 !important; color: #ca8a04 !important; }
+        .notif-type-default { background: #f1f5f9 !important; color: #475569 !important; }
+
+        @keyframes notifHighlightPulse {
+            0% {
+                box-shadow: 0 0 0 3.5px #0ea5e9, 0 10px 35px rgba(14, 165, 233, 0.4) !important;
+                transform: scale(1.008);
+            }
+            50% {
+                box-shadow: 0 0 0 4px #0284c7, 0 12px 40px rgba(2, 132, 199, 0.5) !important;
+                transform: scale(1.012);
+            }
+            100% {
+                box-shadow: none !important;
+                transform: scale(1);
+            }
+        }
+        .notif-target-highlight {
+            animation: notifHighlightPulse 3.5s ease-in-out forwards !important;
+            transition: all 0.3s ease !important;
+        }
+    </style>
+
+    <script>
+    function handleNotifItemClick(url, event) {
+        if (!url) return;
+        try {
+            const targetUrlObj = new URL(url, window.location.origin);
+            const currentPath = window.location.pathname;
+            const targetPath = targetUrlObj.pathname;
+            
+            if (currentPath === targetPath) {
+                if (event) event.preventDefault();
+                window.history.pushState({}, '', url);
+                if (typeof window.scrollToNotifTarget === 'function') {
+                    window.scrollToNotifTarget();
+                } else {
+                    window.location.href = url;
+                }
+            } else {
+                window.location.href = url;
+            }
+        } catch(e) {
+            window.location.href = url;
+        }
+    }
+    </script>
+
         .dash-share-overlay {
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
             background: rgba(15, 23, 42, 0.45); backdrop-filter: blur(8px);
@@ -2652,9 +2760,9 @@
             .dash-share-overlay { align-items: center; }
         }
         .dash-share-box {
-            background: #ffffff; color: #0f172a; border-radius: 24px; padding: 24px; width: 100%; max-width: 480px;
+            background: #ffffff; color: #0f172a; border-radius: 24px; padding: 24px 20px; width: 92%; max-width: 440px;
             box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.25); position: relative; font-family: 'Be Vietnam Pro', sans-serif;
-            border: 1px solid rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(0, 0, 0, 0.08); overflow: hidden; box-sizing: border-box;
         }
         .dash-share-close {
             position: absolute; top: 16px; right: 16px; background: #f1f5f9; border: none;
@@ -2667,7 +2775,7 @@
         
         .dash-friends-scroll {
             display: flex; gap: 14px; overflow-x: auto; padding-bottom: 12px; margin-bottom: 16px;
-            scrollbar-width: thin; scrollbar-color: #cbd5e1 transparent;
+            scrollbar-width: thin; scrollbar-color: #cbd5e1 transparent; -webkit-overflow-scrolling: touch;
         }
         .dash-friend-item {
             display: flex; flex-direction: column; align-items: center; gap: 6px; width: 72px; flex-shrink: 0;
@@ -2692,23 +2800,33 @@
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%;
         }
 
-        .dash-share-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+        .dash-share-grid {
+            display: flex; gap: 10px; overflow-x: auto; padding: 4px 0 10px 0;
+            scrollbar-width: none; -webkit-overflow-scrolling: touch; width: 100%; box-sizing: border-box;
+        }
+        .dash-share-grid::-webkit-scrollbar { display: none; }
         .dash-grid-btn {
-            display: flex; flex-direction: column; align-items: center; gap: 8px; background: transparent; border: none;
-            color: #334155; cursor: pointer; padding: 8px 4px; border-radius: 16px; transition: all 0.15s;
+            display: flex; flex-direction: column; align-items: center; gap: 6px; background: transparent; border: none;
+            color: #334155; cursor: pointer; padding: 6px 2px; border-radius: 16px; transition: all 0.15s;
+            width: 64px; flex-shrink: 0; box-sizing: border-box;
         }
         .dash-grid-btn:hover { background: #f8fafc; color: #0f172a; }
         .dash-grid-icon-box {
-            width: 52px; height: 52px; border-radius: 20px; background: #f1f5f9; display: flex;
-            align-items: center; justify-content: center; font-size: 1.4rem; transition: all 0.2s;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            width: 50px; height: 50px; border-radius: 16px; background: #f1f5f9; display: flex;
+            align-items: center; justify-content: center; font-size: 1.3rem; transition: all 0.2s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04); flex-shrink: 0;
         }
-        .dash-grid-btn:hover .dash-grid-icon-box { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(37, 99, 235, 0.2); }
+        .dash-grid-btn:hover .dash-grid-icon-box { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(37, 99, 235, 0.2); }
+        .dash-grid-btn.zalo .dash-grid-icon-box { background: #0068ff; color: #fff; font-weight: 800; font-size: 0.8rem; }
+        .dash-grid-btn.facebook .dash-grid-icon-box { background: #1877f2; color: #fff; font-weight: 800; font-size: 0.85rem; }
         .dash-grid-btn.feed .dash-grid-icon-box { background: #eff6ff; color: #2563eb; }
         .dash-grid-btn.link .dash-grid-icon-box { background: #ecfdf5; color: #10b981; }
         .dash-grid-btn.external .dash-grid-icon-box { background: #fef3c7; color: #d97706; }
         .dash-grid-btn.chat .dash-grid-icon-box { background: #f0f9ff; color: #0284c7; }
-        .dash-grid-label { font-size: 0.78rem; font-weight: 700; text-align: center; line-height: 1.25; color: #1e293b; }
+        .dash-grid-label {
+            font-size: 0.74rem; font-weight: 700; text-align: center; line-height: 1.2; color: #1e293b;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%;
+        }
     </style>
 
     <div id="dongAnhShareModal" style="display:none; opacity:0; transition: opacity 0.25s ease;" class="dash-share-overlay">
@@ -2726,13 +2844,13 @@
 
             <!-- Section 2: Share options -->
             <div class="dash-share-subtitle">Chia sẻ lên hệ sinh thái</div>
-            <div class="dash-share-grid" style="grid-template-columns: repeat(6, 1fr);">
+            <div class="dash-share-grid">
                 <button type="button" class="dash-grid-btn zalo" onclick="shareToZaloWeb()">
-                    <div class="dash-grid-icon-box" style="background: #0068ff; color: #fff; font-weight: 800; font-size: 0.82rem;">Zalo</div>
+                    <div class="dash-grid-icon-box">Zalo</div>
                     <span class="dash-grid-label">Zalo</span>
                 </button>
                 <button type="button" class="dash-grid-btn facebook" onclick="shareToFacebookWeb()">
-                    <div class="dash-grid-icon-box" style="background: #1877f2; color: #fff; font-weight: 800; font-size: 0.9rem;">FB</div>
+                    <div class="dash-grid-icon-box">FB</div>
                     <span class="dash-grid-label">Facebook</span>
                 </button>
                 <button type="button" class="dash-grid-btn feed" onclick="shareToInternalFeed()">
@@ -3010,44 +3128,33 @@
     </script>
 
 
-    {{-- Global Auth Guard — Login Popup Modal --}}
-    <div id="authLoginModal" style="display:none; position:fixed; inset:0; z-index:999999; background:rgba(0,0,0,0.55); backdrop-filter:blur(6px); align-items:center; justify-content:center;" onclick="if(event.target===this)closeAuthLoginModal()">
-        <div style="background:#fff; border-radius:20px; width:92%; max-width:420px; box-shadow:0 25px 80px rgba(0,0,0,0.25); animation:authModalIn .3s ease; overflow:hidden;">
-            {{-- Header --}}
-            <div style="text-align:center; padding:28px 24px 0; position:relative;">
-                <button onclick="closeAuthLoginModal()" style="position:absolute; top:14px; right:16px; background:none; border:none; font-size:1.4rem; cursor:pointer; color:#94a3b8; line-height:1;" aria-label="Đóng">&times;</button>
-                <div style="font-size:2.5rem; margin-bottom:8px;">🍜</div>
-                <h3 style="margin:0; font-size:1.35rem; font-weight:800; color:#0f172a;">Đăng nhập</h3>
-                <p id="authLoginMessage" style="margin:6px 0 0; font-size:0.84rem; color:#64748b;">Đăng nhập để tương tác với cộng đồng</p>
+    {{-- Global Auth Guard — Food Tour Style Invite Popup Modal --}}
+    <div id="authLoginModal" style="display:none; position:fixed; inset:0; z-index:999999; background:rgba(15, 23, 42, 0.65); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); align-items:center; justify-content:center; padding: 20px; box-sizing: border-box;" onclick="if(event.target===this)closeAuthLoginModal()">
+        <div style="background:#ffffff; border-radius:24px; width:92%; max-width:420px; padding: 32px 24px 28px 24px; box-shadow:0 25px 80px rgba(0,0,0,0.3); border: 1.5px solid rgba(14, 165, 233, 0.25); text-align:center; position:relative; animation:authModalIn .3s ease; box-sizing: border-box;">
+            <button onclick="closeAuthLoginModal()" style="position:absolute; top:16px; right:16px; width: 32px; height: 32px; border-radius: 50%; background:#f1f5f9; border:none; font-size:1.1rem; color:#64748b; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:background 0.2s;" onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#f1f5f9'" aria-label="Đóng">✕</button>
+            
+            <div style="width:68px; height:68px; border-radius:50%; background:linear-gradient(135deg, #0ea5e9, #0284c7); color:#fff; display:inline-flex; align-items:center; justify-content:center; font-size:2.2rem; margin-bottom:16px; box-shadow:0 10px 25px -5px rgba(14,165,233,0.45);">
+                🔑
             </div>
-            {{-- Error display --}}
-            <div id="authLoginError" style="display:none; margin:12px 24px 0; padding:10px 14px; background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.2); border-radius:10px; color:#dc2626; font-size:0.82rem; font-weight:600;"></div>
-            {{-- Form --}}
-            <form id="authLoginForm" onsubmit="handleAuthLoginSubmit(event)" style="padding:20px 24px 24px;">
-                <div style="margin-bottom:14px;">
-                    <label style="display:block; font-size:0.82rem; font-weight:700; color:#334155; margin-bottom:6px;">Tài khoản</label>
-                    <input type="text" id="authLoginEmail" required placeholder="Email, tên đăng nhập hoặc SĐT"
-                        style="width:100%; padding:11px 14px; border:1.5px solid #e2e8f0; border-radius:12px; font-size:0.9rem; outline:none; transition:border .2s; background:#f8fafc; box-sizing:border-box;"
-                        onfocus="this.style.borderColor='#0284c7';this.style.background='#fff'" onblur="this.style.borderColor='#e2e8f0';this.style.background='#f8fafc'">
-                </div>
-                <div style="margin-bottom:18px;">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                        <label style="font-size:0.82rem; font-weight:700; color:#334155;">Mật khẩu</label>
-                        <a href="/auth/forgot-password" style="font-size:0.76rem; color:#0284c7; text-decoration:none;">Quên mật khẩu?</a>
-                    </div>
-                    <input type="password" id="authLoginPassword" required placeholder="••••••••"
-                        style="width:100%; padding:11px 14px; border:1.5px solid #e2e8f0; border-radius:12px; font-size:0.9rem; outline:none; transition:border .2s; background:#f8fafc; box-sizing:border-box;"
-                        onfocus="this.style.borderColor='#0284c7';this.style.background='#fff'" onblur="this.style.borderColor='#e2e8f0';this.style.background='#f8fafc'">
-                </div>
-                <button type="submit" id="authLoginSubmitBtn"
-                    style="width:100%; padding:12px; border:none; border-radius:12px; background:linear-gradient(135deg,#0284c7,#0369a1); color:#fff; font-size:0.95rem; font-weight:800; cursor:pointer; transition:opacity .2s;"
-                    onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
-                    Đăng nhập
-                </button>
-                <div style="text-align:center; margin-top:16px; font-size:0.82rem; color:#64748b;">
-                    Chưa có tài khoản? <a href="/auth/register" style="color:#0284c7; font-weight:700; text-decoration:none;">Đăng ký ngay</a>
-                </div>
-            </form>
+
+            <h3 style="margin:0 0 8px 0; font-size:1.3rem; font-weight:800; color:#0f172a; font-family: var(--font-heading, inherit);" id="authLoginTitle">Đăng nhập tài khoản</h3>
+            
+            <p id="authLoginMessage" style="margin:0 0 24px 0; font-size:0.9rem; color:#64748b; line-height:1.6; font-weight: 500;">
+                Bạn cần đăng nhập hoặc đăng ký tài khoản Đông Anh Discovery để trải nghiệm tính năng này nhé!
+            </p>
+
+            <div style="display:flex; gap:12px;">
+                <a id="authModalLoginBtn" href="/auth/login" style="flex:1; padding:12px 16px; border-radius:14px; background:linear-gradient(135deg, #0ea5e9, #0284c7); color:#ffffff; font-weight:800; font-size:0.92rem; text-decoration:none; display:inline-flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 8px 20px -4px rgba(14, 165, 233, 0.4); transition:transform 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                    <span>🔑</span> Đăng nhập
+                </a>
+                <a id="authModalRegisterBtn" href="/auth/register" style="flex:1; padding:12px 16px; border-radius:14px; background:#f8fafc; color:#0284c7; font-weight:800; font-size:0.92rem; text-decoration:none; border:1.5px solid #e0f2fe; display:inline-flex; align-items:center; justify-content:center; gap:6px; transition:background 0.2s;" onmouseover="this.style.background='#eff6ff'" onmouseout="this.style.background='#f8fafc'">
+                    <span>✨</span> Đăng ký
+                </a>
+            </div>
+
+            <button type="button" onclick="closeAuthLoginModal()" style="background:transparent; border:none; color:#94a3b8; font-size:0.85rem; font-weight:600; cursor:pointer; padding:8px 0 0 0; margin-top:14px; font-family:inherit; width:100%;">
+                Để sau
+            </button>
         </div>
     </div>
     <style>
@@ -3072,21 +3179,21 @@
     function openAuthLoginModal(actionName) {
         var modal = document.getElementById('authLoginModal');
         var msgEl = document.getElementById('authLoginMessage');
-        var errEl = document.getElementById('authLoginError');
-        errEl.style.display = 'none';
+        var titleEl = document.getElementById('authLoginTitle');
+        
         if (actionName) {
-            msgEl.textContent = 'Đăng nhập để ' + actionName;
+            if (titleEl) titleEl.textContent = 'Đăng nhập để ' + actionName;
+            if (msgEl) msgEl.textContent = 'Bạn cần đăng nhập hoặc đăng ký tài khoản Đông Anh Discovery để ' + actionName + ' nhé!';
         } else {
-            msgEl.textContent = 'Đăng nhập để tương tác với cộng đồng';
+            if (titleEl) titleEl.textContent = 'Đăng nhập tài khoản';
+            if (msgEl) msgEl.textContent = 'Bạn cần đăng nhập hoặc đăng ký tài khoản Đông Anh Discovery để trải nghiệm tính năng này nhé!';
         }
-        modal.style.display = 'flex';
-        setTimeout(function() {
-            document.getElementById('authLoginEmail').focus();
-        }, 100);
+        if (modal) modal.style.display = 'flex';
     }
 
     function closeAuthLoginModal() {
-        document.getElementById('authLoginModal').style.display = 'none';
+        var modal = document.getElementById('authLoginModal');
+        if (modal) modal.style.display = 'none';
     }
 
     function handleAuthLoginSubmit(e) {

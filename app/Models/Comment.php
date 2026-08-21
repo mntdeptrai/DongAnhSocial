@@ -39,9 +39,9 @@ class Comment extends Model
      */
     public function getDisplayNameAttribute(): string
     {
-        if ($this->relationLoaded('user') && $this->user) {
+        if ($this->user) {
             return $this->user->name;
         }
-        return $this->guest_name ?? 'Khách vãng lai';
+        return (!empty($this->guest_name) && $this->guest_name !== 'Khách vãng lai') ? $this->guest_name : 'Khách vãng lai';
     }
 }

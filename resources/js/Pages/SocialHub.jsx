@@ -94,6 +94,48 @@ export default function SocialHub() {
         }
     }, [currentUser]);
 
+    const chatInputRef = useRef(null);
+
+    // Tự động mở hộp thoại chat trực tiếp khi nhấp từ thông báo (?chat_user=ID)
+    window.scrollToNotifTarget = function() {
+        const params = new URLSearchParams(window.location.search);
+        const targetUserId = params.get('chat_user') || params.get('user_id') || params.get('friend_id');
+        if (targetUserId) {
+            const found = initialFriends.find(f => String(f.id) === String(targetUserId));
+            if (found) {
+                setActiveFriend(found);
+            } else {
+                axios.get(`/api/users/${targetUserId}`)
+                    .then(res => {
+                        if (res.data && res.data.id) {
+                            setActiveFriend(res.data);
+                        }
+                    })
+                    .catch(() => {});
+            }
+            
+            // Auto focus chat input with glowing effect
+            setTimeout(() => {
+                if (chatInputRef.current) {
+                    chatInputRef.current.focus();
+                    chatInputRef.current.style.boxShadow = '0 0 0 4px rgba(14, 165, 233, 0.4)';
+                    setTimeout(() => {
+                        if (chatInputRef.current) chatInputRef.current.style.boxShadow = 'none';
+                    }, 2500);
+                }
+            }, 400);
+        }
+        
+        const tab = params.get('tab');
+        if (tab) {
+            setActiveTab(tab);
+        }
+    };
+
+    useEffect(() => {
+        window.scrollToNotifTarget();
+    }, [initialFriends]);
+
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (notifContainerRef.current && !notifContainerRef.current.contains(event.target)) {
@@ -727,6 +769,11 @@ export default function SocialHub() {
                     align-items: center;
                     justify-content: center;
                     color: #b0b3b8;
+                }
+                @media (max-width: 640px) {
+                    .quick-action-grid {
+                        grid-template-columns: 1fr !important;
+                    }
                 }
             `}</style>
             
@@ -1772,6 +1819,7 @@ export default function SocialHub() {
                                 )}
 
                                 <input 
+                                    ref={chatInputRef}
                                     type="text"
                                     value={newMessageText}
                                     onChange={(e) => setNewMessageText(e.target.value)}
@@ -1800,12 +1848,79 @@ export default function SocialHub() {
                             </form>
                         </>
                     ) : (
-                        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', gap: '12px', padding: '40px' }}>
-                            <span style={{ fontSize: '4rem' }}>💬</span>
-                            <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-main)', margin: 0 }}>Social Chat Hub</h3>
-                            <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', maxWidth: '350px', textAlign: 'center', margin: 0, lineHeight: 1.6 }}>
-                                Chọn một người bạn từ danh sách bên trái hoặc quét vị trí GPS để bắt đầu nhắn tin realtime và kết nối trực tuyến!
+                        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 20px', textAlign: 'center', background: 'radial-gradient(circle at center, rgba(14,165,233,0.06) 0%, transparent 70%)' }}>
+                            {/* Animated Glowing Icon Badge */}
+                            <div style={{ position: 'relative', marginBottom: '20px' }}>
+                                <div style={{ width: '88px', height: '88px', borderRadius: '50%', background: 'linear-gradient(135deg, #0ea5e9, #6366f1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2.5rem', boxShadow: '0 12px 30px rgba(14,165,233,0.3)', color: '#fff' }}>
+                                    💬
+                                </div>
+                                <div style={{ position: 'absolute', top: '-4px', right: '-4px', width: '28px', height: '28px', borderRadius: '50%', background: '#10b981', border: '3px solid #0f172a', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', color: '#fff' }}>
+                                    ⚡
+                                </div>
+                            </div>
+
+                            <h3 style={{ fontSize: '1.4rem', fontWeight: 900, background: 'linear-gradient(135deg, #0ea5e9, #6366f1)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', margin: '0 0 8px 0', letterSpacing: '-0.02em' }}>
+                                Social Chat Hub • DongAnh Discovery
+                            </h3>
+
+                            <p style={{ fontSize: '0.9rem', color: 'var(--text-muted, #64748b)', maxWidth: '440px', textAlign: 'center', margin: '0 0 28px 0', lineHeight: 1.6 }}>
+                                Trò chuyện Realtime, chia sẻ vị trí GPS lân cận và cùng lên lịch khám phá Food Tour Đông Anh cùng bạn bè!
                             </p>
+
+                            {/* Quick Action Grid Hub */}
+                            <div className="quick-action-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px', width: '100%', maxWidth: '440px' }}>
+                                <button 
+                                    onClick={() => { setActiveTab('nearby'); shareLocation(); }}
+                                    style={{ padding: '14px 16px', borderRadius: '16px', background: 'var(--bg-surface, #ffffff)', border: '1.5px solid var(--border-glow, #e2e8f0)', cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '12px', boxShadow: '0 4px 14px rgba(0,0,0,0.03)' }}
+                                    onMouseOver={e => { e.currentTarget.style.borderColor = '#0ea5e9'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+                                    onMouseOut={e => { e.currentTarget.style.borderColor = 'var(--border-glow, #e2e8f0)'; e.currentTarget.style.transform = 'none'; }}
+                                >
+                                    <span style={{ fontSize: '1.5rem', width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(14,165,233,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>📍</span>
+                                    <div>
+                                        <div style={{ fontSize: '0.86rem', fontWeight: 800, color: 'var(--text-main, #0f172a)' }}>Tìm Bạn Ở Gần</div>
+                                        <div style={{ fontSize: '0.74rem', color: 'var(--text-muted, #64748b)' }}>Quét định vị GPS bán kính 10km</div>
+                                    </div>
+                                </button>
+
+                                <button 
+                                    onClick={() => setActiveTab('suggestions')}
+                                    style={{ padding: '14px 16px', borderRadius: '16px', background: 'var(--bg-surface, #ffffff)', border: '1.5px solid var(--border-glow, #e2e8f0)', cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '12px', boxShadow: '0 4px 14px rgba(0,0,0,0.03)' }}
+                                    onMouseOver={e => { e.currentTarget.style.borderColor = '#6366f1'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+                                    onMouseOut={e => { e.currentTarget.style.borderColor = 'var(--border-glow, #e2e8f0)'; e.currentTarget.style.transform = 'none'; }}
+                                >
+                                    <span style={{ fontSize: '1.5rem', width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(99,102,241,0.12)', display: 'flex', alignItems: 'center', justify: 'center' }}>👥</span>
+                                    <div>
+                                        <div style={{ fontSize: '0.86rem', fontWeight: 800, color: 'var(--text-main, #0f172a)' }}>Gợi Ý Kết Bạn</div>
+                                        <div style={{ fontSize: '0.74rem', color: 'var(--text-muted, #64748b)' }}>Khám phá thành viên Đông Anh mới</div>
+                                    </div>
+                                </button>
+
+                                <a 
+                                    href="/ban-tin?filter=food_tour"
+                                    style={{ padding: '14px 16px', borderRadius: '16px', background: 'var(--bg-surface, #ffffff)', border: '1.5px solid var(--border-glow, #e2e8f0)', textDecoration: 'none', cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '12px', boxShadow: '0 4px 14px rgba(0,0,0,0.03)' }}
+                                    onMouseOver={e => { e.currentTarget.style.borderColor = '#f59e0b'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+                                    onMouseOut={e => { e.currentTarget.style.borderColor = 'var(--border-glow, #e2e8f0)'; e.currentTarget.style.transform = 'none'; }}
+                                >
+                                    <span style={{ fontSize: '1.5rem', width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(245,158,11,0.12)', display: 'flex', alignItems: 'center', justify: 'center' }}>🍲</span>
+                                    <div>
+                                        <div style={{ fontSize: '0.86rem', fontWeight: 800, color: 'var(--text-main, #0f172a)' }}>Food Tour</div>
+                                        <div style={{ fontSize: '0.74rem', color: 'var(--text-muted, #64748b)' }}>Chia sẻ nhật ký ẩm thực cùng bạn</div>
+                                    </div>
+                                </a>
+
+                                <a 
+                                    href="/ban-tin"
+                                    style={{ padding: '14px 16px', borderRadius: '16px', background: 'var(--bg-surface, #ffffff)', border: '1.5px solid var(--border-glow, #e2e8f0)', textDecoration: 'none', cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '12px', boxShadow: '0 4px 14px rgba(0,0,0,0.03)' }}
+                                    onMouseOver={e => { e.currentTarget.style.borderColor = '#ec4899'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+                                    onMouseOut={e => { e.currentTarget.style.borderColor = 'var(--border-glow, #e2e8f0)'; e.currentTarget.style.transform = 'none'; }}
+                                >
+                                    <span style={{ fontSize: '1.5rem', width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(236,72,153,0.12)', display: 'flex', alignItems: 'center', justify: 'center' }}>📸</span>
+                                    <div>
+                                        <div style={{ fontSize: '0.86rem', fontWeight: 800, color: 'var(--text-main, #0f172a)' }}>Story & Bản Tin</div>
+                                        <div style={{ fontSize: '0.74rem', color: 'var(--text-muted, #64748b)' }}>Xem hình ảnh và khoảnh khắc mới</div>
+                                    </div>
+                                </a>
+                            </div>
                         </div>
                     )}
 

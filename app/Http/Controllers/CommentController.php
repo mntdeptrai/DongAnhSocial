@@ -27,6 +27,12 @@ class CommentController extends Controller
         // Kiểm tra chống bot và lọc spam toàn diện
         $spamCheck = SpamProtectionService::check($request, $content, 'comment');
         if ($spamCheck['is_spam']) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $spamCheck['reason']
+                ], 422);
+            }
             return redirect()->back()
                 ->withErrors(['content' => $spamCheck['reason']])
                 ->with('error', $spamCheck['reason'])
@@ -34,10 +40,27 @@ class CommentController extends Controller
         }
 
         $data = CommentData::fromRequest($request);
-        $this->commentService->createComment($data);
+        $comment = $this->commentService->createComment($data);
 
         // Ghi nhận bình luận thành công (kích hoạt cooldown 4s và chống gửi trùng lặp)
         SpamProtectionService::recordSuccess($request, $content, 'comment');
+
+        if ($request->ajax() || $request->wantsJson()) {
+            $user = $comment->user;
+            $displayName = $comment->display_name ?? ($user ? $user->name : ($comment->guest_name ?: 'Khách vãng lai'));
+            return response()->json([
+                'success' => true,
+                'message' => 'Bình luận của bạn đã được gửi thành công! 💬',
+                'comment' => [
+                    'id'            => $comment->id,
+                    'content'       => $comment->content,
+                    'display_name'  => $displayName,
+                    'is_admin'      => $user ? ($user->role === 'admin') : false,
+                    'avatar_letter' => mb_substr($displayName, 0, 1, 'UTF-8'),
+                    'created_at'    => 'Vừa xong',
+                ]
+            ]);
+        }
 
         return redirect()->back()->with('success', 'Bình luận của bạn đã được gửi thành công! 💬');
     }

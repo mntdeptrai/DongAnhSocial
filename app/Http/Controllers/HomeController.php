@@ -265,11 +265,35 @@ class HomeController extends Controller
             $checkinPosts = \App\Models\Checkin::with(['user', 'eatery', 'comments.user'])
                 ->where('status', 'published')
                 ->orderBy('created_at', 'desc')
-                ->get();
+                ->get()
+                ->map(function($c) {
+                    $c->is_checkin = true;
+                    $c->name = $c->eatery ? "📍 Check-in tại " . $c->eatery->name : "📍 Bài đăng Check-in";
+                    $c->description = $c->content ?? $c->description;
+                    return $c;
+                });
         } catch (\Throwable $e) {}
 
-        // Gộp tất cả bài viết (không bao gồm bài checkin)
-        $allPostsCombined = $eduPosts->concat($userPosts)->values();
+        // 4. Lấy các bài đăng Nhật ký hành trình Food Tour (FoodTourDiary)
+        $foodTourDiaries = collect();
+        try {
+            $foodTourDiaries = \App\Models\FoodTourDiary::with(['user', 'foodTour', 'comments.user'])
+                ->orderBy('created_at', 'desc')
+                ->get()
+                ->map(function($d) {
+                    $d->is_food_tour = true;
+                    $tourTitle = $d->foodTour ? $d->foodTour->title : 'Hành trình Ẩm thực Đông Anh';
+                    $d->name = "🍲 Nhật ký Food Tour: " . $tourTitle;
+                    $d->description = $d->comment;
+                    if ($d->rating) {
+                        $d->description = "⭐ Đánh giá: " . $d->rating . "/5 sao\n\n" . $d->description;
+                    }
+                    return $d;
+                });
+        } catch (\Throwable $e) {}
+
+        // Gộp tất cả loại bài viết vào Bảng tin (Bao gồm Cả Nhật ký Food Tour & Checkin)
+        $allPostsCombined = $eduPosts->concat($userPosts)->concat($checkinPosts)->concat($foodTourDiaries)->values();
 
         // ========================================================
         // THUẬT TOÁN CÁ NHÂN HÓA BẢNG TIN (Personalized Feed)
@@ -420,15 +444,18 @@ class HomeController extends Controller
             ->take(10)
             ->get();
 
-        $allEateries = \Illuminate\Support\Facades\Cache::remember('all_eateries_dropdown', 3600, function() {
-            return \App\Models\Eatery::active()
-                ->with('category:id,name')
-                ->select('id', 'name', 'slug', 'address', 'image_path', 'rating', 'category_id')
-                ->orderBy('name')
-                ->get();
-        });
+        $allEateries = collect();
 
-        return view('newsfeed', compact('posts', 'featuredUsers', 'allEateries'));
+        $stories = \App\Models\Story::with('user')
+            ->where('created_at', '>=', now()->subHours(24))
+            ->orderBy('created_at', 'asc')
+            ->get()
+            ->map(function($s) {
+                $s->time_ago = $s->created_at ? $s->created_at->diffForHumans() : 'Vừa xong';
+                return $s;
+            });
+
+        return view('newsfeed', compact('posts', 'featuredUsers', 'allEateries', 'stories'));
     }
 
     /**

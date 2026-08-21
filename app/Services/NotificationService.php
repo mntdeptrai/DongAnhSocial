@@ -97,22 +97,22 @@ class NotificationService
                     $othersCount = max(0, $totalReactors - 1);
                     $emoji = $first->emoji ?? '👍';
 
-                    $postTypeLabel = match (strtolower($first->reactionable_type)) {
-                        'checkin', 'app\models\checkin' => 'check-in',
-                        'diary', 'app\models\foodtourdiary' => 'hành trình',
-                        'eatery', 'app\models\eatery' => 'cơ sở/gian hàng',
+                    $targetLabel = match (true) {
+                        str_contains(strtolower($first->reactionable_type), 'checkin') => 'bài check-in',
+                        str_contains(strtolower($first->reactionable_type), 'foodtour') || str_contains(strtolower($first->reactionable_type), 'diary') => 'nhật ký food tour',
+                        str_contains(strtolower($first->reactionable_type), 'eatery') => 'địa điểm',
                         default => 'bài viết',
                     };
 
                     if ($othersCount > 0) {
-                        $body = "{$latestUser} và {$othersCount} người khác đã thích/thả cảm xúc bài viết {$postTypeLabel} của bạn.";
+                        $body = "{$latestUser} và {$othersCount} người khác đã bày tỏ cảm xúc về {$targetLabel} của bạn.";
                     } else {
-                        $body = "{$latestUser} đã thả {$emoji} bài viết {$postTypeLabel} của bạn.";
+                        $body = "{$latestUser} đã thả {$emoji} vào {$targetLabel} của bạn.";
                     }
 
                     $targetUrl = match (strtolower($first->reactionable_type)) {
-                        'checkin', 'app\models\checkin' => '/checkin',
-                        'diary', 'app\models\foodtourdiary' => '/food-tour',
+                        'checkin', 'app\models\checkin' => '/checkin?checkin=' . $first->reactionable_id,
+                        'diary', 'app\models\foodtourdiary' => '/checkin?diary=' . $first->reactionable_id,
                         'eatery', 'app\models\eatery' => '/dia-diem/' . (optional(Eatery::find($first->reactionable_id))->slug ?? ''),
                         default => '/ban-tin?post=' . (optional(\App\Models\Post::find($first->reactionable_id))->hashid ?? $first->reactionable_id),
                     };
@@ -120,7 +120,7 @@ class NotificationService
                     $ts = Carbon::parse($first->created_at)->timestamp;
                     $notifications[] = [
                         'id'         => 'react_' . $key . '_' . $ts,
-                        'title'      => '👍 Cảm xúc mới bài ' . $postTypeLabel,
+                        'title'      => '👍 Cảm xúc mới trên ' . $targetLabel,
                         'body'       => $body,
                         'time'       => Carbon::parse($first->created_at)->diffForHumans(),
                         'time_ts'    => $ts,
@@ -138,7 +138,7 @@ class NotificationService
             // B. THÔNG BÁO BÌNH LUẬN (Comments) — TỔNG HỢP KIỂU FACEBOOK
             // ========================================================
             if (!empty($myCheckinIds) || !empty($myDiaryIds) || !empty($myPostIds) || !empty($myEduIds) || !empty($myEateryIds)) {
-                $commentsQuery = Comment::where(function($q) use ($myCheckinIds, $myDiaryIds, $myPostIds, $myEduIds, $myEateryIds) {
+                $commentsQuery = Comment::with('user')->where(function($q) use ($myCheckinIds, $myDiaryIds, $myPostIds, $myEduIds, $myEateryIds) {
                     if (!empty($myCheckinIds)) {
                         $q->orWhere(function($sub) use ($myCheckinIds) {
                             $sub->whereIn('commentable_type', ['App\\Models\\Checkin', 'checkin'])->whereIn('commentable_id', $myCheckinIds);
@@ -188,28 +188,33 @@ class NotificationService
                         $totalCommenters = $group->count();
                     }
 
-                    $latestUser = $first->display_name ?? 'Một thành viên';
+                    $latestUser = $first->user ? $first->user->name : ($first->display_name ?: 'Một thành viên');
                     $othersCount = max(0, $totalCommenters - 1);
-                    $postTypeLabel = str_contains($first->commentable_type, 'Checkin') ? 'check-in' : (str_contains($first->commentable_type, 'Eatery') ? 'cơ sở' : 'bài viết');
+                    $targetLabel = match (true) {
+                        str_contains($first->commentable_type, 'Checkin') => 'bài check-in',
+                        str_contains($first->commentable_type, 'FoodTourDiary') => 'nhật ký food tour',
+                        str_contains($first->commentable_type, 'Eatery') => 'địa điểm',
+                        default => 'bài viết',
+                    };
 
                     if ($othersCount > 0) {
-                        $body = "{$latestUser} và {$othersCount} người khác đã bình luận về bài viết {$postTypeLabel} của bạn.";
+                        $body = "{$latestUser} và {$othersCount} người khác đã bình luận về {$targetLabel} của bạn.";
                     } else {
                         $snippet = Str::limit($first->content ?? '', 45);
-                        $body = "{$latestUser} đã bình luận bài viết {$postTypeLabel} của bạn: \"{$snippet}\"";
+                        $body = "{$latestUser} đã bình luận về {$targetLabel} của bạn: \"{$snippet}\"";
                     }
 
                     $targetUrl = match (true) {
-                        str_contains($first->commentable_type, 'Checkin') => '/checkin',
-                        str_contains($first->commentable_type, 'FoodTourDiary') => '/food-tour',
+                        str_contains($first->commentable_type, 'Checkin') => '/checkin?checkin=' . $first->commentable_id . '&open_comments=1',
+                        str_contains($first->commentable_type, 'FoodTourDiary') => '/checkin?diary=' . $first->commentable_id . '&open_comments=1',
                         str_contains($first->commentable_type, 'Eatery') => '/dia-diem/' . (optional(Eatery::find($first->commentable_id))->slug ?? ''),
-                        default => '/ban-tin?post=' . (optional(\App\Models\Post::find($first->commentable_id))->hashid ?? $first->commentable_id),
+                        default => '/ban-tin?post=' . (optional(\App\Models\Post::find($first->commentable_id))->hashid ?? $first->commentable_id) . '&open_comments=1',
                     };
 
                     $ts = Carbon::parse($first->created_at)->timestamp;
                     $notifications[] = [
                         'id'         => 'comment_' . $key . '_' . $ts,
-                        'title'      => '💬 Bình luận mới bài ' . $postTypeLabel,
+                        'title'      => '💬 Bình luận mới trên ' . $targetLabel,
                         'body'       => $body,
                         'time'       => Carbon::parse($first->created_at)->diffForHumans(),
                         'time_ts'    => $ts,
@@ -218,6 +223,46 @@ class NotificationService
                         'is_read'    => false,
                         'post_type'  => str_contains($first->commentable_type, 'Checkin') ? 'checkin' : 'post',
                         'post_id'    => $first->commentable_id,
+                        'target_url' => $targetUrl,
+                    ];
+                }
+            }
+
+            // ========================================================
+            // B1.5. THÔNG BÁO KHI CÓ NGƯỜI TRẢ LỜI/NHẮC TÊN TRONG BÌNH LUẬN
+            // ========================================================
+            if ($user && !empty($user->name)) {
+                $userName = $user->name;
+                $replyComments = Comment::where(function($q) use ($userName) {
+                        $q->where('content', 'LIKE', '%' . $userName . '%');
+                    })
+                    ->where(function($q) use ($userId) {
+                        $q->whereNull('user_id')->orWhere('user_id', '!=', $userId);
+                    })
+                    ->orderBy('created_at', 'desc')
+                    ->take(5)
+                    ->get();
+
+                foreach ($replyComments as $rc) {
+                    $senderName = $rc->display_name ?? 'Thành viên';
+                    $snippet = Str::limit($rc->content ?? '', 45);
+                    $targetUrl = match (true) {
+                        str_contains($rc->commentable_type, 'Checkin') => '/checkin?checkin=' . $rc->commentable_id . '&open_comments=1',
+                        str_contains($rc->commentable_type, 'FoodTourDiary') => '/checkin?diary=' . $rc->commentable_id . '&open_comments=1',
+                        str_contains($rc->commentable_type, 'Eatery') => '/dia-diem/' . (optional(Eatery::find($rc->commentable_id))->slug ?? ''),
+                        default => '/ban-tin?post=' . (optional(\App\Models\Post::find($rc->commentable_id))->hashid ?? $rc->commentable_id) . '&open_comments=1',
+                    };
+                    $ts = Carbon::parse($rc->created_at)->timestamp;
+
+                    $notifications[] = [
+                        'id'         => 'comment_reply_' . $rc->id . '_' . $ts,
+                        'title'      => '↩️ Phản hồi bình luận mới',
+                        'body'       => "{$senderName} đã nhắc tên/trả lời bình luận của bạn: \"{$snippet}\"",
+                        'time'       => Carbon::parse($rc->created_at)->diffForHumans(),
+                        'time_ts'    => $ts,
+                        'type'       => 'reply',
+                        'icon'       => 'reply',
+                        'is_read'    => false,
                         'target_url' => $targetUrl,
                     ];
                 }
@@ -376,13 +421,14 @@ class NotificationService
             }
 
             // ========================================================
-            // F. THÔNG BÁO LỜI MỜI KẾT BẠN (Friend Requests)
+            // F. THÔNG BÁO LỜI MỜI KẾT BẠN & ĐÃ CHẤP NHẬN KẾT BẠN
             // ========================================================
+            // 1. Lời mời kết bạn mới nhận được (Pending)
             $friendRequests = DB::table('friendships')
                 ->where('friend_id', $userId)
                 ->where('status', 'pending')
                 ->latest()
-                ->take(3)
+                ->take(5)
                 ->get();
 
             foreach ($friendRequests as $fr) {
@@ -390,7 +436,7 @@ class NotificationService
                 if ($sender) {
                     $ts = isset($fr->created_at) ? Carbon::parse($fr->created_at)->timestamp : 0;
                     $notifications[] = [
-                        'id'         => 'fr_' . $fr->id,
+                        'id'         => 'fr_req_' . $fr->id . '_' . $ts,
                         'title'      => '👥 Lời mời kết bạn mới',
                         'body'       => $sender->name . ' đã gửi cho bạn một lời mời kết bạn mới.',
                         'time'       => isset($fr->created_at) ? Carbon::parse($fr->created_at)->diffForHumans() : 'Vừa xong',
@@ -398,10 +444,69 @@ class NotificationService
                         'type'       => 'friend',
                         'icon'       => 'person_add',
                         'is_read'    => false,
-                        'target_url' => '/social',
+                        'target_url' => '/social?tab=requests',
                     ];
                 }
             }
+
+            // 2. Lời mời kết bạn do mình gửi ĐÃ ĐƯỢC CHẤP NHẬN (Accepted)
+            $acceptedFriends = DB::table('friendships')
+                ->where('user_id', $userId)
+                ->where('status', 'accepted')
+                ->latest('updated_at')
+                ->take(5)
+                ->get();
+
+            foreach ($acceptedFriends as $af) {
+                $friendUser = User::find($af->friend_id);
+                if ($friendUser) {
+                    $ts = isset($af->updated_at) ? Carbon::parse($af->updated_at)->timestamp : (isset($af->created_at) ? Carbon::parse($af->created_at)->timestamp : 0);
+                    $notifications[] = [
+                        'id'         => 'fr_acc_' . $af->id . '_' . $ts,
+                        'title'      => '🎉 Đã chấp nhận lời mời kết bạn',
+                        'body'       => $friendUser->name . ' đã chấp nhận lời mời kết bạn của bạn. Hãy gửi lời chào ngay!',
+                        'time'       => isset($af->updated_at) ? Carbon::parse($af->updated_at)->diffForHumans() : 'Vừa xong',
+                        'time_ts'    => $ts,
+                        'type'       => 'friend',
+                        'icon'       => 'person_check',
+                        'is_read'    => false,
+                        'target_url' => '/social?chat_user=' . $friendUser->id,
+                    ];
+                }
+            }
+
+            // ========================================================
+            // F2. THÔNG BÁO TIN NHẮN MỚI TỪ BẠN BÈ / NGƯỜI DÙNG (Direct Messages)
+            // ========================================================
+            try {
+                $unreadMessages = DB::table('messages')
+                    ->where('receiver_id', $userId)
+                    ->orderBy('created_at', 'desc')
+                    ->take(10)
+                    ->get()
+                    ->groupBy('sender_id');
+
+                foreach ($unreadMessages as $senderId => $msgGroup) {
+                    $sender = User::find($senderId);
+                    if ($sender) {
+                        $latestMsg = $msgGroup->first();
+                        $snippet = Str::limit($latestMsg->message ?? 'Đã gửi cho bạn một tin nhắn mới', 45);
+                        $ts = Carbon::parse($latestMsg->created_at)->timestamp;
+
+                        $notifications[] = [
+                            'id'         => 'direct_msg_' . $senderId . '_' . $ts,
+                            'title'      => '💬 Tin nhắn mới từ ' . $sender->name,
+                            'body'       => "{$sender->name}: \"{$snippet}\"",
+                            'time'       => Carbon::parse($latestMsg->created_at)->diffForHumans(),
+                            'time_ts'    => $ts,
+                            'type'       => 'message',
+                            'icon'       => 'chat',
+                            'is_read'    => false,
+                            'target_url' => '/social?chat_user=' . $senderId,
+                        ];
+                    }
+                }
+            } catch (\Throwable $e) {}
 
             // ========================================================
             // G. THÔNG BÁO BÀI VIẾT MỚI TỪ BẠN BÈ VÀ NGƯỜI THEO DÕI

@@ -651,14 +651,22 @@
                                 $authorName = $post->user ? $post->user->name : ($post->eatery ? $post->eatery->name : 'Thành viên Đông Anh');
                                 $authorSlug = $post->user ? \Illuminate\Support\Str::slug($post->user->name) : '';
                                 $profileUrl = $authorSlug ? "/profile/{$authorSlug}" : ($post->user_id ? "/profile/{$post->user_id}" : '#');
+                                $pUser = $post->user;
+                                $pAvatarUrl = $pUser ? ($pUser->avatar_url ?: ($pUser->avatar && (str_starts_with($pUser->avatar, 'http') || str_contains($pUser->avatar, '/')) ? (str_starts_with($pUser->avatar, 'http') ? $pUser->avatar : asset('storage/' . ltrim($pUser->avatar, '/'))) : null)) : null;
+                                $pLetter = mb_substr($authorName, 0, 1, 'UTF-8');
                             @endphp
                             <article class="checkin-post-card glass-panel" data-post-id="{{ $post->id }}" data-user-id="{{ $post->user_id ?? '' }}" style="margin-bottom: 20px;">
                                 <!-- Post Author Header -->
                                 <div class="post-header">
                                     <div class="post-author">
                                         <a href="{{ $profileUrl }}" style="text-decoration: none; display: flex; align-items: center; gap: 10px;">
-                                            <div class="author-avatar" style="width: 42px; height: 42px; border-radius: 50%; background: linear-gradient(135deg, #0284c7, #0369a1); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1rem;">
-                                                {{ mb_substr($authorName, 0, 1, 'UTF-8') }}
+                                            <div class="author-avatar" style="width: 42px; height: 42px; border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1rem; background: linear-gradient(135deg, #0284c7, #0369a1); color: #fff; flex-shrink: 0;">
+                                                @if($pAvatarUrl)
+                                                    <img src="{{ $pAvatarUrl }}" alt="{{ $authorName }}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';">
+                                                    <span style="display: none;">{{ $pLetter }}</span>
+                                                @else
+                                                    {{ $pLetter }}
+                                                @endif
                                             </div>
                                             <div class="author-meta">
                                                 <span class="author-name" style="display: inline-flex; align-items: center; gap: 4px; color: var(--text-main); font-weight: 700;">
@@ -810,12 +818,23 @@
                             <span style="background: var(--primary-grad); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">📍 Check-in địa điểm</span>
                         </h2>
                         @foreach($standaloneCheckins as $checkin)
+                            @php
+                                $cUser = $checkin->user;
+                                $cAvatarUrl = $cUser ? ($cUser->avatar_url ?: ($cUser->avatar && (str_starts_with($cUser->avatar, 'http') || str_contains($cUser->avatar, '/')) ? (str_starts_with($cUser->avatar, 'http') ? $cUser->avatar : asset('storage/' . ltrim($cUser->avatar, '/'))) : null)) : null;
+                                $cName = $checkin->display_name ?? 'Thực khách';
+                                $cLetter = mb_substr($cName, 0, 1, 'UTF-8');
+                            @endphp
                             <article class="checkin-post-card glass-panel" data-checkin-id="{{ $checkin->id }}" data-user-id="{{ $checkin->user_id ?? '' }}" style="margin-bottom: 20px;">
                                 <!-- Post Author Header -->
                                 <div class="post-header">
                                     <div class="post-author">
-                                        <div class="author-avatar">
-                                            {{ $checkin->user ? mb_substr($checkin->user->name, 0, 1, 'UTF-8') : '👤' }}
+                                        <div class="author-avatar" style="width: 42px; height: 42px; border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1rem; background: linear-gradient(135deg, #0284c7, #0369a1); color: #fff; flex-shrink: 0;">
+                                            @if($cAvatarUrl)
+                                                <img src="{{ $cAvatarUrl }}" alt="{{ $cName }}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';">
+                                                <span style="display: none;">{{ $cLetter }}</span>
+                                            @else
+                                                {{ $cLetter }}
+                                            @endif
                                         </div>
                                         <div class="author-meta">
                                             <span class="author-name" style="display: inline-flex; align-items: center; gap: 4px;">
@@ -970,17 +989,28 @@
                             <span style="background: var(--primary-grad); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">🗺️ Nhật ký Food Tour</span>
                         </h2>
                         @foreach($diaries as $diary)
+                            @php
+                                $dUser = $diary->user;
+                                $dAvatarUrl = $dUser ? ($dUser->avatar_url ?: ($dUser->avatar && (str_starts_with($dUser->avatar, 'http') || str_contains($dUser->avatar, '/')) ? (str_starts_with($dUser->avatar, 'http') ? $dUser->avatar : asset('storage/' . ltrim($dUser->avatar, '/'))) : null)) : null;
+                                $dName = $dUser->name ?? 'Thực khách Đông Anh';
+                                $dLetter = mb_substr($dName, 0, 1, 'UTF-8');
+                            @endphp
                             <article class="checkin-post-card glass-panel" data-diary-id="{{ $diary->id }}" data-user-id="{{ $diary->user_id ?? '' }}" style="margin-bottom: 20px;">
                                 <!-- Post Author Header -->
                                 <div class="post-header">
                                     <div class="post-author">
-                                        <div class="author-avatar">
-                                            {{ $diary->user->avatar ?? '👤' }}
+                                        <div class="author-avatar" style="width: 42px; height: 42px; border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1rem; background: linear-gradient(135deg, #0284c7, #0369a1); color: #fff; flex-shrink: 0;">
+                                            @if($dAvatarUrl)
+                                                <img src="{{ $dAvatarUrl }}" alt="{{ $dName }}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';">
+                                                <span style="display: none;">{{ $dLetter }}</span>
+                                            @else
+                                                {{ $dLetter }}
+                                            @endif
                                         </div>
                                         <div class="author-meta">
-                                            <span class="author-name">{{ $diary->user->name ?? 'Thực khách Đông Anh' }}</span>
-                                            <span class="author-role-badge {{ ($diary->user && $diary->user->role === 'admin') ? 'role-admin' : 'role-user' }}">
-                                                {{ ($diary->user && $diary->user->role === 'admin') ? 'Admin' : 'Thực khách' }}
+                                            <span class="author-name">{{ $dName }}</span>
+                                            <span class="author-role-badge {{ ($dUser && $dUser->role === 'admin') ? 'role-admin' : 'role-user' }}">
+                                                {{ ($dUser && $dUser->role === 'admin') ? 'Admin' : 'Thực khách' }}
                                             </span>
                                         </div>
                                     </div>
@@ -2186,6 +2216,45 @@
         }
     }
 
+    // Tự động cuộn, phát sáng và mở bình luận bài checkin / nhật ký từ thông báo
+    window.scrollToNotifTarget = function() {
+        const params = new URLSearchParams(window.location.search);
+        const targetId = params.get('checkin') || params.get('diary') || params.get('post') || params.get('id');
+        const openComments = params.get('open_comments') || params.get('comments');
+
+        if (targetId) {
+            let targetEl = document.querySelector(`[data-checkin-id="${targetId}"]`) ||
+                           document.querySelector(`[data-diary-id="${targetId}"]`) ||
+                           document.querySelector(`[data-post-id="${targetId}"]`) ||
+                           document.getElementById('post-card-checkin-' + targetId) ||
+                           document.getElementById('post-card-foodtour-' + targetId);
+
+            if (targetEl) {
+                document.querySelectorAll('.notif-target-highlight').forEach(el => el.classList.remove('notif-target-highlight'));
+
+                setTimeout(function() {
+                    targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    targetEl.classList.add('notif-target-highlight');
+
+                    if (openComments) {
+                        const commentsSec = targetEl.querySelector('.comments-section');
+                        if (commentsSec) {
+                            commentsSec.style.display = 'block';
+                            const input = commentsSec.querySelector('input[name="content"]');
+                            if (input) {
+                                setTimeout(() => {
+                                    input.focus();
+                                    input.style.boxShadow = '0 0 0 4px rgba(14, 165, 233, 0.4)';
+                                    setTimeout(() => { input.style.boxShadow = 'none'; }, 2500);
+                                }, 350);
+                            }
+                        }
+                    }
+                }, 250);
+            }
+        }
+    };
+
     // Khởi động sau khi DOM sẵn sàng
     document.addEventListener('DOMContentLoaded', () => {
         // Đánh dấu các card hiện có để tránh duplicate
@@ -2196,6 +2265,7 @@
             renderedIds.add('diary-' + el.dataset.diaryId);
         });
         connectEcho();
+        window.scrollToNotifTarget();
     });
 })();
 </script>
