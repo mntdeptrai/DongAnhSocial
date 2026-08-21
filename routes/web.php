@@ -208,7 +208,33 @@ Route::prefix('seller')->middleware(['auth', 'role:seller,admin', 'tenant.auth']
     // Quản lý Cơ sở kinh doanh & Chuyển đổi Đa thực thể
     Route::post('/switch-entity', [VendorController::class, 'switchEntity'])->name('seller.switch-entity');
     Route::get('/business-profile', [VendorController::class, 'showBusinessProfile'])->name('seller.business-profile');
-    Route::post('/business-profile', [VendorController::class, 'updateBusinessProfile'])->name('seller.business-profile.update');
+});
+
+// Route dọn dẹp khẩn cấp bình luận rác & bot spam
+Route::get('/clean-spam-comments', function() {
+    $deletedUsersCount = \Illuminate\Support\Facades\DB::table('users')
+        ->whereRaw('LOWER(name) LIKE ?', ['%hfjnuiyz%'])
+        ->orWhereRaw('LOWER(email) LIKE ?', ['%hfjnuiyz%'])
+        ->delete();
+
+    $deletedCommentsCount = \Illuminate\Support\Facades\DB::table('comments')
+        ->where('guest_name', 'LIKE', '%HfJNUIYZ%')
+        ->orWhereRaw('LOWER(guest_name) LIKE ?', ['%hfjnuiyz%'])
+        ->orWhere('content', '1')
+        ->orWhere('content', '1BE7D4CSVY0')
+        ->orWhere('content', ')')
+        ->orWhereRaw('content LIKE ?', ['%!(O&&!*%'])
+        ->orWhereRaw('LOWER(content) LIKE ?', ['%hfjnuiyz%'])
+        ->delete();
+
+    \Illuminate\Support\Facades\Artisan::call('view:clear');
+
+    return response()->json([
+        'success' => true,
+        'message' => "Đã dọn dẹp thành công {$deletedCommentsCount} bình luận rác và {$deletedUsersCount} tài khoản bot spam!",
+        'deleted_comments' => $deletedCommentsCount,
+        'deleted_users' => $deletedUsersCount,
+    ]);
 });
 
 
