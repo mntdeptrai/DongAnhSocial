@@ -521,6 +521,22 @@ class SchoolManagementController extends Controller
         $uploadedImages = [];
         $uploadedVideos = [];
 
+        // Thêm hỗ trợ nhận mảng URL ảnh đã qua batch upload (bỏ qua giới hạn 20 tệp của PHP)
+        if ($request->has('image_urls')) {
+            $urls = is_array($request->image_urls) ? $request->image_urls : json_decode($request->image_urls, true);
+            if (is_array($urls)) {
+                foreach ($urls as $url) {
+                    if (!empty($url) && is_string($url)) {
+                        if (str_contains($url, '.mp4') || str_contains($url, '.mov') || str_contains($url, '.webm')) {
+                            $uploadedVideos[] = $url;
+                        } else {
+                            $uploadedImages[] = $url;
+                        }
+                    }
+                }
+            }
+        }
+
         // Single file check (image or video)
         if ($request->hasFile('image')) {
             $file = $request->file('image');

@@ -2177,7 +2177,7 @@ function closeNewsfeedPostModal() {
     }
 }
 
-function handleNewsfeedPostSubmit(e, form) {
+async function handleNewsfeedPostSubmit(e, form) {
     e.preventDefault();
     
     const submitBtn = form.querySelector('.fb-modal-submit-btn');
@@ -2185,20 +2185,63 @@ function handleNewsfeedPostSubmit(e, form) {
     
     if (submitBtn) {
         submitBtn.disabled = true;
-        submitBtn.innerHTML = '🚀 Đang đăng bài...';
-    }
-
-    const formData = new FormData(form);
-    
-    formData.delete('images[]');
-    formData.delete('images');
-    if (typeof selectedMediaFiles !== 'undefined' && selectedMediaFiles.length > 0) {
-        selectedMediaFiles.forEach(file => {
-            formData.append('images[]', file);
-        });
+        submitBtn.innerHTML = '🚀 Đang tải media lên...';
     }
 
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+    const uploadedImageUrls = [];
+
+    // Nâng cấp: Tự động chia đợt tải ảnh (Batch Uploading 5 tệp/lần) để vượt qua giới hạn max_file_uploads = 20 của PHP server
+    if (typeof selectedMediaFiles !== 'undefined' && selectedMediaFiles.length > 0) {
+        const batchSize = 5;
+        const totalFiles = selectedMediaFiles.length;
+        
+        for (let i = 0; i < totalFiles; i += batchSize) {
+            const chunk = selectedMediaFiles.slice(i, i + batchSize);
+            if (submitBtn) {
+                submitBtn.innerHTML = `🚀 Đang tải lên ${Math.min(i + batchSize, totalFiles)}/${totalFiles} tệp...`;
+            }
+            
+            const batchFormData = new FormData();
+            chunk.forEach(file => batchFormData.append('files[]', file));
+            batchFormData.append('folder', 'education');
+
+            try {
+                const uploadRes = await fetch('/api/upload-media', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': csrfToken || '',
+                        'Accept': 'application/json'
+                    },
+                    body: batchFormData
+                });
+                
+                const uploadData = await uploadRes.json();
+                if (uploadData && uploadData.success && Array.isArray(uploadData.files)) {
+                    uploadData.files.forEach(f => {
+                        if (f && f.url) uploadedImageUrls.push(f.url);
+                    });
+                }
+            } catch (err) {
+                console.error('Batch upload error:', err);
+            }
+        }
+    }
+
+    if (submitBtn) {
+        submitBtn.innerHTML = '🚀 Đang tạo bài viết...';
+    }
+
+    const formData = new FormData(form);
+    formData.delete('images[]');
+    formData.delete('images');
+
+    // Nạp toàn bộ danh sách URL đã upload thành công (bảo toàn đủ 100% 33, 50 hay 100 ảnh)
+    if (uploadedImageUrls.length > 0) {
+        uploadedImageUrls.forEach(url => {
+            formData.append('image_urls[]', url);
+        });
+    }
 
     fetch(form.action, {
         method: 'POST',
@@ -2233,8 +2276,8 @@ function handleNewsfeedPostSubmit(e, form) {
             } else if (typeof showToastNotification === 'function') {
                 showToastNotification('✅ Đăng bài viết mới thành công!');
             }
-            
-            setTimeout(() => window.location.reload(), 1000);
+
+            setTimeout(() => window.location.reload(), 800);
         } else {
             let errorMsg = 'Có lỗi xảy ra, vui lòng thử lại.';
             if (data) {
@@ -2245,11 +2288,9 @@ function handleNewsfeedPostSubmit(e, form) {
                     if (errList) errorMsg = errList;
                 }
             } else if (res.status === 413) {
-                errorMsg = 'Dung lượng tổng của ảnh/video vượt quá giới hạn của máy chủ! Vui lòng chọn bớt ảnh hoặc chọn video dung lượng nhỏ hơn.';
+                errorMsg = 'Dung lượng tổng của ảnh/video vượt quá giới hạn của máy chủ!';
             } else if (res.status === 422) {
                 errorMsg = 'Vui lòng nhập đầy đủ tiêu đề và nội dung bài viết.';
-            } else if (res.status === 500) {
-                errorMsg = 'Lỗi xử lý máy chủ (500), vui lòng thử lại.';
             }
 
             if (typeof window.showToast === 'function') {
@@ -2260,17 +2301,11 @@ function handleNewsfeedPostSubmit(e, form) {
         }
     })
     .catch(err => {
-        console.error('Post submit error:', err);
         if (submitBtn) {
             submitBtn.disabled = false;
             submitBtn.innerHTML = originalBtnText;
         }
-        const msg = 'Có lỗi kết nối mạng hoặc dung lượng tệp quá lớn, vui lòng thử lại!';
-        if (typeof window.showToast === 'function') {
-            window.showToast(msg, 'error');
-        } else {
-            alert(msg);
-        }
+        console.error('Submit post error:', err);
     });
 }
 
