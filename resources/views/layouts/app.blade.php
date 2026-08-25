@@ -2751,6 +2751,7 @@
     }
     </script>
 
+    <style>
         .dash-share-overlay {
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
             background: rgba(15, 23, 42, 0.45); backdrop-filter: blur(8px);
