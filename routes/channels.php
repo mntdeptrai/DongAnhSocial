@@ -23,3 +23,10 @@ Broadcast::channel('call.{userId}', function ($user = null, $userId = null) {
     return $currentId && (int) $currentId === (int) $userId;
 });
 
+// Channel public / presence cho LiveStream real-time
+Broadcast::channel('live-stream.{id}', function ($user = null, $id = null) {
+    return true;
+});
+
+
+

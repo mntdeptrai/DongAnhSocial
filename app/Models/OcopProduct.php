@@ -40,4 +40,10 @@ class OcopProduct extends Model
     {
         return $this->belongsTo(Eatery::class);
     }
+
+    public function getImageUrlAttribute(): ?string
+    {
+        return $this->image_path;
+    }
 }
+

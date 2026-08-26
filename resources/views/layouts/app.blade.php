@@ -347,7 +347,9 @@
                             <span class="nav-arrow">➔</span>
                         </a>
                     </li>
+
                     @if(session()->has('user_id'))
+
                         <li>
                             <a href="/social" class="nav-link {{ request()->is('social*') ? 'active' : '' }}">
                                 <span><span class="nav-icon">💬</span>Kết nối bạn bè</span>

@@ -111,9 +111,10 @@
     }
     .mobile-explore-grid {
         display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 8px;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 6px;
     }
+
     .mobile-explore-item {
         display: flex;
         flex-direction: column;
@@ -400,6 +401,13 @@
                     <span>🗺️</span> Bản đồ Địa điểm
                 </a>
 
+                <a href="/livestream" class="nf-sidebar-nav-item" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-radius: 12px; color: #ef4444; font-weight: 700; font-size: 0.88rem; text-decoration: none; background: #fef2f2; transition: background 0.2s ease;" onmouseover="this.style.background='#fee2e2'" onmouseout="this.style.background='#fef2f2'">
+                    <span style="display: flex; align-items: center; gap: 10px;">
+                        <span>🔴</span> Livestream Trực Tiếp
+                    </span>
+                    <span style="font-size: 0.68rem; background: #ef4444; color: #fff; padding: 2px 6px; border-radius: 6px; font-weight: 800;">LIVE</span>
+                </a>
+
                 @if(auth()->check())
                     <a href="/social" class="nf-sidebar-nav-item" style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 12px; color: #475569; font-weight: 700; font-size: 0.88rem; text-decoration: none; transition: background 0.2s ease;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
                         <span>👥</span> Kết nối Bạn bè
@@ -411,6 +419,7 @@
                 @endif
             </div>
         </div>
+
 
     </aside>
 
@@ -512,7 +521,13 @@
                     <span class="mobile-explore-icon">🗺️</span>
                     <span class="mobile-explore-label">Bản đồ</span>
                 </a>
+                <a href="/livestream" class="mobile-explore-item" style="color: #ef4444;">
+                    <span class="mobile-explore-icon">🔴</span>
+                    <span class="mobile-explore-label">Live</span>
+                    <span class="mobile-explore-badge" style="background: #ef4444; color: #fff;">LIVE</span>
+                </a>
                 @if(auth()->check())
+
                     <a href="/social" class="mobile-explore-item">
                         <span class="mobile-explore-icon">👥</span>
                         <span class="mobile-explore-label">Kết nối</span>

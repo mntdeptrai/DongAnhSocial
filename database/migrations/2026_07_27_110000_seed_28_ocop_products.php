@@ -16,6 +16,10 @@ return new class extends Migration
             DB::statement("CREATE TABLE ocop_products_backup AS SELECT * FROM ocop_products");
         }
 
+        try {
+            DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+        } catch (\Throwable $e) {}
+
         // 2. Làm sạch bảng ocop_products để cập nhật 28 sản phẩm chuẩn nhất
         DB::table('ocop_products')->truncate();
 
@@ -330,6 +334,10 @@ return new class extends Migration
                 'updated_at' => now(),
             ]));
         }
+
+        try {
+            DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+        } catch (\Throwable $e) {}
     }
 
     public function down(): void

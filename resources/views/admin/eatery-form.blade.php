@@ -3159,15 +3159,12 @@ function previewEateryPhotoUrl(url) {
         document.getElementById('watchVideoPlayer').src = '';
         document.getElementById('watchYoutubePlayer').src = '';
         
-        if (type === 'youtube_shorts') {
-            const ytMatch = url.match(/(?:shorts\/|watch\?v=)([a-zA-Z0-9_-]+)/);
-            if (ytMatch) {
-                document.getElementById('watchYoutubeContainer').style.display = 'block';
-                document.getElementById('watchYoutubePlayer').src = 'https://www.youtube.com/embed/' + ytMatch[1] + '?autoplay=1';
-            } else {
-                document.getElementById('watchLocalContainer').style.display = 'block';
-                document.getElementById('watchVideoPlayer').src = url;
-            }
+        const ytMatch = url.match(/(?:youtube(?:-nocookie)?\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?|shorts|live)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/i);
+        if (type === 'youtube' || type === 'youtube_shorts' || ytMatch) {
+            const videoId = ytMatch ? ytMatch[1] : url;
+            document.getElementById('watchYoutubeContainer').style.display = 'block';
+            document.getElementById('watchYoutubePlayer').src = 'https://www.youtube.com/embed/' + videoId + '?autoplay=1&rel=0';
+        }
         } else if (type === 'tiktok') {
             const ttMatch = url.match(/video\/(\d+)/);
             if (ttMatch) {

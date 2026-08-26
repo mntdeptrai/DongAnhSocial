@@ -15,6 +15,39 @@ return new class extends Migration
      */
     public function up(): void
     {
+        try {
+            DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+        } catch (\Throwable $e) {}
+
+        if (\Illuminate\Support\Facades\Schema::hasTable('ocop_products')) {
+            \Illuminate\Support\Facades\Schema::table('ocop_products', function ($table) {
+                if (!\Illuminate\Support\Facades\Schema::hasColumn('ocop_products', 'user_id')) {
+                    $table->unsignedBigInteger('user_id')->nullable()->index()->after('eatery_id');
+                }
+                if (!\Illuminate\Support\Facades\Schema::hasColumn('ocop_products', 'stall_name')) {
+                    $table->string('stall_name')->nullable()->after('user_id');
+                }
+                if (!\Illuminate\Support\Facades\Schema::hasColumn('ocop_products', 'seller_name')) {
+                    $table->string('seller_name')->nullable()->after('stall_name');
+                }
+                if (!\Illuminate\Support\Facades\Schema::hasColumn('ocop_products', 'seller_phone')) {
+                    $table->string('seller_phone')->nullable()->after('seller_name');
+                }
+                if (!\Illuminate\Support\Facades\Schema::hasColumn('ocop_products', 'bank_name')) {
+                    $table->string('bank_name')->nullable()->after('seller_phone');
+                }
+                if (!\Illuminate\Support\Facades\Schema::hasColumn('ocop_products', 'bank_account')) {
+                    $table->string('bank_account')->nullable()->after('bank_name');
+                }
+                if (!\Illuminate\Support\Facades\Schema::hasColumn('ocop_products', 'bank_holder')) {
+                    $table->string('bank_holder')->nullable()->after('bank_account');
+                }
+                if (!\Illuminate\Support\Facades\Schema::hasColumn('ocop_products', 'qr_code_path')) {
+                    $table->string('qr_code_path', 500)->nullable()->after('bank_holder');
+                }
+            });
+        }
+
         // 1. Cập nhật thông tin Tổng quan Chợ Lý Nhân (Eatery ID: 29)
         $lyNhan = Eatery::find(29) ?: Eatery::where('slug', 'like', 'cho-ly-nhan%')->first();
         
@@ -488,7 +521,6 @@ return new class extends Migration
                     'is_verified'  => 1,
                     'bank_account' => $stall['bank_account'],
                     'bank_name'    => $stall['bank_name'],
-                    'eatery_id'    => $eateryId,
                 ]);
             } else {
                 $user->update([
@@ -496,7 +528,6 @@ return new class extends Migration
                     'phone'        => $rawPhone,
                     'bank_account' => $stall['bank_account'] ?: $user->bank_account,
                     'bank_name'    => $stall['bank_name'] ?: $user->bank_name,
-                    'eatery_id'    => $eateryId,
                     'role'         => 'seller',
                     'status'       => 'active',
                     'is_verified'  => 1,
@@ -544,10 +575,14 @@ return new class extends Migration
             }
 
             // Gắn stall_id vào user để định danh chính xác gian hàng
-            if ($firstInsertedProdId) {
+            if ($firstInsertedProdId && \Illuminate\Support\Facades\Schema::hasColumn('users', 'stall_id')) {
                 $user->update(['stall_id' => $firstInsertedProdId]);
             }
         }
+
+        try {
+            DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+        } catch (\Throwable $e) {}
     }
 
     /**

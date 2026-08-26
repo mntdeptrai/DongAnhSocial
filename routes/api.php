@@ -70,8 +70,15 @@ Route::prefix('v1')->group(function () {
     Route::delete('/cart/remove/{id}', [GioHangController::class, 'destroy']);
     Route::post('/cart/clear', [GioHangController::class, 'clear']);
 
+    // Livestream API (Phát trực tiếp Đông Anh)
+    Route::get('/livestreams', [\App\Http\Controllers\Api\LiveStreamApiController::class, 'index']);
+    Route::get('/livestreams/{id}', [\App\Http\Controllers\Api\LiveStreamApiController::class, 'show']);
+    Route::post('/livestreams/{id}/comment', [\App\Http\Controllers\Api\LiveStreamApiController::class, 'comment']);
+    Route::post('/livestreams/{id}/reaction', [\App\Http\Controllers\Api\LiveStreamApiController::class, 'reaction']);
+
     // Protocols bổ trợ (GraphQL, RPC, SSE, Stream, Webhooks)
     Route::post('/graphql', [\App\Http\Controllers\Api\GraphQLApiController::class, 'query']);
+
     Route::post('/rpc', [\App\Http\Controllers\Api\RpcApiController::class, 'handle']);
     Route::get('/stream/events', [\App\Http\Controllers\Api\SseApiController::class, 'streamEvents']);
     Route::post('/stream/ai/generate-tour', [\App\Http\Controllers\Api\StreamApiController::class, 'streamAiTour']);

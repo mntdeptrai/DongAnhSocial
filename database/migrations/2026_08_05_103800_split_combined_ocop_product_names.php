@@ -15,8 +15,13 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (!\Illuminate\Support\Facades\Schema::hasTable('ocop_products')) {
+            return;
+        }
+
         // Lấy tất cả sản phẩm có dấu & hoặc , trong tên
         $products = DB::table('ocop_products')
+
             ->where(function ($q) {
                 $q->where('name', 'LIKE', '%&%')
                   ->orWhere('name', 'LIKE', '%,%');

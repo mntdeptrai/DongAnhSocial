@@ -12,6 +12,9 @@ use App\Http\Controllers\SocialHubController;
 use App\Http\Controllers\SchoolManagementController;
 use App\Http\Controllers\MarketStallController;
 use App\Http\Controllers\ManagerOrderController;
+use App\Http\Controllers\LiveStreamController;
+use App\Http\Controllers\YouTubeAuthController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -21,6 +24,11 @@ use App\Http\Controllers\ManagerOrderController;
 | Ở đây định nghĩa toàn bộ đường dẫn (routes) của Bản đồ số Ẩm thực Đông Anh.
 |
 */
+
+// --- YOUTUBE API OAUTH ROUTES (Kết nối 1-click) ---
+Route::get('/youtube/auth', [YouTubeAuthController::class, 'redirect'])->name('youtube.auth');
+Route::get('/youtube/callback', [YouTubeAuthController::class, 'callback'])->name('youtube.callback');
+
 
 // --- USER SIDE ROUTES (Giao diện người dùng) ---
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -66,9 +74,29 @@ Route::get('/api/comments', [HomeController::class, 'getComments'])->name('api.c
 Route::post('/api/comments', [HomeController::class, 'storeComment'])->name('api.comments.store');
 Route::post('/api/posts/increment-share', [HomeController::class, 'incrementShare'])->name('api.posts.share');
 
+// --- LIVESTREAM ROUTES (Phát trực tiếp Đông Anh) ---
+Route::get('/livestream', [LiveStreamController::class, 'index'])->name('livestream.index');
+Route::get('/livestream/create', [LiveStreamController::class, 'create'])->name('livestream.create');
+Route::post('/livestream', [LiveStreamController::class, 'store'])->name('livestream.store');
+Route::get('/livestream/host/{id}', [LiveStreamController::class, 'host'])->name('livestream.host');
+Route::get('/livestream/{id}', [LiveStreamController::class, 'show'])->name('livestream.show');
+Route::post('/livestream/{id}/comment', [LiveStreamController::class, 'sendComment'])->name('livestream.comment');
+Route::post('/livestream/{id}/reaction', [LiveStreamController::class, 'sendReaction'])->name('livestream.reaction');
+Route::post('/livestream/{id}/pin-product', [LiveStreamController::class, 'pinProduct'])->name('livestream.pin-product');
+Route::get('/livestream/{id}/products', [LiveStreamController::class, 'getProducts'])->name('livestream.products');
+Route::post('/livestream/{id}/products', [LiveStreamController::class, 'addProduct'])->name('livestream.products.add');
+Route::delete('/livestream/{id}/products/{productId}', [LiveStreamController::class, 'removeProduct'])->name('livestream.products.remove');
+Route::post('/livestream/{id}/signal', [LiveStreamController::class, 'sendSignal'])->name('livestream.signal');
+
+Route::post('/livestream/{id}/viewer-count', [LiveStreamController::class, 'updateViewerCount'])->name('livestream.viewer-count');
+Route::post('/livestream/{id}/end', [LiveStreamController::class, 'endStream'])->name('livestream.end');
+Route::delete('/livestream/{id}', [LiveStreamController::class, 'destroy'])->name('livestream.destroy');
+
+
 // --- FOOD TOUR JOURNEY ROUTES (Trải nghiệm hành trình ẩm thực) ---
 Route::get('/food-tours', [FoodTourController::class, 'index'])->name('food-tours.index');
 Route::get('/exp-corner', [FoodTourController::class, 'cookingIndex'])->name('cooking-tours.index');
+
 
 // Xem trang cá nhân công khai (Khách không đăng nhập vẫn xem được)
 Route::get('/profile/{identifier?}', [AuthController::class, 'profile'])->name('profile');

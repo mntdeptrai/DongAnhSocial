@@ -61,58 +61,69 @@
     animation-play-state: paused !important;
 }
 
-/* ✈️ 3D REALISTIC AIRPLANE & JET CONTRAIL TRAIL */
+/* ✈️ REAL PHOTOGRAPHIC PASSENGER AIRLINER & JET CONTRAIL TRAIL */
 .hero-airplane-container {
     position: absolute;
-    top: 45px;
-    left: -240px;
+    top: 30px;
+    left: -320px;
     z-index: 10;
     pointer-events: none;
     will-change: transform;
-    animation: flightPath3D 26s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    animation: flightPath3D 24s cubic-bezier(0.4, 0, 0.2, 1) infinite;
     transform-style: preserve-3d;
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
     transform: translateZ(0);
 }
 
-.hero-airplane-svg-wrap {
+.hero-airplane-photo-wrap {
     position: relative;
-    width: 200px;
-    height: 84px;
-    animation: airplaneBank3D 4s ease-in-out infinite alternate;
+    width: 260px;
+    height: auto;
+    animation: airplaneBank3D 4.5s ease-in-out infinite alternate;
     backface-visibility: hidden;
+}
+
+.real-airplane-photo-img {
+    width: 100%;
+    height: auto;
+    display: block;
+    filter: drop-shadow(0 22px 30px rgba(15, 23, 42, 0.38));
+    user-select: none;
+    pointer-events: none;
 }
 
 /* Contrail Jet Smoke Trail behind airplane */
 .jet-contrail-container {
     position: absolute;
-    top: 44px;
-    right: 170px;
+    top: 48px;
+    right: 210px;
     display: flex;
     align-items: center;
     pointer-events: none;
 }
 
 .jet-contrail-line {
-    width: 220px;
-    height: 5px;
-    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.4) 40%, rgba(255, 255, 255, 0.95) 100%);
-    border-radius: 5px;
-    filter: blur(1.5px);
+    width: 280px;
+    height: 6px;
+    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.2) 20%, rgba(255, 255, 255, 0.7) 60%, rgba(255, 255, 255, 0.98) 100%);
+    border-radius: 6px;
+    filter: blur(1.8px);
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
 }
 
 .jet-contrail-puff {
     position: absolute;
-    background: radial-gradient(circle, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.25) 70%, transparent 100%);
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.95) 0%, rgba(240, 249, 255, 0.6) 40%, rgba(224, 242, 254, 0.2) 70%, transparent 100%);
     border-radius: 50% !important;
-    animation: puffExpand 2.2s ease-out infinite;
+    animation: puffExpand 2.4s ease-out infinite;
+    filter: blur(2px);
 }
 
 /* 💖 Heart Smoke Contrail Sky Overlay */
 .heart-contrail-sky-wrap {
     position: absolute;
-    top: 5px;
+    top: 10px;
     left: 50%;
     transform: translateX(-50%);
     width: 92%;
@@ -138,41 +149,41 @@
 
 @keyframes flightPath3D {
     0% {
-        transform: translate3d(-240px, 110px, 30px) rotateX(8deg) rotateY(12deg) rotateZ(8deg) scale(0.7);
+        transform: translate3d(-320px, 110px, 30px) rotateX(6deg) rotateY(10deg) rotateZ(6deg) scale(0.72);
         opacity: 0;
     }
-    12% {
-        transform: translate3d(15vw, 75px, 70px) rotateX(5deg) rotateY(10deg) rotateZ(6deg) scale(0.85);
+    10% {
+        transform: translate3d(12vw, 75px, 70px) rotateX(4deg) rotateY(8deg) rotateZ(5deg) scale(0.85);
         opacity: 1;
     }
     35% {
-        transform: translate3d(38vw, 35px, 110px) rotateX(2deg) rotateY(6deg) rotateZ(3deg) scale(1.0);
+        transform: translate3d(36vw, 30px, 110px) rotateX(1deg) rotateY(4deg) rotateZ(2deg) scale(1.0);
     }
     60% {
-        transform: translate3d(62vw, 50px, 120px) rotateX(-2deg) rotateY(4deg) rotateZ(-3deg) scale(1.05);
+        transform: translate3d(62vw, 45px, 120px) rotateX(-2deg) rotateY(3deg) rotateZ(-2deg) scale(1.06);
     }
     82% {
-        transform: translate3d(85vw, 20px, 70px) rotateX(4deg) rotateY(8deg) rotateZ(5deg) scale(0.85);
+        transform: translate3d(85vw, 15px, 70px) rotateX(3deg) rotateY(6deg) rotateZ(4deg) scale(0.88);
         opacity: 1;
     }
     100% {
-        transform: translate3d(calc(100vw + 250px), -30px, 10px) rotateX(8deg) rotateY(10deg) rotateZ(8deg) scale(0.68);
+        transform: translate3d(calc(100vw + 320px), -30px, 10px) rotateX(6deg) rotateY(8deg) rotateZ(6deg) scale(0.7);
         opacity: 0;
     }
 }
 
 @keyframes airplaneBank3D {
     0% { transform: rotateX(0deg) rotateZ(0deg) translateY(0px); }
-    50% { transform: rotateX(3deg) rotateZ(3deg) translateY(-5px); }
-    100% { transform: rotateX(-2deg) rotateZ(-2deg) translateY(3px); }
+    50% { transform: rotateX(3deg) rotateZ(2.5deg) translateY(-6px); }
+    100% { transform: rotateX(-2deg) rotateZ(-2deg) translateY(4px); }
 }
 
 @keyframes puffExpand {
-    0% { transform: scale(0.5); opacity: 0.8; }
-    100% { transform: scale(3.0); opacity: 0; }
+    0% { transform: scale(0.4); opacity: 0.9; }
+    100% { transform: scale(3.5); opacity: 0; }
 }
 
-/* ☁️ VOLUMETRIC 3D FLUFFY CLOUDS WITH MULTI-LAYER PARALLAX */
+/* ☁️ REAL PHOTOGRAPHIC CLOUDS WITH FLUFFY ATMOSPHERIC DEPTH */
 .cloud-3d-wrap {
     position: absolute;
     pointer-events: none;
@@ -180,74 +191,120 @@
     transform-style: preserve-3d;
 }
 
-.cloud-3d-svg {
-    filter: drop-shadow(0 16px 28px rgba(2, 132, 199, 0.25));
-    animation: cloudFloat3D 6s ease-in-out infinite alternate;
+.real-cloud-center-img {
+    width: 560px;
+    max-width: 90vw;
+    height: auto;
+    display: block;
+    filter: drop-shadow(0 15px 35px rgba(2, 132, 199, 0.25));
+    opacity: 0.92;
+    animation: cloudFloat3D 8s ease-in-out infinite alternate;
+    user-select: none;
+    pointer-events: none;
+}
+
+.real-cloud-backdrop-sub-img {
+    position: absolute;
+    top: 30px;
+    left: 40px;
+    width: 460px;
+    opacity: 0.7;
+    filter: blur(1px);
+    animation: cloudFloat3D 10s ease-in-out infinite alternate-reverse;
+    user-select: none;
+    pointer-events: none;
+}
+
+.real-cloud-layer-img {
+    display: block;
+    height: auto;
+    filter: drop-shadow(0 12px 25px rgba(2, 132, 199, 0.22));
+    user-select: none;
+    pointer-events: none;
+}
+
+@keyframes cloudFloat3D {
+    0% { transform: translateY(0px) scale(1); }
+    100% { transform: translateY(-8px) scale(1.02); }
+}
+
+/* Central Realistic Cloud Bank */
+.cloud-center-backdrop {
+    position: absolute;
+    top: 5px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 560px;
+    max-width: 90vw;
+    height: auto;
+    z-index: 4;
+    pointer-events: none;
 }
 
 /* Clouds Layer 1 - Foreground Fast & Large */
 .cloud-layer-1 {
-    top: 8%;
-    left: -240px;
+    top: 5%;
+    left: -280px;
     z-index: 8;
-    animation: driftCloud1 32s linear infinite;
+    animation: driftCloud1 34s linear infinite;
 }
 
 /* Clouds Layer 2 - Midground Soft */
 .cloud-layer-2 {
-    top: 32%;
-    left: -190px;
+    top: 28%;
+    left: -220px;
     z-index: 3;
-    animation: driftCloud2 45s linear infinite;
-    animation-delay: 8s;
+    animation: driftCloud2 48s linear infinite;
+    animation-delay: 9s;
 }
 
 /* Clouds Layer 3 - Background Slow Misty */
 .cloud-layer-3 {
-    top: 4%;
-    left: -260px;
+    top: 2%;
+    left: -300px;
     z-index: 1;
-    opacity: 0.7;
-    animation: driftCloud3 65s linear infinite;
-    animation-delay: 18s;
+    opacity: 0.75;
+    animation: driftCloud3 68s linear infinite;
+    animation-delay: 19s;
 }
 
 /* Cloud Layer 4 - Mid Right Floating */
 .cloud-layer-4 {
-    top: 22%;
-    right: -220px;
+    top: 18%;
+    right: -260px;
     z-index: 4;
-    animation: driftCloud4 42s linear infinite;
-    animation-delay: 5s;
+    animation: driftCloud4 44s linear infinite;
+    animation-delay: 6s;
 }
 
 @keyframes driftCloud1 {
     0% { transform: translate3d(0, 0, 50px) scale(1.1); }
-    100% { transform: translate3d(calc(100vw + 320px), 0, 50px) scale(1.1); }
+    100% { transform: translate3d(calc(100vw + 360px), 0, 50px) scale(1.1); }
 }
 
 @keyframes driftCloud2 {
-    0% { transform: translate3d(0, 0, 10px) scale(0.9); }
-    100% { transform: translate3d(calc(100vw + 270px), 0, 10px) scale(0.9); }
+    0% { transform: translate3d(0, 0, 10px) scale(0.92); }
+    100% { transform: translate3d(calc(100vw + 300px), 0, 10px) scale(0.92); }
 }
 
 @keyframes driftCloud3 {
-    0% { transform: translate3d(0, 0, -60px) scale(0.75); }
-    100% { transform: translate3d(calc(100vw + 270px), 0, -60px) scale(0.75); }
+    0% { transform: translate3d(0, 0, -60px) scale(0.78); }
+    100% { transform: translate3d(calc(100vw + 300px), 0, -60px) scale(0.78); }
 }
 
 @keyframes driftCloud4 {
-    0% { transform: translate3d(0, 0, 20px) scale(0.85); }
-    100% { transform: translate3d(calc(-100vw - 320px), 0, 20px) scale(0.85); }
+    0% { transform: translate3d(0, 0, 20px) scale(0.88); }
+    100% { transform: translate3d(calc(-100vw - 360px), 0, 20px) scale(0.88); }
 }
 
 @keyframes cloudFloat3D {
     0% { transform: translateY(0px) rotateX(0deg); }
-    100% { transform: translateY(-14px) rotateX(5deg); }
+    100% { transform: translateY(-16px) rotateX(4deg); }
 }
 
 /* 🎈 3D HOT AIR BALLOON IN BACKGROUND */
 .hot-air-balloon-3d {
+
     position: absolute;
     top: 35px;
     right: 16%;
@@ -1967,288 +2024,77 @@
 </style>
 
 <section class="custom-hero-banner">
-    <!-- 💖 3D Heart Smoke Contrail Overlay -->
+    <!-- ☁️ GRAND REAL PHOTOGRAPHIC CLOUD BACKDROP -->
+    <div class="cloud-center-backdrop">
+        <img src="{{ asset('images/cloud_real_c.png') }}" class="real-cloud-center-img" alt="Bầu trời mây Đông Anh" />
+        <img src="{{ asset('images/cloud_real_b.png') }}" class="real-cloud-backdrop-sub-img" alt="Mây thật" />
+    </div>
+
+    <!-- 💖 3D Heart Smoke Contrail Overlay (Delicate Aerobatics Smoke) -->
     <div class="heart-contrail-sky-wrap">
         <svg viewBox="0 0 800 350" preserveAspectRatio="none" style="width: 100%; height: 100%;">
             <defs>
                 <filter id="glowSmoke" x="-20%" y="-20%" width="140%" height="140%">
-                    <feGaussianBlur stdDeviation="5" result="blur" />
+                    <feGaussianBlur stdDeviation="6" result="blur" />
                     <feComposite in="SourceGraphic" in2="blur" operator="over" />
                 </filter>
                 <linearGradient id="heartSmokeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
                     <stop offset="0%" stop-color="rgba(255, 255, 255, 0.95)"/>
-                    <stop offset="40%" stop-color="rgba(254, 205, 211, 0.9)"/>
-                    <stop offset="80%" stop-color="rgba(244, 63, 94, 0.75)"/>
-                    <stop offset="100%" stop-color="rgba(225, 29, 72, 0.4)"/>
+                    <stop offset="35%" stop-color="rgba(254, 205, 211, 0.85)"/>
+                    <stop offset="75%" stop-color="rgba(244, 63, 94, 0.7)"/>
+                    <stop offset="100%" stop-color="rgba(225, 29, 72, 0.35)"/>
                 </linearGradient>
             </defs>
             <path class="heart-smoke-path" d="M 400,65 C 400,65 280,5 280,75 C 280,145 400,240 400,240 C 400,240 520,145 520,75 C 520,5 400,65 400,65 Z" fill="none" stroke="url(#heartSmokeGrad)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" filter="url(#glowSmoke)"/>
         </svg>
     </div>
 
-    <!-- ✈️ 3D REALISTIC AIRPLANE & JET CONTRAIL TRAIL -->
+    <!-- ✈️ REAL PHOTOGRAPHIC COMMERCIAL PASSENGER AIRLINER -->
     <div class="hero-airplane-container">
+        <!-- Dual Engine Jet Contrail Vapors -->
         <div class="jet-contrail-container">
             <div class="jet-contrail-line"></div>
             <div class="jet-contrail-puff" style="width: 14px; height: 14px; right: 10px;"></div>
-            <div class="jet-contrail-puff" style="width: 22px; height: 22px; right: 40px; animation-delay: 0.4s;"></div>
-            <div class="jet-contrail-puff" style="width: 32px; height: 32px; right: 80px; animation-delay: 0.8s;"></div>
-            <div class="jet-contrail-puff" style="width: 45px; height: 45px; right: 130px; animation-delay: 1.2s;"></div>
+            <div class="jet-contrail-puff" style="width: 24px; height: 24px; right: 45px; animation-delay: 0.35s;"></div>
+            <div class="jet-contrail-puff" style="width: 36px; height: 36px; right: 90px; animation-delay: 0.75s;"></div>
+            <div class="jet-contrail-puff" style="width: 52px; height: 52px; right: 150px; animation-delay: 1.15s;"></div>
+            <div class="jet-contrail-puff" style="width: 70px; height: 70px; right: 220px; animation-delay: 1.6s;"></div>
         </div>
-        <div class="hero-airplane-svg-wrap">
-            <svg viewBox="0 0 380 160" style="width: 100%; height: 100%;">
-                <defs>
-                    <!-- Metallic Fuselage Gradient -->
-                    <linearGradient id="fuselage3D" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" stop-color="#ffffff"/>
-                        <stop offset="25%" stop-color="#f8fafc"/>
-                        <stop offset="55%" stop-color="#e2e8f0"/>
-                        <stop offset="85%" stop-color="#94a3b8"/>
-                        <stop offset="100%" stop-color="#475569"/>
-                    </linearGradient>
 
-                    <linearGradient id="fuselageGlint" x1="0%" y1="0%" x2="100%" y2="0%">
-                        <stop offset="0%" stop-color="rgba(255,255,255,0)"/>
-                        <stop offset="50%" stop-color="rgba(255,255,255,0.9)"/>
-                        <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
-                    </linearGradient>
-
-                    <!-- Aerodynamic Swept Wings Gradient -->
-                    <linearGradient id="mainWing3D" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stop-color="#38bdf8"/>
-                        <stop offset="35%" stop-color="#0284c7"/>
-                        <stop offset="80%" stop-color="#0369a1"/>
-                        <stop offset="100%" stop-color="#075985"/>
-                    </linearGradient>
-
-                    <linearGradient id="farWing3D" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stop-color="#0284c7"/>
-                        <stop offset="100%" stop-color="#0f172a"/>
-                    </linearGradient>
-
-                    <!-- Vertical Tail Fin (Sleek modern tail) -->
-                    <linearGradient id="tailFin3D" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stop-color="#0284c7"/>
-                        <stop offset="50%" stop-color="#0369a1"/>
-                        <stop offset="100%" stop-color="#0f172a"/>
-                    </linearGradient>
-
-                    <!-- Cockpit Windshield -->
-                    <linearGradient id="cockpitGlass3D" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stop-color="#38bdf8"/>
-                        <stop offset="60%" stop-color="#0f172a"/>
-                        <stop offset="100%" stop-color="#020617"/>
-                    </linearGradient>
-
-                    <!-- Engine Chrome Nacelle -->
-                    <linearGradient id="engineChrome" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" stop-color="#ffffff"/>
-                        <stop offset="30%" stop-color="#cbd5e1"/>
-                        <stop offset="70%" stop-color="#64748b"/>
-                        <stop offset="100%" stop-color="#1e293b"/>
-                    </linearGradient>
-                </defs>
-
-                <!-- 1. FAR HORIZONTAL STABILIZER (REAR WING FAR) -->
-                <path d="M75,68 L32,54 C28,52 24,54 26,59 L62,74 Z" fill="url(#farWing3D)" opacity="0.85"/>
-
-                <!-- 2. FAR MAIN WING (Swept back with realistic perspective) -->
-                <path d="M210,68 L155,28 C150,24 142,26 146,34 L175,70 Z" fill="url(#farWing3D)"/>
-                <path d="M155,28 L152,18 L157,26 Z" fill="#0284c7"/> <!-- Winglet tip -->
-
-                <!-- 3. TAIL ASSEMBLY -->
-                <path d="M50,70 Q25,72 10,75 C20,77 45,79 60,78 Z" fill="#64748b"/>
-                <path d="M85,68 L48,16 C44,10 34,13 40,24 L62,72 Z" fill="url(#tailFin3D)"/>
-                <path d="M48,16 L45,8 L50,15 Z" fill="#38bdf8"/>
-
-                <!-- 4. NEAR HORIZONTAL STABILIZER (REAR WING NEAR) -->
-                <path d="M80,78 L42,94 C38,96 36,92 40,88 L72,75 Z" fill="url(#farWing3D)"/>
-
-                <!-- 5. MAIN AIRPLANE FUSELAGE (Streamlined 787 Aerodynamic Body) -->
-                <path d="M355,82 C342,75 300,68 180,68 C100,68 50,72 30,75 C45,84 90,88 180,88 C300,88 342,87 355,82 Z" fill="url(#fuselage3D)"/>
-                <path d="M348,81 C335,76 290,70 180,70 C100,70 55,73 35,75 C50,72 100,69 180,69 C290,69 335,75 348,81 Z" fill="url(#fuselageGlint)"/>
-                <path d="M350,83 C338,87 295,88 180,88 C95,88 48,84 32,76 C52,82 100,86 180,86 C295,86 338,85 350,83 Z" fill="#334155" opacity="0.35"/>
-
-                <!-- Cockpit Windshield -->
-                <path d="M328,76 C342,79 346,82 342,84 C330,85 320,83 318,79 Z" fill="url(#cockpitGlass3D)"/>
-                <path d="M328,77 C338,79 342,82 339,83" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="1"/>
-
-                <!-- Passenger Windows Line -->
-                <g fill="#1e293b" opacity="0.75">
-                    <circle cx="308" cy="80" r="1.5"/>
-                    <circle cx="298" cy="80" r="1.5"/>
-                    <circle cx="288" cy="80" r="1.5"/>
-                    <circle cx="278" cy="80" r="1.5"/>
-                    <circle cx="268" cy="80" r="1.5"/>
-                    <circle cx="258" cy="80" r="1.5"/>
-                    <circle cx="248" cy="80" r="1.5"/>
-                    <circle cx="238" cy="80" r="1.5"/>
-                    <circle cx="228" cy="80" r="1.5"/>
-                    <circle cx="218" cy="80" r="1.5"/>
-                    <circle cx="208" cy="80" r="1.5"/>
-                    <circle cx="198" cy="80" r="1.5"/>
-                    <circle cx="188" cy="80" r="1.5"/>
-                    <circle cx="178" cy="80" r="1.5"/>
-                    <circle cx="168" cy="80" r="1.5"/>
-                    <circle cx="158" cy="80" r="1.5"/>
-                    <circle cx="148" cy="80" r="1.5"/>
-                    <circle cx="138" cy="80" r="1.5"/>
-                    <circle cx="128" cy="80" r="1.5"/>
-                    <circle cx="118" cy="80" r="1.5"/>
-                </g>
-
-                <!-- 6. NEAR MAIN SWEPT WING -->
-                <path d="M205,82 L130,128 C122,133 110,128 116,120 L160,80 Z" fill="url(#mainWing3D)"/>
-                <path d="M130,128 L122,138 C120,142 126,140 130,132 Z" fill="#38bdf8"/>
-
-                <!-- 7. REALISTIC TURBOFAN JET ENGINE -->
-                <path d="M185,82 L180,94 L190,94 L195,82 Z" fill="#475569"/>
-                <rect x="168" y="90" width="46" height="18" rx="9" fill="url(#engineChrome)"/>
-                <ellipse cx="214" cy="99" rx="4" ry="9" fill="#94a3b8"/>
-                <ellipse cx="214" cy="99" rx="2.5" ry="7.5" fill="#0f172a"/>
-                <circle cx="214" cy="99" r="1.5" fill="#cbd5e1"/>
-                <ellipse cx="168" cy="99" rx="3" ry="8" fill="#334155"/>
-                <ellipse cx="168" cy="99" rx="1.5" ry="5" fill="#1e293b"/>
-            </svg>
+        <div class="hero-airplane-photo-wrap">
+            <img src="{{ asset('images/plane_60.png') }}" class="real-airplane-photo-img" alt="Máy bay thật Đông Anh Discovery" />
         </div>
     </div>
 
-    <!-- ☁️ VOLUMETRIC 3D FLUFFY CLOUDS -->
+    <!-- ☁️ REAL PHOTOGRAPHIC PARALLAX CLOUDS -->
     <div class="cloud-3d-wrap cloud-layer-1">
-        <svg viewBox="0 0 240 120" width="220" height="110" class="cloud-3d-svg">
-            <defs>
-                <linearGradient id="cloudGrad1" x1="0%" y1="0%" x2="0%" y2="100%">
-                    <stop offset="0%" stop-color="#ffffff"/>
-                    <stop offset="70%" stop-color="#f1f5f9"/>
-                    <stop offset="100%" stop-color="#cbd5e1"/>
-                </linearGradient>
-            </defs>
-            <path d="M30,90 Q15,90 10,75 Q5,60 20,50 Q20,30 40,25 Q60,10 90,20 Q110,5 140,15 Q170,10 190,30 Q215,35 220,55 Q235,70 220,90 Q200,95 30,90 Z" fill="url(#cloudGrad1)"/>
-        </svg>
+        <img src="{{ asset('images/cloud_real_b.png') }}" class="real-cloud-layer-img" style="width: 290px;" alt="Mây thật" />
     </div>
 
     <div class="cloud-3d-wrap cloud-layer-2">
-        <svg viewBox="0 0 200 100" width="180" height="90" class="cloud-3d-svg">
-            <defs>
-                <linearGradient id="cloudGrad2" x1="0%" y1="0%" x2="0%" y2="100%">
-                    <stop offset="0%" stop-color="#ffffff"/>
-                    <stop offset="100%" stop-color="#e2e8f0"/>
-                </linearGradient>
-            </defs>
-            <path d="M25,80 Q10,80 8,65 Q5,50 18,42 Q20,25 38,20 Q55,8 80,16 Q98,5 120,12 Q145,8 160,25 Q180,30 185,48 Q198,60 185,80 Q170,83 25,80 Z" fill="url(#cloudGrad2)"/>
-        </svg>
+        <img src="{{ asset('images/cloud_real_e.png') }}" class="real-cloud-layer-img" style="width: 250px;" alt="Mây thật" />
     </div>
 
     <div class="cloud-3d-wrap cloud-layer-3">
-        <svg viewBox="0 0 260 130" width="240" height="120" class="cloud-3d-svg">
-            <path d="M35,95 Q15,95 12,78 Q8,60 22,50 Q25,30 48,24 Q70,8 100,18 Q125,5 155,14 Q185,8 205,30 Q230,35 238,58 Q255,75 238,95 Q215,98 35,95 Z" fill="#ffffff" opacity="0.85"/>
-        </svg>
+        <img src="{{ asset('images/cloud_real_c.png') }}" class="real-cloud-layer-img" style="width: 340px;" alt="Mây thật" />
     </div>
 
     <div class="cloud-3d-wrap cloud-layer-4">
-        <svg viewBox="0 0 190 95" width="170" height="85" class="cloud-3d-svg">
-            <path d="M20,75 Q8,75 6,60 Q4,48 16,40 Q18,24 35,18 Q50,6 75,14 Q92,4 112,10 Q135,6 148,22 Q168,28 172,44 Q185,55 172,75 Q158,78 20,75 Z" fill="#ffffff" opacity="0.9"/>
-        </svg>
+        <img src="{{ asset('images/cloud_real_d.png') }}" class="real-cloud-layer-img" style="width: 230px;" alt="Mây thật" />
     </div>
 
-    <!-- 🎈 3D HOT AIR BALLOON -->
-    <div class="hot-air-balloon-3d">
-        <svg viewBox="0 0 100 140" width="65" height="90">
-            <defs>
-                <linearGradient id="balloonGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stop-color="#f97316"/>
-                    <stop offset="33%" stop-color="#fbbf24"/>
-                    <stop offset="66%" stop-color="#10b981"/>
-                    <stop offset="100%" stop-color="#06b6d4"/>
-                </linearGradient>
-            </defs>
-            <path d="M50,10 C80,10 90,45 75,80 L60,95 L40,95 L25,80 C10,45 20,10 50,10 Z" fill="url(#balloonGrad)" stroke="#0f172a" stroke-width="2"/>
-            <path d="M50,10 C62,10 68,45 58,95 L42,95 C32,45 38,10 50,10 Z" fill="rgba(255,255,255,0.3)" opacity="0.8"/>
-            <line x1="42" y1="95" x2="44" y2="110" stroke="#0f172a" stroke-width="1.5"/>
-            <line x1="58" y1="95" x2="56" y2="110" stroke="#0f172a" stroke-width="1.5"/>
-            <rect x="42" y="110" width="16" height="14" rx="3" fill="#b45309" stroke="#0f172a" stroke-width="1.5"/>
-        </svg>
-    </div>
-
-    <!-- Swaying Palm Leaves -->
-    <div class="palm-leaf palm-leaf-top-right">
-        <svg viewBox="0 0 100 100" style="width: 100%; height: 100%;">
-            <path d="M10,90 Q40,40 90,10" fill="none" stroke="#15803d" stroke-width="3" stroke-linecap="round" />
-            <path d="M20,75 C25,60 15,50 10,48 C15,55 25,68 30,72 Z" fill="#22c55e" />
-            <path d="M30,65 C38,50 30,38 25,35 C32,45 38,58 40,62 Z" fill="#16a34a" />
-            <path d="M42,55 C52,38 45,28 40,25 C47,35 50,48 52,52 Z" fill="#22c55e" />
-            <path d="M55,45 C65,28 60,18 55,15 C62,25 62,38 64,42 Z" fill="#15803d" />
-            <path d="M68,35 C78,20 72,12 68,10 C74,18 73,28 75,32 Z" fill="#16a34a" />
-            <path d="M80,25 C88,12 85,8 82,6 C86,12 84,20 85,22 Z" fill="#22c55e" />
-        </svg>
-    </div>
-    <div class="palm-leaf palm-leaf-bottom-left">
-        <svg viewBox="0 0 100 100" style="width: 100%; height: 100%; transform: scaleX(-1) rotate(45deg);">
-            <path d="M10,90 Q40,40 90,10" fill="none" stroke="#15803d" stroke-width="3" stroke-linecap="round" />
-            <path d="M20,75 C25,60 15,50 10,48 C15,55 25,68 30,72 Z" fill="#22c55e" />
-            <path d="M30,65 C38,50 30,38 25,35 C32,45 38,58 40,62 Z" fill="#16a34a" />
-            <path d="M42,55 C52,38 45,28 40,25 C47,35 50,48 52,52 Z" fill="#22c55e" />
-            <path d="M55,45 C65,28 60,18 55,15 C62,25 62,38 64,42 Z" fill="#15803d" />
-            <path d="M68,35 C78,20 72,12 68,10 C74,18 73,28 75,32 Z" fill="#16a34a" />
-            <path d="M80,25 C88,12 85,8 82,6 C86,12 84,20 85,22 Z" fill="#22c55e" />
-        </svg>
-    </div>
-
-    <!-- Bubbles particles -->
-    @for ($i = 0; $i < 10; $i++)
-        @php
-            $left = rand(5, 95);
-            $size = rand(8, 24);
-            $delay = rand(0, 100) / 10;
-            $duration = rand(10, 16);
-        @endphp
-        <div class="bubble-particle" style="left: {{ $left }}%; width: {{ $size }}px; height: {{ $size }}px; bottom: -30px; animation-delay: {{ $delay }}s; animation-duration: {{ $duration }}s;"></div>
-    @endfor
-
-    <!-- Polaroid Galleries + Decorations -->
+    <!-- Polaroid Galleries (Real Photographs) -->
     <div class="gallery-container">
-
-        <!-- Polaroid 1: Scooter -->
+        <!-- Polaroid 1: Vi vu -->
         <div class="polaroid-card" style="left: 14%; top: 30px;" data-angle="-7">
             <img src="{{ asset('images/vivudonganh.jpg') }}" alt="Vi vu Đông Anh" class="polaroid-img">
             <div class="polaroid-caption">Vi vu Đông Anh</div>
         </div>
 
-        <!-- Stamp: Orange circle -->
-        <div class="travel-stamp stamp-circle-orange" style="left: 23%; top: 140px; transform: rotate(12deg);">
-            <svg viewBox="0 0 100 100" style="width: 100%; height: 100%;">
-                <path id="circlePath" d="M 50, 50 m -35, 0 a 35,35 0 1,1 70,0 a 35,35 0 1,1 -70,0" fill="none" />
-                <text font-family="'Outfit', sans-serif" font-weight="900" font-size="10.5" fill="#f97316">
-                    <textPath href="#circlePath" startOffset="0%">DONG ANH • DISCOVERY •</textPath>
-                </text>
-                <circle cx="50" cy="50" r="19" fill="none" stroke="#f97316" stroke-width="2" />
-                <text x="50" y="55" font-family="'Outfit', sans-serif" font-weight="900" font-size="14" fill="#f97316" text-anchor="middle">⛵</text>
-            </svg>
-        </div>
-
-        <!-- Polaroid 2: Lotus -->
+        <!-- Polaroid 2: Cây đa -->
         <div class="polaroid-card" style="left: 28%; top: 15px;" data-angle="4">
             <img src="{{ asset('images/caydabacho.jpg') }}" alt="Cây đa Bác Hồ" class="polaroid-img">
             <div class="polaroid-caption">Cây đa bác hồ</div>
-        </div>
-
-        <!-- Tent Camp center illustration -->
-        <div class="tent-camp-container" style="left: 45%; top: 60px;">
-            <svg viewBox="0 0 100 80" class="tent-camp-svg" style="width: 100%; height: 100%;">
-                <!-- Tent -->
-                <path d="M10,65 L50,15 L90,65 Z" fill="#0ea5e9" stroke="#0f172a" stroke-width="2.5" />
-                <path d="M50,15 L90,65 L70,65 Z" fill="#0284c7" stroke="#0f172a" stroke-width="2.5" />
-                <!-- Tent Door -->
-                <path d="M50,15 L35,65 L65,65 Z" fill="#ffb300" stroke="#0f172a" stroke-width="2" />
-                <path d="M50,15 L50,65" stroke="#0f172a" stroke-width="2" />
-                <!-- Campfire logs -->
-                <rect x="25" y="70" width="20" height="5" rx="2" fill="#854d0e" stroke="#0f172a" stroke-width="1.5" transform="rotate(15 35 72.5)" />
-                <rect x="35" y="70" width="20" height="5" rx="2" fill="#854d0e" stroke="#0f172a" stroke-width="1.5" transform="rotate(-15 45 72.5)" />
-                <!-- Campfire flames -->
-                <path d="M35,70 C35,60 40,55 45,50 C50,55 55,60 55,70 Z" fill="#ef4444" />
-                <path d="M40,70 C40,63 43,60 45,57 C47,60 50,63 50,70 Z" fill="#f97316" />
-                <path d="M43,70 C43,66 44,64 45,62 C46,64 47,66 47,70 Z" fill="#eab308" />
-            </svg>
         </div>
 
         <!-- Polaroid 3: Gate -->
@@ -2256,7 +2102,6 @@
             <img src="{{ asset('images/thanhcoloa.webp') }}" alt="Thành Cổ Loa" class="polaroid-img">
             <div class="polaroid-caption">Thành Cổ Loa</div>
         </div>
-
 
         <!-- Polaroid 4: Concert -->
         <div class="polaroid-card" style="left: 73%; top: 35px;" data-angle="-5">

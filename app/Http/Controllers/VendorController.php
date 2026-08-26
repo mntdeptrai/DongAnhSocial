@@ -288,12 +288,20 @@ class VendorController extends Controller
         $recentOrders = collect();
         if (\Illuminate\Support\Facades\Schema::hasTable('orders')) {
             $orderQuery = DB::table('orders')
-                ->where('stall_name', $context['stallName']);
+                ->where(function($q) use ($context) {
+                    if (!empty($context['stallName'])) {
+                        $q->where('stall_name', $context['stallName']);
+                    }
+                    if (!empty($context['eateryId'])) {
+                        $q->orWhere('eatery_id', $context['eateryId']);
+                    }
+                });
 
             $recentOrders = (clone $orderQuery)->latest()->take(10)->get();
             $ordersCount = (clone $orderQuery)->count();
             $totalRevenue = (clone $orderQuery)->where('status', '!=', 'cancelled')->sum('total_amount');
         }
+
 
         $viewName = !empty($context['isOcopSeller']) ? 'seller.dashboard-ocop' : 'seller.dashboard';
 
@@ -525,7 +533,14 @@ class VendorController extends Controller
         $orders = collect();
         if (\Illuminate\Support\Facades\Schema::hasTable('orders')) {
             $orders = DB::table('orders')
-                ->where('stall_name', $context['stallName'])
+                ->where(function($q) use ($context) {
+                    if (!empty($context['stallName'])) {
+                        $q->where('stall_name', $context['stallName']);
+                    }
+                    if (!empty($context['eateryId'])) {
+                        $q->orWhere('eatery_id', $context['eateryId']);
+                    }
+                })
                 ->latest()
                 ->paginate(20);
 
@@ -558,12 +573,20 @@ class VendorController extends Controller
         }
 
         // Bảo mật context
-        if ($context['stallName'] && $order->stall_name !== $context['stallName']) {
+        $hasAccess = false;
+        if (!empty($context['stallName']) && $order->stall_name === $context['stallName']) {
+            $hasAccess = true;
+        }
+        if (!empty($context['eateryId']) && (int)$order->eatery_id === (int)$context['eateryId']) {
+            $hasAccess = true;
+        }
+        if (!$hasAccess && session('user_role') !== 'admin') {
             abort(403, 'Gian hàng của bạn không có quyền xem đơn hàng này!');
         }
 
         $items = DB::table('order_items')->where('order_id', $order->id)->get();
         $order->items = $items;
+
 
         return view('seller.order-detail', array_merge($context, ['order' => $order]));
     }

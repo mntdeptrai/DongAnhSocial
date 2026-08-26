@@ -8,7 +8,7 @@ plugins {
 android {
     namespace = "com.donganh.social"
     compileSdk = 37
-    ndkVersion = "28.2.13676358"
+    ndkVersion = flutter.ndkVersion
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -23,6 +23,10 @@ android {
         targetSdk = 35
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+
+        ndk {
+            abiFilters.addAll(setOf("arm64-v8a", "x86_64"))
+        }
     }
 
     buildTypes {
@@ -40,7 +44,7 @@ android {
 
     packaging {
         jniLibs {
-            keepDebugSymbols.add("**/*.so")
+            useLegacyPackaging = true
             pickFirsts.add("**/*.so")
         }
         resources {

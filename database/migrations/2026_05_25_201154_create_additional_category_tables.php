@@ -10,8 +10,8 @@ return new class extends Migration
     {
         $connection = Schema::getConnection()->getName();
 
-        // 1. Rooms for Stay in Đông Anh (mysql_stay)
-        if ($connection === 'mysql_stay') {
+        // 1. Rooms for Stay in Đông Anh
+        if (($connection === 'mysql_stay' || $connection === 'mysql') && !Schema::hasTable('rooms')) {
             Schema::create('rooms', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('eatery_id')->constrained()->onDelete('cascade');
@@ -25,8 +25,8 @@ return new class extends Migration
             });
         }
 
-        // 2. Wellness Services for Wellness & Care (mysql_wellness)
-        if ($connection === 'mysql_wellness') {
+        // 2. Wellness Services for Wellness & Care
+        if (($connection === 'mysql_wellness' || $connection === 'mysql') && !Schema::hasTable('wellness_services')) {
             Schema::create('wellness_services', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('eatery_id')->constrained()->onDelete('cascade');
@@ -39,8 +39,8 @@ return new class extends Migration
             });
         }
 
-        // 3. OCOP Products for Đông Anh Market (mysql_market)
-        if ($connection === 'mysql_market') {
+        // 3. OCOP Products for Đông Anh Market
+        if (($connection === 'mysql_market' || $connection === 'mysql') && !Schema::hasTable('ocop_products')) {
             Schema::create('ocop_products', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('eatery_id')->constrained()->onDelete('cascade');
@@ -53,8 +53,8 @@ return new class extends Migration
             });
         }
 
-        // 4. Education Programs for Smart Education Map (mysql_education)
-        if ($connection === 'mysql_education') {
+        // 4. Education Programs for Smart Education Map
+        if (($connection === 'mysql_education' || $connection === 'mysql') && !Schema::hasTable('education_programs')) {
             Schema::create('education_programs', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('eatery_id')->constrained()->onDelete('cascade');
@@ -66,6 +66,7 @@ return new class extends Migration
                 $table->timestamps();
             });
         }
+
     }
 
     public function down(): void

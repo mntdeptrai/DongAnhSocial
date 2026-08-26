@@ -7,6 +7,7 @@ use App\Domain\ReviewVideo\Actions\CreateReviewVideoAction;
 use App\Domain\ReviewVideo\Actions\UpdateReviewVideoAction;
 use App\Helpers\R2Helper;
 use App\Services\EateryApiService;
+use App\Services\YouTubeService;
 
 class ReviewVideoService
 {
@@ -17,7 +18,7 @@ class ReviewVideoService
 
     public function create(ReviewVideoData $data, string $status)
     {
-        list($videoUrl, $videoType) = $this->resolveVideoDetails($data->video_file, $data->video_url);
+        list($videoUrl, $videoType) = $this->resolveVideoDetails($data->video_file, $data->video_url, $data->title ?? 'Video Review Đông Anh');
         return $this->createAction->execute($data, $videoUrl, $videoType, $status);
     }
 
@@ -33,8 +34,7 @@ class ReviewVideoService
                     @unlink($oldFilePath);
                 }
             }
-            $videoUrl = R2Helper::upload($data->video_file, 'videos');
-            $videoType = 'local';
+            list($videoUrl, $videoType) = $this->resolveVideoDetails($data->video_file, null, $data->title ?? 'Video Review Đông Anh');
         } elseif ($data->video_url && $data->video_url !== $currentUrl) {
             if ($currentType === 'local' && \Str::startsWith($currentUrl, '/uploads/videos/')) {
                 $oldFilePath = public_path($currentUrl);
@@ -42,7 +42,7 @@ class ReviewVideoService
                     @unlink($oldFilePath);
                 }
             }
-            list($videoUrl, $videoType) = $this->resolveVideoDetails(null, $data->video_url);
+            list($videoUrl, $videoType) = $this->resolveVideoDetails(null, $data->video_url, $data->title ?? 'Video Review Đông Anh');
         }
 
         return $this->updateAction->execute($id, $data, $videoUrl, $videoType, $status);
@@ -63,12 +63,21 @@ class ReviewVideoService
         return EateryApiService::deleteVideo($id);
     }
 
-    protected function resolveVideoDetails($videoFile, ?string $videoUrl): array
+    protected function resolveVideoDetails($videoFile, ?string $videoUrl, string $title = 'Video Review Đông Anh'): array
     {
         $resolvedUrl = '';
         $resolvedType = 'local';
 
         if ($videoFile) {
+            // 1. Thử upload trực tiếp lên YouTube qua YouTube Data API v3 nếu đã cấu hình
+            if (YouTubeService::isConfigured()) {
+                $ytResult = YouTubeService::uploadVideo($videoFile, $title, 'Video trải nghiệm ẩm thực và du lịch trên DongAnh Discovery');
+                if ($ytResult && !empty($ytResult['url'])) {
+                    return [$ytResult['url'], 'youtube_shorts'];
+                }
+            }
+
+            // 2. Fallback sang Cloudflare R2 / Local Storage nếu chưa cấu hình YouTube hoặc gặp sự cố
             $resolvedUrl = R2Helper::upload($videoFile, 'videos');
             $resolvedType = 'local';
         } elseif ($videoUrl) {
@@ -100,7 +109,7 @@ class ReviewVideoService
                     }
                 }
             } 
-            elseif (preg_match('/(?:youtube\.com\/(?:shorts\/|watch\?v=)|youtu\.be\/)([a-zA-Z0-9_-]+)/i', $url, $matches)) {
+            elseif (YouTubeService::isYouTubeUrl($url)) {
                 $resolvedType = 'youtube_shorts';
                 $resolvedUrl = $url;
             } else {
@@ -112,3 +121,4 @@ class ReviewVideoService
         return [$resolvedUrl, $resolvedType];
     }
 }
+

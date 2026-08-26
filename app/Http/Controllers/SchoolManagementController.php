@@ -8,6 +8,7 @@ use App\Models\Eatery;
 use App\Services\EateryApiService;
 use App\Helpers\VietnameseSeoHelper;
 use App\Helpers\R2Helper;
+use App\Services\YouTubeService;
 
 class SchoolManagementController extends Controller
 {
@@ -571,11 +572,20 @@ class SchoolManagementController extends Controller
             }
         }
 
+        $title = $request->input('title', 'Video Hoạt Động Giáo Dục Đông Anh');
+
         // Dedicated videos[] files
         if ($request->hasFile('videos')) {
             foreach ($request->file('videos') as $file) {
                 if (!$file || !($file instanceof \Illuminate\Http\UploadedFile) || !$file->isValid()) {
                     continue;
+                }
+                if (YouTubeService::isConfigured()) {
+                    $ytResult = YouTubeService::uploadVideo($file, $title, 'Video hoạt động giáo dục và học tập tại Đông Anh');
+                    if ($ytResult && !empty($ytResult['url'])) {
+                        $uploadedVideos[] = $ytResult['url'];
+                        continue;
+                    }
                 }
                 $path = R2Helper::upload($file, 'education');
                 if ($path) {
