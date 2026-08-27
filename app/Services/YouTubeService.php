@@ -207,6 +207,116 @@ class YouTubeService
     }
 
     /**
+     * Tự động tạo phiên phát trực tiếp YouTube Live (Broadcast + RTMP Ingest + Bind)
+     *
+     * @param string $title Tiêu đề phiên live
+     * @param string $description Mô tả phiên live
+     * @param string $privacyStatus 'public', 'unlisted', 'private'
+     * @return array|null Trả về mảng ['id' => ..., 'video_id' => ..., 'watch_url' => ..., 'embed_url' => ..., 'rtmp_server_url' => ..., 'stream_key' => ...]
+     */
+    public static function createLiveEvent(string $title, string $description = '', string $privacyStatus = 'public'): ?array
+    {
+        $accessToken = self::getAccessToken();
+        if (!$accessToken) {
+            Log::error('YouTubeService: Không thể lấy Access Token để tạo YouTube Live event.');
+            return null;
+        }
+
+        try {
+            // 1. Tạo Broadcast (liveBroadcasts.insert)
+            $broadcastPayload = [
+                'snippet' => [
+                    'title'              => mb_substr($title, 0, 100),
+                    'description'        => $description,
+                    'scheduledStartTime' => now()->toIso8601String(),
+                ],
+                'status' => [
+                    'privacyStatus'           => in_array($privacyStatus, ['public', 'unlisted', 'private']) ? $privacyStatus : 'public',
+                    'selfDeclaredMadeForKids' => false,
+                ],
+                'contentDetails' => [
+                    'enableAutoStart'   => true,
+                    'enableAutoStop'    => true,
+                    'enableDvr'         => true,
+                    'latencyPreference' => 'ultraLow',
+                    'projection'        => 'rectangular',
+                ]
+            ];
+
+            $broadcastRes = Http::withHeaders([
+                'Authorization' => 'Bearer ' . $accessToken,
+                'Content-Type'  => 'application/json',
+            ])->post('https://www.googleapis.com/youtube/v3/liveBroadcasts?part=snippet,status,contentDetails', $broadcastPayload);
+
+            if (!$broadcastRes->successful()) {
+                Log::error('YouTubeService: Lỗi tạo YouTube Live Broadcast: ' . $broadcastRes->body());
+                return null;
+            }
+
+            $broadcastData = $broadcastRes->json();
+            $broadcastId = $broadcastData['id'] ?? null;
+            if (!$broadcastId) {
+                Log::error('YouTubeService: Không nhận được broadcast ID từ Google.');
+                return null;
+            }
+
+            // 2. Tạo Stream Ingestion (liveStreams.insert)
+            $streamPayload = [
+                'snippet' => [
+                    'title' => 'DongAnh Stream - ' . mb_substr($title, 0, 60),
+                ],
+                'cdn' => [
+                    'frameRate'     => 'variable',
+                    'ingestionType' => 'rtmp',
+                    'resolution'    => 'variable',
+                ]
+            ];
+
+            $streamRes = Http::withHeaders([
+                'Authorization' => 'Bearer ' . $accessToken,
+                'Content-Type'  => 'application/json',
+            ])->post('https://www.googleapis.com/youtube/v3/liveStreams?part=snippet,cdn', $streamPayload);
+
+            if (!$streamRes->successful()) {
+                Log::error('YouTubeService: Lỗi tạo YouTube Live Stream CDN: ' . $streamRes->body());
+                return null;
+            }
+
+            $streamData = $streamRes->json();
+            $streamId = $streamData['id'] ?? null;
+            $ingestionAddress = $streamData['cdn']['ingestionInfo']['ingestionAddress'] ?? 'rtmp://a.rtmp.youtube.com/live2';
+            $streamName = $streamData['cdn']['ingestionInfo']['streamName'] ?? null;
+
+            // 3. Liên kết Broadcast và Stream (liveBroadcasts.bind)
+            if ($streamId) {
+                $bindRes = Http::withHeaders([
+                    'Authorization' => 'Bearer ' . $accessToken,
+                ])->post("https://www.googleapis.com/youtube/v3/liveBroadcasts/bind?id={$broadcastId}&part=id,contentDetails&streamId={$streamId}");
+
+                if (!$bindRes->successful()) {
+                    Log::warning('YouTubeService: Lỗi bind broadcast và stream: ' . $bindRes->body());
+                }
+            }
+
+            Log::info("YouTubeService: Tự động tạo YouTube Live thành công. Video ID: {$broadcastId}");
+
+            return [
+                'id'              => $broadcastId,
+                'video_id'        => $broadcastId,
+                'watch_url'       => "https://www.youtube.com/watch?v={$broadcastId}",
+                'embed_url'       => "https://www.youtube.com/embed/{$broadcastId}",
+                'rtmp_server_url' => $ingestionAddress,
+                'stream_key'      => $streamName,
+                'title'           => $title,
+            ];
+
+        } catch (\Throwable $e) {
+            Log::error('YouTubeService: Exception khi tạo YouTube Live event: ' . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
      * Trích xuất Video ID từ mọi dạng link YouTube (watch, shorts, youtu.be, embed, v.v.)
      */
     public static function extractVideoId(?string $url): ?string

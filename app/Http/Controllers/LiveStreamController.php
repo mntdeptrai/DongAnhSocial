@@ -173,13 +173,36 @@ class LiveStreamController extends Controller
             'product_ids'       => 'nullable|array',
             'product_ids.*'     => 'integer',
             'cover_image'       => 'nullable|image|max:5120',
+            'youtube_url'       => 'nullable|string|max:500',
+            'stream_source'     => 'nullable|string|in:youtube_auto,youtube,webrtc,obs',
         ]);
 
+        $streamSource = $request->input('stream_source', 'youtube_auto');
+        $youtubeVideoId = null;
+        $createdYtEvent = null;
+
+        // 1. Nếu chọn tự động tạo YouTube Live (1-Click từ website)
+        if ($streamSource === 'youtube_auto') {
+            if (\App\Services\YouTubeService::isConfigured()) {
+                $createdYtEvent = \App\Services\YouTubeService::createLiveEvent(
+                    $request->title,
+                    $request->description ?? 'Livestream bán hàng OCOP & Giao lưu cộng đồng Đông Anh',
+                    'public'
+                );
+                if ($createdYtEvent && !empty($createdYtEvent['video_id'])) {
+                    $youtubeVideoId = $createdYtEvent['video_id'];
+                }
+            }
+        } elseif ($request->filled('youtube_url')) {
+            $youtubeVideoId = \App\Services\YouTubeService::extractVideoId($request->input('youtube_url'));
+        }
 
         $coverImagePath = null;
         if ($request->hasFile('cover_image')) {
             $coverImagePath = $request->file('cover_image')->store('livestreams', 'public');
             $coverImagePath = '/storage/' . $coverImagePath;
+        } elseif ($youtubeVideoId) {
+            $coverImagePath = \App\Services\YouTubeService::getThumbnailUrl($youtubeVideoId, 'hqdefault');
         }
 
         $liveStream = LiveStream::create([
@@ -189,6 +212,7 @@ class LiveStreamController extends Controller
             'category'          => $request->category,
             'pinned_product_id' => $request->pinned_product_id,
             'cover_image'       => $coverImagePath,
+            'youtube_video_id'  => $youtubeVideoId,
             'status'            => 'live',
             'viewer_count'      => 1,
             'peak_viewers'      => 1,
@@ -634,6 +658,39 @@ class LiveStreamController extends Controller
             'status'       => 'success',
             'viewer_count' => $stream->viewer_count,
             'peak_viewers' => $stream->peak_viewers,
+        ]);
+    }
+
+    /**
+     * Cập nhật luồng YouTube Live cho phiên phát trực tiếp (0% CPU Server)
+     */
+    public function updateYouTubeLive(Request $request, $id)
+    {
+        $currentUser = $this->getCurrentUser();
+        $stream = $this->findStream($id);
+
+        if (!$currentUser || ($stream->user_id !== $currentUser->id && $currentUser->role !== 'admin')) {
+            return response()->json(['status' => 'error', 'message' => 'Không có quyền thực hiện.'], 403);
+        }
+
+        $request->validate([
+            'youtube_url' => 'nullable|string|max:500',
+        ]);
+
+        $url = $request->input('youtube_url');
+        $videoId = !empty($url) ? \App\Services\YouTubeService::extractVideoId($url) : null;
+
+        $stream->youtube_video_id = $videoId;
+        if ($videoId && empty($stream->cover_image)) {
+            $stream->cover_image = \App\Services\YouTubeService::getThumbnailUrl($videoId, 'hqdefault');
+        }
+        $stream->save();
+
+        return response()->json([
+            'status'           => 'success',
+            'message'          => $videoId ? 'Đã kích hoạt nguồn phát YouTube Live thành công!' : 'Đã tắt chế độ YouTube Live.',
+            'youtube_video_id' => $videoId,
+            'embed_url'        => $videoId ? \App\Services\YouTubeService::getEmbedUrl($videoId) : null,
         ]);
     }
 

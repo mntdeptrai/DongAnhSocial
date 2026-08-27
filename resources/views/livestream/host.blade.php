@@ -8,8 +8,14 @@
         <!-- Main Video Studio (Left / Center) -->
         <div class="studio-video-pane">
             <div class="studio-screen-wrapper">
-                <!-- Video Element -->
-                <video id="host-preview-video" autoplay playsinline muted class="host-main-video"></video>
+                <!-- Video Element (Webcam / WebRTC hoặc YouTube Live Monitor) -->
+                @if($stream->youtube_video_id)
+                    <div id="host-youtube-preview-container" style="position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1; background: #000;">
+                        <iframe id="host-youtube-frame" src="https://www.youtube.com/embed/{{ $stream->youtube_video_id }}?autoplay=1&mute=1&rel=0&playsinline=1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="width: 100%; height: 100%; border: none;"></iframe>
+                    </div>
+                @else
+                    <video id="host-preview-video" autoplay playsinline muted class="host-main-video"></video>
+                @endif
 
                 <!-- Floating Reactions Layer -->
                 <div id="host-reaction-layer" class="floating-reaction-layer"></div>
@@ -90,11 +96,11 @@
                     <button type="button" class="btn-copy-link" onclick="copyShareUrl()">Sao chép</button>
                 </div>
 
-                <!-- OBS / TikTok Studio RTMP Ingest Panel -->
-                <div class="studio-rtmp-panel" style="margin-top: 12px; background: rgba(14, 165, 233, 0.06); border: 1px dashed rgba(14, 165, 233, 0.35); border-radius: 12px; padding: 12px 14px;">
+                <!-- Live Broadcast & RTMP Stream Key Panel -->
+                <div class="studio-rtmp-panel" style="margin-top: 12px; background: rgba(14, 165, 233, 0.05); border: 1px solid rgba(14, 165, 233, 0.2); border-radius: 12px; padding: 12px 14px;">
                     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
                         <span style="font-size: 0.86rem; font-weight: 700; color: #0284c7; display: flex; align-items: center; gap: 6px;">
-                            📹 Phát qua OBS / TikTok Live Studio / PRISM:
+                            ⚡ Khóa luồng phát sóng (OBS / PRISM Studio):
                         </span>
                         <button type="button" onclick="toggleRtmpDetails()" id="btn-toggle-rtmp" style="background: none; border: none; color: #0284c7; font-size: 0.8rem; font-weight: 700; cursor: pointer; text-decoration: underline;">
                             [Xem Cấu hình RTMP]
@@ -102,11 +108,11 @@
                     </div>
                     <div id="rtmp-details-panel" style="display: none; font-size: 0.82rem; color: #334155; margin-top: 10px; line-height: 1.8;">
                         <div style="margin-bottom: 8px; font-size: 0.78rem; color: #64748b; line-height: 1.4;">
-                            💡 <i>Chỉ cần thiết khi bạn muốn phát từ phần mềm chuyên nghiệp trên máy tính (OBS / PRISM Studio). Nếu bạn đang live trực tiếp bằng camera điện thoại/webcam, bạn có thể bỏ qua phần này.</i>
+                            💡 <i>Dành cho người phát bằng phần mềm chuyên nghiệp trên máy tính (OBS / PRISM). Nếu bạn đang live trực tiếp bằng camera trên trang, bạn có thể bỏ qua phần này.</i>
                         </div>
                         <div style="display: flex; align-items: center; justify-content: space-between; background: #ffffff; padding: 6px 10px; border-radius: 8px; margin-bottom: 6px; border: 1px solid #e2e8f0;">
-                            <div><b>Máy chủ (Server):</b> <code style="color: #0284c7; font-weight: 700;">{{ $stream->rtmp_server_url }}</code></div>
-                            <button type="button" class="btn-copy-link" style="padding: 3px 8px; font-size: 0.75rem;" onclick="copyRawText('{{ $stream->rtmp_server_url }}')">Copy</button>
+                            <div><b>Máy chủ (Server URL):</b> <code style="color: #0284c7; font-weight: 700;">{{ $stream->youtube_video_id ? 'rtmp://a.rtmp.youtube.com/live2' : $stream->rtmp_server_url }}</code></div>
+                            <button type="button" class="btn-copy-link" style="padding: 3px 8px; font-size: 0.75rem;" onclick="copyRawText('{{ $stream->youtube_video_id ? 'rtmp://a.rtmp.youtube.com/live2' : $stream->rtmp_server_url }}')">Copy</button>
                         </div>
                         <div style="display: flex; align-items: center; justify-content: space-between; background: #ffffff; padding: 6px 10px; border-radius: 8px; border: 1px solid #e2e8f0;">
                             <div><b>Khóa luồng (Stream Key):</b> <code style="color: #ea580c; font-weight: 700;">{{ $stream->stream_key }}</code></div>
@@ -389,6 +395,57 @@ function copyShareUrl() {
                 showConfirmButton: false
             });
         }
+    }
+}
+
+async function saveYouTubeLiveLink(event) {
+    const input = document.getElementById('host-youtube-input');
+    const val = (input ? input.value : '').trim();
+    const btn = event ? event.target : null;
+    const originalText = btn ? btn.innerHTML : '';
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '⏳ Đang lưu...';
+    }
+
+    try {
+        const res = await fetch('{{ route('livestream.update-youtube', $stream->code_or_id) }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+            },
+            body: JSON.stringify({ youtube_url: val })
+        });
+        const data = await res.json();
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }
+
+        if (data.status === 'success') {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Thành công!',
+                    text: data.message,
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+            } else {
+                alert(data.message);
+            }
+            setTimeout(() => window.location.reload(), 1200);
+        } else {
+            alert(data.message || 'Không thể cập nhật YouTube Live.');
+        }
+    } catch (e) {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }
+        alert('Lỗi kết nối khi cập nhật link YouTube Live.');
     }
 }
 </script>

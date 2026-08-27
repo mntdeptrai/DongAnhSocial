@@ -32,7 +32,7 @@ class YouTubeAuthController extends Controller
             'client_id'             => $clientId,
             'redirect_uri'          => $redirectUri,
             'response_type'         => 'code',
-            'scope'                 => 'https://www.googleapis.com/auth/youtube.upload https://www.googleapis.com/auth/youtube.readonly',
+            'scope'                 => 'https://www.googleapis.com/auth/youtube https://www.googleapis.com/auth/youtube.upload https://www.googleapis.com/auth/youtube.readonly https://www.googleapis.com/auth/youtube.force-ssl',
             'access_type'           => 'offline',
             'prompt'                => 'consent',
             'include_granted_scopes'=> 'true',

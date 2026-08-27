@@ -88,7 +88,7 @@ Route::post('/livestream/{id}/products', [LiveStreamController::class, 'addProdu
 Route::delete('/livestream/{id}/products/{productId}', [LiveStreamController::class, 'removeProduct'])->name('livestream.products.remove');
 Route::post('/livestream/{id}/signal', [LiveStreamController::class, 'sendSignal'])->name('livestream.signal');
 Route::get('/livestream/{id}/signals', [LiveStreamController::class, 'getSignals'])->name('livestream.signals');
-
+Route::post('/livestream/{id}/youtube-live', [LiveStreamController::class, 'updateYouTubeLive'])->name('livestream.update-youtube');
 Route::post('/livestream/{id}/viewer-count', [LiveStreamController::class, 'updateViewerCount'])->name('livestream.viewer-count');
 Route::post('/livestream/{id}/upload-recording', [LiveStreamController::class, 'uploadRecording'])->name('livestream.upload-recording');
 Route::post('/livestream/{id}/end', [LiveStreamController::class, 'endStream'])->name('livestream.end');

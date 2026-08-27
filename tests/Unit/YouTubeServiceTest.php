@@ -120,4 +120,40 @@ class YouTubeServiceTest extends TestCase
         $this->assertEquals('https://www.youtube.com/watch?v=abc123xyz89', $result['url']);
         $this->assertEquals('https://www.youtube.com/embed/abc123xyz89', $result['embed_url']);
     }
+
+    public function test_create_live_event_flow()
+    {
+        Config::set('services.youtube.client_id', 'test_client_id');
+        Config::set('services.youtube.client_secret', 'test_client_secret');
+        Config::set('services.youtube.refresh_token', 'test_refresh_token');
+
+        Http::fake([
+            'https://oauth2.googleapis.com/token' => Http::response([
+                'access_token' => 'mock_access_token_12345',
+                'expires_in'   => 3600,
+            ], 200),
+            'https://www.googleapis.com/youtube/v3/liveBroadcasts*' => Http::response([
+                'id' => 'liveBroadcast123',
+                'snippet' => ['title' => 'Livestream Test'],
+            ], 200),
+            'https://www.googleapis.com/youtube/v3/liveStreams*' => Http::response([
+                'id' => 'liveStreamCDN456',
+                'cdn' => [
+                    'ingestionInfo' => [
+                        'ingestionAddress' => 'rtmp://a.rtmp.youtube.com/live2',
+                        'streamName'       => 'abcd-1234-efgh-5678',
+                    ]
+                ]
+            ], 200),
+        ]);
+
+        $result = YouTubeService::createLiveEvent('Livestream Test', 'Mo ta livestream', 'public');
+
+        $this->assertNotNull($result);
+        $this->assertEquals('liveBroadcast123', $result['video_id']);
+        $this->assertEquals('https://www.youtube.com/watch?v=liveBroadcast123', $result['watch_url']);
+        $this->assertEquals('https://www.youtube.com/embed/liveBroadcast123', $result['embed_url']);
+        $this->assertEquals('rtmp://a.rtmp.youtube.com/live2', $result['rtmp_server_url']);
+        $this->assertEquals('abcd-1234-efgh-5678', $result['stream_key']);
+    }
 }

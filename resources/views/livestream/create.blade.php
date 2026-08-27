@@ -504,6 +504,50 @@ function toggleTestMic() {
     }
 }
 
+function switchStreamSource(type) {
+    document.querySelectorAll('.source-card').forEach(c => {
+        c.style.borderColor = '#e2e8f0';
+        c.style.background = '#ffffff';
+    });
+    const active = document.getElementById(`source-card-${type}`);
+    if (active) {
+        active.style.borderColor = '#0ea5e9';
+        active.style.background = '#f0f9ff';
+    }
+
+    const autoBox = document.getElementById('youtube-auto-box');
+    if (autoBox) {
+        autoBox.style.display = (type === 'youtube_auto') ? 'block' : 'none';
+    }
+
+    const ytBox = document.getElementById('youtube-url-box');
+    if (ytBox) {
+        ytBox.style.display = (type === 'youtube') ? 'block' : 'none';
+    }
+}
+
+function extractYouTubeId(url) {
+    if (!url) return null;
+    if (/^[a-zA-Z0-9_-]{11}$/.test(url.trim())) return url.trim();
+    const match = url.match(/(?:youtube(?:-nocookie)?\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?|shorts|live)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/i);
+    return match ? match[1] : null;
+}
+
+function checkYouTubePreview(val) {
+    const videoId = extractYouTubeId(val);
+    const previewBox = document.getElementById('yt-preview-box');
+    const previewThumb = document.getElementById('yt-preview-thumb');
+    const previewId = document.getElementById('yt-preview-id');
+
+    if (videoId) {
+        if (previewThumb) previewThumb.src = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+        if (previewId) previewId.innerText = `YouTube Video ID: ${videoId}`;
+        if (previewBox) previewBox.style.display = 'flex';
+    } else {
+        if (previewBox) previewBox.style.display = 'none';
+    }
+}
+
 function updateTitleCounter(input) {
     const counter = document.getElementById('title-counter');
     if (counter) {

@@ -19,6 +19,11 @@
                             <video src="{{ $stream->recording_url }}" controls autoplay playsinline class="viewer-replay-video"></video>
                         @endif
                     </div>
+                @elseif($stream->youtube_video_id)
+                    <!-- Live YouTube Stream Player (100% YouTube CDN - 0% Server CPU) -->
+                    <div class="viewer-youtube-box">
+                        <iframe src="https://www.youtube.com/embed/{{ $stream->youtube_video_id }}?autoplay=1&rel=0&playsinline=1&enablejsapi=1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen class="viewer-youtube-frame"></iframe>
+                    </div>
                 @else
                     <!-- Live WebRTC Video Player (muted for instant browser autoplay) -->
                     <video id="viewer-video-player" autoplay playsinline muted class="viewer-main-video"></video>
@@ -446,6 +451,7 @@ document.addEventListener('DOMContentLoaded', () => {
         streamId: '{{ $stream->code_or_id }}',
         channelId: {{ $stream->id }},
         hlsUrl: '{{ $stream->hls_stream_url }}',
+        youtubeVideoId: '{{ $stream->youtube_video_id }}',
         userId: {{ Auth::id() ?: (session('user_id') ?: 'null') }}
     });
 });
@@ -684,15 +690,19 @@ function showCopiedToast() {
 }
 
 /* Replay Box */
-.viewer-replay-box {
+.viewer-replay-box, .viewer-youtube-box {
+    position: absolute;
+    inset: 0;
     width: 100%;
     height: 100%;
-    background: #000;
+    background: #000000;
+    overflow: hidden;
 }
-.viewer-replay-frame, .viewer-replay-video {
+.viewer-replay-frame, .viewer-replay-video, .viewer-youtube-frame {
     width: 100%;
     height: 100%;
-    object-fit: contain;
+    border: none;
+    object-fit: cover;
 }
 
 .viewer-unmute-btn {
