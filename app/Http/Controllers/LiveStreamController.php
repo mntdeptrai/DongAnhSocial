@@ -656,6 +656,63 @@ class LiveStreamController extends Controller
     }
 
     /**
+     * Tải lên video đã ghi hình của phiên Live và đồng bộ lên Kênh YouTube
+     */
+    public function uploadRecording(Request $request, $id)
+    {
+        $currentUser = $this->getCurrentUser();
+        $stream = $this->findStream($id);
+
+        if (!$currentUser || ($stream->user_id !== $currentUser->id && $currentUser->role !== 'admin')) {
+            return response()->json(['status' => 'error', 'message' => 'Không có quyền thực hiện.'], 403);
+        }
+
+        $request->validate([
+            'recording' => 'required|file|max:512000', // max 500MB
+        ]);
+
+        $file = $request->file('recording');
+        $storedPath = $file->store('livestream_recordings', 'public');
+        $localUrl = '/storage/' . $storedPath;
+
+        $youtubeVideoId = null;
+        $youtubeUrl = null;
+
+        // Nếu YouTube API đã kết nối OAuth, tự động upload lên YouTube
+        if (\App\Services\YouTubeService::isConfigured()) {
+            try {
+                $ytResult = \App\Services\YouTubeService::uploadVideo(
+                    video: $file,
+                    title: '🔴 Livestream: ' . $stream->title . ' - Đông Anh Discovery',
+                    description: "Phiên phát trực tiếp tại Đông Anh Discovery\n\nChủ phòng: " . ($stream->user ? $stream->user->name : 'Streamer') . "\nChủ đề: " . $stream->category . "\nThời gian: " . ($stream->started_at ? $stream->started_at->format('d/m/Y H:i') : now()->format('d/m/Y H:i')) . "\n\n" . ($stream->description ?: ''),
+                    privacy: 'unlisted',
+                    tags: ['Đông Anh', 'Livestream', 'OCOP', 'DongAnh Discovery']
+                );
+
+                if ($ytResult && !empty($ytResult['id'])) {
+                    $youtubeVideoId = $ytResult['id'];
+                    $youtubeUrl = $ytResult['url'];
+                }
+            } catch (\Throwable $e) {
+                Log::warning('YouTube auto-upload failed for stream #' . $stream->id . ': ' . $e->getMessage());
+            }
+        }
+
+        $stream->recording_url = $youtubeUrl ?: $localUrl;
+        if ($youtubeVideoId) {
+            $stream->youtube_video_id = $youtubeVideoId;
+        }
+        $stream->save();
+
+        return response()->json([
+            'status'           => 'success',
+            'recording_url'    => $stream->recording_url,
+            'youtube_video_id' => $stream->youtube_video_id,
+            'is_youtube'       => !empty($stream->youtube_video_id),
+        ]);
+    }
+
+    /**
      * Xóa bản ghi phiên Livestream
      */
     public function destroy($id)

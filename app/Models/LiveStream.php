@@ -15,6 +15,8 @@ class LiveStream extends Model
         'title',
         'description',
         'cover_image',
+        'recording_url',
+        'youtube_video_id',
         'status',
         'category',
         'pinned_product_id',

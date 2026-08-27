@@ -90,6 +90,7 @@ Route::post('/livestream/{id}/signal', [LiveStreamController::class, 'sendSignal
 Route::get('/livestream/{id}/signals', [LiveStreamController::class, 'getSignals'])->name('livestream.signals');
 
 Route::post('/livestream/{id}/viewer-count', [LiveStreamController::class, 'updateViewerCount'])->name('livestream.viewer-count');
+Route::post('/livestream/{id}/upload-recording', [LiveStreamController::class, 'uploadRecording'])->name('livestream.upload-recording');
 Route::post('/livestream/{id}/end', [LiveStreamController::class, 'endStream'])->name('livestream.end');
 Route::delete('/livestream/{id}', [LiveStreamController::class, 'destroy'])->name('livestream.destroy');
 

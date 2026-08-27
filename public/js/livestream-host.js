@@ -137,6 +137,9 @@ window.DongAnhLiveHost = (function () {
             videoElement.srcObject = localStream;
         }
 
+        // Tự động ghi hình phiên Live để lưu trữ và tải lên YouTube
+        startRecording(localStream);
+
         // Cập nhật track tới tất cả viewers hiện có
         peerConnections.forEach((pc) => {
             const senders = pc.getSenders();
@@ -781,8 +784,38 @@ window.DongAnhLiveHost = (function () {
         return n < 10 ? '0' + n : n;
     }
 
+    let mediaRecorder = null;
+    let recordedChunks = [];
+
     /**
-     * Kết thúc Livestream
+     * Tự động ghi hình phiên Livestream (MediaRecorder)
+     */
+    function startRecording(stream) {
+        if (!window.MediaRecorder || !stream) return;
+        try {
+            recordedChunks = [];
+            const mimeTypes = [
+                'video/webm;codecs=vp9,opus',
+                'video/webm;codecs=vp8,opus',
+                'video/webm',
+                'video/mp4'
+            ];
+            const mime = mimeTypes.find(m => MediaRecorder.isTypeSupported(m)) || '';
+            mediaRecorder = new MediaRecorder(stream, mime ? { mimeType: mime } : {});
+            mediaRecorder.ondataavailable = (event) => {
+                if (event.data && event.data.size > 0) {
+                    recordedChunks.push(event.data);
+                }
+            };
+            mediaRecorder.start(2500);
+            console.log('[LiveHost] MediaRecorder started with mime:', mime);
+        } catch (e) {
+            console.warn('[LiveHost] MediaRecorder error:', e);
+        }
+    }
+
+    /**
+     * Kết thúc Livestream & Tải video lên YouTube
      */
     async function endStream() {
         if (typeof Swal !== 'undefined') {
@@ -793,10 +826,54 @@ window.DongAnhLiveHost = (function () {
                 showCancelButton: true,
                 confirmButtonColor: '#ef4444',
                 cancelButtonColor: '#64748b',
-                confirmButtonText: '🔴 Dừng phát sóng',
+                confirmButtonText: '🔴 Dừng phát & Lưu Video',
                 cancelButtonText: 'Tiếp tục Live'
             });
             if (!result.isConfirmed) return;
+        }
+
+        // Hiển thị thông báo đang xử lý lưu video
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                title: 'Đang lưu & Tải video lên YouTube...',
+                html: '<div style="font-size:0.95rem; color:#64748b; margin-top:8px;">Hệ thống đang đồng bộ bản ghi video phiên Live của bạn. Vui lòng chờ...</div>',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+        }
+
+        // 1. Dừng ghi hình và chuẩn bị tệp video
+        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+            try { mediaRecorder.stop(); } catch(e) {}
+        }
+
+        let ytResultData = null;
+        if (recordedChunks.length > 0) {
+            try {
+                const mimeType = mediaRecorder ? (mediaRecorder.mimeType || 'video/webm') : 'video/webm';
+                const blob = new Blob(recordedChunks, { type: mimeType });
+                const ext = mimeType.includes('mp4') ? 'mp4' : 'webm';
+                const file = new File([blob], `live_record_${streamId}_${Date.now()}.${ext}`, { type: mimeType });
+
+                const formData = new FormData();
+                formData.append('recording', file);
+
+                console.log('[LiveHost] Uploading recorded stream video (' + (file.size / (1024*1024)).toFixed(2) + ' MB)...');
+                const uploadRes = await fetch(`/livestream/${streamId}/upload-recording`, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': getCsrf()
+                    },
+                    body: formData
+                });
+                ytResultData = await uploadRes.json();
+                console.log('[LiveHost] Video upload completed:', ytResultData);
+            } catch (uploadErr) {
+                console.warn('[LiveHost] Error uploading recording:', uploadErr);
+            }
         }
 
         try {
@@ -816,6 +893,10 @@ window.DongAnhLiveHost = (function () {
             peerConnections.forEach(pc => pc.close());
             if (timerInterval) clearInterval(timerInterval);
 
+            const ytSuccessHtml = (ytResultData && ytResultData.youtube_video_id)
+                ? `<div style="margin-top:10px; color:#16a34a; font-weight:700;">📺 Đã tự động tải lên Kênh YouTube thành công!</div>`
+                : (ytResultData && ytResultData.recording_url ? `<div style="margin-top:10px; color:#0ea5e9; font-weight:700;">💾 Đã lưu bản ghi video phiên Live thành công!</div>` : '');
+
             if (typeof Swal !== 'undefined') {
                 Swal.fire({
                     icon: 'success',
@@ -825,9 +906,10 @@ window.DongAnhLiveHost = (function () {
                             <div>⏱️ <b>Thời lượng:</b> ${data.duration || '00:00'}</div>
                             <div>👥 <b>Lượt xem cao nhất:</b> ${data.peak_viewers || 1} người</div>
                             <div>❤️ <b>Tổng lượt tương tác:</b> ${data.total_likes || 0} lượt</div>
+                            ${ytSuccessHtml}
                         </div>
                     `,
-                    confirmButtonText: 'Về trang Bản tin',
+                    confirmButtonText: 'Về trang Quản lý Live',
                     confirmButtonColor: '#0ea5e9'
                 }).then(() => {
                     window.location.href = '/livestream';
