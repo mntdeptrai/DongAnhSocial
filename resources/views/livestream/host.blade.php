@@ -213,17 +213,20 @@
     if (typeof window.Echo === 'undefined') {
         window.Echo = new (class {
             constructor() {
-                const defaultHost = window.location.hostname || 'donganhdiscovery.xadonganh.com';
                 const isHttps = window.location.protocol === 'https:';
-                const reverbHost = '{{ config('broadcasting.connections.reverb.options.host', env('REVERB_HOST', 'donganhdiscovery.xadonganh.com')) }}' || defaultHost;
-                const reverbPort = {{ (int)config('broadcasting.connections.reverb.options.port', env('REVERB_PORT', 443)) }};
-                const reverbKey = '{{ config('broadcasting.connections.reverb.key', env('REVERB_APP_KEY', 'donganhreverbkey')) }}';
+                const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+                const wsHost = isLocal ? '127.0.0.1' : window.location.hostname;
+                const wsPort = isLocal ? {{ (int)env('REVERB_PORT', 8080) }} : (isHttps ? 443 : 80);
+                const forceTLS = isLocal ? false : isHttps;
+                const reverbKey = '{{ config('broadcasting.connections.reverb.key') ?: env('REVERB_APP_KEY', 'donganhreverbkey')) }}';
+
+                console.log('[LiveHost] Connecting to Reverb:', wsHost, wsPort, 'TLS:', forceTLS, 'Key:', reverbKey);
 
                 this._pusher = new Pusher(reverbKey, {
-                    wsHost:           reverbHost,
-                    wsPort:           reverbPort,
-                    wssPort:          reverbPort,
-                    forceTLS:         isHttps || {{ config('broadcasting.connections.reverb.options.useTLS', env('REVERB_SCHEME', 'https') === 'https') ? 'true' : 'false' }},
+                    wsHost:           wsHost,
+                    wsPort:           wsPort,
+                    wssPort:          wsPort,
+                    forceTLS:         forceTLS,
                     enabledTransports: ['ws', 'wss'],
                     cluster:          'mt1',
                     disableStats:     true,
@@ -246,6 +249,9 @@
             }
             channel(name) {
                 const ch = this._pusher.subscribe(name);
+                ch.bind_global((eventName, data) => {
+                    console.log('[LiveHost WS Event]', name, eventName, data);
+                });
                 const obj = {
                     listen: (event, cb) => {
                         const evtName = event.startsWith('.') ? event.slice(1) : event;
@@ -272,7 +278,7 @@
     }
 </script>
 
-<script src="{{ asset('js/livestream-host.js') }}"></script>
+<script src="{{ asset('js/livestream-host.js') }}?v={{ time() }}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     DongAnhLiveHost.init({

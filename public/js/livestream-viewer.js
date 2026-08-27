@@ -9,6 +9,7 @@ window.DongAnhLiveViewer = (function () {
     let mySessionId = 'viewer_' + Math.random().toString(36).substring(2, 9);
     let peerConnection = null;
     let remoteStream = null;
+    let pendingIceCandidates = [];
 
     const rtcConfig = {
         iceServers: [
@@ -42,16 +43,18 @@ window.DongAnhLiveViewer = (function () {
         // 3. Gửi tín hiệu tham gia phòng tới Host
         setTimeout(() => {
             sendSignal('host', 'viewer_join', null);
-        }, 500);
+        }, 300);
 
-        // Lặp lại gửi tín hiệu nếu chưa kết nối sau 3 giây
+        // Lặp lại gửi tín hiệu nếu chưa kết nối sau 3 giây (đảm bảo kết nối ngay khi Host mở Studio)
         const retryTimer = setInterval(() => {
-            if (!peerConnection || peerConnection.connectionState !== 'connected') {
+            if (!peerConnection || (peerConnection.connectionState !== 'connected' && peerConnection.iceConnectionState !== 'connected')) {
+                console.log('[LiveViewer] Checking connection... Sending viewer_join signal to Host.');
                 sendSignal('host', 'viewer_join', null);
             } else {
+                console.log('[LiveViewer] WebRTC Connected successfully!');
                 clearInterval(retryTimer);
             }
-        }, 3500);
+        }, 3000);
     }
 
     /**
@@ -59,11 +62,20 @@ window.DongAnhLiveViewer = (function () {
      */
     function createPeerConnection() {
         if (peerConnection) {
-            peerConnection.close();
+            try { peerConnection.close(); } catch(e) {}
         }
 
         peerConnection = new RTCPeerConnection(rtcConfig);
         remoteStream = new MediaStream();
+        pendingIceCandidates = [];
+
+        // Đăng ký nhận video và audio chủ động
+        try {
+            peerConnection.addTransceiver('video', { direction: 'recvonly' });
+            peerConnection.addTransceiver('audio', { direction: 'recvonly' });
+        } catch (e) {
+            console.warn('[LiveViewer] addTransceiver warning:', e);
+        }
 
         const videoEl = document.getElementById('viewer-video-player');
         if (videoEl) {
@@ -73,7 +85,14 @@ window.DongAnhLiveViewer = (function () {
         // Nhận track từ Host
         peerConnection.ontrack = (event) => {
             console.log('[LiveViewer] Received remote track:', event.track.kind);
-            remoteStream.addTrack(event.track);
+            if (event.streams && event.streams[0]) {
+                const videoElement = document.getElementById('viewer-video-player');
+                if (videoElement && videoElement.srcObject !== event.streams[0]) {
+                    videoElement.srcObject = event.streams[0];
+                }
+            } else {
+                remoteStream.addTrack(event.track);
+            }
 
             hideLoadingOverlay();
             attemptPlayVideo();
@@ -90,8 +109,17 @@ window.DongAnhLiveViewer = (function () {
             console.log('[LiveViewer] Connection state:', peerConnection.connectionState);
             if (peerConnection.connectionState === 'connected') {
                 hideLoadingOverlay();
+                attemptPlayVideo();
             } else if (peerConnection.connectionState === 'disconnected' || peerConnection.connectionState === 'failed') {
                 showReconnectingOverlay();
+            }
+        };
+
+        peerConnection.oniceconnectionstatechange = () => {
+            console.log('[LiveViewer] ICE state:', peerConnection.iceConnectionState);
+            if (peerConnection.iceConnectionState === 'connected' || peerConnection.iceConnectionState === 'completed') {
+                hideLoadingOverlay();
+                attemptPlayVideo();
             }
         };
     }
@@ -121,7 +149,7 @@ window.DongAnhLiveViewer = (function () {
             } else if (e.signal_type === 'ice_candidate') {
                 handleIceCandidate(e.signal_data);
             } else if (e.signal_type === 'host_ready') {
-                sendSignal(e.sender_session_id, 'viewer_join', null);
+                sendSignal(e.sender_session_id || 'host', 'viewer_join', null);
             }
         });
 
@@ -165,11 +193,23 @@ window.DongAnhLiveViewer = (function () {
 
         try {
             const offer = typeof sdpData === 'string' ? JSON.parse(sdpData) : sdpData;
+            console.log('[LiveViewer] Setting remote description (Host Offer)...');
             await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+
+            // Xả hàng đợi ICE candidate đã nhận trước đó
+            while (pendingIceCandidates.length > 0) {
+                const candidate = pendingIceCandidates.shift();
+                try {
+                    await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+                } catch (e) {
+                    console.warn('[LiveViewer] Error draining queued ICE candidate:', e);
+                }
+            }
 
             const answer = await peerConnection.createAnswer();
             await peerConnection.setLocalDescription(answer);
 
+            console.log('[LiveViewer] Sending Answer to Host:', hostSessionId);
             sendSignal(hostSessionId, 'viewer_answer', JSON.stringify(answer));
         } catch (err) {
             console.error('[LiveViewer] Error handling host offer:', err);
@@ -180,12 +220,17 @@ window.DongAnhLiveViewer = (function () {
      * Nhận ICE Candidate
      */
     async function handleIceCandidate(candidateData) {
-        if (!peerConnection) return;
         try {
             const candidate = typeof candidateData === 'string' ? JSON.parse(candidateData) : candidateData;
-            if (candidate) {
-                await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+            if (!candidate) return;
+
+            if (!peerConnection || !peerConnection.remoteDescription || !peerConnection.remoteDescription.type) {
+                console.log('[LiveViewer] Remote description not set yet. Queuing ICE candidate.');
+                pendingIceCandidates.push(candidate);
+                return;
             }
+
+            await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
         } catch (err) {
             console.error('[LiveViewer] Error adding ICE candidate:', err);
         }
@@ -196,7 +241,8 @@ window.DongAnhLiveViewer = (function () {
      */
     async function sendSignal(targetSessionId, signalType, signalData) {
         try {
-            await fetch(`/livestream/${streamId}/signal`, {
+            console.log('[LiveViewer] Sending signal:', signalType, 'to:', targetSessionId);
+            const res = await fetch(`/livestream/${streamId}/signal`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -210,6 +256,10 @@ window.DongAnhLiveViewer = (function () {
                     signal_data: signalData
                 })
             });
+            const data = await res.json();
+            if (data.status !== 'success') {
+                console.warn('[LiveViewer] sendSignal response:', data);
+            }
         } catch (err) {
             console.warn('[LiveViewer] sendSignal error:', err);
         }
@@ -222,13 +272,19 @@ window.DongAnhLiveViewer = (function () {
         const videoEl = document.getElementById('viewer-video-player');
         if (!videoEl) return;
 
+        // Thử phát có tiếng trước
         const playPromise = videoEl.play();
         if (playPromise !== undefined) {
             playPromise.then(() => {
                 const unblockBtn = document.getElementById('viewer-unblock-audio-btn');
                 if (unblockBtn) unblockBtn.style.display = 'none';
             }).catch(() => {
-                // Trình duyệt chặn âm thanh tự động phát -> Hiển thị nút bật tiếng
+                // Trình duyệt chặn autoplay có tiếng -> Chuyển sang muted để hiển thị video ngay
+                console.log('[LiveViewer] Autoplay with audio blocked by browser policy. Playing muted first.');
+                videoEl.muted = true;
+                videoEl.play().catch(e => console.warn('[LiveViewer] Muted play error:', e));
+
+                // Hiển thị nút bật tiếng nổi bật
                 const unblockBtn = document.getElementById('viewer-unblock-audio-btn');
                 if (unblockBtn) unblockBtn.style.display = 'flex';
             });
@@ -239,9 +295,11 @@ window.DongAnhLiveViewer = (function () {
         const videoEl = document.getElementById('viewer-video-player');
         if (videoEl) {
             videoEl.muted = false;
-            videoEl.play();
+            videoEl.play().catch(e => console.warn('[LiveViewer] unmute play error:', e));
         }
         const unblockBtn = document.getElementById('viewer-unblock-audio-btn');
+        if (unblockBtn) unblockBtn.style.display = 'none';
+    }
         if (unblockBtn) unblockBtn.style.display = 'none';
     }
 

@@ -16,6 +16,7 @@ window.DongAnhLiveHost = (function () {
 
     // PeerConnections map: viewerSessionId => RTCPeerConnection
     const peerConnections = new Map();
+    const pendingIceCandidatesMap = new Map(); // viewerSessionId => [candidate, ...]
 
     const rtcConfig = {
         iceServers: [
@@ -164,18 +165,23 @@ window.DongAnhLiveHost = (function () {
         console.log('[LiveHost] Creating WebRTC peer connection for viewer:', viewerSessionId);
 
         if (peerConnections.has(viewerSessionId)) {
-            peerConnections.get(viewerSessionId).close();
+            try { peerConnections.get(viewerSessionId).close(); } catch(e) {}
             peerConnections.delete(viewerSessionId);
         }
 
         const pc = new RTCPeerConnection(rtcConfig);
         peerConnections.set(viewerSessionId, pc);
+        pendingIceCandidatesMap.delete(viewerSessionId);
 
         // Thêm tracks vào PC
         const activeStream = screenStream || localStream;
         if (activeStream) {
             activeStream.getTracks().forEach(track => {
-                pc.addTrack(track, activeStream);
+                try {
+                    pc.addTrack(track, activeStream);
+                } catch(e) {
+                    console.warn('[LiveHost] addTrack error:', e);
+                }
             });
         }
 
@@ -187,23 +193,26 @@ window.DongAnhLiveHost = (function () {
         };
 
         pc.onconnectionstatechange = () => {
-            console.log(`[LiveHost] Viewer ${viewerSessionId} state:`, pc.connectionState);
+            console.log(`[LiveHost] Viewer ${viewerSessionId} connection state:`, pc.connectionState);
             if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed' || pc.connectionState === 'closed') {
                 peerConnections.delete(viewerSessionId);
+                pendingIceCandidatesMap.delete(viewerSessionId);
                 updateOnlineViewerBadge();
             } else if (pc.connectionState === 'connected') {
                 updateOnlineViewerBadge();
             }
         };
 
+        pc.oniceconnectionstatechange = () => {
+            console.log(`[LiveHost] Viewer ${viewerSessionId} ICE state:`, pc.iceConnectionState);
+        };
+
         // Tạo SDP Offer
         try {
-            const offer = await pc.createOffer({
-                offerToReceiveAudio: false,
-                offerToReceiveVideo: false
-            });
+            const offer = await pc.createOffer();
             await pc.setLocalDescription(offer);
 
+            console.log('[LiveHost] Sending Host Offer to viewer:', viewerSessionId);
             sendSignal(viewerSessionId, 'host_offer', JSON.stringify(offer));
         } catch (err) {
             console.error('[LiveHost] Error creating offer for viewer:', err);
@@ -215,12 +224,27 @@ window.DongAnhLiveHost = (function () {
      */
     async function handleViewerAnswer(viewerSessionId, sdpData) {
         const pc = peerConnections.get(viewerSessionId);
-        if (!pc) return;
+        if (!pc) {
+            console.warn('[LiveHost] No peer connection found for viewer answer:', viewerSessionId);
+            return;
+        }
 
         try {
             const answer = typeof sdpData === 'string' ? JSON.parse(sdpData) : sdpData;
+            console.log('[LiveHost] Setting Remote Description for viewer:', viewerSessionId);
             await pc.setRemoteDescription(new RTCSessionDescription(answer));
-            console.log('[LiveHost] Remote description set for viewer:', viewerSessionId);
+
+            // Xả hàng đợi ICE candidate của viewer này nếu có
+            const pending = pendingIceCandidatesMap.get(viewerSessionId) || [];
+            while (pending.length > 0) {
+                const cand = pending.shift();
+                try {
+                    await pc.addIceCandidate(new RTCIceCandidate(cand));
+                } catch (e) {
+                    console.warn('[LiveHost] Error draining ICE candidate for viewer:', viewerSessionId, e);
+                }
+            }
+            pendingIceCandidatesMap.delete(viewerSessionId);
         } catch (err) {
             console.error('[LiveHost] Error setting remote description:', err);
         }
@@ -231,13 +255,21 @@ window.DongAnhLiveHost = (function () {
      */
     async function handleIceCandidate(viewerSessionId, candidateData) {
         const pc = peerConnections.get(viewerSessionId);
-        if (!pc) return;
 
         try {
             const candidate = typeof candidateData === 'string' ? JSON.parse(candidateData) : candidateData;
-            if (candidate) {
-                await pc.addIceCandidate(new RTCIceCandidate(candidate));
+            if (!candidate) return;
+
+            if (!pc || !pc.remoteDescription || !pc.remoteDescription.type) {
+                console.log('[LiveHost] Queuing ICE candidate for viewer:', viewerSessionId);
+                if (!pendingIceCandidatesMap.has(viewerSessionId)) {
+                    pendingIceCandidatesMap.set(viewerSessionId, []);
+                }
+                pendingIceCandidatesMap.get(viewerSessionId).push(candidate);
+                return;
             }
+
+            await pc.addIceCandidate(new RTCIceCandidate(candidate));
         } catch (err) {
             console.error('[LiveHost] Error adding ICE candidate:', err);
         }
@@ -248,7 +280,8 @@ window.DongAnhLiveHost = (function () {
      */
     async function sendSignal(targetSessionId, signalType, signalData) {
         try {
-            await fetch(`/livestream/${streamId}/signal`, {
+            console.log('[LiveHost] Sending signal:', signalType, 'to:', targetSessionId);
+            const res = await fetch(`/livestream/${streamId}/signal`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -262,6 +295,10 @@ window.DongAnhLiveHost = (function () {
                     signal_data: signalData
                 })
             });
+            const data = await res.json();
+            if (data.status !== 'success') {
+                console.warn('[LiveHost] sendSignal response:', data);
+            }
         } catch (err) {
             console.warn('[LiveHost] sendSignal failed:', err);
         }

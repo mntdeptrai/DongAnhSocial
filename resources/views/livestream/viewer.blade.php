@@ -9,8 +9,8 @@
         <!-- Main Video & Interactions Column (Left) -->
         <div class="viewer-video-pane">
             <div class="viewer-screen-wrapper">
-                <!-- Video Element -->
-                <video id="viewer-video-player" autoplay playsinline class="viewer-main-video"></video>
+                <!-- Video Element (muted enables instant smooth autoplay across all browsers) -->
+                <video id="viewer-video-player" autoplay playsinline muted class="viewer-main-video"></video>
 
                 <!-- Connecting Spinner Overlay -->
                 <div id="viewer-connecting-spinner" class="viewer-connecting-overlay">
@@ -326,17 +326,20 @@ window.__liveProducts = @json($productsMap);
     if (typeof window.Echo === 'undefined') {
         window.Echo = new (class {
             constructor() {
-                const defaultHost = window.location.hostname || 'donganhdiscovery.xadonganh.com';
                 const isHttps = window.location.protocol === 'https:';
-                const reverbHost = '{{ config('broadcasting.connections.reverb.options.host', env('REVERB_HOST', 'donganhdiscovery.xadonganh.com')) }}' || defaultHost;
-                const reverbPort = {{ (int)config('broadcasting.connections.reverb.options.port', env('REVERB_PORT', 443)) }};
-                const reverbKey = '{{ config('broadcasting.connections.reverb.key', env('REVERB_APP_KEY', 'donganhreverbkey')) }}';
+                const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+                const wsHost = isLocal ? '127.0.0.1' : window.location.hostname;
+                const wsPort = isLocal ? {{ (int)env('REVERB_PORT', 8080) }} : (isHttps ? 443 : 80);
+                const forceTLS = isLocal ? false : isHttps;
+                const reverbKey = '{{ config('broadcasting.connections.reverb.key') ?: env('REVERB_APP_KEY', 'donganhreverbkey') }}';
+
+                console.log('[LiveViewer] Connecting to Reverb:', wsHost, wsPort, 'TLS:', forceTLS, 'Key:', reverbKey);
 
                 this._pusher = new Pusher(reverbKey, {
-                    wsHost:           reverbHost,
-                    wsPort:           reverbPort,
-                    wssPort:          reverbPort,
-                    forceTLS:         isHttps || {{ config('broadcasting.connections.reverb.options.useTLS', env('REVERB_SCHEME', 'https') === 'https') ? 'true' : 'false' }},
+                    wsHost:           wsHost,
+                    wsPort:           wsPort,
+                    wssPort:          wsPort,
+                    forceTLS:         forceTLS,
                     enabledTransports: ['ws', 'wss'],
                     cluster:          'mt1',
                     disableStats:     true,
@@ -359,6 +362,9 @@ window.__liveProducts = @json($productsMap);
             }
             channel(name) {
                 const ch = this._pusher.subscribe(name);
+                ch.bind_global((eventName, data) => {
+                    console.log('[LiveViewer WS Event]', name, eventName, data);
+                });
                 const obj = {
                     listen: (event, cb) => {
                         const evtName = event.startsWith('.') ? event.slice(1) : event;
@@ -385,7 +391,7 @@ window.__liveProducts = @json($productsMap);
     }
 </script>
 
-<script src="{{ asset('js/livestream-viewer.js') }}"></script>
+<script src="{{ asset('js/livestream-viewer.js') }}?v={{ time() }}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     DongAnhLiveViewer.init({
@@ -602,6 +608,33 @@ function showCopiedToast() {
     width: 100%;
     height: 100%;
     object-fit: cover;
+}
+
+.viewer-unmute-btn {
+    position: absolute;
+    top: 60px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 50;
+    background: rgba(15, 23, 42, 0.88);
+    color: #fff;
+    border: 1.5px solid rgba(255, 255, 255, 0.3);
+    padding: 10px 22px;
+    border-radius: 30px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    cursor: pointer;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+}
+.viewer-unmute-btn:hover {
+    background: #0ea5e9;
+    border-color: #38bdf8;
+    transform: translateX(-50%) scale(1.04);
 }
 
 /* Connecting Spinner */
