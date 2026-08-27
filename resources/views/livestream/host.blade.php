@@ -101,6 +101,9 @@
                         </button>
                     </div>
                     <div id="rtmp-details-panel" style="display: none; font-size: 0.82rem; color: #334155; margin-top: 10px; line-height: 1.8;">
+                        <div style="margin-bottom: 8px; font-size: 0.78rem; color: #64748b; line-height: 1.4;">
+                            💡 <i>Chỉ cần thiết khi bạn muốn phát từ phần mềm chuyên nghiệp trên máy tính (OBS / PRISM Studio). Nếu bạn đang live trực tiếp bằng camera điện thoại/webcam, bạn có thể bỏ qua phần này.</i>
+                        </div>
                         <div style="display: flex; align-items: center; justify-content: space-between; background: #ffffff; padding: 6px 10px; border-radius: 8px; margin-bottom: 6px; border: 1px solid #e2e8f0;">
                             <div><b>Máy chủ (Server):</b> <code style="color: #0284c7; font-weight: 700;">{{ $stream->rtmp_server_url }}</code></div>
                             <button type="button" class="btn-copy-link" style="padding: 3px 8px; font-size: 0.75rem;" onclick="copyRawText('{{ $stream->rtmp_server_url }}')">Copy</button>

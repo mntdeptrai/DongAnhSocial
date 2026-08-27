@@ -545,7 +545,7 @@ class LiveStreamController extends Controller
         $request->validate([
             'sender_session_id' => 'required|string',
             'target_session_id' => 'required|string',
-            'signal_type'       => 'required|string|in:viewer_join,host_offer,viewer_answer,ice_candidate,host_ready',
+            'signal_type'       => 'required|string|in:viewer_join,host_offer,viewer_answer,ice_candidate,ice_candidates_batch,host_ready',
             'signal_data'       => 'nullable|string',
         ]);
 

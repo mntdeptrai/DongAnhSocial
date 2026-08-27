@@ -30,18 +30,26 @@ window.DongAnhLiveViewer = (function () {
     let hlsInstance = null;
 
     /**
-     * Khởi tạo phòng xem Livestream cho Viewer (SRS HLS + WebRTC Hybrid)
+     * Khởi tạo phòng xem Livestream cho Viewer (YouTube Live hoặc SRS HLS / WebRTC)
      */
     function init(config) {
         streamId = config.streamId;
         channelId = config.channelId || config.streamId;
+        const youtubeVideoId = config.youtubeVideoId || null;
         const hlsUrl = config.hlsUrl || `/live/${streamId}.m3u8`;
-        console.log('[LiveViewer] Initializing viewer for stream #', streamId, 'HLS URL:', hlsUrl);
+        console.log('[LiveViewer] Initializing viewer for stream #', streamId, 'YouTube ID:', youtubeVideoId, 'HLS URL:', hlsUrl);
 
         // 1. Lắng nghe WebSocket Channel từ Laravel Echo / Reverb (cho chat, tim, giỏ hàng)
         setupEchoListeners();
 
-        // 2. Thử khởi động luồng phát HLS qua SRS Media Server
+        // 2. Nếu là luồng YouTube Live, YouTube CDN gánh 100% video -> Không cần khởi động WebRTC/HLS (0% CPU Server)
+        if (youtubeVideoId) {
+            console.log('[LiveViewer] Active YouTube Live Stream mode. Zero Server CPU & Bandwidth load.');
+            hideLoadingOverlay();
+            return;
+        }
+
+        // 3. Thử khởi động luồng phát HLS qua SRS Media Server
         startHlsPlayback(hlsUrl);
     }
 
@@ -165,7 +173,7 @@ window.DongAnhLiveViewer = (function () {
                         console.log('[LiveViewer] [HTTP Poll] Received signal:', sig.signal_type, 'from:', sig.sender_session_id);
                         if (sig.signal_type === 'host_offer') {
                             handleHostOffer(sig.sender_session_id, sig.signal_data);
-                        } else if (sig.signal_type === 'ice_candidate') {
+                        } else if (sig.signal_type === 'ice_candidate' || sig.signal_type === 'ice_candidates_batch') {
                             handleIceCandidate(sig.signal_data);
                         } else if (sig.signal_type === 'host_ready') {
                             sendSignal(sig.sender_session_id || 'host', 'viewer_join', null);
@@ -178,7 +186,36 @@ window.DongAnhLiveViewer = (function () {
             } catch (e) {
                 // ignore
             }
-        }, 3000);
+        }, 5000);
+    }
+
+    let iceCandidateBuffer = [];
+    let iceBatchTimeout = null;
+
+    function queueIceCandidate(candidate) {
+        if (!candidate) return;
+        iceCandidateBuffer.push(candidate);
+        if (!iceBatchTimeout) {
+            iceBatchTimeout = setTimeout(() => {
+                flushIceCandidates();
+            }, 150);
+        }
+    }
+
+    function flushIceCandidates() {
+        if (iceCandidateBuffer.length === 0) return;
+        const batch = [...iceCandidateBuffer];
+        iceCandidateBuffer = [];
+        if (iceBatchTimeout) {
+            clearTimeout(iceBatchTimeout);
+            iceBatchTimeout = null;
+        }
+
+        if (batch.length === 1) {
+            sendSignal('host', 'ice_candidate', JSON.stringify(batch[0]));
+        } else {
+            sendSignal('host', 'ice_candidates_batch', JSON.stringify(batch));
+        }
     }
 
     /**
@@ -186,7 +223,7 @@ window.DongAnhLiveViewer = (function () {
      */
     function createPeerConnection() {
         if (peerConnection) {
-            try { peerConnection.close(); } catch(e) {}
+            try { peerConnection.close(); } catch (e) { }
         }
 
         peerConnection = new RTCPeerConnection(rtcConfig);
@@ -223,10 +260,10 @@ window.DongAnhLiveViewer = (function () {
             attemptPlayVideo();
         };
 
-        // Gửi ICE candidate lên Server
+        // Gửi ICE candidate lên Server (dùng cơ chế gom batch để tiết kiệm CPU)
         peerConnection.onicecandidate = (event) => {
             if (event.candidate) {
-                sendSignal('host', 'ice_candidate', JSON.stringify(event.candidate));
+                queueIceCandidate(event.candidate);
             }
         };
 
@@ -271,7 +308,7 @@ window.DongAnhLiveViewer = (function () {
 
             if (e.signal_type === 'host_offer') {
                 handleHostOffer(e.sender_session_id, e.signal_data);
-            } else if (e.signal_type === 'ice_candidate') {
+            } else if (e.signal_type === 'ice_candidate' || e.signal_type === 'ice_candidates_batch') {
                 handleIceCandidate(e.signal_data);
             } else if (e.signal_type === 'host_ready') {
                 sendSignal(e.sender_session_id || 'host', 'viewer_join', null);
@@ -342,20 +379,22 @@ window.DongAnhLiveViewer = (function () {
     }
 
     /**
-     * Nhận ICE Candidate
+     * Nhận ICE Candidate (đơn lẻ hoặc mảng batch)
      */
     async function handleIceCandidate(candidateData) {
         try {
-            const candidate = typeof candidateData === 'string' ? JSON.parse(candidateData) : candidateData;
-            if (!candidate) return;
+            const parsed = typeof candidateData === 'string' ? JSON.parse(candidateData) : candidateData;
+            if (!parsed) return;
 
-            if (!peerConnection || !peerConnection.remoteDescription || !peerConnection.remoteDescription.type) {
-                console.log('[LiveViewer] Remote description not set yet. Queuing ICE candidate.');
-                pendingIceCandidates.push(candidate);
-                return;
+            const candidates = Array.isArray(parsed) ? parsed : [parsed];
+
+            for (const candidate of candidates) {
+                if (!peerConnection || !peerConnection.remoteDescription || !peerConnection.remoteDescription.type) {
+                    pendingIceCandidates.push(candidate);
+                } else {
+                    await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+                }
             }
-
-            await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
         } catch (err) {
             console.error('[LiveViewer] Error adding ICE candidate:', err);
         }
@@ -516,7 +555,7 @@ window.DongAnhLiveViewer = (function () {
                     likesCountEl.innerText = Number(data.total_likes).toLocaleString('vi-VN');
                 }
             }
-        } catch (_) {}
+        } catch (_) { }
     }
 
     /**
@@ -699,8 +738,37 @@ window.DongAnhLiveViewer = (function () {
         if (el) el.style.display = 'flex';
     }
 
+    function destroy() {
+        console.log('[LiveViewer] Cleaning up and destroying viewer resources...');
+        if (pollingInterval) {
+            clearInterval(pollingInterval);
+            pollingInterval = null;
+        }
+        if (iceBatchTimeout) {
+            clearTimeout(iceBatchTimeout);
+            iceBatchTimeout = null;
+        }
+        iceCandidateBuffer = [];
+        if (hlsInstance) {
+            try { hlsInstance.destroy(); } catch (e) { }
+            hlsInstance = null;
+        }
+        if (peerConnection) {
+            try { peerConnection.close(); } catch (e) { }
+            peerConnection = null;
+        }
+        const videoEl = document.getElementById('viewer-video-player');
+        if (videoEl) {
+            try {
+                videoEl.pause();
+                videoEl.src = '';
+                videoEl.srcObject = null;
+            } catch (e) { }
+        }
+    }
+
     function escapeHtml(str) {
-        return (str || '').replace(/[&<>"']/g, function(m) {
+        return (str || '').replace(/[&<>"']/g, function (m) {
             return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m];
         });
     }
@@ -710,6 +778,7 @@ window.DongAnhLiveViewer = (function () {
         unmuteAndPlay,
         sendComment,
         sendReaction,
-        renderFloatingReaction
+        renderFloatingReaction,
+        destroy
     };
 })();

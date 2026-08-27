@@ -77,7 +77,7 @@
                             ↗ Chia sẻ
                         </button>
                         <!-- Mobile Close/Exit Live Button -->
-                        <a href="{{ route('livestream.index') }}" onclick="window.location.href='{{ route('livestream.index') }}'" ontouchend="window.location.href='{{ route('livestream.index') }}'" class="btn-close-live-mobile" title="Rời phòng Live">✕</a>
+                        <button type="button" class="btn-close-live-mobile" onclick="closeLiveViewer(event)" title="Rời phòng Live">✕</button>
                     </div>
                 </div>
 
@@ -584,6 +584,21 @@ function submitViewerComment() {
         DongAnhLiveViewer.sendComment(val);
         if (input) input.value = '';
         if (inputMobile) inputMobile.value = '';
+    }
+}
+
+function closeLiveViewer(e) {
+    if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+    if (window.DongAnhLiveViewer && typeof window.DongAnhLiveViewer.destroy === 'function') {
+        window.DongAnhLiveViewer.destroy();
+    }
+    if (window.history.length > 1 && document.referrer && document.referrer.includes(window.location.host)) {
+        window.history.back();
+    } else {
+        window.location.href = "{{ route('livestream.index') }}";
     }
 }
 
@@ -1688,7 +1703,7 @@ function showCopiedToast() {
         z-index: 99999 !important;
         background: #000000 !important;
         overflow: hidden !important;
-        touch-action: none !important;
+        touch-action: pan-y !important;
     }
 
     .viewer-layout {
@@ -1735,23 +1750,25 @@ function showCopiedToast() {
     /* TikTok Top Bar */
     .viewer-top-bar {
         position: absolute !important;
-        top: max(14px, env(safe-area-inset-top, 14px)) !important;
+        top: max(16px, env(safe-area-inset-top, 16px)) !important;
         left: 12px !important;
         right: 12px !important;
-        z-index: 40 !important;
+        z-index: 100000 !important;
         display: flex !important;
         align-items: center !important;
         justify-content: space-between !important;
+        pointer-events: auto !important;
     }
 
     .viewer-streamer-info {
-        background: rgba(0, 0, 0, 0.5) !important;
+        background: rgba(0, 0, 0, 0.55) !important;
         backdrop-filter: blur(14px) !important;
         -webkit-backdrop-filter: blur(14px) !important;
         border: 1px solid rgba(255, 255, 255, 0.2) !important;
         border-radius: 30px !important;
         padding: 4px 12px 4px 4px !important;
         gap: 8px !important;
+        pointer-events: auto !important;
     }
     .streamer-avatar {
         width: 34px !important;
@@ -1774,20 +1791,22 @@ function showCopiedToast() {
         align-items: center !important;
         gap: 8px !important;
         pointer-events: auto !important;
-        z-index: 101 !important;
+        z-index: 100001 !important;
     }
 
     .btn-close-live-mobile {
         display: flex !important;
-        width: 38px !important;
-        height: 38px !important;
+        width: 40px !important;
+        height: 40px !important;
+        min-width: 40px !important;
+        min-height: 40px !important;
         border-radius: 50% !important;
-        background: rgba(0, 0, 0, 0.65) !important;
+        background: rgba(0, 0, 0, 0.7) !important;
         backdrop-filter: blur(14px) !important;
         -webkit-backdrop-filter: blur(14px) !important;
-        border: 1px solid rgba(255, 255, 255, 0.3) !important;
+        border: 1.5px solid rgba(255, 255, 255, 0.35) !important;
         color: #ffffff !important;
-        font-size: 1.15rem !important;
+        font-size: 1.25rem !important;
         font-weight: 800 !important;
         align-items: center !important;
         justify-content: center !important;
@@ -1796,8 +1815,13 @@ function showCopiedToast() {
         pointer-events: auto !important;
         touch-action: manipulation !important;
         -webkit-tap-highlight-color: transparent !important;
-        z-index: 102 !important;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.4) !important;
+        z-index: 100002 !important;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.5) !important;
+        transition: transform 0.15s ease, background 0.15s ease !important;
+    }
+    .btn-close-live-mobile:active {
+        transform: scale(0.9) !important;
+        background: rgba(239, 68, 68, 0.85) !important;
     }
 
     .floating-reaction-layer {

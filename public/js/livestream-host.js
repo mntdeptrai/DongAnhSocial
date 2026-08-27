@@ -105,7 +105,7 @@ window.DongAnhLiveHost = (function () {
                             handleViewerJoin(sig.sender_session_id);
                         } else if (sig.signal_type === 'viewer_answer') {
                             handleViewerAnswer(sig.sender_session_id, sig.signal_data);
-                        } else if (sig.signal_type === 'ice_candidate') {
+                        } else if (sig.signal_type === 'ice_candidate' || sig.signal_type === 'ice_candidates_batch') {
                             handleIceCandidate(sig.sender_session_id, sig.signal_data);
                         }
                     }
@@ -116,7 +116,43 @@ window.DongAnhLiveHost = (function () {
             } catch (e) {
                 // ignore
             }
-        }, 3000);
+        }, 5000);
+    }
+
+    // Bộ đệm ICE Candidate gom batch cho từng viewer để chống bão request CPU
+    const iceCandidateBuffers = new Map();
+    const iceBatchTimeouts = new Map();
+
+    function queueIceCandidateForViewer(viewerSessionId, candidate) {
+        if (!candidate) return;
+        if (!iceCandidateBuffers.has(viewerSessionId)) {
+            iceCandidateBuffers.set(viewerSessionId, []);
+        }
+        iceCandidateBuffers.get(viewerSessionId).push(candidate);
+
+        if (!iceBatchTimeouts.has(viewerSessionId)) {
+            const timeoutId = setTimeout(() => {
+                flushIceCandidatesForViewer(viewerSessionId);
+            }, 150);
+            iceBatchTimeouts.set(viewerSessionId, timeoutId);
+        }
+    }
+
+    function flushIceCandidatesForViewer(viewerSessionId) {
+        const batch = iceCandidateBuffers.get(viewerSessionId) || [];
+        iceCandidateBuffers.delete(viewerSessionId);
+        if (iceBatchTimeouts.has(viewerSessionId)) {
+            clearTimeout(iceBatchTimeouts.get(viewerSessionId));
+            iceBatchTimeouts.delete(viewerSessionId);
+        }
+
+        if (batch.length === 0) return;
+
+        if (batch.length === 1) {
+            sendSignal(viewerSessionId, 'ice_candidate', JSON.stringify(batch[0]));
+        } else {
+            sendSignal(viewerSessionId, 'ice_candidates_batch', JSON.stringify(batch));
+        }
     }
 
     /**
@@ -184,7 +220,7 @@ window.DongAnhLiveHost = (function () {
                 handleViewerJoin(e.sender_session_id);
             } else if (e.signal_type === 'viewer_answer') {
                 handleViewerAnswer(e.sender_session_id, e.signal_data);
-            } else if (e.signal_type === 'ice_candidate') {
+            } else if (e.signal_type === 'ice_candidate' || e.signal_type === 'ice_candidates_batch') {
                 handleIceCandidate(e.sender_session_id, e.signal_data);
             }
         });
@@ -239,10 +275,10 @@ window.DongAnhLiveHost = (function () {
             });
         }
 
-        // Bắt ICE candidate
+        // Bắt ICE candidate (dùng cơ chế gom batch cho viewer này để tiết kiệm CPU)
         pc.onicecandidate = (event) => {
             if (event.candidate) {
-                sendSignal(viewerSessionId, 'ice_candidate', JSON.stringify(event.candidate));
+                queueIceCandidateForViewer(viewerSessionId, event.candidate);
             }
         };
 
@@ -305,25 +341,27 @@ window.DongAnhLiveHost = (function () {
     }
 
     /**
-     * Nhận ICE candidate từ Viewer
+     * Nhận ICE candidate từ Viewer (hỗ trợ đơn lẻ hoặc mảng batch)
      */
     async function handleIceCandidate(viewerSessionId, candidateData) {
         const pc = peerConnections.get(viewerSessionId);
 
         try {
-            const candidate = typeof candidateData === 'string' ? JSON.parse(candidateData) : candidateData;
-            if (!candidate) return;
+            const parsed = typeof candidateData === 'string' ? JSON.parse(candidateData) : candidateData;
+            if (!parsed) return;
 
-            if (!pc || !pc.remoteDescription || !pc.remoteDescription.type) {
-                console.log('[LiveHost] Queuing ICE candidate for viewer:', viewerSessionId);
-                if (!pendingIceCandidatesMap.has(viewerSessionId)) {
-                    pendingIceCandidatesMap.set(viewerSessionId, []);
+            const candidates = Array.isArray(parsed) ? parsed : [parsed];
+
+            for (const candidate of candidates) {
+                if (!pc || !pc.remoteDescription || !pc.remoteDescription.type) {
+                    if (!pendingIceCandidatesMap.has(viewerSessionId)) {
+                        pendingIceCandidatesMap.set(viewerSessionId, []);
+                    }
+                    pendingIceCandidatesMap.get(viewerSessionId).push(candidate);
+                } else {
+                    await pc.addIceCandidate(new RTCIceCandidate(candidate));
                 }
-                pendingIceCandidatesMap.get(viewerSessionId).push(candidate);
-                return;
             }
-
-            await pc.addIceCandidate(new RTCIceCandidate(candidate));
         } catch (err) {
             console.error('[LiveHost] Error adding ICE candidate:', err);
         }
