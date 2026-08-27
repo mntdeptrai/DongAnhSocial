@@ -86,7 +86,7 @@
                 @endif
                 <div class="studio-share-box">
                     <span class="share-label">🔗 Link phòng live:</span>
-                    <input type="text" readonly value="{{ route('livestream.show', $stream->id) }}" id="live-share-url" class="share-input">
+                    <input type="text" readonly value="{{ route('livestream.show', $stream->code_or_id) }}" id="live-share-url" class="share-input">
                     <button type="button" class="btn-copy-link" onclick="copyShareUrl()">Sao chép</button>
                 </div>
             </div>
@@ -211,7 +211,8 @@
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     DongAnhLiveHost.init({
-        streamId: {{ $stream->id }}
+        streamId: '{{ $stream->code_or_id }}',
+        channelId: {{ $stream->id }}
     });
 });
 

@@ -5,6 +5,7 @@
 
 window.DongAnhLiveViewer = (function () {
     let streamId = null;
+    let channelId = null;
     let mySessionId = 'viewer_' + Math.random().toString(36).substring(2, 9);
     let peerConnection = null;
     let remoteStream = null;
@@ -29,7 +30,8 @@ window.DongAnhLiveViewer = (function () {
      */
     function init(config) {
         streamId = config.streamId;
-        console.log('[LiveViewer] Initializing viewer for stream #', streamId, 'Session:', mySessionId);
+        channelId = config.channelId || config.streamId;
+        console.log('[LiveViewer] Initializing viewer for stream #', streamId, 'Channel:', channelId, 'Session:', mySessionId);
 
         // 1. Tạo WebRTC RTCPeerConnection
         createPeerConnection();
@@ -104,7 +106,7 @@ window.DongAnhLiveViewer = (function () {
             return;
         }
 
-        const channel = window.Echo.channel('live-stream.' + streamId);
+        const channel = window.Echo.channel('live-stream.' + channelId);
 
         // 1. Tín hiệu WebRTC
         channel.listen('.LiveStreamSignal', async (e) => {
@@ -352,20 +354,36 @@ window.DongAnhLiveViewer = (function () {
         };
 
         const icon = iconMap[type] || '❤️';
-        const el = document.createElement('div');
-        el.className = 'floating-particle';
-        el.innerText = icon;
-        el.style.left = (Math.random() * 60 + 20) + '%';
-        el.style.animationDuration = (Math.random() * 1.5 + 2) + 's';
+        const count = 2;
 
-        container.appendChild(el);
-        setTimeout(() => el.remove(), 3500);
+        for (let i = 0; i < count; i++) {
+            setTimeout(() => {
+                const el = document.createElement('div');
+                el.className = 'floating-particle';
+                el.innerText = icon;
+                const startLeft = 70 + (Math.random() * 24 - 12);
+                el.style.left = startLeft + '%';
+                el.style.animationDuration = (Math.random() * 0.8 + 2.2) + 's';
+                el.style.fontSize = (Math.random() * 0.8 + 2) + 'rem';
+
+                container.appendChild(el);
+                setTimeout(() => el.remove(), 3000);
+            }, i * 140);
+        }
     }
 
     /**
      * Cập nhật danh sách nhiều sản phẩm trong giỏ hàng Khán giả
      */
     function updateViewerCartUI(products = [], pinnedProduct = null) {
+        if (!window.__liveProducts) window.__liveProducts = {};
+        products.forEach(p => {
+            if (p && p.id) window.__liveProducts[p.id] = p;
+        });
+        if (pinnedProduct && pinnedProduct.id) {
+            window.__liveProducts[pinnedProduct.id] = pinnedProduct;
+        }
+
         const topCountEl = document.getElementById('viewer-cart-top-count');
         const totalCountEl = document.getElementById('viewer-cart-total-count');
         if (topCountEl) topCountEl.innerText = products.length;
@@ -396,9 +414,9 @@ window.DongAnhLiveViewer = (function () {
                                 </div>
                             </div>
                             <div class="cart-item-actions">
-                                <a href="${prod.detail_url}" target="_blank" class="btn-cart-buy">
+                                <button type="button" onclick="openProductQuickView(${prod.id}, event)" class="btn-cart-buy">
                                     🛒 Xem & Mua
-                                </a>
+                                </button>
                             </div>
                         </div>
                     `;
@@ -446,6 +464,9 @@ window.DongAnhLiveViewer = (function () {
             return;
         }
 
+        if (!window.__liveProducts) window.__liveProducts = {};
+        window.__liveProducts[product.id] = product;
+
         banner.style.display = 'flex';
         banner.innerHTML = `
             <img src="${product.image || product.image_url || '/assets/icon/default_food.png'}" class="pin-thumb" alt="${escapeHtml(product.name)}">
@@ -454,9 +475,9 @@ window.DongAnhLiveViewer = (function () {
                 <div class="pin-title">${escapeHtml(product.name)}</div>
                 <div class="pin-price">${product.price}</div>
             </div>
-            <a href="${product.detail_url}" target="_blank" class="pin-buy-btn">
+            <button type="button" onclick="openProductQuickView(${product.id}, event)" class="pin-buy-btn">
                 🛒 Xem & Mua
-            </a>
+            </button>
         `;
     }
 

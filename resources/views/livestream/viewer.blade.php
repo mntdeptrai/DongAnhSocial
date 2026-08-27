@@ -64,7 +64,6 @@
                     </div>
                 </div>
 
-
                 <!-- Pinned Product Overlay Banner -->
                 <div id="viewer-pinned-product-banner" class="viewer-pinned-product" style="{{ $stream->pinnedProduct ? 'display:flex;' : 'display:none;' }}">
                     @if($stream->pinnedProduct)
@@ -74,10 +73,9 @@
                             <div class="pin-title">{{ $stream->pinnedProduct->name }}</div>
                             <div class="pin-price">{{ $stream->pinnedProduct->price ? number_format($stream->pinnedProduct->price) . 'đ' : 'OCOP' }}</div>
                         </div>
-                        <a href="{{ route('ocop.product.show', $stream->pinnedProduct->slug ?: $stream->pinnedProduct->id) }}" target="_blank" class="pin-buy-btn">
+                        <button type="button" onclick="openProductQuickView({{ $stream->pinnedProduct->id }}, event)" class="pin-buy-btn">
                             🛒 Xem & Mua
-                        </a>
-
+                        </button>
                     @endif
                 </div>
 
@@ -121,7 +119,7 @@
                     <h3 class="related-title">Các phòng Live khác đang phát</h3>
                     <div class="related-grid">
                         @foreach($relatedStreams as $rel)
-                            <a href="{{ route('livestream.show', $rel->id) }}" class="related-card">
+                            <a href="{{ route('livestream.show', $rel->code_or_id) }}" class="related-card">
                                 <div class="related-thumb">
                                     <img src="{{ $rel->cover_image ? asset($rel->cover_image) : 'https://images.unsplash.com/photo-1516280440614-37939bbacd81?auto=format&fit=crop&w=400&q=80' }}" alt="{{ $rel->title }}">
                                     <span class="related-badge-live">LIVE</span>
@@ -171,18 +169,18 @@
     </div>
 </div>
 
-<!-- Drawer / Modal Giỏ Hàng Khán Giả -->
-<div id="viewer-cart-modal" class="pin-modal-overlay" style="display: none;">
-    <div class="pin-modal-card viewer-cart-card">
-        <div class="pin-modal-header">
-            <div class="viewer-cart-title-box">
-                <span class="cart-icon-lg">🛍️</span>
+<!-- Modal Giỏ Hàng Khán Giả (Fixed Fullscreen Overlay) -->
+<div id="viewer-cart-modal" class="live-modal-backdrop" onclick="if(event.target === this) closeViewerCart()">
+    <div class="live-modal-dialog">
+        <div class="live-modal-header">
+            <div class="modal-title-with-icon">
+                <span class="modal-icon-lg">🛍️</span>
                 <div>
-                    <h3 style="margin: 0;">Túi Hàng Trực Tiếp</h3>
-                    <span class="cart-sub"><span id="viewer-cart-total-count">{{ $stream->products->count() }}</span> sản phẩm OCOP & Đặc sản Đông Anh</span>
+                    <h3 class="live-modal-title">Túi Hàng Trực Tiếp</h3>
+                    <span class="modal-sub-text"><span id="viewer-cart-total-count">{{ $stream->products->count() }}</span> sản phẩm OCOP & Đặc sản Đông Anh</span>
                 </div>
             </div>
-            <button type="button" class="modal-close-btn" onclick="closeViewerCart()">✕</button>
+            <button type="button" class="live-modal-close" onclick="closeViewerCart()">✕</button>
         </div>
 
         <div class="viewer-cart-list" id="viewer-cart-items-list">
@@ -192,7 +190,6 @@
                     <div class="cart-item-num">#{{ $idx + 1 }}</div>
                     <img src="{{ $prod->image_url ? (str_starts_with($prod->image_url, 'http') ? $prod->image_url : asset($prod->image_url)) : '/assets/icon/default_food.png' }}" onerror="this.onerror=null; this.src='/assets/icon/default_food.png';" class="cart-item-img" alt="{{ $prod->name }}">
                     <div class="cart-item-info">
-
                         @if($isPinned)
                             <span class="badge-spotlight">🔥 Đang giới thiệu</span>
                         @endif
@@ -205,9 +202,9 @@
                         </div>
                     </div>
                     <div class="cart-item-actions">
-                        <a href="{{ route('ocop.product.show', $prod->slug ?: $prod->id) }}" target="_blank" class="btn-cart-buy">
+                        <button type="button" onclick="openProductQuickView({{ $prod->id }}, event)" class="btn-cart-buy">
                             🛒 Xem & Mua
-                        </a>
+                        </button>
                     </div>
                 </div>
             @empty
@@ -220,19 +217,242 @@
     </div>
 </div>
 
+<!-- Modal Xem & Mua Nhanh Sản Phẩm Trực Tiếp Trên Live (Fixed Fullscreen Overlay) -->
+<div id="viewer-product-quickview-modal" class="live-modal-backdrop" onclick="if(event.target === this) closeProductQuickView()">
+    <div class="live-modal-dialog dialog-lg">
+        <div class="live-modal-header">
+            <div class="modal-title-with-icon">
+                <span class="modal-icon-lg">🌾</span>
+                <div>
+                    <h3 class="live-modal-title">Đặc Sản OCOP Đông Anh</h3>
+                    <span class="modal-sub-text">Mua sắm trực tiếp ngay trong phiên Livestream</span>
+                </div>
+            </div>
+            <button type="button" class="live-modal-close" onclick="closeProductQuickView()">✕</button>
+        </div>
+
+        <div class="quickview-body">
+            <div class="quickview-grid">
+                <div class="quickview-media">
+                    <img id="qv-product-img" src="/assets/icon/default_food.png" alt="Sản phẩm" class="quickview-main-img" onerror="this.onerror=null; this.src='/assets/icon/default_food.png';">
+                    <span id="qv-product-star" class="quickview-star-tag">⭐ 4 sao OCOP</span>
+                </div>
+                <div class="quickview-info">
+                    <h2 id="qv-product-name" class="quickview-name">Tên sản phẩm</h2>
+                    <div class="quickview-pricing-row">
+                        <span id="qv-product-price" class="quickview-price">0đ</span>
+                        <span id="qv-product-unit" class="quickview-unit"></span>
+                    </div>
+
+                    <div id="qv-product-desc" class="quickview-desc">
+                        Sản phẩm OCOP chất lượng cao được tuyển chọn và kiểm định chuẩn Đông Anh.
+                    </div>
+
+                    <!-- Quantity Control -->
+                    <div class="quickview-qty-box">
+                        <span class="qty-title">Số lượng:</span>
+                        <div class="qty-stepper">
+                            <button type="button" class="qty-btn-step" onclick="changeQuickViewQty(-1)">−</button>
+                            <input type="number" id="qv-qty-input" value="1" min="1" max="99" readonly class="qty-val">
+                            <button type="button" class="qty-btn-step" onclick="changeQuickViewQty(1)">+</button>
+                        </div>
+                        <div class="qty-total-preview">
+                            Thành tiền: <b id="qv-total-price">0đ</b>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="quickview-actions">
+                        <button type="button" id="qv-btn-add-cart" class="btn-qv-add-cart" onclick="submitQuickViewAddToCart(false)">
+                            🛒 Thêm Vào Giỏ Hàng
+                        </button>
+                        <button type="button" id="qv-btn-buy-now" class="btn-qv-buy-now" onclick="submitQuickViewAddToCart(true)">
+                            ⚡ Mua Ngay
+                        </button>
+                    </div>
+
+                    <div class="quickview-footer">
+                        <a id="qv-product-link" href="#" target="_blank" class="qv-detail-link">
+                            Xem bài viết chi tiết & nguồn gốc sản phẩm ↗
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@php
+    $productsMap = [];
+    foreach ($stream->products as $p) {
+        $productsMap[$p->id] = [
+            'id'          => $p->id,
+            'name'        => $p->name,
+            'price'       => $p->price ? number_format($p->price) . 'đ' : 'Liên hệ',
+            'raw_price'   => (float)$p->price,
+            'unit'        => $p->unit ? ('/ ' . $p->unit) : '/ sản phẩm',
+            'image'       => $p->image_url ? (str_starts_with($p->image_url, 'http') ? $p->image_url : asset($p->image_url)) : '/assets/icon/default_food.png',
+            'image_url'   => $p->image_url ? (str_starts_with($p->image_url, 'http') ? $p->image_url : asset($p->image_url)) : '/assets/icon/default_food.png',
+            'star_rating' => $p->star_rating ?? '4 sao',
+            'description' => $p->description ?? 'Sản phẩm OCOP chất lượng cao được tuyển chọn và kiểm định chuẩn Đông Anh.',
+            'story'       => $p->story ?? null,
+            'detail_url'  => route('ocop.product.show', $p->slug ?: $p->id),
+        ];
+    }
+    if ($stream->pinnedProduct && !isset($productsMap[$stream->pinnedProduct->id])) {
+        $p = $stream->pinnedProduct;
+        $productsMap[$p->id] = [
+            'id'          => $p->id,
+            'name'        => $p->name,
+            'price'       => $p->price ? number_format($p->price) . 'đ' : 'Liên hệ',
+            'raw_price'   => (float)$p->price,
+            'unit'        => $p->unit ? ('/ ' . $p->unit) : '/ sản phẩm',
+            'image'       => $p->image_url ? (str_starts_with($p->image_url, 'http') ? $p->image_url : asset($p->image_url)) : '/assets/icon/default_food.png',
+            'image_url'   => $p->image_url ? (str_starts_with($p->image_url, 'http') ? $p->image_url : asset($p->image_url)) : '/assets/icon/default_food.png',
+            'star_rating' => $p->star_rating ?? '4 sao',
+            'description' => $p->description ?? 'Sản phẩm OCOP chất lượng cao được tuyển chọn và kiểm định chuẩn Đông Anh.',
+            'story'       => $p->story ?? null,
+            'detail_url'  => route('ocop.product.show', $p->slug ?: $p->id),
+        ];
+    }
+@endphp
+<script>
+window.__liveProducts = @json($productsMap);
+</script>
+
 <script src="{{ asset('js/livestream-viewer.js') }}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     DongAnhLiveViewer.init({
-        streamId: {{ $stream->id }}
+        streamId: '{{ $stream->code_or_id }}',
+        channelId: {{ $stream->id }}
     });
 });
 
+let currentQuickViewProduct = null;
+let currentQuickViewQty = 1;
+
 function openViewerCart() {
-    document.getElementById('viewer-cart-modal').style.display = 'flex';
+    const modal = document.getElementById('viewer-cart-modal');
+    if (modal) modal.classList.add('is-open');
 }
 function closeViewerCart() {
-    document.getElementById('viewer-cart-modal').style.display = 'none';
+    const modal = document.getElementById('viewer-cart-modal');
+    if (modal) modal.classList.remove('is-open');
+}
+
+function openProductQuickView(productId, e) {
+    if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
+    let product = window.__liveProducts ? window.__liveProducts[productId] : null;
+    if (!product) {
+        console.warn('Product not found in window.__liveProducts for id:', productId);
+        return;
+    }
+
+    currentQuickViewProduct = product;
+    currentQuickViewQty = 1;
+
+    document.getElementById('qv-product-img').src = product.image || product.image_url || '/assets/icon/default_food.png';
+    document.getElementById('qv-product-name').innerText = product.name;
+    document.getElementById('qv-product-price').innerText = product.price;
+    document.getElementById('qv-product-unit').innerText = product.unit || '/ sản phẩm';
+    document.getElementById('qv-product-star').innerText = '⭐ ' + (product.star_rating || '4 sao') + ' OCOP';
+    document.getElementById('qv-product-desc').innerText = product.description || (product.story ? product.story.substring(0, 160) + '...' : 'Sản phẩm OCOP chất lượng cao đạt chuẩn chứng nhận Đông Anh.');
+    document.getElementById('qv-product-link').href = product.detail_url || '#';
+    document.getElementById('qv-qty-input').value = 1;
+
+    updateQuickViewTotal();
+
+    const modal = document.getElementById('viewer-product-quickview-modal');
+    if (modal) modal.classList.add('is-open');
+}
+
+function closeProductQuickView() {
+    const modal = document.getElementById('viewer-product-quickview-modal');
+    if (modal) modal.classList.remove('is-open');
+}
+
+function changeQuickViewQty(delta) {
+    currentQuickViewQty = Math.max(1, Math.min(99, currentQuickViewQty + delta));
+    document.getElementById('qv-qty-input').value = currentQuickViewQty;
+    updateQuickViewTotal();
+}
+
+function updateQuickViewTotal() {
+    if (!currentQuickViewProduct) return;
+    const rawPrice = currentQuickViewProduct.raw_price || 0;
+    if (rawPrice > 0) {
+        const total = rawPrice * currentQuickViewQty;
+        document.getElementById('qv-total-price').innerText = total.toLocaleString('vi-VN') + 'đ';
+    } else {
+        document.getElementById('qv-total-price').innerText = currentQuickViewProduct.price || 'Liên hệ';
+    }
+}
+
+async function submitQuickViewAddToCart(isBuyNow = false) {
+    if (!currentQuickViewProduct) return;
+
+    const btnAdd = document.getElementById('qv-btn-add-cart');
+    const btnBuy = document.getElementById('qv-btn-buy-now');
+    const activeBtn = isBuyNow ? btnBuy : btnAdd;
+    const origText = activeBtn.innerHTML;
+
+    activeBtn.disabled = true;
+    activeBtn.innerHTML = '⏳ Đang xử lý...';
+
+    try {
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+        const res = await fetch('/cart/add', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken,
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                ocop_product_id: currentQuickViewProduct.id,
+                quantity: currentQuickViewQty
+            })
+        });
+
+        const data = await res.json();
+        activeBtn.disabled = false;
+        activeBtn.innerHTML = origText;
+
+        if (data.success || data.status === 'success') {
+            if (typeof updateCartBadge === 'function' && data.count !== undefined) {
+                updateCartBadge(data.count);
+            }
+
+            if (isBuyNow) {
+                window.location.href = '/checkout';
+            } else {
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Đã thêm vào giỏ hàng!',
+                        text: `${currentQuickViewProduct.name} (x${currentQuickViewQty})`,
+                        timer: 1800,
+                        showConfirmButton: false
+                    });
+                } else {
+                    alert('Đã thêm sản phẩm vào giỏ hàng thành công!');
+                }
+                closeProductQuickView();
+            }
+        } else {
+            alert(data.message || 'Không thể thêm sản phẩm vào giỏ hàng.');
+        }
+    } catch (err) {
+        console.error('Add to cart error:', err);
+        activeBtn.disabled = false;
+        activeBtn.innerHTML = origText;
+        alert('Lỗi kết nối khi thêm vào giỏ hàng.');
+    }
 }
 
 function submitViewerComment() {
@@ -243,20 +463,43 @@ function submitViewerComment() {
 }
 
 function copyStreamUrl() {
-    if (navigator.clipboard) {
-        navigator.clipboard.writeText(window.location.href);
-        if (typeof Swal !== 'undefined') {
-            Swal.fire({
-                icon: 'success',
-                title: 'Đã sao chép liên kết!',
-                timer: 1200,
-                showConfirmButton: false
-            });
-        }
+    const url = window.location.href;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(showCopiedToast).catch(() => fallbackCopy(url));
+    } else {
+        fallbackCopy(url);
+    }
+}
+
+function fallbackCopy(text) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try {
+        document.execCommand('copy');
+        showCopiedToast();
+    } catch (e) {
+        prompt('Sao chép liên kết tại đây:', text);
+    }
+    document.body.removeChild(ta);
+}
+
+function showCopiedToast() {
+    if (typeof Swal !== 'undefined') {
+        Swal.fire({
+            icon: 'success',
+            title: 'Đã sao chép liên kết xem live!',
+            timer: 1400,
+            showConfirmButton: false
+        });
+    } else {
+        alert('Đã sao chép liên kết xem live thành công!');
     }
 }
 </script>
-
 
 <style>
 .live-viewer-container {
@@ -505,18 +748,18 @@ function copyStreamUrl() {
 .pin-buy-btn {
     background: linear-gradient(135deg, #10b981 0%, #059669 100%);
     color: #ffffff;
+    border: none;
     font-size: 0.8rem;
     font-weight: 700;
     padding: 8px 14px;
     border-radius: 10px;
-    text-decoration: none;
+    cursor: pointer;
     white-space: nowrap;
     box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
     transition: all 0.2s;
 }
 .pin-buy-btn:hover {
     transform: scale(1.04);
-    color: #fff;
 }
 
 /* Floating Reactions */
@@ -549,6 +792,33 @@ function copyStreamUrl() {
 }
 .reaction-btn:active {
     transform: scale(0.9);
+}
+
+/* Floating Reactions Layer */
+.floating-reaction-layer {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 25;
+}
+.floating-particle {
+    position: absolute;
+    bottom: 20px;
+    font-size: 2.4rem;
+    animation: floatUp 2.8s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+    opacity: 0.95;
+    filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.5));
+    user-select: none;
+    pointer-events: none;
+    z-index: 26;
+}
+@keyframes floatUp {
+    0% { transform: translateY(0) scale(0.6) rotate(0deg); opacity: 0; }
+    15% { opacity: 1; transform: translateY(-30px) scale(1.25) rotate(-8deg); }
+    50% { transform: translateY(-160px) scale(1.05) rotate(12deg); }
+    80% { opacity: 0.85; }
+    100% { transform: translateY(-380px) scale(0.75) rotate(-18deg); opacity: 0; }
 }
 
 /* Details Card */
@@ -807,29 +1077,112 @@ function copyStreamUrl() {
     50% { transform: scale(1.04); }
 }
 
-.viewer-cart-card {
-    width: 520px;
+/* ========================================================
+   LIVE MODALS (POPUPS FIXED FULLSCREEN)
+   ======================================================== */
+.live-modal-backdrop {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background: rgba(15, 23, 42, 0.8) !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+    z-index: 999999 !important;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    box-sizing: border-box;
 }
-.viewer-cart-title-box {
+.live-modal-backdrop.is-open {
+    display: flex !important;
+    animation: liveModalFadeIn 0.2s ease-out;
+}
+.live-modal-dialog {
+    background: #ffffff !important;
+    border-radius: 24px !important;
+    width: 520px;
+    max-width: calc(100vw - 32px);
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
+    border: 1px solid #e2e8f0;
+    box-sizing: border-box;
+    animation: liveModalSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.live-modal-dialog.dialog-lg {
+    width: 640px;
+}
+.live-modal-header {
+    padding: 18px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #f1f5f9;
+    background: #ffffff;
+    flex-shrink: 0;
+}
+.modal-title-with-icon {
     display: flex;
     align-items: center;
     gap: 12px;
 }
-.cart-icon-lg {
+.modal-icon-lg {
     font-size: 1.8rem;
 }
-.cart-sub {
+.live-modal-title {
+    margin: 0;
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #0f172a;
+}
+.modal-sub-text {
     font-size: 0.78rem;
     color: #64748b;
     font-weight: 600;
 }
+.live-modal-close {
+    background: #f1f5f9;
+    border: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    font-size: 1.1rem;
+    color: #64748b;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+.live-modal-close:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+}
+@keyframes liveModalFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+@keyframes liveModalSlideUp {
+    from { transform: translateY(20px) scale(0.97); opacity: 0; }
+    to { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+/* Viewer Cart Items */
 .viewer-cart-list {
     max-height: 60vh;
     overflow-y: auto;
-    padding: 12px 20px;
+    padding: 16px 20px;
     display: flex;
     flex-direction: column;
     gap: 12px;
+    background: #ffffff;
 }
 .viewer-cart-item {
     display: flex;
@@ -904,22 +1257,23 @@ function copyStreamUrl() {
     font-weight: 700;
 }
 .btn-cart-buy {
-    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
     color: #ffffff;
-    text-decoration: none;
+    border: none;
     padding: 8px 16px;
     border-radius: 10px;
     font-size: 0.84rem;
     font-weight: 700;
+    cursor: pointer;
     white-space: nowrap;
     display: inline-block;
-    box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3);
+    box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);
     transition: all 0.2s;
 }
 .btn-cart-buy:hover {
-    background: #dc2626;
-    color: #fff;
+    background: #059669;
     transform: translateY(-1px);
+    box-shadow: 0 6px 14px rgba(16, 185, 129, 0.45);
 }
 .empty-viewer-cart {
     text-align: center;
@@ -932,6 +1286,205 @@ function copyStreamUrl() {
     margin-bottom: 8px;
 }
 
+/* Quick View Modal Body & Layout */
+.quickview-body {
+    padding: 24px;
+    overflow-y: auto;
+    max-height: 75vh;
+    background: #ffffff;
+}
+.quickview-grid {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    gap: 24px;
+    align-items: start;
+}
+.quickview-media {
+    position: relative;
+    border-radius: 18px;
+    overflow: hidden;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    aspect-ratio: 1 / 1;
+}
+.quickview-main-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.quickview-star-tag {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    right: 10px;
+    background: rgba(15, 23, 42, 0.85);
+    backdrop-filter: blur(8px);
+    color: #fbbf24;
+    font-size: 0.75rem;
+    font-weight: 800;
+    padding: 4px 10px;
+    border-radius: 8px;
+    text-align: center;
+}
+.quickview-info {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+.quickview-name {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #0f172a;
+    line-height: 1.35;
+    margin: 0;
+}
+.quickview-pricing-row {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+}
+.quickview-price {
+    font-size: 1.5rem;
+    font-weight: 900;
+    color: #ef4444;
+}
+.quickview-unit {
+    font-size: 0.88rem;
+    color: #64748b;
+    font-weight: 600;
+}
+.quickview-desc {
+    font-size: 0.88rem;
+    color: #475569;
+    line-height: 1.55;
+    background: #f8fafc;
+    padding: 12px 14px;
+    border-radius: 12px;
+    border-left: 3px solid #0ea5e9;
+}
+.quickview-qty-box {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    gap: 12px;
+}
+.qty-title {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #334155;
+}
+.qty-stepper {
+    display: flex;
+    align-items: center;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 10px;
+    overflow: hidden;
+}
+.qty-btn-step {
+    background: #f1f5f9;
+    border: none;
+    width: 32px;
+    height: 32px;
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #1e293b;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.qty-btn-step:hover {
+    background: #e2e8f0;
+}
+.qty-val {
+    width: 44px;
+    height: 32px;
+    border: none;
+    text-align: center;
+    font-weight: 800;
+    font-size: 0.95rem;
+    color: #0f172a;
+    background: #ffffff;
+    outline: none;
+}
+.qty-total-preview {
+    font-size: 0.85rem;
+    color: #64748b;
+}
+.qty-total-preview b {
+    color: #ef4444;
+    font-size: 1.05rem;
+}
+.quickview-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 4px;
+}
+.btn-qv-add-cart {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: #ffffff;
+    border: none;
+    padding: 12px 16px;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
+    transition: all 0.2s;
+}
+.btn-qv-add-cart:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(16, 185, 129, 0.45);
+}
+.btn-qv-buy-now {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: #ffffff;
+    border: none;
+    padding: 12px 16px;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(245, 158, 11, 0.35);
+    transition: all 0.2s;
+}
+.btn-qv-buy-now:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(245, 158, 11, 0.45);
+}
+.quickview-footer {
+    text-align: center;
+    margin-top: 4px;
+}
+.qv-detail-link {
+    color: #0284c7;
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-decoration: none;
+}
+.qv-detail-link:hover {
+    text-decoration: underline;
+}
+
+@media (max-width: 600px) {
+    .quickview-grid {
+        grid-template-columns: 1fr;
+    }
+    .quickview-media {
+        max-width: 240px;
+        margin: 0 auto;
+    }
+    .quickview-actions {
+        grid-template-columns: 1fr;
+    }
+}
+
 @media (max-width: 980px) {
     .viewer-layout {
         grid-template-columns: 1fr;
@@ -942,4 +1495,3 @@ function copyStreamUrl() {
 }
 </style>
 @endsection
-

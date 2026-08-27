@@ -10,6 +10,7 @@ class LiveStream extends Model
     use HasFactory;
 
     protected $fillable = [
+        'code',
         'user_id',
         'title',
         'description',
@@ -23,6 +24,20 @@ class LiveStream extends Model
         'started_at',
         'ended_at',
     ];
+
+    protected static function booted()
+    {
+        static::creating(function ($model) {
+            if (empty($model->code)) {
+                $model->code = 'live-' . \Illuminate\Support\Str::lower(\Illuminate\Support\Str::random(8));
+            }
+        });
+    }
+
+    public function getCodeOrIdAttribute()
+    {
+        return $this->code ?: ('live-' . $this->id);
+    }
 
     protected $casts = [
         'started_at' => 'datetime',

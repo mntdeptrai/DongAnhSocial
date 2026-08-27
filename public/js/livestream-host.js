@@ -5,6 +5,7 @@
 
 window.DongAnhLiveHost = (function () {
     let streamId = null;
+    let channelId = null;
     let mySessionId = 'host_' + Math.random().toString(36).substring(2, 9);
     let localStream = null;
     let screenStream = null;
@@ -39,7 +40,8 @@ window.DongAnhLiveHost = (function () {
      */
     async function init(config) {
         streamId = config.streamId;
-        console.log('[LiveHost] Initializing studio for stream #', streamId, 'Session:', mySessionId);
+        channelId = config.channelId || config.streamId;
+        console.log('[LiveHost] Initializing studio for stream #', streamId, 'Channel:', channelId, 'Session:', mySessionId);
 
         // 1. Khởi động Camera & Mic
         try {
@@ -113,7 +115,7 @@ window.DongAnhLiveHost = (function () {
             return;
         }
 
-        const channel = window.Echo.channel('live-stream.' + streamId);
+        const channel = window.Echo.channel('live-stream.' + channelId);
 
         // 1. Tín hiệu WebRTC
         channel.listen('.LiveStreamSignal', async (e) => {
@@ -630,14 +632,22 @@ window.DongAnhLiveHost = (function () {
         };
 
         const icon = iconMap[type] || '❤️';
-        const el = document.createElement('div');
-        el.className = 'floating-particle';
-        el.innerText = icon;
-        el.style.left = (Math.random() * 60 + 20) + '%';
-        el.style.animationDuration = (Math.random() * 1.5 + 2) + 's';
+        const count = 2;
 
-        container.appendChild(el);
-        setTimeout(() => el.remove(), 3500);
+        for (let i = 0; i < count; i++) {
+            setTimeout(() => {
+                const el = document.createElement('div');
+                el.className = 'floating-particle';
+                el.innerText = icon;
+                const startLeft = 70 + (Math.random() * 24 - 12);
+                el.style.left = startLeft + '%';
+                el.style.animationDuration = (Math.random() * 0.8 + 2.2) + 's';
+                el.style.fontSize = (Math.random() * 0.8 + 2) + 'rem';
+
+                container.appendChild(el);
+                setTimeout(() => el.remove(), 3000);
+            }, i * 140);
+        }
     }
 
     /**

@@ -75,7 +75,7 @@
             <div class="live-grid">
                 @foreach($activeStreams as $stream)
                     <div class="live-card">
-                        <a href="{{ route('livestream.show', $stream->id) }}" class="live-card-thumb-link">
+                        <a href="{{ route('livestream.show', $stream->code_or_id) }}" class="live-card-thumb-link">
                             <div class="live-card-thumb">
                                 @if($stream->cover_image)
                                     <img src="{{ asset($stream->cover_image) }}" alt="{{ $stream->title }}">
@@ -105,7 +105,7 @@
                                 <img src="{{ $stream->user->avatar ? (str_starts_with($stream->user->avatar, 'http') ? $stream->user->avatar : asset($stream->user->avatar)) : 'https://ui-avatars.com/api/?name=' . urlencode($stream->user->name) . '&background=0ea5e9&color=fff' }}" alt="{{ $stream->user->name }}">
                             </div>
                             <div class="live-card-info">
-                                <a href="{{ route('livestream.show', $stream->id) }}" class="live-card-title">
+                                <a href="{{ route('livestream.show', $stream->code_or_id) }}" class="live-card-title">
                                     {{ $stream->title }}
                                 </a>
                                 <div class="live-card-meta">

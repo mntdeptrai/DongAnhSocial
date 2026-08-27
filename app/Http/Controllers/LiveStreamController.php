@@ -26,16 +26,19 @@ class LiveStreamController extends Controller
     protected function formatProduct($product, bool $isPinned = false): array
     {
         return [
-            'id'          => $product->id,
-            'name'        => $product->name,
-            'price'       => $product->price ? number_format($product->price) . 'đ' : 'Liên hệ',
-            'raw_price'   => (float)$product->price,
-            'image'       => $product->image_path ? (str_starts_with($product->image_path, 'http') ? $product->image_path : asset($product->image_path)) : null,
-            'image_url'   => $product->image_path ? (str_starts_with($product->image_path, 'http') ? $product->image_path : asset($product->image_path)) : null,
-            'star_rating' => $product->star_rating ?? '4 sao',
-            'detail_url'  => route('ocop.product.show', $product->slug ?: $product->id),
-            'unit'        => $product->unit ?? 'sản phẩm',
-            'is_pinned'   => $isPinned,
+            'id'             => $product->id,
+            'name'           => $product->name,
+            'price'          => $product->price ? number_format($product->price) . 'đ' : 'Liên hệ',
+            'raw_price'      => (float)$product->price,
+            'image'          => $product->image_path ? (str_starts_with($product->image_path, 'http') ? $product->image_path : asset($product->image_path)) : '/assets/icon/default_food.png',
+            'image_url'      => $product->image_path ? (str_starts_with($product->image_path, 'http') ? $product->image_path : asset($product->image_path)) : '/assets/icon/default_food.png',
+            'star_rating'    => $product->star_rating ?? '4 sao',
+            'detail_url'     => route('ocop.product.show', $product->slug ?: $product->id),
+            'unit'           => $product->unit ?? 'sản phẩm',
+            'is_pinned'      => $isPinned,
+            'description'    => $product->description ?? 'Sản phẩm OCOP chất lượng cao được tuyển chọn và kiểm định chuẩn Đông Anh.',
+            'story'          => $product->story ?? null,
+            'artisans'       => $product->artisans ?? null,
         ];
     }
 
@@ -46,6 +49,40 @@ class LiveStreamController extends Controller
     protected function getCurrentUser()
     {
         return Auth::user() ?? (session('user_id') ? User::find(session('user_id')) : null);
+    }
+
+    /**
+     * Tìm phiên livestream theo Code định danh (hoặc ID tương thích ngược)
+     */
+    protected function findStream($identifier, array $with = [])
+    {
+        $query = LiveStream::query();
+        if (!empty($with)) {
+            $query->with($with);
+        }
+
+        // 1. Thử tìm theo 'code' nếu có
+        try {
+            $stream = (clone $query)->where('code', $identifier)->first();
+            if ($stream) return $stream;
+        } catch (\Throwable $e) {}
+
+        // 2. Thử tìm theo id số (nếu là số)
+        if (is_numeric($identifier)) {
+            $stream = (clone $query)->where('id', $identifier)->first();
+            if ($stream) return $stream;
+        }
+
+        // 3. Nếu là dạng 'live-123'
+        if (is_string($identifier) && str_starts_with($identifier, 'live-')) {
+            $possibleId = substr($identifier, 5);
+            if (is_numeric($possibleId)) {
+                $stream = (clone $query)->where('id', $possibleId)->first();
+                if ($stream) return $stream;
+            }
+        }
+
+        return $query->where('id', $identifier)->firstOrFail();
     }
 
     /**
@@ -157,7 +194,7 @@ class LiveStreamController extends Controller
             $liveStream->products()->sync($attachData);
         }
 
-        return redirect()->route('livestream.host', $liveStream->id);
+        return redirect()->route('livestream.host', $liveStream->code_or_id);
     }
 
     /**
@@ -170,11 +207,11 @@ class LiveStreamController extends Controller
             return redirect()->route('login')->with('error', 'Vui lòng đăng nhập.');
         }
 
-        $stream = LiveStream::with(['user', 'pinnedProduct', 'products', 'comments.user'])->findOrFail($id);
+        $stream = $this->findStream($id, ['user', 'pinnedProduct', 'products', 'comments.user']);
 
         // Chỉ chủ phòng mới được vào Studio phát sóng
         if ($stream->user_id !== $currentUser->id) {
-            return redirect()->route('livestream.show', $id);
+            return redirect()->route('livestream.show', $stream->code_or_id);
         }
 
         $ocopProducts = $this->getAvailableOcopProducts();
@@ -190,16 +227,16 @@ class LiveStreamController extends Controller
     public function show($id)
     {
         $currentUser = $this->getCurrentUser();
-        $stream = LiveStream::with(['user', 'pinnedProduct', 'products', 'comments.user'])->findOrFail($id);
+        $stream = $this->findStream($id, ['user', 'pinnedProduct', 'products', 'comments.user']);
 
         // Nếu người xem chính là chủ phòng và đang live thì chuyển sang Studio
         if ($currentUser && $stream->user_id === $currentUser->id && $stream->status === 'live') {
-            return redirect()->route('livestream.host', $id);
+            return redirect()->route('livestream.host', $stream->code_or_id);
         }
 
         $relatedStreams = LiveStream::with('user')
             ->where('status', 'live')
-            ->where('id', '!=', $id)
+            ->where('id', '!=', $stream->id)
             ->limit(4)
             ->get();
 
@@ -220,7 +257,7 @@ class LiveStreamController extends Controller
             'message' => 'required|string|max:500',
         ]);
 
-        $stream = LiveStream::findOrFail($id);
+        $stream = $this->findStream($id);
 
         $comment = LiveStreamComment::create([
             'live_stream_id' => $stream->id,
@@ -261,7 +298,7 @@ class LiveStreamController extends Controller
      */
     public function sendReaction(Request $request, $id)
     {
-        $stream = LiveStream::findOrFail($id);
+        $stream = $this->findStream($id);
         $reactionType = $request->input('type', 'heart');
 
         $stream->increment('likes_count');
@@ -288,7 +325,7 @@ class LiveStreamController extends Controller
      */
     public function getProducts($id)
     {
-        $stream = LiveStream::with('products')->findOrFail($id);
+        $stream = $this->findStream($id, ['products']);
         $pinnedId = $stream->pinned_product_id;
 
         $products = $stream->products->map(function ($p) use ($pinnedId) {
@@ -310,7 +347,7 @@ class LiveStreamController extends Controller
     public function addProduct(Request $request, $id)
     {
         $currentUser = $this->getCurrentUser();
-        $stream = LiveStream::findOrFail($id);
+        $stream = $this->findStream($id);
 
         if (!$currentUser || ($stream->user_id !== $currentUser->id && $currentUser->role !== 'admin')) {
             return response()->json(['status' => 'error', 'message' => 'Không có quyền thực hiện.'], 403);
@@ -363,7 +400,7 @@ class LiveStreamController extends Controller
     public function removeProduct(Request $request, $id, $productId)
     {
         $currentUser = $this->getCurrentUser();
-        $stream = LiveStream::findOrFail($id);
+        $stream = $this->findStream($id);
 
         if (!$currentUser || ($stream->user_id !== $currentUser->id && $currentUser->role !== 'admin')) {
             return response()->json(['status' => 'error', 'message' => 'Không có quyền thực hiện.'], 403);
@@ -410,7 +447,7 @@ class LiveStreamController extends Controller
     public function pinProduct(Request $request, $id)
     {
         $currentUser = $this->getCurrentUser();
-        $stream = LiveStream::findOrFail($id);
+        $stream = $this->findStream($id);
 
         if (!$currentUser || ($stream->user_id !== $currentUser->id && $currentUser->role !== 'admin')) {
             return response()->json(['status' => 'error', 'message' => 'Không có quyền thực hiện.'], 403);
@@ -493,7 +530,7 @@ class LiveStreamController extends Controller
             'signal_data'       => 'nullable|string',
         ]);
 
-        $stream = LiveStream::findOrFail($id);
+        $stream = $this->findStream($id);
 
         try {
             broadcast(new LiveStreamSignal(
@@ -515,7 +552,7 @@ class LiveStreamController extends Controller
      */
     public function updateViewerCount(Request $request, $id)
     {
-        $stream = LiveStream::findOrFail($id);
+        $stream = $this->findStream($id);
         $count = max(1, (int)$request->input('count', 1));
 
         $stream->viewer_count = $count;
@@ -537,7 +574,7 @@ class LiveStreamController extends Controller
     public function endStream(Request $request, $id)
     {
         $currentUser = $this->getCurrentUser();
-        $stream = LiveStream::findOrFail($id);
+        $stream = $this->findStream($id);
 
         if (!$currentUser || ($stream->user_id !== $currentUser->id && $currentUser->role !== 'admin')) {
             return response()->json(['status' => 'error', 'message' => 'Không có quyền thực hiện.'], 403);
@@ -573,7 +610,7 @@ class LiveStreamController extends Controller
     public function destroy($id)
     {
         $currentUser = $this->getCurrentUser();
-        $stream = LiveStream::findOrFail($id);
+        $stream = $this->findStream($id);
 
         if (!$currentUser || ($stream->user_id !== $currentUser->id && $currentUser->role !== 'admin')) {
             return response()->json(['status' => 'error', 'message' => 'Không có quyền thực hiện.'], 403);
