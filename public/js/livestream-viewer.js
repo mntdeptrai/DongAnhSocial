@@ -27,35 +27,93 @@ window.DongAnhLiveViewer = (function () {
         return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
     }
 
+    let hlsInstance = null;
+
     /**
-     * Khởi tạo phòng xem Livestream cho Viewer
+     * Khởi tạo phòng xem Livestream cho Viewer (SRS HLS + WebRTC Hybrid)
      */
     function init(config) {
         streamId = config.streamId;
         channelId = config.channelId || config.streamId;
-        console.log('[LiveViewer] Initializing viewer for stream #', streamId, 'Channel:', channelId, 'Session:', mySessionId);
+        const hlsUrl = config.hlsUrl || `/live/${streamId}.m3u8`;
+        console.log('[LiveViewer] Initializing viewer for stream #', streamId, 'HLS URL:', hlsUrl);
 
-        // 1. Tạo WebRTC RTCPeerConnection
-        createPeerConnection();
-
-        // 2. Lắng nghe WebSocket Channel từ Laravel Echo / Reverb
+        // 1. Lắng nghe WebSocket Channel từ Laravel Echo / Reverb (cho chat, tim, giỏ hàng)
         setupEchoListeners();
 
-        // 3. Khởi động cơ chế dự phòng HTTP Signaling Fallback (chỉ kích hoạt nếu WebSocket không phản hồi sau 4s)
-        setTimeout(() => {
-            if (!peerConnection || (peerConnection.connectionState !== 'connected' && peerConnection.iceConnectionState !== 'connected')) {
-                if (!window.Echo || !window.Echo.connector || !window.Echo.connector.pusher || window.Echo.connector.pusher.connection.state !== 'connected') {
-                    startHttpPollingFallback();
-                }
+        // 2. Thử khởi động luồng phát HLS qua SRS Media Server
+        startHlsPlayback(hlsUrl);
+    }
+
+    /**
+     * Khởi tạo phát HLS qua Hls.js hoặc Safari Native HLS
+     */
+    function startHlsPlayback(hlsUrl) {
+        const videoEl = document.getElementById('viewer-video-player');
+        if (!videoEl) return;
+
+        let hlsConnected = false;
+
+        if (typeof Hls !== 'undefined' && Hls.isSupported()) {
+            if (hlsInstance) {
+                hlsInstance.destroy();
             }
-        }, 4000);
+            hlsInstance = new Hls({
+                enableWorker: true,
+                lowLatencyMode: true,
+                liveSyncDurationCount: 2,
+                liveMaxLatencyDurationCount: 5,
+                manifestLoadingTimeOut: 3500,
+                manifestLoadingMaxRetry: 2,
+            });
 
-        // 4. Gửi tín hiệu tham gia phòng tới Host ngay lập tức (100ms)
-        setTimeout(() => {
-            sendSignal('host', 'viewer_join', null);
-        }, 100);
+            hlsInstance.loadSource(hlsUrl);
+            hlsInstance.attachMedia(videoEl);
 
-        // Thử lại tối đa 3 lần cách nhau 2.5s nếu chưa kết nối
+            hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
+                console.log('[LiveViewer] SRS HLS Manifest parsed successfully!');
+                hlsConnected = true;
+                hideLoadingOverlay();
+                attemptPlayVideo();
+            });
+
+            hlsInstance.on(Hls.Events.ERROR, (event, data) => {
+                if (data.fatal && !hlsConnected) {
+                    console.log('[LiveViewer] HLS stream pending, starting WebRTC fallback...');
+                    startWebRtcFallback();
+                }
+            });
+        } else if (videoEl.canPlayType('application/vnd.apple.mpegurl')) {
+            // Safari iOS
+            videoEl.src = hlsUrl;
+            videoEl.addEventListener('loadedmetadata', () => {
+                hlsConnected = true;
+                hideLoadingOverlay();
+                attemptPlayVideo();
+            });
+            setTimeout(() => {
+                if (!hlsConnected) {
+                    startWebRtcFallback();
+                }
+            }, 3000);
+        } else {
+            startWebRtcFallback();
+        }
+    }
+
+    /**
+     * Khởi động cơ chế WebRTC P2P Fallback
+     */
+    function startWebRtcFallback() {
+        if (peerConnection && (peerConnection.connectionState === 'connected' || peerConnection.iceConnectionState === 'connected')) {
+            return;
+        }
+
+        createPeerConnection();
+
+        // Gửi tín hiệu tham gia phòng tới Host
+        sendSignal('host', 'viewer_join', null);
+
         let retryCount = 0;
         const retryTimer = setInterval(() => {
             retryCount++;
@@ -65,12 +123,11 @@ window.DongAnhLiveViewer = (function () {
                 return;
             }
 
-            if (retryCount >= 4) {
+            if (retryCount >= 3) {
                 clearInterval(retryTimer);
                 return;
             }
 
-            console.log('[LiveViewer] Handshaking... Sending viewer_join signal to Host (retry #' + retryCount + ').');
             sendSignal('host', 'viewer_join', null);
         }, 2500);
     }

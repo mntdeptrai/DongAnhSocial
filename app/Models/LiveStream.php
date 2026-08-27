@@ -93,4 +93,30 @@ class LiveStream extends Model
         }
         return sprintf('%02d:%02d', $diff->i, $diff->s);
     }
+
+    public function getStreamKeyAttribute(): string
+    {
+        return $this->code_or_id;
+    }
+
+    public function getRtmpServerUrlAttribute(): string
+    {
+        $host = request()->getHost() ?: 'donganhdiscovery.xadonganh.com';
+        return "rtmp://{$host}:1935/live";
+    }
+
+    public function getHlsStreamUrlAttribute(): string
+    {
+        return "/live/{$this->code_or_id}.m3u8";
+    }
+
+    public function getWhipStreamUrlAttribute(): string
+    {
+        return "/rtc/v1/whip/?app=live&stream={$this->code_or_id}";
+    }
+
+    public function getWhepStreamUrlAttribute(): string
+    {
+        return "/rtc/v1/whep/?app=live&stream={$this->code_or_id}";
+    }
 }

@@ -89,6 +89,28 @@
                     <input type="text" readonly value="{{ route('livestream.show', $stream->code_or_id) }}" id="live-share-url" class="share-input">
                     <button type="button" class="btn-copy-link" onclick="copyShareUrl()">Sao chép</button>
                 </div>
+
+                <!-- OBS / TikTok Studio RTMP Ingest Panel -->
+                <div class="studio-rtmp-panel" style="margin-top: 12px; background: rgba(14, 165, 233, 0.06); border: 1px dashed rgba(14, 165, 233, 0.35); border-radius: 12px; padding: 12px 14px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+                        <span style="font-size: 0.86rem; font-weight: 700; color: #0284c7; display: flex; align-items: center; gap: 6px;">
+                            📹 Phát qua OBS / TikTok Live Studio / PRISM:
+                        </span>
+                        <button type="button" onclick="toggleRtmpDetails()" id="btn-toggle-rtmp" style="background: none; border: none; color: #0284c7; font-size: 0.8rem; font-weight: 700; cursor: pointer; text-decoration: underline;">
+                            [Xem Cấu hình RTMP]
+                        </button>
+                    </div>
+                    <div id="rtmp-details-panel" style="display: none; font-size: 0.82rem; color: #334155; margin-top: 10px; line-height: 1.8;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; background: #ffffff; padding: 6px 10px; border-radius: 8px; margin-bottom: 6px; border: 1px solid #e2e8f0;">
+                            <div><b>Máy chủ (Server):</b> <code style="color: #0284c7; font-weight: 700;">{{ $stream->rtmp_server_url }}</code></div>
+                            <button type="button" class="btn-copy-link" style="padding: 3px 8px; font-size: 0.75rem;" onclick="copyRawText('{{ $stream->rtmp_server_url }}')">Copy</button>
+                        </div>
+                        <div style="display: flex; align-items: center; justify-content: space-between; background: #ffffff; padding: 6px 10px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                            <div><b>Khóa luồng (Stream Key):</b> <code style="color: #ea580c; font-weight: 700;">{{ $stream->stream_key }}</code></div>
+                            <button type="button" class="btn-copy-link" style="padding: 3px 8px; font-size: 0.75rem;" onclick="copyRawText('{{ $stream->stream_key }}')">Copy</button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -325,6 +347,30 @@ function filterHostAllProducts(query) {
         const name = item.getAttribute('data-name') || '';
         item.style.display = (!q || name.includes(q)) ? 'flex' : 'none';
     });
+}
+
+function toggleRtmpDetails() {
+    const p = document.getElementById('rtmp-details-panel');
+    const btn = document.getElementById('btn-toggle-rtmp');
+    if (p) {
+        const isHidden = p.style.display === 'none';
+        p.style.display = isHidden ? 'block' : 'none';
+        if (btn) btn.innerText = isHidden ? '[Ẩn Cấu hình]' : '[Xem Cấu hình RTMP]';
+    }
+}
+
+function copyRawText(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({ icon: 'success', title: 'Đã sao chép!', text: text, timer: 1200, showConfirmButton: false });
+            } else {
+                alert('Đã sao chép: ' + text);
+            }
+        });
+    } else {
+        prompt('Sao chép tại đây:', text);
+    }
 }
 
 function copyShareUrl() {

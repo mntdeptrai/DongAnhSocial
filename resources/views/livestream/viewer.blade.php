@@ -364,6 +364,9 @@
 window.__liveProducts = @json($productsMap);
 </script>
 
+<!-- Hls.js Media Streaming Library -->
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.8/dist/hls.min.js"></script>
+
 <!-- Pusher & Reverb WebSocket Library -->
 <script src="https://cdn.jsdelivr.net/npm/pusher-js@8.4.0/dist/web/pusher.min.js"></script>
 <script>
@@ -440,8 +443,9 @@ window.__liveProducts = @json($productsMap);
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     DongAnhLiveViewer.init({
-        streamId: {{ $stream->id }},
+        streamId: '{{ $stream->code_or_id }}',
         channelId: {{ $stream->id }},
+        hlsUrl: '{{ $stream->hls_stream_url }}',
         userId: {{ Auth::id() ?: (session('user_id') ?: 'null') }}
     });
 });
