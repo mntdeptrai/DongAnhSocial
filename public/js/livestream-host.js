@@ -826,17 +826,17 @@ window.DongAnhLiveHost = (function () {
                 showCancelButton: true,
                 confirmButtonColor: '#ef4444',
                 cancelButtonColor: '#64748b',
-                confirmButtonText: '🔴 Dừng phát & Lưu Video',
+                confirmButtonText: '🔴 Dừng phát sóng',
                 cancelButtonText: 'Tiếp tục Live'
             });
             if (!result.isConfirmed) return;
         }
 
-        // Hiển thị thông báo đang xử lý lưu video
+        // Hiển thị thông báo đang hoàn tất
         if (typeof Swal !== 'undefined') {
             Swal.fire({
-                title: 'Đang lưu & Tải video lên YouTube...',
-                html: '<div style="font-size:0.95rem; color:#64748b; margin-top:8px;">Hệ thống đang đồng bộ bản ghi video phiên Live của bạn. Vui lòng chờ...</div>',
+                title: 'Đang hoàn tất...',
+                html: '<div style="font-size:0.95rem; color:#64748b; margin-top:8px;">Vui lòng chờ trong giây lát...</div>',
                 allowOutsideClick: false,
                 didOpen: () => {
                     Swal.showLoading();
@@ -893,10 +893,6 @@ window.DongAnhLiveHost = (function () {
             peerConnections.forEach(pc => pc.close());
             if (timerInterval) clearInterval(timerInterval);
 
-            const ytSuccessHtml = (ytResultData && ytResultData.youtube_video_id)
-                ? `<div style="margin-top:10px; color:#16a34a; font-weight:700;">📺 Đã tự động tải lên Kênh YouTube thành công!</div>`
-                : (ytResultData && ytResultData.recording_url ? `<div style="margin-top:10px; color:#0ea5e9; font-weight:700;">💾 Đã lưu bản ghi video phiên Live thành công!</div>` : '');
-
             if (typeof Swal !== 'undefined') {
                 Swal.fire({
                     icon: 'success',
@@ -906,7 +902,6 @@ window.DongAnhLiveHost = (function () {
                             <div>⏱️ <b>Thời lượng:</b> ${data.duration || '00:00'}</div>
                             <div>👥 <b>Lượt xem cao nhất:</b> ${data.peak_viewers || 1} người</div>
                             <div>❤️ <b>Tổng lượt tương tác:</b> ${data.total_likes || 0} lượt</div>
-                            ${ytSuccessHtml}
                         </div>
                     `,
                     confirmButtonText: 'Về trang Quản lý Live',
