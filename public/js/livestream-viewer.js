@@ -300,8 +300,6 @@ window.DongAnhLiveViewer = (function () {
         const unblockBtn = document.getElementById('viewer-unblock-audio-btn');
         if (unblockBtn) unblockBtn.style.display = 'none';
     }
-        if (unblockBtn) unblockBtn.style.display = 'none';
-    }
 
     /**
      * Gửi bình luận

@@ -216,7 +216,7 @@
                 const isHttps = window.location.protocol === 'https:';
                 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
                 const wsHost = isLocal ? '127.0.0.1' : window.location.hostname;
-                const wsPort = isLocal ? {{ (int)env('REVERB_PORT', 8080) }} : (isHttps ? 443 : 80);
+                const wsPort = isLocal ? 8080 : (isHttps ? 443 : 80);
                 const forceTLS = isLocal ? false : isHttps;
                 const reverbKey = '{{ config('broadcasting.connections.reverb.key') ?: env('REVERB_APP_KEY', 'donganhreverbkey')) }}';
 
