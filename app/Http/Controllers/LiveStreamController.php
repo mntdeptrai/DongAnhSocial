@@ -15,6 +15,7 @@ use App\Events\LiveStreamEnded;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
 
 use App\Events\LiveStreamProductsUpdated;
 
@@ -532,6 +533,22 @@ class LiveStreamController extends Controller
 
         $stream = $this->findStream($id);
 
+        // Lưu tín hiệu vào hàng đợi Cache để làm cơ chế dự phòng (HTTP Fallback)
+        $cacheKey = 'live_stream_signals_' . $stream->id;
+        $signals = Cache::get($cacheKey, []);
+        $signals[] = [
+            'live_stream_id'    => $stream->id,
+            'sender_session_id' => $request->sender_session_id,
+            'target_session_id' => $request->target_session_id,
+            'signal_type'       => $request->signal_type,
+            'signal_data'       => $request->signal_data,
+            'timestamp'         => microtime(true),
+        ];
+        if (count($signals) > 80) {
+            $signals = array_slice($signals, -80);
+        }
+        Cache::put($cacheKey, $signals, 120);
+
         try {
             broadcast(new LiveStreamSignal(
                 liveStreamId: $stream->id,
@@ -545,6 +562,40 @@ class LiveStreamController extends Controller
         }
 
         return response()->json(['status' => 'success']);
+    }
+
+    /**
+     * Lấy danh sách tín hiệu WebRTC qua HTTP Polling (Dự phòng khi WebSocket không khả dụng)
+     */
+    public function getSignals(Request $request, $id)
+    {
+        $stream = $this->findStream($id);
+        $mySessionId = $request->query('session_id');
+        $isHost = $request->query('is_host') == '1';
+        $since = (float)$request->query('since', 0);
+
+        $cacheKey = 'live_stream_signals_' . $stream->id;
+        $signals = Cache::get($cacheKey, []);
+
+        $results = [];
+        foreach ($signals as $sig) {
+            if ($sig['timestamp'] <= $since) {
+                continue;
+            }
+            if ($sig['sender_session_id'] === $mySessionId) {
+                continue;
+            }
+            $target = $sig['target_session_id'];
+            if ($target === $mySessionId || $target === 'all' || ($isHost && $target === 'host')) {
+                $results[] = $sig;
+            }
+        }
+
+        return response()->json([
+            'status'  => 'success',
+            'signals' => $results,
+            'now'     => microtime(true),
+        ]);
     }
 
     /**

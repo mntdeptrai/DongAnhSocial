@@ -61,11 +61,50 @@ window.DongAnhLiveHost = (function () {
         // 2. Lắng nghe WebSocket Channel từ Laravel Echo / Reverb
         setupEchoListeners();
 
-        // 3. Bắt đầu bộ đếm thời gian
+        // 3. Khởi động cơ chế dự phòng HTTP Signaling Fallback
+        startHttpPollingFallback();
+
+        // 4. Bắt đầu bộ đếm thời gian
         startTimer();
 
-        // 4. Bắn tín hiệu Host Ready
+        // 5. Bắn tín hiệu Host Ready
         sendSignal('all', 'host_ready', null);
+    }
+
+    let lastSignalTimestamp = 0;
+    let pollingInterval = null;
+
+    /**
+     * Cơ chế dự phòng: Tự động kéo tín hiệu qua HTTP khi WebSocket bị gián đoạn
+     */
+    function startHttpPollingFallback() {
+        if (pollingInterval) return;
+        pollingInterval = setInterval(async () => {
+            try {
+                const res = await fetch(`/livestream/${streamId}/signals?session_id=${mySessionId}&is_host=1&since=${lastSignalTimestamp}`);
+                const data = await res.json();
+                if (data.status === 'success' && data.signals && data.signals.length > 0) {
+                    for (const sig of data.signals) {
+                        if (sig.timestamp > lastSignalTimestamp) {
+                            lastSignalTimestamp = sig.timestamp;
+                        }
+                        console.log('[LiveHost] [HTTP Poll] Received signal:', sig.signal_type, 'from:', sig.sender_session_id);
+                        if (sig.signal_type === 'viewer_join') {
+                            handleViewerJoin(sig.sender_session_id);
+                        } else if (sig.signal_type === 'viewer_answer') {
+                            handleViewerAnswer(sig.sender_session_id, sig.signal_data);
+                        } else if (sig.signal_type === 'ice_candidate') {
+                            handleIceCandidate(sig.sender_session_id, sig.signal_data);
+                        }
+                    }
+                }
+                if (data.now) {
+                    lastSignalTimestamp = Math.max(lastSignalTimestamp, data.now - 10);
+                }
+            } catch (e) {
+                // ignore
+            }
+        }, 1200);
     }
 
     /**

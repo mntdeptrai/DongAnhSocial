@@ -40,7 +40,10 @@ window.DongAnhLiveViewer = (function () {
         // 2. Lắng nghe WebSocket Channel từ Laravel Echo / Reverb
         setupEchoListeners();
 
-        // 3. Gửi tín hiệu tham gia phòng tới Host
+        // 3. Khởi động cơ chế dự phòng HTTP Signaling Fallback
+        startHttpPollingFallback();
+
+        // 4. Gửi tín hiệu tham gia phòng tới Host
         setTimeout(() => {
             sendSignal('host', 'viewer_join', null);
         }, 300);
@@ -55,6 +58,46 @@ window.DongAnhLiveViewer = (function () {
                 clearInterval(retryTimer);
             }
         }, 3000);
+    }
+
+    let lastSignalTimestamp = 0;
+    let pollingInterval = null;
+
+    /**
+     * Cơ chế dự phòng: Tự động kéo tín hiệu qua HTTP khi WebSocket bị chặn hoặc chưa bật
+     */
+    function startHttpPollingFallback() {
+        if (pollingInterval) return;
+        pollingInterval = setInterval(async () => {
+            if (peerConnection && (peerConnection.connectionState === 'connected' || peerConnection.iceConnectionState === 'connected')) {
+                return;
+            }
+
+            try {
+                const res = await fetch(`/livestream/${streamId}/signals?session_id=${mySessionId}&since=${lastSignalTimestamp}`);
+                const data = await res.json();
+                if (data.status === 'success' && data.signals && data.signals.length > 0) {
+                    for (const sig of data.signals) {
+                        if (sig.timestamp > lastSignalTimestamp) {
+                            lastSignalTimestamp = sig.timestamp;
+                        }
+                        console.log('[LiveViewer] [HTTP Poll] Received signal:', sig.signal_type, 'from:', sig.sender_session_id);
+                        if (sig.signal_type === 'host_offer') {
+                            handleHostOffer(sig.sender_session_id, sig.signal_data);
+                        } else if (sig.signal_type === 'ice_candidate') {
+                            handleIceCandidate(sig.signal_data);
+                        } else if (sig.signal_type === 'host_ready') {
+                            sendSignal(sig.sender_session_id || 'host', 'viewer_join', null);
+                        }
+                    }
+                }
+                if (data.now) {
+                    lastSignalTimestamp = Math.max(lastSignalTimestamp, data.now - 10);
+                }
+            } catch (e) {
+                // ignore
+            }
+        }, 1200);
     }
 
     /**
