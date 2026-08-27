@@ -218,7 +218,7 @@
                 const wsHost = isLocal ? '127.0.0.1' : window.location.hostname;
                 const wsPort = isLocal ? 8080 : (isHttps ? 443 : 80);
                 const forceTLS = isLocal ? false : isHttps;
-                const reverbKey = '{{ config('broadcasting.connections.reverb.key') ?: env('REVERB_APP_KEY', 'donganhreverbkey')) }}';
+                const reverbKey = '{{ config('broadcasting.connections.reverb.key') ?: env('REVERB_APP_KEY', 'donganhreverbkey') }}';
 
                 console.log('[LiveHost] Connecting to Reverb:', wsHost, wsPort, 'TLS:', forceTLS, 'Key:', reverbKey);
 
