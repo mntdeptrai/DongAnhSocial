@@ -22,6 +22,7 @@ window.DongAnhLiveHost = (function () {
         iceServers: [
             { urls: 'stun:stun.l.google.com:19302' },
             { urls: 'stun:stun1.l.google.com:19302' },
+            { urls: 'stun:stun.cloudflare.com:3478' },
             { urls: 'stun:openrelay.metered.ca:80' },
             { urls: 'turn:openrelay.metered.ca:80', username: 'openrelayproject', credential: 'openrelayproject' },
             { urls: 'turn:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' }
@@ -67,8 +68,13 @@ window.DongAnhLiveHost = (function () {
         // 4. Bắt đầu bộ đếm thời gian
         startTimer();
 
-        // 5. Bắn tín hiệu Host Ready
+        // 5. Bắn tín hiệu Host Ready ngay lập tức
         sendSignal('all', 'host_ready', null);
+
+        // Bắn định kỳ host_ready mỗi 3s để người xem vào sau kết nối tức thì
+        setInterval(() => {
+            sendSignal('all', 'host_ready', null);
+        }, 3000);
     }
 
     let lastSignalTimestamp = 0;
@@ -104,7 +110,7 @@ window.DongAnhLiveHost = (function () {
             } catch (e) {
                 // ignore
             }
-        }, 1200);
+        }, 500);
     }
 
     /**

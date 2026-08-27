@@ -15,6 +15,7 @@ window.DongAnhLiveViewer = (function () {
         iceServers: [
             { urls: 'stun:stun.l.google.com:19302' },
             { urls: 'stun:stun1.l.google.com:19302' },
+            { urls: 'stun:stun.cloudflare.com:3478' },
             { urls: 'stun:openrelay.metered.ca:80' },
             { urls: 'turn:openrelay.metered.ca:80', username: 'openrelayproject', credential: 'openrelayproject' },
             { urls: 'turn:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' }
@@ -43,28 +44,28 @@ window.DongAnhLiveViewer = (function () {
         // 3. Khởi động cơ chế dự phòng HTTP Signaling Fallback
         startHttpPollingFallback();
 
-        // 4. Gửi tín hiệu tham gia phòng tới Host
+        // 4. Gửi tín hiệu tham gia phòng tới Host ngay lập tức (100ms)
         setTimeout(() => {
             sendSignal('host', 'viewer_join', null);
-        }, 300);
+        }, 100);
 
-        // Lặp lại gửi tín hiệu nếu chưa kết nối sau 3 giây (đảm bảo kết nối ngay khi Host mở Studio)
+        // Lặp lại gửi tín hiệu nếu chưa kết nối (mỗi 1.5s trong 10s đầu)
         const retryTimer = setInterval(() => {
             if (!peerConnection || (peerConnection.connectionState !== 'connected' && peerConnection.iceConnectionState !== 'connected')) {
-                console.log('[LiveViewer] Checking connection... Sending viewer_join signal to Host.');
+                console.log('[LiveViewer] Handshaking... Sending viewer_join signal to Host.');
                 sendSignal('host', 'viewer_join', null);
             } else {
                 console.log('[LiveViewer] WebRTC Connected successfully!');
                 clearInterval(retryTimer);
             }
-        }, 3000);
+        }, 1500);
     }
 
     let lastSignalTimestamp = 0;
     let pollingInterval = null;
 
     /**
-     * Cơ chế dự phòng: Tự động kéo tín hiệu qua HTTP khi WebSocket bị chặn hoặc chưa bật
+     * Cơ chế dự phòng: Tự động kéo tín hiệu qua HTTP khi WebSocket bị chậm hoặc bị gián đoạn
      */
     function startHttpPollingFallback() {
         if (pollingInterval) return;
@@ -97,7 +98,7 @@ window.DongAnhLiveViewer = (function () {
             } catch (e) {
                 // ignore
             }
-        }, 1200);
+        }, 500);
     }
 
     /**
@@ -123,6 +124,7 @@ window.DongAnhLiveViewer = (function () {
         const videoEl = document.getElementById('viewer-video-player');
         if (videoEl) {
             videoEl.srcObject = remoteStream;
+            videoEl.muted = true;
         }
 
         // Nhận track từ Host
