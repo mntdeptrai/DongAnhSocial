@@ -41,24 +41,38 @@ window.DongAnhLiveViewer = (function () {
         // 2. Lắng nghe WebSocket Channel từ Laravel Echo / Reverb
         setupEchoListeners();
 
-        // 3. Khởi động cơ chế dự phòng HTTP Signaling Fallback
-        startHttpPollingFallback();
+        // 3. Khởi động cơ chế dự phòng HTTP Signaling Fallback (chỉ kích hoạt nếu WebSocket không phản hồi sau 4s)
+        setTimeout(() => {
+            if (!peerConnection || (peerConnection.connectionState !== 'connected' && peerConnection.iceConnectionState !== 'connected')) {
+                if (!window.Echo || !window.Echo.connector || !window.Echo.connector.pusher || window.Echo.connector.pusher.connection.state !== 'connected') {
+                    startHttpPollingFallback();
+                }
+            }
+        }, 4000);
 
         // 4. Gửi tín hiệu tham gia phòng tới Host ngay lập tức (100ms)
         setTimeout(() => {
             sendSignal('host', 'viewer_join', null);
         }, 100);
 
-        // Lặp lại gửi tín hiệu nếu chưa kết nối (mỗi 1.5s trong 10s đầu)
+        // Thử lại tối đa 3 lần cách nhau 2.5s nếu chưa kết nối
+        let retryCount = 0;
         const retryTimer = setInterval(() => {
-            if (!peerConnection || (peerConnection.connectionState !== 'connected' && peerConnection.iceConnectionState !== 'connected')) {
-                console.log('[LiveViewer] Handshaking... Sending viewer_join signal to Host.');
-                sendSignal('host', 'viewer_join', null);
-            } else {
+            retryCount++;
+            if (peerConnection && (peerConnection.connectionState === 'connected' || peerConnection.iceConnectionState === 'connected')) {
                 console.log('[LiveViewer] WebRTC Connected successfully!');
                 clearInterval(retryTimer);
+                return;
             }
-        }, 1500);
+
+            if (retryCount >= 4) {
+                clearInterval(retryTimer);
+                return;
+            }
+
+            console.log('[LiveViewer] Handshaking... Sending viewer_join signal to Host (retry #' + retryCount + ').');
+            sendSignal('host', 'viewer_join', null);
+        }, 2500);
     }
 
     let lastSignalTimestamp = 0;
@@ -71,6 +85,15 @@ window.DongAnhLiveViewer = (function () {
         if (pollingInterval) return;
         pollingInterval = setInterval(async () => {
             if (peerConnection && (peerConnection.connectionState === 'connected' || peerConnection.iceConnectionState === 'connected')) {
+                clearInterval(pollingInterval);
+                pollingInterval = null;
+                return;
+            }
+
+            // Nếu WebSocket đang hoạt động tốt thì không cần polling HTTP
+            if (window.Echo && window.Echo.connector && window.Echo.connector.pusher && window.Echo.connector.pusher.connection.state === 'connected') {
+                clearInterval(pollingInterval);
+                pollingInterval = null;
                 return;
             }
 
@@ -98,7 +121,7 @@ window.DongAnhLiveViewer = (function () {
             } catch (e) {
                 // ignore
             }
-        }, 500);
+        }, 3000);
     }
 
     /**

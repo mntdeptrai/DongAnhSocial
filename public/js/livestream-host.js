@@ -62,19 +62,18 @@ window.DongAnhLiveHost = (function () {
         // 2. Lắng nghe WebSocket Channel từ Laravel Echo / Reverb
         setupEchoListeners();
 
-        // 3. Khởi động cơ chế dự phòng HTTP Signaling Fallback
-        startHttpPollingFallback();
+        // 3. Khởi động cơ chế dự phòng HTTP Signaling Fallback (chỉ kích hoạt nếu WebSocket mất kết nối)
+        setTimeout(() => {
+            if (!window.Echo || !window.Echo.connector || !window.Echo.connector.pusher || window.Echo.connector.pusher.connection.state !== 'connected') {
+                startHttpPollingFallback();
+            }
+        }, 4000);
 
         // 4. Bắt đầu bộ đếm thời gian
         startTimer();
 
-        // 5. Bắn tín hiệu Host Ready ngay lập tức
+        // 5. Bắn tín hiệu Host Ready một lần khi khởi tạo
         sendSignal('all', 'host_ready', null);
-
-        // Bắn định kỳ host_ready mỗi 3s để người xem vào sau kết nối tức thì
-        setInterval(() => {
-            sendSignal('all', 'host_ready', null);
-        }, 3000);
     }
 
     let lastSignalTimestamp = 0;
@@ -86,6 +85,13 @@ window.DongAnhLiveHost = (function () {
     function startHttpPollingFallback() {
         if (pollingInterval) return;
         pollingInterval = setInterval(async () => {
+            // Nếu WebSocket đã kết nối tốt, dừng polling
+            if (window.Echo && window.Echo.connector && window.Echo.connector.pusher && window.Echo.connector.pusher.connection.state === 'connected') {
+                clearInterval(pollingInterval);
+                pollingInterval = null;
+                return;
+            }
+
             try {
                 const res = await fetch(`/livestream/${streamId}/signals?session_id=${mySessionId}&is_host=1&since=${lastSignalTimestamp}`);
                 const data = await res.json();
@@ -110,7 +116,7 @@ window.DongAnhLiveHost = (function () {
             } catch (e) {
                 // ignore
             }
-        }, 500);
+        }, 3000);
     }
 
     /**

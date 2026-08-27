@@ -57,33 +57,51 @@ class LiveStreamController extends Controller
      */
     protected function findStream($identifier, array $with = [])
     {
+        if (empty($with)) {
+            $cached = Cache::get('ls_obj_' . $identifier);
+            if ($cached instanceof LiveStream) {
+                return $cached;
+            }
+        }
+
         $query = LiveStream::query();
         if (!empty($with)) {
             $query->with($with);
         }
 
+        $stream = null;
+
         // 1. Thử tìm theo 'code' nếu có
         try {
             $stream = (clone $query)->where('code', $identifier)->first();
-            if ($stream) return $stream;
         } catch (\Throwable $e) {}
 
         // 2. Thử tìm theo id số (nếu là số)
-        if (is_numeric($identifier)) {
+        if (!$stream && is_numeric($identifier)) {
             $stream = (clone $query)->where('id', $identifier)->first();
-            if ($stream) return $stream;
         }
 
         // 3. Nếu là dạng 'live-123'
-        if (is_string($identifier) && str_starts_with($identifier, 'live-')) {
+        if (!$stream && is_string($identifier) && str_starts_with($identifier, 'live-')) {
             $possibleId = substr($identifier, 5);
             if (is_numeric($possibleId)) {
                 $stream = (clone $query)->where('id', $possibleId)->first();
-                if ($stream) return $stream;
             }
         }
 
-        return $query->where('id', $identifier)->firstOrFail();
+        if (!$stream) {
+            $stream = $query->where('id', $identifier)->firstOrFail();
+        }
+
+        if (empty($with) && $stream) {
+            Cache::put('ls_obj_' . $identifier, $stream, 30);
+            Cache::put('ls_obj_' . $stream->id, $stream, 30);
+            if (!empty($stream->code)) {
+                Cache::put('ls_obj_' . $stream->code, $stream, 30);
+            }
+        }
+
+        return $stream;
     }
 
     /**
