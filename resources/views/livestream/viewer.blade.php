@@ -81,66 +81,68 @@
                     </div>
                 </div>
 
-                <!-- Pinned Product Overlay Banner (TikTok Deal Capsule) -->
-                <div id="viewer-pinned-product-banner" class="viewer-pinned-product" style="{{ $stream->pinnedProduct ? 'display:flex;' : 'display:none;' }}">
-                    @if($stream->pinnedProduct)
-                        <div class="pin-thumb-wrapper">
-                            <img src="{{ $stream->pinnedProduct->image_url ? (str_starts_with($stream->pinnedProduct->image_url, 'http') ? $stream->pinnedProduct->image_url : asset($stream->pinnedProduct->image_url)) : '/images/ocop-placeholder.png' }}" onerror="this.onerror=null; this.src='/images/ocop-placeholder.png';" class="pin-thumb" alt="{{ $stream->pinnedProduct->name }}">
-                            <span class="pin-num-tag">1</span>
-                        </div>
-                        <div class="pin-info">
-                            <div class="pin-badge-row">
-                                <span class="pin-badge">🔥 HOT</span>
-                                <span class="pin-title">{{ $stream->pinnedProduct->name }}</span>
+                @if($stream->status !== 'ended' || $stream->youtube_video_id || $stream->recording_url)
+                    <!-- Pinned Product Overlay Banner (TikTok Deal Capsule) -->
+                    <div id="viewer-pinned-product-banner" class="viewer-pinned-product" style="{{ $stream->pinnedProduct ? 'display:flex;' : 'display:none;' }}">
+                        @if($stream->pinnedProduct)
+                            <div class="pin-thumb-wrapper">
+                                <img src="{{ $stream->pinnedProduct->image_url ? (str_starts_with($stream->pinnedProduct->image_url, 'http') ? $stream->pinnedProduct->image_url : asset($stream->pinnedProduct->image_url)) : '/images/ocop-placeholder.png' }}" onerror="this.onerror=null; this.src='/images/ocop-placeholder.png';" class="pin-thumb" alt="{{ $stream->pinnedProduct->name }}">
+                                <span class="pin-num-tag">1</span>
                             </div>
-                            <div class="pin-price-row">
-                                <span class="pin-price">{{ $stream->pinnedProduct->price ? number_format($stream->pinnedProduct->price) . 'đ' : 'OCOP' }}</span>
-                                @if($stream->pinnedProduct->star_rating)
-                                    <span class="pin-star">⭐ {{ $stream->pinnedProduct->star_rating }}</span>
-                                @endif
+                            <div class="pin-info">
+                                <div class="pin-badge-row">
+                                    <span class="pin-badge">🔥 HOT</span>
+                                    <span class="pin-title">{{ $stream->pinnedProduct->name }}</span>
+                                </div>
+                                <div class="pin-price-row">
+                                    <span class="pin-price">{{ $stream->pinnedProduct->price ? number_format($stream->pinnedProduct->price) . 'đ' : 'OCOP' }}</span>
+                                    @if($stream->pinnedProduct->star_rating)
+                                        <span class="pin-star">⭐ {{ $stream->pinnedProduct->star_rating }}</span>
+                                    @endif
+                                </div>
                             </div>
-                        </div>
-                        <button type="button" onclick="openProductQuickView({{ $stream->pinnedProduct->id }}, event)" class="pin-buy-btn">
-                            Mua
-                        </button>
-                    @endif
-                </div>
-
-                <!-- Desktop Floating Reaction Bar -->
-                <div class="viewer-reaction-bar">
-                    <button type="button" class="reaction-btn" onclick="DongAnhLiveViewer.sendReaction('heart')" title="Thả tim">❤️</button>
-                    <button type="button" class="reaction-btn" onclick="DongAnhLiveViewer.sendReaction('fire')" title="Tuyệt vời">🔥</button>
-                    <button type="button" class="reaction-btn" onclick="DongAnhLiveViewer.sendReaction('clap')" title="Vỗ tay">👏</button>
-                    <button type="button" class="reaction-btn" onclick="DongAnhLiveViewer.sendReaction('wow')" title="Yêu thích">😍</button>
-                    <button type="button" class="reaction-btn" onclick="DongAnhLiveViewer.sendReaction('star')" title="Tặng sao">⭐</button>
-                </div>
-
-                <!-- Mobile TikTok Bottom Action Bar -->
-                <div class="mobile-tiktok-action-bar">
-                    <button type="button" class="btn-tiktok-bag" onclick="openViewerCart()" title="Túi hàng livestream">
-                        <span class="tiktok-bag-icon">🛍️</span>
-                        <span class="tiktok-bag-badge" id="viewer-cart-mobile-count">{{ $stream->products->count() }}</span>
-                    </button>
-
-                    <form onsubmit="event.preventDefault(); submitViewerComment();" class="tiktok-chat-form">
-                        <input type="text" id="viewer-comment-input-mobile" placeholder="{{ Auth::check() || session('user_id') ? 'Thêm bình luận...' : 'Đăng nhập để chat...' }}" class="tiktok-chat-input" autocomplete="off">
-                        <button type="submit" class="btn-tiktok-send-icon" title="Gửi">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-                        </button>
-                    </form>
-
-                    <div class="tiktok-reactions-group">
-                        <button type="button" class="tiktok-reaction-btn tiktok-heart-btn" onclick="DongAnhLiveViewer.sendReaction('heart')" title="Thả tim">
-                            ❤️
-                        </button>
-                        <button type="button" class="tiktok-reaction-btn" onclick="DongAnhLiveViewer.sendReaction('fire')" title="Cảm xúc lửa">
-                            🔥
-                        </button>
-                        <button type="button" class="tiktok-reaction-btn" onclick="copyStreamUrl()" title="Chia sẻ">
-                            ↗️
-                        </button>
+                            <button type="button" onclick="openProductQuickView({{ $stream->pinnedProduct->id }}, event)" class="pin-buy-btn">
+                                Mua
+                            </button>
+                        @endif
                     </div>
-                </div>
+
+                    <!-- Desktop Floating Reaction Bar -->
+                    <div class="viewer-reaction-bar">
+                        <button type="button" class="reaction-btn" onclick="DongAnhLiveViewer.sendReaction('heart')" title="Thả tim">❤️</button>
+                        <button type="button" class="reaction-btn" onclick="DongAnhLiveViewer.sendReaction('fire')" title="Tuyệt vời">🔥</button>
+                        <button type="button" class="reaction-btn" onclick="DongAnhLiveViewer.sendReaction('clap')" title="Vỗ tay">👏</button>
+                        <button type="button" class="reaction-btn" onclick="DongAnhLiveViewer.sendReaction('wow')" title="Yêu thích">😍</button>
+                        <button type="button" class="reaction-btn" onclick="DongAnhLiveViewer.sendReaction('star')" title="Tặng sao">⭐</button>
+                    </div>
+
+                    <!-- Mobile TikTok Bottom Action Bar -->
+                    <div class="mobile-tiktok-action-bar">
+                        <button type="button" class="btn-tiktok-bag" onclick="openViewerCart()" title="Túi hàng livestream">
+                            <span class="tiktok-bag-icon">🛍️</span>
+                            <span class="tiktok-bag-badge" id="viewer-cart-mobile-count">{{ $stream->products->count() }}</span>
+                        </button>
+
+                        <form onsubmit="event.preventDefault(); submitViewerComment();" class="tiktok-chat-form">
+                            <input type="text" id="viewer-comment-input-mobile" placeholder="{{ Auth::check() || session('user_id') ? 'Thêm bình luận...' : 'Đăng nhập để chat...' }}" class="tiktok-chat-input" autocomplete="off">
+                            <button type="submit" class="btn-tiktok-send-icon" title="Gửi">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                            </button>
+                        </form>
+
+                        <div class="tiktok-reactions-group">
+                            <button type="button" class="tiktok-reaction-btn tiktok-heart-btn" onclick="DongAnhLiveViewer.sendReaction('heart')" title="Thả tim">
+                                ❤️
+                            </button>
+                            <button type="button" class="tiktok-reaction-btn" onclick="DongAnhLiveViewer.sendReaction('fire')" title="Cảm xúc lửa">
+                                🔥
+                            </button>
+                            <button type="button" class="tiktok-reaction-btn" onclick="copyStreamUrl()" title="Chia sẻ">
+                                ↗️
+                            </button>
+                        </div>
+                    </div>
+                @endif
 
             </div>
 
@@ -1630,20 +1632,51 @@ function showCopiedToast() {
    📱 100% IMMERSIVE TIKTOK LIVE MOBILE EXPERIENCE
    ======================================================== */
 @media (max-width: 768px) {
-    body {
+    html, body {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        height: 100dvh !important;
+        max-width: 100vw !important;
+        max-height: 100dvh !important;
+        overflow: hidden !important;
+        overscroll-behavior: none !important;
+        -webkit-overflow-scrolling: auto !important;
+        touch-action: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #000000 !important;
+    }
+
+    /* Hide standard site header, footer, bottom nav and all floating widgets on mobile live */
+    header, footer, .main-navbar, .site-header, nav.navbar, .app-header, .mobile-bottom-nav,
+    .floating-cart-btn, .global-cart-button, #global-cart-icon, .floating-cart, .btn-floating-cart,
+    .floating-action-btn, #back-to-top, .zalo-chat-widget, #cart-product-modal,
+    main > *:not(.live-viewer-container) {
+        display: none !important;
+    }
+
+    main {
+        min-height: 100dvh !important;
+        height: 100dvh !important;
+        padding: 0 !important;
+        margin: 0 !important;
         overflow: hidden !important;
         background: #000000 !important;
     }
 
-    /* Hide standard site header / navbar on mobile live stream */
-    header, .main-navbar, .site-header, nav.navbar, .app-header, .mobile-bottom-nav {
-        display: none !important;
-    }
-
     .live-viewer-container {
         position: fixed !important;
-        inset: 0 !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
         width: 100vw !important;
+        height: 100% !important;
         height: 100dvh !important;
         margin: 0 !important;
         padding: 0 !important;
@@ -1651,6 +1684,7 @@ function showCopiedToast() {
         z-index: 99999 !important;
         background: #000000 !important;
         overflow: hidden !important;
+        touch-action: none !important;
     }
 
     .viewer-layout {

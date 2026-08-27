@@ -618,6 +618,17 @@ window.DongAnhLiveViewer = (function () {
             const likesEl = document.getElementById('ended-likes');
             if (likesEl) likesEl.innerText = (eventData.total_likes || 0).toLocaleString('vi-VN');
         }
+
+        // Ẩn thanh công cụ và chat nổi khi phiên live đã kết thúc
+        const chatPane = document.querySelector('.viewer-chat-pane');
+        if (chatPane) chatPane.style.display = 'none';
+        const bottomBar = document.querySelector('.mobile-tiktok-action-bar');
+        if (bottomBar) bottomBar.style.display = 'none';
+        const pinnedBanner = document.getElementById('viewer-pinned-product-banner');
+        if (pinnedBanner) pinnedBanner.style.display = 'none';
+        const reactionLayer = document.getElementById('viewer-reaction-layer');
+        if (reactionLayer) reactionLayer.style.display = 'none';
+
         if (peerConnection) peerConnection.close();
     }
 
