@@ -3307,12 +3307,14 @@
     }
     </script>
 
-    {{-- WebRTC P2P Call Modals, Overlay & Client JS --}}
+    {{-- WebRTC P2P Call Modals, Overlay & Client JS (Tắt trên trang Livestream để tối ưu tài nguyên và đường truyền) --}}
+    @if(!request()->is('livestream*'))
     @include('partials.webrtc-call-modal')
 
     {{-- Real-time Customer Order & Status Notification Engine --}}
     @if(Auth::check() || session('user_id'))
     <script src="{{ asset('js/customer-notifications.js') }}?v={{ time() }}"></script>
+    @endif
     @endif
 </body>
 </html>
