@@ -3311,7 +3311,9 @@
     @include('partials.webrtc-call-modal')
 
     {{-- Real-time Customer Order & Status Notification Engine --}}
+    @if(Auth::check() || session('user_id'))
     <script src="{{ asset('js/customer-notifications.js') }}?v={{ time() }}"></script>
+    @endif
 </body>
 </html>
 

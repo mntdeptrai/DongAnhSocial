@@ -207,6 +207,57 @@
 </div>
 
 
+<!-- Pusher & Reverb WebSocket Library -->
+<script src="https://cdn.jsdelivr.net/npm/pusher-js@8.4.0/dist/web/pusher.min.js"></script>
+<script>
+    if (typeof window.Echo === 'undefined') {
+        window.Echo = new (class {
+            constructor() {
+                const defaultHost = window.location.hostname || 'donganhdiscovery.xadonganh.com';
+                const isHttps = window.location.protocol === 'https:';
+                this._pusher = new Pusher('{{ env('REVERB_APP_KEY', 'donganhreverbkey') }}', {
+                    wsHost:           '{{ env('REVERB_HOST') }}' || defaultHost,
+                    wsPort:           {{ env('REVERB_PORT', 443) }},
+                    wssPort:          {{ env('REVERB_PORT', 443) }},
+                    forceTLS:         {{ env('REVERB_SCHEME', 'https') === 'https' ? 'true' : 'false' }},
+                    enabledTransports: ['ws', 'wss'],
+                    cluster:          'mt1',
+                    disableStats:     true,
+                    authEndpoint:     '/broadcasting/auth',
+                    auth: {
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+                        }
+                    }
+                });
+                this.connector = { pusher: this._pusher };
+            }
+            channel(name) {
+                const ch = this._pusher.subscribe(name);
+                const obj = {
+                    listen: (event, cb) => {
+                        const evtName = event.startsWith('.') ? event.slice(1) : event;
+                        ch.bind(evtName, cb);
+                        return obj;
+                    }
+                };
+                return obj;
+            }
+            private(name) {
+                const ch = this._pusher.subscribe('private-' + name);
+                const obj = {
+                    listen: (event, cb) => {
+                        const evtName = event.startsWith('.') ? event.slice(1) : event;
+                        ch.bind(evtName, cb);
+                        return obj;
+                    }
+                };
+                return obj;
+            }
+        })();
+    }
+</script>
+
 <script src="{{ asset('js/livestream-host.js') }}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
