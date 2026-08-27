@@ -102,7 +102,7 @@
                         </a>
                         <div class="live-card-body">
                             <div class="live-card-avatar">
-                                <img src="{{ $stream->user->avatar ? (str_starts_with($stream->user->avatar, 'http') ? $stream->user->avatar : asset($stream->user->avatar)) : 'https://ui-avatars.com/api/?name=' . urlencode($stream->user->name) . '&background=0ea5e9&color=fff' }}" alt="{{ $stream->user->name }}">
+                                <img src="{{ $stream->user->avatar_url ?: ('https://ui-avatars.com/api/?name=' . urlencode($stream->user->name) . '&background=0ea5e9&color=fff') }}" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name={{ urlencode($stream->user->name) }}&background=0ea5e9&color=fff';" alt="{{ $stream->user->name }}">
                             </div>
                             <div class="live-card-info">
                                 <a href="{{ route('livestream.show', $stream->code_or_id) }}" class="live-card-title">

@@ -45,7 +45,7 @@
                 <!-- Top Status Bar -->
                 <div class="viewer-top-bar">
                     <div class="viewer-streamer-info">
-                        <img src="{{ $stream->user->avatar ? (str_starts_with($stream->user->avatar, 'http') ? $stream->user->avatar : asset($stream->user->avatar)) : 'https://ui-avatars.com/api/?name=' . urlencode($stream->user->name) }}" alt="{{ $stream->user->name }}" class="streamer-avatar">
+                        <img src="{{ $stream->user->avatar_url ?: ('https://ui-avatars.com/api/?name=' . urlencode($stream->user->name) . '&background=0ea5e9&color=fff') }}" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name={{ urlencode($stream->user->name) }}&background=0ea5e9&color=fff';" alt="{{ $stream->user->name }}" class="streamer-avatar">
                         <div class="streamer-text">
                             <div class="streamer-name">{{ $stream->user->name }}</div>
                             <div class="streamer-status">
@@ -67,7 +67,7 @@
                 <!-- Pinned Product Overlay Banner -->
                 <div id="viewer-pinned-product-banner" class="viewer-pinned-product" style="{{ $stream->pinnedProduct ? 'display:flex;' : 'display:none;' }}">
                     @if($stream->pinnedProduct)
-                        <img src="{{ $stream->pinnedProduct->image_url ? asset($stream->pinnedProduct->image_url) : '/assets/icon/default_food.png' }}" class="pin-thumb" alt="{{ $stream->pinnedProduct->name }}">
+                        <img src="{{ $stream->pinnedProduct->image_url ? asset($stream->pinnedProduct->image_url) : '/images/ocop-placeholder.png' }}" onerror="this.onerror=null; this.src='/images/ocop-placeholder.png';" class="pin-thumb" alt="{{ $stream->pinnedProduct->name }}">
                         <div class="pin-info">
                             <span class="pin-badge">🏷️ Đang giới thiệu</span>
                             <div class="pin-title">{{ $stream->pinnedProduct->name }}</div>
@@ -150,7 +150,7 @@
                 </div>
                 @foreach($stream->comments->reverse() as $cmt)
                     <div class="live-chat-item {{ $cmt->user_id === $stream->user_id ? 'host-comment' : '' }}">
-                        <img src="{{ $cmt->user->avatar ? (str_starts_with($cmt->user->avatar, 'http') ? $cmt->user->avatar : asset($cmt->user->avatar)) : 'https://ui-avatars.com/api/?name=' . urlencode($cmt->user->name) }}" alt="{{ $cmt->user->name }}" class="chat-avatar">
+                        <img src="{{ $cmt->user->avatar_url ?: ('https://ui-avatars.com/api/?name=' . urlencode($cmt->user->name) . '&background=0ea5e9&color=fff') }}" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name={{ urlencode($cmt->user->name) }}&background=0ea5e9&color=fff';" alt="{{ $cmt->user->name }}" class="chat-avatar">
                         <div class="chat-content">
                             <span class="chat-username">{{ $cmt->user->name }}</span>
                             <span class="chat-text">{{ $cmt->message }}</span>
@@ -188,7 +188,7 @@
                 @php $isPinned = ((int)$stream->pinned_product_id === (int)$prod->id); @endphp
                 <div class="viewer-cart-item {{ $isPinned ? 'is-pinned-spotlight' : '' }}" id="viewer-cart-row-{{ $prod->id }}">
                     <div class="cart-item-num">#{{ $idx + 1 }}</div>
-                    <img src="{{ $prod->image_url ? (str_starts_with($prod->image_url, 'http') ? $prod->image_url : asset($prod->image_url)) : '/assets/icon/default_food.png' }}" onerror="this.onerror=null; this.src='/assets/icon/default_food.png';" class="cart-item-img" alt="{{ $prod->name }}">
+                    <img src="{{ $prod->image_url ? (str_starts_with($prod->image_url, 'http') ? $prod->image_url : asset($prod->image_url)) : '/images/ocop-placeholder.png' }}" onerror="this.onerror=null; this.src='/images/ocop-placeholder.png';" class="cart-item-img" alt="{{ $prod->name }}">
                     <div class="cart-item-info">
                         @if($isPinned)
                             <span class="badge-spotlight">🔥 Đang giới thiệu</span>
@@ -234,7 +234,7 @@
         <div class="quickview-body">
             <div class="quickview-grid">
                 <div class="quickview-media">
-                    <img id="qv-product-img" src="/assets/icon/default_food.png" alt="Sản phẩm" class="quickview-main-img" onerror="this.onerror=null; this.src='/assets/icon/default_food.png';">
+                    <img id="qv-product-img" src="/images/ocop-placeholder.png" alt="Sản phẩm" class="quickview-main-img" onerror="this.onerror=null; this.src='/images/ocop-placeholder.png';">
                     <span id="qv-product-star" class="quickview-star-tag">⭐ 4 sao OCOP</span>
                 </div>
                 <div class="quickview-info">
@@ -291,8 +291,8 @@
             'price'       => $p->price ? number_format($p->price) . 'đ' : 'Liên hệ',
             'raw_price'   => (float)$p->price,
             'unit'        => $p->unit ? ('/ ' . $p->unit) : '/ sản phẩm',
-            'image'       => $p->image_url ? (str_starts_with($p->image_url, 'http') ? $p->image_url : asset($p->image_url)) : '/assets/icon/default_food.png',
-            'image_url'   => $p->image_url ? (str_starts_with($p->image_url, 'http') ? $p->image_url : asset($p->image_url)) : '/assets/icon/default_food.png',
+            'image'       => $p->image_url ? (str_starts_with($p->image_url, 'http') ? $p->image_url : asset($p->image_url)) : '/images/ocop-placeholder.png',
+            'image_url'   => $p->image_url ? (str_starts_with($p->image_url, 'http') ? $p->image_url : asset($p->image_url)) : '/images/ocop-placeholder.png',
             'star_rating' => $p->star_rating ?? '4 sao',
             'description' => $p->description ?? 'Sản phẩm OCOP chất lượng cao được tuyển chọn và kiểm định chuẩn Đông Anh.',
             'story'       => $p->story ?? null,
@@ -307,8 +307,8 @@
             'price'       => $p->price ? number_format($p->price) . 'đ' : 'Liên hệ',
             'raw_price'   => (float)$p->price,
             'unit'        => $p->unit ? ('/ ' . $p->unit) : '/ sản phẩm',
-            'image'       => $p->image_url ? (str_starts_with($p->image_url, 'http') ? $p->image_url : asset($p->image_url)) : '/assets/icon/default_food.png',
-            'image_url'   => $p->image_url ? (str_starts_with($p->image_url, 'http') ? $p->image_url : asset($p->image_url)) : '/assets/icon/default_food.png',
+            'image'       => $p->image_url ? (str_starts_with($p->image_url, 'http') ? $p->image_url : asset($p->image_url)) : '/images/ocop-placeholder.png',
+            'image_url'   => $p->image_url ? (str_starts_with($p->image_url, 'http') ? $p->image_url : asset($p->image_url)) : '/images/ocop-placeholder.png',
             'star_rating' => $p->star_rating ?? '4 sao',
             'description' => $p->description ?? 'Sản phẩm OCOP chất lượng cao được tuyển chọn và kiểm định chuẩn Đông Anh.',
             'story'       => $p->story ?? null,
@@ -328,11 +328,15 @@ window.__liveProducts = @json($productsMap);
             constructor() {
                 const defaultHost = window.location.hostname || 'donganhdiscovery.xadonganh.com';
                 const isHttps = window.location.protocol === 'https:';
-                this._pusher = new Pusher('{{ env('REVERB_APP_KEY', 'donganhreverbkey') }}', {
-                    wsHost:           '{{ env('REVERB_HOST') }}' || defaultHost,
-                    wsPort:           {{ env('REVERB_PORT', 443) }},
-                    wssPort:          {{ env('REVERB_PORT', 443) }},
-                    forceTLS:         {{ env('REVERB_SCHEME', 'https') === 'https' ? 'true' : 'false' }},
+                const reverbHost = '{{ config('broadcasting.connections.reverb.options.host', env('REVERB_HOST', 'donganhdiscovery.xadonganh.com')) }}' || defaultHost;
+                const reverbPort = {{ (int)config('broadcasting.connections.reverb.options.port', env('REVERB_PORT', 443)) }};
+                const reverbKey = '{{ config('broadcasting.connections.reverb.key', env('REVERB_APP_KEY', 'donganhreverbkey')) }}';
+
+                this._pusher = new Pusher(reverbKey, {
+                    wsHost:           reverbHost,
+                    wsPort:           reverbPort,
+                    wssPort:          reverbPort,
+                    forceTLS:         isHttps || {{ config('broadcasting.connections.reverb.options.useTLS', env('REVERB_SCHEME', 'https') === 'https') ? 'true' : 'false' }},
                     enabledTransports: ['ws', 'wss'],
                     cluster:          'mt1',
                     disableStats:     true,
@@ -343,6 +347,14 @@ window.__liveProducts = @json($productsMap);
                         }
                     }
                 });
+
+                this._pusher.connection.bind('connected', () => {
+                    console.log('[LiveViewer] Reverb WebSocket connected successfully.');
+                });
+                this._pusher.connection.bind('error', (err) => {
+                    console.warn('[LiveViewer] Reverb WebSocket connection error:', err);
+                });
+
                 this.connector = { pusher: this._pusher };
             }
             channel(name) {
@@ -351,6 +363,7 @@ window.__liveProducts = @json($productsMap);
                     listen: (event, cb) => {
                         const evtName = event.startsWith('.') ? event.slice(1) : event;
                         ch.bind(evtName, cb);
+                        ch.bind('App\\Events\\' + evtName, cb);
                         return obj;
                     }
                 };
@@ -362,6 +375,7 @@ window.__liveProducts = @json($productsMap);
                     listen: (event, cb) => {
                         const evtName = event.startsWith('.') ? event.slice(1) : event;
                         ch.bind(evtName, cb);
+                        ch.bind('App\\Events\\' + evtName, cb);
                         return obj;
                     }
                 };

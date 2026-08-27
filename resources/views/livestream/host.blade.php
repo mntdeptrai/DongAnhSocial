@@ -38,7 +38,7 @@
                 <!-- Pinned Product Overlay Banner -->
                 <div id="host-pinned-product-container" class="studio-pinned-product" style="{{ $stream->pinnedProduct ? 'display:flex;' : 'display:none;' }}">
                     @if($stream->pinnedProduct)
-                        <img src="{{ $stream->pinnedProduct->image_url ? asset($stream->pinnedProduct->image_url) : '/assets/icon/default_food.png' }}" class="pin-thumb" alt="{{ $stream->pinnedProduct->name }}">
+                        <img src="{{ $stream->pinnedProduct->image_url ? asset($stream->pinnedProduct->image_url) : '/images/ocop-placeholder.png' }}" onerror="this.onerror=null; this.src='/images/ocop-placeholder.png';" class="pin-thumb" alt="{{ $stream->pinnedProduct->name }}">
                         <div class="pin-info">
                             <span class="pin-badge">🏷️ Đang giới thiệu</span>
                             <div class="pin-title">{{ $stream->pinnedProduct->name }}</div>
@@ -107,7 +107,7 @@
                 </div>
                 @foreach($stream->comments->reverse() as $cmt)
                     <div class="live-chat-item {{ $cmt->user_id === $stream->user_id ? 'host-comment' : '' }}">
-                        <img src="{{ $cmt->user->avatar ? (str_starts_with($cmt->user->avatar, 'http') ? $cmt->user->avatar : asset($cmt->user->avatar)) : 'https://ui-avatars.com/api/?name=' . urlencode($cmt->user->name) }}" alt="{{ $cmt->user->name }}" class="chat-avatar">
+                        <img src="{{ $cmt->user->avatar_url ?: ('https://ui-avatars.com/api/?name=' . urlencode($cmt->user->name) . '&background=0ea5e9&color=fff') }}" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name={{ urlencode($cmt->user->name) }}&background=0ea5e9&color=fff';" alt="{{ $cmt->user->name }}" class="chat-avatar">
                         <div class="chat-content">
                             <span class="chat-username">{{ $cmt->user->name }}</span>
                             <span class="chat-text">{{ $cmt->message }}</span>
@@ -150,7 +150,7 @@
                 @forelse($streamProducts as $prod)
                     @php $isPinned = ((int)$stream->pinned_product_id === (int)$prod->id); @endphp
                     <div class="pin-product-item {{ $isPinned ? 'selected' : '' }}" id="host-prod-row-{{ $prod->id }}">
-                        <img src="{{ $prod->image_url ? (str_starts_with($prod->image_url, 'http') ? $prod->image_url : asset($prod->image_url)) : '/assets/icon/default_food.png' }}" onerror="this.onerror=null; this.src='/assets/icon/default_food.png';" class="pin-item-img" alt="{{ $prod->name }}">
+                        <img src="{{ $prod->image_url ? (str_starts_with($prod->image_url, 'http') ? $prod->image_url : asset($prod->image_url)) : '/images/ocop-placeholder.png' }}" onerror="this.onerror=null; this.src='/images/ocop-placeholder.png';" class="pin-item-img" alt="{{ $prod->name }}">
                         <div class="pin-item-info">
                             <div class="pin-item-name">{{ $prod->name }}</div>
                             <div class="pin-item-price">{{ $prod->price ? number_format($prod->price) . 'đ' : 'Đặc sản OCOP' }}</div>
@@ -186,7 +186,7 @@
                 @foreach($ocopProducts as $prod)
                     @php $alreadyInLive = $streamProducts->contains('id', $prod->id); @endphp
                     <div class="pin-product-item {{ $alreadyInLive ? 'in-live' : '' }}" data-name="{{ Str::lower($prod->name) }}" id="all-prod-row-{{ $prod->id }}">
-                        <img src="{{ $prod->image_url ? (str_starts_with($prod->image_url, 'http') ? $prod->image_url : asset($prod->image_url)) : '/assets/icon/default_food.png' }}" onerror="this.onerror=null; this.src='/assets/icon/default_food.png';" class="pin-item-img" alt="{{ $prod->name }}">
+                        <img src="{{ $prod->image_url ? (str_starts_with($prod->image_url, 'http') ? $prod->image_url : asset($prod->image_url)) : '/images/ocop-placeholder.png' }}" onerror="this.onerror=null; this.src='/images/ocop-placeholder.png';" class="pin-item-img" alt="{{ $prod->name }}">
                         <div class="pin-item-info">
                             <div class="pin-item-name">{{ $prod->name }}</div>
                             <div class="pin-item-price">{{ $prod->price ? number_format($prod->price) . 'đ' : 'Đặc sản OCOP' }}</div>
@@ -215,11 +215,15 @@
             constructor() {
                 const defaultHost = window.location.hostname || 'donganhdiscovery.xadonganh.com';
                 const isHttps = window.location.protocol === 'https:';
-                this._pusher = new Pusher('{{ env('REVERB_APP_KEY', 'donganhreverbkey') }}', {
-                    wsHost:           '{{ env('REVERB_HOST') }}' || defaultHost,
-                    wsPort:           {{ env('REVERB_PORT', 443) }},
-                    wssPort:          {{ env('REVERB_PORT', 443) }},
-                    forceTLS:         {{ env('REVERB_SCHEME', 'https') === 'https' ? 'true' : 'false' }},
+                const reverbHost = '{{ config('broadcasting.connections.reverb.options.host', env('REVERB_HOST', 'donganhdiscovery.xadonganh.com')) }}' || defaultHost;
+                const reverbPort = {{ (int)config('broadcasting.connections.reverb.options.port', env('REVERB_PORT', 443)) }};
+                const reverbKey = '{{ config('broadcasting.connections.reverb.key', env('REVERB_APP_KEY', 'donganhreverbkey')) }}';
+
+                this._pusher = new Pusher(reverbKey, {
+                    wsHost:           reverbHost,
+                    wsPort:           reverbPort,
+                    wssPort:          reverbPort,
+                    forceTLS:         isHttps || {{ config('broadcasting.connections.reverb.options.useTLS', env('REVERB_SCHEME', 'https') === 'https') ? 'true' : 'false' }},
                     enabledTransports: ['ws', 'wss'],
                     cluster:          'mt1',
                     disableStats:     true,
@@ -230,6 +234,14 @@
                         }
                     }
                 });
+
+                this._pusher.connection.bind('connected', () => {
+                    console.log('[LiveHost] Reverb WebSocket connected successfully.');
+                });
+                this._pusher.connection.bind('error', (err) => {
+                    console.warn('[LiveHost] Reverb WebSocket connection error:', err);
+                });
+
                 this.connector = { pusher: this._pusher };
             }
             channel(name) {
@@ -238,6 +250,7 @@
                     listen: (event, cb) => {
                         const evtName = event.startsWith('.') ? event.slice(1) : event;
                         ch.bind(evtName, cb);
+                        ch.bind('App\\Events\\' + evtName, cb);
                         return obj;
                     }
                 };
@@ -249,6 +262,7 @@
                     listen: (event, cb) => {
                         const evtName = event.startsWith('.') ? event.slice(1) : event;
                         ch.bind(evtName, cb);
+                        ch.bind('App\\Events\\' + evtName, cb);
                         return obj;
                     }
                 };

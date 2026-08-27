@@ -176,7 +176,7 @@
                                         </div>
                                     </div>
 
-                                    <img src="{{ $product->image_url ? (str_starts_with($product->image_url, 'http') ? $product->image_url : asset($product->image_url)) : '/assets/icon/default_food.png' }}" onerror="this.onerror=null; this.src='/assets/icon/default_food.png';" class="prod-thumb-img" alt="{{ $product->name }}">
+                                    <img src="{{ $product->image_url ? (str_starts_with($product->image_url, 'http') ? $product->image_url : asset($product->image_url)) : '/images/ocop-placeholder.png' }}" onerror="this.onerror=null; this.src='/images/ocop-placeholder.png';" class="prod-thumb-img" alt="{{ $product->name }}">
 
                                     <div class="prod-details-col">
                                         <div class="prod-title">{{ $product->name }}</div>

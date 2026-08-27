@@ -30,8 +30,8 @@ class LiveStreamController extends Controller
             'name'           => $product->name,
             'price'          => $product->price ? number_format($product->price) . 'đ' : 'Liên hệ',
             'raw_price'      => (float)$product->price,
-            'image'          => $product->image_path ? (str_starts_with($product->image_path, 'http') ? $product->image_path : asset($product->image_path)) : '/assets/icon/default_food.png',
-            'image_url'      => $product->image_path ? (str_starts_with($product->image_path, 'http') ? $product->image_path : asset($product->image_path)) : '/assets/icon/default_food.png',
+            'image'          => $product->image_path ? (str_starts_with($product->image_path, 'http') ? $product->image_path : asset($product->image_path)) : '/images/ocop-placeholder.png',
+            'image_url'      => $product->image_path ? (str_starts_with($product->image_path, 'http') ? $product->image_path : asset($product->image_path)) : '/images/ocop-placeholder.png',
             'star_rating'    => $product->star_rating ?? '4 sao',
             'detail_url'     => route('ocop.product.show', $product->slug ?: $product->id),
             'unit'           => $product->unit ?? 'sản phẩm',
@@ -265,7 +265,7 @@ class LiveStreamController extends Controller
             'message'        => trim($request->message),
         ]);
 
-        $userAvatar = $currentUser->avatar ? (str_starts_with($currentUser->avatar, 'http') ? $currentUser->avatar : asset($currentUser->avatar)) : 'https://ui-avatars.com/api/?name=' . urlencode($currentUser->name) . '&background=0ea5e9&color=fff';
+        $userAvatar = $currentUser->avatar_url ?: ('https://ui-avatars.com/api/?name=' . urlencode($currentUser->name) . '&background=0ea5e9&color=fff');
 
         try {
             broadcast(new LiveStreamCommentSent(
@@ -276,7 +276,7 @@ class LiveStreamController extends Controller
                 userAvatar: $userAvatar,
                 message: $comment->message,
                 createdAt: $comment->created_at->format('H:i')
-            ))->toOthers();
+            ));
         } catch (\Throwable $e) {
             Log::warning('LiveStreamCommentSent broadcast warning: ' . $e->getMessage());
         }
@@ -539,7 +539,7 @@ class LiveStreamController extends Controller
                 targetSessionId: $request->target_session_id,
                 signalType: $request->signal_type,
                 signalData: $request->signal_data
-            ))->toOthers();
+            ));
         } catch (\Throwable $e) {
             Log::warning('LiveStreamSignal broadcast warning: ' . $e->getMessage());
         }
@@ -591,7 +591,7 @@ class LiveStreamController extends Controller
                 duration: $stream->duration,
                 peakViewers: (int)$stream->peak_viewers,
                 totalLikes: (int)$stream->likes_count
-            ))->toOthers();
+            ));
         } catch (\Throwable $e) {
             Log::warning('LiveStreamEnded broadcast warning: ' . $e->getMessage());
         }

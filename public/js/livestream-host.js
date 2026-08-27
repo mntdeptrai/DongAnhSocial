@@ -517,7 +517,7 @@ window.DongAnhLiveHost = (function () {
                     const isPinned = prod.is_pinned;
                     return `
                         <div class="pin-product-item ${isPinned ? 'selected' : ''}" id="host-prod-row-${prod.id}">
-                            <img src="${prod.image_url || prod.image || '/assets/icon/default_food.png'}" class="pin-item-img" alt="${escapeHtml(prod.name)}">
+                            <img src="${prod.image_url || prod.image || '/images/ocop-placeholder.png'}" onerror="this.onerror=null; this.src='/images/ocop-placeholder.png';" class="pin-item-img" alt="${escapeHtml(prod.name)}">
                             <div class="pin-item-info">
                                 <div class="pin-item-name">${escapeHtml(prod.name)}</div>
                                 <div class="pin-item-price">${prod.price}</div>
@@ -605,7 +605,7 @@ window.DongAnhLiveHost = (function () {
 
         pinContainer.style.display = 'flex';
         pinContainer.innerHTML = `
-            <img src="${product.image || product.image_url || '/assets/icon/default_food.png'}" class="pin-thumb" alt="${escapeHtml(product.name)}">
+            <img src="${product.image || product.image_url || '/images/ocop-placeholder.png'}" onerror="this.onerror=null; this.src='/images/ocop-placeholder.png';" class="pin-thumb" alt="${escapeHtml(product.name)}">
             <div class="pin-info">
                 <span class="pin-badge">🏷️ Đang giới thiệu</span>
                 <div class="pin-title">${escapeHtml(product.name)}</div>

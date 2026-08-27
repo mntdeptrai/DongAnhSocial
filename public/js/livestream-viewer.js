@@ -404,7 +404,7 @@ window.DongAnhLiveViewer = (function () {
                     return `
                         <div class="viewer-cart-item ${isPinned ? 'is-pinned-spotlight' : ''}" id="viewer-cart-row-${prod.id}">
                             <div class="cart-item-num">#${idx + 1}</div>
-                            <img src="${prod.image_url || prod.image || '/assets/icon/default_food.png'}" class="cart-item-img" alt="${escapeHtml(prod.name)}">
+                            <img src="${prod.image_url || prod.image || '/images/ocop-placeholder.png'}" onerror="this.onerror=null; this.src='/images/ocop-placeholder.png';" class="cart-item-img" alt="${escapeHtml(prod.name)}">
                             <div class="cart-item-info">
                                 ${isPinned ? '<span class="badge-spotlight">🔥 Đang giới thiệu</span>' : ''}
                                 <div class="cart-item-name">${escapeHtml(prod.name)}</div>
@@ -469,7 +469,7 @@ window.DongAnhLiveViewer = (function () {
 
         banner.style.display = 'flex';
         banner.innerHTML = `
-            <img src="${product.image || product.image_url || '/assets/icon/default_food.png'}" class="pin-thumb" alt="${escapeHtml(product.name)}">
+            <img src="${product.image || product.image_url || '/images/ocop-placeholder.png'}" onerror="this.onerror=null; this.src='/images/ocop-placeholder.png';" class="pin-thumb" alt="${escapeHtml(product.name)}">
             <div class="pin-info">
                 <span class="pin-badge">🏷️ Đang giới thiệu</span>
                 <div class="pin-title">${escapeHtml(product.name)}</div>
