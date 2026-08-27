@@ -538,17 +538,31 @@ class SchoolManagementController extends Controller
             }
         }
 
+        $title = $request->input('title', 'Video Hoạt Động Đông Anh');
+
         // Single file check (image or video)
         if ($request->hasFile('image')) {
             $file = $request->file('image');
             if ($file && $file->isValid()) {
                 $mime = $file->getClientMimeType() ?: '';
-                $path = R2Helper::upload($file, 'education');
-                if ($path) {
-                    if (str_contains($mime, 'video') || in_array(strtolower($file->getClientOriginalExtension()), ['mp4', 'mov', 'avi', 'mkv', 'webm'])) {
-                        $uploadedVideos[] = $path;
-                    } else {
-                        $uploadedImages[] = $path;
+                $isVid = str_contains($mime, 'video') || in_array(strtolower($file->getClientOriginalExtension()), ['mp4', 'mov', 'avi', 'mkv', 'webm']);
+                if ($isVid) {
+                    if (YouTubeService::isConfigured()) {
+                        $ytResult = YouTubeService::uploadVideo($file, $title, 'Video hoạt động trên DongAnh Discovery');
+                        if ($ytResult && !empty($ytResult['url'])) {
+                            $uploadedVideos[] = $ytResult['url'];
+                            $file = null;
+                        }
+                    }
+                }
+                if ($file) {
+                    $path = R2Helper::upload($file, 'education');
+                    if ($path) {
+                        if ($isVid) {
+                            $uploadedVideos[] = $path;
+                        } else {
+                            $uploadedImages[] = $path;
+                        }
                     }
                 }
             }
@@ -561,9 +575,19 @@ class SchoolManagementController extends Controller
                     continue;
                 }
                 $mime = $file->getClientMimeType() ?: '';
+                $isVid = str_contains($mime, 'video') || in_array(strtolower($file->getClientOriginalExtension()), ['mp4', 'mov', 'avi', 'mkv', 'webm']);
+                if ($isVid) {
+                    if (YouTubeService::isConfigured()) {
+                        $ytResult = YouTubeService::uploadVideo($file, $title, 'Video hoạt động trên DongAnh Discovery');
+                        if ($ytResult && !empty($ytResult['url'])) {
+                            $uploadedVideos[] = $ytResult['url'];
+                            continue;
+                        }
+                    }
+                }
                 $path = R2Helper::upload($file, 'education');
                 if ($path) {
-                    if (str_contains($mime, 'video') || in_array(strtolower($file->getClientOriginalExtension()), ['mp4', 'mov', 'avi', 'mkv', 'webm'])) {
+                    if ($isVid) {
                         $uploadedVideos[] = $path;
                     } else {
                         $uploadedImages[] = $path;
@@ -571,8 +595,6 @@ class SchoolManagementController extends Controller
                 }
             }
         }
-
-        $title = $request->input('title', 'Video Hoạt Động Giáo Dục Đông Anh');
 
         // Dedicated videos[] files
         if ($request->hasFile('videos')) {
@@ -688,12 +710,33 @@ class SchoolManagementController extends Controller
         if ($request->hasFile('media_file')) {
             $file = $request->file('media_file');
             if ($file->isValid()) {
-                $uploaded = \App\Helpers\R2Helper::upload($file, 'stories');
-                if ($uploaded) {
-                    $mediaUrl = $uploaded;
-                    $mime = $file->getMimeType();
-                    if (str_contains($mime, 'video')) {
-                        $type = 'video';
+                $mime = $file->getMimeType() ?: '';
+                $isVid = str_contains($mime, 'video') || in_array(strtolower($file->getClientOriginalExtension()), ['mp4', 'mov', 'avi', 'mkv', 'webm']);
+                if ($isVid) {
+                    $type = 'video';
+                    if (\App\Services\YouTubeService::isConfigured()) {
+                        try {
+                            $captionTitle = $request->input('caption') ?: ('Story Đông Anh - ' . ($user ? $user->name : 'Thành viên'));
+                            $ytResult = \App\Services\YouTubeService::uploadVideo(
+                                video: $file,
+                                title: \Illuminate\Support\Str::limit($captionTitle, 95),
+                                description: "Story tin ngắn đăng tải tại Đông Anh Discovery bởi " . ($user ? $user->name : 'Thành viên'),
+                                privacy: 'unlisted',
+                                tags: ['Shorts', 'DongAnh', 'Story']
+                            );
+                            if ($ytResult && !empty($ytResult['url'])) {
+                                $mediaUrl = $ytResult['url'];
+                            }
+                        } catch (\Throwable $e) {
+                            \Illuminate\Support\Facades\Log::warning('YouTube story upload warning: ' . $e->getMessage());
+                        }
+                    }
+                }
+
+                if (empty($mediaUrl)) {
+                    $uploaded = \App\Helpers\R2Helper::upload($file, 'stories');
+                    if ($uploaded) {
+                        $mediaUrl = $uploaded;
                     }
                 }
             }

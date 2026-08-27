@@ -13,12 +13,36 @@ class YouTubeService
     const UPLOAD_URL = 'https://www.googleapis.com/upload/youtube/v3/videos?uploadType=resumable&part=snippet,status';
 
     /**
+     * Lấy Refresh Token từ cấu hình .env hoặc tệp lưu trữ oauth token
+     */
+    public static function getRefreshToken(): ?string
+    {
+        $token = config('services.youtube.refresh_token') ?: env('YOUTUBE_REFRESH_TOKEN');
+        if (!empty($token)) {
+            return $token;
+        }
+
+        $tokenPath = storage_path('app/youtube_token.json');
+        if (file_exists($tokenPath)) {
+            $data = json_decode(file_get_contents($tokenPath), true);
+            if (!empty($data['refresh_token'])) {
+                return $data['refresh_token'];
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Kiểm tra xem cấu hình YouTube API đã sẵn sàng chưa
      */
     public static function isConfigured(): bool
     {
-        $config = config('services.youtube');
-        return !empty($config['client_id']) && !empty($config['client_secret']) && !empty($config['refresh_token']);
+        $clientId = config('services.youtube.client_id') ?: env('YOUTUBE_CLIENT_ID');
+        $clientSecret = config('services.youtube.client_secret') ?: env('YOUTUBE_CLIENT_SECRET');
+        $refreshToken = self::getRefreshToken();
+
+        return !empty($clientId) && !empty($clientSecret) && !empty($refreshToken);
     }
 
     /**
@@ -27,16 +51,20 @@ class YouTubeService
     public static function getAccessToken(): ?string
     {
         if (!self::isConfigured()) {
-            Log::warning('YouTubeService: Chưa cấu hình đầy đủ client_id, client_secret hoặc refresh_token trong .env');
+            Log::warning('YouTubeService: Chưa cấu hình đầy đủ client_id, client_secret hoặc refresh_token trong .env / storage');
             return null;
         }
 
-        return Cache::remember('youtube_api_access_token', 3300, function () {
+        $clientId = config('services.youtube.client_id') ?: env('YOUTUBE_CLIENT_ID');
+        $clientSecret = config('services.youtube.client_secret') ?: env('YOUTUBE_CLIENT_SECRET');
+        $refreshToken = self::getRefreshToken();
+
+        return Cache::remember('youtube_api_access_token', 3300, function () use ($clientId, $clientSecret, $refreshToken) {
             try {
                 $response = Http::asForm()->post(self::TOKEN_URL, [
-                    'client_id'     => config('services.youtube.client_id'),
-                    'client_secret' => config('services.youtube.client_secret'),
-                    'refresh_token' => config('services.youtube.refresh_token'),
+                    'client_id'     => $clientId,
+                    'client_secret' => $clientSecret,
+                    'refresh_token' => $refreshToken,
                     'grant_type'    => 'refresh_token',
                 ]);
 
