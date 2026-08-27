@@ -77,7 +77,7 @@
                             ↗ Chia sẻ
                         </button>
                         <!-- Mobile Close/Exit Live Button -->
-                        <a href="{{ route('livestream.index') }}" class="btn-close-live-mobile" title="Rời phòng Live">✕</a>
+                        <a href="{{ route('livestream.index') }}" onclick="window.location.href='{{ route('livestream.index') }}'" ontouchend="window.location.href='{{ route('livestream.index') }}'" class="btn-close-live-mobile" title="Rời phòng Live">✕</a>
                     </div>
                 </div>
 
@@ -1769,23 +1769,39 @@ function showCopiedToast() {
         display: flex !important;
         align-items: center !important;
         gap: 8px !important;
+        pointer-events: auto !important;
+        z-index: 101 !important;
     }
 
     .btn-close-live-mobile {
         display: flex !important;
-        width: 34px !important;
-        height: 34px !important;
+        width: 38px !important;
+        height: 38px !important;
         border-radius: 50% !important;
-        background: rgba(0, 0, 0, 0.5) !important;
-        backdrop-filter: blur(12px) !important;
-        border: 1px solid rgba(255, 255, 255, 0.25) !important;
+        background: rgba(0, 0, 0, 0.65) !important;
+        backdrop-filter: blur(14px) !important;
+        -webkit-backdrop-filter: blur(14px) !important;
+        border: 1px solid rgba(255, 255, 255, 0.3) !important;
         color: #ffffff !important;
-        font-size: 1rem !important;
-        font-weight: 700 !important;
+        font-size: 1.15rem !important;
+        font-weight: 800 !important;
         align-items: center !important;
         justify-content: center !important;
         text-decoration: none !important;
         cursor: pointer !important;
+        pointer-events: auto !important;
+        touch-action: manipulation !important;
+        -webkit-tap-highlight-color: transparent !important;
+        z-index: 102 !important;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.4) !important;
+    }
+
+    .floating-reaction-layer {
+        pointer-events: none !important;
+        position: absolute !important;
+        inset: 0 !important;
+        z-index: 15 !important;
+        overflow: hidden !important;
     }
 
     /* TikTok Floating Chat Overlay (Bottom Left) */
