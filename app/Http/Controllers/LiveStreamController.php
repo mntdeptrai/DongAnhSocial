@@ -41,11 +41,11 @@ class LiveStreamController extends Controller
 
 
     /**
-     * Lấy người dùng hiện tại (Auth session hoặc fallback cho test)
+     * Lấy người dùng hiện tại
      */
     protected function getCurrentUser()
     {
-        return Auth::user() ?? User::first();
+        return Auth::user() ?? (session('user_id') ? User::find(session('user_id')) : null);
     }
 
     /**
@@ -172,8 +172,8 @@ class LiveStreamController extends Controller
 
         $stream = LiveStream::with(['user', 'pinnedProduct', 'products', 'comments.user'])->findOrFail($id);
 
-        // Kiểm tra quyền (chủ stream hoặc admin)
-        if ($stream->user_id !== $currentUser->id && $currentUser->role !== 'admin') {
+        // Chỉ chủ phòng mới được vào Studio phát sóng
+        if ($stream->user_id !== $currentUser->id) {
             return redirect()->route('livestream.show', $id);
         }
 

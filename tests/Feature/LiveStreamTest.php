@@ -12,9 +12,12 @@ use App\Events\LiveStreamReactionSent;
 use App\Events\LiveStreamProductsUpdated;
 use App\Events\LiveStreamProductPinned;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class LiveStreamTest extends TestCase
 {
+    use RefreshDatabase;
+
     public function test_can_view_livestream_index(): void
     {
         $response = $this->get('/livestream');
@@ -24,7 +27,7 @@ class LiveStreamTest extends TestCase
 
     public function test_can_view_livestream_watch_page(): void
     {
-        $viewer = User::first();
+        $viewer = User::factory()->create();
         $this->assertNotNull($viewer);
 
         $host = User::factory()->create();
@@ -51,7 +54,7 @@ class LiveStreamTest extends TestCase
 
     public function test_livestream_api_returns_active_streams(): void
     {
-        $user = User::first();
+        $user = User::factory()->create();
         $stream = LiveStream::create([
             'user_id'      => $user->id,
             'title'        => 'Livestream API Test',
@@ -85,7 +88,7 @@ class LiveStreamTest extends TestCase
     {
         Event::fake([LiveStreamReactionSent::class]);
 
-        $user = User::first();
+        $user = User::factory()->create();
         $stream = LiveStream::create([
             'user_id'      => $user->id,
             'title'        => 'Livestream Reaction Test',
@@ -117,7 +120,7 @@ class LiveStreamTest extends TestCase
     {
         Event::fake([LiveStreamCommentSent::class]);
 
-        $user = User::first();
+        $user = User::factory()->create();
         $stream = LiveStream::create([
             'user_id'      => $user->id,
             'title'        => 'Livestream Comment Test',
@@ -151,7 +154,7 @@ class LiveStreamTest extends TestCase
     {
         Event::fake([LiveStreamProductsUpdated::class, LiveStreamProductPinned::class]);
 
-        $user = User::first();
+        $user = User::factory()->create();
 
         $prods = \App\Models\OcopCertifiedProduct::take(2)->get();
         if ($prods->count() < 2) {
