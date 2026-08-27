@@ -466,38 +466,6 @@
                     </div>
                 @endforeach
             @endif
-
-            <!-- Featured Story 1: Co Loa -->
-            <div class="nf-story-card story-item-card" style="background-image: url('https://images.unsplash.com/photo-1596402184320-417e7178b2cd?auto=format&fit=crop&w=300&q=80');" onclick="openStoryViewer({{ $groupCardIdx++ }})">
-                <div class="nf-story-overlay">
-                    <img src="https://media.xadonganh.com/eateries/1780392421_hfPQH7HB.png" class="nf-story-avatar" alt="Cổ Loa" onerror="this.src='https://ui-avatars.com/api/?name=Co+Loa&background=0ea5e9&color=fff'">
-                    <span class="nf-story-name">Lễ hội Cổ Loa ⛩️</span>
-                </div>
-            </div>
-
-            <!-- Featured Story 2: Truong Mua Mua -->
-            <div class="nf-story-card story-item-card" style="background-image: url('https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=300&q=80');" onclick="openStoryViewer({{ $groupCardIdx++ }})">
-                <div class="nf-story-overlay">
-                    <img src="https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=150&q=80" class="nf-story-avatar" alt="Trường học" onerror="this.src='https://ui-avatars.com/api/?name=School&background=10b981&color=fff'">
-                    <span class="nf-story-name">Chào năm học mới 🏫</span>
-                </div>
-            </div>
-
-            <!-- Featured Story 3: Food Tour -->
-            <div class="nf-story-card story-item-card" style="background-image: url('https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=300&q=80');" onclick="openStoryViewer({{ $groupCardIdx++ }})">
-                <div class="nf-story-overlay">
-                    <img src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=150&q=80" class="nf-story-avatar" alt="Food Tour" onerror="this.src='https://ui-avatars.com/api/?name=Food&background=f59e0b&color=fff'">
-                    <span class="nf-story-name">Ẩm thực Đông Anh 🍲</span>
-                </div>
-            </div>
-
-            <!-- Featured Story 4: Checkin -->
-            <div class="nf-story-card story-item-card" style="background-image: url('https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=300&q=80');" onclick="openStoryViewer({{ $groupCardIdx++ }})">
-                <div class="nf-story-overlay">
-                    <img src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=150&q=80" class="nf-story-avatar" alt="Checkin" onerror="this.src='https://ui-avatars.com/api/?name=Checkin&background=ec4899&color=fff'">
-                    <span class="nf-story-name">Góc Check-in Hot 🎈</span>
-                </div>
-            </div>
         </div>
 
         <!-- Mobile Explore Menu Bar (Displayed only on Mobile Screens) -->
@@ -1440,37 +1408,6 @@ let currentGroupIndex = 0;
 let currentGroupStoryIndex = 0;
 let storyTimer = null;
 
-const presetStoriesList = [
-    {
-        author_name: 'Lễ hội Cổ Loa ⛩️',
-        author_avatar: 'https://media.xadonganh.com/eateries/1780392421_hfPQH7HB.png',
-        media_url: 'https://images.unsplash.com/photo-1596402184320-417e7178b2cd?auto=format&fit=crop&w=1200&q=80',
-        caption: 'Hòa mình vào không khí Lễ hội di tích quốc gia Cổ Loa năm 2026! ⛩️',
-        created_at: '2 giờ trước'
-    },
-    {
-        author_name: 'Chào năm học mới 🏫',
-        author_avatar: 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=150&q=80',
-        media_url: 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=1200&q=80',
-        caption: 'Chúc các bé Trường Mầm Nhỏ có một năm học mới tràn đầy niềm vui 🎒',
-        created_at: '4 giờ trước'
-    },
-    {
-        author_name: 'Ẩm thực Đông Anh 🍲',
-        author_avatar: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=150&q=80',
-        media_url: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=1200&q=80',
-        caption: 'Food tour bún chả & đặc sản Đông Anh hấp dẫn không thể bỏ qua! 🍲',
-        created_at: '5 giờ trước'
-    },
-    {
-        author_name: 'Góc Check-in Hot 🎈',
-        author_avatar: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=150&q=80',
-        media_url: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1200&q=80',
-        caption: 'Góc chụp ảnh chill cực đẹp tại Đông Anh 🎈',
-        created_at: '6 giờ trước'
-    }
-];
-
 const userStoriesDb = @json(isset($stories) ? $stories : []);
 
 function formatStoryTimeAgo(dateStr) {
@@ -1523,15 +1460,6 @@ function buildStoryGroups() {
             storyGroups.push(g);
         });
     }
-
-    // 2. Add Preset Featured Stories (each preset story is its own group)
-    presetStoriesList.forEach(p => {
-        storyGroups.push({
-            author_name: p.author_name,
-            author_avatar: p.author_avatar,
-            stories: [p]
-        });
-    });
 }
 
 function openStoryViewer(groupIdx) {
