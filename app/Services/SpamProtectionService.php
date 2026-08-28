@@ -22,6 +22,7 @@ class SpamProtectionService
         't.me/', 'telegram.me/', 'chat.whatsapp.com/', 'zalo.me/g/',
         'hfjnuiyz', 'sleep(', 'benchmark(', 'waitfor delay', 'redirtest', '1be7d4csvy0', '!(o&&!*',
         'bxss.me', 'rpb.png', 'etc/passwd', 'win.ini', 'esi:include', '<esi:',
+        'response.write', 'response.', 'expr ', 'assert(', 'base64_decode', 'print(md5',
         'acunetix', 'sqlmap', 'burpsuite', 'oastify', 'interactsh'
     ];
 

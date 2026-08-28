@@ -73,12 +73,30 @@ class CleanBotCommentsCommand extends Command
 
                 // 2. Quét & xóa bình luận rác theo nội dung và tên khách
                 if (Schema::connection($conn)->hasTable('comments')) {
+                    // Xóa bình luận mồ côi (user_id không tồn tại trong bảng users)
+                    if (Schema::connection($conn)->hasTable('users')) {
+                        $validUserIds = DB::connection($conn)->table('users')->pluck('id')->toArray();
+                        $delOrphans = DB::connection($conn)->table('comments')
+                            ->whereNotNull('user_id')
+                            ->whereNotIn('user_id', $validUserIds)
+                            ->delete();
+                        if ($delOrphans > 0) {
+                            $totalDeletedComments += $delOrphans;
+                            $this->warn("  👉 Đã xóa {$delOrphans} bình luận mồ côi (user không tồn tại) trên [{$conn}].");
+                        }
+                    }
+
                     $delComments = DB::connection($conn)->table('comments')
                         ->where(function ($q) {
                             $q->whereRaw('LOWER(guest_name) LIKE ?', ['%hfjnuiyz%'])
                               ->orWhereRaw('LOWER(guest_name) LIKE ?', ['%acunetix%'])
                               ->orWhereRaw('LOWER(guest_name) LIKE ?', ['%sqlmap%'])
                               ->orWhereRaw('LOWER(content) LIKE ?', ['%hfjnuiyz%'])
+                              ->orWhereRaw('LOWER(content) LIKE ?', ['%response.write%'])
+                              ->orWhereRaw('LOWER(content) LIKE ?', ['%response.%'])
+                              ->orWhereRaw('LOWER(content) LIKE ?', ['%write(%'])
+                              ->orWhereRaw('LOWER(content) LIKE ?', ['%9849344%'])
+                              ->orWhereRaw('LOWER(content) LIKE ?', ['%9638453%'])
                               ->orWhereRaw('LOWER(content) LIKE ?', ['%echo %'])
                               ->orWhereRaw('LOWER(content) LIKE ?', ['%zgnrlq%'])
                               ->orWhereRaw('LOWER(content) LIKE ?', ['%bosujf%'])
@@ -100,6 +118,10 @@ class CleanBotCommentsCommand extends Command
                               ->orWhereRaw('LOWER(content) LIKE ?', ['%assert(%'])
                               ->orWhereRaw('LOWER(content) LIKE ?', ['%base64_decode%'])
                               ->orWhereRaw('LOWER(content) LIKE ?', ['%print(md5%'])
+                              ->orWhereRaw('LOWER(content) LIKE ?', ['%document.cookie%'])
+                              ->orWhereRaw('LOWER(content) LIKE ?', ['%alert(%'])
+                              ->orWhereRaw('LOWER(content) LIKE ?', ['%<script%'])
+                              ->orWhereRaw('LOWER(content) LIKE ?', ['%javascript:%'])
                               ->orWhereRaw('content LIKE ?', ['%..%'])
                               ->orWhereRaw('content LIKE ?', ['%${%'])
                               ->orWhereRaw('content LIKE ?', ['%#{%'])

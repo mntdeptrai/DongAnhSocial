@@ -24,14 +24,16 @@ class Comment extends Model
     protected static function booted(): void
     {
         static::addGlobalScope('clean_comments', function ($builder) {
-            // 1. Lọc bỏ các bình luận thuộc về User bot / scanner
+            // 1. Lọc bỏ các bình luận thuộc về User bot / scanner và loại bỏ bình luận mồ côi (user_id không tồn tại)
             $builder->where(function ($query) {
                 $query->whereNull('user_id')
-                    ->orWhereDoesntHave('user', function ($u) {
-                        $u->whereRaw('LOWER(name) LIKE ?', ['%hfjnuiyz%'])
-                          ->orWhereRaw('LOWER(email) LIKE ?', ['%hfjnuiyz%'])
-                          ->orWhereRaw('LOWER(name) LIKE ?', ['%acunetix%'])
-                          ->orWhereRaw('LOWER(name) LIKE ?', ['%sqlmap%']);
+                    ->orWhere(function ($sub) {
+                        $sub->whereHas('user', function ($u) {
+                            $u->whereRaw('LOWER(name) NOT LIKE ?', ['%hfjnuiyz%'])
+                              ->whereRaw('LOWER(email) NOT LIKE ?', ['%hfjnuiyz%'])
+                              ->whereRaw('LOWER(name) NOT LIKE ?', ['%acunetix%'])
+                              ->whereRaw('LOWER(name) NOT LIKE ?', ['%sqlmap%']);
+                        });
                     });
             });
 
@@ -45,8 +47,13 @@ class Comment extends Model
                     });
             });
 
-            // 3. Lọc bỏ toàn bộ các payload scanner / command injection / fuzzing
+            // 3. Lọc bỏ toàn bộ các payload scanner / SSTI / command injection / fuzzing
             $builder->whereRaw('LOWER(content) NOT LIKE ?', ['%hfjnuiyz%'])
+                ->whereRaw('LOWER(content) NOT LIKE ?', ['%response.write%'])
+                ->whereRaw('LOWER(content) NOT LIKE ?', ['%response.%'])
+                ->whereRaw('LOWER(content) NOT LIKE ?', ['%write(%'])
+                ->whereRaw('LOWER(content) NOT LIKE ?', ['%9849344%'])
+                ->whereRaw('LOWER(content) NOT LIKE ?', ['%9638453%'])
                 ->whereRaw('LOWER(content) NOT LIKE ?', ['%echo %'])
                 ->whereRaw('LOWER(content) NOT LIKE ?', ['%zgnrlq%'])
                 ->whereRaw('LOWER(content) NOT LIKE ?', ['%bosujf%'])
@@ -67,6 +74,10 @@ class Comment extends Model
                 ->whereRaw('LOWER(content) NOT LIKE ?', ['%assert(%'])
                 ->whereRaw('LOWER(content) NOT LIKE ?', ['%base64_decode%'])
                 ->whereRaw('LOWER(content) NOT LIKE ?', ['%print(md5%'])
+                ->whereRaw('LOWER(content) NOT LIKE ?', ['%document.cookie%'])
+                ->whereRaw('LOWER(content) NOT LIKE ?', ['%alert(%'])
+                ->whereRaw('LOWER(content) NOT LIKE ?', ['%<script%'])
+                ->whereRaw('LOWER(content) NOT LIKE ?', ['%javascript:%'])
                 ->whereRaw('content NOT LIKE ?', ['%..%'])
                 ->whereRaw('content NOT LIKE ?', ['%${%'])
                 ->whereRaw('content NOT LIKE ?', ['%#{%'])
