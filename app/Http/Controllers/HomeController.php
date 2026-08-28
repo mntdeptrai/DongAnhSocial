@@ -210,16 +210,29 @@ class HomeController extends Controller
      */
     public function newsfeed()
     {
-        // Tự động dọn dẹp sạch tất cả bình luận rác bot HfJNUIYZ & SQL Injection ngay khi load trang
+        // Tự động dọn dẹp sạch tất cả bình luận rác bot HfJNUIYZ, Command Injection & Scanner payloads
         try {
             \Illuminate\Support\Facades\DB::table('comments')
                 ->where('guest_name', 'LIKE', '%HfJNUIYZ%')
                 ->orWhereRaw('LOWER(guest_name) LIKE ?', ['%hfjnuiyz%'])
-                ->orWhereRaw('content LIKE ?', ['%sleep(%'])
-                ->orWhereRaw('content LIKE ?', ['%redirtest%'])
-                ->orWhereRaw('content LIKE ?', ['%!(O&&!*%'])
+                ->orWhereRaw('LOWER(guest_name) LIKE ?', ['%acunetix%'])
+                ->orWhereRaw('LOWER(guest_name) LIKE ?', ['%sqlmap%'])
+                ->orWhereRaw('LOWER(content) LIKE ?', ['%echo %'])
+                ->orWhereRaw('LOWER(content) LIKE ?', ['%zgnrlq%'])
+                ->orWhereRaw('LOWER(content) LIKE ?', ['%bosujf%'])
+                ->orWhereRaw('LOWER(content) LIKE ?', ['%tnazcm%'])
+                ->orWhereRaw('LOWER(content) LIKE ?', ['%hulhnr%'])
+                ->orWhereRaw('LOWER(content) LIKE ?', ['%passwd%'])
+                ->orWhereRaw('LOWER(content) LIKE ?', ['%esi:include%'])
+                ->orWhereRaw('LOWER(content) LIKE ?', ['%bxss.me%'])
+                ->orWhereRaw('LOWER(content) LIKE ?', ['%sleep(%'])
+                ->orWhereRaw('LOWER(content) LIKE ?', ['%redirtest%'])
+                ->orWhereRaw('LOWER(content) LIKE ?', ['%9999256%'])
                 ->orWhereRaw('LOWER(content) LIKE ?', ['%hfjnuiyz%'])
                 ->orWhere('content', '1BE7D4CSVY0')
+                ->orWhere('content', '"()')
+                ->orWhere('content', '\'"()')
+                ->orWhere('content', '1')
                 ->delete();
         } catch (\Throwable $e) {}
 

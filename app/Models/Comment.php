@@ -24,6 +24,18 @@ class Comment extends Model
     protected static function booted(): void
     {
         static::addGlobalScope('clean_comments', function ($builder) {
+            // 1. Lọc bỏ các bình luận thuộc về User bot / scanner
+            $builder->where(function ($query) {
+                $query->whereNull('user_id')
+                    ->orWhereDoesntHave('user', function ($u) {
+                        $u->whereRaw('LOWER(name) LIKE ?', ['%hfjnuiyz%'])
+                          ->orWhereRaw('LOWER(email) LIKE ?', ['%hfjnuiyz%'])
+                          ->orWhereRaw('LOWER(name) LIKE ?', ['%acunetix%'])
+                          ->orWhereRaw('LOWER(name) LIKE ?', ['%sqlmap%']);
+                    });
+            });
+
+            // 2. Lọc bỏ các bình luận có guest_name là bot
             $builder->where(function ($query) {
                 $query->whereNull('guest_name')
                     ->orWhere(function ($q) {
@@ -31,16 +43,32 @@ class Comment extends Model
                           ->whereRaw('LOWER(guest_name) NOT LIKE ?', ['%acunetix%'])
                           ->whereRaw('LOWER(guest_name) NOT LIKE ?', ['%sqlmap%']);
                     });
-            })
-            ->whereRaw('LOWER(content) NOT LIKE ?', ['%hfjnuiyz%'])
-            ->whereRaw('LOWER(content) NOT LIKE ?', ['%passwd%'])
-            ->whereRaw('LOWER(content) NOT LIKE ?', ['%esi:include%'])
-            ->whereRaw('LOWER(content) NOT LIKE ?', ['%bxss.me%'])
-            ->whereRaw('LOWER(content) NOT LIKE ?', ['%sleep(%'])
-            ->whereRaw('LOWER(content) NOT LIKE ?', ['%redirtest%'])
-            ->whereRaw('LOWER(content) NOT LIKE ?', ['%9999256%'])
-            ->whereRaw('LOWER(content) NOT LIKE ?', ['%1be7d4csvy0%'])
-            ->where('content', '!=', '1');
+            });
+
+            // 3. Lọc bỏ toàn bộ các payload scanner / command injection / fuzzing
+            $builder->whereRaw('LOWER(content) NOT LIKE ?', ['%hfjnuiyz%'])
+                ->whereRaw('LOWER(content) NOT LIKE ?', ['%echo %'])
+                ->whereRaw('LOWER(content) NOT LIKE ?', ['%zgnrlq%'])
+                ->whereRaw('LOWER(content) NOT LIKE ?', ['%bosujf%'])
+                ->whereRaw('LOWER(content) NOT LIKE ?', ['%tnazcm%'])
+                ->whereRaw('LOWER(content) NOT LIKE ?', ['%hulhnr%'])
+                ->whereRaw('LOWER(content) NOT LIKE ?', ['%xyu|%'])
+                ->whereRaw('LOWER(content) NOT LIKE ?', ['%passwd%'])
+                ->whereRaw('LOWER(content) NOT LIKE ?', ['%esi:include%'])
+                ->whereRaw('LOWER(content) NOT LIKE ?', ['%bxss.me%'])
+                ->whereRaw('LOWER(content) NOT LIKE ?', ['%rpb.png%'])
+                ->whereRaw('LOWER(content) NOT LIKE ?', ['%sleep(%'])
+                ->whereRaw('LOWER(content) NOT LIKE ?', ['%benchmark(%'])
+                ->whereRaw('LOWER(content) NOT LIKE ?', ['%redirtest%'])
+                ->whereRaw('LOWER(content) NOT LIKE ?', ['%9999256%'])
+                ->whereRaw('LOWER(content) NOT LIKE ?', ['%10000284%'])
+                ->whereRaw('LOWER(content) NOT LIKE ?', ['%1be7d4csvy0%'])
+                ->whereRaw('content NOT LIKE ?', ['%..%'])
+                ->whereRaw('content NOT LIKE ?', ['%${%'])
+                ->whereRaw('content NOT LIKE ?', ['%#{%'])
+                ->whereRaw('content NOT LIKE ?', ['%!(%'])
+                ->whereRaw('content NOT LIKE ?', ['%^(%'])
+                ->whereNotIn('content', ['"()', '\'"()', '\'"', '""', "''", ')', '(', '1', '1BE7D4CSVY0']);
         });
     }
 
