@@ -652,8 +652,21 @@
                         </a>
 
                         @php
-                            $currentUserId = Auth::id() ?? session('user_id');
-                            $canManagePost = $currentUserId && ($isAdminAuthor || (isset($p->user_id) && $p->user_id == $currentUserId) || (isset($authUser) && $authUser->role === 'admin'));
+                            $currentAuthUser = Auth::user() ?? (session('user_id') ? \App\Models\User::find(session('user_id')) : null);
+                            $isViewerAdmin = $currentAuthUser && ($currentAuthUser->role === 'admin' || (method_exists($currentAuthUser, 'isAdmin') && $currentAuthUser->isAdmin()));
+                            
+                            // Người xem chỉ có quyền xóa nếu: Là Admin HOẶC Là chính tác giả bài viết
+                            $isViewerAuthor = false;
+                            if ($currentAuthUser) {
+                                if (isset($p->user_id) && $p->user_id == $currentAuthUser->id) {
+                                    $isViewerAuthor = true;
+                                } elseif (isset($p->eatery) && $p->eatery->user_id == $currentAuthUser->id) {
+                                    $isViewerAuthor = true;
+                                } elseif (isset($postUser) && $postUser && $postUser->id == $currentAuthUser->id) {
+                                    $isViewerAuthor = true;
+                                }
+                            }
+                            $canManagePost = $isViewerAdmin || $isViewerAuthor;
                         @endphp
 
                         <!-- Post Action Options (3 Dots Menu) -->
