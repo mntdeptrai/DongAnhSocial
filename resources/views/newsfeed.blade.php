@@ -695,41 +695,41 @@
                     <!-- Multi-Photo Grid Gallery (Facebook Full-Bleed Edge-to-Edge) -->
                     @if($imgCount === 1)
                         <div class="fb-photo-grid fb-grid-1" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 0)">
-                            <img src="{{ $imgs[0] }}" alt="{{ $p->name ?? 'Ảnh' }}" style="width: 100%; max-height: 520px; object-fit: cover; cursor: pointer;">
+                            <img src="{{ $imgs[0] }}" loading="lazy" decoding="async" alt="{{ $p->name ?? 'Ảnh' }}" style="width: 100%; max-height: 520px; object-fit: cover; cursor: pointer;">
                         </div>
                     @elseif($imgCount === 2)
                         <div class="fb-photo-grid fb-grid-2">
-                            <img src="{{ $imgs[0] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 0)" alt="{{ $p->name ?? 'Ảnh' }}">
-                            <img src="{{ $imgs[1] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 1)" alt="{{ $p->name ?? 'Ảnh' }}">
+                            <img src="{{ $imgs[0] }}" loading="lazy" decoding="async" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 0)" alt="{{ $p->name ?? 'Ảnh' }}">
+                            <img src="{{ $imgs[1] }}" loading="lazy" decoding="async" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 1)" alt="{{ $p->name ?? 'Ảnh' }}">
                         </div>
                     @elseif($imgCount === 3)
                         <div class="fb-photo-grid fb-grid-3">
-                            <img src="{{ $imgs[0] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 0)" alt="{{ $p->name ?? 'Ảnh' }}">
+                            <img src="{{ $imgs[0] }}" loading="lazy" decoding="async" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 0)" alt="{{ $p->name ?? 'Ảnh' }}">
                             <div class="fb-grid-3-col-right">
-                                <img src="{{ $imgs[1] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 1)" alt="{{ $p->name ?? 'Ảnh' }}">
-                                <img src="{{ $imgs[2] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 2)" alt="{{ $p->name ?? 'Ảnh' }}">
+                                <img src="{{ $imgs[1] }}" loading="lazy" decoding="async" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 1)" alt="{{ $p->name ?? 'Ảnh' }}">
+                                <img src="{{ $imgs[2] }}" loading="lazy" decoding="async" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 2)" alt="{{ $p->name ?? 'Ảnh' }}">
                             </div>
                         </div>
                     @elseif($imgCount === 4)
                         <div class="fb-photo-grid fb-grid-4">
-                            <img src="{{ $imgs[0] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 0)" alt="{{ $p->name ?? 'Ảnh' }}">
+                            <img src="{{ $imgs[0] }}" loading="lazy" decoding="async" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 0)" alt="{{ $p->name ?? 'Ảnh' }}">
                             <div class="fb-grid-4-col-right">
-                                <img src="{{ $imgs[1] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 1)" alt="{{ $p->name ?? 'Ảnh' }}">
-                                <img src="{{ $imgs[2] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 2)" alt="{{ $p->name ?? 'Ảnh' }}">
-                                <img src="{{ $imgs[3] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 3)" alt="{{ $p->name ?? 'Ảnh' }}">
+                                <img src="{{ $imgs[1] }}" loading="lazy" decoding="async" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 1)" alt="{{ $p->name ?? 'Ảnh' }}">
+                                <img src="{{ $imgs[2] }}" loading="lazy" decoding="async" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 2)" alt="{{ $p->name ?? 'Ảnh' }}">
+                                <img src="{{ $imgs[3] }}" loading="lazy" decoding="async" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 3)" alt="{{ $p->name ?? 'Ảnh' }}">
                             </div>
                         </div>
                     @elseif($imgCount >= 5)
                         <div class="fb-photo-grid fb-grid-5">
                             <div class="fb-grid-5-row-top">
-                                <img src="{{ $imgs[0] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 0)" alt="{{ $p->name ?? 'Ảnh' }}">
-                                <img src="{{ $imgs[1] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 1)" alt="{{ $p->name ?? 'Ảnh' }}">
+                                <img src="{{ $imgs[0] }}" loading="lazy" decoding="async" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 0)" alt="{{ $p->name ?? 'Ảnh' }}">
+                                <img src="{{ $imgs[1] }}" loading="lazy" decoding="async" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 1)" alt="{{ $p->name ?? 'Ảnh' }}">
                             </div>
                             <div class="fb-grid-5-row-bottom">
-                                <img src="{{ $imgs[2] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 2)" alt="{{ $p->name ?? 'Ảnh' }}">
-                                <img src="{{ $imgs[3] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 3)" alt="{{ $p->name ?? 'Ảnh' }}">
+                                <img src="{{ $imgs[2] }}" loading="lazy" decoding="async" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 2)" alt="{{ $p->name ?? 'Ảnh' }}">
+                                <img src="{{ $imgs[3] }}" loading="lazy" decoding="async" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 3)" alt="{{ $p->name ?? 'Ảnh' }}">
                                 <div class="fb-photo-thumb-box" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 4)" style="position: relative !important; width: 100% !important; height: 100% !important; overflow: hidden !important; display: block !important;">
-                                    <img src="{{ $imgs[4] }}" alt="{{ $p->name ?? 'Ảnh' }}" style="width: 100%; height: 100%; object-fit: cover; display: block;">
+                                    <img src="{{ $imgs[4] }}" loading="lazy" decoding="async" alt="{{ $p->name ?? 'Ảnh' }}" style="width: 100%; height: 100%; object-fit: cover; display: block;">
                                     @if($imgCount > 5)
                                         <div class="fb-photo-more-overlay" style="position: absolute !important; inset: 0 !important; width: 100% !important; height: 100% !important; display: flex !important; align-items: center !important; justify-content: center !important; background: rgba(0, 0, 0, 0.52) !important; backdrop-filter: blur(4px) !important; -webkit-backdrop-filter: blur(4px) !important; z-index: 10 !important; pointer-events: none !important; margin: 0 !important; padding: 0 !important; color: #ffffff !important; font-size: 2.8rem !important; font-weight: 900 !important;">
                                             <span class="fb-photo-more-count" style="color: #ffffff !important; font-size: 2.8rem !important; font-weight: 900 !important; line-height: 1 !important; text-shadow: 0 3px 12px rgba(0,0,0,0.8) !important; display: inline-block !important; margin: 0 !important; padding: 0 !important; text-align: center !important; transform: none !important;">+{{ $imgCount - 5 }}</span>
@@ -976,7 +976,7 @@
 </div>
 
 <!-- Modal 2: Viewer Xem Story Toàn Màn Hình (FB / IG Fullscreen Story Viewer) -->
-<div id="storyViewerModal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.95); backdrop-filter: blur(16px); z-index: 999999; align-items: center; justify-content: center; overflow: hidden;">
+<div id="storyViewerModal" onclick="if(event.target === this) closeStoryViewer()" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.95); backdrop-filter: blur(16px); z-index: 999999; align-items: center; justify-content: center; overflow: hidden;">
     
     <!-- Top Close Button -->
     <button type="button" onclick="closeStoryViewer()" style="position: absolute; top: 20px; right: 20px; width: 44px; height: 44px; border-radius: 50%; background: rgba(255,255,255,0.2); color: #fff; border: none; font-size: 1.4rem; cursor: pointer; z-index: 100000; display: flex; align-items: center; justify-content: center; transition: background 0.2s ease;" title="Đóng Story">✕</button>
@@ -1005,7 +1005,7 @@
         <!-- Story Media / Background Box -->
         <div id="viewerContentBox" style="width: 100%; height: 100%; position: absolute; inset: 0; z-index: 1; background-size: cover; background-position: center; display: flex; align-items: center; justify-content: center;">
             <img id="viewerMediaImage" src="" style="width: 100%; height: 100%; object-fit: cover; display: none;">
-            <video id="viewerMediaVideo" src="" autoplay playsinline loop style="width: 100%; height: 100%; object-fit: contain; display: none; background: #000;"></video>
+            <video id="viewerMediaVideo" playsinline style="width: 100%; height: 100%; object-fit: contain; display: none; background: #000;"></video>
             
             <!-- Story Caption Text Overlay -->
             <div id="viewerCaptionText" style="position: absolute; bottom: 75px; left: 0; right: 0; padding: 20px 16px 16px 16px; color: #ffffff; font-size: 1.1rem; font-weight: 800; text-align: center; line-height: 1.5; text-shadow: 0 2px 10px rgba(0,0,0,0.9); z-index: 10; background: linear-gradient(0deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0) 100%); word-break: break-word; pointer-events: none; display: none;"></div>
@@ -1313,6 +1313,16 @@ function openCreateStoryModal() {
 function closeCreateStoryModal() {
     const modal = document.getElementById('createStoryModal');
     if (modal) modal.style.display = 'none';
+    const vid = document.getElementById('igCanvasVid');
+    if (vid) {
+        try {
+            vid.pause();
+            vid.currentTime = 0;
+            vid.removeAttribute('src');
+            vid.load();
+        } catch (e) {}
+        vid.style.display = 'none';
+    }
 }
 
 function cycleIgGradientColor() {
@@ -1451,6 +1461,7 @@ function buildStoryGroups() {
                 author_avatar: authorAvatar,
                 media_url: s.media_url,
                 caption: s.caption || '',
+                type: s.type || '',
                 bg_gradient: s.bg_gradient || 'linear-gradient(135deg, #0ea5e9, #0284c7)',
                 created_at: s.time_ago || formatStoryTimeAgo(s.created_at)
             });
@@ -1459,6 +1470,21 @@ function buildStoryGroups() {
         Object.values(groupedUsers).forEach(g => {
             storyGroups.push(g);
         });
+    }
+}
+
+function stopCurrentStoryVideo() {
+    const vid = document.getElementById('viewerMediaVideo');
+    if (vid) {
+        try {
+            vid.pause();
+            vid.currentTime = 0;
+            vid.ontimeupdate = null;
+            vid.onended = null;
+            vid.removeAttribute('src');
+            vid.load();
+        } catch (e) {}
+        vid.style.display = 'none';
     }
 }
 
@@ -1475,9 +1501,11 @@ function openStoryViewer(groupIdx) {
 }
 
 function renderCurrentStory() {
+    stopCurrentStoryVideo();
+
     if (!storyGroups[currentGroupIndex]) return;
     const group = storyGroups[currentGroupIndex];
-    if (!group.stories[currentGroupStoryIndex]) return;
+    if (!group || !group.stories || !group.stories[currentGroupStoryIndex]) return;
 
     const st = group.stories[currentGroupStoryIndex];
 
@@ -1490,20 +1518,29 @@ function renderCurrentStory() {
     const txt = document.getElementById('viewerCaptionText');
     const box = document.getElementById('viewerContentBox');
 
-    if (st.media_url) {
+    const isVideo = (st.type === 'video') || (st.media_url && (/\.(mp4|webm|mov|m4v|ogv|ogg)$/i.test(st.media_url) || st.media_url.includes('/video/')));
+
+    if (st.media_url && isVideo) {
         box.style.background = '#0f172a';
-        if (st.media_url.match(/\.(mp4|webm|mov)$/i)) {
-            vid.src = st.media_url;
-            vid.style.display = 'block';
-            img.style.display = 'none';
-        } else {
-            img.src = st.media_url;
-            img.style.display = 'block';
-            vid.style.display = 'none';
+        img.style.display = 'none';
+        img.src = '';
+
+        vid.src = st.media_url;
+        vid.style.display = 'block';
+        vid.currentTime = 0;
+        const playPromise = vid.play();
+        if (playPromise !== undefined) {
+            playPromise.catch(err => {
+                console.log('Video autoplay handled:', err);
+            });
         }
+    } else if (st.media_url) {
+        box.style.background = '#0f172a';
+        img.src = st.media_url;
+        img.style.display = 'block';
     } else {
         img.style.display = 'none';
-        vid.style.display = 'none';
+        img.src = '';
         box.style.background = st.bg_gradient || 'linear-gradient(135deg, #0ea5e9, #0284c7)';
     }
 
@@ -1515,7 +1552,7 @@ function renderCurrentStory() {
         txt.style.display = 'none';
     }
 
-    startStoryProgress();
+    startStoryProgress(isVideo);
 }
 
 function renderStoryProgressBars() {
@@ -1541,12 +1578,44 @@ function renderStoryProgressBars() {
     });
 }
 
-function startStoryProgress() {
+function startStoryProgress(isVideo = false) {
     clearInterval(storyTimer);
     renderStoryProgressBars();
 
     const inner = document.getElementById(`storySegInner_${currentGroupStoryIndex}`);
     if (!inner) return;
+
+    if (isVideo) {
+        const vid = document.getElementById('viewerMediaVideo');
+        if (vid) {
+            vid.ontimeupdate = function() {
+                if (vid.duration && !isNaN(vid.duration) && vid.duration > 0) {
+                    const pct = (vid.currentTime / vid.duration) * 100;
+                    inner.style.width = Math.min(pct, 100) + '%';
+                }
+            };
+            vid.onended = function() {
+                vid.ontimeupdate = null;
+                vid.onended = null;
+                nextStorySlide();
+            };
+
+            // Fallback timer if video duration metadata is not immediately available
+            let secCount = 0;
+            storyTimer = setInterval(() => {
+                secCount += 0.1;
+                if (!vid.duration || isNaN(vid.duration)) {
+                    const pct = (secCount / 5) * 100;
+                    inner.style.width = Math.min(pct, 100) + '%';
+                    if (pct >= 100) {
+                        clearInterval(storyTimer);
+                        nextStorySlide();
+                    }
+                }
+            }, 100);
+            return;
+        }
+    }
 
     let pct = 0;
     storyTimer = setInterval(() => {
@@ -1595,6 +1664,7 @@ function prevStorySlide() {
 
 function closeStoryViewer() {
     clearInterval(storyTimer);
+    stopCurrentStoryVideo();
     const modal = document.getElementById('storyViewerModal');
     if (modal) modal.style.display = 'none';
 }
@@ -1651,6 +1721,20 @@ function sendStoryReply() {
         })
     }).catch(err => {});
 }
+
+// Global keydown handler to close stories on ESC key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        const vModal = document.getElementById('storyViewerModal');
+        if (vModal && vModal.style.display !== 'none') {
+            closeStoryViewer();
+        }
+        const cModal = document.getElementById('createStoryModal');
+        if (cModal && cModal.style.display !== 'none') {
+            closeCreateStoryModal();
+        }
+    }
+});
 </script>
 
 <!-- Newsfeed Post Creation Modal -->

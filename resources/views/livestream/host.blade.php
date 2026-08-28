@@ -309,7 +309,7 @@
     }
 </script>
 
-<script src="{{ asset('js/livestream-host.js') }}?v={{ time() }}"></script>
+<script src="{{ asset('js/livestream-host.js') }}?v={{ file_exists(public_path('js/livestream-host.js')) ? filemtime(public_path('js/livestream-host.js')) : '1.0.0' }}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     DongAnhLiveHost.init({

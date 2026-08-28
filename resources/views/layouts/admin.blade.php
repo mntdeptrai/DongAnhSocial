@@ -21,10 +21,10 @@
     <!-- Dedicated Admin Stylesheet -->
     <link rel="stylesheet" href="{{ asset('css/admin.css') }}?v={{ file_exists(public_path('css/admin.css')) ? filemtime(public_path('css/admin.css')) : '1.0.0' }}">
     <!-- 4-Screen Breakpoint Relative Responsive System -->
-    <link rel="stylesheet" href="{{ asset('css/4-screen-responsive.css') }}?v={{ time() }}">
+    <link rel="stylesheet" href="{{ asset('css/4-screen-responsive.css') }}?v={{ file_exists(public_path('css/4-screen-responsive.css')) ? filemtime(public_path('css/4-screen-responsive.css')) : '1.0.0' }}">
     <!-- Facebook Multi-Photo Feed Stylesheet -->
     <link rel="stylesheet" href="{{ asset('css/facebook-feed.css') }}?v={{ file_exists(public_path('css/facebook-feed.css')) ? filemtime(public_path('css/facebook-feed.css')) : '1.0.0' }}">
-    <script src="{{ asset('js/facebook-feed.js') }}?v={{ file_exists(public_path('js/facebook-feed.js')) ? filemtime(public_path('js/facebook-feed.js')) : '1.0.0' }}"></script>
+    <script defer src="{{ asset('js/facebook-feed.js') }}?v={{ file_exists(public_path('js/facebook-feed.js')) ? filemtime(public_path('js/facebook-feed.js')) : '1.0.0' }}"></script>
 </head>
 <body>
 

@@ -399,28 +399,38 @@ class HomeController extends Controller
             }
         }
 
-        // Attach comments and reactions
-        $commentsGroup = \App\Models\Comment::with('user')
-            ->where(function($q) use ($allPostsCombined) {
-                foreach ($allPostsCombined as $p) {
-                    $cType = get_class($p);
-                    $q->orWhere(function($sub) use ($cType, $p) {
-                        $sub->whereIn('commentable_type', [$cType, strtolower(class_basename($cType))])
-                            ->where('commentable_id', $p->id);
-                    });
-                }
-            })
-            ->get()
-            ->groupBy(function($c) {
-                $normType = match (true) {
-                    str_contains($c->commentable_type, 'Checkin') => 'checkin',
-                    str_contains($c->commentable_type, 'FoodTourDiary') => 'diary',
-                    str_contains($c->commentable_type, 'Eatery') => 'eatery',
-                    str_contains($c->commentable_type, 'EducationProgram') => 'education',
-                    default => 'post',
-                };
-                return $normType . '_' . $c->commentable_id;
-            });
+        // Attach comments and reactions efficiently using grouped whereIn
+        $idsByType = [];
+        foreach ($allPostsCombined as $p) {
+            $cType = get_class($p);
+            $baseType = strtolower(class_basename($cType));
+            $idsByType[$cType][] = $p->id;
+            $idsByType[$baseType][] = $p->id;
+        }
+
+        $commentsGroup = collect();
+        if (!empty($idsByType)) {
+            $commentsGroup = \App\Models\Comment::with('user')
+                ->where(function($q) use ($idsByType) {
+                    foreach ($idsByType as $type => $ids) {
+                        $q->orWhere(function($sub) use ($type, $ids) {
+                            $sub->where('commentable_type', $type)
+                                ->whereIn('commentable_id', array_unique($ids));
+                        });
+                    }
+                })
+                ->get()
+                ->groupBy(function($c) {
+                    $normType = match (true) {
+                        str_contains($c->commentable_type, 'Checkin') => 'checkin',
+                        str_contains($c->commentable_type, 'FoodTourDiary') => 'diary',
+                        str_contains($c->commentable_type, 'Eatery') => 'eatery',
+                        str_contains($c->commentable_type, 'EducationProgram') => 'education',
+                        default => 'post',
+                    };
+                    return $normType . '_' . $c->commentable_id;
+                });
+        }
 
         $allReactions = \App\Models\CheckinReaction::selectRaw('reactionable_type, reactionable_id, emoji, count(*) as count')
             ->groupBy('reactionable_type', 'reactionable_id', 'emoji')

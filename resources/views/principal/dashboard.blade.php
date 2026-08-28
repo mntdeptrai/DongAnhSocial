@@ -3,8 +3,8 @@
 @section('title', 'Bảng Điều Hành - ' . $school->standardized_name)
 
 @section('content')
-<link rel="stylesheet" href="{{ asset('css/facebook-feed.css') }}?v={{ time() }}">
-<script src="{{ asset('js/facebook-feed.js') }}?v={{ time() }}"></script>
+<link rel="stylesheet" href="{{ asset('css/facebook-feed.css') }}?v={{ file_exists(public_path('css/facebook-feed.css')) ? filemtime(public_path('css/facebook-feed.css')) : '1.0.0' }}">
+<script defer src="{{ asset('js/facebook-feed.js') }}?v={{ file_exists(public_path('js/facebook-feed.js')) ? filemtime(public_path('js/facebook-feed.js')) : '1.0.0' }}"></script>
 <style>
     :root {
         --sch-primary: #4f46e5;

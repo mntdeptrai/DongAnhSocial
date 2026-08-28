@@ -71,18 +71,28 @@
     
     @stack('head')
     
+    <!-- DNS Prefetch & Preconnect for High-Speed External CDN Assets -->
+    <link rel="dns-prefetch" href="//fonts.googleapis.com">
+    <link rel="dns-prefetch" href="//fonts.gstatic.com">
+    <link rel="dns-prefetch" href="//cdn.jsdelivr.net">
+    <link rel="dns-prefetch" href="//cdnjs.cloudflare.com">
+    <link rel="dns-prefetch" href="//unpkg.com">
+    <link rel="dns-prefetch" href="//pub-0d65b75ce9134b228fdfd47781b22e11.r2.dev">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+    
     <!-- Leaflet.js Map Assets -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
     
     <!-- Google Fonts Preload: Be Vietnam Pro (Vietnamese Primary) + Outfit & Plus Jakarta Sans -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,600&display=swap" rel="stylesheet">
     
-    <!-- SweetAlert2 for modern popup alerts -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- SweetAlert2 for modern popup alerts (Deferred for Non-blocking FCP) -->
+    <script defer src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         // Override native window.alert to render modern modal popups automatically across all web pages
         window.alert = function(message) {
@@ -101,13 +111,15 @@
                         confirmButton: 'px-6 py-2.5 rounded-xl font-bold text-white shadow-md'
                     }
                 });
+            } else {
+                console.log('Alert:', message);
             }
         };
     </script>
     
-    <!-- Custom Theme Styling -->
-    <link rel="stylesheet" href="{{ asset('css/app.css') }}?v={{ time() }}">
-    <link rel="stylesheet" href="{{ asset('css/4-screen-responsive.css') }}?v={{ time() }}">
+    <!-- Custom Theme Styling with Browser-Cacheable Timestamps -->
+    <link rel="stylesheet" href="{{ asset('css/app.css') }}?v={{ file_exists(public_path('css/app.css')) ? filemtime(public_path('css/app.css')) : '1.0.0' }}">
+    <link rel="stylesheet" href="{{ asset('css/4-screen-responsive.css') }}?v={{ file_exists(public_path('css/4-screen-responsive.css')) ? filemtime(public_path('css/4-screen-responsive.css')) : '1.0.0' }}">
     
     <!-- Mobile Native Overrides (Only load for mobile and tablet screens) -->
     <link rel="stylesheet" media="screen and (max-width: 991px)" href="{{ asset('css/mobile-native.css') }}?v={{ file_exists(public_path('css/mobile-native.css')) ? filemtime(public_path('css/mobile-native.css')) : '1.0.0' }}">
@@ -116,12 +128,12 @@
     <link rel="stylesheet" href="{{ asset('css/mobile-fix.css') }}?v={{ file_exists(public_path('css/mobile-fix.css')) ? filemtime(public_path('css/mobile-fix.css')) : '1.0.0' }}">
     
     <!-- Map-Based Storytelling CSS & GSAP Animation Library -->
-    <link rel="stylesheet" href="{{ asset('css/storytelling.css') }}?v={{ file_exists(public_path('css/storytelling.css')) ? filemtime(public_path('css/storytelling.css')) : time() }}">
-    <link rel="stylesheet" href="{{ asset('css/storytelling-mobile.css') }}?v={{ file_exists(public_path('css/storytelling-mobile.css')) ? filemtime(public_path('css/storytelling-mobile.css')) : time() }}">
-    <link rel="stylesheet" href="{{ asset('css/ocop-storytelling.css') }}?v={{ file_exists(public_path('css/ocop-storytelling.css')) ? filemtime(public_path('css/ocop-storytelling.css')) : time() }}">
+    <link rel="stylesheet" href="{{ asset('css/storytelling.css') }}?v={{ file_exists(public_path('css/storytelling.css')) ? filemtime(public_path('css/storytelling.css')) : '1.0.0' }}">
+    <link rel="stylesheet" href="{{ asset('css/storytelling-mobile.css') }}?v={{ file_exists(public_path('css/storytelling-mobile.css')) ? filemtime(public_path('css/storytelling-mobile.css')) : '1.0.0' }}">
+    <link rel="stylesheet" href="{{ asset('css/ocop-storytelling.css') }}?v={{ file_exists(public_path('css/ocop-storytelling.css')) ? filemtime(public_path('css/ocop-storytelling.css')) : '1.0.0' }}">
     <link rel="stylesheet" href="{{ asset('css/facebook-feed.css') }}?v={{ file_exists(public_path('css/facebook-feed.css')) ? filemtime(public_path('css/facebook-feed.css')) : '1.0.0' }}">
-    <script src="{{ asset('js/facebook-feed.js') }}?v={{ file_exists(public_path('js/facebook-feed.js')) ? filemtime(public_path('js/facebook-feed.js')) : '1.0.0' }}"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script defer src="{{ asset('js/facebook-feed.js') }}?v={{ file_exists(public_path('js/facebook-feed.js')) ? filemtime(public_path('js/facebook-feed.js')) : '1.0.0' }}"></script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
     
     <!-- Dynamic Schema.org JSON-LD Structured Data for Google Indexing -->
     @yield('seo_schema')
@@ -2377,21 +2389,21 @@
 
     <!-- Map-Based Storytelling Modal & JS Engine -->
     @include('partials.storytelling-modal')
-    <script src="{{ asset('js/storytelling-data.js') }}?v={{ file_exists(public_path('js/storytelling-data.js')) ? filemtime(public_path('js/storytelling-data.js')) : time() }}"></script>
-    <script src="{{ asset('js/storytelling-engine.js') }}?v={{ file_exists(public_path('js/storytelling-engine.js')) ? filemtime(public_path('js/storytelling-engine.js')) : time() }}"></script>
+    <script defer src="{{ asset('js/storytelling-data.js') }}?v={{ file_exists(public_path('js/storytelling-data.js')) ? filemtime(public_path('js/storytelling-data.js')) : '1.0.0' }}"></script>
+    <script defer src="{{ asset('js/storytelling-engine.js') }}?v={{ file_exists(public_path('js/storytelling-engine.js')) ? filemtime(public_path('js/storytelling-engine.js')) : '1.0.0' }}"></script>
 
     <!-- OCOP Map-Based Storytelling Modal & JS Engine -->
     @include('partials.ocop-storytelling-modal')
-    <script src="{{ asset('js/ocop-official-data.js') }}?v={{ file_exists(public_path('js/ocop-official-data.js')) ? filemtime(public_path('js/ocop-official-data.js')) : time() }}"></script>
+    <script defer src="{{ asset('js/ocop-official-data.js') }}?v={{ file_exists(public_path('js/ocop-official-data.js')) ? filemtime(public_path('js/ocop-official-data.js')) : '1.0.0' }}"></script>
     <script>
         window.DB_OCOP_PRODUCTS = (window.OCOP_PRODUCTS && window.OCOP_PRODUCTS.length > 0) ? window.OCOP_PRODUCTS : window.OFFICIAL_OCOP_PRODUCTS;
     </script>
-    <script src="{{ asset('js/ocop-story-data.js') }}?v={{ file_exists(public_path('js/ocop-story-data.js')) ? filemtime(public_path('js/ocop-story-data.js')) : time() }}"></script>
-    <script src="{{ asset('js/ocop-story/camera-controller.js') }}?v={{ file_exists(public_path('js/ocop-story/camera-controller.js')) ? filemtime(public_path('js/ocop-story/camera-controller.js')) : time() }}"></script>
-    <script src="{{ asset('js/ocop-story/marker-controller.js') }}?v={{ file_exists(public_path('js/ocop-story/marker-controller.js')) ? filemtime(public_path('js/ocop-story/marker-controller.js')) : time() }}"></script>
-    <script src="{{ asset('js/ocop-story/card-controller.js') }}?v={{ file_exists(public_path('js/ocop-story/card-controller.js')) ? filemtime(public_path('js/ocop-story/card-controller.js')) : time() }}"></script>
-    <script src="{{ asset('js/ocop-story/animation-controller.js') }}?v={{ file_exists(public_path('js/ocop-story/animation-controller.js')) ? filemtime(public_path('js/ocop-story/animation-controller.js')) : time() }}"></script>
-    <script src="{{ asset('js/ocop-story/story-controller.js') }}?v={{ file_exists(public_path('js/ocop-story/story-controller.js')) ? filemtime(public_path('js/ocop-story/story-controller.js')) : time() }}"></script>
+    <script defer src="{{ asset('js/ocop-story-data.js') }}?v={{ file_exists(public_path('js/ocop-story-data.js')) ? filemtime(public_path('js/ocop-story-data.js')) : '1.0.0' }}"></script>
+    <script defer src="{{ asset('js/ocop-story/camera-controller.js') }}?v={{ file_exists(public_path('js/ocop-story/camera-controller.js')) ? filemtime(public_path('js/ocop-story/camera-controller.js')) : '1.0.0' }}"></script>
+    <script defer src="{{ asset('js/ocop-story/marker-controller.js') }}?v={{ file_exists(public_path('js/ocop-story/marker-controller.js')) ? filemtime(public_path('js/ocop-story/marker-controller.js')) : '1.0.0' }}"></script>
+    <script defer src="{{ asset('js/ocop-story/card-controller.js') }}?v={{ file_exists(public_path('js/ocop-story/card-controller.js')) ? filemtime(public_path('js/ocop-story/card-controller.js')) : '1.0.0' }}"></script>
+    <script defer src="{{ asset('js/ocop-story/animation-controller.js') }}?v={{ file_exists(public_path('js/ocop-story/animation-controller.js')) ? filemtime(public_path('js/ocop-story/animation-controller.js')) : '1.0.0' }}"></script>
+    <script defer src="{{ asset('js/ocop-story/story-controller.js') }}?v={{ file_exists(public_path('js/ocop-story/story-controller.js')) ? filemtime(public_path('js/ocop-story/story-controller.js')) : '1.0.0' }}"></script>
 
 
     <!-- Back to Top & Quick Controls Floating Widget -->
@@ -3313,7 +3325,7 @@
 
     {{-- Real-time Customer Order & Status Notification Engine --}}
     @if(Auth::check() || session('user_id'))
-    <script src="{{ asset('js/customer-notifications.js') }}?v={{ time() }}"></script>
+    <script defer src="{{ asset('js/customer-notifications.js') }}?v={{ file_exists(public_path('js/customer-notifications.js')) ? filemtime(public_path('js/customer-notifications.js')) : '1.0.0' }}"></script>
     @endif
     @endif
 </body>

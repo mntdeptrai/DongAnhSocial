@@ -444,7 +444,7 @@ window.__liveProducts = @json($productsMap);
 </script>
 
 <!-- Livestream Client Engine -->
-<script src="{{ asset('js/livestream-viewer.js') }}?v={{ time() }}"></script>
+<script src="{{ asset('js/livestream-viewer.js') }}?v={{ file_exists(public_path('js/livestream-viewer.js')) ? filemtime(public_path('js/livestream-viewer.js')) : '1.0.0' }}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     DongAnhLiveViewer.init({

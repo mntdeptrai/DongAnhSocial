@@ -4,7 +4,7 @@
 
 @section('content')
 <!-- Load premium styling for orders -->
-<link rel="stylesheet" href="{{ asset('css/orders.css') }}?v={{ time() }}">
+<link rel="stylesheet" href="{{ asset('css/orders.css') }}?v={{ file_exists(public_path('css/orders.css')) ? filemtime(public_path('css/orders.css')) : '1.0.0' }}">
 
 <div class="orders-container">
     
@@ -132,5 +132,5 @@
 </div>
 
 <!-- Core interactive logic -->
-<script src="{{ asset('js/orders.js') }}?v={{ time() }}"></script>
+<script defer src="{{ asset('js/orders.js') }}?v={{ file_exists(public_path('js/orders.js')) ? filemtime(public_path('js/orders.js')) : '1.0.0' }}"></script>
 @endsection
