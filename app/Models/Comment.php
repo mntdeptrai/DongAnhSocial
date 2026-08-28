@@ -63,12 +63,16 @@ class Comment extends Model
                 ->whereRaw('LOWER(content) NOT LIKE ?', ['%9999256%'])
                 ->whereRaw('LOWER(content) NOT LIKE ?', ['%10000284%'])
                 ->whereRaw('LOWER(content) NOT LIKE ?', ['%1be7d4csvy0%'])
+                ->whereRaw('LOWER(content) NOT LIKE ?', ['%expr %'])
+                ->whereRaw('LOWER(content) NOT LIKE ?', ['%assert(%'])
+                ->whereRaw('LOWER(content) NOT LIKE ?', ['%base64_decode%'])
+                ->whereRaw('LOWER(content) NOT LIKE ?', ['%print(md5%'])
                 ->whereRaw('content NOT LIKE ?', ['%..%'])
                 ->whereRaw('content NOT LIKE ?', ['%${%'])
                 ->whereRaw('content NOT LIKE ?', ['%#{%'])
                 ->whereRaw('content NOT LIKE ?', ['%!(%'])
                 ->whereRaw('content NOT LIKE ?', ['%^(%'])
-                ->whereNotIn('content', ['"()', '\'"()', '\'"', '""', "''", ')', '(', '1', '1BE7D4CSVY0']);
+                ->whereNotIn('content', ['"()', '\'"()', '\'"', '""', "''", ')', '(', '1', '1BE7D4CSVY0', 'comments', 'comments/.', 'comments/']);
         });
     }
 

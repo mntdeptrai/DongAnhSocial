@@ -598,7 +598,18 @@
                     $isVerifiedAuthor = ($postUser && ($postUser->is_verified || in_array($postUser->role, ['admin', 'principal', 'seller']))) || ($p instanceof \App\Models\EducationProgram);
                     $isAdminAuthor = $postUser && ($postUser->role === 'admin');
 
-                    $imgs = method_exists($p, 'getAllImagesAttribute') ? $p->all_images : ($p->image_path ? [$p->image_path] : []);
+                    $rawImgs = method_exists($p, 'getAllImagesAttribute') ? $p->all_images : ($p->image_path ? [$p->image_path] : (!empty($p->images) ? (is_array($p->images) ? $p->images : json_decode($p->images, true)) : []));
+                    if (!is_array($rawImgs)) $rawImgs = [];
+                    $imgs = [];
+                    foreach ($rawImgs as $imgItem) {
+                        if (!empty($imgItem) && is_string($imgItem)) {
+                            if (\Illuminate\Support\Str::startsWith($imgItem, ['http://', 'https://', 'data:'])) {
+                                $imgs[] = $imgItem;
+                            } else {
+                                $imgs[] = asset(ltrim($imgItem, '/'));
+                            }
+                        }
+                    }
                     $imgCount = count($imgs);
                     $isFoodTour = $p->is_food_tour ?? false;
                     $isCheckin = $p->is_checkin ?? false;
@@ -783,10 +794,35 @@
 
                     <!-- Expandable Comments Drawer -->
                     <div class="comments-section" id="comments-section-{{ $postDomKey }}" style="display: none; padding: 14px 16px; background: #f8fafc; border-top: 1px solid #e2e8f0;">
-                        <div class="comments-list" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px;">
+                        <div class="comments-list" id="comments-list-{{ $postDomKey }}" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px;">
                             @if($p->comments && $p->comments->isNotEmpty())
-                                @foreach($p->comments as $comment)
+                                @php
+                                    $allCommentsList = $p->comments->values();
+                                    $totalCommentsCount = $allCommentsList->count();
+                                    $visibleLimit = 3; // Mặc định chỉ hiển thị 3 bình luận mới nhất
+                                    $hasHiddenComments = $totalCommentsCount > $visibleLimit;
+                                    $hiddenCount = $totalCommentsCount - $visibleLimit;
+                                @endphp
+
+                                @if($hasHiddenComments)
+                                    <!-- Nút Xem thêm các bình luận trước đó -->
+                                    <div class="more-comments-wrapper" style="text-align: left; margin-bottom: 2px;">
+                                        <button type="button" 
+                                                class="btn-toggle-more-comments" 
+                                                onclick="toggleMoreComments('{{ $postDomKey }}', this)" 
+                                                data-expanded="false"
+                                                data-hidden-count="{{ $hiddenCount }}"
+                                                style="background: transparent; border: none; padding: 4px 8px; border-radius: 8px; color: #0284c7; font-weight: 700; font-size: 0.84rem; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; font-family: inherit; transition: all 0.15s ease;"
+                                                onmouseover="this.style.background='#e0f2fe'" 
+                                                onmouseout="this.style.background='transparent'">
+                                            <span>🔽 Xem {{ $hiddenCount }} bình luận trước đó</span>
+                                        </button>
+                                    </div>
+                                @endif
+
+                                @foreach($allCommentsList as $cIdx => $comment)
                                     @php
+                                        $isHidden = $hasHiddenComments && ($cIdx < $hiddenCount);
                                         $rawContent = $comment->content;
                                         $isReply = str_starts_with(trim($rawContent), '@');
                                         
@@ -797,8 +833,9 @@
                                         }
                                     @endphp
 
-                                    <div class="comment-item {{ $isReply ? 'comment-reply-item' : '' }}" 
-                                         style="display: flex; gap: 10px; align-items: flex-start; 
+                                    <div class="comment-item {{ $isReply ? 'comment-reply-item' : '' }} {{ $isHidden ? 'comment-prev-hidden' : '' }}" 
+                                         data-comment-id="{{ $comment->id }}"
+                                         style="display: {{ $isHidden ? 'none' : 'flex' }}; gap: 10px; align-items: flex-start; 
                                                 background: {{ $isReply ? '#f0f9ff' : '#ffffff' }}; 
                                                 border-radius: 14px; padding: 10px 14px; 
                                                 border: 1px solid {{ $isReply ? '#bae6fd' : '#e2e8f0' }}; 
@@ -1081,6 +1118,32 @@ window.scrollToNotifTarget = function() {
 };
 
 document.addEventListener("DOMContentLoaded", window.scrollToNotifTarget);
+
+// Xem thêm / Thu gọn các bình luận trước đó (Pagination / Expand Comments)
+function toggleMoreComments(postDomKey, btn) {
+    const list = document.getElementById('comments-list-' + postDomKey);
+    if (!list) return;
+    const hiddenItems = list.querySelectorAll('.comment-prev-hidden');
+    const isExpanded = btn.getAttribute('data-expanded') === 'true';
+    const hiddenCount = btn.getAttribute('data-hidden-count') || '';
+
+    if (!isExpanded) {
+        // Mở rộng toàn bộ bình luận cũ
+        hiddenItems.forEach(item => {
+            item.style.display = 'flex';
+            item.style.animation = 'fadeIn 0.25s ease forwards';
+        });
+        btn.setAttribute('data-expanded', 'true');
+        btn.innerHTML = '<span>🔼 Thu gọn bình luận cũ</span>';
+    } else {
+        // Thu gọn lại chỉ hiển thị 3 bình luận mới nhất
+        hiddenItems.forEach(item => {
+            item.style.display = 'none';
+        });
+        btn.setAttribute('data-expanded', 'false');
+        btn.innerHTML = `<span>🔽 Xem ${hiddenCount} bình luận trước đó</span>`;
+    }
+}
 
 // Trả lời bình luận (Reply to comment)
 function replyToComment(postDomKey, authorName) {

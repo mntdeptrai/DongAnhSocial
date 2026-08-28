@@ -67,6 +67,10 @@ return new class extends Migration
                               ->orWhereRaw('LOWER(content) LIKE ?', ['%9999256%'])
                               ->orWhereRaw('LOWER(content) LIKE ?', ['%10000284%'])
                               ->orWhereRaw('LOWER(content) LIKE ?', ['%1be7d4csvy0%'])
+                              ->orWhereRaw('LOWER(content) LIKE ?', ['%expr %'])
+                              ->orWhereRaw('LOWER(content) LIKE ?', ['%assert(%'])
+                              ->orWhereRaw('LOWER(content) LIKE ?', ['%base64_decode%'])
+                              ->orWhereRaw('LOWER(content) LIKE ?', ['%print(md5%'])
                               ->orWhereRaw('content LIKE ?', ['%..%'])
                               ->orWhereRaw('content LIKE ?', ['%${%'])
                               ->orWhereRaw('content LIKE ?', ['%#{%'])
@@ -77,7 +81,10 @@ return new class extends Migration
                               ->orWhere('content', '\'"')
                               ->orWhere('content', '1')
                               ->orWhere('content', ')')
-                              ->orWhere('content', '(');
+                              ->orWhere('content', '(')
+                              ->orWhere('content', 'comments')
+                              ->orWhere('content', 'comments/.')
+                              ->orWhere('content', 'comments/');
                         })
                         ->delete();
                 }

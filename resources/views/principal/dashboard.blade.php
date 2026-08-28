@@ -2151,8 +2151,44 @@
                     
                     if (data.success && data.comments.length > 0) {
                         listEl.innerHTML = '';
-                        data.comments.forEach(c => {
-                            listEl.appendChild(createCommentItemElement(c));
+                        const total = data.comments.length;
+                        const limit = 3;
+                        const hiddenCount = total - limit;
+
+                        if (total > limit) {
+                            const moreBtnWrap = document.createElement('div');
+                            moreBtnWrap.style.cssText = 'margin-bottom: 6px; text-align: left;';
+                            moreBtnWrap.innerHTML = `
+                                <button type="button" class="btn-toggle-prev-comments" data-expanded="false" style="background: none; border: none; padding: 4px 8px; color: #4338ca; font-weight: 700; font-size: 0.82rem; cursor: pointer; border-radius: 6px; font-family: inherit;">
+                                    🔽 Xem ${hiddenCount} bình luận trước đó
+                                </button>
+                            `;
+                            listEl.appendChild(moreBtnWrap);
+
+                            const toggleBtn = moreBtnWrap.querySelector('.btn-toggle-prev-comments');
+                            toggleBtn.addEventListener('click', function() {
+                                const isExp = this.getAttribute('data-expanded') === 'true';
+                                const hiddenItems = listEl.querySelectorAll('.comment-item-prev-hidden');
+                                if (!isExp) {
+                                    hiddenItems.forEach(el => { el.style.display = 'flex'; });
+                                    this.setAttribute('data-expanded', 'true');
+                                    this.innerHTML = '🔼 Thu gọn bình luận cũ';
+                                } else {
+                                    hiddenItems.forEach(el => { el.style.display = 'none'; });
+                                    this.setAttribute('data-expanded', 'false');
+                                    this.innerHTML = `🔽 Xem ${hiddenCount} bình luận trước đó`;
+                                }
+                            });
+                        }
+
+                        data.comments.forEach((c, idx) => {
+                            const isHidden = total > limit && idx < hiddenCount;
+                            const el = createCommentItemElement(c);
+                            if (isHidden) {
+                                el.classList.add('comment-item-prev-hidden');
+                                el.style.display = 'none';
+                            }
+                            listEl.appendChild(el);
                         });
                     } else {
                         listEl.innerHTML = `<div class="text-center py-2 text-muted" style="font-size: 0.85rem;" id="no-comments-msg-${postId}">Chưa có bình luận nào. Hãy là người đầu tiên bình luận!</div>`;
