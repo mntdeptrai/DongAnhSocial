@@ -29,8 +29,8 @@ class Comment extends Model
                 $query->whereNull('user_id')
                     ->orWhere(function ($sub) {
                         $sub->whereHas('user', function ($u) {
-                            $u->whereRaw('LOWER(name) NOT LIKE ?', ['%hfjnuiyz%'])
-                              ->whereRaw('LOWER(email) NOT LIKE ?', ['%hfjnuiyz%'])
+                            $u->whereRaw('LOWER(name) NOT LIKE ?', ['%hfjnu%'])
+                              ->whereRaw('LOWER(email) NOT LIKE ?', ['%hfjnu%'])
                               ->whereRaw('LOWER(name) NOT LIKE ?', ['%acunetix%'])
                               ->whereRaw('LOWER(name) NOT LIKE ?', ['%sqlmap%']);
                         });
@@ -41,14 +41,16 @@ class Comment extends Model
             $builder->where(function ($query) {
                 $query->whereNull('guest_name')
                     ->orWhere(function ($q) {
-                        $q->whereRaw('LOWER(guest_name) NOT LIKE ?', ['%hfjnuiyz%'])
+                        $q->whereRaw('LOWER(guest_name) NOT LIKE ?', ['%hfjnu%'])
+                          ->whereRaw('LOWER(guest_name) NOT LIKE ?', ['%hfjnulyz%'])
+                          ->whereRaw('LOWER(guest_name) NOT LIKE ?', ['%hfjnuiyz%'])
                           ->whereRaw('LOWER(guest_name) NOT LIKE ?', ['%acunetix%'])
                           ->whereRaw('LOWER(guest_name) NOT LIKE ?', ['%sqlmap%']);
                     });
             });
 
             // 3. Lọc bỏ toàn bộ các payload scanner / SSTI / command injection / fuzzing
-            $builder->whereRaw('LOWER(content) NOT LIKE ?', ['%hfjnuiyz%'])
+            $builder->whereRaw('LOWER(content) NOT LIKE ?', ['%hfjnu%'])
                 ->whereRaw('LOWER(content) NOT LIKE ?', ['%response.write%'])
                 ->whereRaw('LOWER(content) NOT LIKE ?', ['%response.%'])
                 ->whereRaw('LOWER(content) NOT LIKE ?', ['%write(%'])

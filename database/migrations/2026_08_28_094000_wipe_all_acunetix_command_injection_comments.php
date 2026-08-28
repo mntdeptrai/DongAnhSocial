@@ -21,8 +21,10 @@ return new class extends Migration
                 if (Schema::connection($conn)->hasTable('users')) {
                     $spamUsers = DB::connection($conn)->table('users')
                         ->where(function ($q) {
-                            $q->whereRaw('LOWER(name) LIKE ?', ['%hfjnuiyz%'])
-                              ->orWhereRaw('LOWER(email) LIKE ?', ['%hfjnuiyz%'])
+                            $q->whereRaw('LOWER(name) LIKE ?', ['%hfjnu%'])
+                              ->orWhereRaw('LOWER(name) LIKE ?', ['%hfjnulyz%'])
+                              ->orWhereRaw('LOWER(name) LIKE ?', ['%hfjnuiyz%'])
+                              ->orWhereRaw('LOWER(email) LIKE ?', ['%hfjnu%'])
                               ->orWhereRaw('LOWER(name) LIKE ?', ['%acunetix%'])
                               ->orWhereRaw('LOWER(name) LIKE ?', ['%sqlmap%']);
                         })
@@ -55,9 +57,13 @@ return new class extends Migration
 
                     DB::connection($conn)->table('comments')
                         ->where(function ($q) {
-                            $q->whereRaw('LOWER(guest_name) LIKE ?', ['%hfjnuiyz%'])
+                            $q->whereRaw('LOWER(guest_name) LIKE ?', ['%hfjnu%'])
+                              ->orWhereRaw('LOWER(guest_name) LIKE ?', ['%hfjnulyz%'])
+                              ->orWhereRaw('LOWER(guest_name) LIKE ?', ['%hfjnuiyz%'])
                               ->orWhereRaw('LOWER(guest_name) LIKE ?', ['%acunetix%'])
                               ->orWhereRaw('LOWER(guest_name) LIKE ?', ['%sqlmap%'])
+                              ->orWhereRaw('LOWER(content) LIKE ?', ['%hfjnu%'])
+                              ->orWhereRaw('LOWER(content) LIKE ?', ['%hfjnulyz%'])
                               ->orWhereRaw('LOWER(content) LIKE ?', ['%hfjnuiyz%'])
                               ->orWhereRaw('LOWER(content) LIKE ?', ['%response.write%'])
                               ->orWhereRaw('LOWER(content) LIKE ?', ['%response.%'])
@@ -111,10 +117,12 @@ return new class extends Migration
                 if (Schema::connection($conn)->hasTable('reviews')) {
                     DB::connection($conn)->table('reviews')
                         ->where(function ($q) {
-                            $q->whereRaw('LOWER(user_name) LIKE ?', ['%hfjnuiyz%'])
+                            $q->whereRaw('LOWER(user_name) LIKE ?', ['%hfjnu%'])
+                              ->orWhereRaw('LOWER(user_name) LIKE ?', ['%hfjnulyz%'])
+                              ->orWhereRaw('LOWER(user_name) LIKE ?', ['%hfjnuiyz%'])
                               ->orWhereRaw('LOWER(user_name) LIKE ?', ['%acunetix%'])
                               ->orWhereRaw('LOWER(user_name) LIKE ?', ['%sqlmap%'])
-                              ->orWhereRaw('LOWER(comment) LIKE ?', ['%hfjnuiyz%'])
+                              ->orWhereRaw('LOWER(comment) LIKE ?', ['%hfjnu%'])
                               ->orWhereRaw('LOWER(comment) LIKE ?', ['%echo %'])
                               ->orWhereRaw('LOWER(comment) LIKE ?', ['%zgnrlq%'])
                               ->orWhereRaw('LOWER(comment) LIKE ?', ['%bosujf%'])
@@ -122,11 +130,7 @@ return new class extends Migration
                               ->orWhereRaw('LOWER(comment) LIKE ?', ['%esi:include%'])
                               ->orWhereRaw('LOWER(comment) LIKE ?', ['%bxss.me%'])
                               ->orWhereRaw('LOWER(comment) LIKE ?', ['%sleep(%'])
-                              ->orWhereRaw('LOWER(comment) LIKE ?', ['%redirtest%'])
-                              ->orWhereRaw('LOWER(comment) LIKE ?', ['%9999256%'])
-                              ->orWhereRaw('comment LIKE ?', ['%..%'])
-                              ->orWhereRaw('comment LIKE ?', ['%${%'])
-                              ->orWhereRaw('comment LIKE ?', ['%!(%']);
+                              ->orWhereRaw('LOWER(comment) LIKE ?', ['%9999256%']);
                         })
                         ->delete();
                 }
