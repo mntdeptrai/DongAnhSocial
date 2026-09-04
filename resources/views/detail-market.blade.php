@@ -1509,7 +1509,7 @@
 
     <!-- VI. DANH SÁCH SẢN PHẨM TRƯNG BÀY -->
     @php
-        $isCultureMarket = str_contains(strtolower($eatery->slug ?? ''), 'co-loa') || str_contains(strtolower($eatery->name ?? ''), 'cổ loa') || str_contains(strtolower($eatery->name ?? ''), 'văn hóa du lịch');
+        $isCultureMarket = str_contains(strtolower($eatery->slug ?? ''), 'van-hoa-du-lich') || str_contains(strtolower($eatery->name ?? ''), 'văn hóa du lịch');
     @endphp
 
     <div style="margin-top: 40px; margin-bottom: 40px;">

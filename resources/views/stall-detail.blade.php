@@ -66,10 +66,8 @@
 
 @section('content')
 @php
-    $isCultureMarket = str_contains(strtolower($eatery->slug ?? ''), 'co-loa') 
-        || str_contains(strtolower($eatery->name ?? ''), 'cổ loa') 
-        || str_contains(strtolower($eatery->name ?? ''), 'văn hóa du lịch')
-        || str_contains(strtolower($stallName ?? ''), 'cổ loa');
+    $isCultureMarket = str_contains(strtolower($eatery->slug ?? ''), 'van-hoa-du-lich') 
+        || str_contains(strtolower($eatery->name ?? ''), 'văn hóa du lịch');
 @endphp
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
@@ -1066,7 +1064,7 @@
                 <div class="panel-body" id="stallProductsContainer" style="{{ $stallProducts->count() > 5 ? 'max-height: 540px; overflow-y: auto; padding-right: 14px;' : '' }}">
                     @forelse($stallProducts as $product)
                         @php
-                            $isCultureMarket = str_contains(strtolower($eatery->slug ?? ''), 'co-loa') || str_contains(strtolower($eatery->name ?? ''), 'cổ loa') || str_contains(strtolower($eatery->name ?? ''), 'văn hóa du lịch');
+                            $isCultureMarket = str_contains(strtolower($eatery->slug ?? ''), 'van-hoa-du-lich') || str_contains(strtolower($eatery->name ?? ''), 'văn hóa du lịch');
                             $hasCustomOrigin = false;
                             $prodOrigin = '';
                             $cleanDesc = '';
