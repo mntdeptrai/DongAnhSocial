@@ -2292,7 +2292,7 @@
                 } elseif ($cat->slug === 'traditional-market') {
                     $displayIcon = '🏪';
                     $displayNameEn = 'CHỢ TRUYỀN THỐNG';
-                    $displayNameVi = '15 Chợ số Đông Anh';
+                    $displayNameVi = '17 Chợ số Đông Anh';
                 } elseif ($cat->slug === 'smart-education-map') {
                     $displayIcon = '🎓';
                     $displayNameEn = 'TRƯỜNG HỌC SỐ';
