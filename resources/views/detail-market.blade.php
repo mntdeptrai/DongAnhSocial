@@ -1707,7 +1707,7 @@
                                 <div style="display: flex; flex-direction: column; gap: 2px;">
                                     @foreach($stallProducts as $prod)
                                         @php
-                                            $itemImg = $prod->image_url ?: $prod->image_path;
+                                            $itemImg = $prod->image_url ?: ($prod->image_path ?: '/images/stalls/food.png');
                                             if (!empty($itemImg)) {
                                                 $trimmedItemImg = trim($itemImg);
                                                 if (str_starts_with($trimmedItemImg, '[')) {
@@ -1718,22 +1718,16 @@
                                                 }
                                                 if (str_starts_with($trimmedItemImg, 'http://') || str_starts_with($trimmedItemImg, 'https://')) {
                                                     $itemImgUrl = $trimmedItemImg;
-                                                } elseif (file_exists(public_path(ltrim($trimmedItemImg, '/')))) {
-                                                    $itemImgUrl = asset(ltrim($trimmedItemImg, '/'));
                                                 } else {
-                                                    $itemImgUrl = asset($trimmedItemImg);
+                                                    $itemImgUrl = asset(ltrim($trimmedItemImg, '/'));
                                                 }
                                             } else {
-                                                $itemImgUrl = null;
+                                                $itemImgUrl = asset('/images/stalls/food.png');
                                             }
                                         @endphp
                                         <div class="product-item-gov" style="cursor: pointer; transition: all 0.2s; border-radius: 10px; padding: 6px 10px; margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between; gap: 10px;" onmouseover="this.style.background='rgba(14, 165, 233, 0.08)';" onmouseout="this.style.background='transparent';" onclick="window.location.href='{{ route('market.stall.show', ['marketSlug' => $eatery->slug, 'stallSlug' => $safeStallSlug]) }}'">
                                             <div style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;">
-                                                @if(!empty($itemImgUrl))
-                                                    <img src="{{ $itemImgUrl }}" alt="{{ $prod->name }}" style="width: 38px; height: 38px; object-fit: cover; border-radius: 8px; border: 1px solid #e2e8f0; flex-shrink: 0;">
-                                                @else
-                                                    <span style="font-size: 1.1rem; flex-shrink: 0; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; background: #f1f5f9; border-radius: 8px;">🌾</span>
-                                                @endif
+                                                <img src="{{ $itemImgUrl }}" alt="{{ $prod->name }}" style="width: 38px; height: 38px; object-fit: cover; border-radius: 8px; border: 1px solid #e2e8f0; flex-shrink: 0;">
                                                 <span class="product-name-txt" style="font-weight: 700; color: var(--text-main); font-size: 0.88rem;">{{ $prod->name }}</span>
                                             </div>
                                             <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">

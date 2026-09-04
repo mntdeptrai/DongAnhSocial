@@ -1082,20 +1082,18 @@
                             $starRating = $product->star_rating;
                         @endphp
                         @php
-                            $prodImgUrl = $product->image_url;
+                            $prodImgUrl = $product->image_url ?: ($product->image_path ?: '/images/stalls/food.png');
                             if (!empty($prodImgUrl)) {
                                 if (!str_starts_with($prodImgUrl, 'http://') && !str_starts_with($prodImgUrl, 'https://')) {
-                                    $prodImgUrl = asset($prodImgUrl);
+                                    $prodImgUrl = asset(ltrim($prodImgUrl, '/'));
                                 }
+                            } else {
+                                $prodImgUrl = asset('/images/stalls/food.png');
                             }
                         @endphp
                         <div class="product-card" data-name="{{ mb_strtolower($product->name) }}" data-category="{{ $pCat }}" style="padding: 14px 16px; align-items: flex-start;">
                             {{-- Thumbnail --}}
-                            @if(!empty($prodImgUrl))
-                                <img src="{{ $prodImgUrl }}" alt="{{ $product->name }}" class="product-img" style="width: 76px; height: 76px; cursor: pointer;" onclick="openPublicDetailModal({{ json_encode($product->name) }}, {{ intval($product->price) }}, {{ json_encode($product->unit ?: '') }}, {{ json_encode($product->description ?: '') }}, {{ json_encode($product->all_images) }}, {{ json_encode($starRating ?: '') }}, {{ $product->id }})">
-                            @else
-                                <div class="product-img-placeholder" style="width: 76px; height: 76px; font-size: 1.8rem; cursor: pointer;" onclick="openPublicDetailModal({{ json_encode($product->name) }}, {{ intval($product->price) }}, {{ json_encode($product->unit ?: '') }}, {{ json_encode($product->description ?: '') }}, {{ json_encode($product->all_images) }}, {{ json_encode($starRating ?: '') }}, {{ $product->id }})">{{ $prodEmoji }}</div>
-                            @endif
+                            <img src="{{ $prodImgUrl }}" alt="{{ $product->name }}" class="product-img" style="width: 76px; height: 76px; border-radius: 12px; object-fit: cover; border: 1px solid #cbd5e1; cursor: pointer;" onclick="openPublicDetailModal({{ json_encode($product->name) }}, {{ intval($product->price) }}, {{ json_encode($product->unit ?: '') }}, {{ json_encode($product->description ?: '') }}, {{ json_encode($product->all_images) }}, {{ json_encode($starRating ?: '') }}, {{ $product->id }})">
 
                             {{-- Info --}}
                             <div style="flex: 1; min-width: 0; padding-right: 10px;">

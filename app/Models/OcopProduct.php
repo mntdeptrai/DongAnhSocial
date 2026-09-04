@@ -43,14 +43,18 @@ class OcopProduct extends Model
 
     public function getAllImagesAttribute(): array
     {
-        if (empty($this->image_path)) return [];
+        if (empty($this->image_path)) return ['/images/stalls/food.png'];
         $trimmed = trim($this->image_path);
         if (str_starts_with($trimmed, '[')) {
             $decoded = json_decode($trimmed, true);
-            if (is_array($decoded)) return array_values(array_filter($decoded));
+            if (is_array($decoded)) {
+                $filtered = array_values(array_filter($decoded));
+                if (!empty($filtered)) return $filtered;
+            }
         }
         if (str_contains($trimmed, ',')) {
-            return array_values(array_filter(array_map('trim', explode(',', $trimmed))));
+            $filtered = array_values(array_filter(array_map('trim', explode(',', $trimmed))));
+            if (!empty($filtered)) return $filtered;
         }
         return [$trimmed];
     }
@@ -58,7 +62,7 @@ class OcopProduct extends Model
     public function getImageUrlAttribute(): ?string
     {
         $all = $this->all_images;
-        return !empty($all) ? $all[0] : null;
+        return !empty($all) ? $all[0] : '/images/stalls/food.png';
     }
 }
 
