@@ -13,7 +13,7 @@
     $currentSellerName = $p->seller_name ?? $sellerName;
     $currentSellerPhone = $p->seller_phone ?? $sellerPhone;
     $currentStallName = $p->stall_name ?? $stallName;
-    $currentStallImage = $p->image_path ?? ($user->avatar ?? '');
+    $currentStallImage = $p->stall_image ?? '';
     
     // Parse description for origin & attp
     $rawDesc = $p->description ?? '';

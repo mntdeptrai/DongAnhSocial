@@ -432,11 +432,18 @@ class VendorController extends Controller
             $description = $description ? ($originText . '. ' . $description) : $originText;
         }
 
+        $existingStallImg = DB::connection('mysql_market')->table('ocop_products')
+            ->where('eatery_id', $context['eateryId'])
+            ->where('stall_name', $context['stallName'])
+            ->whereNotNull('stall_image')
+            ->value('stall_image');
+
         DB::connection('mysql_market')->table('ocop_products')->insert([
             'eatery_id' => $context['eateryId'],
             'stall_name' => $context['stallName'],
             'seller_name' => $context['sellerName'],
             'seller_phone' => $context['sellerPhone'],
+            'stall_image' => $existingStallImg ?: null,
             'name' => $request->name,
             'price' => $numericPrice,
             'unit' => $request->unit ?: 'kg',
@@ -836,7 +843,9 @@ class VendorController extends Controller
             'updated_at'   => now(),
         ];
         if ($stallImagePath) {
-            $ocopData['image_path'] = $stallImagePath;
+            try {
+                $ocopData['stall_image'] = $stallImagePath;
+            } catch (\Throwable $e) {}
         }
 
         // Tạo chuỗi mô tả kết hợp đầy đủ Nguồn gốc & ATTP

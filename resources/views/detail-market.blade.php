@@ -1587,8 +1587,8 @@
                      
                     <div class="stall-card-gov">
                         @php
-                            // Ảnh 1: Ảnh đại diện cho sạp (Gian hàng cover banner)
-                            $stallCustomImg = $first->image_url ?: $first->image_path;
+                            // Ảnh 1: Ảnh đại diện cho sạp (Gian hàng cover banner - lưu ở cột stall_image)
+                            $stallCustomImg = $stallProducts->pluck('stall_image')->filter()->first();
                             if (!empty($stallCustomImg)) {
                                 $trimmedCover = trim($stallCustomImg);
                                 if (str_starts_with($trimmedCover, '[')) {
