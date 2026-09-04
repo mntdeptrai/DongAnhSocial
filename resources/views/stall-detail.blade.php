@@ -810,15 +810,42 @@
 
     {{-- ========================= HERO HEADER ========================= --}}
     <div class="stall-hero">
-        <div class="stall-avatar">
-            @php
-                $emojiMap = [
-                    'Ăn uống' => '🍜', 'Rau củ' => '🥦', 'Thịt tươi' => '🥩',
-                    'Thực phẩm khô' => '🌾', 'Khác' => '🏪'
-                ];
-                $stallEmoji = $emojiMap[$category] ?? '🏪';
-            @endphp
-            {{ $stallEmoji }}
+        @php
+            $stallCustomImg = $stallProducts->pluck('stall_image')->filter()->first();
+            $stallImgUrl = null;
+            if (!empty($stallCustomImg)) {
+                $trimmedCover = trim($stallCustomImg);
+                if (str_starts_with($trimmedCover, 'http://') || str_starts_with($trimmedCover, 'https://')) {
+                    $stallImgUrl = $trimmedCover;
+                } else {
+                    $stallImgUrl = asset(ltrim($trimmedCover, '/'));
+                }
+            }
+
+            $ownerAvatarUrl = null;
+            if (!empty($sellerUser?->avatar)) {
+                $trimmedAvt = trim($sellerUser->avatar);
+                if (str_starts_with($trimmedAvt, 'http://') || str_starts_with($trimmedAvt, 'https://')) {
+                    $ownerAvatarUrl = $trimmedAvt;
+                } else {
+                    $ownerAvatarUrl = asset(ltrim($trimmedAvt, '/'));
+                }
+            }
+
+            $emojiMap = [
+                'Ăn uống' => '🍜', 'Rau củ' => '🥦', 'Thịt tươi' => '🥩',
+                'Thực phẩm khô' => '🌾', 'Khác' => '🏪'
+            ];
+            $stallEmoji = $emojiMap[$category] ?? '🏪';
+        @endphp
+
+        <div class="stall-avatar" style="{{ $stallImgUrl ? 'padding: 0; overflow: hidden; cursor: pointer;' : '' }}"
+             @if($stallImgUrl) onclick="openCustomImageLightbox('{{ $stallImgUrl }}')" title="Bấm để xem ảnh thực tế của Gian hàng" @endif>
+            @if($stallImgUrl)
+                <img src="{{ $stallImgUrl }}" alt="Ảnh Gian Hàng {{ $stallName }}" style="width: 100%; height: 100%; object-fit: cover;">
+            @else
+                {{ $stallEmoji }}
+            @endif
         </div>
 
         <div class="stall-hero-info">
@@ -960,6 +987,61 @@
                         </div>
                     </div>
                     @endif
+                    {{-- Hình ảnh đại diện Gian hàng & Chủ hộ --}}
+                    <div class="info-row" style="align-items: flex-start;">
+                        <div class="info-icon" style="background: rgba(14, 165, 233, 0.1); color: var(--primary);">
+                            <i class="bi bi-images"></i>
+                        </div>
+                        <div style="flex: 1;">
+                            <span class="info-label">Hình ảnh đại diện Gian hàng & Chủ hộ</span>
+                            <div style="display: flex; gap: 12px; margin-top: 10px; flex-wrap: wrap;">
+                                {{-- Ảnh đại diện Gian hàng (Sạp) --}}
+                                <div style="flex: 1; min-width: 130px; background: var(--bg-card); border: 1px solid var(--border-glow); border-radius: 12px; padding: 10px; display: flex; flex-direction: column; align-items: center; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
+                                    <div style="font-size: 0.72rem; font-weight: 800; color: var(--text-muted); margin-bottom: 6px; display: flex; align-items: center; gap: 4px;">
+                                        <span>🏪</span> Ảnh Sạp Gian Hàng
+                                    </div>
+                                    @if($stallImgUrl)
+                                        <div onclick="openCustomImageLightbox('{{ $stallImgUrl }}')" 
+                                             style="width: 100%; height: 110px; border-radius: 8px; overflow: hidden; position: relative; cursor: pointer; border: 1px solid rgba(0,0,0,0.1);"
+                                             title="Bấm để xem ảnh phóng to">
+                                            <img src="{{ $stallImgUrl }}" alt="Ảnh sạp gian hàng" style="width: 100%; height: 100%; object-fit: cover;">
+                                            <div style="position: absolute; bottom: 4px; right: 4px; background: rgba(0,0,0,0.65); color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 0.65rem; font-weight: 700; backdrop-filter: blur(4px);">
+                                                <i class="bi bi-zoom-in"></i> Phóng to
+                                            </div>
+                                        </div>
+                                    @else
+                                        <div style="width: 100%; height: 110px; border-radius: 8px; background: rgba(0,0,0,0.03); border: 1px dashed var(--border-glow); display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-muted); padding: 6px;">
+                                            <span style="font-size: 1.8rem;">{{ $stallEmoji }}</span>
+                                            <span style="font-size: 0.68rem; margin-top: 4px; color: var(--text-muted);">Chưa tải ảnh sạp thực tế</span>
+                                        </div>
+                                    @endif
+                                </div>
+
+                                {{-- Ảnh đại diện Chủ hộ / Tiểu thương --}}
+                                @if(!$isCultureMarket)
+                                <div style="flex: 1; min-width: 130px; background: var(--bg-card); border: 1px solid var(--border-glow); border-radius: 12px; padding: 10px; display: flex; flex-direction: column; align-items: center; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
+                                    <div style="font-size: 0.72rem; font-weight: 800; color: var(--text-muted); margin-bottom: 6px; display: flex; align-items: center; gap: 4px;">
+                                        <span>👤</span> Avatar Chủ Hộ
+                                    </div>
+                                    @if($ownerAvatarUrl)
+                                        <div onclick="openCustomImageLightbox('{{ $ownerAvatarUrl }}')" 
+                                             style="width: 80px; height: 80px; border-radius: 50%; overflow: hidden; position: relative; cursor: pointer; border: 2.5px solid var(--primary); box-shadow: 0 4px 12px rgba(14,165,233,0.25); margin: 12px auto;"
+                                             title="Bấm để xem ảnh phóng to">
+                                            <img src="{{ $ownerAvatarUrl }}" alt="Avatar chủ hộ" style="width: 100%; height: 100%; object-fit: cover;">
+                                        </div>
+                                    @else
+                                        @php
+                                            $firstChar = mb_substr(trim($sellerName ?: 'T'), 0, 1);
+                                        @endphp
+                                        <div style="width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, #0ea5e9, #06b6d4); color: #fff; font-size: 1.8rem; font-weight: 900; display: flex; align-items: center; justify-content: center; margin: 12px auto; box-shadow: 0 4px 12px rgba(14,165,233,0.25);">
+                                            {{ mb_strtoupper($firstChar) }}
+                                        </div>
+                                    @endif
+                                </div>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
 
                     {{-- Chia sẻ gian hàng --}}
                     <div style="margin-top: 14px; padding-top: 14px; border-top: 1px dashed var(--border-glow);">
@@ -1806,6 +1888,18 @@ let lightboxIndex = 0;
 function openImageLightbox(index) {
     if (!modalImages || modalImages.length === 0) return;
     lightboxIndex = typeof index === 'number' ? index : currentImgIndex;
+    renderLightboxContent();
+    const modal = document.getElementById('pub-img-lightbox-modal');
+    if (modal) {
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+function openCustomImageLightbox(url) {
+    if (!url) return;
+    modalImages = [url];
+    lightboxIndex = 0;
     renderLightboxContent();
     const modal = document.getElementById('pub-img-lightbox-modal');
     if (modal) {
