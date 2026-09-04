@@ -15,6 +15,7 @@ use App\Events\LiveStreamEnded;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
 
 use App\Events\LiveStreamProductsUpdated;
 
@@ -26,16 +27,19 @@ class LiveStreamController extends Controller
     protected function formatProduct($product, bool $isPinned = false): array
     {
         return [
-            'id'          => $product->id,
-            'name'        => $product->name,
-            'price'       => $product->price ? number_format($product->price) . 'đ' : 'Liên hệ',
-            'raw_price'   => (float)$product->price,
-            'image'       => $product->image_path ? (str_starts_with($product->image_path, 'http') ? $product->image_path : asset($product->image_path)) : null,
-            'image_url'   => $product->image_path ? (str_starts_with($product->image_path, 'http') ? $product->image_path : asset($product->image_path)) : null,
-            'star_rating' => $product->star_rating ?? '4 sao',
-            'detail_url'  => route('ocop.product.show', $product->slug ?: $product->id),
-            'unit'        => $product->unit ?? 'sản phẩm',
-            'is_pinned'   => $isPinned,
+            'id'             => $product->id,
+            'name'           => $product->name,
+            'price'          => $product->price ? number_format($product->price) . 'đ' : 'Liên hệ',
+            'raw_price'      => (float)$product->price,
+            'image'          => $product->image_path ? (str_starts_with($product->image_path, 'http') ? $product->image_path : asset($product->image_path)) : '/images/ocop-placeholder.png',
+            'image_url'      => $product->image_path ? (str_starts_with($product->image_path, 'http') ? $product->image_path : asset($product->image_path)) : '/images/ocop-placeholder.png',
+            'star_rating'    => $product->star_rating ?? '4 sao',
+            'detail_url'     => route('ocop.product.show', $product->slug ?: $product->id),
+            'unit'           => $product->unit ?? 'sản phẩm',
+            'is_pinned'      => $isPinned,
+            'description'    => $product->description ?? 'Sản phẩm OCOP chất lượng cao được tuyển chọn và kiểm định chuẩn Đông Anh.',
+            'story'          => $product->story ?? null,
+            'artisans'       => $product->artisans ?? null,
         ];
     }
 
@@ -46,6 +50,58 @@ class LiveStreamController extends Controller
     protected function getCurrentUser()
     {
         return Auth::user() ?? (session('user_id') ? User::find(session('user_id')) : null);
+    }
+
+    /**
+     * Tìm phiên livestream theo Code định danh (hoặc ID tương thích ngược)
+     */
+    protected function findStream($identifier, array $with = [])
+    {
+        if (empty($with)) {
+            $cached = Cache::get('ls_obj_' . $identifier);
+            if ($cached instanceof LiveStream) {
+                return $cached;
+            }
+        }
+
+        $query = LiveStream::query();
+        if (!empty($with)) {
+            $query->with($with);
+        }
+
+        $stream = null;
+
+        // 1. Thử tìm theo 'code' nếu có
+        try {
+            $stream = (clone $query)->where('code', $identifier)->first();
+        } catch (\Throwable $e) {}
+
+        // 2. Thử tìm theo id số (nếu là số)
+        if (!$stream && is_numeric($identifier)) {
+            $stream = (clone $query)->where('id', $identifier)->first();
+        }
+
+        // 3. Nếu là dạng 'live-123'
+        if (!$stream && is_string($identifier) && str_starts_with($identifier, 'live-')) {
+            $possibleId = substr($identifier, 5);
+            if (is_numeric($possibleId)) {
+                $stream = (clone $query)->where('id', $possibleId)->first();
+            }
+        }
+
+        if (!$stream) {
+            $stream = $query->where('id', $identifier)->firstOrFail();
+        }
+
+        if (empty($with) && $stream) {
+            Cache::put('ls_obj_' . $identifier, $stream, 30);
+            Cache::put('ls_obj_' . $stream->id, $stream, 30);
+            if (!empty($stream->code)) {
+                Cache::put('ls_obj_' . $stream->code, $stream, 30);
+            }
+        }
+
+        return $stream;
     }
 
     /**
@@ -117,13 +173,36 @@ class LiveStreamController extends Controller
             'product_ids'       => 'nullable|array',
             'product_ids.*'     => 'integer',
             'cover_image'       => 'nullable|image|max:5120',
+            'youtube_url'       => 'nullable|string|max:500',
+            'stream_source'     => 'nullable|string|in:youtube_auto,youtube,webrtc,obs',
         ]);
 
+        $streamSource = $request->input('stream_source', 'youtube_auto');
+        $youtubeVideoId = null;
+        $createdYtEvent = null;
+
+        // 1. Nếu chọn tự động tạo YouTube Live (1-Click từ website)
+        if ($streamSource === 'youtube_auto') {
+            if (\App\Services\YouTubeService::isConfigured()) {
+                $createdYtEvent = \App\Services\YouTubeService::createLiveEvent(
+                    $request->title,
+                    $request->description ?? 'Livestream bán hàng OCOP & Giao lưu cộng đồng Đông Anh',
+                    'public'
+                );
+                if ($createdYtEvent && !empty($createdYtEvent['video_id'])) {
+                    $youtubeVideoId = $createdYtEvent['video_id'];
+                }
+            }
+        } elseif ($request->filled('youtube_url')) {
+            $youtubeVideoId = \App\Services\YouTubeService::extractVideoId($request->input('youtube_url'));
+        }
 
         $coverImagePath = null;
         if ($request->hasFile('cover_image')) {
             $coverImagePath = $request->file('cover_image')->store('livestreams', 'public');
             $coverImagePath = '/storage/' . $coverImagePath;
+        } elseif ($youtubeVideoId) {
+            $coverImagePath = \App\Services\YouTubeService::getThumbnailUrl($youtubeVideoId, 'hqdefault');
         }
 
         $liveStream = LiveStream::create([
@@ -133,6 +212,7 @@ class LiveStreamController extends Controller
             'category'          => $request->category,
             'pinned_product_id' => $request->pinned_product_id,
             'cover_image'       => $coverImagePath,
+            'youtube_video_id'  => $youtubeVideoId,
             'status'            => 'live',
             'viewer_count'      => 1,
             'peak_viewers'      => 1,
@@ -157,7 +237,7 @@ class LiveStreamController extends Controller
             $liveStream->products()->sync($attachData);
         }
 
-        return redirect()->route('livestream.host', $liveStream->id);
+        return redirect()->route('livestream.host', $liveStream->code_or_id);
     }
 
     /**
@@ -170,11 +250,11 @@ class LiveStreamController extends Controller
             return redirect()->route('login')->with('error', 'Vui lòng đăng nhập.');
         }
 
-        $stream = LiveStream::with(['user', 'pinnedProduct', 'products', 'comments.user'])->findOrFail($id);
+        $stream = $this->findStream($id, ['user', 'pinnedProduct', 'products', 'comments.user']);
 
         // Chỉ chủ phòng mới được vào Studio phát sóng
         if ($stream->user_id !== $currentUser->id) {
-            return redirect()->route('livestream.show', $id);
+            return redirect()->route('livestream.show', $stream->code_or_id);
         }
 
         $ocopProducts = $this->getAvailableOcopProducts();
@@ -190,16 +270,16 @@ class LiveStreamController extends Controller
     public function show($id)
     {
         $currentUser = $this->getCurrentUser();
-        $stream = LiveStream::with(['user', 'pinnedProduct', 'products', 'comments.user'])->findOrFail($id);
+        $stream = $this->findStream($id, ['user', 'pinnedProduct', 'products', 'comments.user']);
 
         // Nếu người xem chính là chủ phòng và đang live thì chuyển sang Studio
         if ($currentUser && $stream->user_id === $currentUser->id && $stream->status === 'live') {
-            return redirect()->route('livestream.host', $id);
+            return redirect()->route('livestream.host', $stream->code_or_id);
         }
 
         $relatedStreams = LiveStream::with('user')
             ->where('status', 'live')
-            ->where('id', '!=', $id)
+            ->where('id', '!=', $stream->id)
             ->limit(4)
             ->get();
 
@@ -220,7 +300,7 @@ class LiveStreamController extends Controller
             'message' => 'required|string|max:500',
         ]);
 
-        $stream = LiveStream::findOrFail($id);
+        $stream = $this->findStream($id);
 
         $comment = LiveStreamComment::create([
             'live_stream_id' => $stream->id,
@@ -228,7 +308,7 @@ class LiveStreamController extends Controller
             'message'        => trim($request->message),
         ]);
 
-        $userAvatar = $currentUser->avatar ? (str_starts_with($currentUser->avatar, 'http') ? $currentUser->avatar : asset($currentUser->avatar)) : 'https://ui-avatars.com/api/?name=' . urlencode($currentUser->name) . '&background=0ea5e9&color=fff';
+        $userAvatar = $currentUser->avatar_url ?: ('https://ui-avatars.com/api/?name=' . urlencode($currentUser->name) . '&background=0ea5e9&color=fff');
 
         try {
             broadcast(new LiveStreamCommentSent(
@@ -239,7 +319,7 @@ class LiveStreamController extends Controller
                 userAvatar: $userAvatar,
                 message: $comment->message,
                 createdAt: $comment->created_at->format('H:i')
-            ))->toOthers();
+            ));
         } catch (\Throwable $e) {
             Log::warning('LiveStreamCommentSent broadcast warning: ' . $e->getMessage());
         }
@@ -261,7 +341,7 @@ class LiveStreamController extends Controller
      */
     public function sendReaction(Request $request, $id)
     {
-        $stream = LiveStream::findOrFail($id);
+        $stream = $this->findStream($id);
         $reactionType = $request->input('type', 'heart');
 
         $stream->increment('likes_count');
@@ -288,7 +368,7 @@ class LiveStreamController extends Controller
      */
     public function getProducts($id)
     {
-        $stream = LiveStream::with('products')->findOrFail($id);
+        $stream = $this->findStream($id, ['products']);
         $pinnedId = $stream->pinned_product_id;
 
         $products = $stream->products->map(function ($p) use ($pinnedId) {
@@ -310,7 +390,7 @@ class LiveStreamController extends Controller
     public function addProduct(Request $request, $id)
     {
         $currentUser = $this->getCurrentUser();
-        $stream = LiveStream::findOrFail($id);
+        $stream = $this->findStream($id);
 
         if (!$currentUser || ($stream->user_id !== $currentUser->id && $currentUser->role !== 'admin')) {
             return response()->json(['status' => 'error', 'message' => 'Không có quyền thực hiện.'], 403);
@@ -363,7 +443,7 @@ class LiveStreamController extends Controller
     public function removeProduct(Request $request, $id, $productId)
     {
         $currentUser = $this->getCurrentUser();
-        $stream = LiveStream::findOrFail($id);
+        $stream = $this->findStream($id);
 
         if (!$currentUser || ($stream->user_id !== $currentUser->id && $currentUser->role !== 'admin')) {
             return response()->json(['status' => 'error', 'message' => 'Không có quyền thực hiện.'], 403);
@@ -410,7 +490,7 @@ class LiveStreamController extends Controller
     public function pinProduct(Request $request, $id)
     {
         $currentUser = $this->getCurrentUser();
-        $stream = LiveStream::findOrFail($id);
+        $stream = $this->findStream($id);
 
         if (!$currentUser || ($stream->user_id !== $currentUser->id && $currentUser->role !== 'admin')) {
             return response()->json(['status' => 'error', 'message' => 'Không có quyền thực hiện.'], 403);
@@ -489,11 +569,27 @@ class LiveStreamController extends Controller
         $request->validate([
             'sender_session_id' => 'required|string',
             'target_session_id' => 'required|string',
-            'signal_type'       => 'required|string|in:viewer_join,host_offer,viewer_answer,ice_candidate,host_ready',
+            'signal_type'       => 'required|string|in:viewer_join,host_offer,viewer_answer,ice_candidate,ice_candidates_batch,host_ready',
             'signal_data'       => 'nullable|string',
         ]);
 
-        $stream = LiveStream::findOrFail($id);
+        $stream = $this->findStream($id);
+
+        // Lưu tín hiệu vào hàng đợi Cache để làm cơ chế dự phòng (HTTP Fallback)
+        $cacheKey = 'live_stream_signals_' . $stream->id;
+        $signals = Cache::get($cacheKey, []);
+        $signals[] = [
+            'live_stream_id'    => $stream->id,
+            'sender_session_id' => $request->sender_session_id,
+            'target_session_id' => $request->target_session_id,
+            'signal_type'       => $request->signal_type,
+            'signal_data'       => $request->signal_data,
+            'timestamp'         => microtime(true),
+        ];
+        if (count($signals) > 80) {
+            $signals = array_slice($signals, -80);
+        }
+        Cache::put($cacheKey, $signals, 120);
 
         try {
             broadcast(new LiveStreamSignal(
@@ -502,7 +598,7 @@ class LiveStreamController extends Controller
                 targetSessionId: $request->target_session_id,
                 signalType: $request->signal_type,
                 signalData: $request->signal_data
-            ))->toOthers();
+            ));
         } catch (\Throwable $e) {
             Log::warning('LiveStreamSignal broadcast warning: ' . $e->getMessage());
         }
@@ -511,11 +607,45 @@ class LiveStreamController extends Controller
     }
 
     /**
+     * Lấy danh sách tín hiệu WebRTC qua HTTP Polling (Dự phòng khi WebSocket không khả dụng)
+     */
+    public function getSignals(Request $request, $id)
+    {
+        $stream = $this->findStream($id);
+        $mySessionId = $request->query('session_id');
+        $isHost = $request->query('is_host') == '1';
+        $since = (float)$request->query('since', 0);
+
+        $cacheKey = 'live_stream_signals_' . $stream->id;
+        $signals = Cache::get($cacheKey, []);
+
+        $results = [];
+        foreach ($signals as $sig) {
+            if ($sig['timestamp'] <= $since) {
+                continue;
+            }
+            if ($sig['sender_session_id'] === $mySessionId) {
+                continue;
+            }
+            $target = $sig['target_session_id'];
+            if ($target === $mySessionId || $target === 'all' || ($isHost && $target === 'host')) {
+                $results[] = $sig;
+            }
+        }
+
+        return response()->json([
+            'status'  => 'success',
+            'signals' => $results,
+            'now'     => microtime(true),
+        ]);
+    }
+
+    /**
      * Cập nhật số lượng người xem đang online
      */
     public function updateViewerCount(Request $request, $id)
     {
-        $stream = LiveStream::findOrFail($id);
+        $stream = $this->findStream($id);
         $count = max(1, (int)$request->input('count', 1));
 
         $stream->viewer_count = $count;
@@ -532,12 +662,45 @@ class LiveStreamController extends Controller
     }
 
     /**
+     * Cập nhật luồng YouTube Live cho phiên phát trực tiếp (0% CPU Server)
+     */
+    public function updateYouTubeLive(Request $request, $id)
+    {
+        $currentUser = $this->getCurrentUser();
+        $stream = $this->findStream($id);
+
+        if (!$currentUser || ($stream->user_id !== $currentUser->id && $currentUser->role !== 'admin')) {
+            return response()->json(['status' => 'error', 'message' => 'Không có quyền thực hiện.'], 403);
+        }
+
+        $request->validate([
+            'youtube_url' => 'nullable|string|max:500',
+        ]);
+
+        $url = $request->input('youtube_url');
+        $videoId = !empty($url) ? \App\Services\YouTubeService::extractVideoId($url) : null;
+
+        $stream->youtube_video_id = $videoId;
+        if ($videoId && empty($stream->cover_image)) {
+            $stream->cover_image = \App\Services\YouTubeService::getThumbnailUrl($videoId, 'hqdefault');
+        }
+        $stream->save();
+
+        return response()->json([
+            'status'           => 'success',
+            'message'          => $videoId ? 'Đã kích hoạt nguồn phát YouTube Live thành công!' : 'Đã tắt chế độ YouTube Live.',
+            'youtube_video_id' => $videoId,
+            'embed_url'        => $videoId ? \App\Services\YouTubeService::getEmbedUrl($videoId) : null,
+        ]);
+    }
+
+    /**
      * Kết thúc phiên phát trực tiếp
      */
     public function endStream(Request $request, $id)
     {
         $currentUser = $this->getCurrentUser();
-        $stream = LiveStream::findOrFail($id);
+        $stream = $this->findStream($id);
 
         if (!$currentUser || ($stream->user_id !== $currentUser->id && $currentUser->role !== 'admin')) {
             return response()->json(['status' => 'error', 'message' => 'Không có quyền thực hiện.'], 403);
@@ -554,7 +717,7 @@ class LiveStreamController extends Controller
                 duration: $stream->duration,
                 peakViewers: (int)$stream->peak_viewers,
                 totalLikes: (int)$stream->likes_count
-            ))->toOthers();
+            ));
         } catch (\Throwable $e) {
             Log::warning('LiveStreamEnded broadcast warning: ' . $e->getMessage());
         }
@@ -568,12 +731,69 @@ class LiveStreamController extends Controller
     }
 
     /**
+     * Tải lên video đã ghi hình của phiên Live và đồng bộ lên Kênh YouTube
+     */
+    public function uploadRecording(Request $request, $id)
+    {
+        $currentUser = $this->getCurrentUser();
+        $stream = $this->findStream($id);
+
+        if (!$currentUser || ($stream->user_id !== $currentUser->id && $currentUser->role !== 'admin')) {
+            return response()->json(['status' => 'error', 'message' => 'Không có quyền thực hiện.'], 403);
+        }
+
+        $request->validate([
+            'recording' => 'required|file|max:512000', // max 500MB
+        ]);
+
+        $file = $request->file('recording');
+        $storedPath = $file->store('livestream_recordings', 'public');
+        $localUrl = '/storage/' . $storedPath;
+
+        $youtubeVideoId = null;
+        $youtubeUrl = null;
+
+        // Nếu YouTube API đã kết nối OAuth, tự động upload lên YouTube
+        if (\App\Services\YouTubeService::isConfigured()) {
+            try {
+                $ytResult = \App\Services\YouTubeService::uploadVideo(
+                    video: $file,
+                    title: '🔴 Livestream: ' . $stream->title . ' - Đông Anh Discovery',
+                    description: "Phiên phát trực tiếp tại Đông Anh Discovery\n\nChủ phòng: " . ($stream->user ? $stream->user->name : 'Streamer') . "\nChủ đề: " . $stream->category . "\nThời gian: " . ($stream->started_at ? $stream->started_at->format('d/m/Y H:i') : now()->format('d/m/Y H:i')) . "\n\n" . ($stream->description ?: ''),
+                    privacy: 'unlisted',
+                    tags: ['Đông Anh', 'Livestream', 'OCOP', 'DongAnh Discovery']
+                );
+
+                if ($ytResult && !empty($ytResult['id'])) {
+                    $youtubeVideoId = $ytResult['id'];
+                    $youtubeUrl = $ytResult['url'];
+                }
+            } catch (\Throwable $e) {
+                Log::warning('YouTube auto-upload failed for stream #' . $stream->id . ': ' . $e->getMessage());
+            }
+        }
+
+        $stream->recording_url = $youtubeUrl ?: $localUrl;
+        if ($youtubeVideoId) {
+            $stream->youtube_video_id = $youtubeVideoId;
+        }
+        $stream->save();
+
+        return response()->json([
+            'status'           => 'success',
+            'recording_url'    => $stream->recording_url,
+            'youtube_video_id' => $stream->youtube_video_id,
+            'is_youtube'       => !empty($stream->youtube_video_id),
+        ]);
+    }
+
+    /**
      * Xóa bản ghi phiên Livestream
      */
     public function destroy($id)
     {
         $currentUser = $this->getCurrentUser();
-        $stream = LiveStream::findOrFail($id);
+        $stream = $this->findStream($id);
 
         if (!$currentUser || ($stream->user_id !== $currentUser->id && $currentUser->role !== 'admin')) {
             return response()->json(['status' => 'error', 'message' => 'Không có quyền thực hiện.'], 403);

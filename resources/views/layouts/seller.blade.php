@@ -387,7 +387,7 @@
         if (e.target === this) closeLogoutConfirmModal();
     });
     </script>
-    <script src="{{ asset('js/seller-notifications.js') }}?v={{ time() }}"></script>
+    <script defer src="{{ asset('js/seller-notifications.js') }}?v={{ file_exists(public_path('js/seller-notifications.js')) ? filemtime(public_path('js/seller-notifications.js')) : '1.0.0' }}"></script>
     <style>
     @keyframes pulse-badge {
         0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6); }

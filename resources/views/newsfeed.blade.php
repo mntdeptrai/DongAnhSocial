@@ -466,38 +466,6 @@
                     </div>
                 @endforeach
             @endif
-
-            <!-- Featured Story 1: Co Loa -->
-            <div class="nf-story-card story-item-card" style="background-image: url('https://images.unsplash.com/photo-1596402184320-417e7178b2cd?auto=format&fit=crop&w=300&q=80');" onclick="openStoryViewer({{ $groupCardIdx++ }})">
-                <div class="nf-story-overlay">
-                    <img src="https://media.xadonganh.com/eateries/1780392421_hfPQH7HB.png" class="nf-story-avatar" alt="Cổ Loa" onerror="this.src='https://ui-avatars.com/api/?name=Co+Loa&background=0ea5e9&color=fff'">
-                    <span class="nf-story-name">Lễ hội Cổ Loa ⛩️</span>
-                </div>
-            </div>
-
-            <!-- Featured Story 2: Truong Mua Mua -->
-            <div class="nf-story-card story-item-card" style="background-image: url('https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=300&q=80');" onclick="openStoryViewer({{ $groupCardIdx++ }})">
-                <div class="nf-story-overlay">
-                    <img src="https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=150&q=80" class="nf-story-avatar" alt="Trường học" onerror="this.src='https://ui-avatars.com/api/?name=School&background=10b981&color=fff'">
-                    <span class="nf-story-name">Chào năm học mới 🏫</span>
-                </div>
-            </div>
-
-            <!-- Featured Story 3: Food Tour -->
-            <div class="nf-story-card story-item-card" style="background-image: url('https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=300&q=80');" onclick="openStoryViewer({{ $groupCardIdx++ }})">
-                <div class="nf-story-overlay">
-                    <img src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=150&q=80" class="nf-story-avatar" alt="Food Tour" onerror="this.src='https://ui-avatars.com/api/?name=Food&background=f59e0b&color=fff'">
-                    <span class="nf-story-name">Ẩm thực Đông Anh 🍲</span>
-                </div>
-            </div>
-
-            <!-- Featured Story 4: Checkin -->
-            <div class="nf-story-card story-item-card" style="background-image: url('https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=300&q=80');" onclick="openStoryViewer({{ $groupCardIdx++ }})">
-                <div class="nf-story-overlay">
-                    <img src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=150&q=80" class="nf-story-avatar" alt="Checkin" onerror="this.src='https://ui-avatars.com/api/?name=Checkin&background=ec4899&color=fff'">
-                    <span class="nf-story-name">Góc Check-in Hot 🎈</span>
-                </div>
-            </div>
         </div>
 
         <!-- Mobile Explore Menu Bar (Displayed only on Mobile Screens) -->
@@ -630,7 +598,18 @@
                     $isVerifiedAuthor = ($postUser && ($postUser->is_verified || in_array($postUser->role, ['admin', 'principal', 'seller']))) || ($p instanceof \App\Models\EducationProgram);
                     $isAdminAuthor = $postUser && ($postUser->role === 'admin');
 
-                    $imgs = method_exists($p, 'getAllImagesAttribute') ? $p->all_images : ($p->image_path ? [$p->image_path] : []);
+                    $rawImgs = method_exists($p, 'getAllImagesAttribute') ? $p->all_images : ($p->image_path ? [$p->image_path] : (!empty($p->images) ? (is_array($p->images) ? $p->images : json_decode($p->images, true)) : []));
+                    if (!is_array($rawImgs)) $rawImgs = [];
+                    $imgs = [];
+                    foreach ($rawImgs as $imgItem) {
+                        if (!empty($imgItem) && is_string($imgItem)) {
+                            if (\Illuminate\Support\Str::startsWith($imgItem, ['http://', 'https://', 'data:'])) {
+                                $imgs[] = $imgItem;
+                            } else {
+                                $imgs[] = asset(ltrim($imgItem, '/'));
+                            }
+                        }
+                    }
                     $imgCount = count($imgs);
                     $isFoodTour = $p->is_food_tour ?? false;
                     $isCheckin = $p->is_checkin ?? false;
@@ -673,8 +652,21 @@
                         </a>
 
                         @php
-                            $currentUserId = Auth::id() ?? session('user_id');
-                            $canManagePost = $currentUserId && ($isAdminAuthor || (isset($p->user_id) && $p->user_id == $currentUserId) || (isset($authUser) && $authUser->role === 'admin'));
+                            $currentAuthUser = Auth::user() ?? (session('user_id') ? \App\Models\User::find(session('user_id')) : null);
+                            $isViewerAdmin = $currentAuthUser && ($currentAuthUser->role === 'admin' || (method_exists($currentAuthUser, 'isAdmin') && $currentAuthUser->isAdmin()));
+                            
+                            // Người xem chỉ có quyền xóa nếu: Là Admin HOẶC Là chính tác giả bài viết
+                            $isViewerAuthor = false;
+                            if ($currentAuthUser) {
+                                if (isset($p->user_id) && $p->user_id == $currentAuthUser->id) {
+                                    $isViewerAuthor = true;
+                                } elseif (isset($p->eatery) && $p->eatery->user_id == $currentAuthUser->id) {
+                                    $isViewerAuthor = true;
+                                } elseif (isset($postUser) && $postUser && $postUser->id == $currentAuthUser->id) {
+                                    $isViewerAuthor = true;
+                                }
+                            }
+                            $canManagePost = $isViewerAdmin || $isViewerAuthor;
                         @endphp
 
                         <!-- Post Action Options (3 Dots Menu) -->
@@ -727,41 +719,41 @@
                     <!-- Multi-Photo Grid Gallery (Facebook Full-Bleed Edge-to-Edge) -->
                     @if($imgCount === 1)
                         <div class="fb-photo-grid fb-grid-1" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 0)">
-                            <img src="{{ $imgs[0] }}" alt="{{ $p->name ?? 'Ảnh' }}" style="width: 100%; max-height: 520px; object-fit: cover; cursor: pointer;">
+                            <img src="{{ $imgs[0] }}" loading="lazy" decoding="async" alt="{{ $p->name ?? 'Ảnh' }}" style="width: 100%; max-height: 520px; object-fit: cover; cursor: pointer;">
                         </div>
                     @elseif($imgCount === 2)
                         <div class="fb-photo-grid fb-grid-2">
-                            <img src="{{ $imgs[0] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 0)" alt="{{ $p->name ?? 'Ảnh' }}">
-                            <img src="{{ $imgs[1] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 1)" alt="{{ $p->name ?? 'Ảnh' }}">
+                            <img src="{{ $imgs[0] }}" loading="lazy" decoding="async" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 0)" alt="{{ $p->name ?? 'Ảnh' }}">
+                            <img src="{{ $imgs[1] }}" loading="lazy" decoding="async" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 1)" alt="{{ $p->name ?? 'Ảnh' }}">
                         </div>
                     @elseif($imgCount === 3)
                         <div class="fb-photo-grid fb-grid-3">
-                            <img src="{{ $imgs[0] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 0)" alt="{{ $p->name ?? 'Ảnh' }}">
+                            <img src="{{ $imgs[0] }}" loading="lazy" decoding="async" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 0)" alt="{{ $p->name ?? 'Ảnh' }}">
                             <div class="fb-grid-3-col-right">
-                                <img src="{{ $imgs[1] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 1)" alt="{{ $p->name ?? 'Ảnh' }}">
-                                <img src="{{ $imgs[2] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 2)" alt="{{ $p->name ?? 'Ảnh' }}">
+                                <img src="{{ $imgs[1] }}" loading="lazy" decoding="async" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 1)" alt="{{ $p->name ?? 'Ảnh' }}">
+                                <img src="{{ $imgs[2] }}" loading="lazy" decoding="async" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 2)" alt="{{ $p->name ?? 'Ảnh' }}">
                             </div>
                         </div>
                     @elseif($imgCount === 4)
                         <div class="fb-photo-grid fb-grid-4">
-                            <img src="{{ $imgs[0] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 0)" alt="{{ $p->name ?? 'Ảnh' }}">
+                            <img src="{{ $imgs[0] }}" loading="lazy" decoding="async" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 0)" alt="{{ $p->name ?? 'Ảnh' }}">
                             <div class="fb-grid-4-col-right">
-                                <img src="{{ $imgs[1] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 1)" alt="{{ $p->name ?? 'Ảnh' }}">
-                                <img src="{{ $imgs[2] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 2)" alt="{{ $p->name ?? 'Ảnh' }}">
-                                <img src="{{ $imgs[3] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 3)" alt="{{ $p->name ?? 'Ảnh' }}">
+                                <img src="{{ $imgs[1] }}" loading="lazy" decoding="async" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 1)" alt="{{ $p->name ?? 'Ảnh' }}">
+                                <img src="{{ $imgs[2] }}" loading="lazy" decoding="async" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 2)" alt="{{ $p->name ?? 'Ảnh' }}">
+                                <img src="{{ $imgs[3] }}" loading="lazy" decoding="async" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 3)" alt="{{ $p->name ?? 'Ảnh' }}">
                             </div>
                         </div>
                     @elseif($imgCount >= 5)
                         <div class="fb-photo-grid fb-grid-5">
                             <div class="fb-grid-5-row-top">
-                                <img src="{{ $imgs[0] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 0)" alt="{{ $p->name ?? 'Ảnh' }}">
-                                <img src="{{ $imgs[1] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 1)" alt="{{ $p->name ?? 'Ảnh' }}">
+                                <img src="{{ $imgs[0] }}" loading="lazy" decoding="async" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 0)" alt="{{ $p->name ?? 'Ảnh' }}">
+                                <img src="{{ $imgs[1] }}" loading="lazy" decoding="async" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 1)" alt="{{ $p->name ?? 'Ảnh' }}">
                             </div>
                             <div class="fb-grid-5-row-bottom">
-                                <img src="{{ $imgs[2] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 2)" alt="{{ $p->name ?? 'Ảnh' }}">
-                                <img src="{{ $imgs[3] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 3)" alt="{{ $p->name ?? 'Ảnh' }}">
+                                <img src="{{ $imgs[2] }}" loading="lazy" decoding="async" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 2)" alt="{{ $p->name ?? 'Ảnh' }}">
+                                <img src="{{ $imgs[3] }}" loading="lazy" decoding="async" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 3)" alt="{{ $p->name ?? 'Ảnh' }}">
                                 <div class="fb-photo-thumb-box" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 4)" style="position: relative !important; width: 100% !important; height: 100% !important; overflow: hidden !important; display: block !important;">
-                                    <img src="{{ $imgs[4] }}" alt="{{ $p->name ?? 'Ảnh' }}" style="width: 100%; height: 100%; object-fit: cover; display: block;">
+                                    <img src="{{ $imgs[4] }}" loading="lazy" decoding="async" alt="{{ $p->name ?? 'Ảnh' }}" style="width: 100%; height: 100%; object-fit: cover; display: block;">
                                     @if($imgCount > 5)
                                         <div class="fb-photo-more-overlay" style="position: absolute !important; inset: 0 !important; width: 100% !important; height: 100% !important; display: flex !important; align-items: center !important; justify-content: center !important; background: rgba(0, 0, 0, 0.52) !important; backdrop-filter: blur(4px) !important; -webkit-backdrop-filter: blur(4px) !important; z-index: 10 !important; pointer-events: none !important; margin: 0 !important; padding: 0 !important; color: #ffffff !important; font-size: 2.8rem !important; font-weight: 900 !important;">
                                             <span class="fb-photo-more-count" style="color: #ffffff !important; font-size: 2.8rem !important; font-weight: 900 !important; line-height: 1 !important; text-shadow: 0 3px 12px rgba(0,0,0,0.8) !important; display: inline-block !important; margin: 0 !important; padding: 0 !important; text-align: center !important; transform: none !important;">+{{ $imgCount - 5 }}</span>
@@ -815,10 +807,35 @@
 
                     <!-- Expandable Comments Drawer -->
                     <div class="comments-section" id="comments-section-{{ $postDomKey }}" style="display: none; padding: 14px 16px; background: #f8fafc; border-top: 1px solid #e2e8f0;">
-                        <div class="comments-list" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px;">
+                        <div class="comments-list" id="comments-list-{{ $postDomKey }}" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px;">
                             @if($p->comments && $p->comments->isNotEmpty())
-                                @foreach($p->comments as $comment)
+                                @php
+                                    $allCommentsList = $p->comments->values();
+                                    $totalCommentsCount = $allCommentsList->count();
+                                    $visibleLimit = 3; // Mặc định chỉ hiển thị 3 bình luận mới nhất
+                                    $hasHiddenComments = $totalCommentsCount > $visibleLimit;
+                                    $hiddenCount = $totalCommentsCount - $visibleLimit;
+                                @endphp
+
+                                @if($hasHiddenComments)
+                                    <!-- Nút Xem thêm các bình luận trước đó -->
+                                    <div class="more-comments-wrapper" style="text-align: left; margin-bottom: 2px;">
+                                        <button type="button" 
+                                                class="btn-toggle-more-comments" 
+                                                onclick="toggleMoreComments('{{ $postDomKey }}', this)" 
+                                                data-expanded="false"
+                                                data-hidden-count="{{ $hiddenCount }}"
+                                                style="background: transparent; border: none; padding: 4px 8px; border-radius: 8px; color: #0284c7; font-weight: 700; font-size: 0.84rem; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; font-family: inherit; transition: all 0.15s ease;"
+                                                onmouseover="this.style.background='#e0f2fe'" 
+                                                onmouseout="this.style.background='transparent'">
+                                            <span>🔽 Xem {{ $hiddenCount }} bình luận trước đó</span>
+                                        </button>
+                                    </div>
+                                @endif
+
+                                @foreach($allCommentsList as $cIdx => $comment)
                                     @php
+                                        $isHidden = $hasHiddenComments && ($cIdx < $hiddenCount);
                                         $rawContent = $comment->content;
                                         $isReply = str_starts_with(trim($rawContent), '@');
                                         
@@ -829,8 +846,9 @@
                                         }
                                     @endphp
 
-                                    <div class="comment-item {{ $isReply ? 'comment-reply-item' : '' }}" 
-                                         style="display: flex; gap: 10px; align-items: flex-start; 
+                                    <div class="comment-item {{ $isReply ? 'comment-reply-item' : '' }} {{ $isHidden ? 'comment-prev-hidden' : '' }}" 
+                                         data-comment-id="{{ $comment->id }}"
+                                         style="display: {{ $isHidden ? 'none' : 'flex' }}; gap: 10px; align-items: flex-start; 
                                                 background: {{ $isReply ? '#f0f9ff' : '#ffffff' }}; 
                                                 border-radius: 14px; padding: 10px 14px; 
                                                 border: 1px solid {{ $isReply ? '#bae6fd' : '#e2e8f0' }}; 
@@ -1008,7 +1026,7 @@
 </div>
 
 <!-- Modal 2: Viewer Xem Story Toàn Màn Hình (FB / IG Fullscreen Story Viewer) -->
-<div id="storyViewerModal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.95); backdrop-filter: blur(16px); z-index: 999999; align-items: center; justify-content: center; overflow: hidden;">
+<div id="storyViewerModal" onclick="if(event.target === this) closeStoryViewer()" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.95); backdrop-filter: blur(16px); z-index: 999999; align-items: center; justify-content: center; overflow: hidden;">
     
     <!-- Top Close Button -->
     <button type="button" onclick="closeStoryViewer()" style="position: absolute; top: 20px; right: 20px; width: 44px; height: 44px; border-radius: 50%; background: rgba(255,255,255,0.2); color: #fff; border: none; font-size: 1.4rem; cursor: pointer; z-index: 100000; display: flex; align-items: center; justify-content: center; transition: background 0.2s ease;" title="Đóng Story">✕</button>
@@ -1037,7 +1055,7 @@
         <!-- Story Media / Background Box -->
         <div id="viewerContentBox" style="width: 100%; height: 100%; position: absolute; inset: 0; z-index: 1; background-size: cover; background-position: center; display: flex; align-items: center; justify-content: center;">
             <img id="viewerMediaImage" src="" style="width: 100%; height: 100%; object-fit: cover; display: none;">
-            <video id="viewerMediaVideo" src="" autoplay playsinline loop style="width: 100%; height: 100%; object-fit: contain; display: none; background: #000;"></video>
+            <video id="viewerMediaVideo" playsinline style="width: 100%; height: 100%; object-fit: contain; display: none; background: #000;"></video>
             
             <!-- Story Caption Text Overlay -->
             <div id="viewerCaptionText" style="position: absolute; bottom: 75px; left: 0; right: 0; padding: 20px 16px 16px 16px; color: #ffffff; font-size: 1.1rem; font-weight: 800; text-align: center; line-height: 1.5; text-shadow: 0 2px 10px rgba(0,0,0,0.9); z-index: 10; background: linear-gradient(0deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0) 100%); word-break: break-word; pointer-events: none; display: none;"></div>
@@ -1113,6 +1131,32 @@ window.scrollToNotifTarget = function() {
 };
 
 document.addEventListener("DOMContentLoaded", window.scrollToNotifTarget);
+
+// Xem thêm / Thu gọn các bình luận trước đó (Pagination / Expand Comments)
+function toggleMoreComments(postDomKey, btn) {
+    const list = document.getElementById('comments-list-' + postDomKey);
+    if (!list) return;
+    const hiddenItems = list.querySelectorAll('.comment-prev-hidden');
+    const isExpanded = btn.getAttribute('data-expanded') === 'true';
+    const hiddenCount = btn.getAttribute('data-hidden-count') || '';
+
+    if (!isExpanded) {
+        // Mở rộng toàn bộ bình luận cũ
+        hiddenItems.forEach(item => {
+            item.style.display = 'flex';
+            item.style.animation = 'fadeIn 0.25s ease forwards';
+        });
+        btn.setAttribute('data-expanded', 'true');
+        btn.innerHTML = '<span>🔼 Thu gọn bình luận cũ</span>';
+    } else {
+        // Thu gọn lại chỉ hiển thị 3 bình luận mới nhất
+        hiddenItems.forEach(item => {
+            item.style.display = 'none';
+        });
+        btn.setAttribute('data-expanded', 'false');
+        btn.innerHTML = `<span>🔽 Xem ${hiddenCount} bình luận trước đó</span>`;
+    }
+}
 
 // Trả lời bình luận (Reply to comment)
 function replyToComment(postDomKey, authorName) {
@@ -1345,6 +1389,16 @@ function openCreateStoryModal() {
 function closeCreateStoryModal() {
     const modal = document.getElementById('createStoryModal');
     if (modal) modal.style.display = 'none';
+    const vid = document.getElementById('igCanvasVid');
+    if (vid) {
+        try {
+            vid.pause();
+            vid.currentTime = 0;
+            vid.removeAttribute('src');
+            vid.load();
+        } catch (e) {}
+        vid.style.display = 'none';
+    }
 }
 
 function cycleIgGradientColor() {
@@ -1440,37 +1494,6 @@ let currentGroupIndex = 0;
 let currentGroupStoryIndex = 0;
 let storyTimer = null;
 
-const presetStoriesList = [
-    {
-        author_name: 'Lễ hội Cổ Loa ⛩️',
-        author_avatar: 'https://media.xadonganh.com/eateries/1780392421_hfPQH7HB.png',
-        media_url: 'https://images.unsplash.com/photo-1596402184320-417e7178b2cd?auto=format&fit=crop&w=1200&q=80',
-        caption: 'Hòa mình vào không khí Lễ hội di tích quốc gia Cổ Loa năm 2026! ⛩️',
-        created_at: '2 giờ trước'
-    },
-    {
-        author_name: 'Chào năm học mới 🏫',
-        author_avatar: 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=150&q=80',
-        media_url: 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=1200&q=80',
-        caption: 'Chúc các bé Trường Mầm Nhỏ có một năm học mới tràn đầy niềm vui 🎒',
-        created_at: '4 giờ trước'
-    },
-    {
-        author_name: 'Ẩm thực Đông Anh 🍲',
-        author_avatar: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=150&q=80',
-        media_url: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=1200&q=80',
-        caption: 'Food tour bún chả & đặc sản Đông Anh hấp dẫn không thể bỏ qua! 🍲',
-        created_at: '5 giờ trước'
-    },
-    {
-        author_name: 'Góc Check-in Hot 🎈',
-        author_avatar: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=150&q=80',
-        media_url: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1200&q=80',
-        caption: 'Góc chụp ảnh chill cực đẹp tại Đông Anh 🎈',
-        created_at: '6 giờ trước'
-    }
-];
-
 const userStoriesDb = @json(isset($stories) ? $stories : []);
 
 function formatStoryTimeAgo(dateStr) {
@@ -1514,6 +1537,7 @@ function buildStoryGroups() {
                 author_avatar: authorAvatar,
                 media_url: s.media_url,
                 caption: s.caption || '',
+                type: s.type || '',
                 bg_gradient: s.bg_gradient || 'linear-gradient(135deg, #0ea5e9, #0284c7)',
                 created_at: s.time_ago || formatStoryTimeAgo(s.created_at)
             });
@@ -1523,15 +1547,21 @@ function buildStoryGroups() {
             storyGroups.push(g);
         });
     }
+}
 
-    // 2. Add Preset Featured Stories (each preset story is its own group)
-    presetStoriesList.forEach(p => {
-        storyGroups.push({
-            author_name: p.author_name,
-            author_avatar: p.author_avatar,
-            stories: [p]
-        });
-    });
+function stopCurrentStoryVideo() {
+    const vid = document.getElementById('viewerMediaVideo');
+    if (vid) {
+        try {
+            vid.pause();
+            vid.currentTime = 0;
+            vid.ontimeupdate = null;
+            vid.onended = null;
+            vid.removeAttribute('src');
+            vid.load();
+        } catch (e) {}
+        vid.style.display = 'none';
+    }
 }
 
 function openStoryViewer(groupIdx) {
@@ -1547,9 +1577,11 @@ function openStoryViewer(groupIdx) {
 }
 
 function renderCurrentStory() {
+    stopCurrentStoryVideo();
+
     if (!storyGroups[currentGroupIndex]) return;
     const group = storyGroups[currentGroupIndex];
-    if (!group.stories[currentGroupStoryIndex]) return;
+    if (!group || !group.stories || !group.stories[currentGroupStoryIndex]) return;
 
     const st = group.stories[currentGroupStoryIndex];
 
@@ -1562,20 +1594,29 @@ function renderCurrentStory() {
     const txt = document.getElementById('viewerCaptionText');
     const box = document.getElementById('viewerContentBox');
 
-    if (st.media_url) {
+    const isVideo = (st.type === 'video') || (st.media_url && (/\.(mp4|webm|mov|m4v|ogv|ogg)$/i.test(st.media_url) || st.media_url.includes('/video/')));
+
+    if (st.media_url && isVideo) {
         box.style.background = '#0f172a';
-        if (st.media_url.match(/\.(mp4|webm|mov)$/i)) {
-            vid.src = st.media_url;
-            vid.style.display = 'block';
-            img.style.display = 'none';
-        } else {
-            img.src = st.media_url;
-            img.style.display = 'block';
-            vid.style.display = 'none';
+        img.style.display = 'none';
+        img.src = '';
+
+        vid.src = st.media_url;
+        vid.style.display = 'block';
+        vid.currentTime = 0;
+        const playPromise = vid.play();
+        if (playPromise !== undefined) {
+            playPromise.catch(err => {
+                console.log('Video autoplay handled:', err);
+            });
         }
+    } else if (st.media_url) {
+        box.style.background = '#0f172a';
+        img.src = st.media_url;
+        img.style.display = 'block';
     } else {
         img.style.display = 'none';
-        vid.style.display = 'none';
+        img.src = '';
         box.style.background = st.bg_gradient || 'linear-gradient(135deg, #0ea5e9, #0284c7)';
     }
 
@@ -1587,7 +1628,7 @@ function renderCurrentStory() {
         txt.style.display = 'none';
     }
 
-    startStoryProgress();
+    startStoryProgress(isVideo);
 }
 
 function renderStoryProgressBars() {
@@ -1613,12 +1654,44 @@ function renderStoryProgressBars() {
     });
 }
 
-function startStoryProgress() {
+function startStoryProgress(isVideo = false) {
     clearInterval(storyTimer);
     renderStoryProgressBars();
 
     const inner = document.getElementById(`storySegInner_${currentGroupStoryIndex}`);
     if (!inner) return;
+
+    if (isVideo) {
+        const vid = document.getElementById('viewerMediaVideo');
+        if (vid) {
+            vid.ontimeupdate = function() {
+                if (vid.duration && !isNaN(vid.duration) && vid.duration > 0) {
+                    const pct = (vid.currentTime / vid.duration) * 100;
+                    inner.style.width = Math.min(pct, 100) + '%';
+                }
+            };
+            vid.onended = function() {
+                vid.ontimeupdate = null;
+                vid.onended = null;
+                nextStorySlide();
+            };
+
+            // Fallback timer if video duration metadata is not immediately available
+            let secCount = 0;
+            storyTimer = setInterval(() => {
+                secCount += 0.1;
+                if (!vid.duration || isNaN(vid.duration)) {
+                    const pct = (secCount / 5) * 100;
+                    inner.style.width = Math.min(pct, 100) + '%';
+                    if (pct >= 100) {
+                        clearInterval(storyTimer);
+                        nextStorySlide();
+                    }
+                }
+            }, 100);
+            return;
+        }
+    }
 
     let pct = 0;
     storyTimer = setInterval(() => {
@@ -1667,6 +1740,7 @@ function prevStorySlide() {
 
 function closeStoryViewer() {
     clearInterval(storyTimer);
+    stopCurrentStoryVideo();
     const modal = document.getElementById('storyViewerModal');
     if (modal) modal.style.display = 'none';
 }
@@ -1723,6 +1797,20 @@ function sendStoryReply() {
         })
     }).catch(err => {});
 }
+
+// Global keydown handler to close stories on ESC key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        const vModal = document.getElementById('storyViewerModal');
+        if (vModal && vModal.style.display !== 'none') {
+            closeStoryViewer();
+        }
+        const cModal = document.getElementById('createStoryModal');
+        if (cModal && cModal.style.display !== 'none') {
+            closeCreateStoryModal();
+        }
+    }
+});
 </script>
 
 <!-- Newsfeed Post Creation Modal -->

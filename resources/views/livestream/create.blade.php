@@ -176,7 +176,7 @@
                                         </div>
                                     </div>
 
-                                    <img src="{{ $product->image_url ? (str_starts_with($product->image_url, 'http') ? $product->image_url : asset($product->image_url)) : '/assets/icon/default_food.png' }}" onerror="this.onerror=null; this.src='/assets/icon/default_food.png';" class="prod-thumb-img" alt="{{ $product->name }}">
+                                    <img src="{{ $product->image_url ? (str_starts_with($product->image_url, 'http') ? $product->image_url : asset($product->image_url)) : '/images/ocop-placeholder.png' }}" onerror="this.onerror=null; this.src='/images/ocop-placeholder.png';" class="prod-thumb-img" alt="{{ $product->name }}">
 
                                     <div class="prod-details-col">
                                         <div class="prod-title">{{ $product->name }}</div>
@@ -501,6 +501,50 @@ function toggleTestMic() {
             vuText.innerText = testMicEnabled ? 'Sẵn sàng' : 'Đã tắt mic';
             vuText.style.color = testMicEnabled ? '#10b981' : '#ef4444';
         }
+    }
+}
+
+function switchStreamSource(type) {
+    document.querySelectorAll('.source-card').forEach(c => {
+        c.style.borderColor = '#e2e8f0';
+        c.style.background = '#ffffff';
+    });
+    const active = document.getElementById(`source-card-${type}`);
+    if (active) {
+        active.style.borderColor = '#0ea5e9';
+        active.style.background = '#f0f9ff';
+    }
+
+    const autoBox = document.getElementById('youtube-auto-box');
+    if (autoBox) {
+        autoBox.style.display = (type === 'youtube_auto') ? 'block' : 'none';
+    }
+
+    const ytBox = document.getElementById('youtube-url-box');
+    if (ytBox) {
+        ytBox.style.display = (type === 'youtube') ? 'block' : 'none';
+    }
+}
+
+function extractYouTubeId(url) {
+    if (!url) return null;
+    if (/^[a-zA-Z0-9_-]{11}$/.test(url.trim())) return url.trim();
+    const match = url.match(/(?:youtube(?:-nocookie)?\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?|shorts|live)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/i);
+    return match ? match[1] : null;
+}
+
+function checkYouTubePreview(val) {
+    const videoId = extractYouTubeId(val);
+    const previewBox = document.getElementById('yt-preview-box');
+    const previewThumb = document.getElementById('yt-preview-thumb');
+    const previewId = document.getElementById('yt-preview-id');
+
+    if (videoId) {
+        if (previewThumb) previewThumb.src = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+        if (previewId) previewId.innerText = `YouTube Video ID: ${videoId}`;
+        if (previewBox) previewBox.style.display = 'flex';
+    } else {
+        if (previewBox) previewBox.style.display = 'none';
     }
 }
 

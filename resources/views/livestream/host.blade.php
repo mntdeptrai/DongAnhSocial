@@ -8,8 +8,14 @@
         <!-- Main Video Studio (Left / Center) -->
         <div class="studio-video-pane">
             <div class="studio-screen-wrapper">
-                <!-- Video Element -->
-                <video id="host-preview-video" autoplay playsinline muted class="host-main-video"></video>
+                <!-- Video Element (Webcam / WebRTC hoặc YouTube Live Monitor) -->
+                @if($stream->youtube_video_id)
+                    <div id="host-youtube-preview-container" style="position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1; background: #000;">
+                        <iframe id="host-youtube-frame" src="https://www.youtube.com/embed/{{ $stream->youtube_video_id }}?autoplay=1&mute=1&rel=0&playsinline=1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="width: 100%; height: 100%; border: none;"></iframe>
+                    </div>
+                @else
+                    <video id="host-preview-video" autoplay playsinline muted class="host-main-video"></video>
+                @endif
 
                 <!-- Floating Reactions Layer -->
                 <div id="host-reaction-layer" class="floating-reaction-layer"></div>
@@ -38,7 +44,7 @@
                 <!-- Pinned Product Overlay Banner -->
                 <div id="host-pinned-product-container" class="studio-pinned-product" style="{{ $stream->pinnedProduct ? 'display:flex;' : 'display:none;' }}">
                     @if($stream->pinnedProduct)
-                        <img src="{{ $stream->pinnedProduct->image_url ? asset($stream->pinnedProduct->image_url) : '/assets/icon/default_food.png' }}" class="pin-thumb" alt="{{ $stream->pinnedProduct->name }}">
+                        <img src="{{ $stream->pinnedProduct->image_url ? asset($stream->pinnedProduct->image_url) : '/images/ocop-placeholder.png' }}" onerror="this.onerror=null; this.src='/images/ocop-placeholder.png';" class="pin-thumb" alt="{{ $stream->pinnedProduct->name }}">
                         <div class="pin-info">
                             <span class="pin-badge">🏷️ Đang giới thiệu</span>
                             <div class="pin-title">{{ $stream->pinnedProduct->name }}</div>
@@ -86,8 +92,33 @@
                 @endif
                 <div class="studio-share-box">
                     <span class="share-label">🔗 Link phòng live:</span>
-                    <input type="text" readonly value="{{ route('livestream.show', $stream->id) }}" id="live-share-url" class="share-input">
+                    <input type="text" readonly value="{{ route('livestream.show', $stream->code_or_id) }}" id="live-share-url" class="share-input">
                     <button type="button" class="btn-copy-link" onclick="copyShareUrl()">Sao chép</button>
+                </div>
+
+                <!-- Live Broadcast & RTMP Stream Key Panel -->
+                <div class="studio-rtmp-panel" style="margin-top: 12px; background: rgba(14, 165, 233, 0.05); border: 1px solid rgba(14, 165, 233, 0.2); border-radius: 12px; padding: 12px 14px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+                        <span style="font-size: 0.86rem; font-weight: 700; color: #0284c7; display: flex; align-items: center; gap: 6px;">
+                            ⚡ Khóa luồng phát sóng (OBS / PRISM Studio):
+                        </span>
+                        <button type="button" onclick="toggleRtmpDetails()" id="btn-toggle-rtmp" style="background: none; border: none; color: #0284c7; font-size: 0.8rem; font-weight: 700; cursor: pointer; text-decoration: underline;">
+                            [Xem Cấu hình RTMP]
+                        </button>
+                    </div>
+                    <div id="rtmp-details-panel" style="display: none; font-size: 0.82rem; color: #334155; margin-top: 10px; line-height: 1.8;">
+                        <div style="margin-bottom: 8px; font-size: 0.78rem; color: #64748b; line-height: 1.4;">
+                            💡 <i>Dành cho người phát bằng phần mềm chuyên nghiệp trên máy tính (OBS / PRISM). Nếu bạn đang live trực tiếp bằng camera trên trang, bạn có thể bỏ qua phần này.</i>
+                        </div>
+                        <div style="display: flex; align-items: center; justify-content: space-between; background: #ffffff; padding: 6px 10px; border-radius: 8px; margin-bottom: 6px; border: 1px solid #e2e8f0;">
+                            <div><b>Máy chủ (Server URL):</b> <code style="color: #0284c7; font-weight: 700;">{{ $stream->youtube_video_id ? 'rtmp://a.rtmp.youtube.com/live2' : $stream->rtmp_server_url }}</code></div>
+                            <button type="button" class="btn-copy-link" style="padding: 3px 8px; font-size: 0.75rem;" onclick="copyRawText('{{ $stream->youtube_video_id ? 'rtmp://a.rtmp.youtube.com/live2' : $stream->rtmp_server_url }}')">Copy</button>
+                        </div>
+                        <div style="display: flex; align-items: center; justify-content: space-between; background: #ffffff; padding: 6px 10px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                            <div><b>Khóa luồng (Stream Key):</b> <code style="color: #ea580c; font-weight: 700;">{{ $stream->stream_key }}</code></div>
+                            <button type="button" class="btn-copy-link" style="padding: 3px 8px; font-size: 0.75rem;" onclick="copyRawText('{{ $stream->stream_key }}')">Copy</button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -107,7 +138,7 @@
                 </div>
                 @foreach($stream->comments->reverse() as $cmt)
                     <div class="live-chat-item {{ $cmt->user_id === $stream->user_id ? 'host-comment' : '' }}">
-                        <img src="{{ $cmt->user->avatar ? (str_starts_with($cmt->user->avatar, 'http') ? $cmt->user->avatar : asset($cmt->user->avatar)) : 'https://ui-avatars.com/api/?name=' . urlencode($cmt->user->name) }}" alt="{{ $cmt->user->name }}" class="chat-avatar">
+                        <img src="{{ $cmt->user->avatar_url ?: ('https://ui-avatars.com/api/?name=' . urlencode($cmt->user->name) . '&background=0ea5e9&color=fff') }}" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name={{ urlencode($cmt->user->name) }}&background=0ea5e9&color=fff';" alt="{{ $cmt->user->name }}" class="chat-avatar">
                         <div class="chat-content">
                             <span class="chat-username">{{ $cmt->user->name }}</span>
                             <span class="chat-text">{{ $cmt->message }}</span>
@@ -150,7 +181,7 @@
                 @forelse($streamProducts as $prod)
                     @php $isPinned = ((int)$stream->pinned_product_id === (int)$prod->id); @endphp
                     <div class="pin-product-item {{ $isPinned ? 'selected' : '' }}" id="host-prod-row-{{ $prod->id }}">
-                        <img src="{{ $prod->image_url ? (str_starts_with($prod->image_url, 'http') ? $prod->image_url : asset($prod->image_url)) : '/assets/icon/default_food.png' }}" onerror="this.onerror=null; this.src='/assets/icon/default_food.png';" class="pin-item-img" alt="{{ $prod->name }}">
+                        <img src="{{ $prod->image_url ? (str_starts_with($prod->image_url, 'http') ? $prod->image_url : asset($prod->image_url)) : '/images/ocop-placeholder.png' }}" onerror="this.onerror=null; this.src='/images/ocop-placeholder.png';" class="pin-item-img" alt="{{ $prod->name }}">
                         <div class="pin-item-info">
                             <div class="pin-item-name">{{ $prod->name }}</div>
                             <div class="pin-item-price">{{ $prod->price ? number_format($prod->price) . 'đ' : 'Đặc sản OCOP' }}</div>
@@ -186,7 +217,7 @@
                 @foreach($ocopProducts as $prod)
                     @php $alreadyInLive = $streamProducts->contains('id', $prod->id); @endphp
                     <div class="pin-product-item {{ $alreadyInLive ? 'in-live' : '' }}" data-name="{{ Str::lower($prod->name) }}" id="all-prod-row-{{ $prod->id }}">
-                        <img src="{{ $prod->image_url ? (str_starts_with($prod->image_url, 'http') ? $prod->image_url : asset($prod->image_url)) : '/assets/icon/default_food.png' }}" onerror="this.onerror=null; this.src='/assets/icon/default_food.png';" class="pin-item-img" alt="{{ $prod->name }}">
+                        <img src="{{ $prod->image_url ? (str_starts_with($prod->image_url, 'http') ? $prod->image_url : asset($prod->image_url)) : '/images/ocop-placeholder.png' }}" onerror="this.onerror=null; this.src='/images/ocop-placeholder.png';" class="pin-item-img" alt="{{ $prod->name }}">
                         <div class="pin-item-info">
                             <div class="pin-item-name">{{ $prod->name }}</div>
                             <div class="pin-item-price">{{ $prod->price ? number_format($prod->price) . 'đ' : 'Đặc sản OCOP' }}</div>
@@ -207,11 +238,83 @@
 </div>
 
 
-<script src="{{ asset('js/livestream-host.js') }}"></script>
+<!-- Pusher & Reverb WebSocket Library -->
+<script src="https://cdn.jsdelivr.net/npm/pusher-js@8.4.0/dist/web/pusher.min.js"></script>
+<script>
+    if (typeof window.Echo === 'undefined') {
+        window.Echo = new (class {
+            constructor() {
+                const isHttps = window.location.protocol === 'https:';
+                const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+                const wsHost = isLocal ? '127.0.0.1' : window.location.hostname;
+                const wsPort = isLocal ? 8080 : (isHttps ? 443 : 80);
+                const forceTLS = isLocal ? false : isHttps;
+                const reverbKey = '{{ config('broadcasting.connections.reverb.key') ?: env('REVERB_APP_KEY', 'donganhreverbkey') }}';
+
+                console.log('[LiveHost] Connecting to Reverb:', wsHost, wsPort, 'TLS:', forceTLS, 'Key:', reverbKey);
+
+                this._pusher = new Pusher(reverbKey, {
+                    wsHost:           wsHost,
+                    wsPort:           wsPort,
+                    wssPort:          wsPort,
+                    forceTLS:         forceTLS,
+                    enabledTransports: ['ws', 'wss'],
+                    cluster:          'mt1',
+                    disableStats:     true,
+                    authEndpoint:     '/broadcasting/auth',
+                    auth: {
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+                        }
+                    }
+                });
+
+                this._pusher.connection.bind('connected', () => {
+                    console.log('[LiveHost] Reverb WebSocket connected successfully.');
+                });
+                this._pusher.connection.bind('error', (err) => {
+                    console.warn('[LiveHost] Reverb WebSocket connection error:', err);
+                });
+
+                this.connector = { pusher: this._pusher };
+            }
+            channel(name) {
+                const ch = this._pusher.subscribe(name);
+                ch.bind_global((eventName, data) => {
+                    console.log('[LiveHost WS Event]', name, eventName, data);
+                });
+                const obj = {
+                    listen: (event, cb) => {
+                        const evtName = event.startsWith('.') ? event.slice(1) : event;
+                        ch.bind(evtName, cb);
+                        ch.bind('App\\Events\\' + evtName, cb);
+                        return obj;
+                    }
+                };
+                return obj;
+            }
+            private(name) {
+                const ch = this._pusher.subscribe('private-' + name);
+                const obj = {
+                    listen: (event, cb) => {
+                        const evtName = event.startsWith('.') ? event.slice(1) : event;
+                        ch.bind(evtName, cb);
+                        ch.bind('App\\Events\\' + evtName, cb);
+                        return obj;
+                    }
+                };
+                return obj;
+            }
+        })();
+    }
+</script>
+
+<script src="{{ asset('js/livestream-host.js') }}?v={{ file_exists(public_path('js/livestream-host.js')) ? filemtime(public_path('js/livestream-host.js')) : '1.0.0' }}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     DongAnhLiveHost.init({
-        streamId: {{ $stream->id }}
+        streamId: '{{ $stream->code_or_id }}',
+        channelId: {{ $stream->id }}
     });
 });
 
@@ -255,6 +358,30 @@ function filterHostAllProducts(query) {
     });
 }
 
+function toggleRtmpDetails() {
+    const p = document.getElementById('rtmp-details-panel');
+    const btn = document.getElementById('btn-toggle-rtmp');
+    if (p) {
+        const isHidden = p.style.display === 'none';
+        p.style.display = isHidden ? 'block' : 'none';
+        if (btn) btn.innerText = isHidden ? '[Ẩn Cấu hình]' : '[Xem Cấu hình RTMP]';
+    }
+}
+
+function copyRawText(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({ icon: 'success', title: 'Đã sao chép!', text: text, timer: 1200, showConfirmButton: false });
+            } else {
+                alert('Đã sao chép: ' + text);
+            }
+        });
+    } else {
+        prompt('Sao chép tại đây:', text);
+    }
+}
+
 function copyShareUrl() {
     const input = document.getElementById('live-share-url');
     if (input) {
@@ -268,6 +395,57 @@ function copyShareUrl() {
                 showConfirmButton: false
             });
         }
+    }
+}
+
+async function saveYouTubeLiveLink(event) {
+    const input = document.getElementById('host-youtube-input');
+    const val = (input ? input.value : '').trim();
+    const btn = event ? event.target : null;
+    const originalText = btn ? btn.innerHTML : '';
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '⏳ Đang lưu...';
+    }
+
+    try {
+        const res = await fetch('{{ route('livestream.update-youtube', $stream->code_or_id) }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+            },
+            body: JSON.stringify({ youtube_url: val })
+        });
+        const data = await res.json();
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }
+
+        if (data.status === 'success') {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Thành công!',
+                    text: data.message,
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+            } else {
+                alert(data.message);
+            }
+            setTimeout(() => window.location.reload(), 1200);
+        } else {
+            alert(data.message || 'Không thể cập nhật YouTube Live.');
+        }
+    } catch (e) {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }
+        alert('Lỗi kết nối khi cập nhật link YouTube Live.');
     }
 }
 </script>

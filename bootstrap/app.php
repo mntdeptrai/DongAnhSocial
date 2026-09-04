@@ -13,8 +13,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Áp dụng CheckUserStatus, HandleInertiaRequests & OptimizeResponseMiddleware cho toàn bộ web routes
         $middleware->web(append: [
             \App\Http\Middleware\CheckUserStatus::class,
+            \App\Http\Middleware\HandleInertiaRequests::class,
+            \App\Http\Middleware\OptimizeResponseMiddleware::class,
         ]);
 
         // Thêm session & cookie middleware vào API group
@@ -22,6 +25,8 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->api(prepend: [
             \Illuminate\Cookie\Middleware\EncryptCookies::class,
             \Illuminate\Session\Middleware\StartSession::class,
+        ], append: [
+            \App\Http\Middleware\OptimizeResponseMiddleware::class,
         ]);
 
         $middleware->alias([

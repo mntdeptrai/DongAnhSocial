@@ -8,7 +8,7 @@
  */
 
 (function () {
-    const POLL_INTERVAL_MS = 3500;
+    const POLL_INTERVAL_MS = 15000;
     const API_URL = '/api/orders?status=all';
     const STORAGE_KEY = 'donganh_cust_order_statuses';
 

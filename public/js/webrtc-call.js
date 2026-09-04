@@ -78,7 +78,7 @@ window.DongAnhWebRTC = (function () {
                     playRingtone(false);
                 }
             } catch (_) {}
-        }, 2000);
+        }, 10000);
     }
 
     let callerStatusPollInterval = null;

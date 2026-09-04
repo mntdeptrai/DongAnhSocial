@@ -32,7 +32,7 @@ class LiveStreamProductsUpdated implements ShouldBroadcastNow
 
     public function broadcastAs(): string
     {
-        return 'products.updated';
+        return 'LiveStreamProductsUpdated';
     }
 
     public function broadcastWith(): array

@@ -5,6 +5,7 @@
 
 window.DongAnhLiveHost = (function () {
     let streamId = null;
+    let channelId = null;
     let mySessionId = 'host_' + Math.random().toString(36).substring(2, 9);
     let localStream = null;
     let screenStream = null;
@@ -15,11 +16,13 @@ window.DongAnhLiveHost = (function () {
 
     // PeerConnections map: viewerSessionId => RTCPeerConnection
     const peerConnections = new Map();
+    const pendingIceCandidatesMap = new Map(); // viewerSessionId => [candidate, ...]
 
     const rtcConfig = {
         iceServers: [
             { urls: 'stun:stun.l.google.com:19302' },
             { urls: 'stun:stun1.l.google.com:19302' },
+            { urls: 'stun:stun.cloudflare.com:3478' },
             { urls: 'stun:openrelay.metered.ca:80' },
             { urls: 'turn:openrelay.metered.ca:80', username: 'openrelayproject', credential: 'openrelayproject' },
             { urls: 'turn:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' }
@@ -39,7 +42,8 @@ window.DongAnhLiveHost = (function () {
      */
     async function init(config) {
         streamId = config.streamId;
-        console.log('[LiveHost] Initializing studio for stream #', streamId, 'Session:', mySessionId);
+        channelId = config.channelId || config.streamId;
+        console.log('[LiveHost] Initializing studio for stream #', streamId, 'Channel:', channelId, 'Session:', mySessionId);
 
         // 1. Khởi động Camera & Mic
         try {
@@ -58,11 +62,97 @@ window.DongAnhLiveHost = (function () {
         // 2. Lắng nghe WebSocket Channel từ Laravel Echo / Reverb
         setupEchoListeners();
 
-        // 3. Bắt đầu bộ đếm thời gian
+        // 3. Khởi động cơ chế dự phòng HTTP Signaling Fallback (chỉ kích hoạt nếu WebSocket mất kết nối)
+        setTimeout(() => {
+            if (!window.Echo || !window.Echo.connector || !window.Echo.connector.pusher || window.Echo.connector.pusher.connection.state !== 'connected') {
+                startHttpPollingFallback();
+            }
+        }, 4000);
+
+        // 4. Bắt đầu bộ đếm thời gian
         startTimer();
 
-        // 4. Bắn tín hiệu Host Ready
+        // 5. Bắn tín hiệu Host Ready một lần khi khởi tạo
         sendSignal('all', 'host_ready', null);
+    }
+
+    let lastSignalTimestamp = 0;
+    let pollingInterval = null;
+
+    /**
+     * Cơ chế dự phòng: Tự động kéo tín hiệu qua HTTP khi WebSocket bị gián đoạn
+     */
+    function startHttpPollingFallback() {
+        if (pollingInterval) return;
+        pollingInterval = setInterval(async () => {
+            // Nếu WebSocket đã kết nối tốt, dừng polling
+            if (window.Echo && window.Echo.connector && window.Echo.connector.pusher && window.Echo.connector.pusher.connection.state === 'connected') {
+                clearInterval(pollingInterval);
+                pollingInterval = null;
+                return;
+            }
+
+            try {
+                const res = await fetch(`/livestream/${streamId}/signals?session_id=${mySessionId}&is_host=1&since=${lastSignalTimestamp}`);
+                const data = await res.json();
+                if (data.status === 'success' && data.signals && data.signals.length > 0) {
+                    for (const sig of data.signals) {
+                        if (sig.timestamp > lastSignalTimestamp) {
+                            lastSignalTimestamp = sig.timestamp;
+                        }
+                        console.log('[LiveHost] [HTTP Poll] Received signal:', sig.signal_type, 'from:', sig.sender_session_id);
+                        if (sig.signal_type === 'viewer_join') {
+                            handleViewerJoin(sig.sender_session_id);
+                        } else if (sig.signal_type === 'viewer_answer') {
+                            handleViewerAnswer(sig.sender_session_id, sig.signal_data);
+                        } else if (sig.signal_type === 'ice_candidate' || sig.signal_type === 'ice_candidates_batch') {
+                            handleIceCandidate(sig.sender_session_id, sig.signal_data);
+                        }
+                    }
+                }
+                if (data.now) {
+                    lastSignalTimestamp = Math.max(lastSignalTimestamp, data.now - 10);
+                }
+            } catch (e) {
+                // ignore
+            }
+        }, 5000);
+    }
+
+    // Bộ đệm ICE Candidate gom batch cho từng viewer để chống bão request CPU
+    const iceCandidateBuffers = new Map();
+    const iceBatchTimeouts = new Map();
+
+    function queueIceCandidateForViewer(viewerSessionId, candidate) {
+        if (!candidate) return;
+        if (!iceCandidateBuffers.has(viewerSessionId)) {
+            iceCandidateBuffers.set(viewerSessionId, []);
+        }
+        iceCandidateBuffers.get(viewerSessionId).push(candidate);
+
+        if (!iceBatchTimeouts.has(viewerSessionId)) {
+            const timeoutId = setTimeout(() => {
+                flushIceCandidatesForViewer(viewerSessionId);
+            }, 150);
+            iceBatchTimeouts.set(viewerSessionId, timeoutId);
+        }
+    }
+
+    function flushIceCandidatesForViewer(viewerSessionId) {
+        const batch = iceCandidateBuffers.get(viewerSessionId) || [];
+        iceCandidateBuffers.delete(viewerSessionId);
+        if (iceBatchTimeouts.has(viewerSessionId)) {
+            clearTimeout(iceBatchTimeouts.get(viewerSessionId));
+            iceBatchTimeouts.delete(viewerSessionId);
+        }
+
+        if (batch.length === 0) return;
+
+        if (batch.length === 1) {
+            sendSignal(viewerSessionId, 'ice_candidate', JSON.stringify(batch[0]));
+        } else {
+            sendSignal(viewerSessionId, 'ice_candidates_batch', JSON.stringify(batch));
+        }
     }
 
     /**
@@ -89,6 +179,9 @@ window.DongAnhLiveHost = (function () {
             videoElement.srcObject = localStream;
         }
 
+        // Tự động ghi hình phiên Live để lưu trữ và tải lên YouTube
+        startRecording(localStream);
+
         // Cập nhật track tới tất cả viewers hiện có
         peerConnections.forEach((pc) => {
             const senders = pc.getSenders();
@@ -113,7 +206,7 @@ window.DongAnhLiveHost = (function () {
             return;
         }
 
-        const channel = window.Echo.channel('live-stream.' + streamId);
+        const channel = window.Echo.channel('live-stream.' + channelId);
 
         // 1. Tín hiệu WebRTC
         channel.listen('.LiveStreamSignal', async (e) => {
@@ -127,7 +220,7 @@ window.DongAnhLiveHost = (function () {
                 handleViewerJoin(e.sender_session_id);
             } else if (e.signal_type === 'viewer_answer') {
                 handleViewerAnswer(e.sender_session_id, e.signal_data);
-            } else if (e.signal_type === 'ice_candidate') {
+            } else if (e.signal_type === 'ice_candidate' || e.signal_type === 'ice_candidates_batch') {
                 handleIceCandidate(e.sender_session_id, e.signal_data);
             }
         });
@@ -162,46 +255,54 @@ window.DongAnhLiveHost = (function () {
         console.log('[LiveHost] Creating WebRTC peer connection for viewer:', viewerSessionId);
 
         if (peerConnections.has(viewerSessionId)) {
-            peerConnections.get(viewerSessionId).close();
+            try { peerConnections.get(viewerSessionId).close(); } catch(e) {}
             peerConnections.delete(viewerSessionId);
         }
 
         const pc = new RTCPeerConnection(rtcConfig);
         peerConnections.set(viewerSessionId, pc);
+        pendingIceCandidatesMap.delete(viewerSessionId);
 
         // Thêm tracks vào PC
         const activeStream = screenStream || localStream;
         if (activeStream) {
             activeStream.getTracks().forEach(track => {
-                pc.addTrack(track, activeStream);
+                try {
+                    pc.addTrack(track, activeStream);
+                } catch(e) {
+                    console.warn('[LiveHost] addTrack error:', e);
+                }
             });
         }
 
-        // Bắt ICE candidate
+        // Bắt ICE candidate (dùng cơ chế gom batch cho viewer này để tiết kiệm CPU)
         pc.onicecandidate = (event) => {
             if (event.candidate) {
-                sendSignal(viewerSessionId, 'ice_candidate', JSON.stringify(event.candidate));
+                queueIceCandidateForViewer(viewerSessionId, event.candidate);
             }
         };
 
         pc.onconnectionstatechange = () => {
-            console.log(`[LiveHost] Viewer ${viewerSessionId} state:`, pc.connectionState);
+            console.log(`[LiveHost] Viewer ${viewerSessionId} connection state:`, pc.connectionState);
             if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed' || pc.connectionState === 'closed') {
                 peerConnections.delete(viewerSessionId);
+                pendingIceCandidatesMap.delete(viewerSessionId);
                 updateOnlineViewerBadge();
             } else if (pc.connectionState === 'connected') {
                 updateOnlineViewerBadge();
             }
         };
 
+        pc.oniceconnectionstatechange = () => {
+            console.log(`[LiveHost] Viewer ${viewerSessionId} ICE state:`, pc.iceConnectionState);
+        };
+
         // Tạo SDP Offer
         try {
-            const offer = await pc.createOffer({
-                offerToReceiveAudio: false,
-                offerToReceiveVideo: false
-            });
+            const offer = await pc.createOffer();
             await pc.setLocalDescription(offer);
 
+            console.log('[LiveHost] Sending Host Offer to viewer:', viewerSessionId);
             sendSignal(viewerSessionId, 'host_offer', JSON.stringify(offer));
         } catch (err) {
             console.error('[LiveHost] Error creating offer for viewer:', err);
@@ -213,28 +314,53 @@ window.DongAnhLiveHost = (function () {
      */
     async function handleViewerAnswer(viewerSessionId, sdpData) {
         const pc = peerConnections.get(viewerSessionId);
-        if (!pc) return;
+        if (!pc) {
+            console.warn('[LiveHost] No peer connection found for viewer answer:', viewerSessionId);
+            return;
+        }
 
         try {
             const answer = typeof sdpData === 'string' ? JSON.parse(sdpData) : sdpData;
+            console.log('[LiveHost] Setting Remote Description for viewer:', viewerSessionId);
             await pc.setRemoteDescription(new RTCSessionDescription(answer));
-            console.log('[LiveHost] Remote description set for viewer:', viewerSessionId);
+
+            // Xả hàng đợi ICE candidate của viewer này nếu có
+            const pending = pendingIceCandidatesMap.get(viewerSessionId) || [];
+            while (pending.length > 0) {
+                const cand = pending.shift();
+                try {
+                    await pc.addIceCandidate(new RTCIceCandidate(cand));
+                } catch (e) {
+                    console.warn('[LiveHost] Error draining ICE candidate for viewer:', viewerSessionId, e);
+                }
+            }
+            pendingIceCandidatesMap.delete(viewerSessionId);
         } catch (err) {
             console.error('[LiveHost] Error setting remote description:', err);
         }
     }
 
     /**
-     * Nhận ICE candidate từ Viewer
+     * Nhận ICE candidate từ Viewer (hỗ trợ đơn lẻ hoặc mảng batch)
      */
     async function handleIceCandidate(viewerSessionId, candidateData) {
         const pc = peerConnections.get(viewerSessionId);
-        if (!pc) return;
 
         try {
-            const candidate = typeof candidateData === 'string' ? JSON.parse(candidateData) : candidateData;
-            if (candidate) {
-                await pc.addIceCandidate(new RTCIceCandidate(candidate));
+            const parsed = typeof candidateData === 'string' ? JSON.parse(candidateData) : candidateData;
+            if (!parsed) return;
+
+            const candidates = Array.isArray(parsed) ? parsed : [parsed];
+
+            for (const candidate of candidates) {
+                if (!pc || !pc.remoteDescription || !pc.remoteDescription.type) {
+                    if (!pendingIceCandidatesMap.has(viewerSessionId)) {
+                        pendingIceCandidatesMap.set(viewerSessionId, []);
+                    }
+                    pendingIceCandidatesMap.get(viewerSessionId).push(candidate);
+                } else {
+                    await pc.addIceCandidate(new RTCIceCandidate(candidate));
+                }
             }
         } catch (err) {
             console.error('[LiveHost] Error adding ICE candidate:', err);
@@ -246,7 +372,8 @@ window.DongAnhLiveHost = (function () {
      */
     async function sendSignal(targetSessionId, signalType, signalData) {
         try {
-            await fetch(`/livestream/${streamId}/signal`, {
+            console.log('[LiveHost] Sending signal:', signalType, 'to:', targetSessionId);
+            const res = await fetch(`/livestream/${streamId}/signal`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -260,6 +387,10 @@ window.DongAnhLiveHost = (function () {
                     signal_data: signalData
                 })
             });
+            const data = await res.json();
+            if (data.status !== 'success') {
+                console.warn('[LiveHost] sendSignal response:', data);
+            }
         } catch (err) {
             console.warn('[LiveHost] sendSignal failed:', err);
         }
@@ -515,7 +646,7 @@ window.DongAnhLiveHost = (function () {
                     const isPinned = prod.is_pinned;
                     return `
                         <div class="pin-product-item ${isPinned ? 'selected' : ''}" id="host-prod-row-${prod.id}">
-                            <img src="${prod.image_url || prod.image || '/assets/icon/default_food.png'}" class="pin-item-img" alt="${escapeHtml(prod.name)}">
+                            <img src="${prod.image_url || prod.image || '/images/ocop-placeholder.png'}" onerror="this.onerror=null; this.src='/images/ocop-placeholder.png';" class="pin-item-img" alt="${escapeHtml(prod.name)}">
                             <div class="pin-item-info">
                                 <div class="pin-item-name">${escapeHtml(prod.name)}</div>
                                 <div class="pin-item-price">${prod.price}</div>
@@ -603,7 +734,7 @@ window.DongAnhLiveHost = (function () {
 
         pinContainer.style.display = 'flex';
         pinContainer.innerHTML = `
-            <img src="${product.image || product.image_url || '/assets/icon/default_food.png'}" class="pin-thumb" alt="${escapeHtml(product.name)}">
+            <img src="${product.image || product.image_url || '/images/ocop-placeholder.png'}" onerror="this.onerror=null; this.src='/images/ocop-placeholder.png';" class="pin-thumb" alt="${escapeHtml(product.name)}">
             <div class="pin-info">
                 <span class="pin-badge">🏷️ Đang giới thiệu</span>
                 <div class="pin-title">${escapeHtml(product.name)}</div>
@@ -630,14 +761,22 @@ window.DongAnhLiveHost = (function () {
         };
 
         const icon = iconMap[type] || '❤️';
-        const el = document.createElement('div');
-        el.className = 'floating-particle';
-        el.innerText = icon;
-        el.style.left = (Math.random() * 60 + 20) + '%';
-        el.style.animationDuration = (Math.random() * 1.5 + 2) + 's';
+        const count = 2;
 
-        container.appendChild(el);
-        setTimeout(() => el.remove(), 3500);
+        for (let i = 0; i < count; i++) {
+            setTimeout(() => {
+                const el = document.createElement('div');
+                el.className = 'floating-particle';
+                el.innerText = icon;
+                const startLeft = 70 + (Math.random() * 24 - 12);
+                el.style.left = startLeft + '%';
+                el.style.animationDuration = (Math.random() * 0.8 + 2.2) + 's';
+                el.style.fontSize = (Math.random() * 0.8 + 2) + 'rem';
+
+                container.appendChild(el);
+                setTimeout(() => el.remove(), 3000);
+            }, i * 140);
+        }
     }
 
     /**
@@ -689,8 +828,38 @@ window.DongAnhLiveHost = (function () {
         return n < 10 ? '0' + n : n;
     }
 
+    let mediaRecorder = null;
+    let recordedChunks = [];
+
     /**
-     * Kết thúc Livestream
+     * Tự động ghi hình phiên Livestream (MediaRecorder)
+     */
+    function startRecording(stream) {
+        if (!window.MediaRecorder || !stream) return;
+        try {
+            recordedChunks = [];
+            const mimeTypes = [
+                'video/webm;codecs=vp9,opus',
+                'video/webm;codecs=vp8,opus',
+                'video/webm',
+                'video/mp4'
+            ];
+            const mime = mimeTypes.find(m => MediaRecorder.isTypeSupported(m)) || '';
+            mediaRecorder = new MediaRecorder(stream, mime ? { mimeType: mime } : {});
+            mediaRecorder.ondataavailable = (event) => {
+                if (event.data && event.data.size > 0) {
+                    recordedChunks.push(event.data);
+                }
+            };
+            mediaRecorder.start(2500);
+            console.log('[LiveHost] MediaRecorder started with mime:', mime);
+        } catch (e) {
+            console.warn('[LiveHost] MediaRecorder error:', e);
+        }
+    }
+
+    /**
+     * Kết thúc Livestream & Tải video lên YouTube
      */
     async function endStream() {
         if (typeof Swal !== 'undefined') {
@@ -705,6 +874,50 @@ window.DongAnhLiveHost = (function () {
                 cancelButtonText: 'Tiếp tục Live'
             });
             if (!result.isConfirmed) return;
+        }
+
+        // Hiển thị thông báo đang hoàn tất
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                title: 'Đang hoàn tất...',
+                html: '<div style="font-size:0.95rem; color:#64748b; margin-top:8px;">Vui lòng chờ trong giây lát...</div>',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+        }
+
+        // 1. Dừng ghi hình và chuẩn bị tệp video
+        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+            try { mediaRecorder.stop(); } catch(e) {}
+        }
+
+        let ytResultData = null;
+        if (recordedChunks.length > 0) {
+            try {
+                const mimeType = mediaRecorder ? (mediaRecorder.mimeType || 'video/webm') : 'video/webm';
+                const blob = new Blob(recordedChunks, { type: mimeType });
+                const ext = mimeType.includes('mp4') ? 'mp4' : 'webm';
+                const file = new File([blob], `live_record_${streamId}_${Date.now()}.${ext}`, { type: mimeType });
+
+                const formData = new FormData();
+                formData.append('recording', file);
+
+                console.log('[LiveHost] Uploading recorded stream video (' + (file.size / (1024*1024)).toFixed(2) + ' MB)...');
+                const uploadRes = await fetch(`/livestream/${streamId}/upload-recording`, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': getCsrf()
+                    },
+                    body: formData
+                });
+                ytResultData = await uploadRes.json();
+                console.log('[LiveHost] Video upload completed:', ytResultData);
+            } catch (uploadErr) {
+                console.warn('[LiveHost] Error uploading recording:', uploadErr);
+            }
         }
 
         try {
@@ -735,7 +948,7 @@ window.DongAnhLiveHost = (function () {
                             <div>❤️ <b>Tổng lượt tương tác:</b> ${data.total_likes || 0} lượt</div>
                         </div>
                     `,
-                    confirmButtonText: 'Về trang Bản tin',
+                    confirmButtonText: 'Về trang Quản lý Live',
                     confirmButtonColor: '#0ea5e9'
                 }).then(() => {
                     window.location.href = '/livestream';

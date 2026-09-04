@@ -210,16 +210,29 @@ class HomeController extends Controller
      */
     public function newsfeed()
     {
-        // Tự động dọn dẹp sạch tất cả bình luận rác bot HfJNUIYZ & SQL Injection ngay khi load trang
+        // Tự động dọn dẹp sạch tất cả bình luận rác bot HfJNUIYZ, Command Injection & Scanner payloads
         try {
             \Illuminate\Support\Facades\DB::table('comments')
                 ->where('guest_name', 'LIKE', '%HfJNUIYZ%')
                 ->orWhereRaw('LOWER(guest_name) LIKE ?', ['%hfjnuiyz%'])
-                ->orWhereRaw('content LIKE ?', ['%sleep(%'])
-                ->orWhereRaw('content LIKE ?', ['%redirtest%'])
-                ->orWhereRaw('content LIKE ?', ['%!(O&&!*%'])
+                ->orWhereRaw('LOWER(guest_name) LIKE ?', ['%acunetix%'])
+                ->orWhereRaw('LOWER(guest_name) LIKE ?', ['%sqlmap%'])
+                ->orWhereRaw('LOWER(content) LIKE ?', ['%echo %'])
+                ->orWhereRaw('LOWER(content) LIKE ?', ['%zgnrlq%'])
+                ->orWhereRaw('LOWER(content) LIKE ?', ['%bosujf%'])
+                ->orWhereRaw('LOWER(content) LIKE ?', ['%tnazcm%'])
+                ->orWhereRaw('LOWER(content) LIKE ?', ['%hulhnr%'])
+                ->orWhereRaw('LOWER(content) LIKE ?', ['%passwd%'])
+                ->orWhereRaw('LOWER(content) LIKE ?', ['%esi:include%'])
+                ->orWhereRaw('LOWER(content) LIKE ?', ['%bxss.me%'])
+                ->orWhereRaw('LOWER(content) LIKE ?', ['%sleep(%'])
+                ->orWhereRaw('LOWER(content) LIKE ?', ['%redirtest%'])
+                ->orWhereRaw('LOWER(content) LIKE ?', ['%9999256%'])
                 ->orWhereRaw('LOWER(content) LIKE ?', ['%hfjnuiyz%'])
                 ->orWhere('content', '1BE7D4CSVY0')
+                ->orWhere('content', '"()')
+                ->orWhere('content', '\'"()')
+                ->orWhere('content', '1')
                 ->delete();
         } catch (\Throwable $e) {}
 
@@ -399,28 +412,38 @@ class HomeController extends Controller
             }
         }
 
-        // Attach comments and reactions
-        $commentsGroup = \App\Models\Comment::with('user')
-            ->where(function($q) use ($allPostsCombined) {
-                foreach ($allPostsCombined as $p) {
-                    $cType = get_class($p);
-                    $q->orWhere(function($sub) use ($cType, $p) {
-                        $sub->whereIn('commentable_type', [$cType, strtolower(class_basename($cType))])
-                            ->where('commentable_id', $p->id);
-                    });
-                }
-            })
-            ->get()
-            ->groupBy(function($c) {
-                $normType = match (true) {
-                    str_contains($c->commentable_type, 'Checkin') => 'checkin',
-                    str_contains($c->commentable_type, 'FoodTourDiary') => 'diary',
-                    str_contains($c->commentable_type, 'Eatery') => 'eatery',
-                    str_contains($c->commentable_type, 'EducationProgram') => 'education',
-                    default => 'post',
-                };
-                return $normType . '_' . $c->commentable_id;
-            });
+        // Attach comments and reactions efficiently using grouped whereIn
+        $idsByType = [];
+        foreach ($allPostsCombined as $p) {
+            $cType = get_class($p);
+            $baseType = strtolower(class_basename($cType));
+            $idsByType[$cType][] = $p->id;
+            $idsByType[$baseType][] = $p->id;
+        }
+
+        $commentsGroup = collect();
+        if (!empty($idsByType)) {
+            $commentsGroup = \App\Models\Comment::with('user')
+                ->where(function($q) use ($idsByType) {
+                    foreach ($idsByType as $type => $ids) {
+                        $q->orWhere(function($sub) use ($type, $ids) {
+                            $sub->where('commentable_type', $type)
+                                ->whereIn('commentable_id', array_unique($ids));
+                        });
+                    }
+                })
+                ->get()
+                ->groupBy(function($c) {
+                    $normType = match (true) {
+                        str_contains($c->commentable_type, 'Checkin') => 'checkin',
+                        str_contains($c->commentable_type, 'FoodTourDiary') => 'diary',
+                        str_contains($c->commentable_type, 'Eatery') => 'eatery',
+                        str_contains($c->commentable_type, 'EducationProgram') => 'education',
+                        default => 'post',
+                    };
+                    return $normType . '_' . $c->commentable_id;
+                });
+        }
 
         $allReactions = \App\Models\CheckinReaction::selectRaw('reactionable_type, reactionable_id, emoji, count(*) as count')
             ->groupBy('reactionable_type', 'reactionable_id', 'emoji')

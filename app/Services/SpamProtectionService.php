@@ -20,7 +20,10 @@ class SpamProtectionService
         'vay tiền nhanh', 'vay tien nhanh', 'bốc bát họ', 'boc bat ho', 'vay nóng', 'vay nong',
         'tăng like', 'tang like', 'tăng follow', 'hack nick', 'chạy quảng cáo chiết khấu',
         't.me/', 'telegram.me/', 'chat.whatsapp.com/', 'zalo.me/g/',
-        'hfjnuiyz', 'sleep(', 'redirtest', '1be7d4csvy0', '!(o&&!*'
+        'hfjnuiyz', 'sleep(', 'benchmark(', 'waitfor delay', 'redirtest', '1be7d4csvy0', '!(o&&!*',
+        'bxss.me', 'rpb.png', 'etc/passwd', 'win.ini', 'esi:include', '<esi:',
+        'response.write', 'response.', 'expr ', 'assert(', 'base64_decode', 'print(md5',
+        'acunetix', 'sqlmap', 'burpsuite', 'oastify', 'interactsh'
     ];
 
     /**
@@ -46,7 +49,27 @@ class SpamProtectionService
             ];
         }
 
-        // 2. Kiểm tra độ dài và định dạng nội dung
+        // 2. Kiểm tra tên khách vãng lai (guest_name) nếu có
+        $guestName = trim((string) $request->input('guest_name', ''));
+        if (!empty($guestName)) {
+            $lowerGuest = mb_strtolower($guestName, 'UTF-8');
+            if (str_contains($lowerGuest, 'hfjnuiyz') || str_contains($lowerGuest, 'acunetix') || str_contains($lowerGuest, 'sqlmap')) {
+                return [
+                    'is_spam' => true,
+                    'reason' => 'Tên hiển thị không hợp lệ.',
+                    'code' => 422
+                ];
+            }
+            if (preg_match('/[<>{}\$\[\]\\\/]/', $guestName)) {
+                return [
+                    'is_spam' => true,
+                    'reason' => 'Tên hiển thị chứa ký tự không hợp lệ.',
+                    'code' => 422
+                ];
+            }
+        }
+
+        // 3. Kiểm tra độ dài và định dạng nội dung
         $trimmed = trim($content);
         if (mb_strlen($trimmed, 'UTF-8') < 2) {
             return [
@@ -64,7 +87,25 @@ class SpamProtectionService
             ];
         }
 
-        // 3. Kiểm tra spam chuỗi lặp lại vô nghĩa (vd: aaaaaaaa, 1111111, hehehehehe 20 lần)
+        // 4. Kiểm tra mã độc / Scanner Injection / Directory Traversal / Template Injection
+        if (preg_match('/(\.\.[\/\\\\]|\$\{[^}]+\}|#\{[^}]+\}|<esi:|<\?php|<script)/i', $trimmed)) {
+            return [
+                'is_spam' => true,
+                'reason' => 'Nội dung bình luận chứa ký tự cú pháp không hợp lệ.',
+                'code' => 422
+            ];
+        }
+
+        // 5. Kiểm tra chuỗi fuzzing / ký tự đặc biệt lộn xộn bất thường (vd: !(()&&!|*|*|, ^(#$!@#$)()))******)
+        if (self::hasFuzzingPayload($trimmed)) {
+            return [
+                'is_spam' => true,
+                'reason' => 'Nội dung bình luận chứa chuỗi ký tự không hợp lệ.',
+                'code' => 422
+            ];
+        }
+
+        // 6. Kiểm tra spam chuỗi lặp lại vô nghĩa (vd: aaaaaaaa, 1111111, hehehehehe 20 lần)
         if (self::hasRepetitiveSpam($trimmed)) {
             return [
                 'is_spam' => true,
@@ -73,7 +114,7 @@ class SpamProtectionService
             ];
         }
 
-        // 4. Kiểm tra từ khóa rác & link spam (chứa từ cấm hoặc quá nhiều URL)
+        // 7. Kiểm tra từ khóa rác & link spam (chứa từ cấm hoặc quá nhiều URL)
         $spamWord = self::findSpamKeyword($trimmed);
         if ($spamWord) {
             return [
@@ -172,6 +213,29 @@ class SpamProtectionService
             if ($request->filled($field)) {
                 return true;
             }
+        }
+
+        return false;
+    }
+
+    /**
+     * Phát hiện chuỗi fuzzing hoặc ký tự đặc biệt lộn xộn bất thường (vd: !(()&&!|*|*|, ^(#$!@#$)()))******)
+     */
+    public static function hasFuzzingPayload(string $text): bool
+    {
+        $len = mb_strlen($text, 'UTF-8');
+        if ($len <= 0) return false;
+
+        // Nếu nội dung ngắn (<= 30 ký tự) mà không chứa bất kỳ chữ cái nào
+        $lettersCount = preg_match_all('/[\p{L}0-9]/u', $text);
+        if ($len <= 30 && $lettersCount === 0) {
+            return true;
+        }
+
+        // Tỷ lệ ký tự đặc biệt (ngoài chữ cái, số, khoảng trắng và emoji thông thường)
+        $symbolsCount = preg_match_all('/[!@#\$%\^&\*\(\)_\+=\[\]\{\}\|;:\'",<>\?\/\\\\~`]/', $text);
+        if ($len >= 6 && ($symbolsCount / $len) > 0.45 && $lettersCount < 4) {
+            return true;
         }
 
         return false;

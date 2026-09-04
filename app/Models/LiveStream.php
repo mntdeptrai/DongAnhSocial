@@ -10,10 +10,13 @@ class LiveStream extends Model
     use HasFactory;
 
     protected $fillable = [
+        'code',
         'user_id',
         'title',
         'description',
         'cover_image',
+        'recording_url',
+        'youtube_video_id',
         'status',
         'category',
         'pinned_product_id',
@@ -23,6 +26,20 @@ class LiveStream extends Model
         'started_at',
         'ended_at',
     ];
+
+    protected static function booted()
+    {
+        static::creating(function ($model) {
+            if (empty($model->code)) {
+                $model->code = 'live-' . \Illuminate\Support\Str::lower(\Illuminate\Support\Str::random(8));
+            }
+        });
+    }
+
+    public function getCodeOrIdAttribute()
+    {
+        return $this->code ?: ('live-' . $this->id);
+    }
 
     protected $casts = [
         'started_at' => 'datetime',
@@ -75,5 +92,31 @@ class LiveStream extends Model
             return sprintf('%02d:%02d:%02d', $diff->h, $diff->i, $diff->s);
         }
         return sprintf('%02d:%02d', $diff->i, $diff->s);
+    }
+
+    public function getStreamKeyAttribute(): string
+    {
+        return $this->code_or_id;
+    }
+
+    public function getRtmpServerUrlAttribute(): string
+    {
+        $host = request()->getHost() ?: 'donganhdiscovery.xadonganh.com';
+        return "rtmp://{$host}:1935/live";
+    }
+
+    public function getHlsStreamUrlAttribute(): string
+    {
+        return "/live/{$this->code_or_id}.m3u8";
+    }
+
+    public function getWhipStreamUrlAttribute(): string
+    {
+        return "/rtc/v1/whip/?app=live&stream={$this->code_or_id}";
+    }
+
+    public function getWhepStreamUrlAttribute(): string
+    {
+        return "/rtc/v1/whep/?app=live&stream={$this->code_or_id}";
     }
 }

@@ -64,4 +64,32 @@ class Checkin extends Model
         }
         return $this->guest_name ?? 'Khách vãng lai';
     }
+
+    /**
+     * Lấy toàn bộ ảnh của bài checkin
+     */
+    public function getAllImagesAttribute(): array
+    {
+        $list = [];
+        if (!empty($this->image_path)) {
+            $raw = is_string($this->image_path) ? json_decode($this->image_path, true) : null;
+            if (is_array($raw)) {
+                $list = array_values(array_filter($raw));
+            } else {
+                $list[] = $this->image_path;
+            }
+        }
+
+        $formatted = [];
+        foreach ($list as $img) {
+            if (!empty($img) && is_string($img)) {
+                if (\Illuminate\Support\Str::startsWith($img, ['http://', 'https://', 'data:'])) {
+                    $formatted[] = $img;
+                } else {
+                    $formatted[] = asset(ltrim($img, '/'));
+                }
+            }
+        }
+        return $formatted;
+    }
 }

@@ -5,14 +5,17 @@
 
 window.DongAnhLiveViewer = (function () {
     let streamId = null;
+    let channelId = null;
     let mySessionId = 'viewer_' + Math.random().toString(36).substring(2, 9);
     let peerConnection = null;
     let remoteStream = null;
+    let pendingIceCandidates = [];
 
     const rtcConfig = {
         iceServers: [
             { urls: 'stun:stun.l.google.com:19302' },
             { urls: 'stun:stun1.l.google.com:19302' },
+            { urls: 'stun:stun.cloudflare.com:3478' },
             { urls: 'stun:openrelay.metered.ca:80' },
             { urls: 'turn:openrelay.metered.ca:80', username: 'openrelayproject', credential: 'openrelayproject' },
             { urls: 'turn:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' }
@@ -24,32 +27,195 @@ window.DongAnhLiveViewer = (function () {
         return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
     }
 
+    let hlsInstance = null;
+
     /**
-     * Khởi tạo phòng xem Livestream cho Viewer
+     * Khởi tạo phòng xem Livestream cho Viewer (YouTube Live hoặc SRS HLS / WebRTC)
      */
     function init(config) {
         streamId = config.streamId;
-        console.log('[LiveViewer] Initializing viewer for stream #', streamId, 'Session:', mySessionId);
+        channelId = config.channelId || config.streamId;
+        const youtubeVideoId = config.youtubeVideoId || null;
+        const hlsUrl = config.hlsUrl || `/live/${streamId}.m3u8`;
+        console.log('[LiveViewer] Initializing viewer for stream #', streamId, 'YouTube ID:', youtubeVideoId, 'HLS URL:', hlsUrl);
 
-        // 1. Tạo WebRTC RTCPeerConnection
-        createPeerConnection();
-
-        // 2. Lắng nghe WebSocket Channel từ Laravel Echo / Reverb
+        // 1. Lắng nghe WebSocket Channel từ Laravel Echo / Reverb (cho chat, tim, giỏ hàng)
         setupEchoListeners();
 
-        // 3. Gửi tín hiệu tham gia phòng tới Host
-        setTimeout(() => {
-            sendSignal('host', 'viewer_join', null);
-        }, 500);
+        // 2. Nếu là luồng YouTube Live, YouTube CDN gánh 100% video -> Không cần khởi động WebRTC/HLS (0% CPU Server)
+        if (youtubeVideoId) {
+            console.log('[LiveViewer] Active YouTube Live Stream mode. Zero Server CPU & Bandwidth load.');
+            hideLoadingOverlay();
+            return;
+        }
 
-        // Lặp lại gửi tín hiệu nếu chưa kết nối sau 3 giây
-        const retryTimer = setInterval(() => {
-            if (!peerConnection || peerConnection.connectionState !== 'connected') {
-                sendSignal('host', 'viewer_join', null);
-            } else {
-                clearInterval(retryTimer);
+        // 3. Thử khởi động luồng phát HLS qua SRS Media Server
+        startHlsPlayback(hlsUrl);
+    }
+
+    /**
+     * Khởi tạo phát HLS qua Hls.js hoặc Safari Native HLS
+     */
+    function startHlsPlayback(hlsUrl) {
+        const videoEl = document.getElementById('viewer-video-player');
+        if (!videoEl) return;
+
+        let hlsConnected = false;
+
+        if (typeof Hls !== 'undefined' && Hls.isSupported()) {
+            if (hlsInstance) {
+                hlsInstance.destroy();
             }
-        }, 3500);
+            hlsInstance = new Hls({
+                enableWorker: true,
+                lowLatencyMode: true,
+                liveSyncDurationCount: 2,
+                liveMaxLatencyDurationCount: 5,
+                manifestLoadingTimeOut: 3500,
+                manifestLoadingMaxRetry: 2,
+            });
+
+            hlsInstance.loadSource(hlsUrl);
+            hlsInstance.attachMedia(videoEl);
+
+            hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
+                console.log('[LiveViewer] SRS HLS Manifest parsed successfully!');
+                hlsConnected = true;
+                hideLoadingOverlay();
+                attemptPlayVideo();
+            });
+
+            hlsInstance.on(Hls.Events.ERROR, (event, data) => {
+                if (data.fatal && !hlsConnected) {
+                    console.log('[LiveViewer] HLS stream pending, starting WebRTC fallback...');
+                    startWebRtcFallback();
+                }
+            });
+        } else if (videoEl.canPlayType('application/vnd.apple.mpegurl')) {
+            // Safari iOS
+            videoEl.src = hlsUrl;
+            videoEl.addEventListener('loadedmetadata', () => {
+                hlsConnected = true;
+                hideLoadingOverlay();
+                attemptPlayVideo();
+            });
+            setTimeout(() => {
+                if (!hlsConnected) {
+                    startWebRtcFallback();
+                }
+            }, 3000);
+        } else {
+            startWebRtcFallback();
+        }
+    }
+
+    /**
+     * Khởi động cơ chế WebRTC P2P Fallback
+     */
+    function startWebRtcFallback() {
+        if (peerConnection && (peerConnection.connectionState === 'connected' || peerConnection.iceConnectionState === 'connected')) {
+            return;
+        }
+
+        createPeerConnection();
+
+        // Gửi tín hiệu tham gia phòng tới Host
+        sendSignal('host', 'viewer_join', null);
+
+        let retryCount = 0;
+        const retryTimer = setInterval(() => {
+            retryCount++;
+            if (peerConnection && (peerConnection.connectionState === 'connected' || peerConnection.iceConnectionState === 'connected')) {
+                console.log('[LiveViewer] WebRTC Connected successfully!');
+                clearInterval(retryTimer);
+                return;
+            }
+
+            if (retryCount >= 3) {
+                clearInterval(retryTimer);
+                return;
+            }
+
+            sendSignal('host', 'viewer_join', null);
+        }, 2500);
+    }
+
+    let lastSignalTimestamp = 0;
+    let pollingInterval = null;
+
+    /**
+     * Cơ chế dự phòng: Tự động kéo tín hiệu qua HTTP khi WebSocket bị chậm hoặc bị gián đoạn
+     */
+    function startHttpPollingFallback() {
+        if (pollingInterval) return;
+        pollingInterval = setInterval(async () => {
+            if (peerConnection && (peerConnection.connectionState === 'connected' || peerConnection.iceConnectionState === 'connected')) {
+                clearInterval(pollingInterval);
+                pollingInterval = null;
+                return;
+            }
+
+            // Nếu WebSocket đang hoạt động tốt thì không cần polling HTTP
+            if (window.Echo && window.Echo.connector && window.Echo.connector.pusher && window.Echo.connector.pusher.connection.state === 'connected') {
+                clearInterval(pollingInterval);
+                pollingInterval = null;
+                return;
+            }
+
+            try {
+                const res = await fetch(`/livestream/${streamId}/signals?session_id=${mySessionId}&since=${lastSignalTimestamp}`);
+                const data = await res.json();
+                if (data.status === 'success' && data.signals && data.signals.length > 0) {
+                    for (const sig of data.signals) {
+                        if (sig.timestamp > lastSignalTimestamp) {
+                            lastSignalTimestamp = sig.timestamp;
+                        }
+                        console.log('[LiveViewer] [HTTP Poll] Received signal:', sig.signal_type, 'from:', sig.sender_session_id);
+                        if (sig.signal_type === 'host_offer') {
+                            handleHostOffer(sig.sender_session_id, sig.signal_data);
+                        } else if (sig.signal_type === 'ice_candidate' || sig.signal_type === 'ice_candidates_batch') {
+                            handleIceCandidate(sig.signal_data);
+                        } else if (sig.signal_type === 'host_ready') {
+                            sendSignal(sig.sender_session_id || 'host', 'viewer_join', null);
+                        }
+                    }
+                }
+                if (data.now) {
+                    lastSignalTimestamp = Math.max(lastSignalTimestamp, data.now - 10);
+                }
+            } catch (e) {
+                // ignore
+            }
+        }, 5000);
+    }
+
+    let iceCandidateBuffer = [];
+    let iceBatchTimeout = null;
+
+    function queueIceCandidate(candidate) {
+        if (!candidate) return;
+        iceCandidateBuffer.push(candidate);
+        if (!iceBatchTimeout) {
+            iceBatchTimeout = setTimeout(() => {
+                flushIceCandidates();
+            }, 150);
+        }
+    }
+
+    function flushIceCandidates() {
+        if (iceCandidateBuffer.length === 0) return;
+        const batch = [...iceCandidateBuffer];
+        iceCandidateBuffer = [];
+        if (iceBatchTimeout) {
+            clearTimeout(iceBatchTimeout);
+            iceBatchTimeout = null;
+        }
+
+        if (batch.length === 1) {
+            sendSignal('host', 'ice_candidate', JSON.stringify(batch[0]));
+        } else {
+            sendSignal('host', 'ice_candidates_batch', JSON.stringify(batch));
+        }
     }
 
     /**
@@ -57,30 +223,47 @@ window.DongAnhLiveViewer = (function () {
      */
     function createPeerConnection() {
         if (peerConnection) {
-            peerConnection.close();
+            try { peerConnection.close(); } catch (e) { }
         }
 
         peerConnection = new RTCPeerConnection(rtcConfig);
         remoteStream = new MediaStream();
+        pendingIceCandidates = [];
+
+        // Đăng ký nhận video và audio chủ động
+        try {
+            peerConnection.addTransceiver('video', { direction: 'recvonly' });
+            peerConnection.addTransceiver('audio', { direction: 'recvonly' });
+        } catch (e) {
+            console.warn('[LiveViewer] addTransceiver warning:', e);
+        }
 
         const videoEl = document.getElementById('viewer-video-player');
         if (videoEl) {
             videoEl.srcObject = remoteStream;
+            videoEl.muted = true;
         }
 
         // Nhận track từ Host
         peerConnection.ontrack = (event) => {
             console.log('[LiveViewer] Received remote track:', event.track.kind);
-            remoteStream.addTrack(event.track);
+            if (event.streams && event.streams[0]) {
+                const videoElement = document.getElementById('viewer-video-player');
+                if (videoElement && videoElement.srcObject !== event.streams[0]) {
+                    videoElement.srcObject = event.streams[0];
+                }
+            } else {
+                remoteStream.addTrack(event.track);
+            }
 
             hideLoadingOverlay();
             attemptPlayVideo();
         };
 
-        // Gửi ICE candidate lên Server
+        // Gửi ICE candidate lên Server (dùng cơ chế gom batch để tiết kiệm CPU)
         peerConnection.onicecandidate = (event) => {
             if (event.candidate) {
-                sendSignal('host', 'ice_candidate', JSON.stringify(event.candidate));
+                queueIceCandidate(event.candidate);
             }
         };
 
@@ -88,8 +271,17 @@ window.DongAnhLiveViewer = (function () {
             console.log('[LiveViewer] Connection state:', peerConnection.connectionState);
             if (peerConnection.connectionState === 'connected') {
                 hideLoadingOverlay();
+                attemptPlayVideo();
             } else if (peerConnection.connectionState === 'disconnected' || peerConnection.connectionState === 'failed') {
                 showReconnectingOverlay();
+            }
+        };
+
+        peerConnection.oniceconnectionstatechange = () => {
+            console.log('[LiveViewer] ICE state:', peerConnection.iceConnectionState);
+            if (peerConnection.iceConnectionState === 'connected' || peerConnection.iceConnectionState === 'completed') {
+                hideLoadingOverlay();
+                attemptPlayVideo();
             }
         };
     }
@@ -104,7 +296,7 @@ window.DongAnhLiveViewer = (function () {
             return;
         }
 
-        const channel = window.Echo.channel('live-stream.' + streamId);
+        const channel = window.Echo.channel('live-stream.' + channelId);
 
         // 1. Tín hiệu WebRTC
         channel.listen('.LiveStreamSignal', async (e) => {
@@ -116,10 +308,10 @@ window.DongAnhLiveViewer = (function () {
 
             if (e.signal_type === 'host_offer') {
                 handleHostOffer(e.sender_session_id, e.signal_data);
-            } else if (e.signal_type === 'ice_candidate') {
+            } else if (e.signal_type === 'ice_candidate' || e.signal_type === 'ice_candidates_batch') {
                 handleIceCandidate(e.signal_data);
             } else if (e.signal_type === 'host_ready') {
-                sendSignal(e.sender_session_id, 'viewer_join', null);
+                sendSignal(e.sender_session_id || 'host', 'viewer_join', null);
             }
         });
 
@@ -163,11 +355,23 @@ window.DongAnhLiveViewer = (function () {
 
         try {
             const offer = typeof sdpData === 'string' ? JSON.parse(sdpData) : sdpData;
+            console.log('[LiveViewer] Setting remote description (Host Offer)...');
             await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+
+            // Xả hàng đợi ICE candidate đã nhận trước đó
+            while (pendingIceCandidates.length > 0) {
+                const candidate = pendingIceCandidates.shift();
+                try {
+                    await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+                } catch (e) {
+                    console.warn('[LiveViewer] Error draining queued ICE candidate:', e);
+                }
+            }
 
             const answer = await peerConnection.createAnswer();
             await peerConnection.setLocalDescription(answer);
 
+            console.log('[LiveViewer] Sending Answer to Host:', hostSessionId);
             sendSignal(hostSessionId, 'viewer_answer', JSON.stringify(answer));
         } catch (err) {
             console.error('[LiveViewer] Error handling host offer:', err);
@@ -175,14 +379,21 @@ window.DongAnhLiveViewer = (function () {
     }
 
     /**
-     * Nhận ICE Candidate
+     * Nhận ICE Candidate (đơn lẻ hoặc mảng batch)
      */
     async function handleIceCandidate(candidateData) {
-        if (!peerConnection) return;
         try {
-            const candidate = typeof candidateData === 'string' ? JSON.parse(candidateData) : candidateData;
-            if (candidate) {
-                await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+            const parsed = typeof candidateData === 'string' ? JSON.parse(candidateData) : candidateData;
+            if (!parsed) return;
+
+            const candidates = Array.isArray(parsed) ? parsed : [parsed];
+
+            for (const candidate of candidates) {
+                if (!peerConnection || !peerConnection.remoteDescription || !peerConnection.remoteDescription.type) {
+                    pendingIceCandidates.push(candidate);
+                } else {
+                    await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+                }
             }
         } catch (err) {
             console.error('[LiveViewer] Error adding ICE candidate:', err);
@@ -194,7 +405,8 @@ window.DongAnhLiveViewer = (function () {
      */
     async function sendSignal(targetSessionId, signalType, signalData) {
         try {
-            await fetch(`/livestream/${streamId}/signal`, {
+            console.log('[LiveViewer] Sending signal:', signalType, 'to:', targetSessionId);
+            const res = await fetch(`/livestream/${streamId}/signal`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -208,6 +420,10 @@ window.DongAnhLiveViewer = (function () {
                     signal_data: signalData
                 })
             });
+            const data = await res.json();
+            if (data.status !== 'success') {
+                console.warn('[LiveViewer] sendSignal response:', data);
+            }
         } catch (err) {
             console.warn('[LiveViewer] sendSignal error:', err);
         }
@@ -220,13 +436,19 @@ window.DongAnhLiveViewer = (function () {
         const videoEl = document.getElementById('viewer-video-player');
         if (!videoEl) return;
 
+        // Thử phát có tiếng trước
         const playPromise = videoEl.play();
         if (playPromise !== undefined) {
             playPromise.then(() => {
                 const unblockBtn = document.getElementById('viewer-unblock-audio-btn');
                 if (unblockBtn) unblockBtn.style.display = 'none';
             }).catch(() => {
-                // Trình duyệt chặn âm thanh tự động phát -> Hiển thị nút bật tiếng
+                // Trình duyệt chặn autoplay có tiếng -> Chuyển sang muted để hiển thị video ngay
+                console.log('[LiveViewer] Autoplay with audio blocked by browser policy. Playing muted first.');
+                videoEl.muted = true;
+                videoEl.play().catch(e => console.warn('[LiveViewer] Muted play error:', e));
+
+                // Hiển thị nút bật tiếng nổi bật
                 const unblockBtn = document.getElementById('viewer-unblock-audio-btn');
                 if (unblockBtn) unblockBtn.style.display = 'flex';
             });
@@ -237,7 +459,7 @@ window.DongAnhLiveViewer = (function () {
         const videoEl = document.getElementById('viewer-video-player');
         if (videoEl) {
             videoEl.muted = false;
-            videoEl.play();
+            videoEl.play().catch(e => console.warn('[LiveViewer] unmute play error:', e));
         }
         const unblockBtn = document.getElementById('viewer-unblock-audio-btn');
         if (unblockBtn) unblockBtn.style.display = 'none';
@@ -333,7 +555,7 @@ window.DongAnhLiveViewer = (function () {
                     likesCountEl.innerText = Number(data.total_likes).toLocaleString('vi-VN');
                 }
             }
-        } catch (_) {}
+        } catch (_) { }
     }
 
     /**
@@ -352,20 +574,36 @@ window.DongAnhLiveViewer = (function () {
         };
 
         const icon = iconMap[type] || '❤️';
-        const el = document.createElement('div');
-        el.className = 'floating-particle';
-        el.innerText = icon;
-        el.style.left = (Math.random() * 60 + 20) + '%';
-        el.style.animationDuration = (Math.random() * 1.5 + 2) + 's';
+        const count = 2;
 
-        container.appendChild(el);
-        setTimeout(() => el.remove(), 3500);
+        for (let i = 0; i < count; i++) {
+            setTimeout(() => {
+                const el = document.createElement('div');
+                el.className = 'floating-particle';
+                el.innerText = icon;
+                const startLeft = 70 + (Math.random() * 24 - 12);
+                el.style.left = startLeft + '%';
+                el.style.animationDuration = (Math.random() * 0.8 + 2.2) + 's';
+                el.style.fontSize = (Math.random() * 0.8 + 2) + 'rem';
+
+                container.appendChild(el);
+                setTimeout(() => el.remove(), 3000);
+            }, i * 140);
+        }
     }
 
     /**
      * Cập nhật danh sách nhiều sản phẩm trong giỏ hàng Khán giả
      */
     function updateViewerCartUI(products = [], pinnedProduct = null) {
+        if (!window.__liveProducts) window.__liveProducts = {};
+        products.forEach(p => {
+            if (p && p.id) window.__liveProducts[p.id] = p;
+        });
+        if (pinnedProduct && pinnedProduct.id) {
+            window.__liveProducts[pinnedProduct.id] = pinnedProduct;
+        }
+
         const topCountEl = document.getElementById('viewer-cart-top-count');
         const totalCountEl = document.getElementById('viewer-cart-total-count');
         if (topCountEl) topCountEl.innerText = products.length;
@@ -386,7 +624,7 @@ window.DongAnhLiveViewer = (function () {
                     return `
                         <div class="viewer-cart-item ${isPinned ? 'is-pinned-spotlight' : ''}" id="viewer-cart-row-${prod.id}">
                             <div class="cart-item-num">#${idx + 1}</div>
-                            <img src="${prod.image_url || prod.image || '/assets/icon/default_food.png'}" class="cart-item-img" alt="${escapeHtml(prod.name)}">
+                            <img src="${prod.image_url || prod.image || '/images/ocop-placeholder.png'}" onerror="this.onerror=null; this.src='/images/ocop-placeholder.png';" class="cart-item-img" alt="${escapeHtml(prod.name)}">
                             <div class="cart-item-info">
                                 ${isPinned ? '<span class="badge-spotlight">🔥 Đang giới thiệu</span>' : ''}
                                 <div class="cart-item-name">${escapeHtml(prod.name)}</div>
@@ -396,9 +634,9 @@ window.DongAnhLiveViewer = (function () {
                                 </div>
                             </div>
                             <div class="cart-item-actions">
-                                <a href="${prod.detail_url}" target="_blank" class="btn-cart-buy">
+                                <button type="button" onclick="openProductQuickView(${prod.id}, event)" class="btn-cart-buy">
                                     🛒 Xem & Mua
-                                </a>
+                                </button>
                             </div>
                         </div>
                     `;
@@ -446,17 +684,20 @@ window.DongAnhLiveViewer = (function () {
             return;
         }
 
+        if (!window.__liveProducts) window.__liveProducts = {};
+        window.__liveProducts[product.id] = product;
+
         banner.style.display = 'flex';
         banner.innerHTML = `
-            <img src="${product.image || product.image_url || '/assets/icon/default_food.png'}" class="pin-thumb" alt="${escapeHtml(product.name)}">
+            <img src="${product.image || product.image_url || '/images/ocop-placeholder.png'}" onerror="this.onerror=null; this.src='/images/ocop-placeholder.png';" class="pin-thumb" alt="${escapeHtml(product.name)}">
             <div class="pin-info">
                 <span class="pin-badge">🏷️ Đang giới thiệu</span>
                 <div class="pin-title">${escapeHtml(product.name)}</div>
                 <div class="pin-price">${product.price}</div>
             </div>
-            <a href="${product.detail_url}" target="_blank" class="pin-buy-btn">
+            <button type="button" onclick="openProductQuickView(${product.id}, event)" class="pin-buy-btn">
                 🛒 Xem & Mua
-            </a>
+            </button>
         `;
     }
 
@@ -473,6 +714,17 @@ window.DongAnhLiveViewer = (function () {
             const likesEl = document.getElementById('ended-likes');
             if (likesEl) likesEl.innerText = (eventData.total_likes || 0).toLocaleString('vi-VN');
         }
+
+        // Ẩn thanh công cụ và chat nổi khi phiên live đã kết thúc
+        const chatPane = document.querySelector('.viewer-chat-pane');
+        if (chatPane) chatPane.style.display = 'none';
+        const bottomBar = document.querySelector('.mobile-tiktok-action-bar');
+        if (bottomBar) bottomBar.style.display = 'none';
+        const pinnedBanner = document.getElementById('viewer-pinned-product-banner');
+        if (pinnedBanner) pinnedBanner.style.display = 'none';
+        const reactionLayer = document.getElementById('viewer-reaction-layer');
+        if (reactionLayer) reactionLayer.style.display = 'none';
+
         if (peerConnection) peerConnection.close();
     }
 
@@ -486,8 +738,37 @@ window.DongAnhLiveViewer = (function () {
         if (el) el.style.display = 'flex';
     }
 
+    function destroy() {
+        console.log('[LiveViewer] Cleaning up and destroying viewer resources...');
+        if (pollingInterval) {
+            clearInterval(pollingInterval);
+            pollingInterval = null;
+        }
+        if (iceBatchTimeout) {
+            clearTimeout(iceBatchTimeout);
+            iceBatchTimeout = null;
+        }
+        iceCandidateBuffer = [];
+        if (hlsInstance) {
+            try { hlsInstance.destroy(); } catch (e) { }
+            hlsInstance = null;
+        }
+        if (peerConnection) {
+            try { peerConnection.close(); } catch (e) { }
+            peerConnection = null;
+        }
+        const videoEl = document.getElementById('viewer-video-player');
+        if (videoEl) {
+            try {
+                videoEl.pause();
+                videoEl.src = '';
+                videoEl.srcObject = null;
+            } catch (e) { }
+        }
+    }
+
     function escapeHtml(str) {
-        return (str || '').replace(/[&<>"']/g, function(m) {
+        return (str || '').replace(/[&<>"']/g, function (m) {
             return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m];
         });
     }
@@ -497,6 +778,7 @@ window.DongAnhLiveViewer = (function () {
         unmuteAndPlay,
         sendComment,
         sendReaction,
-        renderFloatingReaction
+        renderFloatingReaction,
+        destroy
     };
 })();
