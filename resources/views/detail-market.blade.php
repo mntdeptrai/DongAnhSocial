@@ -1587,19 +1587,38 @@
                     <div class="stall-card-gov">
                         @php
                             // Ảnh 1: Ảnh đại diện cho sạp (Gian hàng cover banner)
-                            $coverImg = asset('images/stalls/food.png');
-                            if ($category === 'Rau củ') {
-                                $coverImg = asset('images/stalls/veggies.png');
-                            } elseif ($category === 'Thực phẩm khô' || str_contains($stallName, 'Hoa quả')) {
-                                $coverImg = asset('images/stalls/fruits.png');
-                            } elseif ($category === 'Thịt tươi') {
-                                $coverImg = asset('images/stalls/meat.png');
+                            $stallCustomImg = $first->image_url ?: $first->image_path;
+                            if (!empty($stallCustomImg)) {
+                                $trimmedCover = trim($stallCustomImg);
+                                if (str_starts_with($trimmedCover, '[')) {
+                                    $decodedCover = json_decode($trimmedCover, true);
+                                    if (is_array($decodedCover) && count($decodedCover) > 0) {
+                                        $trimmedCover = $decodedCover[0];
+                                    }
+                                }
+                                if (str_starts_with($trimmedCover, 'http://') || str_starts_with($trimmedCover, 'https://')) {
+                                    $coverImg = $trimmedCover;
+                                } else {
+                                    $coverImg = asset(ltrim($trimmedCover, '/'));
+                                }
+                            } else {
+                                $coverImg = asset('images/stalls/food.png');
+                                if ($category === 'Rau củ') {
+                                    $coverImg = asset('images/stalls/veggies.png');
+                                } elseif ($category === 'Thực phẩm khô' || str_contains($stallName, 'Hoa quả')) {
+                                    $coverImg = asset('images/stalls/fruits.png');
+                                } elseif ($category === 'Thịt tươi') {
+                                    $coverImg = asset('images/stalls/meat.png');
+                                }
                             }
 
                             // Ảnh 2: Ảnh đại diện của chủ hộ (Profile photo hoặc Badge chữ cái đầu)
                             $sellerAvatar = null;
                             if (!empty($first->user?->avatar)) {
-                                $sellerAvatar = asset(ltrim($first->user->avatar, '/'));
+                                $userAv = asset(ltrim($first->user->avatar, '/'));
+                                if ($userAv !== $coverImg) {
+                                    $sellerAvatar = $userAv;
+                                }
                             }
                         @endphp
                         

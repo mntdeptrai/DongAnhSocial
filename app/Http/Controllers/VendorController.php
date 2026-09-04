@@ -759,6 +759,13 @@ class VendorController extends Controller
             $stallImagePath = trim($request->input('stall_image_url'));
         }
 
+        $ownerAvatarPath = null;
+        if ($request->hasFile('avatar')) {
+            $ownerAvatarPath = R2Helper::upload($request->file('avatar'), 'avatars');
+        } elseif ($request->filled('avatar_url')) {
+            $ownerAvatarPath = trim($request->input('avatar_url'));
+        }
+
         // 1. Cập nhật thông tin trên bảng User hiện tại
         if ($user) {
             $userUpdate = [
@@ -768,8 +775,8 @@ class VendorController extends Controller
                 'bank_name' => $bankName ?: null,
                 'updated_at' => now()
             ];
-            if ($stallImagePath) {
-                $userUpdate['avatar'] = $stallImagePath;
+            if ($ownerAvatarPath) {
+                $userUpdate['avatar'] = $ownerAvatarPath;
             }
             DB::table('users')->where('id', $user->id)->update($userUpdate);
 
@@ -783,8 +790,8 @@ class VendorController extends Controller
                     'bank_name' => $bankName ?: null,
                     'updated_at' => now(),
                 ];
-                if ($stallImagePath) {
-                    $routeUpdate['image_url'] = $stallImagePath;
+                if ($ownerAvatarPath) {
+                    $routeUpdate['image_url'] = $ownerAvatarPath;
                 }
                 \App\Models\RouteBusiness::where('user_id', $user->id)
                     ->orWhere('phone', $sellerPhone)

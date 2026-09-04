@@ -199,6 +199,63 @@
         </div>
     </div>
 
+    <!-- SECTION 0.5: HÌNH ẢNH ĐẠI DIỆN CHỦ HỘ / TIỂU THƯƠNG -->
+    <div class="slr-card">
+        <div class="slr-card-header">
+            <span style="font-size: 1.4rem;">👤</span>
+            <h2 class="slr-card-title">Ảnh Đại Diện Chủ Hộ (Chân Dung / Avatar Tiểu Thương)</h2>
+        </div>
+
+        <div style="display: flex; gap: 24px; align-items: flex-start; flex-wrap: wrap;">
+            <!-- Avatar xem trước -->
+            <div style="flex-shrink: 0; text-align: center;">
+                @php
+                    $userAvatarVal = Auth::user()?->avatar;
+                    $userAvatarSrc = null;
+                    if ($userAvatarVal) {
+                        $userAvatarSrc = (str_starts_with($userAvatarVal, 'http://') || str_starts_with($userAvatarVal, 'https://')) 
+                            ? $userAvatarVal 
+                            : asset(ltrim($userAvatarVal, '/'));
+                    }
+                @endphp
+                <div id="avatar_preview_box" style="width: 120px; height: 120px; border-radius: 50%; overflow: hidden; border: 3px solid #0ea5e9; background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 14px rgba(14,165,233,0.25); margin: 0 auto; position: relative;">
+                    @if(!empty($userAvatarSrc))
+                        <img id="avatar_preview" src="{{ $userAvatarSrc }}" alt="Avatar Chủ Hộ" style="width: 100%; height: 100%; object-fit: cover;">
+                        <div id="avatar_placeholder" style="display: none; color: #fff; font-weight: 800; font-size: 2.2rem;">
+                            {{ mb_substr($currentSellerName, 0, 1) }}
+                        </div>
+                    @else
+                        <div id="avatar_placeholder" style="color: #fff; font-weight: 800; font-size: 2.2rem;">
+                            {{ mb_substr($currentSellerName, 0, 1) }}
+                        </div>
+                        <img id="avatar_preview" src="" alt="Avatar Chủ Hộ" style="width: 100%; height: 100%; object-fit: cover; display: none;">
+                    @endif
+                </div>
+                <div style="font-size: 0.75rem; color: #64748b; margin-top: 8px; font-weight: 600;">Avatar hiện tại</div>
+            </div>
+
+            <!-- Khu vực tải ảnh avatar -->
+            <div style="flex: 1; min-width: 280px;">
+                <div class="slr-form-group" style="margin-bottom: 14px;">
+                    <label class="slr-label">👤 Tải Ảnh Chân Dung / Avatar Mới</label>
+                    <input type="file" name="avatar" id="avatar_input" accept="image/*" class="slr-input" style="padding: 10px 14px; background: #fff;" onchange="previewAvatarFile(this)">
+                    <div style="font-size: 0.78rem; color: #64748b; margin-top: 4px;">
+                        Khuyến nghị: Ảnh chân dung cá nhân rõ mặt (JPG, PNG, WEBP, tối đa 10MB).
+                    </div>
+                </div>
+
+                <div class="slr-form-group" style="margin-bottom: 12px;">
+                    <label class="slr-label" style="font-size: 0.8rem; color: #64748b;">HOẶC DÁN LINK ẢNH AVATAR TRỰC TIẾP (URL)</label>
+                    <input type="text" name="avatar_url" id="avatar_url_input" class="slr-input" value="{{ old('avatar_url', $userAvatarVal) }}" placeholder="https://..." oninput="previewAvatarUrl(this.value)">
+                </div>
+
+                <div style="padding: 10px 14px; background: #f0f9ff; border-radius: 10px; border: 1px solid #bae6fd; font-size: 0.82rem; color: #0369a1; font-weight: 600;">
+                    💬 Ảnh này sẽ hiển thị làm <strong>Avatar Chân Dung Chủ Hộ</strong> trong khung Trò chuyện & Nhắn tin với Khách hàng, trên các thẻ gian hàng công khai và góc tài khoản của bạn.
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         function previewStallFile(input) {
             if (input.files && input.files[0]) {
@@ -221,6 +278,36 @@
             if (url && url.trim().length > 5) {
                 const preview = document.getElementById('stall_image_preview');
                 const placeholder = document.getElementById('stall_image_placeholder');
+                if (preview) {
+                    preview.src = url.trim();
+                    preview.style.display = 'block';
+                }
+                if (placeholder) {
+                    placeholder.style.display = 'none';
+                }
+            }
+        }
+        function previewAvatarFile(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const preview = document.getElementById('avatar_preview');
+                    const placeholder = document.getElementById('avatar_placeholder');
+                    if (preview) {
+                        preview.src = e.target.result;
+                        preview.style.display = 'block';
+                    }
+                    if (placeholder) {
+                        placeholder.style.display = 'none';
+                    }
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+        function previewAvatarUrl(url) {
+            if (url && url.trim().length > 5) {
+                const preview = document.getElementById('avatar_preview');
+                const placeholder = document.getElementById('avatar_placeholder');
                 if (preview) {
                     preview.src = url.trim();
                     preview.style.display = 'block';
