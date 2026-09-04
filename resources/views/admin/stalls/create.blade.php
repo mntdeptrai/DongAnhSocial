@@ -1,27 +1,29 @@
 @extends('layouts.admin')
 
-@section('title', '➕ Thêm Gian Hàng Số Mới')
+@section('title', '➕ Thêm Sản Phẩm Trưng Bày Mới')
 
 @section('content')
 <!-- Welcome Workspace Banner -->
-<div class="admin-welcome-banner" style="margin-bottom: 24px; background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);">
+<div class="admin-welcome-banner" style="margin-bottom: 24px; background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); padding: 24px; border-radius: 16px;">
     <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
         <div>
-            <h1 style="font-size: 1.45rem; color: #ffffff;">🛒 Thêm Gian Hàng Số Mới</h1>
-            <p style="color: rgba(255,255,255,0.85); margin-top: 4px;">Khai báo thông tin hộ kinh doanh, gian hàng và sản phẩm nông sản Chợ 4.0</p>
+            <h1 style="font-size: 1.45rem; color: #ffffff; margin: 0; display: flex; align-items: center; gap: 8px;">
+                <span>🏛️</span> Thêm Sản Phẩm Trưng Bày Mới — Chợ văn hoá Du lịch Cổ Loa
+            </h1>
+            <p style="color: rgba(255,255,255,0.85); margin-top: 6px; margin-bottom: 0;">Khai báo thông tin sản phẩm, quà lưu niệm & đặc sản trưng bày tại Chợ Cổ Loa</p>
         </div>
-        <a href="/admin/stalls" class="btn-admin btn-admin-accent" style="padding: 8px 18px; border-radius: 8px; font-weight: 700; text-decoration: none;">
-            ⬅ Quay lại
+        <a href="/admin/stalls" class="btn-admin btn-admin-accent" style="padding: 10px 20px; border-radius: 10px; background-color: #ffffff; color: #0284c7; font-weight: 700; text-decoration: none; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+            ⬅ Quay lại danh sách
         </a>
     </div>
 </div>
 
 <!-- Errors Notification Banner -->
 @if ($errors->any())
-    <div class="admin-alert admin-alert-warning" style="background-color: #fee2e2; border-color: #fecaca; color: #b91c1c; margin-bottom: 24px;">
+    <div class="admin-alert admin-alert-warning" style="background-color: #fee2e2; border-color: #fecaca; color: #b91c1c; margin-bottom: 24px; padding: 16px; border-radius: 12px;">
         <div>
             <strong style="display: block; margin-bottom: 6px;">⚠️ Vui lòng kiểm tra lại thông tin nhập vào:</strong>
-            <ul style="padding-left: 20px; font-size: 0.85rem;">
+            <ul style="padding-left: 20px; font-size: 0.85rem; margin: 0;">
                 @foreach ($errors->all() as $error)
                     <li>{{ $error }}</li>
                 @endforeach
@@ -30,31 +32,46 @@
     </div>
 @endif
 
-<div class="admin-card" style="max-width: 900px; margin: 0 auto; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05); border-radius: 20px; padding: 28px;">
+<div class="admin-card" style="max-width: 900px; margin: 0 auto; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05); border-radius: 20px; padding: 28px; background: #ffffff;">
+    <!-- Banner Hướng dẫn Gom nhóm sản phẩm vào Gian hàng -->
+    <div style="background: #f0f9ff; border: 1.5px solid #bae6fd; border-radius: 14px; padding: 14px 18px; margin-bottom: 24px; font-size: 0.84rem; color: #0369a1;">
+        <div style="display: flex; align-items: flex-start; gap: 10px;">
+            <span style="font-size: 1.3rem; line-height: 1;">💡</span>
+            <div>
+                <strong style="font-size: 0.88rem; color: #0284c7;">HƯỚNG DẪN THÊM NHIỀU SẢN PHẨM VÀO GIAN HÀNG:</strong>
+                <ul style="margin: 6px 0 0 0; padding-left: 18px; line-height: 1.5;">
+                    <li><strong>Để thêm sản phẩm mới vào CÙNG 1 GIAN HÀNG</strong> (VD: Thêm mặt hàng <em>Túi xách da</em>, <em>Giày dép thêu</em> vào gian <em>"Gian hàng Giày dép & Túi xách"</em>): Hãy chọn hoặc gõ lại đúng <strong>Tên Gian Hàng</strong>.</li>
+                    <li><strong>Để tạo GIAN HÀNG MỚI HOÀN TOÀN</strong>: Bạn chỉ cần gõ tên Gian Hàng mới của mình.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
     <form action="/admin/stalls" method="POST" enctype="multipart/form-data">
         @csrf
+        <input type="hidden" name="seller_name" value="Chợ Văn hóa Du lịch Cổ Loa">
 
-        <!-- SECTION 1: THÔNG TIN CHỢ & HỘ KINH DOANH -->
+        <!-- SECTION 1: DẠNG SẢN PHẨM & ĐỊA ĐIỂM -->
         <h3 style="font-size: 1.05rem; font-weight: 800; color: #0284c7; margin-bottom: 16px; border-bottom: 1.5px solid #e0f2fe; padding-bottom: 8px; display: flex; align-items: center; gap: 8px;">
-            <span>🏪</span> Thông Tin Chợ & Hộ Kinh Doanh
+            <span>🏛️</span> Thông Tin Gian Hàng & Sản Phẩm Cụ Thể
         </h3>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 24px;">
             <!-- Địa Điểm Chợ -->
             <div class="admin-form-group">
-                <label class="admin-form-label" style="font-weight: 700; font-size: 0.82rem; margin-bottom: 8px; display: block; color: var(--admin-text-main);">Thuộc Chợ Truyền Thống <span style="color: var(--admin-danger);">*</span></label>
+                <label class="admin-form-label" style="font-weight: 700; font-size: 0.82rem; margin-bottom: 8px; display: block; color: var(--admin-text-main);">Thuộc Chợ / Địa Điểm <span style="color: var(--admin-danger);">*</span></label>
                 <div style="position: relative;">
                     <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--admin-text-muted);">🏢</span>
                     @if(session('user_role') === 'manager' && $managerEatery)
                         <input type="hidden" name="eatery_id" value="{{ $managerEatery->id }}">
                         <div class="admin-form-input" style="padding-left: 38px; border-radius: 10px; height: 42px; font-size: 0.86rem; display: flex; align-items: center; background-color: #f1f5f9; color: #0284c7; font-weight: 700; border: 1.5px solid #cbd5e1; cursor: not-allowed;">
-                            {{ $managerEatery->name }} ({{ $managerEatery->address }}) 🔒 [Cố định theo tài khoản BQL]
+                            {{ $managerEatery->name }} 🔒 [Cố định]
                         </div>
                     @else
-                        <select name="eatery_id" required class="admin-form-input" style="padding-left: 38px; border-radius: 10px; height: 42px; font-size: 0.86rem;">
+                        <select name="eatery_id" required class="admin-form-input" style="padding-left: 38px; border-radius: 10px; height: 42px; font-size: 0.86rem; width: 100%;">
                             @foreach($markets as $m)
                                 <option value="{{ $m->id }}" {{ old('eatery_id', $managerEatery ? $managerEatery->id : null) == $m->id ? 'selected' : '' }}>
-                                    {{ $m->name }} ({{ $m->address }})
+                                    {{ $m->name }}
                                 </option>
                             @endforeach
                         </select>
@@ -62,324 +79,78 @@
                 </div>
             </div>
 
-            <!-- Tên Gian Hàng -->
+            <!-- Tên Gian Hàng / Khu Trưng Bày -->
             <div class="admin-form-group">
-                <label class="admin-form-label" style="font-weight: 700; font-size: 0.82rem; margin-bottom: 8px; display: block; color: var(--admin-text-main);">Tên Gian Hàng Số <span style="color: var(--admin-danger);">*</span></label>
+                <label class="admin-form-label" style="font-weight: 700; font-size: 0.82rem; margin-bottom: 8px; display: block; color: var(--admin-text-main);">1. Tên Gian Hàng / Khu Trưng Bày <span style="color: var(--admin-danger);">*</span></label>
                 <div style="position: relative;">
-                    <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--admin-text-muted);">🛒</span>
-                    <input type="text" name="stall_name" required value="{{ old('stall_name') }}" class="admin-form-input" placeholder="Ví dụ: Gian hàng Ăn uống Cô Sinh" style="padding-left: 38px; border-radius: 10px; height: 42px;">
+                    <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--admin-text-muted);">🏪</span>
+                    <input type="text" name="stall_name" list="existing_stalls_list" required value="{{ old('stall_name', request('stall_name')) }}" class="admin-form-input" placeholder="Chọn hoặc nhập tên Gian hàng..." style="padding-left: 38px; border-radius: 10px; height: 42px; width: 100%;">
+                    @if(isset($existingStallNames) && count($existingStallNames) > 0)
+                        <datalist id="existing_stalls_list">
+                            @foreach($existingStallNames as $sName)
+                                <option value="{{ $sName }}">
+                            @endforeach
+                        </datalist>
+                    @endif
                 </div>
+                <small style="color: #0284c7; font-size: 0.74rem; margin-top: 4px; display: block;">💡 Chọn Gian hàng có sẵn hoặc gõ tên mới</small>
+            </div>
+
+            <!-- Tên Mặt Hàng / Sản Phẩm -->
+            <div class="admin-form-group">
+                <label class="admin-form-label" style="font-weight: 700; font-size: 0.82rem; margin-bottom: 8px; display: block; color: var(--admin-text-main);">2. Tên Mặt Hàng / Sản Phẩm Cụ Thể <span style="color: var(--admin-danger);">*</span></label>
+                <div style="position: relative;">
+                    <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--admin-text-muted);">📦</span>
+                    <input type="text" name="name" required value="{{ old('name') }}" class="admin-form-input" placeholder="Ví dụ: Túi xách da thêu thủ công" style="padding-left: 38px; border-radius: 10px; height: 42px; width: 100%;">
+                </div>
+                <small style="color: #64748b; font-size: 0.74rem; margin-top: 4px; display: block;">Tên món hàng nằm trong Gian hàng trên</small>
             </div>
         </div>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px;">
-            <!-- Họ Tên Chủ Hộ -->
-            <div class="admin-form-group">
-                <label class="admin-form-label" style="font-weight: 700; font-size: 0.82rem; margin-bottom: 8px; display: block; color: var(--admin-text-main);">Họ và Tên Chủ Hộ Kinh Doanh <span style="color: var(--admin-danger);">*</span></label>
-                <div style="position: relative;">
-                    <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--admin-text-muted);">👤</span>
-                    <input type="text" name="seller_name" required value="{{ old('seller_name') }}" class="admin-form-input" placeholder="Ví dụ: Nguyễn Thị Sinh" style="padding-left: 38px; border-radius: 10px; height: 42px;">
-                </div>
-            </div>
-
-            <!-- Số Điện Thoại -->
-            <div class="admin-form-group">
-                <label class="admin-form-label" style="font-weight: 700; font-size: 0.82rem; margin-bottom: 8px; display: block; color: var(--admin-text-main);">Số Điện Thoại Chủ Hộ</label>
-                <div style="position: relative;">
-                    <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--admin-text-muted);">📞</span>
-                    <input type="text" name="seller_phone" value="{{ old('seller_phone') }}" class="admin-form-input" placeholder="Ví dụ: 0987654321" style="padding-left: 38px; border-radius: 10px; height: 42px;">
-                </div>
-            </div>
-        </div>
-
-        <!-- SECTION 2: THÔNG TIN TÀI KHOẢN NGÂN HÀNG & MÃ VIETQR THANH TOÁN SỐ -->
+        <!-- SECTION 2: THÔNG TIN GIÁ BÁN & HÌNH ẢNH -->
         <h3 style="font-size: 1.05rem; font-weight: 800; color: #0284c7; margin-top: 10px; margin-bottom: 16px; border-bottom: 1.5px solid #e0f2fe; padding-bottom: 8px; display: flex; align-items: center; gap: 8px;">
-            <span>💳</span> Thông Tin Tài Khoản Ngân Hàng & Mã VietQR Thanh Toán Số
+            <span>🏷️</span> Giá Niêm Yết & Hình Ảnh Trưng Bày
         </h3>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-bottom: 20px;">
-            <!-- Ngân hàng -->
-            <div class="admin-form-group">
-                <label class="admin-form-label" style="font-weight: 700; font-size: 0.82rem; margin-bottom: 8px; display: block; color: var(--admin-text-main);">Ngân Hàng Thụ Hưởng</label>
-                @php
-                    $adminBanks = [
-                        'MBBank'         => 'MBBank (NH Quân Đội)',
-                        'VietinBank'     => 'VietinBank (NH Công Thương)',
-                        'Vietcombank'    => 'Vietcombank (NH Ngoại Thương - VCB)',
-                        'Agribank'       => 'Agribank (NH Nông Nghiệp & PTNT)',
-                        'BIDV'           => 'BIDV (NH Đầu Tư & Phát Triển)',
-                        'Techcombank'    => 'Techcombank (NH Kỹ Thương - TCB)',
-                        'VPBank'         => 'VPBank (NH Việt Nam Thịnh Vượng)',
-                        'TPBank'         => 'TPBank (NH Tiên Phong)',
-                        'ACB'            => 'ACB (NH Á Châu)',
-                        'Sacombank'      => 'Sacombank (NH Sài Gòn Thương Tín)',
-                        'MSB'            => 'MSB (NH Hàng Hải)',
-                        'VIB'            => 'VIB (NH Quốc Tế)',
-                        'HDBank'         => 'HDBank (NH Phát Triển TP.HCM)',
-                        'LPBank'         => 'LPBank (LienVietPostBank)',
-                        'SHB'            => 'SHB (NH Sài Gòn - Hà Nội)',
-                        'SeABank'        => 'SeABank (NH Đông Nam Á)',
-                        'ABBANK'         => 'ABBANK (NH An Bình)',
-                        'PVcomBank'      => 'PVcomBank (NH Đại Chúng)',
-                        'Eximbank'       => 'Eximbank (NH Xuất Nhập Khẩu)',
-                        'OCB'            => 'OCB (NH Phương Đông)',
-                        'SCB'            => 'SCB (NH Sài Gòn)',
-                        'BacABank'       => 'BacABank (NH Bắc Á)',
-                        'DongABank'      => 'DongABank (NH Đông Á)',
-                        'BaoVietBank'    => 'BaoVietBank (NH Bảo Việt)',
-                        'NCB'            => 'NCB (NH Quốc Dân)',
-                        'Oceanbank'      => 'Oceanbank (NH Đại Dương)',
-                        'GPBank'         => 'GPBank (NH Dầu Khí Toàn Cầu)',
-                        'KienLongBank'   => 'KienLongBank (NH Kiên Long)',
-                        'VietBank'       => 'VietBank (NH Việt Nam Thương Tín)',
-                        'NamABank'       => 'NamABank (NH Nam Á)',
-                        'SaigonBank'     => 'SaigonBank (NH Sài Gòn Công Thương)',
-                        'PGBank'         => 'PGBank (NH Thịnh Vượng & Phát Triển)',
-                        'BVBank'         => 'BVBank (NH Bản Việt)',
-                        'PublicBank'     => 'PublicBank (Public Bank Việt Nam)',
-                        'ShinhanBank'    => 'ShinhanBank (NH Shinhan Việt Nam)',
-                        'WooriBank'      => 'WooriBank (NH Woori Việt Nam)',
-                        'UOB'            => 'UOB (NH United Overseas Bank)',
-                        'HSBC'           => 'HSBC (NH HSBC Việt Nam)',
-                        'Cake'           => 'Cake by VPBank (NH Số Cake)',
-                        'Timo'           => 'Timo (NH Số Timo)',
-                        'ViettelMoney'   => 'Viettel Money',
-                        'VNPTMoney'      => 'VNPT Money'
-                    ];
-                    $selectedAdminBank = old('bank_name', 'MBBank');
-                    $selectedAdminLabel = isset($adminBanks[$selectedAdminBank]) ? $adminBanks[$selectedAdminBank] : $selectedAdminBank;
-                @endphp
-
-                <div class="admin-bank-wrapper" style="position: relative;">
-                    <input type="hidden" name="bank_name" id="admin_bank_hidden" value="{{ $selectedAdminBank }}">
-                    <div style="position: relative;">
-                        <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--admin-text-muted); z-index: 2;">🏦</span>
-                        <input type="text" id="admin_bank_input" class="admin-form-input" style="padding-left: 38px; padding-right: 36px; border-radius: 10px; height: 42px; font-size: 0.86rem;" 
-                               placeholder="🔍 Gõ tìm kiếm hoặc chọn ngân hàng..." 
-                               value="{{ $selectedAdminLabel }}" 
-                               autocomplete="off">
-                        <span id="admin_clear_bank_btn" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #94a3b8; font-weight: bold; z-index: 2; display: {{ !empty($selectedAdminBank) ? 'inline' : 'none' }};">✕</span>
-                    </div>
-
-                    <div id="admin_bank_dropdown" style="position: absolute; top: calc(100% + 4px); left: 0; right: 0; max-height: 240px; overflow-y: auto; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 10px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.15); z-index: 9999; display: none;">
-                        <div class="admin-bank-opt" data-value="" data-label="" style="padding: 10px 14px; cursor: pointer; border-bottom: 1px solid #f1f5f9; color: #64748b; font-size: 0.84rem; font-weight: 700;">
-                            -- Chưa sử dụng ngân hàng / Tiền mặt --
-                        </div>
-                        @foreach($adminBanks as $code => $label)
-                            <div class="admin-bank-opt" data-value="{{ $code }}" data-label="{{ $label }}" style="padding: 10px 14px; cursor: pointer; border-bottom: 1px solid #f8fafc; font-size: 0.84rem; color: #0f172a;">
-                                🏦 <strong>{{ $code }}</strong> — {{ $label }}
-                            </div>
-                        @endforeach
-                    </div>
-                </div>
-
-                <script>
-                    document.addEventListener('DOMContentLoaded', function() {
-                        const input = document.getElementById('admin_bank_input');
-                        const hidden = document.getElementById('admin_bank_hidden');
-                        const dropdown = document.getElementById('admin_bank_dropdown');
-                        const clearBtn = document.getElementById('admin_clear_bank_btn');
-                        const items = dropdown.querySelectorAll('.admin-bank-opt');
-
-                        function filterAdminBanks() {
-                            const q = input.value.trim().toLowerCase();
-                            items.forEach(item => {
-                                const val = (item.getAttribute('data-value') || '').toLowerCase();
-                                const lbl = (item.getAttribute('data-label') || '').toLowerCase();
-                                if (!q || val.includes(q) || lbl.includes(q)) {
-                                    item.style.display = 'block';
-                                } else {
-                                    item.style.display = 'none';
-                                }
-                            });
-                            dropdown.style.display = 'block';
-                            clearBtn.style.display = input.value ? 'inline' : 'none';
-                        }
-
-                        input.addEventListener('focus', filterAdminBanks);
-                        input.addEventListener('input', function() {
-                            filterAdminBanks();
-                            hidden.value = input.value.trim();
-                        });
-
-                        items.forEach(item => {
-                            item.addEventListener('click', function(e) {
-                                e.stopPropagation();
-                                const val = item.getAttribute('data-value');
-                                const lbl = item.getAttribute('data-label');
-                                hidden.value = val;
-                                input.value = lbl || val;
-                                dropdown.style.display = 'none';
-                                clearBtn.style.display = input.value ? 'inline' : 'none';
-                            });
-                            item.addEventListener('mouseenter', function() { this.style.background = '#f1f5f9'; });
-                            item.addEventListener('mouseleave', function() { this.style.background = '#ffffff'; });
-                        });
-
-                        clearBtn.addEventListener('click', function(e) {
-                            e.stopPropagation();
-                            input.value = '';
-                            hidden.value = '';
-                            clearBtn.style.display = 'none';
-                            filterAdminBanks();
-                        });
-
-                        document.addEventListener('click', function(e) {
-                            if (!input.contains(e.target) && !dropdown.contains(e.target)) {
-                                dropdown.style.display = 'none';
-                            }
-                        });
-                    });
-                </script>
-                </div>
-            </div>
-
-            <!-- Số tài khoản -->
-            <div class="admin-form-group">
-                <label class="admin-form-label" style="font-weight: 700; font-size: 0.82rem; margin-bottom: 8px; display: block; color: var(--admin-text-main);">Số Tài Khoản Ngân Hàng</label>
-                <div style="position: relative;">
-                    <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--admin-text-muted);">🔢</span>
-                    <input type="text" name="bank_account" value="{{ old('bank_account') }}" class="admin-form-input" placeholder="Ví dụ: 0987654321 / 1900123456" style="padding-left: 38px; border-radius: 10px; height: 42px;">
-                </div>
-            </div>
-
-            <!-- Tên chủ tài khoản -->
-            <div class="admin-form-group">
-                <label class="admin-form-label" style="font-weight: 700; font-size: 0.82rem; margin-bottom: 8px; display: block; color: var(--admin-text-main);">Tên Chủ Tài Khoản (Viết Hoa)</label>
-                <div style="position: relative;">
-                    <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--admin-text-muted);">💳</span>
-                    <input type="text" name="bank_holder" value="{{ old('bank_holder') }}" class="admin-form-input" placeholder="Ví dụ: NGUYEN THI SINH" style="padding-left: 38px; border-radius: 10px; height: 42px; text-transform: uppercase;">
-                </div>
-            </div>
-        </div>
-
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px;">
-            <!-- Upload Ảnh Mã VietQR -->
-            <div class="admin-form-group">
-                <label class="admin-form-label" style="font-weight: 700; font-size: 0.82rem; margin-bottom: 8px; display: block; color: var(--admin-text-main);">Tải Ảnh Mã VietQR (File)</label>
-                <input type="file" name="qr_code" accept="image/*" class="admin-form-input" style="padding: 8px; border-radius: 10px; height: 42px;">
-            </div>
-
-            <!-- Link URL Mã VietQR -->
-            <div class="admin-form-group">
-                <label class="admin-form-label" style="font-weight: 700; font-size: 0.82rem; margin-bottom: 8px; display: block; color: var(--admin-text-main);">Hoặc URL Ảnh Mã VietQR Online</label>
-                <div style="position: relative;">
-                    <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--admin-text-muted);">🔲</span>
-                    <input type="url" name="qr_code_url" value="{{ old('qr_code_url') }}" class="admin-form-input" placeholder="https://api.vietqr.io/..." style="padding-left: 38px; border-radius: 10px; height: 42px;">
-                </div>
-            </div>
-        </div>
-
-        <!-- SECTION 3: THÔNG TIN SẢN PHẨM & GIÁ BÁN -->
-        <h3 style="font-size: 1.05rem; font-weight: 800; color: #0284c7; margin-top: 10px; margin-bottom: 16px; border-bottom: 1.5px solid #e0f2fe; padding-bottom: 8px; display: flex; align-items: center; gap: 8px;">
-            <span>📦</span> Thông Tin Sản Phẩm / Nông Sản Nổi Bật
-        </h3>
-
-        <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 20px; margin-bottom: 20px;">
-            <!-- Tên Sản Phẩm -->
-            <div class="admin-form-group">
-                <label class="admin-form-label" style="font-weight: 700; font-size: 0.82rem; margin-bottom: 8px; display: block; color: var(--admin-text-main);">Tên Mặt Hàng / Sản Phẩm <span style="color: var(--admin-danger);">*</span></label>
-                <div style="position: relative;">
-                    <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--admin-text-muted);">🍜</span>
-                    <input type="text" name="name" required value="{{ old('name') }}" class="admin-form-input" placeholder="Ví dụ: Bún Riêu Cua / Cà chua VietGAP" style="padding-left: 38px; border-radius: 10px; height: 42px;">
-                </div>
-            </div>
-
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
             <!-- Giá Bán -->
             <div class="admin-form-group">
-                <label class="admin-form-label" style="font-weight: 700; font-size: 0.82rem; margin-bottom: 8px; display: block; color: var(--admin-text-main);">Giá Bán (VNĐ)</label>
+                <label class="admin-form-label" style="font-weight: 700; font-size: 0.82rem; margin-bottom: 8px; display: block; color: var(--admin-text-main);">Giá Bán / Niêm Yết (VNĐ) <small style="color: #64748b; font-weight: normal;">(Tùy chọn)</small></label>
                 <div style="position: relative;">
-                    <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--admin-text-muted);">🏷️</span>
-                    <input type="text" name="price" value="{{ old('price') }}" class="admin-form-input" placeholder="Ví dụ: 20.000đ" style="padding-left: 38px; border-radius: 10px; height: 42px;">
+                    <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--admin-text-muted);">💰</span>
+                    <input type="text" name="price" value="{{ old('price') }}" class="admin-form-input" placeholder="Ví dụ: 50.000đ" style="padding-left: 38px; border-radius: 10px; height: 42px; width: 100%;">
                 </div>
             </div>
 
             <!-- Đơn Vị Tính -->
             <div class="admin-form-group">
-                <label class="admin-form-label" style="font-weight: 700; font-size: 0.82rem; margin-bottom: 8px; display: block; color: var(--admin-text-main);">Đơn Vị Tính</label>
+                <label class="admin-form-label" style="font-weight: 700; font-size: 0.82rem; margin-bottom: 8px; display: block; color: var(--admin-text-main);">Đơn Vị Tính <small style="color: #64748b; font-weight: normal;">(Tùy chọn)</small></label>
                 <div style="position: relative;">
                     <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--admin-text-muted);">⚖️</span>
-                    <input type="text" name="unit" value="{{ old('unit') }}" class="admin-form-input" placeholder="Ví dụ: bát, kg, túi 500g" style="padding-left: 38px; border-radius: 10px; height: 42px;">
+                    <input type="text" name="unit" value="{{ old('unit') }}" class="admin-form-input" placeholder="Ví dụ: Cặp, Hộp, Chiếc, Kg" style="padding-left: 38px; border-radius: 10px; height: 42px; width: 100%;">
                 </div>
             </div>
         </div>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
-            <!-- Upload Ảnh -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px;">
+            <!-- Upload Nhiều Ảnh -->
             <div class="admin-form-group">
-                <label class="admin-form-label" style="font-weight: 700; font-size: 0.82rem; margin-bottom: 8px; display: block; color: var(--admin-text-main);">Tải Ảnh Gian Hàng / Sản Phẩm (File)</label>
-                <input type="file" name="image" accept="image/*" class="admin-form-input" style="padding: 8px; border-radius: 10px; height: 42px;">
+                <label class="admin-form-label" style="font-weight: 700; font-size: 0.82rem; margin-bottom: 8px; display: block; color: var(--admin-text-main);">Tải Nhiều Ảnh Sản Phẩm (File Máy tính)</label>
+                <input type="file" name="images[]" accept="image/*" multiple class="admin-form-input" style="padding: 8px; border-radius: 10px; height: 42px; width: 100%;">
+                <small style="color: #64748b; font-size: 0.75rem; margin-top: 4px; display: block;">💡 Nhấn giữ <strong>Ctrl</strong> hoặc <strong>Shift</strong> để chọn cùng lúc nhiều file ảnh</small>
             </div>
 
-            <!-- URL Ảnh thay thế -->
+            <!-- URL Nhiều Ảnh -->
             <div class="admin-form-group">
-                <label class="admin-form-label" style="font-weight: 700; font-size: 0.82rem; margin-bottom: 8px; display: block; color: var(--admin-text-main);">Hoặc URL Hình Ảnh (Link online)</label>
-                <div style="position: relative;">
-                    <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--admin-text-muted);">🌐</span>
-                    <input type="url" name="image_url" value="{{ old('image_url') }}" class="admin-form-input" placeholder="https://images.unsplash.com/..." style="padding-left: 38px; border-radius: 10px; height: 42px;">
-                </div>
+                <label class="admin-form-label" style="font-weight: 700; font-size: 0.82rem; margin-bottom: 8px; display: block; color: var(--admin-text-main);">Hoặc Dán Link URL Ảnh Online</label>
+                <textarea name="image_urls" rows="2" class="admin-form-input" style="border-radius: 10px; padding: 10px; width: 100%; font-size: 0.82rem;" placeholder="Có thể dán nhiều link ảnh (mỗi link 1 dòng):&#10;https://images.unsplash.com/photo-1...&#10;https://images.unsplash.com/photo-2..."></textarea>
             </div>
         </div>
 
-        <!-- Mô Tả Gian Hàng -->
-        <div class="admin-form-group" style="margin-bottom: 24px;">
-            <label class="admin-form-label" style="font-weight: 700; font-size: 0.82rem; margin-bottom: 8px; display: block; color: var(--admin-text-main);">Mô Tả Chi Tiết Gian Hàng & Nông Sản</label>
-            <textarea name="description" rows="3" class="admin-form-input" style="border-radius: 10px; padding: 12px;" placeholder="Nhập giới thiệu gian hàng, điểm nổi bật về vệ sinh an toàn thực phẩm..."></textarea>
-        </div>
-
-        <!-- SECTION 3: TRUY XUẤT NGUỒN GỐC & HẠ TẦNG CHỢ SỐ 4.0 -->
-        <h3 style="font-size: 1.05rem; font-weight: 800; color: #0284c7; margin-top: 10px; margin-bottom: 16px; border-bottom: 1.5px solid #e0f2fe; padding-bottom: 8px; display: flex; align-items: center; gap: 8px;">
-            <span>🌱</span> Truy Xuất Nguồn Gốc & Tiện Ích Chợ Số 4.0
-        </h3>
-
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
-            <!-- Nguồn Gốc Nhập Hàng / Xuất Xứ Nông Sản -->
-            <div class="admin-form-group">
-                <label class="admin-form-label" style="font-weight: 700; font-size: 0.82rem; margin-bottom: 8px; display: block; color: var(--admin-text-main);">Nguồn Gốc Nhập Hàng / Xuất Xứ Nông Sản <span style="color: var(--admin-danger);">*</span></label>
-                <select name="origin" class="admin-form-input" style="border-radius: 10px; height: 42px; font-size: 0.86rem;">
-                    <option value="Mua trong làng">🌱 Mua trong làng</option>
-                    <option value="Mua trong làng, chợ Đầu">🌾 Mua trong làng, chợ Đầu</option>
-                    <option value="Mua chợ Tó">🏪 Mua chợ Tó</option>
-                    <option value="Chợ Long Biên">🚚 Chợ Long Biên</option>
-                    <option value="Chợ Văn Trì">🛵 Chợ Văn Trì</option>
-                    <option value="Chợ đầu mối Bắc Thăng Long">🚛 Chợ đầu mối Bắc Thăng Long</option>
-                    <option value="Tự sản xuất" selected>🧑‍🌾 Tự sản xuất (Nông hộ địa phương)</option>
-                    <option value="Mua trong làng, tự sản xuất">🏡 Mua trong làng, tự sản xuất</option>
-                    <option value="Cơ sở sản xuất gạo sạch Hải Tiến">🏭 Cơ sở sản xuất gạo sạch Hải Tiến</option>
-                    <option value="Khác">🔹 Nhập khẩu / Nguồn gốc khác</option>
-                </select>
-            </div>
-
-            <!-- Xếp Hạng Chất Lượng / Đạt Chuẩn -->
-            <div class="admin-form-group">
-                <label class="admin-form-label" style="font-weight: 700; font-size: 0.82rem; margin-bottom: 8px; display: block; color: var(--admin-text-main);">Xếp Hạng Chất Lượng / Chứng Nhận</label>
-                <select name="star_rating" class="admin-form-input" style="border-radius: 10px; height: 42px; font-size: 0.86rem;">
-                    <option value="5 sao">⭐ Đạt chuẩn VietGAP / 5 sao</option>
-                    <option value="4 sao" selected>⭐ Hàng tươi nông sản đạt chuẩn ATTP</option>
-                    <option value="3 sao">⭐ Gian hàng đạt chuẩn Chợ 4.0</option>
-                </select>
-            </div>
-        </div>
-
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 28px;">
-            <!-- Chứng nhận Vệ sinh ATTP -->
-            <div class="admin-form-group">
-                <label class="admin-form-label" style="font-weight: 700; font-size: 0.82rem; margin-bottom: 8px; display: block; color: var(--admin-text-main);">Trạng Thái An Toàn Thực Phẩm (ATTP)</label>
-                <select name="attp_status" class="admin-form-input" style="border-radius: 10px; height: 42px; font-size: 0.86rem;">
-                    <option value="ĐẠT TIÊU CHUẨN" selected>✅ Đạt chuẩn ATTP (BQL Chợ Kiểm Định)</option>
-                    <option value="ĐANG KIỂM NGHIỆM">🧪 Đang xét nghiệm mẫu sản phẩm</option>
-                    <option value="CẦN BỔ SUNG">⚠️ Đang bổ sung chứng nhận nguồn gốc</option>
-                </select>
-            </div>
-
-            <!-- Liên kết VietQR & Thanh Toán Số -->
-            <div class="admin-form-group">
-                <label class="admin-form-label" style="font-weight: 700; font-size: 0.82rem; margin-bottom: 8px; display: block; color: var(--admin-text-main);">Liên Kết Thanh Toán Số & VietQR</label>
-                <select name="has_qr" class="admin-form-input" style="border-radius: 10px; height: 42px; font-size: 0.86rem;">
-                    <option value="1" selected>💳 Đã liên kết Mã VietQR & TK Ngân Hàng</option>
-                    <option value="0">❌ Chưa liên kết thanh toán số</option>
-                </select>
-            </div>
+        <!-- SECTION 3: MÔ TẢ NỘI DUNG SẢN PHẨM -->
+        <div class="admin-form-group" style="margin-bottom: 28px;">
+            <label class="admin-form-label" style="font-weight: 700; font-size: 0.82rem; margin-bottom: 8px; display: block; color: var(--admin-text-main);">Mô Tả Chi Tiết Sản Phẩm & Ý Nghĩa Văn Hóa</label>
+            <textarea name="description" rows="4" class="admin-form-input" style="border-radius: 10px; padding: 12px; width: 100%;" placeholder="Nhập giới thiệu chi tiết sản phẩm, nguồn gốc di sản hoặc nét đặc sắc của sản phẩm trưng bày..."></textarea>
         </div>
 
         <!-- Action Buttons -->
@@ -387,8 +158,8 @@
             <a href="/admin/stalls" class="btn-admin btn-admin-accent" style="padding: 10px 24px; border-radius: 10px; font-weight: 700; font-size: 0.84rem; text-decoration: none;">
                 Hủy
             </a>
-            <button type="submit" class="btn-admin btn-admin-primary" style="padding: 10px 32px; border-radius: 10px; font-weight: 700; font-size: 0.84rem; display: flex; align-items: center; gap: 6px; border: none; background-color: #0284c7;">
-                ✓ Lưu Gian Hàng Số
+            <button type="submit" class="btn-admin btn-admin-primary" style="padding: 10px 32px; border-radius: 10px; font-weight: 700; font-size: 0.84rem; display: flex; align-items: center; gap: 6px; border: none; background-color: #0284c7; color: #ffffff; cursor: pointer;">
+                ✓ Lưu Sản Phẩm Trưng Bày
             </button>
         </div>
     </form>

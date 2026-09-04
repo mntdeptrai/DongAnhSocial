@@ -2592,7 +2592,15 @@ class AdminController extends Controller
         }
 
         $markets = \Illuminate\Support\Facades\DB::connection('mysql_market')->table('eateries')->get();
-        return view('admin.stalls.create', compact('markets', 'managerEatery'));
+        $existingStallNames = \Illuminate\Support\Facades\DB::connection('mysql_market')
+            ->table('ocop_products')
+            ->whereNotNull('stall_name')
+            ->where('stall_name', '!=', '')
+            ->pluck('stall_name')
+            ->unique()
+            ->values();
+
+        return view('admin.stalls.create', compact('markets', 'managerEatery', 'existingStallNames'));
     }
 
     public function storeStall(Request $request)
@@ -2605,16 +2613,6 @@ class AdminController extends Controller
 
         $request->validate([
             'eatery_id' => 'required',
-            'stall_name' => 'required|string|max:200',
-            'seller_name' => 'required|string|max:100',
-            'seller_phone' => 'nullable|string|max:20',
-            'bank_name' => 'nullable|string|max:100',
-            'bank_account' => 'nullable|string|max:50',
-            'bank_holder' => 'nullable|string|max:100',
-            'qr_code' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
-            'qr_code_url' => 'nullable|url',
-            'name' => 'required|string|max:200',
-            'price' => 'nullable|string|max:100',
             'unit' => 'nullable|string|max:50',
             'star_rating' => 'nullable|string|max:50',
             'description' => 'nullable|string',
@@ -2658,11 +2656,40 @@ class AdminController extends Controller
             $qrCodePath = "https://img.vietqr.io/image/{$bankCode}-{$bankAccount}-compact.png?accountName=" . urlencode($bankHolder) . "&addInfo=" . urlencode("TT " . $request->stall_name);
         }
 
+        // Xử lý nhiều hình ảnh (File hoặc URL)
+        $imagePaths = [];
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $imgFile) {
+                if ($imgFile && $imgFile->isValid()) {
+                    $imagePaths[] = R2Helper::upload($imgFile, 'ocop');
+                }
+            }
+        } elseif ($request->hasFile('image')) {
+            $imagePaths[] = R2Helper::upload($request->file('image'), 'ocop');
+        }
+
+        if ($request->filled('image_urls')) {
+            $urls = array_filter(array_map('trim', preg_split('/[\r\n,]+/', $request->image_urls)));
+            foreach ($urls as $u) {
+                if (!empty($u)) {
+                    $imagePaths[] = $u;
+                }
+            }
+        } elseif ($request->filled('image_url')) {
+            $imagePaths[] = $request->image_url;
+        }
+
+        $imagePaths = array_values(array_unique(array_filter($imagePaths)));
+        $imagePath = count($imagePaths) > 1 ? json_encode($imagePaths, JSON_UNESCAPED_SLASHES) : (!empty($imagePaths) ? $imagePaths[0] : null);
+
+        $stallName = $request->stall_name ?: $request->name;
+        $sellerName = $request->seller_name ?: 'Chợ Văn hóa Du lịch Cổ Loa';
+
         \Illuminate\Support\Facades\DB::connection('mysql_market')->table('ocop_products')->insert([
             'eatery_id' => $eateryId,
-            'stall_name' => $request->stall_name,
-            'seller_name' => $request->seller_name,
-            'seller_phone' => $request->seller_phone ?: 'Cần cập nhật thông tin',
+            'stall_name' => $stallName,
+            'seller_name' => $sellerName,
+            'seller_phone' => $request->seller_phone ?: 'Ban Quản lý Chợ Cổ Loa',
             'bank_name' => $bankName,
             'bank_account' => $bankAccount,
             'bank_holder' => $bankHolder,
@@ -2670,14 +2697,14 @@ class AdminController extends Controller
             'name' => $request->name,
             'price' => $request->price ?: null,
             'unit' => $request->unit ?: null,
-            'star_rating' => $request->star_rating ?: null,
+            'star_rating' => $request->star_rating ?: 'OCOP / Đặc sản',
             'description' => $request->description,
             'image_path' => $imagePath,
             'created_at' => now(),
             'updated_at' => now(),
         ]);
 
-        return redirect('/admin/stalls')->with('success', '🎉 Thêm mới Gian hàng số thành công!');
+        return redirect('/admin/stalls')->with('success', '🎉 Thêm mới Sản phẩm trưng bày thành công!');
     }
 
     public function editStall($id)
@@ -2724,8 +2751,8 @@ class AdminController extends Controller
 
         $request->validate([
             'eatery_id' => 'required',
-            'stall_name' => 'required|string|max:200',
-            'seller_name' => 'required|string|max:100',
+            'stall_name' => 'nullable|string|max:200',
+            'seller_name' => 'nullable|string|max:100',
             'seller_phone' => 'nullable|string|max:20',
             'bank_name' => 'nullable|string|max:100',
             'bank_account' => 'nullable|string|max:50',
@@ -2738,6 +2765,7 @@ class AdminController extends Controller
             'star_rating' => 'nullable|string|max:50',
             'description' => 'nullable|string',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
+            'images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
             'image_url' => 'nullable|url',
         ]);
 
@@ -2756,13 +2784,35 @@ class AdminController extends Controller
             }
         }
 
-        $imagePath = $stall->image_path;
-        if ($request->filled('image_url')) {
-            $imagePath = $request->image_url;
+        // Xử lý nhiều hình ảnh khi Cập nhật
+        $newImagePaths = [];
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $imgFile) {
+                if ($imgFile && $imgFile->isValid()) {
+                    $newImagePaths[] = R2Helper::upload($imgFile, 'stalls');
+                }
+            }
+        } elseif ($request->hasFile('image')) {
+            $newImagePaths[] = R2Helper::upload($request->file('image'), 'stalls');
         }
 
-        if ($request->hasFile('image')) {
-            $imagePath = R2Helper::upload($request->file('image'), 'stalls');
+        if ($request->filled('image_urls')) {
+            $urls = array_filter(array_map('trim', preg_split('/[\r\n,]+/', $request->image_urls)));
+            foreach ($urls as $u) {
+                if (!empty($u)) {
+                    $newImagePaths[] = $u;
+                }
+            }
+        } elseif ($request->filled('image_url')) {
+            $newImagePaths[] = $request->image_url;
+        }
+
+        $newImagePaths = array_values(array_unique(array_filter($newImagePaths)));
+
+        if (!empty($newImagePaths)) {
+            $imagePath = count($newImagePaths) > 1 ? json_encode($newImagePaths, JSON_UNESCAPED_SLASHES) : $newImagePaths[0];
+        } else {
+            $imagePath = $stall->image_path;
         }
 
         $bankName = trim($request->bank_name ?: '');

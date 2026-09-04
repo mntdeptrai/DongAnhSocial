@@ -13,10 +13,8 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        // Áp dụng CheckUserStatus & HandleInertiaRequests cho toàn bộ web routes
         $middleware->web(append: [
             \App\Http\Middleware\CheckUserStatus::class,
-            \App\Http\Middleware\HandleInertiaRequests::class,
         ]);
 
         // Thêm session & cookie middleware vào API group
@@ -54,19 +52,29 @@ return Application::configure(basePath: dirname(__DIR__))
                 ], 500);
             }
 
+            $prev = url()->previous();
+            if ($prev === $request->fullUrl() || $prev === $request->url() || $prev === url('/')) {
+                return response()->make($friendlyMessage, 500);
+            }
+
             return back()->with('error', $friendlyMessage);
         });
 
         $exceptions->render(function (\PDOException $e, $request) {
             \Illuminate\Support\Facades\Log::error('PDO Exception: ' . $e->getMessage());
 
-            $friendlyMessage = 'Lỗi kết nối cơ sở dữ liệu. Vui lòng thử lại sau.';
+            $friendlyMessage = 'Lỗi kết nối cơ sở dữ liệu (MySQL/MariaDB). Vui lòng kiểm tra dịch vụ MySQL đang chạy.';
 
             if ($request->expectsJson() || $request->ajax()) {
                 return response()->json([
                     'success' => false,
                     'message' => $friendlyMessage,
                 ], 500);
+            }
+
+            $prev = url()->previous();
+            if ($prev === $request->fullUrl() || $prev === $request->url() || $prev === url('/')) {
+                return response()->make($friendlyMessage, 500);
             }
 
             return back()->with('error', $friendlyMessage);

@@ -1507,18 +1507,33 @@
         </div>
     </div>
 
-    <!-- VI. DANH SÁCH GIAN HÀNG TIỂU THƯƠNG -->
+    <!-- VI. DANH SÁCH SẢN PHẨM TRƯNG BÀY -->
+    @php
+        $isCultureMarket = str_contains(strtolower($eatery->slug ?? ''), 'co-loa') || str_contains(strtolower($eatery->name ?? ''), 'cổ loa') || str_contains(strtolower($eatery->name ?? ''), 'văn hóa du lịch');
+    @endphp
+
     <div style="margin-top: 40px; margin-bottom: 40px;">
-        <h2 style="font-family: var(--font-heading); font-weight: 900; font-size: clamp(1.3rem, 5vw, 1.8rem); margin-bottom: 24px; color: var(--text-main); word-break: break-word;">
-            🏪 Hệ thống Gian Hàng Số {{ $eatery->name }}
-        </h2>
+        @if($isCultureMarket)
+            <h2 style="font-family: var(--font-heading); font-weight: 900; font-size: clamp(1.3rem, 5vw, 1.8rem); margin-bottom: 6px; color: var(--text-main); word-break: break-word;">
+                🏛️ Danh Mục Sản Phẩm & Đặc Sản Trưng Bày — {{ $eatery->name }}
+            </h2>
+            <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 24px;">
+                Không gian triển lãm, giới thiệu sản phẩm đặc sản, quà lưu niệm & tinh hoa di sản vùng đất Cổ Loa.
+            </p>
+        @else
+            <h2 style="font-family: var(--font-heading); font-weight: 900; font-size: clamp(1.3rem, 5vw, 1.8rem); margin-bottom: 24px; color: var(--text-main); word-break: break-word;">
+                🏪 Hệ thống Gian Hàng Số {{ $eatery->name }}
+            </h2>
+        @endif
         
         <div class="stalls-grid-custom" id="stallsContainer">
             @foreach($groupedStalls as $stallName => $stallProducts)
                 @php
                     $first = $stallProducts->first();
+                    $displayStallName = !empty(trim($stallName)) ? $stallName : ($first->name ?: 'Gian hàng trưng bày');
+                    $safeStallSlug = \Illuminate\Support\Str::slug($displayStallName) ?: ('gian-hang-' . ($first->id ?? '1'));
                     $sellerUser = $first->user_id ? ($sellerUsersMap[$first->user_id] ?? null) : null;
-                    $sellerName = $first->seller_name ?: ($sellerUser?->name ?: 'Tiểu thương');
+                    $sellerName = $first->seller_name ?: ($sellerUser?->name ?: 'Ban Quản lý Chợ Cổ Loa');
                     $sellerPhone = $first->seller_phone ?: ($sellerUser?->phone ?: '');
                     $desc = $first->description ?? '';
                     
@@ -1554,11 +1569,11 @@
                     $thisStallReviews = $stallReviews->get($stallName) ?? collect();
                     $reviewCount = $thisStallReviews->count();
                     $avgRating = $reviewCount > 0 ? round($thisStallReviews->avg('rating'), 1) : 5.0;
-                    $latestReview = $reviewCount > 0 ? $thisStallReviews->first()->comment : 'Sản phẩm rất tươi ngon, chủ quán thân thiện, thanh toán QR siêu nhanh chóng!';
+                    $latestReview = $reviewCount > 0 ? $thisStallReviews->first()->comment : 'Sản phẩm trưng bày tuyệt đẹp, mang đậm bản sắc di sản Cổ Loa!';
                 @endphp
                 
                 <div class="stall-card-wrapper" 
-                     id="stall-card-{{ \Illuminate\Support\Str::slug($stallName) }}"
+                     id="stall-card-{{ $safeStallSlug }}"
                      data-name="{{ strtolower($stallName) }}" 
                      data-seller="{{ strtolower($sellerName) }}"
                      data-category="{{ $category }}"
@@ -1581,28 +1596,38 @@
                             }
 
                             // Ưu tiên hiển thị ảnh do Seller/Admin tải lên (nếu có)
-                            $customImg = $first->image_path;
+                            $customImg = $first->image_url ?: $first->image_path;
                             if (empty($customImg)) {
-                                $customImg = $stallProducts->first(fn($p) => !empty($p->image_path))?->image_path;
+                                $firstWithImg = $stallProducts->first(fn($p) => !empty($p->image_url) || !empty($p->image_path));
+                                $customImg = $firstWithImg?->image_url ?: $firstWithImg?->image_path;
                             }
                             if (!empty($customImg)) {
-                                if (str_starts_with($customImg, 'http')) {
-                                    $coverImg = $customImg;
-                                } elseif (file_exists(public_path(ltrim($customImg, '/')))) {
-                                    $coverImg = asset(ltrim($customImg, '/'));
+                                $trimmedImg = trim($customImg);
+                                if (str_starts_with($trimmedImg, '[')) {
+                                    $decoded = json_decode($trimmedImg, true);
+                                    if (is_array($decoded) && count($decoded) > 0) {
+                                        $trimmedImg = $decoded[0];
+                                    }
+                                }
+                                if (str_starts_with($trimmedImg, 'http://') || str_starts_with($trimmedImg, 'https://')) {
+                                    $coverImg = $trimmedImg;
+                                } elseif (file_exists(public_path(ltrim($trimmedImg, '/')))) {
+                                    $coverImg = asset(ltrim($trimmedImg, '/'));
                                 } else {
-                                    $coverImg = asset($customImg);
+                                    $coverImg = asset($trimmedImg);
                                 }
                             }
                         @endphp
                         
                         <!-- AI Cover Header Banner -->
                         <div style="position: relative; height: 125px; overflow: hidden; border-top-left-radius: 24px; border-top-right-radius: 24px;">
-                            <img src="{{ $coverImg }}" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.6s ease;" class="stall-cover-img" alt="{{ $stallName }}">
+                            <img src="{{ $coverImg }}" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.6s ease;" class="stall-cover-img" alt="{{ $displayStallName }}">
                             <div style="position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(15, 23, 42, 0.15) 0%, rgba(15, 23, 42, 0.8) 100%);"></div>
                             
                             <div style="position: absolute; top: 10px; right: 10px; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); color: #ffffff; font-size: 0.7rem; font-weight: 800; padding: 4px 12px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.25); box-shadow: 0 4px 10px rgba(0,0,0,0.25);">
-                                @if($category === 'Ăn uống') 🍲 Khối Ẩm Thực
+                                @if($isCultureMarket)
+                                    🌾 Sản Phẩm Trưng Bày
+                                @elseif($category === 'Ăn uống') 🍲 Khối Ẩm Thực
                                 @elseif($category === 'Rau củ') 🥦 Nông Sản Sạch
                                 @elseif($category === 'Thực phẩm khô') 🥜 Đồ Khô & Gia Vị
                                 @elseif($category === 'Thịt tươi') 🥩 Thực Phẩm Tươi
@@ -1612,9 +1637,9 @@
 
                             <div style="position: absolute; bottom: 10px; left: 16px; right: 16px; display: flex; align-items: center; justify-content: space-between; gap: 10px;">
                                 <h4 style="font-family: var(--font-heading); font-size: 1.1rem; font-weight: 900; margin: 0; color: #ffffff; text-shadow: 0 2px 8px rgba(0,0,0,0.8); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1;">
-                                    {{ $stallName }}
+                                    {{ $displayStallName }}
                                 </h4>
-                                <button onclick="showStallOnMap('{{ $stallName }}', '{{ $sellerName }}', '{{ $category }}', '{{ $first->latitude ?? '' }}', '{{ $first->longitude ?? '' }}')" class="btn-map-pin" title="Định vị trên bản đồ số" style="background: rgba(255, 255, 255, 0.25); backdrop-filter: blur(6px); border: 1px solid rgba(255,255,255,0.4); color: #ffffff; border-radius: 8px; font-size: 0.9rem; cursor: pointer; transition: all 0.2s; padding: 4px 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;" onmouseover="this.style.background='#E11D48'; this.style.color='#ffffff';" onmouseout="this.style.background='rgba(255, 255, 255, 0.25)'; this.style.color='#ffffff';">
+                                <button onclick="showStallOnMap('{{ $displayStallName }}', '{{ $sellerName }}', '{{ $category }}', '{{ $first->latitude ?? '' }}', '{{ $first->longitude ?? '' }}')" class="btn-map-pin" title="Định vị trên bản đồ số" style="background: rgba(255, 255, 255, 0.25); backdrop-filter: blur(6px); border: 1px solid rgba(255,255,255,0.4); color: #ffffff; border-radius: 8px; font-size: 0.9rem; cursor: pointer; transition: all 0.2s; padding: 4px 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;" onmouseover="this.style.background='#E11D48'; this.style.color='#ffffff';" onmouseout="this.style.background='rgba(255, 255, 255, 0.25)'; this.style.color='#ffffff';">
                                     📍 Map
                                 </button>
                             </div>
@@ -1622,28 +1647,38 @@
 
                         <!-- Card Header Info -->
                         <div style="padding: 14px 20px; border-bottom: 1px solid var(--border-glow); display: flex; align-items: center; gap: 14px; background: rgba(14, 165, 233, 0.015);">
-                            @php
-                                $gradients = [
-                                    'linear-gradient(135deg, #0EA5E9 0%, #2563EB 100%)',
-                                    'linear-gradient(135deg, #10B981 0%, #059669 100%)',
-                                    'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
-                                    'linear-gradient(135deg, #EC4899 0%, #DB2777 100%)'
-                                ];
-                                $grad = $gradients[abs(crc32($sellerName)) % count($gradients)];
-                            @endphp
-                            <div class="stall-avatar" style="width: 42px; height: 42px; border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.12); border: 2px solid #ffffff; background: {!! $grad !!};">
-                                @if(!empty($customImg) && !str_contains($customImg, 'images/stalls/'))
-                                    <img src="{{ $coverImg }}" alt="{{ $sellerName }}" style="width: 100%; height: 100%; object-fit: cover;">
-                                @else
-                                    <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 1rem;">
-                                        {{ mb_substr($sellerName, 0, 1) }}
-                                    </div>
-                                @endif
-                            </div>
-                            <div style="flex: 1; min-width: 0;">
-                                <span style="font-size: 0.85rem; color: var(--text-main); font-weight: 700; display: block;">👤 Chủ hộ: {{ $sellerName }}</span>
-                                <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 500;">📞 {{ $sellerPhone ?: 'Đã xác minh thông tin' }}</span>
-                            </div>
+                            @if($isCultureMarket)
+                                <div class="stall-avatar" style="width: 42px; height: 42px; border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.12); border: 2px solid #ffffff; background: linear-gradient(135deg, #0EA5E9 0%, #0284c7 100%); color: #fff; font-size: 1.2rem;">
+                                    🏛️
+                                </div>
+                                <div style="flex: 1; min-width: 0;">
+                                    <span style="font-size: 0.85rem; color: var(--text-main); font-weight: 700; display: block;">🏛️ Đơn vị trưng bày: Chợ Văn hóa Du lịch Cổ Loa</span>
+                                    <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 500;">📍 Điểm tham quan & Quảng bá sản phẩm di sản</span>
+                                </div>
+                            @else
+                                @php
+                                    $gradients = [
+                                        'linear-gradient(135deg, #0EA5E9 0%, #2563EB 100%)',
+                                        'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+                                        'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
+                                        'linear-gradient(135deg, #EC4899 0%, #DB2777 100%)'
+                                    ];
+                                    $grad = $gradients[abs(crc32($sellerName)) % count($gradients)];
+                                @endphp
+                                <div class="stall-avatar" style="width: 42px; height: 42px; border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.12); border: 2px solid #ffffff; background: {!! $grad !!};">
+                                    @if(!empty($customImg) && !str_contains($customImg, 'images/stalls/'))
+                                        <img src="{{ $coverImg }}" alt="{{ $sellerName }}" style="width: 100%; height: 100%; object-fit: cover;">
+                                    @else
+                                        <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 1rem;">
+                                            {{ mb_substr($sellerName, 0, 1) }}
+                                        </div>
+                                    @endif
+                                </div>
+                                <div style="flex: 1; min-width: 0;">
+                                    <span style="font-size: 0.85rem; color: var(--text-main); font-weight: 700; display: block;">👤 Chủ hộ: {{ $sellerName }}</span>
+                                    <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 500;">📞 {{ $sellerPhone ?: 'Đã xác minh thông tin' }}</span>
+                                </div>
+                            @endif
                         </div>
                         
                         <!-- Badges area -->
@@ -1652,17 +1687,16 @@
                                   style="cursor: pointer; transition: all 0.2s;" 
                                   onmouseover="this.style.background='rgba(14, 165, 233, 0.15)'" 
                                   onmouseout="this.style.background='rgba(14, 165, 233, 0.08)'"
-                                  onclick="openStallDetailAndScrollToReviews('{{ $stallName }}', '{{ $sellerName }}', '{{ $sellerPhone }}', '{{ $bankInfo }}', '{{ $category }}', '{{ $originText }}', '{{ $hasSmartphone ? 'yes' : 'no' }}', {{ json_encode($stallProducts) }}, '{{ $first->latitude ?? '' }}', '{{ $first->longitude ?? '' }}')">
+                                  onclick="openStallDetailAndScrollToReviews('{{ $displayStallName }}', '{{ $sellerName }}', '{{ $sellerPhone }}', '{{ $bankInfo }}', '{{ $category }}', '{{ $originText }}', '{{ $hasSmartphone ? 'yes' : 'no' }}', {{ json_encode($stallProducts) }}, '{{ $first->latitude ?? '' }}', '{{ $first->longitude ?? '' }}')">
                                 ⭐ {{ number_format($avgRating, 1) }} ({{ $reviewCount }} Đánh giá)
                             </span>
-                            <span class="gov-badge badge-attp-blue">✓ ATTP</span>
-                            @if($hasQr)
-                                <span class="gov-badge badge-qr-green">✓ Có QR</span>
-                            @endif
-                            @if(str_contains(strtolower($originText), 'tự sản xuất'))
-                                <span class="gov-badge badge-home-purple">✓ Tự sản xuất</span>
+                            @if($isCultureMarket)
+                                <span class="gov-badge badge-attp-blue">✓ Sản phẩm OCOP / Di sản</span>
                             @else
-                                <span class="gov-badge badge-verify-sky">✓ Đã xác minh</span>
+                                <span class="gov-badge badge-attp-blue">✓ ATTP</span>
+                                @if($hasQr)
+                                    <span class="gov-badge badge-qr-green">✓ Có QR</span>
+                                @endif
                             @endif
                         </div>
                         
@@ -1671,77 +1705,69 @@
                             <div>
                                 <h5 style="font-size: 0.78rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;">Sản phẩm nổi bật</h5>
                                 <div style="display: flex; flex-direction: column; gap: 2px;">
-                                    @foreach($stallProducts->take(3) as $prod)
-                                        <div class="product-item-gov">
-                                            <div style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0;">
-                                                <span style="font-size: 1rem; flex-shrink: 0;">🍎</span>
-                                                <span class="product-name-txt">{{ $prod->name }}</span>
+                                    @foreach($stallProducts as $prod)
+                                        @php
+                                            $itemImg = $prod->image_url ?: $prod->image_path;
+                                            if (!empty($itemImg)) {
+                                                $trimmedItemImg = trim($itemImg);
+                                                if (str_starts_with($trimmedItemImg, '[')) {
+                                                    $decodedItem = json_decode($trimmedItemImg, true);
+                                                    if (is_array($decodedItem) && count($decodedItem) > 0) {
+                                                        $trimmedItemImg = $decodedItem[0];
+                                                    }
+                                                }
+                                                if (str_starts_with($trimmedItemImg, 'http://') || str_starts_with($trimmedItemImg, 'https://')) {
+                                                    $itemImgUrl = $trimmedItemImg;
+                                                } elseif (file_exists(public_path(ltrim($trimmedItemImg, '/')))) {
+                                                    $itemImgUrl = asset(ltrim($trimmedItemImg, '/'));
+                                                } else {
+                                                    $itemImgUrl = asset($trimmedItemImg);
+                                                }
+                                            } else {
+                                                $itemImgUrl = null;
+                                            }
+                                        @endphp
+                                        <div class="product-item-gov" style="cursor: pointer; transition: all 0.2s; border-radius: 10px; padding: 6px 10px; margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between; gap: 10px;" onmouseover="this.style.background='rgba(14, 165, 233, 0.08)';" onmouseout="this.style.background='transparent';" onclick="window.location.href='{{ route('market.stall.show', ['marketSlug' => $eatery->slug, 'stallSlug' => $safeStallSlug]) }}'">
+                                            <div style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;">
+                                                @if(!empty($itemImgUrl))
+                                                    <img src="{{ $itemImgUrl }}" alt="{{ $prod->name }}" style="width: 38px; height: 38px; object-fit: cover; border-radius: 8px; border: 1px solid #e2e8f0; flex-shrink: 0;">
+                                                @else
+                                                    <span style="font-size: 1.1rem; flex-shrink: 0; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; background: #f1f5f9; border-radius: 8px;">🌾</span>
+                                                @endif
+                                                <span class="product-name-txt" style="font-weight: 700; color: var(--text-main); font-size: 0.88rem;">{{ $prod->name }}</span>
                                             </div>
                                             <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
-                                                <span class="product-price-txt">
-                                                    {{ number_format($prod->price, 0, ',', '.') }}đ/{{ $prod->unit ?: 'kg' }}
-                                                </span>
-                                                <button class="add-to-cart-btn" data-id="{{ $prod->id }}" data-type="ocop_product" onclick="addToCart(event, this); animateFlyToCart(this);" style="background: rgba(14, 165, 233, 0.08); border: 1.5px solid rgba(14, 165, 233, 0.25); color: var(--primary); border-radius: 20px; padding: 4px 10px; font-size: 0.72rem; font-weight: 700; cursor: pointer; transition: all 0.2s; white-space: nowrap; display: flex; align-items: center; gap: 3px;" onmouseover="this.style.background='var(--primary)'; this.style.color='#ffffff'; this.style.borderColor='var(--primary)';" onmouseout="this.style.background='rgba(14, 165, 233, 0.08)'; this.style.color='var(--primary)'; this.style.borderColor='rgba(14, 165, 233, 0.25)';">
-                                                    🛒 Đặt trước
-                                                </button>
+                                                @if($prod->price)
+                                                    <span class="product-price-txt" style="font-weight: 700; color: #ea580c; font-size: 0.85rem;">
+                                                        {{ is_numeric($prod->price) ? number_format($prod->price, 0, ',', '.') . 'đ' : $prod->price }}{{ $prod->unit ? '/' . $prod->unit : '' }} ➔
+                                                    </span>
+                                                @else
+                                                    <span class="product-price-txt" style="color: #0284c7; font-weight: 700; font-size: 0.82rem; background: #e0f2fe; padding: 4px 10px; border-radius: 6px;">Trưng bày ➔</span>
+                                                @endif
                                             </div>
                                         </div>
                                     @endforeach
-
-                                    @if($stallProducts->count() > 3)
-                                        <div style="text-align: center; margin-top: 10px; border-top: 1px dashed var(--border-glow); padding-top: 8px;">
-                                            <a href="{{ route('market.stall.show', ['marketSlug' => $eatery->slug, 'stallSlug' => \Illuminate\Support\Str::slug($stallName)]) }}" style="background: none; border: none; color: var(--primary); font-size: 0.75rem; font-weight: 800; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s;" onmouseover="this.style.opacity='0.8'; this.style.transform='translateX(2px)';" onmouseout="this.style.opacity='1'; this.style.transform='none';">
-                                                Xem toàn bộ gian hàng ({{ $stallProducts->count() }} sản phẩm) ➔
-                                            </a>
-                                        </div>
-                                    @endif
-                                </div>
-                            </div>
-
-                            <!-- Comment snippet preview (Mini quote card) -->
-                            <div style="margin-top: 14px; background: rgba(0, 0, 0, 0.015); border: 1px solid var(--border-glow); border-radius: 12px; padding: 10px 12px; cursor: pointer; transition: all 0.2s;" 
-                                 onmouseover="this.style.background='rgba(14, 165, 233, 0.04)';" 
-                                 onmouseout="this.style.background='rgba(0, 0, 0, 0.015)';"
-                                 onclick="openStallDetailAndScrollToReviews('{{ $stallName }}', '{{ $sellerName }}', '{{ $sellerPhone }}', '{{ $bankInfo }}', '{{ $category }}', '{{ $originText }}', '{{ $hasSmartphone ? 'yes' : 'no' }}', {{ json_encode($stallProducts) }}, '{{ $first->latitude ?? '' }}', '{{ $first->longitude ?? '' }}')">
-                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                                    <span style="font-size: 0.68rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Đánh giá mới nhất</span>
-                                    @if($reviewCount > 0)
-                                        <span style="color: #F59E0B; font-size: 0.72rem; font-weight: 700;">
-                                            {{ str_repeat('★', $thisStallReviews->first()->rating) }}{{ str_repeat('☆', 5 - $thisStallReviews->first()->rating) }}
-                                        </span>
-                                    @endif
-                                </div>
-                                <div style="display: flex; gap: 8px; align-items: flex-start;">
-                                    <span style="font-size: 0.95rem; line-height: 1;">💬</span>
-                                    <div style="flex: 1; min-width: 0;">
-                                        @if($reviewCount > 0)
-                                            <strong style="font-size: 0.75rem; color: var(--text-main); display: block; margin-bottom: 2px; text-align: left;">
-                                                {{ $thisStallReviews->first()->user_name }}
-                                            </strong>
-                                            <p style="font-size: 0.75rem; color: var(--text-muted); font-style: italic; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.3; text-align: left;">
-                                                "{{ $latestReview }}"
-                                            </p>
-                                        @else
-                                            <p style="font-size: 0.75rem; color: var(--text-muted); font-style: italic; margin: 0; line-height: 1.3; text-align: left;">
-                                                Chưa có đánh giá. Nhấn gửi nhận xét đầu tiên!
-                                            </p>
-                                        @endif
-                                    </div>
                                 </div>
                             </div>
                         </div>
                         
                         <!-- Actions footer -->
                         <div class="btn-stall-grid">
-                            <a href="tel:{{ $sellerPhone }}" class="btn-stall-action">
-                                <i class="bi bi-telephone-fill"></i> Gọi điện
-                            </a>
-                            <a href="https://zalo.me/{{ $sellerPhone }}" target="_blank" class="btn-stall-action">
-                                <i class="bi bi-chat-text-fill"></i> Zalo
-                            </a>
-                            <a href="{{ route('market.stall.show', ['marketSlug' => $eatery->slug, 'stallSlug' => \Illuminate\Support\Str::slug($stallName)]) }}" class="btn-stall-action" style="background: var(--primary-grad); color: #fff; border-color: transparent;">
-                                <i class="bi bi-info-circle-fill"></i> Chi tiết
-                            </a>
+                            @if($isCultureMarket)
+                                <a href="{{ route('market.stall.show', ['marketSlug' => $eatery->slug, 'stallSlug' => $safeStallSlug]) }}" class="btn-stall-action" style="grid-column: span 2; background: var(--primary-grad); color: #fff; border-color: transparent; text-align: center; justify-content: center; font-weight: 700;">
+                                    <i class="bi bi-search"></i> Xem chi tiết danh mục sản phẩm
+                                </a>
+                            @else
+                                <a href="tel:{{ $sellerPhone }}" class="btn-stall-action">
+                                    <i class="bi bi-telephone-fill"></i> Gọi điện
+                                </a>
+                                <a href="https://zalo.me/{{ $sellerPhone }}" target="_blank" class="btn-stall-action">
+                                    <i class="bi bi-chat-text-fill"></i> Zalo
+                                </a>
+                                <a href="{{ route('market.stall.show', ['marketSlug' => $eatery->slug, 'stallSlug' => $safeStallSlug]) }}" class="btn-stall-action" style="background: var(--primary-grad); color: #fff; border-color: transparent;">
+                                    <i class="bi bi-info-circle-fill"></i> Chi tiết
+                                </a>
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -3775,6 +3801,7 @@
                     $originText = trim($match[1]);
                 }
                 $sellerPhone = $first->phone ?? '';
+                $safeStallSlugMap = \Illuminate\Support\Str::slug(!empty(trim($stallName)) ? $stallName : ($first->name ?: 'Gian hàng')) ?: ('gian-hang-' . ($first->id ?? '1'));
             @endphp
             {
                 name: {!! json_encode($stallName) !!},
@@ -3787,7 +3814,7 @@
                 products: {!! json_encode($stallProducts) !!},
                 lat: "{{ $first->latitude ?? '' }}",
                 lng: "{{ $first->longitude ?? '' }}",
-                stallSlug: {!! json_encode(\Illuminate\Support\Str::slug($stallName)) !!},
+                stallSlug: {!! json_encode($safeStallSlugMap) !!},
                 marketSlug: {!! json_encode($eatery->slug) !!}
             },
         @endforeach
@@ -4199,22 +4226,25 @@
         else if (category === 'Thịt tươi') blockStr = 'Khối D - Thực phẩm tươi sống';
         document.getElementById('mdZone').textContent = blockStr;
 
+        const isCultureMarketJs = {{ $isCultureMarket ? 'true' : 'false' }};
         const prodList = document.getElementById('mdProductsList');
         prodList.innerHTML = '';
         products.forEach(p => {
+            const priceFormatted = p.price ? `${new Intl.NumberFormat('vi-VN').format(p.price)}đ` : 'Trưng bày';
+            const originSpan = isCultureMarketJs ? '' : `<span style="font-size: 0.72rem; color: var(--text-muted);">🌾 Nguồn gốc: ${originText}</span>`;
+            const buyBtn = isCultureMarketJs ? '' : `<button class="add-to-cart-btn" data-id="${p.id}" data-type="ocop_product" onclick="addToCart(event, this); animateFlyToCart(this);" style="background: var(--primary); border: none; color: white; border-radius: 8px; padding: 6px 12px; font-size: 0.75rem; font-weight: 700; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.transform='scale(1.05)';" onmouseout="this.style.transform='none';">+ Chọn mua</button>`;
+            
             prodList.innerHTML += `
                 <div class="modal-product-item" style="border-left: 4px solid var(--primary); display: flex; justify-content: space-between; align-items: center; gap: 12px;">
                     <div style="flex: 1;">
                         <span style="font-weight: 700; color: var(--text-main); display: block; font-size: 0.85rem;">${p.name}</span>
-                        <span style="font-size: 0.72rem; color: var(--text-muted);">🌾 Nguồn gốc: ${originText} | Cam kết tươi sạch</span>
+                        ${originSpan}
                     </div>
                     <div style="display: flex; align-items: center; gap: 12px; flex-shrink: 0;">
                         <span style="font-family: var(--font-heading); font-size: 0.9rem; font-weight: 900; color: var(--primary);">
-                            ${new Intl.NumberFormat('vi-VN').format(p.price)}đ
+                            ${priceFormatted}
                         </span>
-                        <button class="add-to-cart-btn" data-id="${p.id}" data-type="ocop_product" onclick="addToCart(event, this); animateFlyToCart(this);" style="background: var(--primary); border: none; color: white; border-radius: 8px; padding: 6px 12px; font-size: 0.75rem; font-weight: 700; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.transform='scale(1.05)';" onmouseout="this.style.transform='none';">
-                            + Chọn mua
-                        </button>
+                        ${buyBtn}
                     </div>
                 </div>
             `;
