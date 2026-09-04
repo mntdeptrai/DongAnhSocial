@@ -57,12 +57,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 ], 500);
             }
 
-            $prev = url()->previous();
-            if ($prev === $request->fullUrl() || $prev === $request->url() || $prev === url('/')) {
-                return response()->make($friendlyMessage, 500);
-            }
-
-            return back()->with('error', $friendlyMessage);
+            return back()->withInput()->with('error', $friendlyMessage);
         });
 
         $exceptions->render(function (\PDOException $e, $request) {
@@ -77,12 +72,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 ], 500);
             }
 
-            $prev = url()->previous();
-            if ($prev === $request->fullUrl() || $prev === $request->url() || $prev === url('/')) {
-                return response()->make($friendlyMessage, 500);
-            }
-
-            return back()->with('error', $friendlyMessage);
+            return back()->withInput()->with('error', $friendlyMessage);
         });
 
         // Intercept uncaught exceptions when debug mode is disabled

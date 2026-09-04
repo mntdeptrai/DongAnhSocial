@@ -804,14 +804,24 @@ class VendorController extends Controller
             $productQuery->where('stall_name', $context['stallName']);
         }
 
+        // Cập nhật Cơ sở kinh doanh (eateries) nếu ở chế độ Doanh nghiệp / Hộ độc lập
+        if (!empty($context['isBusinessMode']) && !empty($context['businessEatery'])) {
+            $eateryUpdate = [
+                'name'       => $stallName,
+                'phone'      => $sellerPhone,
+                'updated_at' => now(),
+            ];
+            if (!empty($address)) $eateryUpdate['address'] = $address;
+            if ($latitude !== null) $eateryUpdate['latitude'] = $latitude;
+            if ($longitude !== null) $eateryUpdate['longitude'] = $longitude;
+            if ($stallImagePath) $eateryUpdate['image_path'] = $stallImagePath;
+            $db->table('eateries')->where('id', $context['businessEatery']->id)->update($eateryUpdate);
+        }
+
         $ocopData = [
             'stall_name'   => $stallName,
             'seller_name'  => $sellerName,
             'seller_phone' => $sellerPhone,
-            'address'      => $address ?: null,
-            'map_link'     => $mapLink ?: null,
-            'latitude'     => $latitude,
-            'longitude'    => $longitude,
             'bank_name'    => $bankName ?: null,
             'bank_account' => $bankAccount ?: null,
             'bank_holder'  => $bankHolder ?: null,

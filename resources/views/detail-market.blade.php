@@ -1586,6 +1586,7 @@
                      
                     <div class="stall-card-gov">
                         @php
+                            // Ảnh 1: Ảnh đại diện cho sạp (Gian hàng cover banner)
                             $coverImg = asset('images/stalls/food.png');
                             if ($category === 'Rau củ') {
                                 $coverImg = asset('images/stalls/veggies.png');
@@ -1595,31 +1596,14 @@
                                 $coverImg = asset('images/stalls/meat.png');
                             }
 
-                            // Ưu tiên hiển thị ảnh do Seller/Admin tải lên (nếu có)
-                            $customImg = $first->image_url ?: $first->image_path;
-                            if (empty($customImg)) {
-                                $firstWithImg = $stallProducts->first(fn($p) => !empty($p->image_url) || !empty($p->image_path));
-                                $customImg = $firstWithImg?->image_url ?: $firstWithImg?->image_path;
-                            }
-                            if (!empty($customImg)) {
-                                $trimmedImg = trim($customImg);
-                                if (str_starts_with($trimmedImg, '[')) {
-                                    $decoded = json_decode($trimmedImg, true);
-                                    if (is_array($decoded) && count($decoded) > 0) {
-                                        $trimmedImg = $decoded[0];
-                                    }
-                                }
-                                if (str_starts_with($trimmedImg, 'http://') || str_starts_with($trimmedImg, 'https://')) {
-                                    $coverImg = $trimmedImg;
-                                } elseif (file_exists(public_path(ltrim($trimmedImg, '/')))) {
-                                    $coverImg = asset(ltrim($trimmedImg, '/'));
-                                } else {
-                                    $coverImg = asset($trimmedImg);
-                                }
+                            // Ảnh 2: Ảnh đại diện của chủ hộ (Profile photo hoặc Badge chữ cái đầu)
+                            $sellerAvatar = null;
+                            if (!empty($first->user?->avatar)) {
+                                $sellerAvatar = asset(ltrim($first->user->avatar, '/'));
                             }
                         @endphp
                         
-                        <!-- AI Cover Header Banner -->
+                        <!-- AI Cover Header Banner (Ảnh 1: Đại diện sạp) -->
                         <div style="position: relative; height: 125px; overflow: hidden; border-top-left-radius: 24px; border-top-right-radius: 24px;">
                             <img src="{{ $coverImg }}" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.6s ease;" class="stall-cover-img" alt="{{ $displayStallName }}">
                             <div style="position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(15, 23, 42, 0.15) 0%, rgba(15, 23, 42, 0.8) 100%);"></div>
@@ -1645,7 +1629,7 @@
                             </div>
                         </div>
 
-                        <!-- Card Header Info -->
+                        <!-- Card Header Info (Ảnh 2: Đại diện chủ hộ) -->
                         <div style="padding: 14px 20px; border-bottom: 1px solid var(--border-glow); display: flex; align-items: center; gap: 14px; background: rgba(14, 165, 233, 0.015);">
                             @if($isCultureMarket)
                                 <div class="stall-avatar" style="width: 42px; height: 42px; border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.12); border: 2px solid #ffffff; background: linear-gradient(135deg, #0EA5E9 0%, #0284c7 100%); color: #fff; font-size: 1.2rem;">
@@ -1666,8 +1650,8 @@
                                     $grad = $gradients[abs(crc32($sellerName)) % count($gradients)];
                                 @endphp
                                 <div class="stall-avatar" style="width: 42px; height: 42px; border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.12); border: 2px solid #ffffff; background: {!! $grad !!};">
-                                    @if(!empty($customImg) && !str_contains($customImg, 'images/stalls/'))
-                                        <img src="{{ $coverImg }}" alt="{{ $sellerName }}" style="width: 100%; height: 100%; object-fit: cover;">
+                                    @if(!empty($sellerAvatar))
+                                        <img src="{{ $sellerAvatar }}" alt="{{ $sellerName }}" style="width: 100%; height: 100%; object-fit: cover;">
                                     @else
                                         <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 1rem;">
                                             {{ mb_substr($sellerName, 0, 1) }}

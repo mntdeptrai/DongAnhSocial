@@ -43,7 +43,7 @@ class OcopProduct extends Model
 
     public function getAllImagesAttribute(): array
     {
-        if (empty($this->image_path)) return ['/images/stalls/food.png'];
+        if (empty($this->image_path)) return [];
         $trimmed = trim($this->image_path);
         if (str_starts_with($trimmed, '[')) {
             $decoded = json_decode($trimmed, true);
@@ -62,7 +62,7 @@ class OcopProduct extends Model
     public function getImageUrlAttribute(): ?string
     {
         $all = $this->all_images;
-        return !empty($all) ? $all[0] : '/images/stalls/food.png';
+        return !empty($all) ? $all[0] : null;
     }
 }
 
