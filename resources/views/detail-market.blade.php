@@ -31,6 +31,7 @@
     $products = $eatery->ocopProducts;
     $groupedStalls = $products->groupBy('stall_name');
     $sellerUsersMap = \App\Models\User::whereIn('id', $products->pluck('user_id')->filter())->get()->keyBy('id');
+    $sellerPhoneUsersMap = \App\Models\User::whereIn('phone', $products->pluck('seller_phone')->filter())->get()->keyBy('phone');
     
     $stallReviews = \App\Models\Review::on($eatery->getConnectionName())->where('eatery_id', $eatery->id)
         ->whereNotNull('stall_name')
@@ -1613,9 +1614,17 @@
                             }
 
                             // Ảnh 2: Ảnh đại diện của chủ hộ (Profile photo hoặc Badge chữ cái đầu)
+                            $sellerUserObj = null;
+                            if (!empty($first->user_id) && isset($sellerUsersMap[$first->user_id])) {
+                                $sellerUserObj = $sellerUsersMap[$first->user_id];
+                            } elseif (!empty($sellerPhone) && isset($sellerPhoneUsersMap[$sellerPhone])) {
+                                $sellerUserObj = $sellerPhoneUsersMap[$sellerPhone];
+                            }
+
                             $sellerAvatar = null;
-                            if (!empty($first->user?->avatar)) {
-                                $userAv = asset(ltrim($first->user->avatar, '/'));
+                            if ($sellerUserObj && !empty($sellerUserObj->avatar)) {
+                                $uAv = $sellerUserObj->avatar;
+                                $userAv = (str_starts_with($uAv, 'http://') || str_starts_with($uAv, 'https://')) ? $uAv : asset(ltrim($uAv, '/'));
                                 if ($userAv !== $coverImg) {
                                     $sellerAvatar = $userAv;
                                 }
