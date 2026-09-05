@@ -37,6 +37,7 @@ class User extends Authenticatable
         'eatery_id',
         'stall_id',
         'is_verified',
+        'fcm_token',
     ];
 
     /**
