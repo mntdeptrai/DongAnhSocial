@@ -512,7 +512,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           child: _isLoading
                               ? const ButtonDotsLoader(color: Colors.white, size: 7.0)
                               : Text(
-                                  _isRegister ? 'ĐĂNG KÝ TÀI KHOẢN ✨' : 'ĐĂNG NHẬP NGAY ✨',
+                                  _isRegister ? 'ĐĂNG KÝ TÀI KHOẢN' : 'ĐĂNG NHẬP NGAY',
                                   style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Colors.white),
                                 ),
                         ),

@@ -357,6 +357,7 @@ class SocialHubController extends Controller
         $friendIds = $sentFriendIds->merge($receivedFriendIds)->unique();
 
         $latestMessagesMap = collect();
+        $unreadCountsMap = collect();
         if ($friendIds->isNotEmpty()) {
             $latestMessagesMap = Message::where(function($q) use ($user, $friendIds) {
                     $q->where('sender_id', $user->id)->whereIn('receiver_id', $friendIds);
@@ -371,10 +372,19 @@ class SocialHubController extends Controller
                 ->map(function($messages) {
                     return $messages->first();
                 });
+
+            // Count unread messages FROM each friend TO current user
+            $unreadCountsMap = Message::whereIn('sender_id', $friendIds)
+                ->where('receiver_id', $user->id)
+                ->where('is_read', false)
+                ->selectRaw('sender_id, COUNT(*) as cnt')
+                ->groupBy('sender_id')
+                ->pluck('cnt', 'sender_id');
         }
 
-        $friends = User::whereIn('id', $friendIds)->get()->map(function($f) use ($latestMessagesMap) {
+        $friends = User::whereIn('id', $friendIds)->get()->map(function($f) use ($latestMessagesMap, $unreadCountsMap) {
             $latestMessage = $latestMessagesMap->get($f->id);
+            $unreadCount = $unreadCountsMap->get($f->id, 0);
             return [
                 'id'                       => $f->id,
                 'name'                     => $f->name,
@@ -386,6 +396,7 @@ class SocialHubController extends Controller
                 'latest_message'           => $latestMessage ? $latestMessage->message : null,
                 'latest_message_time'      => $latestMessage ? $latestMessage->created_at->diffForHumans() : null,
                 'latest_message_timestamp' => $latestMessage ? $latestMessage->created_at->timestamp : 0,
+                'unread_count'             => (int) $unreadCount,
             ];
         })->sortByDesc('latest_message_timestamp')->values();
 

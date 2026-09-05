@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import '../services/api_service.dart';
 import '../services/notification_state_service.dart';
+import '../services/native_notification_service.dart';
 import '../widgets/custom_loader.dart';
 import 'news_bulletin_screen.dart';
 import 'feed_screen.dart';
@@ -104,6 +105,32 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.notifications_active_outlined),
+            tooltip: 'Thử nghiệm thông báo đẩy hệ thống',
+            onPressed: () async {
+              await NativeNotificationService.requestPermission();
+              await NativeNotificationService.showNotification(
+                title: 'Đông Anh Social 2026',
+                body: 'Thông báo đẩy hệ thống hoạt động tốt trên thiết bị của bạn! 🎉',
+              );
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Đã gửi thông báo thử nghiệm! Kiểm tra thanh trạng thái thiết bị.'),
+                    backgroundColor: Color(0xFF10B981),
+                  ),
+                );
+              }
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.settings_outlined),
+            tooltip: 'Cấu hình quyền thông báo thiết bị',
+            onPressed: () {
+              NativeNotificationService.openSettings();
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.done_all),
             tooltip: 'Đánh dấu đã đọc tất cả',

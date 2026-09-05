@@ -47,36 +47,33 @@ class _PrincipalDashboardScreenState extends State<PrincipalDashboardScreen> {
         final realSchool = schoolsList.isNotEmpty ? schoolsList.first : null;
         setState(() {
           _schoolData = {
-            'name': realSchool?['name'] ?? 'Trường THCS & Tiểu học Đông Anh',
-            'address': realSchool?['address'] ?? 'Huyện Đông Anh, Thành phố Hà Nội',
-            'phone': realSchool?['phone'] ?? '024 3883 1234',
-            'level': realSchool?['level'] ?? 'Mầm non & Tiểu học & THCS',
+            'name': realSchool?['name'] ?? '',
+            'address': realSchool?['address'] ?? '',
+            'phone': realSchool?['phone'] ?? '',
+            'level': realSchool?['level'] ?? '',
             'components': realSchool?['components'] is List
                 ? List<String>.from(realSchool['components'])
-                : ['Trường THCS An Dương Vương', 'Trường Mầm Nông Phúc Lộc']
+                : <String>[]
           };
 
           _posts = newsList.map((item) {
             return {
               'id': item['id'],
-              'title': item['title'] ?? item['name'] ?? 'Bản tin giáo dục & nhà trường',
-              'date': item['created_at'] != null ? item['created_at'].toString().split('T').first : '2026-08-09',
-              'likes': item['likes_count'] ?? item['views_count'] ?? 15,
+              'title': item['title'] ?? item['name'] ?? '',
+              'date': item['created_at'] != null ? item['created_at'].toString().split('T').first : '',
+              'likes': item['likes_count'] ?? item['views_count'] ?? 0,
               'status': 'Đã xuất bản'
             };
           }).toList();
 
+          _programs = (res['programs'] is List) ? List<dynamic>.from(res['programs']) : [];
+
           _stats = {
             'total_posts': newsList.length,
-            'total_programs': 4,
-            'total_likes': newsList.fold<int>(0, (sum, item) => sum + (item['likes_count'] as int? ?? 10)),
-            'total_shares': 42,
+            'total_programs': _programs.length,
+            'total_likes': newsList.fold<int>(0, (sum, item) => sum + (item['likes_count'] as int? ?? 0)),
+            'total_shares': 0,
           };
-
-          _programs = [
-            {'id': 1, 'name': 'Chương Trình STEM & Chuyển Đổi Số Học Đường', 'fee': 'Theo quy định'},
-            {'id': 2, 'name': 'Bán Trú Chất Lượng Cao & ATTP Chuẩn Quốc Gia', 'fee': 'Bình dân'},
-          ];
           _isLoading = false;
         });
       }

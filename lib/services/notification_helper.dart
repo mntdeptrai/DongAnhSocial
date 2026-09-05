@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../main.dart';
+import 'native_notification_service.dart';
 
 class NotificationHelper {
   static void openSettings() {

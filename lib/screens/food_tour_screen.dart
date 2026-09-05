@@ -78,7 +78,7 @@ class _FoodTourScreenState extends State<FoodTourScreen> {
               final type = json['type'];
               if (type == 'status' || json['message'] != null) {
                 _aiStatusMessage = json['message'] ?? '';
-                _aiStreamLogs.add('✨ ${json['message']}');
+                _aiStreamLogs.add('${json['message']}');
               }
               if (type == 'meta' && json['tour_name'] != null) {
                 _generatedTourTitle = json['tour_name'];
@@ -182,9 +182,9 @@ class _FoodTourScreenState extends State<FoodTourScreen> {
             ),
             child: const Row(
               children: [
-                Icon(Icons.auto_awesome, color: Color(0xFF0284C7), size: 14),
+                Icon(Icons.explore, color: Color(0xFF0284C7), size: 14),
                 SizedBox(width: 4),
-                Text('AI v2.5', style: TextStyle(color: Color(0xFF0369A1), fontSize: 11, fontWeight: FontWeight.w800)),
+                Text('Lộ Trình v2.5', style: TextStyle(color: Color(0xFF0369A1), fontSize: 11, fontWeight: FontWeight.w800)),
               ],
             ),
           ),
@@ -247,7 +247,7 @@ class _FoodTourScreenState extends State<FoodTourScreen> {
                                   borderRadius: BorderRadius.circular(12),
                                   border: Border.all(color: const Color(0xFF38BDF8).withValues(alpha: 0.3)),
                                 ),
-                                child: const Icon(Icons.auto_awesome_rounded, color: Color(0xFF38BDF8), size: 20),
+                                child: const Icon(Icons.alt_route_rounded, color: Color(0xFF38BDF8), size: 20),
                               ),
                               const SizedBox(width: 10),
                               const Column(
@@ -527,7 +527,7 @@ class _FoodTourScreenState extends State<FoodTourScreen> {
                           ),
                           child: const Row(
                             children: [
-                              Icon(Icons.auto_awesome, color: Color(0xFF0284C7), size: 14),
+                              Icon(Icons.map_outlined, color: Color(0xFF0284C7), size: 14),
                               SizedBox(width: 4),
                               Text(
                                 'LỘ TRÌNH DÀNH RIÊNG CHO BẠN',
