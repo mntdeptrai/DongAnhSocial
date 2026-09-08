@@ -59,7 +59,7 @@ return new class extends Migration
                 ],
                 [
                     'eatery_id' => $dongAnhStation->id,
-                    'name' => 'YS. Ngô Thị Bích Liên',
+                    'name' => 'BS. Ngô Thị Bích Liên',
                     'title' => 'Tổ trưởng Khám Chữa Bệnh',
                     'specialty' => 'KCB Ban đầu, Bệnh Mãn Tính & Lao/HIV',
                     'duty_schedule' => 'Trực Cấp Cứu Luân Khoa 24/7',
@@ -71,8 +71,8 @@ return new class extends Migration
                 ],
                 [
                     'eatery_id' => $dongAnhStation->id,
-                    'name' => 'YS. Lê Dâm Hải Yến',
-                    'title' => 'Tổ trưởng Tiêm Chủng',
+                    'name' => 'BS. Lê Đàm Hải Yến',
+                    'title' => 'Tổ trưởng Tổ phòng bệnh',
                     'specialty' => 'Tiêm Chủng Mở Rộng & Phòng Chống Dịch',
                     'duty_schedule' => 'Thứ 2 - Thứ 6 & Lịch Tiêm Định Kỳ',
                     'phone' => '0363551036',
