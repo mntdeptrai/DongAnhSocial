@@ -874,15 +874,19 @@
                                 <a href="tel:0389928304" style="color: #0d9488; font-weight: 800; text-decoration: none;">0389 928 304</a>
                             </div>
                             <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: rgba(255,255,255,0.02); border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
-                                <span><strong>Nguyễn Thị Hậu</strong> (Phó Giám đốc)</span>
+                                <span><strong>Nguyễn Thị Hậu</strong> (Phó Giám đốc TYT)</span>
                                 <a href="tel:0936534226" style="color: #0d9488; font-weight: 800; text-decoration: none;">0936 534 226</a>
                             </div>
                             <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: rgba(255,255,255,0.02); border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
-                                <span><strong>Ngô Thị Bích Liên</strong> (Tổ KCB)</span>
+                                <span><strong>Ngô Thị Bích Liên</strong> (Tổ trưởng Tổ KCB)</span>
                                 <a href="tel:0976551863" style="color: #0d9488; font-weight: 800; text-decoration: none;">0976 551 863</a>
                             </div>
                             <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: rgba(255,255,255,0.02); border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
-                                <span><strong>Lê Đàm Hải Yến</strong> (Tiêm chủng)</span>
+                                <span><strong>Lê Đàm Hải Yến</strong> (Tổ trưởng Tổ phòng bệnh)</span>
+                                <a href="tel:0363551036" style="color: #0d9488; font-weight: 800; text-decoration: none;">0363 551 036</a>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: rgba(255,255,255,0.02); border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
+                                <span><strong>Nguyễn Thị Duyên</strong> (Tổ trưởng Hành chính)</span>
                                 <a href="tel:0363551036" style="color: #0d9488; font-weight: 800; text-decoration: none;">0363 551 036</a>
                             </div>
                         </div>
