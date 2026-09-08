@@ -20,6 +20,19 @@ class AuthController extends Controller
             if (in_array($role, ['admin', 'manager'])) {
                 return redirect('/admin/dashboard');
             } elseif ($role === 'seller') {
+                $user = Auth::user() ?: \App\Models\User::find(session('user_id'));
+                if ($user) {
+                    $hasWellness = \Illuminate\Support\Facades\DB::table('eateries')
+                        ->join('categories', 'eateries.category_id', '=', 'categories.id')
+                        ->where('categories.slug', 'wellness-care')
+                        ->where(function($q) use ($user) {
+                            $q->where('eateries.user_id', $user->id)
+                              ->orWhere('eateries.phone', $user->phone);
+                        })->exists();
+                    if ($hasWellness) {
+                        return redirect('/health-station/dashboard');
+                    }
+                }
                 return redirect('/seller/dashboard');
             } elseif ($role === 'principal') {
                 return redirect('/principal/schools');
@@ -77,7 +90,19 @@ class AuthController extends Controller
 
             if (in_array($user->role, ['admin', 'manager'])) {
                 return redirect()->intended('/admin/dashboard');
+            } elseif ($user->role === 'health_station') {
+                return redirect('/health-station/dashboard');
             } elseif ($user->role === 'seller') {
+                $hasWellness = \Illuminate\Support\Facades\DB::table('eateries')
+                    ->join('categories', 'eateries.category_id', '=', 'categories.id')
+                    ->where('categories.slug', 'wellness-care')
+                    ->where(function($q) use ($user) {
+                        $q->where('eateries.user_id', $user->id)
+                          ->orWhere('eateries.phone', $user->phone);
+                    })->exists();
+                if ($hasWellness) {
+                    return redirect('/health-station/dashboard');
+                }
                 return redirect()->intended('/seller/dashboard');
             } elseif ($user->role === 'principal') {
                 return redirect()->intended('/principal/schools');

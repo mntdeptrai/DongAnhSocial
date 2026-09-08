@@ -128,9 +128,6 @@
             <a href="{{ route('seller.products.index') }}" class="btn-admin" style="background: rgba(255,255,255,0.2); color: #fff; border: 1px solid rgba(255,255,255,0.35); padding: 12px 20px; border-radius: 12px; font-weight: 800; text-decoration: none; display: inline-flex; align-items: center; gap: 8px;">
                 ➕ Đổi Giá & Đăng Món
             </a>
-            <a href="{{ route('seller.orders.index') }}" class="btn-admin" style="background: rgba(255,255,255,0.2); color: #fff; border: 1px solid rgba(255,255,255,0.35); padding: 12px 20px; border-radius: 12px; font-weight: 800; text-decoration: none; display: inline-flex; align-items: center; gap: 8px;">
-                📦 Đơn Hàng
-            </a>
         </div>
     </div>
 </div>
@@ -165,7 +162,9 @@
 <!-- PRODUCTS TABLE PREVIEW -->
 <div class="admin-card">
     <div class="admin-card-header" style="display: flex; justify-content: space-between; align-items: center;">
-        <h2 class="admin-card-title"><span>📦</span> Danh Sách Sản Phẩm / Món Ăn Bày Bán</h2>
+        <h2 class="admin-card-title">
+            <span>📦</span> Danh Sách Sản Phẩm / Món Ăn Bày Bán
+        </h2>
         <a href="{{ route('seller.products.index') }}" class="btn-admin" style="background: #ea580c; color: #fff; font-size: 0.82rem; padding: 8px 16px; border-radius: 10px; text-decoration: none; font-weight: 800;">
             + Thêm Món Mới
         </a>
@@ -194,19 +193,19 @@
                     </td>
                     <td style="font-weight: 800; color: #1e293b; font-size: 0.94rem;">{{ $p->name }}</td>
                     <td style="color: #ea580c; font-weight: 900; font-size: 1rem;">
-                        {{ number_format($p->price, 0, ',', '.') }}đ / {{ $p->unit ?? 'kg' }}
+                        {{ number_format($p->price ?? 0, 0, ',', '.') }}đ {{ isset($p->unit) ? '/ ' . $p->unit : '' }}
                     </td>
-                    <td style="font-size: 0.82rem; color: #64748b;">{{ Str::limit($p->description, 50) }}</td>
+                    <td style="font-size: 0.82rem; color: #64748b;">{{ Str::limit($p->description ?? '', 50) }}</td>
                     <td style="text-align: center;">
                         <a href="{{ route('seller.products.index') }}" class="btn-admin" style="padding: 6px 12px; font-size: 0.78rem; text-decoration: none; background: #fff7ed; color: #ea580c; border: 1px solid #ffedd5; font-weight: 800;">
-                            ⚙️ Chỉnh sửa / Đổi giá
+                            ⚙️ Cập nhật thông tin
                         </a>
                     </td>
                 </tr>
                 @empty
                 <tr>
                     <td colspan="6" style="text-align: center; color: #64748b; padding: 36px;">
-                        Chưa có sản phẩm nào trong gian hàng. Hãy bấm <strong>+ Thêm món mới</strong> để bắt đầu đăng bán!
+                        Chưa có sản phẩm nào trong gian hàng. Hãy bấm + Thêm món mới để bắt đầu đăng bán!
                     </td>
                 </tr>
                 @endforelse

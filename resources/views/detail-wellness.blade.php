@@ -602,7 +602,7 @@
                 $dossier = $eatery->heritage_dossier;
             @endphp
 
-            @if($dossier)
+            @if($dossier && !in_array($categorySlug, ['wellness-care', 'smart-education-map']))
                 <!-- Premium Digital Museum Showcase for Heritage Specialties -->
                 <div class="detail-section glass-panel heritage-museum-card" style="padding: 28px; margin-bottom: 40px;">
                     
@@ -734,6 +734,52 @@
                 </div>
             @else
                 @if(!empty($eatery->description) && $eatery->description !== 'null')
+                @if($categorySlug === 'wellness-care')
+                <!-- Deluxe Medical Facility Introduction Box -->
+                <div class="detail-section glass-panel" style="padding: 32px; margin-bottom: 36px; background: linear-gradient(135deg, rgba(13, 148, 136, 0.06) 0%, rgba(2, 132, 199, 0.03) 100%); border: 1px solid rgba(13, 148, 136, 0.25); border-left: 5px solid #0d9488; border-radius: 20px; box-shadow: 0 10px 30px -10px rgba(13, 148, 136, 0.12); position: relative; overflow: hidden;">
+                    <!-- Ambient Glow Effect -->
+                    <div style="position: absolute; top: -50px; right: -50px; width: 180px; height: 180px; background: radial-gradient(circle, rgba(45, 212, 191, 0.15) 0%, rgba(255, 255, 255, 0) 70%); pointer-events: none;"></div>
+
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; border-bottom: 1px dashed rgba(13, 148, 136, 0.25); padding-bottom: 16px; flex-wrap: wrap;">
+                        <h2 style="font-size: 1.35rem; font-weight: 800; color: #0f766e; margin: 0; display: flex; align-items: center; gap: 10px; font-family: var(--font-heading);">
+                            <span style="background: rgba(13, 148, 136, 0.12); padding: 8px 12px; border-radius: 12px; font-size: 1.1rem; color: #0d9488;">🩺</span>
+                            Giới Thiệu Cơ Sở Y Tế & Chức Năng Nhiệm Vụ
+                        </h2>
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                            <span style="font-size: 0.78rem; background: #f0fdf4; border: 1px solid #bbf7d0; color: #15803d; font-weight: 800; padding: 5px 14px; border-radius: 20px; display: inline-flex; align-items: center; gap: 6px;">
+                                <i class="fa-solid fa-circle-check"></i> Đạt chuẩn SYT Hà Nội
+                            </span>
+                            <span style="font-size: 0.78rem; background: #e0f2fe; border: 1px solid #bae6fd; color: #0369a1; font-weight: 800; padding: 5px 14px; border-radius: 20px; display: inline-flex; align-items: center; gap: 6px;">
+                                <i class="fa-solid fa-shield-halved"></i> Khám BHYT Toàn Dân
+                            </span>
+                        </div>
+                    </div>
+
+                    <div style="font-size: 1.02rem; color: #1e293b; line-height: 1.85; font-weight: 500; margin-bottom: 24px; position: relative; z-index: 2;">
+                        {{ $eatery->description }}
+                    </div>
+
+                    <!-- Highlight Highlights Bar -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(8px); padding: 16px; border-radius: 14px; border: 1px solid rgba(13, 148, 136, 0.18);">
+                        <div style="display: flex; align-items: center; gap: 10px; font-size: 0.85rem; font-weight: 700; color: #0f766e;">
+                            <span style="width: 32px; height: 32px; border-radius: 8px; background: #ccfbf1; display: flex; align-items: center; justify-content: center; color: #0d9488; font-size: 0.9rem;"><i class="fa-solid fa-truck-medical"></i></span>
+                            Trực Cấp Cứu 24/7
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px; font-size: 0.85rem; font-weight: 700; color: #0369a1;">
+                            <span style="width: 32px; height: 32px; border-radius: 8px; background: #e0f2fe; display: flex; align-items: center; justify-content: center; color: #0284c7; font-size: 0.9rem;"><i class="fa-solid fa-notes-medical"></i></span>
+                            Khám Chữa Bệnh BHYT
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px; font-size: 0.85rem; font-weight: 700; color: #15803d;">
+                            <span style="width: 32px; height: 32px; border-radius: 8px; background: #dcfce7; display: flex; align-items: center; justify-content: center; color: #166534; font-size: 0.9rem;"><i class="fa-solid fa-syringe"></i></span>
+                            Tiêm Chủng Mở Rộng
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px; font-size: 0.85rem; font-weight: 700; color: #b45309;">
+                            <span style="width: 32px; height: 32px; border-radius: 8px; background: #fef3c7; display: flex; align-items: center; justify-content: center; color: #d97706; font-size: 0.9rem;"><i class="fa-solid fa-leaf"></i></span>
+                            Y Học Cổ Truyền
+                        </div>
+                    </div>
+                </div>
+                @else
                 <div class="detail-section glass-panel" style="padding: 28px; margin-bottom: 40px;">
                     <h2 class="section-title">
                         <span>📝</span> 
@@ -741,8 +787,6 @@
                             Giới thiệu về quán
                         @elseif($categorySlug === 'stay-in-dong-anh')
                             Giới thiệu địa điểm lưu trú
-                        @elseif($categorySlug === 'wellness-care')
-                            Giới thiệu về cơ sở chăm sóc
                         @elseif($categorySlug === 'dong-anh-market')
                             Giới thiệu về cơ sở
                         @elseif($categorySlug === 'smart-education-map')
@@ -766,6 +810,118 @@
                     @endif
                 </div>
                 @endif
+                @endif
+            @endif
+
+            @if($categorySlug === 'wellness-care' && ($eatery->slug === 'tram-y-te-xa-dong-anh' || $eatery->slug === 'trung-tam-y-te-dong-anh'))
+                <!-- Block Mạng lưới Điểm Y tế & Cán bộ phụ trách (Trích xuất dữ liệu chính thức Xã Đông Anh) -->
+                <div class="detail-section glass-panel" style="padding: 28px; margin-bottom: 40px; background: linear-gradient(135deg, rgba(13, 148, 136, 0.04) 0%, rgba(2, 132, 199, 0.02) 100%); border: 1px solid rgba(13, 148, 136, 0.25);">
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; border-bottom: 1px dashed rgba(13, 148, 136, 0.3); padding-bottom: 14px; flex-wrap: wrap;">
+                        <h3 style="font-size: 1.25rem; font-weight: 800; color: #0d9488; margin: 0; display: flex; align-items: center; gap: 8px;">
+                            🏥 Mạng Lưới Điểm Y Tế & Hotline Cán Bộ Phụ Trách
+                        </h3>
+                        <span style="font-size: 0.78rem; background: rgba(13, 148, 136, 0.15); border: 1px solid rgba(13, 148, 136, 0.3); color: #0d9488; font-weight: 800; padding: 4px 12px; border-radius: 20px;">
+                            ✓ Dữ liệu UBND Xã Đông Anh
+                        </span>
+                    </div>
+
+                    <p style="font-size: 0.92rem; color: var(--text-main); line-height: 1.6; margin-bottom: 20px;">
+                        Trạm Y tế xã Đông Anh thực hiện chức năng quản lý sức khỏe cộng đồng, phòng chống dịch bệnh, tiêm chủng vắc xin và khám chữa bệnh BHYT với <strong>06 Điểm Y tế trực thuộc</strong> phục vụ người dân tại các thôn:
+                    </p>
+
+                    <!-- Grid 6 điểm y tế -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; margin-bottom: 24px;">
+                        <div class="glass-panel" style="padding: 14px; background: rgba(255,255,255,0.02); border: 1px solid rgba(13, 148, 136, 0.2); border-radius: 12px;">
+                            <strong style="color: var(--primary); font-size: 0.9rem; display: block; margin-bottom: 4px;">📍 Điểm Y Tế Xuân Canh</strong>
+                            <span style="font-size: 0.8rem; color: var(--text-muted); display: block;">Địa chỉ: Thôn Xuân Canh - Đông Anh</span>
+                            <span style="font-size: 0.75rem; color: #2ecc71; font-weight: 700; display: block; margin-top: 4px;">⚡ 432 dịch vụ kỹ thuật phê duyệt</span>
+                        </div>
+                        <div class="glass-panel" style="padding: 14px; background: rgba(255,255,255,0.02); border: 1px solid rgba(13, 148, 136, 0.2); border-radius: 12px;">
+                            <strong style="color: var(--primary); font-size: 0.9rem; display: block; margin-bottom: 4px;">📍 Điểm Y Tế Cổ Loa</strong>
+                            <span style="font-size: 0.8rem; color: var(--text-muted); display: block;">Địa chỉ: Thôn Hùng Lạc - Đông Anh</span>
+                            <span style="font-size: 0.75rem; color: #2ecc71; font-weight: 700; display: block; margin-top: 4px;">⚡ 386 dịch vụ kỹ thuật phê duyệt</span>
+                        </div>
+                        <div class="glass-panel" style="padding: 14px; background: rgba(255,255,255,0.02); border: 1px solid rgba(13, 148, 136, 0.2); border-radius: 12px;">
+                            <strong style="color: var(--primary); font-size: 0.9rem; display: block; margin-bottom: 4px;">📍 Điểm Y Tế Dục Tú</strong>
+                            <span style="font-size: 0.8rem; color: var(--text-muted); display: block;">Địa chỉ: Thôn Dục Tú - Đông Anh</span>
+                            <span style="font-size: 0.75rem; color: #2ecc71; font-weight: 700; display: block; margin-top: 4px;">⚡ 386 dịch vụ kỹ thuật phê duyệt</span>
+                        </div>
+                        <div class="glass-panel" style="padding: 14px; background: rgba(255,255,255,0.02); border: 1px solid rgba(13, 148, 136, 0.2); border-radius: 12px;">
+                            <strong style="color: var(--primary); font-size: 0.9rem; display: block; margin-bottom: 4px;">📍 Điểm Y Tế Mai Lâm</strong>
+                            <span style="font-size: 0.8rem; color: var(--text-muted); display: block;">Địa chỉ: Thôn Mai Lâm - Đông Anh</span>
+                            <span style="font-size: 0.75rem; color: #2ecc71; font-weight: 700; display: block; margin-top: 4px;">⚡ 273 dịch vụ kỹ thuật phê duyệt</span>
+                        </div>
+                        <div class="glass-panel" style="padding: 14px; background: rgba(255,255,255,0.02); border: 1px solid rgba(13, 148, 136, 0.2); border-radius: 12px;">
+                            <strong style="color: var(--primary); font-size: 0.9rem; display: block; margin-bottom: 4px;">📍 Điểm Y Tế Việt Hùng</strong>
+                            <span style="font-size: 0.8rem; color: var(--text-muted); display: block;">Địa chỉ: Thôn Việt Hùng - Đông Anh</span>
+                            <span style="font-size: 0.75rem; color: #2ecc71; font-weight: 700; display: block; margin-top: 4px;">⚡ 281 dịch vụ kỹ thuật phê duyệt</span>
+                        </div>
+                        <div class="glass-panel" style="padding: 14px; background: rgba(255,255,255,0.02); border: 1px solid rgba(13, 148, 136, 0.2); border-radius: 12px;">
+                            <strong style="color: var(--primary); font-size: 0.9rem; display: block; margin-bottom: 4px;">📍 Điểm Y Tế Đông Hội</strong>
+                            <span style="font-size: 0.8rem; color: var(--text-muted); display: block;">Địa chỉ: Thôn Hội Phụ - Đông Anh</span>
+                            <span style="font-size: 0.75rem; color: #2ecc71; font-weight: 700; display: block; margin-top: 4px;">⚡ 214 dịch vụ kỹ thuật phê duyệt</span>
+                        </div>
+                    </div>
+
+                    <!-- Hotline Cán bộ phụ trách -->
+                    <div style="background: rgba(255, 255, 255, 0.03); border: 1px dashed rgba(13, 148, 136, 0.3); padding: 18px; border-radius: 14px;">
+                        <h4 style="font-size: 0.95rem; color: var(--text-main); font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
+                            📞 Danh Sách Hotline Cán Bộ Phụ Trách Trực Tiếp:
+                        </h4>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; font-size: 0.85rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: rgba(255,255,255,0.02); border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
+                                <span><strong>Nguyễn Thu Hà</strong> (Giám đốc TYT)</span>
+                                <a href="tel:0389928304" style="color: #0d9488; font-weight: 800; text-decoration: none;">0389 928 304</a>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: rgba(255,255,255,0.02); border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
+                                <span><strong>Nguyễn Thị Hậu</strong> (Phó Giám đốc)</span>
+                                <a href="tel:0936534226" style="color: #0d9488; font-weight: 800; text-decoration: none;">0936 534 226</a>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: rgba(255,255,255,0.02); border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
+                                <span><strong>Ngô Thị Bích Liên</strong> (Tổ KCB)</span>
+                                <a href="tel:0976551863" style="color: #0d9488; font-weight: 800; text-decoration: none;">0976 551 863</a>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: rgba(255,255,255,0.02); border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
+                                <span><strong>Lê Dâm Hải Yến</strong> (Tiêm chủng)</span>
+                                <a href="tel:0363551036" style="color: #0d9488; font-weight: 800; text-decoration: none;">0363 551 036</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @elseif($categorySlug === 'wellness-care' && (str_contains(mb_strtolower($eatery->name), 'điểm y tế') || str_contains(mb_strtolower($eatery->name), 'tổ y tế')))
+                <!-- Block Thông tin Điểm Y tế trực thuộc & Liên hệ Trưởng điểm -->
+                <div class="detail-section glass-panel" style="padding: 28px; margin-bottom: 40px; background: linear-gradient(135deg, rgba(13, 148, 136, 0.04) 0%, rgba(2, 132, 199, 0.02) 100%); border: 1px solid rgba(13, 148, 136, 0.25);">
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; border-bottom: 1px dashed rgba(13, 148, 136, 0.3); padding-bottom: 14px; flex-wrap: wrap;">
+                        <h3 style="font-size: 1.25rem; font-weight: 800; color: #0d9488; margin: 0; display: flex; align-items: center; gap: 8px;">
+                            🏥 Cơ Sở Trực Thuộc Mạng Lưới Trạm Y Tế Xã Đông Anh
+                        </h3>
+                        <a href="{{ route('eatery.show', 'tram-y-te-xa-dong-anh') }}" style="font-size: 0.82rem; background: rgba(13, 148, 136, 0.15); border: 1px solid rgba(13, 148, 136, 0.3); color: #0d9488; font-weight: 800; padding: 4px 14px; border-radius: 20px; text-decoration: none;">
+                            🏛️ Trạm Y Tế Xã Đông Anh (Trạm Chính) ➔
+                        </a>
+                    </div>
+                    @php
+                        $story = is_array($eatery->storytelling_data) ? $eatery->storytelling_data : (json_decode($eatery->storytelling_data ?? '[]', true) ?: []);
+                    @endphp
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 20px;">
+                        <div style="background: rgba(255,255,255,0.03); padding: 16px; border-radius: 12px; border: 1px solid rgba(13, 148, 136, 0.2);">
+                            <span style="font-size: 0.78rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Diện tích cơ sở</span>
+                            <strong style="display: block; font-size: 1.15rem; color: #0d9488; margin-top: 4px;">{{ $story['area'] ?? '3.793 m²' }}</strong>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.03); padding: 16px; border-radius: 12px; border: 1px solid rgba(13, 148, 136, 0.2);">
+                            <span style="font-size: 0.78rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Đội ngũ nhân sự</span>
+                            <strong style="display: block; font-size: 1.15rem; color: #0284c7; margin-top: 4px;">{{ $story['staff_count'] ?? 9 }} nhân viên y tế</strong>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.03); padding: 16px; border-radius: 12px; border: 1px solid rgba(13, 148, 136, 0.2);">
+                            <span style="font-size: 0.78rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Kỹ thuật y tế phê duyệt</span>
+                            <strong style="display: block; font-size: 1.15rem; color: #10b981; margin-top: 4px;">{{ $story['approved_services'] ?? 214 }} dịch vụ (QĐ SYT)</strong>
+                        </div>
+                    </div>
+                    @if(!empty($story['head']))
+                    <div style="background: rgba(13, 148, 136, 0.08); border: 1px solid rgba(13, 148, 136, 0.25); padding: 14px 18px; border-radius: 12px; font-size: 0.9rem; color: var(--text-main); font-weight: 600;">
+                        <i class="fa-solid fa-user-doctor" style="color: #0d9488; margin-right: 6px;"></i> <strong>Cán bộ phụ trách trực tiếp:</strong> {{ $story['head'] }}
+                    </div>
+                    @endif
+                </div>
             @endif
 
             <!-- CSS đặc thù cho Hệ thống Minh bạch Thực phẩm sạch (Trust Hub) -->
@@ -1797,7 +1953,7 @@
                         <span class="widget-info-icon" style="background: rgba(255, 179, 0, 0.1); border-radius: 12px; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; border: 1px solid rgba(255, 179, 0, 0.2); flex-shrink: 0; box-shadow: inset 0 0 10px rgba(255, 179, 0, 0.05);">💰</span>
                         <div>
                             <strong style="display: block; font-size: 0.78rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Mức giá tham khảo</strong>
-                            <span style="color: #ffb300; font-weight: 800; font-size: 1.1rem; display: inline-block; margin-top: 2px; white-space: nowrap; text-shadow: 0 0 10px rgba(255,179,0,0.2);">{{ $eatery->price_range ?: 'Đang cập nhật' }}</span>
+                            <span style="color: #ffb300; font-weight: 800; font-size: 0.95rem; display: inline-block; margin-top: 2px; line-height: 1.4; word-break: break-word; text-shadow: 0 0 10px rgba(255,179,0,0.2);">{{ $eatery->price_range ?: 'Đang cập nhật' }}</span>
                         </div>
                     </li>
                     @endif

@@ -64,31 +64,39 @@ class VendorController extends Controller
             ];
         }
 
-        // 1b. Tìm Cơ sở kinh doanh / Doanh nghiệp độc lập (Category 9 hoặc khác chợ)
+        // 1b. Tìm Cơ sở kinh doanh / Doanh nghiệp / Cơ sở y tế / Trường học độc lập thuộc sở hữu của User
         if ($userId) {
             $businessEatery = $db->table('eateries')
                 ->where('user_id', $userId)
-                ->where('category_id', 9)
                 ->first();
         }
         if (!$businessEatery && !empty($userPhone)) {
             $businessEatery = $db->table('eateries')
                 ->where('phone', $userPhone)
-                ->where('category_id', 9)
                 ->first();
         }
         if (!$businessEatery && $user && $user->eatery_id) {
-            $eateryCandidate = $db->table('eateries')->where('id', $user->eatery_id)->first();
-            if ($eateryCandidate && $eateryCandidate->category_id == 9) {
-                $businessEatery = $eateryCandidate;
-            }
+            $businessEatery = $db->table('eateries')->where('id', $user->eatery_id)->first();
         }
 
         if ($businessEatery) {
+            $catRec = $db->table('categories')->where('id', $businessEatery->category_id)->first();
+            $cSlug = $catRec ? $catRec->slug : '';
+            $badge = '🏢 Hộ kinh doanh / Doanh nghiệp';
+            if ($cSlug === 'wellness-care') {
+                $badge = '🩺 Cơ sở Y tế & Chăm sóc sức khỏe';
+            } elseif ($cSlug === 'smart-education-map') {
+                $badge = '🏫 Trường học & Giáo dục';
+            } elseif ($cSlug === 'stay-in-dong-anh') {
+                $badge = '🏨 Cơ sở Lưu trú & Khách sạn';
+            } elseif ($cSlug === 'dong-anh-food-map') {
+                $badge = '🍽️ Nhà hàng & Quán ăn';
+            }
+
             $managedEntities[] = [
                 'key' => 'business_' . $businessEatery->id,
                 'type' => 'business',
-                'badge' => '🏢 Hộ kinh doanh / Doanh nghiệp',
+                'badge' => $badge,
                 'name' => $businessEatery->name,
                 'sub' => '📍 ' . ($businessEatery->address ?: 'Đông Anh, Hà Nội'),
                 'id' => $businessEatery->id,
@@ -159,22 +167,41 @@ class VendorController extends Controller
                 ->where('stall_name', $stallName)
                 ->get();
         } elseif ($isBusinessMode && $businessEatery) {
-            $dishes = $db->table('dishes')->where('eatery_id', $businessEatery->id)->get();
-            $products = $dishes->map(function($d) use ($businessEatery) {
-                return (object)[
-                    'id' => $d->id,
-                    'eatery_id' => $businessEatery->id,
-                    'stall_name' => $businessEatery->name,
-                    'seller_name' => $businessEatery->name,
-                    'seller_phone' => $businessEatery->phone,
-                    'name' => $d->name,
-                    'price' => $d->price,
-                    'unit' => 'mặt hàng',
-                    'description' => $d->description,
-                    'image_path' => $d->image_path,
-                    'star_rating' => null,
-                ];
-            });
+            if ($categorySlug === 'wellness-care' && \Illuminate\Support\Facades\Schema::hasTable('wellness_services')) {
+                $services = $db->table('wellness_services')->where('eatery_id', $businessEatery->id)->get();
+                $products = $services->map(function($s) use ($businessEatery) {
+                    return (object)[
+                        'id' => $s->id,
+                        'eatery_id' => $businessEatery->id,
+                        'stall_name' => $businessEatery->name,
+                        'seller_name' => $businessEatery->name,
+                        'seller_phone' => $businessEatery->phone,
+                        'name' => $s->name,
+                        'price' => $s->price,
+                        'unit' => 'dịch vụ y tế',
+                        'description' => $s->description,
+                        'image_path' => $s->image_path,
+                        'star_rating' => null,
+                    ];
+                });
+            } else {
+                $dishes = $db->table('dishes')->where('eatery_id', $businessEatery->id)->get();
+                $products = $dishes->map(function($d) use ($businessEatery) {
+                    return (object)[
+                        'id' => $d->id,
+                        'eatery_id' => $businessEatery->id,
+                        'stall_name' => $businessEatery->name,
+                        'seller_name' => $businessEatery->name,
+                        'seller_phone' => $businessEatery->phone,
+                        'name' => $d->name,
+                        'price' => $d->price,
+                        'unit' => 'mặt hàng',
+                        'description' => $d->description,
+                        'image_path' => $d->image_path,
+                        'star_rating' => null,
+                    ];
+                });
+            }
         } else {
             $products = $db->table('ocop_products')->where('eatery_id', $eateryId)->get();
         }
@@ -280,6 +307,10 @@ class VendorController extends Controller
     {
         $this->verifyVendor();
         $context = $this->getVendorStallContext();
+
+        if (isset($context['categorySlug']) && $context['categorySlug'] === 'wellness-care') {
+            return redirect()->route('health-station.dashboard');
+        }
         
         $productsCount = $context['products']->count();
         

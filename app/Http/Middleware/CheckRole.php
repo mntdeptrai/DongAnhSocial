@@ -30,8 +30,11 @@ class CheckRole
                 abort(403, 'Bạn không có quyền truy cập trang quản lý này!');
             }
 
-            // Nếu là admin, seller hoặc manager bị chặn ở route con, redirect về admin dashboard
-            if (in_array($request->user()->role, ['admin', 'seller', 'manager'])) {
+            // Nếu là admin, seller, manager hoặc health_station bị chặn ở route con, redirect về dashboard thích hợp
+            if (in_array($request->user()->role, ['admin', 'seller', 'manager', 'health_station'])) {
+                if ($request->user()->role === 'health_station') {
+                    return redirect('/health-station/dashboard')->with('error', 'Bạn không có quyền truy cập chức năng này!');
+                }
                 return redirect('/admin/dashboard')->with('error', 'Bạn không có quyền truy cập chức năng này!');
             }
 

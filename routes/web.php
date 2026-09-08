@@ -14,6 +14,7 @@ use App\Http\Controllers\MarketStallController;
 use App\Http\Controllers\ManagerOrderController;
 use App\Http\Controllers\LiveStreamController;
 use App\Http\Controllers\YouTubeAuthController;
+use App\Http\Controllers\HealthStationController;
 
 
 /*
@@ -238,6 +239,28 @@ Route::prefix('seller')->middleware(['auth', 'role:seller,admin', 'tenant.auth']
     // Quản lý Cơ sở kinh doanh & Chuyển đổi Đa thực thể
     Route::post('/switch-entity', [VendorController::class, 'switchEntity'])->name('seller.switch-entity');
     Route::get('/business-profile', [VendorController::class, 'showBusinessProfile'])->name('seller.business-profile');
+});
+
+// --- HEALTH STATION MANAGEMENT ROUTES (Kênh Điều Hành Trạm Y Tế & Cơ Sở Sức Khỏe) ---
+Route::prefix('health-station')->middleware(['auth', 'role:health_station,seller,admin,manager'])->group(function () {
+    Route::get('/dashboard', [HealthStationController::class, 'dashboard'])->name('health-station.dashboard');
+    Route::get('/profile', [HealthStationController::class, 'showProfile'])->name('health-station.profile');
+    Route::post('/profile', [HealthStationController::class, 'updateProfile'])->name('health-station.profile.update');
+    
+    // Dịch vụ y tế & Kỹ thuật
+    Route::get('/services', [HealthStationController::class, 'services'])->name('health-station.services');
+    Route::post('/services', [HealthStationController::class, 'storeService'])->name('health-station.services.store');
+    Route::put('/services/{id}', [HealthStationController::class, 'updateService'])->name('health-station.services.update');
+    Route::delete('/services/{id}', [HealthStationController::class, 'destroyService'])->name('health-station.services.destroy');
+    
+    // Bác sĩ & Lịch trực
+    Route::get('/doctors', [HealthStationController::class, 'doctors'])->name('health-station.doctors');
+    Route::post('/doctors', [HealthStationController::class, 'storeDoctor'])->name('health-station.doctors.store');
+    Route::put('/doctors/{id}', [HealthStationController::class, 'updateDoctor'])->name('health-station.doctors.update');
+    Route::delete('/doctors/{id}', [HealthStationController::class, 'destroyDoctor'])->name('health-station.doctors.destroy');
+
+    // API Giải Mã Link Google Maps Rút Gọn Tức Thì
+    Route::post('/resolve-map-link', [HealthStationController::class, 'resolveMapLink'])->name('health-station.resolve-map-link');
 });
 
 // Route dọn dẹp khẩn cấp bình luận rác & bot spam

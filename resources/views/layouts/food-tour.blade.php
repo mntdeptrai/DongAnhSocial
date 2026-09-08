@@ -355,6 +355,8 @@
                                             🏛️ Quản trị viên Tổng
                                         @elseif($effectiveRole === 'manager')
                                             🏛️ Ban Quản lý Chợ
+                                        @elseif($effectiveRole === 'health_station')
+                                            🏥 Cán bộ Trạm Y Tế
                                         @elseif($effectiveRole === 'seller')
                                             🛍️ Chủ Gian Hàng / Cơ Sở
                                         @else
@@ -366,6 +368,10 @@
                                 @if($effectiveRole === 'admin' || $effectiveRole === 'manager')
                                     <a href="/admin/dashboard" class="dropdown-item" style="color: #0ea5e9; font-weight: 700; background: rgba(14, 165, 233, 0.06);">
                                         <span>⚙️</span> Trang Quản Trị Chợ
+                                    </a>
+                                @elseif($effectiveRole === 'health_station')
+                                    <a href="/health-station/dashboard" class="dropdown-item" style="color: #0d9488; font-weight: 700; background: rgba(13, 148, 136, 0.08);">
+                                        <span>🏥</span> Kênh Quản Lý Trạm Y Tế
                                     </a>
                                 @elseif($effectiveRole === 'seller')
                                     <a href="/seller/dashboard" class="dropdown-item" style="color: #10b981; font-weight: 700; background: rgba(16, 185, 129, 0.06);">
