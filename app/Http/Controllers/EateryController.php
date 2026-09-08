@@ -181,6 +181,10 @@ class EateryController extends Controller
             return view('detail-stay', $viewData);
         }
         if ($categorySlug === 'wellness-care') {
+            $viewData['doctors'] = \Illuminate\Support\Facades\DB::table('wellness_doctors')
+                ->where('eatery_id', $eatery->id)
+                ->orderBy('id', 'asc')
+                ->get();
             return view('detail-wellness', $viewData);
         }
         if ($categorySlug === 'smart-education-map') {

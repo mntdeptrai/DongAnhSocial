@@ -1117,8 +1117,75 @@
                         <h4 style="color: var(--text-main); font-weight: 700; font-size: 1.15rem; margin: 0 0 8px 0;">Dữ liệu đang cập nhật</h4>
                         <p style="color: var(--text-muted); font-size: 0.95rem; margin: 0;">{{ $emptyText }}</p>
                     </div>
-                @endif
             </div>
+
+            <!-- Đội ngũ Y bác sĩ & Cán bộ Trực ban -->
+            @php
+                $doctorsList = isset($doctors) && count($doctors) > 0 
+                    ? $doctors 
+                    : (\Illuminate\Support\Facades\DB::table('wellness_doctors')->where('eatery_id', $eatery->id)->orderBy('id', 'asc')->get());
+            @endphp
+
+            @if(count($doctorsList) > 0)
+                <div class="detail-section glass-panel" style="padding: 28px; margin-top: 24px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; border-bottom: 2px solid rgba(13, 148, 136, 0.2); padding-bottom: 12px;">
+                        <h2 class="section-title" style="margin-bottom: 0; color: #0d9488; font-weight: 800; display: flex; align-items: center; gap: 10px;">
+                            <span>👨‍⚕️</span> Đội ngũ Y bác sĩ & Cán bộ Trực ban KCB
+                        </h2>
+                        <span style="background: rgba(13, 148, 136, 0.1); color: #0d9488; font-weight: 700; font-size: 0.8rem; padding: 4px 12px; border-radius: 20px; border: 1px solid rgba(13, 148, 136, 0.2);">
+                            {{ count($doctorsList) }} Cán bộ trực thuộc
+                        </span>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px;">
+                        @foreach($doctorsList as $doc)
+                            <div style="background: var(--bg-card, #ffffff); border: 1px solid var(--border-glow, #e2e8f0); border-radius: 16px; padding: 18px; display: flex; gap: 14px; align-items: flex-start; box-shadow: 0 4px 12px rgba(0,0,0,0.03); transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
+                                <div style="position: relative; flex-shrink: 0;">
+                                    @if(!empty($doc->avatar))
+                                        <img src="{{ $doc->avatar }}" alt="{{ $doc->name }}" style="width: 56px; height: 56px; border-radius: 50%; object-fit: cover; border: 2px solid #0d9488;">
+                                    @else
+                                        <div style="width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, #ccfbf1 0%, #99f6e4 100%); color: #0f766e; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.2rem; border: 2px solid #0d9488;">
+                                            👨‍⚕️
+                                        </div>
+                                    @endif
+                                </div>
+
+                                <div style="flex: 1; min-width: 0;">
+                                    <h4 style="font-size: 0.98rem; font-weight: 800; color: var(--text-main, #0f172a); margin: 0 0 4px 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                        {{ $doc->name }}
+                                    </h4>
+                                    
+                                    @if(!empty($doc->title))
+                                        <div style="font-size: 0.8rem; font-weight: 700; color: #0d9488; margin-bottom: 4px;">
+                                            {{ $doc->title }}
+                                        </div>
+                                    @endif
+
+                                    @if(!empty($doc->specialty))
+                                        <div style="font-size: 0.76rem; color: var(--text-muted, #64748b); margin-bottom: 8px; line-height: 1.35;">
+                                            {{ $doc->specialty }}
+                                        </div>
+                                    @endif
+
+                                    @if(!empty($doc->schedule))
+                                        <div style="font-size: 0.74rem; color: #0284c7; background: rgba(2, 132, 199, 0.08); padding: 3px 8px; border-radius: 6px; display: inline-block; margin-bottom: 8px; font-weight: 600;">
+                                            📅 {{ $doc->schedule }}
+                                        </div>
+                                    @endif
+
+                                    @if(!empty($doc->phone))
+                                        <div style="margin-top: 4px;">
+                                            <a href="tel:{{ $doc->phone }}" style="font-size: 0.82rem; font-weight: 800; color: #ef4444; text-decoration: none; display: inline-flex; align-items: center; gap: 5px;">
+                                                📞 {{ $doc->phone }}
+                                            </a>
+                                        </div>
+                                    @endif
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
 
             <!-- Styles cho Slider thực đơn -->
             <style>
