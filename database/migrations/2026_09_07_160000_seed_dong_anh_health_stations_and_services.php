@@ -55,7 +55,7 @@ return new class extends Migration
                             ['name' => 'Nguyễn Thu Hà', 'role' => 'Giám đốc TYT', 'phone' => '0389928304'],
                             ['name' => 'Nguyễn Thị Hậu', 'role' => 'Phó giám đốc TYT', 'phone' => '0936534226'],
                             ['name' => 'Ngô Thị Bích Liên', 'role' => 'Tổ trưởng Khám Chữa Bệnh (KCB, Lao, HIV)', 'phone' => '0976551863'],
-                            ['name' => 'Lê Dâm Hải Yến', 'role' => 'Tổ trưởng Tiêm chủng & Phòng chống dịch', 'phone' => '0363551036'],
+                            ['name' => 'Lê Đàm Hải Yến', 'role' => 'Tổ trưởng Tổ phòng bệnh', 'phone' => '0363551036'],
                             ['name' => 'Nguyễn Thị Duyên', 'role' => 'Tổ trưởng Hành chính', 'phone' => '0388320979'],
                             ['name' => 'Trần Phương', 'role' => 'Đầu mối phòng chống dịch bệnh', 'phone' => '0356418799'],
                             ['name' => 'Trương Thị Hồng Hạnh', 'role' => 'Đầu mối an toàn thực phẩm', 'phone' => '0968969168'],
