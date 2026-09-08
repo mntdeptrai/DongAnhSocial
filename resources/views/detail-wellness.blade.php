@@ -1117,6 +1117,7 @@
                         <h4 style="color: var(--text-main); font-weight: 700; font-size: 1.15rem; margin: 0 0 8px 0;">Dữ liệu đang cập nhật</h4>
                         <p style="color: var(--text-muted); font-size: 0.95rem; margin: 0;">{{ $emptyText }}</p>
                     </div>
+                @endif
             </div>
 
             <!-- Đội ngũ Y bác sĩ & Cán bộ Trực ban -->
