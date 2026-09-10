@@ -119,9 +119,15 @@
                             @elseif($user->role === 'manager')
                                 <span class="admin-badge admin-badge-primary" style="font-size: 0.72rem; font-weight: 700; background-color: #fef3c7; color: #b45309; border-color: rgba(180, 83, 9, 0.15);">Manager 🏛️</span>
                             @elseif($user->role === 'seller')
-                                <span class="admin-badge admin-badge-primary" style="font-size: 0.72rem; font-weight: 700; background-color: #ecfdf5; color: #047857; border-color: rgba(4, 120, 87, 0.15);">Seller</span>
+                                <span class="admin-badge admin-badge-primary" style="font-size: 0.72rem; font-weight: 700; background-color: #ecfdf5; color: #047857; border-color: rgba(4, 120, 87, 0.15);">Tiểu thương chợ</span>
+                            @elseif($user->role === 'hkd')
+                                <span class="admin-badge admin-badge-primary" style="font-size: 0.72rem; font-weight: 700; background-color: #dbeafe; color: #1d4ed8; border-color: rgba(29, 78, 216, 0.15);">Hộ KD 🏠</span>
+                            @elseif($user->role === 'dn')
+                                <span class="admin-badge admin-badge-primary" style="font-size: 0.72rem; font-weight: 700; background-color: #fce7f3; color: #be185d; border-color: rgba(190, 24, 93, 0.15);">Doanh nghiệp 🏢</span>
+                            @elseif($user->role === 'health_station')
+                                <span class="admin-badge admin-badge-primary" style="font-size: 0.72rem; font-weight: 700; background-color: #ecfdf5; color: #065f46; border-color: rgba(6, 95, 70, 0.15);">Trạm Y tế 🏥</span>
                             @else
-                                <span class="admin-badge admin-badge-primary" style="font-size: 0.72rem; font-weight: 700; background-color: #eff6ff; color: #1d4ed8; border-color: rgba(29, 78, 216, 0.15);">Customer</span>
+                                <span class="admin-badge admin-badge-primary" style="font-size: 0.72rem; font-weight: 700; background-color: #f1f5f9; color: #64748b; border-color: rgba(100, 116, 139, 0.15);">Khách hàng</span>
                             @endif
                         </td>
                         <td style="text-align: center;">

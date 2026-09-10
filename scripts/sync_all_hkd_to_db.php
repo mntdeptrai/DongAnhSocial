@@ -32,20 +32,22 @@ $category = Category::firstOrCreate(
 $communes = Commune::select('id', 'name')->get();
 $defaultCommune = $communes->first();
 
-// 3. Load input dataset
+// 3. Load input datasets
 $jsonPath = database_path('data/hkd_with_phones.json');
-if (!file_exists($jsonPath)) {
-    echo "ERROR: hkd_with_phones.json not found!\n";
-    exit(1);
-}
+$dnJsonPath = database_path('data/doanh_nghiep_with_phones.json');
 
-$hkdList = json_decode(file_get_contents($jsonPath), true);
-if (!is_array($hkdList)) {
-    echo "ERROR: Could not parse hkd_with_phones.json!\n";
-    exit(1);
-}
+$hkdList = file_exists($jsonPath) ? json_decode(file_get_contents($jsonPath), true) : [];
+$dnList = file_exists($dnJsonPath) ? json_decode(file_get_contents($dnJsonPath), true) : [];
 
-echo "Total items in JSON: " . count($hkdList) . "\n";
+if (!is_array($hkdList)) $hkdList = [];
+if (!is_array($dnList)) $dnList = [];
+
+$allList = array_merge($hkdList, $dnList);
+
+echo "Loaded HKD: " . count($hkdList) . " items | Doanh Nghiệp: " . count($dnList) . " items (Total: " . count($allList) . ")\n";
+
+// Use $allList as main dataset
+$hkdList = $allList;
 
 /**
  * Standard Phone Normalization Function
@@ -134,6 +136,7 @@ DB::transaction(function () use (
         } else {
             if ($user->role !== 'admin') {
                 $user->update([
+                    'name'        => !empty($item['name']) ? $item['name'] : $user->name,
                     'status'      => 'active',
                     'is_verified' => true,
                 ]);
@@ -184,6 +187,7 @@ DB::transaction(function () use (
             }
 
             $eatery->update([
+                'name'              => !empty($item['name']) ? $item['name'] : $eatery->name,
                 'category_id'       => $category->id,
                 'address'           => !empty($item['address']) ? $item['address'] : $eatery->address,
                 'description'       => !empty($item['industry']) ? $item['industry'] : $eatery->description,

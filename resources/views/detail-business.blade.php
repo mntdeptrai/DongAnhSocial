@@ -1010,7 +1010,7 @@
                                                     @if(!in_array($categorySlug, ['stay-in-dong-anh', 'wellness-care', 'smart-education-map', 'discover-dong-anh-community-culture-hub']) && isset($item->price) && $item->price > 0)
                                                         <button class="btn-add-to-cart-mini" 
                                                                 data-id="{{ $item->id }}" 
-                                                                data-type="{{ $categorySlug === 'dong-anh-market' ? 'ocop_product' : 'dish' }}"
+                                                                data-type="{{ in_array($categorySlug, ['dong-anh-market', 'co-so-kinh-doanh']) ? 'ocop_product' : 'dish' }}"
                                                                 style="background: var(--primary-grad); border: none; color: white; padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s; box-shadow: 0 4px 10px rgba(255, 126, 41, 0.2);"
                                                                 onclick="addToCart(event, this)">
                                                             Thêm 🛒
@@ -1276,7 +1276,7 @@
                                                 @if(!in_array($categorySlug, ['stay-in-dong-anh', 'wellness-care', 'smart-education-map', 'discover-dong-anh-community-culture-hub']) && isset($item->price) && $item->price > 0)
                                                     <button class="btn-add-to-cart-mini" 
                                                             data-id="{{ $item->id }}" 
-                                                            data-type="{{ $categorySlug === 'dong-anh-market' ? 'ocop_product' : 'dish' }}"
+                                                            data-type="{{ in_array($categorySlug, ['dong-anh-market', 'co-so-kinh-doanh']) ? 'ocop_product' : 'dish' }}"
                                                             style="background: var(--primary-grad); border: none; color: white; padding: 4px 10px; border-radius: 6px; font-size: 0.72rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s;"
                                                             onclick="addToCart(event, this)">
                                                         Thêm 🛒

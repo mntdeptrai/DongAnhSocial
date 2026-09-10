@@ -4,7 +4,10 @@
 
 @section('content')
 @php
-    $hasMarketItems = collect($cartItems)->contains('category_slug', 'dong-anh-market');
+    $hasMarketItems = collect($cartItems)->whereIn('category_slug', ['dong-anh-market', 'traditional-market'])->isNotEmpty();
+    $hasHkdItems    = collect($cartItems)->where('category_slug', 'co-so-kinh-doanh')->isNotEmpty();
+    // Context: 'hkd' only if ALL items are HKD (no market mix)
+    $ctx = ($hasHkdItems && !$hasMarketItems) ? 'hkd' : 'market';
 @endphp
 <div class="container" style="padding: 40px 20px; font-family: 'Be Vietnam Pro', sans-serif;">
     <div style="margin-bottom: 30px;">
@@ -39,7 +42,7 @@
                 <!-- Fulfillment Mode Switcher Tabs -->
                 <div style="display: flex; gap: 10px; margin-bottom: 22px; background: rgba(255,255,255,0.03); padding: 5px; border-radius: 14px; border: 1.5px solid var(--border-glow);">
                     <button type="button" id="tabPickupBtn" class="fulfillment-tab active" onclick="switchFulfillment('pickup')" style="flex: 1; padding: 12px; border-radius: 10px; font-size: 0.88rem; font-weight: 700; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.25s; background: var(--primary, #ff7e29); color: #ffffff; box-shadow: 0 4px 14px rgba(255,126,41,0.25);">
-                        🏪 Ghé sạp lấy / Ăn tại chợ
+                        {{ $ctx === 'hkd' ? '🏪 Đến nhận tại cửa hàng' : '🏪 Ghé sạp lấy / Ăn tại chợ' }}
                     </button>
                     <button type="button" id="tabDeliveryBtn" class="fulfillment-tab" onclick="switchFulfillment('delivery')" style="flex: 1; padding: 12px; border-radius: 10px; font-size: 0.88rem; font-weight: 700; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.25s; background: transparent; color: var(--text-muted);">
                         🛵 Giao tận nơi (Ship)
@@ -62,7 +65,7 @@
                     <div id="pickupFieldsSection" style="display: flex; flex-direction: column; gap: 18px;">
                         <div style="background: rgba(14, 165, 233, 0.05); border: 1.5px dashed rgba(14, 165, 233, 0.3); border-radius: 12px; padding: 14px 16px;">
                             <div style="font-size: 0.85rem; font-weight: 700; color: #0284c7; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
-                                🏛️ Địa điểm nhận hàng:
+                                {{ $ctx === 'hkd' ? '🏬 Địa chỉ cửa hàng / Hộ kinh doanh:' : '🏛️ Địa điểm nhận hàng:' }}
                             </div>
                             <div style="font-size: 0.92rem; font-weight: 700; color: var(--text-main);">
                                 {{ !empty($distinctMarkets) ? implode(', ', $distinctMarkets) : 'Chợ truyền thống Đông Anh' }}
@@ -79,11 +82,20 @@
                                 ⏰ Giờ hẹn qua lấy đồ <span style="color:#ef4444;">*</span>
                             </label>
                             <select id="pickupTimeSelect" onchange="toggleCustomPickupTime(this.value)" style="width: 100%; padding: 12px 16px; border-radius: 10px; border: 1.5px solid var(--border-glow); background: rgba(255,255,255,0.02); color: var(--text-main); outline: none;">
+                                @if($ctx === 'hkd')
+                                <option value="Ngay bây giờ (sau 15 - 30 phút)">⚡ Ngay bây giờ (sau 15 - 30 phút)</option>
+                                <option value="Sáng (08:00 - 11:00)">🌅 Sáng (08:00 - 11:00)</option>
+                                <option value="Trưa (11:00 - 13:00)" selected>☀️ Trưa (11:00 - 13:00)</option>
+                                <option value="Chiều (13:00 - 17:00)">🌤️ Chiều (13:00 - 17:00)</option>
+                                <option value="Tối (17:00 - 20:00)">🌆 Tối (17:00 - 20:00)</option>
+                                <option value="custom">⏰ Khung giờ khác (Tự chọn)...</option>
+                                @else
                                 <option value="Lấy ngay (sau 15 - 30 phút)">⚡ Lấy ngay (sau 15 - 30 phút)</option>
                                 <option value="06:30 - 08:00 (Ăn sáng / Chợ sớm)">🌅 06:30 - 08:00 (Ăn sáng / Chợ sớm)</option>
                                 <option value="11:00 - 12:30 (Bữa trưa)" selected>☀️ 11:00 - 12:30 (Bữa trưa)</option>
                                 <option value="16:30 - 18:30 (Chợ chiều / Bữa tối)">🌇 16:30 - 18:30 (Chợ chiều / Bữa tối)</option>
                                 <option value="custom">⏰ Khung giờ khác (Tự chọn)...</option>
+                                @endif
                             </select>
                             <input type="text" id="customPickupTimeInput" class="form-input" placeholder="Nhập giờ bạn muốn ghé lấy (Ví dụ: 14h00 chiều nay)..." style="display: none; margin-top: 8px; width: 100%; padding: 12px 16px; border-radius: 10px; border: 1.5px solid var(--border-glow); background: rgba(255,255,255,0.02); color: var(--text-main); outline: none;">
                         </div>
@@ -92,7 +104,7 @@
                             <label style="display: block; font-size: 0.88rem; font-weight: 600; color: var(--text-main); margin-bottom: 6px;">
                                 🚗 Thông tin phương tiện / Biển số xe <small style="font-weight: normal; color: var(--text-muted);">(Tùy chọn)</small>
                             </label>
-                            <input type="text" id="pickupVehicleInput" class="form-input" placeholder="Ví dụ: Xe SH đỏ 29-X1 123.45 (nhờ chủ sạp mang ra cổng chợ)..." style="width: 100%; padding: 12px 16px; border-radius: 10px; border: 1.5px solid var(--border-glow); background: rgba(255,255,255,0.02); color: var(--text-main); outline: none;">
+                            <input type="text" id="pickupVehicleInput" class="form-input" placeholder="{{ $ctx === 'hkd' ? 'Ghi thêm yêu cầu khi đến nhận (Ví dụ: gọi điện trước, cần hóa đơn...)' : 'Ví dụ: Xe SH đỏ 29-X1 123.45 (nhờ chủ sạp mang ra cổng chợ)...' }}" style="width: 100%; padding: 12px 16px; border-radius: 10px; border: 1.5px solid var(--border-glow); background: rgba(255,255,255,0.02); color: var(--text-main); outline: none;">
                         </div>
                     </div>
 
@@ -143,8 +155,8 @@
                     <label style="position: relative; border: 1.5px solid var(--border-glow); border-radius: 14px; padding: 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: all 0.2s;" class="payment-method-card">
                         <input type="radio" name="payment_method" value="Online" style="accent-color: var(--primary);" onchange="updatePaymentCardStyles(this)">
                         <div>
-                            <strong style="display: block; font-size: 0.9rem; color: var(--text-main);">Chuyển khoản VietQR của Tiểu thương (Khuyên dùng)</strong>
-                            <span style="font-size: 0.72rem; color: var(--text-muted);">Quét mã QR chuyển khoản trực tiếp cho từng chủ quầy</span>
+                            <strong style="display: block; font-size: 0.9rem; color: var(--text-main);">Chuyển khoản VietQR của {{ $ctx === 'hkd' ? 'Cửa hàng / Doanh nghiệp' : 'Tiểu thương' }} (Khuyên dùng)</strong>
+                            <span style="font-size: 0.72rem; color: var(--text-muted);">Quét mã QR chuyển khoản trực tiếp cho {{ $ctx === 'hkd' ? 'cửa hàng / hộ kinh doanh' : 'từng chủ quầy' }}</span>
                         </div>
                     </label>
                 </div>
@@ -189,7 +201,16 @@
                             <div style="font-size: 0.82rem; font-weight: 700; color: var(--accent); margin-bottom: 10px; display: flex; justify-content: space-between; border-bottom: 1px dashed var(--border-glow); padding-bottom: 6px;">
                                 <span>🏪 {{ $eatery ? $eatery->name : 'Cửa hàng Đông Anh' }}</span>
                                 <span style="background: rgba(255, 126, 41, 0.1); padding: 1px 6px; border-radius: 4px; font-size: 0.72rem;">
-                                    {{ $firstItem['category_slug'] === 'dong-anh-market' ? 'Chợ & OCOP' : 'Ẩm thực' }}
+                                    @php
+                                        $badgeSlug = $firstItem['category_slug'] ?? '';
+                                        $badgeLabel = match(true) {
+                                            $badgeSlug === 'co-so-kinh-doanh' => 'HKD / Doanh Nghiệp',
+                                            in_array($badgeSlug, ['dong-anh-market', 'traditional-market']) => 'Chợ & OCOP',
+                                            $badgeSlug === 'dong-anh-food-map' => 'Ẩm thực',
+                                            default => 'Đông Anh',
+                                        };
+                                    @endphp
+                                    {{ $badgeLabel }}
                                 </span>
                             </div>
                             
@@ -299,7 +320,8 @@
 
         const checkoutForm = document.getElementById('checkoutForm');
         const hiddenAddress = document.getElementById('hiddenAddressInput');
-        const marketNames = "{{ !empty($distinctMarkets) ? implode(', ', $distinctMarkets) : 'Chợ Đông Anh' }}";
+        const marketNames = "{{ !empty($distinctMarkets) ? implode(', ', $distinctMarkets) : 'Đông Anh' }}";
+        const isHkd = {{ $ctx === 'hkd' ? 'true' : 'false' }};
         
         if (checkoutForm && hiddenAddress) {
             checkoutForm.addEventListener('submit', function(e) {
@@ -313,7 +335,7 @@
                         finalTime = customVal ? customVal : 'Lấy trong ngày';
                     }
                     const vehicle = document.getElementById('pickupVehicleInput').value.trim();
-                    let addr = `[Ghé sạp lấy đồ] Tại ${marketNames} (Hẹn: ${finalTime}`;
+                    let addr = `[${isHkd ? 'Đến nhận tại cửa hàng' : 'Ghé sạp lấy đồ'}] Tại ${marketNames} (Hẹn: ${finalTime}`;
                     if (vehicle) {
                         addr += `, Xe: ${vehicle}`;
                     }

@@ -15,6 +15,7 @@ use App\Http\Controllers\ManagerOrderController;
 use App\Http\Controllers\LiveStreamController;
 use App\Http\Controllers\YouTubeAuthController;
 use App\Http\Controllers\HealthStationController;
+use App\Http\Controllers\BusinessManagementController;
 
 
 /*
@@ -239,6 +240,23 @@ Route::prefix('seller')->middleware(['auth', 'role:seller,admin', 'tenant.auth']
     // Quản lý Cơ sở kinh doanh & Chuyển đổi Đa thực thể
     Route::post('/switch-entity', [VendorController::class, 'switchEntity'])->name('seller.switch-entity');
     Route::get('/business-profile', [VendorController::class, 'showBusinessProfile'])->name('seller.business-profile');
+});
+
+// --- HKD & DOANH NGHIỆP MANAGEMENT ROUTES (Kênh Điều Hành Hộ Kinh Doanh & Doanh Nghiệp Số) ---
+Route::prefix('hkd')->middleware(['auth', 'role:seller,hkd,dn,business,admin,manager'])->group(function () {
+    Route::get('/dashboard', [BusinessManagementController::class, 'dashboard'])->name('hkd.dashboard');
+    Route::get('/profile', [BusinessManagementController::class, 'showProfile'])->name('hkd.profile');
+    Route::post('/profile', [BusinessManagementController::class, 'updateProfile'])->name('hkd.profile.update');
+    Route::get('/products', [BusinessManagementController::class, 'products'])->name('hkd.products.index');
+    Route::post('/products', [BusinessManagementController::class, 'storeProduct'])->name('hkd.products.store');
+    Route::put('/products/{id}', [BusinessManagementController::class, 'updateProduct'])->name('hkd.products.update');
+    Route::delete('/products/{id}', [BusinessManagementController::class, 'destroyProduct'])->name('hkd.products.destroy');
+    Route::get('/orders', [BusinessManagementController::class, 'orders'])->name('hkd.orders.index');
+    Route::get('/orders/{id}', [BusinessManagementController::class, 'showOrder'])->name('hkd.orders.show');
+    Route::put('/orders/{id}/status', [BusinessManagementController::class, 'updateOrderStatus'])->name('hkd.orders.update-status');
+    Route::get('/reports', [BusinessManagementController::class, 'reports'])->name('hkd.reports');
+    Route::get('/qr', [BusinessManagementController::class, 'qr'])->name('hkd.qr');
+    Route::get('/chat', [BusinessManagementController::class, 'chatIndex'])->name('hkd.chat.index');
 });
 
 // --- HEALTH STATION MANAGEMENT ROUTES (Kênh Điều Hành Trạm Y Tế & Cơ Sở Sức Khỏe) ---

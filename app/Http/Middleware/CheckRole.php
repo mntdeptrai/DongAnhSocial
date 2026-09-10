@@ -30,16 +30,21 @@ class CheckRole
                 abort(403, 'Bạn không có quyền truy cập trang quản lý này!');
             }
 
-            // Nếu là admin, seller, manager hoặc health_station bị chặn ở route con, redirect về dashboard thích hợp
-            if (in_array($request->user()->role, ['admin', 'seller', 'manager', 'health_station'])) {
-                if ($request->user()->role === 'health_station') {
-                    return redirect('/health-station/dashboard')->with('error', 'Bạn không có quyền truy cập chức năng này!');
-                }
+            $userRole = $request->user()->role;
+            if (($userRole === 'admin' || $userRole === 'manager') && !$request->is('admin/*')) {
                 return redirect('/admin/dashboard')->with('error', 'Bạn không có quyền truy cập chức năng này!');
             }
+            if ($userRole === 'health_station' && !$request->is('health-station/*')) {
+                return redirect('/health-station/dashboard')->with('error', 'Bạn không có quyền truy cập chức năng này!');
+            }
+            if ($userRole === 'seller' && !$request->is('seller/*')) {
+                return redirect('/seller/dashboard')->with('error', 'Bạn không có quyền truy cập chức năng này!');
+            }
+            if (in_array($userRole, ['hkd', 'dn', 'business']) && !$request->is('hkd/*')) {
+                return redirect('/hkd/dashboard')->with('error', 'Bạn không có quyền truy cập chức năng này!');
+            }
 
-            // Nếu là user thường cố tình vào khu vực quản trị, redirect về trang chủ
-            return redirect('/')->with('error', 'Bạn không có quyền truy cập khu vực này!');
+            abort(403, 'Bạn không có quyền truy cập khu vực này!');
         }
 
         return $next($request);

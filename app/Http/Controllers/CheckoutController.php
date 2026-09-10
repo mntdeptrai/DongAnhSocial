@@ -41,7 +41,15 @@ class CheckoutController extends Controller
             $dishes = !empty($dishIds) ? Dish::on('mysql')->with('eatery')->whereIn('id', $dishIds)->get()->keyBy('id') : collect();
             $ocopProducts = !empty($ocopIds) ? OcopProduct::on('mysql_market')->with('eatery')->whereIn('id', $ocopIds)->get()->keyBy('id') : collect();
 
-            $cartItems = $itemsToCheckout->map(function ($item) use ($dishes, $ocopProducts) {
+            // Resolve actual category slug for each ocop product's eatery
+            $ocopEateryIds = $ocopProducts->pluck('eatery_id')->filter()->unique()->values()->all();
+            $eateryCatSlugs = !empty($ocopEateryIds)
+                ? DB::table('eateries')->join('categories', 'eateries.category_id', '=', 'categories.id')
+                    ->whereIn('eateries.id', $ocopEateryIds)
+                    ->pluck('categories.slug', 'eateries.id')
+                : collect();
+
+            $cartItems = $itemsToCheckout->map(function ($item) use ($dishes, $ocopProducts, $eateryCatSlugs) {
                 $product = null;
                 if ($item->dish_id) {
                     $product = $dishes->get($item->dish_id);
@@ -62,7 +70,9 @@ class CheckoutController extends Controller
                     'eatery_id' => $eatery ? $eatery->id : ($product ? $product->eatery_id : null),
                     'eatery_name' => $eatery ? $eatery->name : 'Gian hàng Đông Anh',
                     'stall_name' => ($product && isset($product->stall_name)) ? $product->stall_name : null,
-                    'category_slug' => $item->dish_id ? 'dong-anh-food-map' : 'dong-anh-market'
+                    'category_slug' => $item->dish_id
+                        ? 'dong-anh-food-map'
+                        : ($product ? ($eateryCatSlugs->get($product->eatery_id) ?? 'dong-anh-market') : 'dong-anh-market'),
                 ];
             })->toArray();
 

@@ -15,30 +15,6 @@ class AuthController extends Controller
 {
     public function showLogin(Request $request)
     {
-        if (Auth::check() || session()->has('user_id')) {
-            $role = session('user_role') ?: (Auth::user() ? Auth::user()->role : 'user');
-            if (in_array($role, ['admin', 'manager'])) {
-                return redirect('/admin/dashboard');
-            } elseif ($role === 'seller') {
-                $user = Auth::user() ?: \App\Models\User::find(session('user_id'));
-                if ($user) {
-                    $hasWellness = \Illuminate\Support\Facades\DB::table('eateries')
-                        ->join('categories', 'eateries.category_id', '=', 'categories.id')
-                        ->where('categories.slug', 'wellness-care')
-                        ->where(function($q) use ($user) {
-                            $q->where('eateries.user_id', $user->id)
-                              ->orWhere('eateries.phone', $user->phone);
-                        })->exists();
-                    if ($hasWellness) {
-                        return redirect('/health-station/dashboard');
-                    }
-                }
-                return redirect('/seller/dashboard');
-            } elseif ($role === 'principal') {
-                return redirect('/principal/schools');
-            }
-            return redirect('/');
-        }
         if ($request->has('redirect')) {
             session(['url.intended' => $request->query('redirect')]);
         }
@@ -89,10 +65,10 @@ class AuthController extends Controller
             }
 
             if (in_array($user->role, ['admin', 'manager'])) {
-                return redirect()->intended('/admin/dashboard');
+                return redirect('/admin/dashboard');
             } elseif ($user->role === 'health_station') {
                 return redirect('/health-station/dashboard');
-            } elseif ($user->role === 'seller') {
+            } elseif ($user->role === 'seller' || in_array($user->role, ['hkd', 'dn', 'business'])) {
                 $hasWellness = \Illuminate\Support\Facades\DB::table('eateries')
                     ->join('categories', 'eateries.category_id', '=', 'categories.id')
                     ->where('categories.slug', 'wellness-care')
@@ -103,11 +79,32 @@ class AuthController extends Controller
                 if ($hasWellness) {
                     return redirect('/health-station/dashboard');
                 }
-                return redirect()->intended('/seller/dashboard');
+
+                $cleanPhone = preg_replace('/[^0-9]/', '', $user->phone ?? '');
+                $isHkdBusiness = \Illuminate\Support\Facades\DB::table('eateries')
+                    ->join('categories', 'eateries.category_id', '=', 'categories.id')
+                    ->where('categories.slug', 'co-so-kinh-doanh')
+                    ->where(function($q) use ($user, $cleanPhone) {
+                        $q->where('eateries.user_id', $user->id);
+                        if (!empty($user->eatery_id)) {
+                            $q->orWhere('eateries.id', $user->eatery_id);
+                        }
+                        if (!empty($user->phone)) {
+                            $q->orWhere('eateries.phone', $user->phone);
+                        }
+                        if (!empty($cleanPhone)) {
+                            $q->orWhere('eateries.phone', $cleanPhone);
+                        }
+                    })->exists();
+                if ($isHkdBusiness || in_array($user->role, ['hkd', 'dn', 'business'])) {
+                    return redirect('/hkd/dashboard');
+                }
+
+                return redirect('/seller/dashboard');
             } elseif ($user->role === 'principal') {
-                return redirect()->intended('/principal/schools');
+                return redirect('/principal/schools');
             }
-            return redirect()->intended('/');
+            return redirect('/');
         }
 
         if ($request->wantsJson()) {
