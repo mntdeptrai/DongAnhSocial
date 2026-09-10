@@ -170,7 +170,7 @@ DB::transaction(function () use (
                 'longitude'         => 105.8458,
                 'storytelling_data' => [
                     'tax_code'      => $item['mst'] ?? null,
-                    'business_type' => 'Cơ sở kinh doanh, Doanh nghiệp',
+                    'business_type' => $item['section_type'] ?? 'Hộ kinh doanh',
                     'stt'           => $item['stt'] ?? null,
                 ],
             ]);
@@ -181,7 +181,7 @@ DB::transaction(function () use (
             if (!empty($item['mst'])) {
                 $storyData['tax_code'] = $item['mst'];
             }
-            $storyData['business_type'] = 'Cơ sở kinh doanh, Doanh nghiệp';
+            $storyData['business_type'] = $item['section_type'] ?? $storyData['business_type'] ?? 'Hộ kinh doanh';
             if (!empty($item['stt'])) {
                 $storyData['stt'] = $item['stt'];
             }
