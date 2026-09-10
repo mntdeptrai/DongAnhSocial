@@ -199,6 +199,7 @@
     .card-village-badge.v-dong-anh-cum-3 { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
     .card-village-badge.v-duc-noi { background: #fefce8; color: #a16207; border: 1px solid #fef08a; }
     .card-village-badge.v-viet-hung { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+    .card-village-badge.v-dan-mo { background: #f0f9ff; color: #0284c7; border: 1px solid #bae6fd; }
 
     /* Location Card Item */
     .location-list-card {
@@ -511,15 +512,9 @@
                                 onfocus="this.style.borderColor='#10b981'; this.style.background='#ffffff';"
                                 onblur="this.style.borderColor='#cbd5e1'; this.style.background='#f8fafc';">
                             <option value="all">🛣️ Tất cả tuyến đường</option>
-                            <option value="phu-loc">📍 Đường Phúc Lộc</option>
-                            <option value="dong-anh-cum-3">📍 Quốc Lộ 3</option>
-                            <option value="duc-noi">📍 Đường Cổ Vân</option>
-                            <option value="viet-hung">📍 Đường Việt Hùng</option>
-                            <option value="cao-lo">📍 Đường Cao Lỗ</option>
-                            <option value="xuan-canh">📍 Đường Xuân Canh</option>
-                            <option value="dan-di">📍 Đường Đản Dị</option>
-                            <option value="mai-lam">📍 Đường Dốc Vân</option>
-                            <option value="duc-tu">📍 Đường Phía Nam Dục Tú</option>
+                            <template x-for="v in villages" :key="v.id">
+                                <option :value="v.id" x-text="`📍 ${v.name}`"></option>
+                            </template>
                         </select>
                     </div>
                 </div>
@@ -748,7 +743,8 @@
                 { id: 'xuan-canh', name: 'Đường Xuân Canh', routeName: 'Đường Xuân Canh', color: '#8B5CF6' },
                 { id: 'dan-di', name: 'Đường Đản Dị', routeName: 'Đường Đản Dị', color: '#06B6D4' },
                 { id: 'mai-lam', name: 'Đường Dốc Vân', routeName: 'Đường Dốc Vân', color: '#10B981' },
-                { id: 'duc-tu', name: 'Đường Phía Nam Dục Tú', routeName: 'Đường Phía Nam Dục Tú', color: '#F43F5E' }
+                { id: 'duc-tu', name: 'Đường Phía Nam Dục Tú', routeName: 'Đường Phía Nam Dục Tú', color: '#F43F5E' },
+                { id: 'dan-mo', name: 'Đường Đản Mỗ', routeName: 'Đường Đản Mỗ', color: '#0EA5E9' }
             ],
 
             routes: @json($dbRoutes ?? []).length > 0 ? @json($dbRoutes) : [
@@ -887,7 +883,8 @@
                     'xuan-canh': 'Đường Xuân Canh',
                     'dan-di': 'Đường Đản Dị',
                     'mai-lam': 'Đường Dốc Vân',
-                    'duc-tu': 'Đường Phía Nam Dục Tú'
+                    'duc-tu': 'Đường Phía Nam Dục Tú',
+                    'dan-mo': 'Đường Đản Mỗ'
                 };
 
                 if (villageNameMap[loc.village]) {
@@ -945,8 +942,12 @@
                     const routeMap = {};
                     this.routes.forEach(r => { routeMap[r.id] = r.pathCoords; });
 
-                    const locsByVillage = { 'phu-loc': [], 'dong-anh-cum-3': [], 'duc-noi': [], 'viet-hung': [], 'cao-lo': [], 'xuan-canh': [], 'dan-di': [], 'mai-lam': [], 'duc-tu': [] };
-                    this.locations.forEach(loc => { if (locsByVillage[loc.village]) locsByVillage[loc.village].push(loc); });
+                    const locsByVillage = {};
+                    this.villages.forEach(v => { locsByVillage[v.id] = []; });
+                    this.locations.forEach(loc => { 
+                        if (!locsByVillage[loc.village]) locsByVillage[loc.village] = []; 
+                        locsByVillage[loc.village].push(loc); 
+                    });
 
                     function getPointOnPath(coords, t) {
                         if (!coords || coords.length === 0) return [21.1375, 105.8480];
@@ -961,17 +962,12 @@
                         return [p1[0] + (p2[0] - p1[0]) * segFrac, p1[1] + (p2[1] - p1[1]) * segFrac];
                     }
 
-                    const villageToRouteKey = {
-                        'phu-loc': 'route-phu-loc',
-                        'dong-anh-cum-3': 'route-ql3',
-                        'duc-noi': 'route-co-van',
-                        'viet-hung': 'route-viet-hung',
-                        'cao-lo': 'route-cao-lo',
-                        'xuan-canh': 'route-xuan-canh',
-                        'dan-di': 'route-dan-di',
-                        'mai-lam': 'route-doc-van',
-                        'duc-tu': 'route-phia-nam-duc-tu'
-                    };
+                    const villageToRouteKey = {};
+                    this.routes.forEach(r => {
+                        if (r.villages && r.villages.length > 0) {
+                            r.villages.forEach(vKey => { villageToRouteKey[vKey] = r.id; });
+                        }
+                    });
 
                     Object.keys(locsByVillage).forEach(vKey => {
                         const list = locsByVillage[vKey];
@@ -1106,16 +1102,12 @@
                     const snapRouteStores = (routeId, lineCoords) => {
                         if (!lineCoords || lineCoords.length < 2) return;
 
-                        const routeVillageMap = {
-                            'route-phu-loc': 'phu-loc',
-                            'route-ql3': 'dong-anh-cum-3',
-                            'route-co-van': 'duc-noi',
-                            'route-viet-hung': 'viet-hung',
-                            'route-cao-lo': 'cao-lo',
-                            'route-xuan-canh': 'xuan-canh',
-                            'route-dan-di': 'dan-di',
-                            'route-doc-van': 'mai-lam'
-                        };
+                        const routeVillageMap = {};
+                        this.routes.forEach(r => {
+                            if (r.villages && r.villages.length > 0) {
+                                routeVillageMap[r.id] = r.villages[0];
+                            }
+                        });
 
                         const targetVillage = routeVillageMap[routeId];
                         if (!targetVillage) return;
@@ -1277,16 +1269,12 @@
                 this.updateMapState();
 
                 if (this.activeVillage !== 'all') {
-                    const villageToRouteKey = {
-                        'phu-loc': 'route-phu-loc',
-                        'dong-anh-cum-3': 'route-ql3',
-                        'duc-noi': 'route-co-van',
-                        'viet-hung': 'route-viet-hung',
-                        'cao-lo': 'route-cao-lo',
-                        'xuan-canh': 'route-xuan-canh',
-                        'dan-di': 'route-dan-di',
-                        'mai-lam': 'route-doc-van'
-                    };
+                    const villageToRouteKey = {};
+                    this.routes.forEach(r => {
+                        if (r.villages && r.villages.length > 0) {
+                            r.villages.forEach(vKey => { villageToRouteKey[vKey] = r.id; });
+                        }
+                    });
                     const rKey = villageToRouteKey[this.activeVillage];
                     const line = this.polylinesMap[rKey];
                     if (line && this.map) {
@@ -1445,18 +1433,20 @@
                 cleanAcc = cleanAcc.replace(/[^0-9a-zA-Z]/g, '');
                 if (!cleanAcc) return '';
 
-                let bankCode = 'ICB';
+                let bankCode = 'vietinbank';
                 const b = (bankName || '').toUpperCase();
-                if (b.includes('BIDV')) bankCode = 'BIDV';
-                else if (b.includes('MB')) bankCode = 'MB';
-                else if (b.includes('TECHCOM')) bankCode = 'TCB';
-                else if (b.includes('VIETCOM')) bankCode = 'VCB';
-                else if (b.includes('VIETIN')) bankCode = 'CTG';
-                else if (b.includes('ACB')) bankCode = 'ACB';
-                else if (b.includes('VPBANK') || b.includes('VP')) bankCode = 'VPB';
-                else if (b.includes('SACOMBANK') || b.includes('SACOM')) bankCode = 'STB';
-                else if (b.includes('PG')) bankCode = 'PGB';
-                else if (b.includes('MOMO')) bankCode = 'MOMO';
+                if (b.includes('BIDV')) bankCode = 'bidv';
+                else if (b.includes('MB')) bankCode = 'mb';
+                else if (b.includes('TECHCOM')) bankCode = 'techcombank';
+                else if (b.includes('VIETCOM')) bankCode = 'vietcombank';
+                else if (b.includes('VIETIN')) bankCode = 'vietinbank';
+                else if (b.includes('VIETBANK')) bankCode = 'vietbank';
+                else if (b.includes('ACB')) bankCode = 'acb';
+                else if (b.includes('VPBANK') || b.includes('VP')) bankCode = 'vpbank';
+                else if (b.includes('SACOMBANK') || b.includes('SACOM')) bankCode = 'sacombank';
+                else if (b.includes('AGRIBANK') || b.includes('AGRI')) bankCode = 'agribank';
+                else if (b.includes('PG')) bankCode = 'pgbank';
+                else if (b.includes('MOMO')) bankCode = 'momo';
 
                 const accountNameParam = encodeURIComponent(ownerName || 'HKD DONG ANH');
                 return `https://img.vietqr.io/image/${bankCode}-${cleanAcc}-compact2.jpg?accountName=${accountNameParam}`;

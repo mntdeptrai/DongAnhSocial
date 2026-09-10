@@ -121,6 +121,7 @@ class HomeController extends Controller
                 'dan-di' => 'Đường Đản Dị',
                 'mai-lam' => 'Đường Dốc Vân',
                 'duc-tu' => 'Đường Phía Nam Dục Tú',
+                'dan-mo' => 'Đường Đản Mỗ',
             ];
             if (isset($vMap[$b->village_key])) {
                 $vName = $vMap[$b->village_key];
@@ -143,6 +144,28 @@ class HomeController extends Controller
                 $addr = trim($addr, " \t\n\r\0\x0B,");
             }
 
+            $img = $b->image_url;
+            if (!$img) {
+                $typeImages = [
+                    'quan-an'   => 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=600&q=80',
+                    'nha-hang'  => 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=600&q=80',
+                    'tap-hoa'   => 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?auto=format&fit=crop&w=600&q=80',
+                    'thuc-pham' => 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=600&q=80',
+                    'thoi-trang'=> 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=600&q=80',
+                    'y-te'      => 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=600&q=80',
+                    'dich-vu'   => 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=600&q=80',
+                ];
+                $img = $typeImages[$b->type] ?? 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?auto=format&fit=crop&w=600&q=80';
+            }
+
+            $menuItems = $b->menu;
+            if (is_string($menuItems)) {
+                $menuItems = json_decode($menuItems, true);
+            }
+            if (empty($menuItems)) {
+                $menuItems = ['Hộ kinh doanh thực tế'];
+            }
+
             return [
                 'id' => $b->id,
                 'name' => $b->name,
@@ -156,8 +179,8 @@ class HomeController extends Controller
                 'bankAccount' => $b->bank_account,
                 'bank' => $b->bank_name,
                 'open' => (bool)$b->is_open,
-                'menu' => $b->menu ?? [],
-                'image' => $b->image_url,
+                'menu' => $menuItems,
+                'image' => $img,
                 'lat' => (float)$b->lat,
                 'lng' => (float)$b->lng,
             ];
