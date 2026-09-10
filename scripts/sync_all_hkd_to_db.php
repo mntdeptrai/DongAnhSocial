@@ -119,6 +119,9 @@ DB::transaction(function () use (
         // Find existing user in memory
         $user = $existingUsersByPhone->get($rawPhone) ?? $existingUsersByUsername->get($username);
 
+        $sectionType = $item['section_type'] ?? '';
+        $role = $sectionType === 'Doanh nghiệp' ? 'dn' : 'hkd';
+
         if (!$user) {
             $user = User::create([
                 'name'         => $item['name'] ?? 'Hộ kinh doanh',
@@ -126,7 +129,7 @@ DB::transaction(function () use (
                 'email'        => null,
                 'phone'        => $rawPhone,
                 'password'     => $defaultPassword,
-                'role'         => 'seller',
+                'role'         => $role,
                 'status'       => 'active',
                 'is_verified'  => true,
             ]);
@@ -134,9 +137,10 @@ DB::transaction(function () use (
             $existingUsersByUsername->put($username, $user);
             $createdUsers++;
         } else {
-            if ($user->role !== 'admin') {
+            if (!in_array($user->role, ['admin', 'manager'])) {
                 $user->update([
                     'name'        => !empty($item['name']) ? $item['name'] : $user->name,
+                    'role'        => $role,
                     'status'      => 'active',
                     'is_verified' => true,
                 ]);
