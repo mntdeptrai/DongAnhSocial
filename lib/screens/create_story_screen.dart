@@ -60,11 +60,77 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
   // Story Privacy: 'public' | 'friends' | 'private'
   String _privacySetting = 'public';
 
+  // Story Music Selection
+  String? _selectedMusicName;
+  String? _selectedMusicUrl;
+
+  final List<Map<String, String>> _popularTracks = const [
+    {'name': 'Đông Anh Ngày Mới - Remix', 'artist': 'DongAnh Beats', 'url': 'https://donganhdiscovery.xadonganh.com/music/track1.mp3'},
+    {'name': 'Cổ Loa Hát Xoan - Chill Acoustic', 'artist': 'Dân Ca Cổ Loa', 'url': 'https://donganhdiscovery.xadonganh.com/music/track2.mp3'},
+    {'name': 'Chiều Thu Sông Hồng', 'artist': 'Hà Nội Melody', 'url': 'https://donganhdiscovery.xadonganh.com/music/track3.mp3'},
+    {'name': 'Vũ Điệu Lễ Hội Đền Sái', 'artist': 'EDM Tradition', 'url': 'https://donganhdiscovery.xadonganh.com/music/track4.mp3'},
+  ];
+
+  void _showMusicPickerModal() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Row(
+              children: [
+                Icon(Icons.music_note_rounded, color: Color(0xFF0EA5E9), size: 24),
+                SizedBox(width: 8),
+                Text('Chọn Nhạc Nền Cho Story', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Flexible(
+              child: ListView.separated(
+                shrinkWrap: true,
+                itemCount: _popularTracks.length,
+                separatorBuilder: (_, __) => const Divider(height: 1),
+                itemBuilder: (context, idx) {
+                  final track = _popularTracks[idx];
+                  final isSelected = _selectedMusicUrl == track['url'];
+                  return ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(track['name']!, style: TextStyle(fontWeight: isSelected ? FontWeight.bold : FontWeight.normal, color: const Color(0xFF0F172A))),
+                    subtitle: Text(track['artist']!, style: const TextStyle(color: Color(0xFF64748B))),
+                    trailing: isSelected
+                        ? const Icon(Icons.check_circle_rounded, color: Color(0xFF0EA5E9))
+                        : const Icon(Icons.play_circle_outline_rounded, color: Color(0xFF64748B)),
+                    onTap: () {
+                      setState(() {
+                        _selectedMusicName = track['name'];
+                        _selectedMusicUrl = track['url'];
+                      });
+                      Navigator.pop(ctx);
+                      _showSnackBar('Đã chọn nhạc nền: ${track['name']}', isSuccess: true);
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   void initState() {
     super.initState();
-    // Auto-prompt real device gallery picker on screen enter
-    WidgetsBinding.instance.addPostFrameCallback((_) => _pickMediaFromGallery());
+    // Tải ảnh/video từ thư viện máy mượt mà SAU KHI hiệu ứng chuyển màn hình hoàn tất (350ms)
+    Future.delayed(const Duration(milliseconds: 350), () {
+      if (mounted && _selectedFiles.isEmpty) {
+        _pickMediaFromGallery();
+      }
+    });
   }
 
   @override
@@ -124,76 +190,44 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
         });
       }
     } catch (e) {
-      debugPrint('[CreateStoryScreen] camera error: $e');
+      _showSnackBar('Không thể mở máy ảnh: $e', isError: true);
     }
   }
 
-  /// Publish created story to Backend
-  Future<void> _publishStory() async {
-    if (_previewMedia == null && !_isTextStoryMode) {
-      _showSnackBar('Vui lòng chọn ảnh, video hoặc nhập văn bản để tạo tin!');
-      return;
-    }
+  // --- UPLOAD STORY ACTION ---
 
+  Future<void> _publishStory() async {
+    if (_previewMedia == null && !_isTextStoryMode) return;
     if (_isTextStoryMode && _textStoryController.text.trim().isEmpty) {
-      _showSnackBar('Vui lòng nhập nội dung cho tin văn bản!');
+      _showSnackBar('Vui lòng nhập nội dung văn bản cho tin', isError: true);
       return;
     }
 
     setState(() {
       _isUploading = true;
-      _uploadStatus = 'Đang tải tin lên...';
+      _uploadStatus = 'Đang tải tin của bạn lên...';
     });
 
     try {
-      List<String> uploadedImageUrls = [];
-      List<String> uploadedVideoUrls = [];
-
-      if (!_isTextStoryMode && _previewMedia != null) {
-        final List<String> pathsToUpload = _selectedFiles.isNotEmpty
-            ? _selectedFiles.map((f) => f.path).toList()
-            : [_previewMedia!.path];
-
-        _uploadStatus = 'Đang tải tệp truyền thông lên Cloud...';
-        final uploadedItems = await ApiService.uploadFilesToR2(pathsToUpload, folder: 'stories');
-
-        for (var item in uploadedItems) {
-          final url = item['url'] ?? '';
-          final type = item['type'] ?? 'image';
-          if (url.isNotEmpty) {
-            if (type == 'video' || url.endsWith('.mp4') || url.endsWith('.mov') || url.endsWith('.webm')) {
-              uploadedVideoUrls.add(url);
-            } else {
-              uploadedImageUrls.add(url);
-            }
-          }
-        }
-      }
-
-      _uploadStatus = 'Đang đăng tin...';
-      final String storyDescription = _isTextStoryMode
-          ? _textStoryController.text.trim()
-          : (_textStoryController.text.trim().isNotEmpty
-              ? _textStoryController.text.trim()
-              : 'Tin mới từ ứng dụng');
+      final String? mediaPath = _previewMedia?.path;
+      final String textContent = _textStoryController.text.trim();
 
       final result = await ApiService.createPost(
-        description: storyDescription,
-        images: uploadedImageUrls.isNotEmpty ? uploadedImageUrls : null,
-        videos: uploadedVideoUrls.isNotEmpty ? uploadedVideoUrls : null,
+        description: textContent.isNotEmpty ? textContent : 'Tin mới',
+        imagePath: mediaPath,
       );
 
-      if (result['success'] == true || result['id'] != null) {
-        if (mounted) {
-          _showSnackBar('Đã chia sẻ lên tin của bạn!', isSuccess: true);
+      if (mounted) {
+        if (result['success'] == true) {
+          _showSnackBar('Đã đăng tin thành công!', isSuccess: true);
           Navigator.of(context).pop(true);
+        } else {
+          _showSnackBar(result['message'] ?? 'Đăng tin thất bại', isError: true);
         }
-      } else {
-        throw Exception(result['message'] ?? 'Không thể lưu tin');
       }
     } catch (e) {
       if (mounted) {
-        _showSnackBar('Lỗi khi chia sẻ tin: $e', isError: true);
+        _showSnackBar('Lỗi hệ thống: $e', isError: true);
       }
     } finally {
       if (mounted) {
@@ -229,7 +263,7 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
     }
 
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: const Color(0xFFF8FAFC),
       body: SafeArea(
         child: Column(
           children: [
@@ -256,13 +290,13 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           IconButton(
-            icon: const Icon(Icons.close, color: Colors.white, size: 28),
+            icon: const Icon(Icons.close, color: Color(0xFF0F172A), size: 28),
             onPressed: () => Navigator.of(context).pop(),
           ),
           const Text(
             'Tạo tin',
             style: TextStyle(
-              color: Colors.white,
+              color: Color(0xFF0F172A),
               fontSize: 20,
               fontWeight: FontWeight.bold,
             ),
@@ -270,12 +304,12 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
           Row(
             children: [
               IconButton(
-                icon: const Icon(Icons.camera_alt_outlined, color: Colors.white, size: 26),
+                icon: const Icon(Icons.camera_alt_outlined, color: Color(0xFF475569), size: 26),
                 onPressed: _openCamera,
                 tooltip: 'Mở máy ảnh',
               ),
               IconButton(
-                icon: const Icon(Icons.settings_outlined, color: Colors.white, size: 26),
+                icon: const Icon(Icons.settings_outlined, color: Color(0xFF475569), size: 26),
                 onPressed: _showPrivacySettingsModal,
                 tooltip: 'Cài đặt tin',
               ),
@@ -300,7 +334,7 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
         title: 'Nhạc',
         icon: Icons.music_note_rounded,
         gradient: const [Color(0xFF00C6FF), Color(0xFF0072FF)],
-        onTap: () => _pickMediaFromGallery(),
+        onTap: () => _showMusicPickerModal(),
       ),
       StoryCreationMode(
         title: 'Mẫu',
@@ -337,9 +371,16 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
         width: 90,
         margin: const EdgeInsets.only(right: 12),
         decoration: BoxDecoration(
-          color: const Color(0xFF1E293B),
+          color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.15), width: 1),
+          border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x08000000),
+              blurRadius: 8,
+              offset: Offset(0, 3),
+            ),
+          ],
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -356,7 +397,7 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: mode.gradient.first.withValues(alpha: 0.4),
+                    color: mode.gradient.first.withValues(alpha: 0.3),
                     blurRadius: 8,
                     offset: const Offset(0, 3),
                   ),
@@ -384,7 +425,7 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
             Text(
               mode.title,
               style: const TextStyle(
-                color: Colors.white,
+                color: Color(0xFF0F172A),
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
               ),
@@ -403,7 +444,7 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Theme(
-            data: Theme.of(context).copyWith(cardColor: const Color(0xFF1E293B)),
+            data: Theme.of(context).copyWith(cardColor: Colors.white),
             child: PopupMenuButton<String>(
               initialValue: _galleryFilter,
               onSelected: (String value) {
@@ -415,27 +456,27 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
                   Text(
                     'Thư viện ảnh',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: Color(0xFF0F172A),
                       fontSize: 17,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   SizedBox(width: 4),
-                  Icon(Icons.keyboard_arrow_down_rounded, color: Colors.white, size: 24),
+                  Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF0F172A), size: 24),
                 ],
               ),
               itemBuilder: (BuildContext context) => const <PopupMenuEntry<String>>[
                 PopupMenuItem<String>(
                   value: 'Tất cả',
-                  child: Text('Tất cả phương tiện', style: TextStyle(color: Colors.white)),
+                  child: Text('Tất cả phương tiện', style: TextStyle(color: Color(0xFF0F172A))),
                 ),
                 PopupMenuItem<String>(
                   value: 'Hình ảnh',
-                  child: Text('Chỉ hình ảnh', style: TextStyle(color: Colors.white)),
+                  child: Text('Chỉ hình ảnh', style: TextStyle(color: Color(0xFF0F172A))),
                 ),
                 PopupMenuItem<String>(
                   value: 'Video',
-                  child: Text('Chỉ Video', style: TextStyle(color: Colors.white)),
+                  child: Text('Chỉ Video', style: TextStyle(color: Color(0xFF0F172A))),
                 ),
               ],
             ),
@@ -443,12 +484,12 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
           Row(
             children: [
               Container(
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.12),
+                decoration: const BoxDecoration(
+                  color: Color(0xFFF1F5F9),
                   shape: BoxShape.circle,
                 ),
                 child: IconButton(
-                  icon: const Icon(Icons.search, color: Colors.white, size: 20),
+                  icon: const Icon(Icons.search, color: Color(0xFF475569), size: 20),
                   onPressed: () => _pickMediaFromGallery(),
                   constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
                   padding: EdgeInsets.zero,
@@ -463,21 +504,21 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
-                    color: _isMultiSelect ? const Color(0xFF0EA5E9) : Colors.white.withValues(alpha: 0.12),
+                    color: _isMultiSelect ? const Color(0xFF0EA5E9) : const Color(0xFFF1F5F9),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Row(
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.collections_rounded,
-                        color: Colors.white,
+                        color: _isMultiSelect ? Colors.white : const Color(0xFF475569),
                         size: 16,
                       ),
                       const SizedBox(width: 6),
                       Text(
                         'Chọn nhiều file',
                         style: TextStyle(
-                          color: Colors.white,
+                          color: _isMultiSelect ? Colors.white : const Color(0xFF475569),
                           fontSize: 13,
                           fontWeight: _isMultiSelect ? FontWeight.bold : FontWeight.w500,
                         ),
@@ -518,15 +559,15 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
     return GestureDetector(
       onTap: _openCamera,
       child: Container(
-        color: const Color(0xFF1E293B),
+        color: Colors.white,
         child: const Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.camera_alt, color: Colors.white, size: 36),
+            Icon(Icons.camera_alt, color: Color(0xFF0EA5E9), size: 36),
             SizedBox(height: 6),
             Text(
               'Máy ảnh',
-              style: TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w600),
+              style: TextStyle(color: Color(0xFF0F172A), fontSize: 13, fontWeight: FontWeight.w600),
             ),
           ],
         ),
@@ -538,7 +579,7 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
     return GestureDetector(
       onTap: () => _pickMediaFromGallery(forceMulti: true),
       child: Container(
-        color: const Color(0xFF0EA5E9).withValues(alpha: 0.2),
+        color: const Color(0xFFF0F9FF),
         child: const Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -686,6 +727,25 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
                     });
                   },
                 ),
+                if (_selectedMusicName != null)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.5),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.music_note_rounded, color: Color(0xFF0EA5E9), size: 16),
+                        const SizedBox(width: 4),
+                        Text(
+                          _selectedMusicName!,
+                          style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                  ),
                 Row(
                   children: [
                     if (_isTextStoryMode)
