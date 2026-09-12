@@ -11,6 +11,7 @@ import '../widgets/custom_loader.dart';
 import '../widgets/post_card.dart';
 import '../widgets/squircle_helper.dart';
 import '../widgets/story_carousel.dart';
+import 'create_story_screen.dart';
 
 class NewsBulletinScreen extends StatefulWidget {
   final dynamic targetPostId;
@@ -172,6 +173,25 @@ class _NewsBulletinScreenState extends State<NewsBulletinScreen> {
       return;
     }
     showCreatePostModal(context, onPostSuccess: _fetchNewsfeed);
+  }
+
+  Future<void> _showCreateStoryScreen() async {
+    if (!ApiService.isAuthenticated) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Vui lòng đăng nhập để tạo tin!'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+    final result = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(builder: (_) => const CreateStoryScreen()),
+    );
+    if (result == true) {
+      _fetchNewsfeed();
+    }
   }
 
   void _openFullscreenGallery(BuildContext context, List<String> images, int initialIndex) {
@@ -1007,7 +1027,7 @@ class _NewsBulletinScreenState extends State<NewsBulletinScreen> {
                     case 0:
                       return StoryCarousel(
                         posts: _posts,
-                        onCreateStory: _showCreatePostModal,
+                        onCreateStory: _showCreateStoryScreen,
                         onStoryTap: (post) {
                           if (post.images.isNotEmpty) {
                             _openFullscreenGallery(context, post.images, 0);

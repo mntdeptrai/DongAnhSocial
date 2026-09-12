@@ -1,6 +1,6 @@
-/// Utility để resolve image URL từ relative path → full URL.
-/// Thay thế logic copy-paste `s.startsWith('http') ? s : 'https://.../$s'`
-/// xuất hiện ở 10+ chỗ trong project.
+// Utility để resolve image URL từ relative path → full URL.
+// Thay thế logic copy-paste `s.startsWith('http') ? s : 'https://.../$s'`
+// xuất hiện ở 10+ chỗ trong project.
 import 'app_constants.dart';
 
 class ImageUtils {

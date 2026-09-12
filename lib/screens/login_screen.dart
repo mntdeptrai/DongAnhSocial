@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
-import '../services/api_service.dart';
+import '../features/auth/data/datasources/auth_remote_datasource.dart';
+import '../features/auth/data/repositories/auth_repository_impl.dart';
+import '../features/auth/domain/usecases/login_usecase.dart';
+import '../features/auth/domain/usecases/register_usecase.dart';
 import '../widgets/custom_loader.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -29,6 +32,17 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
   bool _obscurePassword = true;
   String? _errorMessage;
+
+  late final LoginUseCase _loginUseCase;
+  late final RegisterUseCase _registerUseCase;
+
+  @override
+  void initState() {
+    super.initState();
+    final authRepo = AuthRepositoryImpl(remoteDataSource: AuthRemoteDataSourceImpl());
+    _loginUseCase = LoginUseCase(authRepo);
+    _registerUseCase = RegisterUseCase(authRepo);
+  }
 
   @override
   void dispose() {
@@ -122,9 +136,11 @@ class _LoginScreenState extends State<LoginScreen> {
       _errorMessage = null;
     });
 
-    Map<String, dynamic> result;
+    bool success = false;
+    String? message;
+
     if (_isRegister) {
-      result = await ApiService.register(
+      final regResult = await _registerUseCase(RegisterParams(
         name: _nameController.text.trim(),
         email: _emailController.text.trim(),
         password: _passwordController.text,
@@ -132,19 +148,26 @@ class _LoginScreenState extends State<LoginScreen> {
         phone: _phoneController.text.trim(),
         role: _selectedRole,
         agreeTerms: _agreeTerms,
-      );
-      if (result['success'] == true) {
-        // Auto login after registration
-        result = await ApiService.login(
-          _emailController.text.trim(),
-          _passwordController.text,
-        );
+      ));
+
+      if (regResult.isSuccess) {
+        final loginResult = await _loginUseCase(LoginParams(
+          email: _emailController.text.trim(),
+          password: _passwordController.text,
+        ));
+        success = loginResult.isSuccess;
+        message = loginResult.failure?.message;
+      } else {
+        success = false;
+        message = regResult.failure?.message;
       }
     } else {
-      result = await ApiService.login(
-        _emailController.text.trim(),
-        _passwordController.text,
-      );
+      final loginResult = await _loginUseCase(LoginParams(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+      ));
+      success = loginResult.isSuccess;
+      message = loginResult.failure?.message;
     }
 
     if (mounted) {
@@ -152,11 +175,11 @@ class _LoginScreenState extends State<LoginScreen> {
         _isLoading = false;
       });
 
-      if (result['success'] == true) {
+      if (success) {
         widget.onLoginSuccess();
       } else {
         setState(() {
-          _errorMessage = result['message'] ?? 'Đã xảy ra lỗi.';
+          _errorMessage = message ?? 'Đã xảy ra lỗi.';
         });
       }
     }

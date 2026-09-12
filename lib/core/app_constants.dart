@@ -1,5 +1,5 @@
-/// Tập trung tất cả hằng số ứng dụng — URL, màu sắc, kích thước.
-/// Import file này thay vì hardcode giá trị rải rác.
+// Tập trung tất cả hằng số ứng dụng — URL, màu sắc, kích thước.
+// Import file này thay vì hardcode giá trị rải rác.
 import 'package:flutter/material.dart';
 
 class AppConstants {
