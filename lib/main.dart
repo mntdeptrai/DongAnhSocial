@@ -82,7 +82,7 @@ class MyApp extends StatelessWidget {
           },
         ),
         colorScheme: ColorScheme.fromSeed(
-          seedColor: AppConstants.primaryColor,
+          seedColor: AppConstants.primaryColor
           primary: AppConstants.primaryColor,
           secondary: AppConstants.accentColor,
           surface: Colors.white,
