@@ -616,6 +616,12 @@
         <div id="infiniteScrollLoader" style="display: none; padding: 18px 16px; text-align: center; color: var(--primary); font-weight: 700; font-size: 0.9rem; background: rgba(var(--primary-rgb), 0.05); border-radius: 12px; margin-top: 10px; border: 1px dashed rgba(var(--primary-rgb), 0.3);">
             <span style="display: inline-block; animation: spin 1s linear infinite; margin-right: 8px;">⏳</span> Đang tải thêm địa điểm tiếp theo...
         </div>
+        <!-- Nút bấm tải thêm thủ công (Load More Button) -->
+        <div id="loadMoreBtnWrapper" style="{{ (isset($totalCount) && count($eateries) < $totalCount) ? 'display: block;' : 'display: none;' }} margin-top: 14px; text-align: center;">
+            <button type="button" id="loadMoreBtn" onclick="window.loadNextInfinitePage()" style="width: 100%; background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: #ffffff; border: none; font-weight: 800; font-size: 0.92rem; padding: 13px 20px; border-radius: 12px; cursor: pointer; box-shadow: 0 4px 14px rgba(2, 132, 199, 0.25); display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s;" onmouseover="this.style.transform='translateY(-2px) scale(1.01)';" onmouseout="this.style.transform='translateY(0) scale(1)';">
+                <span>Xem Thêm Địa Điểm Tiếp Theo</span> ⬇
+            </button>
+        </div>
         <div id="allLoadedIndicator" style="{{ (isset($totalCount) && count($eateries) >= $totalCount) ? 'display: block;' : 'display: none;' }} padding: 16px; text-align: center; color: var(--text-muted); font-size: 0.85rem; font-weight: 600; background: rgba(0,0,0,0.03); border-radius: 12px; margin-top: 10px;">
             ✨ Bạn đã xem toàn bộ <span id="totalLoadedSpan">{{ $totalCount ?? count($eateries) }}</span> địa điểm tại Đông Anh!
         </div>

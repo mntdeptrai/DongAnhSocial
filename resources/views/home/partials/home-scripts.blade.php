@@ -652,6 +652,257 @@
 
 
 
+    // Hàm sinh HTML danh sách Card
+    window.buildEateryCardsHtml = function(eateriesList, catSlug) {
+        let cardsHtml = '';
+        const isTraditionalMarket = (catSlug === 'traditional-market');
+        const isOcopCategory = (catSlug === 'dong-anh-market');
+
+        eateriesList.forEach(eat => {
+            const categorySlug = eat.category ? (eat.category.slug || '') : (catSlug || '');
+            const isMarket = (categorySlug === 'traditional-market' || isTraditionalMarket);
+            const isOcopItem = (categorySlug === 'dong-anh-market' || isOcopCategory);
+
+            if (isOcopItem) {
+                let ocopCards = [];
+                if (eat.ocop_products && eat.ocop_products.length > 0) {
+                    eat.ocop_products.forEach(p => {
+                        ocopCards.push({
+                            id: p.id,
+                            title: p.name,
+                            subtitle: 'Chủ thể sản xuất: ' + (p.seller_name || eat.name),
+                            desc: p.description || eat.description || '',
+                            image: p.image_path || eat.image_path || 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=300&q=80',
+                            stars: p.star_rating ? (p.star_rating.includes('sao') ? p.star_rating : p.star_rating + ' sao') : (eat.average_rating || '5.0'),
+                            price: p.price ? (isFinite(p.price) ? Number(p.price).toLocaleString('vi-VN') + 'đ' : p.price) : (eat.price_range || 'Liên hệ')
+                        });
+                    });
+                } else {
+                    const desc = eat.description || '';
+                    const match = desc.match(/tên\s+sản\s+phẩm\s+OCOP:\s*([^;]+)/i);
+                    if (match && match[1]) {
+                        const rawProducts = match[1].split(',').map(s => s.trim()).filter(Boolean);
+                        let cleanDesc = desc.replace(/tên\s+sản\s+phẩm\s+OCOP:\s*[^;]+;?\s*/i, '').replace(/^[^;]+;\s*địa chỉ[^;]+;\s*/i, '');
+                        if (!cleanDesc.trim()) cleanDesc = desc;
+
+                        rawProducts.forEach(pName => {
+                            ocopCards.push({
+                                title: pName,
+                                subtitle: 'Chủ thể sản xuất: ' + eat.name,
+                                desc: cleanDesc,
+                                image: eat.image_path || 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=300&q=80',
+                                stars: eat.average_rating || '5.0',
+                                price: eat.price_range || 'Liên hệ'
+                            });
+                        });
+                    } else {
+                        const cleanName = eat.name.replace(/^(HKD|HTX|Hộ kinh doanh|Cơ sở|Công ty)\s+/i, '');
+                        ocopCards.push({
+                            title: 'Sản phẩm OCOP - ' + cleanName,
+                            subtitle: 'Chủ thể sản xuất: ' + eat.name,
+                            desc: desc,
+                            image: eat.image_path || 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=300&q=80',
+                            stars: eat.average_rating || '5.0',
+                            price: eat.price_range || 'Liên hệ'
+                        });
+                    }
+                }
+
+                ocopCards.forEach(card => {
+                    const communeName = eat.commune ? (eat.commune.name || eat.commune) : 'Đông Anh';
+                    cardsHtml += `
+                        <div class="eatery-card glass-panel revealed hover-lift ocop-card-highlight" 
+                             data-slug="${eat.slug || ''}"
+                             data-name="${card.title}"
+                             data-address="${eat.address || ''}"
+                             data-desc="${card.desc}"
+                             data-commune="${communeName}"
+                             data-category="dong-anh-market"
+                             style="animation: fadeIn 0.4s ease forwards;"
+                             onclick="focusOnEatery(${eat.latitude || 21.1352}, ${eat.longitude || 105.8458}, '${eat.slug || ''}', '${card.title.replace(/'/g, "\\'")}', '${card.image}', '${card.price}', '${card.stars}', '${card.subtitle.replace(/'/g, "\\'")}')">
+                            <div class="eatery-img-wrapper hover-zoom-container">
+                                <img src="${card.image}" class="eatery-img hover-zoom-img" alt="${card.title}" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1578916171728-46686eac8d58?auto=format&fit=crop&w=600&q=80';">
+                            </div>
+                            <div class="eatery-info">
+                                <div style="margin-bottom: 4px;">
+                                    <span class="ocop-title-badge">🌾 ĐẶC SẢN OCOP</span>
+                                </div>
+                                <div class="eatery-header" style="align-items: center; margin-bottom: 6px;">
+                                    <h3 class="eatery-title ocop-product-title">${card.title}</h3>
+                                    <div class="ocop-star-tag">
+                                        <span>⭐</span> ${card.stars}
+                                    </div>
+                                </div>
+                                <div class="ocop-seller-badge">
+                                    🏛️ ${card.subtitle}
+                                </div>
+                                ${card.desc && card.desc !== 'null' ? `<p class="eatery-desc">${card.desc}</p>` : ''}
+                                <div class="eatery-footer">
+                                    <div class="eatery-meta-item">
+                                        <span>📍</span> ${communeName}
+                                    </div>
+                                    <div class="eatery-meta-item ocop-price-tag">
+                                        ${card.price}
+                                    </div>
+                                </div>
+                                <a href="${card.id ? `/san-pham-ocop/${card.id}` : `/dia-diem/${eat.slug}`}" class="ocop-explore-btn" onclick="event.stopPropagation();">
+                                    <span>🌾 Xem Chi Tiết Sản Phẩm OCOP</span> ➔
+                                </a>
+                            </div>
+                        </div>
+                    `;
+                });
+            } else {
+                const isBusinessItem = (categorySlug === 'co-so-kinh-doanh' || catSlug === 'co-so-kinh-doanh');
+                let imgUrl = eat.image_path;
+                if (!imgUrl) {
+                    if (isBusinessItem) {
+                        imgUrl = getSmartBusinessImgJS(eat.name, eat.description);
+                    } else {
+                        imgUrl = 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=300&q=80';
+                    }
+                }
+
+                const ratingVal = eat.average_rating || (eat.rating ? parseFloat(eat.rating).toFixed(1) : '5.0');
+                const communeName = eat.commune ? (eat.commune.name || eat.commune) : '';
+                const categoryIcon = eat.category ? (eat.category.icon || '') : '';
+                const categoryName = eat.category ? (eat.category.name || '') : '';
+                
+                const isFoodItem = (categorySlug === 'dong-anh-food-map' || catSlug === 'dong-anh-food-map');
+                const isStayItem = (categorySlug === 'stay-in-dong-anh' || catSlug === 'stay-in-dong-anh');
+                const isWellnessItem = (categorySlug === 'wellness-care' || catSlug === 'wellness-care');
+                const isCultureItem = (categorySlug === 'discover-dong-anh-community-culture-hub' || catSlug === 'discover-dong-anh-community-culture-hub');
+                const isEduItem = (categorySlug === 'smart-education-map' || catSlug === 'smart-education-map');
+                const isCustomStyled = (isMarket || isFoodItem || isStayItem || isWellnessItem || isCultureItem || isEduItem || isBusinessItem);
+
+                // Metadata xử lý cho Doanh nghiệp / Hộ kinh doanh
+                let storyData = eat.storytelling_data;
+                if (typeof storyData === 'string') {
+                    try { storyData = JSON.parse(storyData); } catch(e) { storyData = {}; }
+                }
+                storyData = storyData || {};
+                const taxCode = storyData.tax_code || '';
+                const isEnterprise = (eat.name || '').toUpperCase().includes('CÔNG TY') || (storyData.business_type === 'Doanh nghiệp');
+
+                cardsHtml += `
+                    <div class="eatery-card glass-panel revealed hover-lift ${isMarket ? 'market-card-highlight' : ''} ${isFoodItem ? 'food-card-highlight' : ''} ${isStayItem ? 'stay-card-highlight' : ''} ${isWellnessItem ? 'wellness-card-highlight' : ''} ${isCultureItem ? 'culture-card-highlight' : ''} ${isEduItem ? 'edu-card-highlight' : ''} ${isBusinessItem ? 'business-card-highlight' : ''}" 
+                         data-slug="${eat.slug}"
+                         data-name="${eat.name}"
+                         data-address="${eat.address}"
+                         data-desc="${eat.description && eat.description !== 'null' ? eat.description : ''}"
+                         data-commune="${communeName}"
+                         data-category="${categorySlug}"
+                         style="animation: fadeIn 0.4s ease forwards;"
+                         onclick="focusOnEatery(${eat.latitude}, ${eat.longitude}, '${eat.slug}')">
+                        <div class="eatery-img-wrapper hover-zoom-container">
+                            <img src="${imgUrl}" class="eatery-img hover-zoom-img" alt="${eat.name}" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1578916171728-46686eac8d58?auto=format&fit=crop&w=600&q=80';">
+                            ${!isCustomStyled ? `
+                                <div style="position: absolute; top: 8px; left: 8px; max-width: calc(100% - 16px); display: flex; align-items: center; gap: 4px; font-size: 0.68rem; font-weight: 700; color: #ffffff; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(4px); padding: 4px 8px; border-radius: 6px; box-shadow: 0 2px 10px rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1);">
+                                    <span>${categoryIcon}</span>
+                                    <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${categoryName}</span>
+                                </div>
+                            ` : ''}
+                        </div>
+                        <div class="eatery-info">
+                            ${isMarket ? `
+                                <div style="margin-bottom: 4px;">
+                                    <span class="market-title-badge">🏪 CHỢ SỐ</span>
+                                </div>
+                            ` : isFoodItem ? `
+                                <div style="margin-bottom: 4px;">
+                                    <span class="food-title-badge">🍜 QUÁN NGON NỔI BẬT</span>
+                                </div>
+                            ` : isStayItem ? `
+                                <div style="margin-bottom: 4px;">
+                                    <span class="stay-title-badge">🏨 LƯU TRÚ DỊCH VỤ</span>
+                                </div>
+                            ` : isWellnessItem ? `
+                                <div style="margin-bottom: 4px;">
+                                    <span class="wellness-title-badge">🩺 CHĂM SÓC SỨC KHỎE</span>
+                                </div>
+                            ` : isCultureItem ? `
+                                <div style="margin-bottom: 4px;">
+                                    <span class="culture-title-badge">🏛️ THIẾT CHẾ VĂN HÓA</span>
+                                </div>
+                            ` : isEduItem ? `
+                                <div style="margin-bottom: 4px;">
+                                    <span class="edu-title-badge">🎓 CƠ SỞ GIÁO DỤC</span>
+                                </div>
+                            ` : isBusinessItem ? `
+                                <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px; margin-bottom: 4px;">
+                                    <span class="business-title-badge">
+                                        ${isEnterprise ? '🏢 DOANH NGHIỆP' : '🏪 HỘ KINH DOANH'}
+                                    </span>
+                                    ${taxCode ? `<span class="business-mst-tag">🆔 MST: ${taxCode}</span>` : ''}
+                                </div>
+                            ` : ''}
+                            <div class="eatery-header" ${isCustomStyled ? 'style="align-items: center; margin-bottom: 6px;"' : ''}>
+                                <h3 class="eatery-title" ${isBusinessItem ? 'style="color: #0f172a; font-size: 1.18rem; font-weight: 900; letter-spacing: -0.2px;"' : ''}>${eat.name}</h3>
+                                <div class="rating-stars" ${isFoodItem ? 'style="color: #f59e0b; font-weight: 800;"' : isStayItem ? 'style="color: #db2777; font-weight: 800;"' : isWellnessItem ? 'style="color: #059669; font-weight: 800;"' : isCultureItem ? 'style="color: #d97706; font-weight: 800;"' : isEduItem ? 'style="color: #4f46e5; font-weight: 800;"' : isBusinessItem ? 'style="color: #0284c7; font-weight: 800;"' : ''}>
+                                    <span>⭐</span> ${ratingVal}
+                                </div>
+                            </div>
+                            ${eat.description && eat.description !== 'null' ? `<p class="eatery-desc">${eat.description}</p>` : ''}
+                            <div class="eatery-footer">
+                                <div class="eatery-meta-item">
+                                    <span>📍</span> ${communeName}
+                                </div>
+                                ${isBusinessItem && eat.phone ? `
+                                    <a href="tel:${eat.phone}" class="business-phone-tag" onclick="event.stopPropagation();">
+                                        <span>📞</span> ${eat.phone}
+                                    </a>
+                                ` : !['smart-education-map', 'hanh-trinh-di-san', 'discover-dong-anh-community-culture-hub'].includes(categorySlug) ? `
+                                    <div class="eatery-meta-item" style="${isFoodItem ? 'color: #ea580c; font-weight: 700;' : 'color: var(--primary); font-weight: 600;'}">
+                                        ${eat.price_range}
+                                    </div>
+                                ` : ''}
+                            </div>
+                            ${isMarket ? `
+                                <a href="/dia-diem/${eat.slug}" class="market-explore-btn" onclick="event.stopPropagation();">
+                                    <span>🛒 Xem Gian Hàng Số & Sơ Đồ Chợ</span> ➔
+                                </a>
+                            ` : isFoodItem ? `
+                                <a href="/dia-diem/${eat.slug}" class="food-explore-btn" onclick="event.stopPropagation();">
+                                    <span>🍽️ Xem Thực Đơn & Chỉ Đường</span> ➔
+                                </a>
+                            ` : isStayItem ? `
+                                <a href="/dia-diem/${eat.slug}" class="stay-explore-btn" onclick="event.stopPropagation();">
+                                    <span>🏨 Xem Chi Tiết & Đặt Phòng</span> ➔
+                                </a>
+                            ` : isWellnessItem ? `
+                                <a href="/dia-diem/${eat.slug}" class="wellness-explore-btn" onclick="event.stopPropagation();">
+                                    <span>🩺 Xem Dịch Vụ & Đặt Lịch</span> ➔
+                                </a>
+                            ` : isCultureItem ? `
+                                <a href="/dia-diem/${eat.slug}" class="culture-explore-btn" onclick="event.stopPropagation();">
+                                    <span>🏛️ Khám Phá Hoạt Động & Sự Kiện</span> ➔
+                                </a>
+                            ` : isEduItem ? `
+                                <div class="edu-card-actions">
+                                    <button type="button" class="edu-story-btn" onclick="event.stopPropagation(); window.openSchoolStoryteller('${eat.slug}', '/dia-diem/${eat.slug}');">
+                                        <span>📖 Xem Story</span>
+                                    </button>
+                                    <a href="/dia-diem/${eat.slug}" class="edu-explore-btn" onclick="event.stopPropagation();">
+                                        <span>🎓 Tra Cứu Thông Tin Trường</span> ➔
+                                    </a>
+                                </div>
+                            ` : isBusinessItem ? `
+                                <a href="/dia-diem/${eat.slug}" class="business-explore-btn" onclick="event.stopPropagation();">
+                                    <span>🏪 Xem Chi Tiết Cơ Sở & Dịch Vụ</span> ➔
+                                </a>
+                            ` : `
+                                <a href="/dia-diem/${eat.slug}" class="btn-primary" onclick="event.stopPropagation();" style="display: flex; align-items: center; justify-content: space-between; padding: 8px 14px; border-radius: 8px; font-size: 0.78rem; font-weight: 700; text-decoration: none; margin-top: 10px;">
+                                    <span>Xem Chi Tiết</span> ➔
+                                </a>
+                            `}
+                        </div>
+                    </div>
+                `;
+            }
+        });
+        return cardsHtml;
+    };
+
     // 10. Logic lọc danh mục qua AJAX mượt mà (SPA style, không reload trang!)
     window.filterCategoryAjax = function(slug, href) {
         const eateriesContainer = document.getElementById('eateriesListContainer');
@@ -919,256 +1170,7 @@
                     return 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?auto=format&fit=crop&w=600&q=80';
                 }
 
-                // Hàm sinh HTML danh sách Card
-                window.buildEateryCardsHtml = function(eateriesList, catSlug) {
-                    let cardsHtml = '';
-                    const isTraditionalMarket = (catSlug === 'traditional-market');
-                    const isOcopCategory = (catSlug === 'dong-anh-market');
 
-                    eateriesList.forEach(eat => {
-                        const categorySlug = eat.category ? (eat.category.slug || '') : (catSlug || '');
-                        const isMarket = (categorySlug === 'traditional-market' || isTraditionalMarket);
-                        const isOcopItem = (categorySlug === 'dong-anh-market' || isOcopCategory);
-
-                        if (isOcopItem) {
-                            let ocopCards = [];
-                            if (eat.ocop_products && eat.ocop_products.length > 0) {
-                                eat.ocop_products.forEach(p => {
-                                    ocopCards.push({
-                                        id: p.id,
-                                        title: p.name,
-                                        subtitle: 'Chủ thể sản xuất: ' + (p.seller_name || eat.name),
-                                        desc: p.description || eat.description || '',
-                                        image: p.image_path || eat.image_path || 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=300&q=80',
-                                        stars: p.star_rating ? (p.star_rating.includes('sao') ? p.star_rating : p.star_rating + ' sao') : (eat.average_rating || '5.0'),
-                                        price: p.price ? (isFinite(p.price) ? Number(p.price).toLocaleString('vi-VN') + 'đ' : p.price) : (eat.price_range || 'Liên hệ')
-                                    });
-                                });
-                            } else {
-                                const desc = eat.description || '';
-                                const match = desc.match(/tên\s+sản\s+phẩm\s+OCOP:\s*([^;]+)/i);
-                                if (match && match[1]) {
-                                    const rawProducts = match[1].split(',').map(s => s.trim()).filter(Boolean);
-                                    let cleanDesc = desc.replace(/tên\s+sản\s+phẩm\s+OCOP:\s*[^;]+;?\s*/i, '').replace(/^[^;]+;\s*địa chỉ[^;]+;\s*/i, '');
-                                    if (!cleanDesc.trim()) cleanDesc = desc;
-
-                                    rawProducts.forEach(pName => {
-                                        ocopCards.push({
-                                            title: pName,
-                                            subtitle: 'Chủ thể sản xuất: ' + eat.name,
-                                            desc: cleanDesc,
-                                            image: eat.image_path || 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=300&q=80',
-                                            stars: eat.average_rating || '5.0',
-                                            price: eat.price_range || 'Liên hệ'
-                                        });
-                                    });
-                                } else {
-                                    const cleanName = eat.name.replace(/^(HKD|HTX|Hộ kinh doanh|Cơ sở|Công ty)\s+/i, '');
-                                    ocopCards.push({
-                                        title: 'Sản phẩm OCOP - ' + cleanName,
-                                        subtitle: 'Chủ thể sản xuất: ' + eat.name,
-                                        desc: desc,
-                                        image: eat.image_path || 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=300&q=80',
-                                        stars: eat.average_rating || '5.0',
-                                        price: eat.price_range || 'Liên hệ'
-                                    });
-                                }
-                            }
-
-                            ocopCards.forEach(card => {
-                                const communeName = eat.commune ? (eat.commune.name || eat.commune) : 'Đông Anh';
-                                cardsHtml += `
-                                    <div class="eatery-card glass-panel revealed hover-lift ocop-card-highlight" 
-                                         data-slug="${eat.slug || ''}"
-                                         data-name="${card.title}"
-                                         data-address="${eat.address || ''}"
-                                         data-desc="${card.desc}"
-                                         data-commune="${communeName}"
-                                         data-category="dong-anh-market"
-                                         style="animation: fadeIn 0.4s ease forwards;"
-                                         onclick="focusOnEatery(${eat.latitude || 21.1352}, ${eat.longitude || 105.8458}, '${eat.slug || ''}', '${card.title.replace(/'/g, "\\'")}', '${card.image}', '${card.price}', '${card.stars}', '${card.subtitle.replace(/'/g, "\\'")}')">
-                                        <div class="eatery-img-wrapper hover-zoom-container">
-                                            <img src="${card.image}" class="eatery-img hover-zoom-img" alt="${card.title}" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1578916171728-46686eac8d58?auto=format&fit=crop&w=600&q=80';">
-                                        </div>
-                                        <div class="eatery-info">
-                                            <div style="margin-bottom: 4px;">
-                                                <span class="ocop-title-badge">🌾 ĐẶC SẢN OCOP</span>
-                                            </div>
-                                            <div class="eatery-header" style="align-items: center; margin-bottom: 6px;">
-                                                <h3 class="eatery-title ocop-product-title">${card.title}</h3>
-                                                <div class="ocop-star-tag">
-                                                    <span>⭐</span> ${card.stars}
-                                                </div>
-                                            </div>
-                                            <div class="ocop-seller-badge">
-                                                🏛️ ${card.subtitle}
-                                            </div>
-                                            ${card.desc && card.desc !== 'null' ? `<p class="eatery-desc">${card.desc}</p>` : ''}
-                                            <div class="eatery-footer">
-                                                <div class="eatery-meta-item">
-                                                    <span>📍</span> ${communeName}
-                                                </div>
-                                                <div class="eatery-meta-item ocop-price-tag">
-                                                    ${card.price}
-                                                </div>
-                                            </div>
-                                            <a href="${card.id ? `/san-pham-ocop/${card.id}` : `/dia-diem/${eat.slug}`}" class="ocop-explore-btn" onclick="event.stopPropagation();">
-                                                <span>🌾 Xem Chi Tiết Sản Phẩm OCOP</span> ➔
-                                            </a>
-                                        </div>
-                                    </div>
-                                `;
-                            });
-                        } else {
-                            const isBusinessItem = (categorySlug === 'co-so-kinh-doanh' || catSlug === 'co-so-kinh-doanh');
-                            let imgUrl = eat.image_path;
-                            if (!imgUrl) {
-                                if (isBusinessItem) {
-                                    imgUrl = getSmartBusinessImgJS(eat.name, eat.description);
-                                } else {
-                                    imgUrl = 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=300&q=80';
-                                }
-                            }
-
-                            const ratingVal = eat.average_rating || (eat.rating ? parseFloat(eat.rating).toFixed(1) : '5.0');
-                            const communeName = eat.commune ? (eat.commune.name || eat.commune) : '';
-                            const categoryIcon = eat.category ? (eat.category.icon || '') : '';
-                            const categoryName = eat.category ? (eat.category.name || '') : '';
-                            
-                            const isFoodItem = (categorySlug === 'dong-anh-food-map' || catSlug === 'dong-anh-food-map');
-                            const isStayItem = (categorySlug === 'stay-in-dong-anh' || catSlug === 'stay-in-dong-anh');
-                            const isWellnessItem = (categorySlug === 'wellness-care' || catSlug === 'wellness-care');
-                            const isCultureItem = (categorySlug === 'discover-dong-anh-community-culture-hub' || catSlug === 'discover-dong-anh-community-culture-hub');
-                            const isEduItem = (categorySlug === 'smart-education-map' || catSlug === 'smart-education-map');
-                            const isCustomStyled = (isMarket || isFoodItem || isStayItem || isWellnessItem || isCultureItem || isEduItem || isBusinessItem);
-
-                            // Metadata xử lý cho Doanh nghiệp / Hộ kinh doanh
-                            let storyData = eat.storytelling_data;
-                            if (typeof storyData === 'string') {
-                                try { storyData = JSON.parse(storyData); } catch(e) { storyData = {}; }
-                            }
-                            storyData = storyData || {};
-                            const taxCode = storyData.tax_code || '';
-                            const isEnterprise = (eat.name || '').toUpperCase().includes('CÔNG TY') || (storyData.business_type === 'Doanh nghiệp');
-
-                            cardsHtml += `
-                                <div class="eatery-card glass-panel revealed hover-lift ${isMarket ? 'market-card-highlight' : ''} ${isFoodItem ? 'food-card-highlight' : ''} ${isStayItem ? 'stay-card-highlight' : ''} ${isWellnessItem ? 'wellness-card-highlight' : ''} ${isCultureItem ? 'culture-card-highlight' : ''} ${isEduItem ? 'edu-card-highlight' : ''} ${isBusinessItem ? 'business-card-highlight' : ''}" 
-                                     data-slug="${eat.slug}"
-                                     data-name="${eat.name}"
-                                     data-address="${eat.address}"
-                                     data-desc="${eat.description && eat.description !== 'null' ? eat.description : ''}"
-                                     data-commune="${communeName}"
-                                     data-category="${categorySlug}"
-                                     style="animation: fadeIn 0.4s ease forwards;"
-                                     onclick="focusOnEatery(${eat.latitude}, ${eat.longitude}, '${eat.slug}')">
-                                    <div class="eatery-img-wrapper hover-zoom-container">
-                                        <img src="${imgUrl}" class="eatery-img hover-zoom-img" alt="${eat.name}" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1578916171728-46686eac8d58?auto=format&fit=crop&w=600&q=80';">
-                                        ${!isCustomStyled ? `
-                                            <div style="position: absolute; top: 8px; left: 8px; max-width: calc(100% - 16px); display: flex; align-items: center; gap: 4px; font-size: 0.68rem; font-weight: 700; color: #ffffff; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(4px); padding: 4px 8px; border-radius: 6px; box-shadow: 0 2px 10px rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1);">
-                                                <span>${categoryIcon}</span>
-                                                <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${categoryName}</span>
-                                            </div>
-                                        ` : ''}
-                                    </div>
-                                    <div class="eatery-info">
-                                        ${isMarket ? `
-                                            <div style="margin-bottom: 4px;">
-                                                <span class="market-title-badge">🏪 CHỢ SỐ</span>
-                                            </div>
-                                        ` : isFoodItem ? `
-                                            <div style="margin-bottom: 4px;">
-                                                <span class="food-title-badge">🍜 QUÁN NGON NỔI BẬT</span>
-                                            </div>
-                                        ` : isStayItem ? `
-                                            <div style="margin-bottom: 4px;">
-                                                <span class="stay-title-badge">🏨 LƯU TRÚ DỊCH VỤ</span>
-                                            </div>
-                                        ` : isWellnessItem ? `
-                                            <div style="margin-bottom: 4px;">
-                                                <span class="wellness-title-badge">🩺 CHĂM SÓC SỨC KHỎE</span>
-                                            </div>
-                                        ` : isCultureItem ? `
-                                            <div style="margin-bottom: 4px;">
-                                                <span class="culture-title-badge">🏛️ THIẾT CHẾ VĂN HÓA</span>
-                                            </div>
-                                        ` : isEduItem ? `
-                                            <div style="margin-bottom: 4px;">
-                                                <span class="edu-title-badge">🎓 CƠ SỞ GIÁO DỤC</span>
-                                            </div>
-                                        ` : isBusinessItem ? `
-                                            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px; margin-bottom: 4px;">
-                                                <span class="business-title-badge">
-                                                    ${isEnterprise ? '🏢 DOANH NGHIỆP' : '🏪 HỘ KINH DOANH'}
-                                                </span>
-                                                ${taxCode ? `<span class="business-mst-tag">🆔 MST: ${taxCode}</span>` : ''}
-                                            </div>
-                                        ` : ''}
-                                        <div class="eatery-header" ${isCustomStyled ? 'style="align-items: center; margin-bottom: 6px;"' : ''}>
-                                            <h3 class="eatery-title" ${isBusinessItem ? 'style="color: #0f172a; font-size: 1.18rem; font-weight: 900; letter-spacing: -0.2px;"' : ''}>${eat.name}</h3>
-                                            <div class="rating-stars" ${isFoodItem ? 'style="color: #f59e0b; font-weight: 800;"' : isStayItem ? 'style="color: #db2777; font-weight: 800;"' : isWellnessItem ? 'style="color: #059669; font-weight: 800;"' : isCultureItem ? 'style="color: #d97706; font-weight: 800;"' : isEduItem ? 'style="color: #4f46e5; font-weight: 800;"' : isBusinessItem ? 'style="color: #0284c7; font-weight: 800;"' : ''}>
-                                                <span>⭐</span> ${ratingVal}
-                                            </div>
-                                        </div>
-                                        ${eat.description && eat.description !== 'null' ? `<p class="eatery-desc">${eat.description}</p>` : ''}
-                                        <div class="eatery-footer">
-                                            <div class="eatery-meta-item">
-                                                <span>📍</span> ${communeName}
-                                            </div>
-                                            ${isBusinessItem && eat.phone ? `
-                                                <a href="tel:${eat.phone}" class="business-phone-tag" onclick="event.stopPropagation();">
-                                                    <span>📞</span> ${eat.phone}
-                                                </a>
-                                            ` : !['smart-education-map', 'hanh-trinh-di-san', 'discover-dong-anh-community-culture-hub'].includes(categorySlug) ? `
-                                                <div class="eatery-meta-item" style="${isFoodItem ? 'color: #ea580c; font-weight: 700;' : 'color: var(--primary); font-weight: 600;'}">
-                                                    ${eat.price_range}
-                                                </div>
-                                            ` : ''}
-                                        </div>
-                                        ${isMarket ? `
-                                            <a href="/dia-diem/${eat.slug}" class="market-explore-btn" onclick="event.stopPropagation();">
-                                                <span>🛒 Xem Gian Hàng Số & Sơ Đồ Chợ</span> ➔
-                                            </a>
-                                        ` : isFoodItem ? `
-                                            <a href="/dia-diem/${eat.slug}" class="food-explore-btn" onclick="event.stopPropagation();">
-                                                <span>🍽️ Xem Thực Đơn & Chỉ Đường</span> ➔
-                                            </a>
-                                        ` : isStayItem ? `
-                                            <a href="/dia-diem/${eat.slug}" class="stay-explore-btn" onclick="event.stopPropagation();">
-                                                <span>🏨 Xem Chi Tiết & Đặt Phòng</span> ➔
-                                            </a>
-                                        ` : isWellnessItem ? `
-                                            <a href="/dia-diem/${eat.slug}" class="wellness-explore-btn" onclick="event.stopPropagation();">
-                                                <span>🩺 Xem Dịch Vụ & Đặt Lịch</span> ➔
-                                            </a>
-                                        ` : isCultureItem ? `
-                                            <a href="/dia-diem/${eat.slug}" class="culture-explore-btn" onclick="event.stopPropagation();">
-                                                <span>🏛️ Khám Phá Hoạt Động & Sự Kiện</span> ➔
-                                            </a>
-                                        ` : isEduItem ? `
-                                            <div class="edu-card-actions">
-                                                <button type="button" class="edu-story-btn" onclick="event.stopPropagation(); window.openSchoolStoryteller('${eat.slug}', '/dia-diem/${eat.slug}');">
-                                                    <span>📖 Xem Story</span>
-                                                </button>
-                                                <a href="/dia-diem/${eat.slug}" class="edu-explore-btn" onclick="event.stopPropagation();">
-                                                    <span>🎓 Tra Cứu Thông Tin Trường</span> ➔
-                                                </a>
-                                            </div>
-                                        ` : isBusinessItem ? `
-                                            <a href="/dia-diem/${eat.slug}" class="business-explore-btn" onclick="event.stopPropagation();">
-                                                <span>🏪 Xem Chi Tiết Cơ Sở & Dịch Vụ</span> ➔
-                                            </a>
-                                        ` : `
-                                            <a href="/dia-diem/${eat.slug}" class="btn-primary" onclick="event.stopPropagation();" style="display: flex; align-items: center; justify-content: space-between; padding: 8px 14px; border-radius: 8px; font-size: 0.78rem; font-weight: 700; text-decoration: none; margin-top: 10px;">
-                                                <span>Xem Chi Tiết</span> ➔
-                                            </a>
-                                        `}
-                                    </div>
-                                </div>
-                            `;
-                        }
-                    });
-                    return cardsHtml;
-                };
 
                 // Re-render danh sách khi lọc qua AJAX
                 if (isOcopCategory && ocopProductsList.length > 0) {
@@ -1258,10 +1260,14 @@
                     window.infiniteScrollState.isLoading = false;
 
                     const allLoadedInd = document.getElementById('allLoadedIndicator');
+                    const loadMoreBtnWrapper = document.getElementById('loadMoreBtnWrapper');
                     if (allLoadedInd) {
                         allLoadedInd.style.display = !window.infiniteScrollState.hasMore ? 'block' : 'none';
                         const totalLoadedSpan = document.getElementById('totalLoadedSpan');
                         if (totalLoadedSpan) totalLoadedSpan.innerText = window.infiniteScrollState.totalCount;
+                    }
+                    if (loadMoreBtnWrapper) {
+                        loadMoreBtnWrapper.style.display = window.infiniteScrollState.hasMore ? 'block' : 'none';
                     }
                 }
                 
@@ -1305,7 +1311,13 @@
         window.infiniteScrollState.isLoading = true;
         const loader = document.getElementById('infiniteScrollLoader');
         const allLoadedInd = document.getElementById('allLoadedIndicator');
+        const loadMoreBtnWrapper = document.getElementById('loadMoreBtnWrapper');
+        const loadMoreBtn = document.getElementById('loadMoreBtn');
         if (loader) loader.style.display = 'block';
+        if (loadMoreBtn) {
+            loadMoreBtn.disabled = true;
+            loadMoreBtn.innerHTML = '<span>⏳ Đang tải thêm địa điểm...</span>';
+        }
 
         const nextPage = window.infiniteScrollState.currentPage + 1;
         let url = `/?ajax=1&page=${nextPage}`;
@@ -1344,16 +1356,29 @@
                 }
 
                 if (loader) loader.style.display = 'none';
-                if (!window.infiniteScrollState.hasMore && allLoadedInd) {
-                    const totalLoadedSpan = document.getElementById('totalLoadedSpan');
-                    if (totalLoadedSpan) totalLoadedSpan.innerText = window.infiniteScrollState.totalCount;
-                    allLoadedInd.style.display = 'block';
+                if (!window.infiniteScrollState.hasMore) {
+                    if (allLoadedInd) {
+                        const totalLoadedSpan = document.getElementById('totalLoadedSpan');
+                        if (totalLoadedSpan) totalLoadedSpan.innerText = window.infiniteScrollState.totalCount;
+                        allLoadedInd.style.display = 'block';
+                    }
+                    if (loadMoreBtnWrapper) loadMoreBtnWrapper.style.display = 'none';
+                } else {
+                    if (loadMoreBtn) {
+                        loadMoreBtn.disabled = false;
+                        loadMoreBtn.innerHTML = '<span>Xem Thêm Địa Điểm Tiếp Theo</span> ⬇';
+                    }
+                    if (loadMoreBtnWrapper) loadMoreBtnWrapper.style.display = 'block';
                 }
                 window.infiniteScrollState.isLoading = false;
             })
             .catch(err => {
                 console.error("Infinite scroll error:", err);
                 if (loader) loader.style.display = 'none';
+                if (loadMoreBtn) {
+                    loadMoreBtn.disabled = false;
+                    loadMoreBtn.innerHTML = '<span>⚠️ Tải tiếp gặp lỗi, bấm để thử lại</span> 🔄';
+                }
                 window.infiniteScrollState.isLoading = false;
             });
     };
