@@ -176,7 +176,55 @@
             </div>
         </div>
 
-        @if(isset($eatery))
+        @if(isset($allBusinesses) && count($allBusinesses) > 1)
+        <div style="margin: 16px 14px 12px 14px; padding: 14px; background: rgba(0, 0, 0, 0.4); border: 1.5px solid #10b981; border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.3);">
+            <div style="font-size: 0.72rem; color: #6ee7b7; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+                <span><i class="fa-solid fa-arrows-rotate"></i> Đổi Hộ Kinh Doanh</span>
+                <span style="background: #10b981; color: #044e3b; font-size: 0.65rem; padding: 2px 8px; border-radius: 10px; font-weight: 900;">{{ count($allBusinesses) }} Hộ</span>
+            </div>
+            
+            <form action="{{ route('hkd.switch-business') }}" method="POST">
+                @csrf
+                <select name="hkd_id" onchange="this.form.submit()" style="width: 100%; background: #064e3b; color: #ffffff; border: 1.5px solid #34d399; border-radius: 10px; padding: 10px; font-size: 0.82rem; font-weight: 700; cursor: pointer; outline: none; line-height: 1.4;">
+                    @foreach($allBusinesses as $biz)
+                        @php
+                            $bData = is_string($biz->storytelling_data) ? json_decode($biz->storytelling_data, true) : (array)($biz->storytelling_data ?? []);
+                            $bMst = $bData['mst'] ?? ($bData['tax_code'] ?? '');
+                            $bInd = $bData['industry'] ?? ($biz->description ?? '');
+                            $bShortInd = $bInd ? \Illuminate\Support\Str::limit($bInd, 28) : $biz->name;
+                            $bLabel = ($bMst ? ('[MST: ' . $bMst . '] ') : '') . $bShortInd;
+                        @endphp
+                        <option value="{{ $biz->id }}" {{ (isset($eatery) && $eatery->id == $biz->id) ? 'selected' : '' }} style="background: #064e3b; color: #ffffff; padding: 8px;">
+                            {{ $bLabel }}
+                        </option>
+                    @endforeach
+                </select>
+            </form>
+
+            @if(isset($eatery))
+                @php
+                    $curData = is_string($eatery->storytelling_data) ? json_decode($eatery->storytelling_data, true) : (array)($eatery->storytelling_data ?? []);
+                    $curMst = $curData['mst'] ?? ($curData['tax_code'] ?? '');
+                    $curInd = $curData['industry'] ?? ($eatery->description ?? '');
+                @endphp
+                <div style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed rgba(255,255,255,0.2); font-size: 0.74rem; color: #d1fae5; line-height: 1.45;">
+                    <div style="font-weight: 800; color: #fbbf24; font-size: 0.76rem; display: flex; align-items: center; gap: 4px;">
+                        <i class="fa-solid fa-check-circle" style="color: #34d399;"></i> Đang điều hành:
+                    </div>
+                    @if($curMst)
+                        <div style="font-weight: 700; color: #ffffff; margin-top: 3px;">
+                            🆔 MST: <span style="color: #6ee7b7; font-weight: 900;">{{ $curMst }}</span>
+                        </div>
+                    @endif
+                    @if($curInd)
+                        <div style="color: #a7f3d0; margin-top: 2px; font-weight: 500;">
+                            💼 {{ \Illuminate\Support\Str::limit($curInd, 45) }}
+                        </div>
+                    @endif
+                </div>
+            @endif
+        </div>
+        @elseif(isset($eatery))
         <div class="hkd-business-badge">
             <div class="hkd-business-badge-type">🏢 Hộ Kinh Doanh / Doanh Nghiệp</div>
             <div class="hkd-business-badge-name">{{ $eatery->name }}</div>

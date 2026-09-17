@@ -108,10 +108,17 @@
     </div>
     <div class="hkd-hero-title">{{ $eatery->name }}</div>
     <div class="hkd-hero-sub">
-        <span><i class="fa-solid fa-id-card" style="color: #6ee7b7;"></i> MST: {{ $storyData['mst'] ?? 'Đang cập nhật' }}</span>
+        <span style="background: rgba(0,0,0,0.25); padding: 4px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); font-weight: 800;">
+            <i class="fa-solid fa-id-card" style="color: #6ee7b7;"></i> MST: {{ $storyData['mst'] ?? 'Đang cập nhật' }}
+        </span>
         <span><i class="fa-solid fa-location-dot" style="color: #6ee7b7;"></i> {{ $eatery->address }}</span>
         <span><i class="fa-solid fa-phone" style="color: #6ee7b7;"></i> {{ $eatery->phone }}</span>
     </div>
+    @if(!empty($storyData['industry']) || !empty($eatery->description))
+        <div style="margin-top: 10px; font-size: 0.92rem; color: #fef08a; background: rgba(0,0,0,0.2); padding: 6px 14px; border-radius: 10px; display: inline-flex; align-items: center; gap: 8px; border: 1px solid rgba(254,240,138,0.3);">
+            <i class="fa-solid fa-briefcase"></i> <b>Lĩnh vực:</b> {{ $storyData['industry'] ?? $eatery->description }}
+        </div>
+    @endif
     <div style="margin-top: 22px; display: flex; gap: 12px; flex-wrap: wrap;">
         <a href="{{ route('hkd.profile') }}" class="hkd-btn-action hkd-btn-emerald">
             <i class="fa-solid fa-store"></i> Hồ Sơ Cơ Sở & Định Vị

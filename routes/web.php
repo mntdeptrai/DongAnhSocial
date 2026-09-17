@@ -244,6 +244,7 @@ Route::prefix('seller')->middleware(['auth', 'role:seller,admin', 'tenant.auth']
 
 // --- HKD & DOANH NGHIỆP MANAGEMENT ROUTES (Kênh Điều Hành Hộ Kinh Doanh & Doanh Nghiệp Số) ---
 Route::prefix('hkd')->middleware(['auth', 'role:seller,hkd,dn,business,admin,manager'])->group(function () {
+    Route::post('/switch-business', [BusinessManagementController::class, 'switchBusiness'])->name('hkd.switch-business');
     Route::get('/dashboard', [BusinessManagementController::class, 'dashboard'])->name('hkd.dashboard');
     Route::get('/profile', [BusinessManagementController::class, 'showProfile'])->name('hkd.profile');
     Route::post('/profile', [BusinessManagementController::class, 'updateProfile'])->name('hkd.profile.update');

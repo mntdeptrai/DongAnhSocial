@@ -45,30 +45,33 @@ class SyncHkdFromJson extends Command
             $name  = trim($rec['name']  ?? '');
             $mst   = trim($rec['mst']   ?? '');
 
-            if (!$phone && !$name) { $skipped++; continue; }
+            if (!$phone) { $skipped++; continue; }
 
-            // ── Try to find existing eatery ──────────────────────────────
+            // ── Try to find existing eatery by MST or STT ─────────────────
             $eatery = null;
-            if ($phone) {
-                $phoneNorm = ltrim($phone, '0');
+            if ($mst) {
                 $eatery = DB::table('eateries')
-                    ->where(function ($q) use ($phone, $phoneNorm) {
-                        $q->where('phone', $phone)
-                          ->orWhere('phone', '0' . $phoneNorm)
-                          ->orWhere('phone', '+84' . $phoneNorm);
-                    })
+                    ->where('storytelling_data', 'LIKE', '%"mst":"' . $mst . '"%')
                     ->first();
+            }
 
-                // Fallback: user → eatery_id
-                if (!$eatery) {
-                    $user = DB::table('users')
-                        ->where(function ($q) use ($phone, $phoneNorm) {
-                            $q->where('phone', $phone)
-                              ->orWhere('phone', '0' . $phoneNorm);
-                        })
-                        ->first();
-                    if ($user && $user->eatery_id) {
-                        $eatery = DB::table('eateries')->where('id', $user->eatery_id)->first();
+            if (!$eatery && isset($rec['stt'])) {
+                $eatery = DB::table('eateries')
+                    ->where('storytelling_data', 'LIKE', '%"stt":' . $rec['stt'] . ',%')
+                    ->orWhere('storytelling_data', 'LIKE', '%"stt": ' . $rec['stt'] . '%')
+                    ->first();
+            }
+
+            if (!$eatery && $name && $phone) {
+                $cand = DB::table('eateries')
+                    ->where('name', $name)
+                    ->where('phone', $phone)
+                    ->first();
+                if ($cand) {
+                    $candStory = !empty($cand->storytelling_data) ? (json_decode($cand->storytelling_data, true) ?: []) : [];
+                    $candMst = $candStory['mst'] ?? '';
+                    if (empty($candMst) || $candMst === $mst) {
+                        $eatery = $cand;
                     }
                 }
             }
@@ -82,6 +85,7 @@ class SyncHkdFromJson extends Command
                         : (array) $eatery->storytelling_data;
                 }
 
+                $story['stt']      = $rec['stt'] ?? ($story['stt'] ?? null);
                 $story['mst']      = $mst ?: ($story['mst'] ?? '');
                 $story['industry'] = $story['industry'] ?? ($rec['industry'] ?? '');
 
@@ -123,11 +127,11 @@ class SyncHkdFromJson extends Command
                     $userPhone = $phone ?: ('09' . rand(10000000, 99999999));
                     $userId = DB::table('users')->insertGetId([
                         'name'        => $name ?: 'Chủ Hộ Kinh Doanh',
-                        'email'       => ($phone ?: Str::slug($name)) . '@hkd.donganh.gov.vn',
+                        'email'       => ($phone ?: (Str::slug($name) . '-' . strtolower(Str::random(6)))) . '@hkd.donganh.gov.vn',
                         'phone'       => $userPhone,
                         'password'    => bcrypt('12345678'),
-                        'role'        => 'seller',
-                        'is_active'   => true,
+                        'role'        => 'hkd',
+                        'status'      => 'active',
                         'is_verified' => true,
                         'created_at'  => now(),
                         'updated_at'  => now(),
@@ -154,6 +158,7 @@ class SyncHkdFromJson extends Command
                     'latitude'          => $rec['latitude']   ?? 21.1352,
                     'longitude'         => $rec['longitude']  ?? 105.8458,
                     'storytelling_data' => json_encode([
+                        'stt'        => $rec['stt'] ?? null,
                         'mst'        => $mst,
                         'owner_name' => $name,
                         'industry'   => $rec['industry'] ?? '',

@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\Str;
 use App\Helpers\R2Helper;
 
@@ -35,6 +36,9 @@ class BusinessManagementController extends Controller
     /**
      * Get business context for logged in user
      */
+    /**
+     * Get business context for logged in user
+     */
     private function getBusinessContext()
     {
         $user = Auth::user();
@@ -42,17 +46,32 @@ class BusinessManagementController extends Controller
         $userPhone = $user ? $user->phone : (session('user_phone') ?? '');
         $userName = $user ? $user->name : (session('user_name') ?? 'Hộ kinh doanh');
 
-        // Find business eatery linked to user
+        // Query all business eateries linked to user or user phone
+        $query = DB::table('eateries');
+        if ($userId) {
+            $query->where(function($q) use ($userId, $userPhone, $user) {
+                $q->where('user_id', $userId);
+                if (!empty($userPhone)) {
+                    $q->orWhere('phone', $userPhone);
+                }
+                if ($user && $user->eatery_id) {
+                    $q->orWhere('id', $user->eatery_id);
+                }
+            });
+        } elseif (!empty($userPhone)) {
+            $query->where('phone', $userPhone);
+        }
+        $allBusinesses = $query->orderBy('name', 'asc')->get();
+
+        $activeId = session('active_hkd_id');
         $eatery = null;
 
-        if ($userId) {
-            $eatery = DB::table('eateries')->where('user_id', $userId)->first();
+        if ($activeId) {
+            $eatery = $allBusinesses->firstWhere('id', $activeId);
         }
-        if (!$eatery && !empty($userPhone)) {
-            $eatery = DB::table('eateries')->where('phone', $userPhone)->first();
-        }
-        if (!$eatery && $user && $user->eatery_id) {
-            $eatery = DB::table('eateries')->where('id', $user->eatery_id)->first();
+
+        if (!$eatery) {
+            $eatery = $allBusinesses->first();
         }
 
         // If no eatery exists yet for this HKD user, create one automatically
@@ -76,10 +95,15 @@ class BusinessManagementController extends Controller
             ]);
 
             $eatery = DB::table('eateries')->where('id', $eateryId)->first();
+            $allBusinesses = collect([$eatery]);
 
             if ($user) {
                 DB::table('users')->where('id', $userId)->update(['eatery_id' => $eateryId]);
             }
+        }
+
+        if ($eatery) {
+            session(['active_hkd_id' => $eatery->id]);
         }
 
         // Parse storytelling data
@@ -88,11 +112,29 @@ class BusinessManagementController extends Controller
             $storyData = is_string($eatery->storytelling_data) ? json_decode($eatery->storytelling_data, true) : (array) $eatery->storytelling_data;
         }
 
+        // Share to views so layouts/hkd.blade.php always receives them
+        View::share('allBusinesses', $allBusinesses);
+        View::share('eatery', $eatery);
+
         return [
             'user' => $user,
             'eatery' => $eatery,
+            'allBusinesses' => $allBusinesses,
             'storyData' => $storyData,
         ];
+    }
+
+    /**
+     * Chuyển đổi Hộ kinh doanh / Doanh nghiệp đang quản lý
+     */
+    public function switchBusiness(Request $request)
+    {
+        $this->verifyHkdAccess();
+        $hkdId = $request->input('hkd_id');
+        if ($hkdId) {
+            session(['active_hkd_id' => $hkdId]);
+        }
+        return redirect()->back()->with('success', 'Đã chuyển đổi sang quản lý Hộ kinh doanh được chọn!');
     }
 
     /**
