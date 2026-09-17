@@ -1164,13 +1164,13 @@
                             $starRating = $product->star_rating;
                         @endphp
                         @php
-                            $prodImgUrl = $product->image_url ?: ($product->image_path ?: '/images/stalls/food.png');
+                            $prodImgUrl = $product->image_url ?: ($product->image_path ?: '/images/stalls/food.webp');
                             if (!empty($prodImgUrl)) {
                                 if (!str_starts_with($prodImgUrl, 'http://') && !str_starts_with($prodImgUrl, 'https://')) {
                                     $prodImgUrl = asset(ltrim($prodImgUrl, '/'));
                                 }
                             } else {
-                                $prodImgUrl = asset('/images/stalls/food.png');
+                                $prodImgUrl = asset('/images/stalls/food.webp');
                             }
                         @endphp
                         <div class="product-card" data-name="{{ mb_strtolower($product->name) }}" data-category="{{ $pCat }}" style="padding: 14px 16px; align-items: flex-start;">
@@ -1788,9 +1788,9 @@ function openPublicDetailModal(name, price, unit, description, images, starRatin
             modalImages = [images];
         }
     } else {
-        modalImages = ['/images/stalls/food.png'];
+        modalImages = ['/images/stalls/food.webp'];
     }
-    if (modalImages.length === 0) modalImages = ['/images/stalls/food.png'];
+    if (modalImages.length === 0) modalImages = ['/images/stalls/food.webp'];
 
     currentImgIndex = 0;
     renderModalImage();

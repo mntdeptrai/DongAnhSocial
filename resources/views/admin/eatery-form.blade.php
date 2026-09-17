@@ -3694,7 +3694,7 @@ function previewEateryPhotoUrl(url) {
         } else {
             products.forEach((p, idx) => {
                 const tr = document.createElement('tr');
-                const imgPath = p.image_path || (p.image_url || '/images/stalls/food.png');
+                const imgPath = p.image_path || (p.image_url || '/images/stalls/food.webp');
                 
                 // Định dạng giá bán chuẩn VNĐ (Ví dụ: 20.000đ)
                 let formattedPrice = 'Liên hệ';

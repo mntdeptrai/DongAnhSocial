@@ -64,10 +64,21 @@ class SocialHubController extends Controller
             Friendship::where('friend_id', $user->id)->pluck('user_id')
         )->unique();
 
-        $suggestions = User::whereNotIn('id', $nonSuggestions)
-            ->inRandomOrder()
-            ->limit(20)
+        $maxId = User::max('id') ?? 1;
+        $randomStartId = rand(1, max(1, $maxId - 50));
+        $suggestions = User::where('id', '>=', $randomStartId)
+            ->whereNotIn('id', $nonSuggestions)
+            ->take(20)
             ->get();
+
+        if ($suggestions->count() < 20) {
+            $excludeIds = $nonSuggestions->merge($suggestions->pluck('id'))->unique();
+            $more = User::whereNotIn('id', $excludeIds)
+                ->take(20 - $suggestions->count())
+                ->get();
+            $suggestions = $suggestions->merge($more);
+        }
+        $suggestions = $suggestions->shuffle();
 
         $myFoodTours = FoodTour::where('user_id', $user->id)->get();
 
@@ -118,12 +129,10 @@ class SocialHubController extends Controller
 
         $userIds = $users->pluck('id')->toArray();
 
-        // Tối ưu tránh N+1 query: Lấy toàn bộ quan hệ kết bạn liên quan trong 1 query duy nhất dùng index unique
-        $friendships = Friendship::where(function ($q) use ($user, $userIds) {
-            $q->where('user_id', $user->id)->whereIn('friend_id', $userIds);
-        })->orWhere(function ($q) use ($user, $userIds) {
-            $q->where('friend_id', $user->id)->whereIn('user_id', $userIds);
-        })->get();
+        // Tối ưu tránh N+1 query và Full Scan: Tách 2 hướng truy vấn tận dụng triệt để index unique và foreign key
+        $sentFriendships = Friendship::where('user_id', $user->id)->whereIn('friend_id', $userIds)->get();
+        $receivedFriendships = Friendship::where('friend_id', $user->id)->whereIn('user_id', $userIds)->get();
+        $friendships = $sentFriendships->merge($receivedFriendships);
 
         // Ánh xạ thành mảng để truy xuất nhanh O(1)
         $friendshipMap = [];
@@ -660,12 +669,10 @@ class SocialHubController extends Controller
 
         $otherIds = $others->pluck('id')->toArray();
 
-        // Tối ưu hóa tránh N+1 query: Lấy toàn bộ quan hệ bạn bè của các user này với $user trong 1 query duy nhất
-        $friendships = Friendship::where(function($q) use ($user, $otherIds) {
-            $q->where('user_id', $user->id)->whereIn('friend_id', $otherIds);
-        })->orWhere(function($q) use ($user, $otherIds) {
-            $q->where('friend_id', $user->id)->whereIn('user_id', $otherIds);
-        })->get();
+        // Tối ưu hóa tránh N+1 query: Tách 2 hướng truy vấn tận dụng index và merge
+        $sentFriendships = Friendship::where('user_id', $user->id)->whereIn('friend_id', $otherIds)->get();
+        $receivedFriendships = Friendship::where('friend_id', $user->id)->whereIn('user_id', $otherIds)->get();
+        $friendships = $sentFriendships->merge($receivedFriendships);
 
         // Ánh xạ thành mảng tra cứu nhanh O(1)
         $friendshipMap = [];

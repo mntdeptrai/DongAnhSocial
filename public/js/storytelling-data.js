@@ -28,7 +28,7 @@ window.STORYTELLING_SCHOOLS = {
             "classes": 30,
             "students": 759,
             "ratio": "25.3 HS/lớp (Quy mô chuẩn)",
-            "photo": "/js/picture/mnphucloc.png",
+            "photo": "/js/picture/mnphucloc.webp",
             "qrCode": "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://donganh.hanoi.gov.vn/mn-phuc-loc",
             "mapUrl": "",
             "lat": 21.136308,
@@ -43,7 +43,7 @@ window.STORYTELLING_SCHOOLS = {
                 "classes": 16,
                 "students": 405,
                 "mapUrl": "https://maps.app.goo.gl/9y9AUUbFDEXH7eBh6",
-                "photo": "/js/picture/mnphucloc.png",
+                "photo": "/js/picture/mnphucloc.webp",
                 "lat": 21.1685,
                 "lng": 105.892
             },
@@ -55,7 +55,7 @@ window.STORYTELLING_SCHOOLS = {
                 "classes": 14,
                 "students": 354,
                 "mapUrl": "https://maps.app.goo.gl/yqwyJFhWdRvw4tWE7",
-                "photo": "/js/picture/mnsaomai.png",
+                "photo": "/js/picture/mnsaomai.webp",
                 "lat": 21.138812,
                 "lng": 105.847245
             }
@@ -86,7 +86,7 @@ window.STORYTELLING_SCHOOLS = {
             "classes": 36,
             "students": 947,
             "ratio": "26.3 HS/lớp",
-            "photo": "/js/picture/M%E1%BA%A7m%20non%20C%E1%BB%95%20Loa.png",
+            "photo": "/js/picture/M%E1%BA%A7m%20non%20C%E1%BB%95%20Loa.webp",
             "qrCode": "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://donganh.hanoi.gov.vn/mn-co-loa",
             "mapUrl": "",
             "lat": 21.117815,
@@ -101,7 +101,7 @@ window.STORYTELLING_SCHOOLS = {
                 "classes": 18,
                 "students": 564,
                 "mapUrl": "https://maps.app.goo.gl/HWA7rdQoYeWcn3ENA",
-                "photo": "/js/picture/M%E1%BA%A7m%20non%20C%E1%BB%95%20Loa.png",
+                "photo": "/js/picture/M%E1%BA%A7m%20non%20C%E1%BB%95%20Loa.webp",
                 "lat": 21.1398,
                 "lng": 105.8655
             },
@@ -113,7 +113,7 @@ window.STORYTELLING_SCHOOLS = {
                 "classes": 18,
                 "students": 383,
                 "mapUrl": "https://maps.app.goo.gl/kgqGgYQg9CN1U4nA8",
-                "photo": "/js/picture/mam-non-thanh-loa.png",
+                "photo": "/js/picture/mam-non-thanh-loa.webp",
                 "lat": 21.115684,
                 "lng": 105.868815
             }
@@ -144,7 +144,7 @@ window.STORYTELLING_SCHOOLS = {
             "classes": 32,
             "students": 866,
             "ratio": "27.0 HS/lớp",
-            "photo": "/js/picture/mnmailam.png",
+            "photo": "/js/picture/mnmailam.webp",
             "qrCode": "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://donganh.hanoi.gov.vn/mn-mai-lam",
             "mapUrl": "",
             "lat": 21.086289,
@@ -159,7 +159,7 @@ window.STORYTELLING_SCHOOLS = {
                 "classes": 18,
                 "students": 521,
                 "mapUrl": "https://maps.app.goo.gl/uY8A6D5Szx46iEzM9",
-                "photo": "/js/picture/mam-non-thai-binh.png",
+                "photo": "/js/picture/mam-non-thai-binh.webp",
                 "lat": 21.1085,
                 "lng": 105.882
             },
@@ -171,7 +171,7 @@ window.STORYTELLING_SCHOOLS = {
                 "classes": 14,
                 "students": 345,
                 "mapUrl": "https://maps.app.goo.gl/Q25i5LBxx68iHvaJ6",
-                "photo": "/js/picture/mnmailam.png",
+                "photo": "/js/picture/mnmailam.webp",
                 "lat": 21.090206,
                 "lng": 105.89065
             }
@@ -206,7 +206,7 @@ window.STORYTELLING_SCHOOLS = {
             "classes": 55,
             "students": 1440,
             "ratio": "26.2 HS/lớp",
-            "photo": "/js/picture/mnviethung.png",
+            "photo": "/js/picture/mnviethung.webp",
             "qrCode": "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://donganh.hanoi.gov.vn/mn-viet-hung",
             "mapUrl": "",
             "lat": 21.127569,
@@ -221,7 +221,7 @@ window.STORYTELLING_SCHOOLS = {
                 "classes": 17,
                 "students": 525,
                 "mapUrl": "https://maps.app.goo.gl/tgNDRcA26qgs2Fhs9",
-                "photo": "/js/picture/mam-nonduc-noi.png",
+                "photo": "/js/picture/mam-nonduc-noi.webp",
                 "lat": 21.148,
                 "lng": 105.875
             },
@@ -233,7 +233,7 @@ window.STORYTELLING_SCHOOLS = {
                 "classes": 12,
                 "students": 268,
                 "mapUrl": "https://maps.app.goo.gl/RehiPjpQSdmu3yCr5",
-                "photo": "/js/picture/mnviethung.png",
+                "photo": "/js/picture/mnviethung.webp",
                 "lat": 21.124153,
                 "lng": 105.885276
             },
@@ -245,7 +245,7 @@ window.STORYTELLING_SCHOOLS = {
                 "classes": 26,
                 "students": 647,
                 "mapUrl": "https://maps.app.goo.gl/5cD9SyWJVoS5vfjj6",
-                "photo": "/js/picture/mam-non-duc-tu.png",
+                "photo": "/js/picture/mam-non-duc-tu.webp",
                 "lat": 21.122361,
                 "lng": 105.898472
             }
@@ -276,7 +276,7 @@ window.STORYTELLING_SCHOOLS = {
             "classes": 33,
             "students": 910,
             "ratio": "27.5 HS/lớp",
-            "photo": "/js/picture/mnuyno.png",
+            "photo": "/js/picture/mnuyno.webp",
             "qrCode": "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://donganh.hanoi.gov.vn/mn-uy-no",
             "mapUrl": "",
             "lat": 21.139923,
@@ -291,7 +291,7 @@ window.STORYTELLING_SCHOOLS = {
                 "classes": 15,
                 "students": 420,
                 "mapUrl": "https://maps.app.goo.gl/TRKwpJ2D2pf4ZVwP6",
-                "photo": "/js/picture/mnuynoa.png",
+                "photo": "/js/picture/mnuynoa.webp",
                 "lat": 21.139,
                 "lng": 105.85
             },
@@ -303,7 +303,7 @@ window.STORYTELLING_SCHOOLS = {
                 "classes": 18,
                 "students": 490,
                 "mapUrl": "https://maps.app.goo.gl/Bm2UTX2okvcLPcSZ7",
-                "photo": "/js/picture/mnuyno.png",
+                "photo": "/js/picture/mnuyno.webp",
                 "lat": 21.135843,
                 "lng": 105.856946
             }
@@ -334,7 +334,7 @@ window.STORYTELLING_SCHOOLS = {
             "classes": 48,
             "students": 1464,
             "ratio": "30.5 HS/lớp",
-            "photo": "/js/picture/Mam-non-Dong-Hoi.png",
+            "photo": "/js/picture/Mam-non-Dong-Hoi.webp",
             "qrCode": "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://donganh.hanoi.gov.vn/mn-dong-hoi",
             "mapUrl": "",
             "lat": 21.094203,
@@ -349,7 +349,7 @@ window.STORYTELLING_SCHOOLS = {
                 "classes": 28,
                 "students": 875,
                 "mapUrl": "https://maps.app.goo.gl/ZQpzxZJauizwwNBWA",
-                "photo": "/js/picture/Mam-non-Dong-Hoi.png",
+                "photo": "/js/picture/Mam-non-Dong-Hoi.webp",
                 "lat": 21.095,
                 "lng": 105.871
             },
@@ -361,7 +361,7 @@ window.STORYTELLING_SCHOOLS = {
                 "classes": 20,
                 "students": 589,
                 "mapUrl": "https://maps.app.goo.gl/C6MAhzSyXfsvGehs5",
-                "photo": "/js/picture/mnxuancanh.png",
+                "photo": "/js/picture/mnxuancanh.webp",
                 "lat": 21.087655,
                 "lng": 105.850942
             }
@@ -392,7 +392,7 @@ window.STORYTELLING_SCHOOLS = {
             "classes": 28,
             "students": 1009,
             "ratio": "36.0 HS/lớp (Trường Chất lượng cao)",
-            "photo": "/js/picture/th-an-duong-vuong.png",
+            "photo": "/js/picture/th-an-duong-vuong.webp",
             "qrCode": "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://donganh.hanoi.gov.vn/th-an-duong-vuong",
             "mapUrl": "https://maps.app.goo.gl/YieK3S3jn9phJ9gP6",
             "lat": 21.129434,
@@ -407,7 +407,7 @@ window.STORYTELLING_SCHOOLS = {
                 "classes": 28,
                 "students": 1009,
                 "mapUrl": "https://maps.app.goo.gl/YieK3S3jn9phJ9gP6",
-                "photo": "/js/picture/th-an-duong-vuong.png",
+                "photo": "/js/picture/th-an-duong-vuong.webp",
                 "lat": 21.142,
                 "lng": 105.869
             }
@@ -438,7 +438,7 @@ window.STORYTELLING_SCHOOLS = {
             "classes": 55,
             "students": 2426,
             "ratio": "44.1 HS/lớp",
-            "photo": "/js/picture/th-dong-hoi.png",
+            "photo": "/js/picture/th-dong-hoi.webp",
             "qrCode": "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://donganh.hanoi.gov.vn/th-dong-hoi",
             "mapUrl": "",
             "lat": 21.085148,
@@ -453,7 +453,7 @@ window.STORYTELLING_SCHOOLS = {
                 "classes": 38,
                 "students": 1887,
                 "mapUrl": "https://maps.app.goo.gl/61LK62Ns11w6q4gt7",
-                "photo": "/js/picture/th-dong-hoi.png",
+                "photo": "/js/picture/th-dong-hoi.webp",
                 "lat": 21.093,
                 "lng": 105.868
             },
@@ -465,7 +465,7 @@ window.STORYTELLING_SCHOOLS = {
                 "classes": 17,
                 "students": 539,
                 "mapUrl": "https://maps.app.goo.gl/3Wm4f5oc9Kp6aJ4U8",
-                "photo": "/js/picture/th-xuan-canh.png",
+                "photo": "/js/picture/th-xuan-canh.webp",
                 "lat": 21.091135,
                 "lng": 105.850408
             }
@@ -496,7 +496,7 @@ window.STORYTELLING_SCHOOLS = {
             "classes": 40,
             "students": 1237,
             "ratio": "30.9 HS/lớp",
-            "photo": "/js/picture/th-viet-hung.png",
+            "photo": "/js/picture/th-viet-hung.webp",
             "qrCode": "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://donganh.hanoi.gov.vn/th-viet-hung",
             "mapUrl": "",
             "lat": 21.138603,
@@ -511,7 +511,7 @@ window.STORYTELLING_SCHOOLS = {
                 "classes": 21,
                 "students": 667,
                 "mapUrl": "https://maps.app.goo.gl/8n4PSrdwkLLXmDft6",
-                "photo": "/js/picture/th-viet-hung.png",
+                "photo": "/js/picture/th-viet-hung.webp",
                 "lat": 21.145,
                 "lng": 105.878
             },
@@ -523,7 +523,7 @@ window.STORYTELLING_SCHOOLS = {
                 "classes": 19,
                 "students": 570,
                 "mapUrl": "https://maps.app.goo.gl/HTnd6P7o8RVBevLG6",
-                "photo": "/js/picture/th-viet-hung-2.png",
+                "photo": "/js/picture/th-viet-hung-2.webp",
                 "lat": 21.140083,
                 "lng": 105.876833
             }
@@ -554,7 +554,7 @@ window.STORYTELLING_SCHOOLS = {
             "classes": 30,
             "students": 1294,
             "ratio": "43.1 HS/lớp (Trường Chất lượng cao)",
-            "photo": "/js/picture/thcs-nguyen-huy-tuong.png",
+            "photo": "/js/picture/thcs-nguyen-huy-tuong.webp",
             "qrCode": "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://donganh.hanoi.gov.vn/thcs-nguyen-huy-tuong",
             "mapUrl": "https://maps.app.goo.gl/kwKAd91Sgb1c6WNL6",
             "lat": 21.139393,
@@ -569,7 +569,7 @@ window.STORYTELLING_SCHOOLS = {
                 "classes": 30,
                 "students": 1294,
                 "mapUrl": "https://maps.app.goo.gl/kwKAd91Sgb1c6WNL6",
-                "photo": "/js/picture/thcs-nguyen-huy-tuong.png",
+                "photo": "/js/picture/thcs-nguyen-huy-tuong.webp",
                 "lat": 21.136,
                 "lng": 105.845
             }
@@ -600,7 +600,7 @@ window.STORYTELLING_SCHOOLS = {
             "classes": 25,
             "students": 996,
             "ratio": "39.8 HS/lớp",
-            "photo": "/js/picture/thcs-ngo-quyen.png",
+            "photo": "/js/picture/thcs-ngo-quyen.webp",
             "qrCode": "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://donganh.hanoi.gov.vn/thcs-ngo-quyen",
             "mapUrl": "https://maps.app.goo.gl/8jZZK7h2r7MrpGSC6",
             "lat": 21.078665,
@@ -615,7 +615,7 @@ window.STORYTELLING_SCHOOLS = {
                 "classes": 25,
                 "students": 996,
                 "mapUrl": "https://maps.app.goo.gl/8jZZK7h2r7MrpGSC6",
-                "photo": "/js/picture/thcs-ngo-quyen.png",
+                "photo": "/js/picture/thcs-ngo-quyen.webp",
                 "lat": 21.138,
                 "lng": 105.842
             }
@@ -646,7 +646,7 @@ window.STORYTELLING_SCHOOLS = {
             "classes": 50,
             "students": 2020,
             "ratio": "40.4 HS/lớp",
-            "photo": "/js/picture/thcs-an-duong-vuong.png",
+            "photo": "/js/picture/thcs-an-duong-vuong.webp",
             "qrCode": "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://donganh.hanoi.gov.vn/thcs-an-duong-vuong",
             "mapUrl": "",
             "lat": 21.134702,
@@ -661,7 +661,7 @@ window.STORYTELLING_SCHOOLS = {
                 "classes": 19,
                 "students": 739,
                 "mapUrl": "https://maps.app.goo.gl/dvpeDAC3ETiuZaUw7",
-                "photo": "/js/picture/thcs-an-duong-vuong.png",
+                "photo": "/js/picture/thcs-an-duong-vuong.webp",
                 "lat": 21.165,
                 "lng": 105.889
             },
@@ -673,7 +673,7 @@ window.STORYTELLING_SCHOOLS = {
                 "classes": 31,
                 "students": 1281,
                 "mapUrl": "https://maps.app.goo.gl/uRRETtAV1n3Gx2GMA",
-                "photo": "/js/picture/thcs-viet-hung.png",
+                "photo": "/js/picture/thcs-viet-hung.webp",
                 "lat": 21.139294,
                 "lng": 105.877457
             }
@@ -704,7 +704,7 @@ window.STORYTELLING_SCHOOLS = {
             "classes": 45,
             "students": 1609,
             "ratio": "35.8 HS/lớp",
-            "photo": "/js/picture/thcsxuancanh.png",
+            "photo": "/js/picture/thcsxuancanh.webp",
             "qrCode": "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://donganh.hanoi.gov.vn/thcs-xuan-canh",
             "mapUrl": "",
             "lat": 21.087584,
@@ -719,7 +719,7 @@ window.STORYTELLING_SCHOOLS = {
                 "classes": 31,
                 "students": 1112,
                 "mapUrl": "https://maps.app.goo.gl/rMex8PaR3cwLhqH2A",
-                "photo": "/js/picture/thcs-dong-hoi.png",
+                "photo": "/js/picture/thcs-dong-hoi.webp",
                 "lat": 21.089,
                 "lng": 105.856
             },
@@ -731,7 +731,7 @@ window.STORYTELLING_SCHOOLS = {
                 "classes": 14,
                 "students": 497,
                 "mapUrl": "https://maps.app.goo.gl/J8aT7Y2h6BMVfNGT9",
-                "photo": "/js/picture/thcsxuancanh.png",
+                "photo": "/js/picture/thcsxuancanh.webp",
                 "lat": 21.091557,
                 "lng": 105.852109
             }
@@ -762,7 +762,7 @@ window.STORYTELLING_SCHOOLS = {
             "classes": 50,
             "students": 1640,
             "ratio": "32.8 HS/lớp (Tiểu học & THCS)",
-            "photo": "/js/picture/thcsmailam.png",
+            "photo": "/js/picture/thcsmailam.webp",
             "qrCode": "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://donganh.hanoi.gov.vn/truong-lien-cap-mai-lam",
             "mapUrl": "",
             "lat": 21.090091,
@@ -777,7 +777,7 @@ window.STORYTELLING_SCHOOLS = {
                 "classes": 29,
                 "students": 928,
                 "mapUrl": "https://maps.app.goo.gl/rcAvadRPQWyYjmR68",
-                "photo": "/js/picture/th-ngo-tat-to.png",
+                "photo": "/js/picture/th-ngo-tat-to.webp",
                 "lat": 21.105,
                 "lng": 105.88
             },
@@ -789,7 +789,7 @@ window.STORYTELLING_SCHOOLS = {
                 "classes": 21,
                 "students": 712,
                 "mapUrl": "https://maps.app.goo.gl/tRj8MGycj8EY2Mhw6",
-                "photo": "/js/picture/thcsmailam.png",
+                "photo": "/js/picture/thcsmailam.webp",
                 "lat": 21.090509,
                 "lng": 105.892691
             }
@@ -820,7 +820,7 @@ window.STORYTELLING_SCHOOLS = {
             "classes": 52,
             "students": 2094,
             "ratio": "40.3 HS/lớp (Tiểu học & THCS)",
-            "photo": "/js/picture/thcscoloa.png",
+            "photo": "/js/picture/thcscoloa.webp",
             "qrCode": "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://donganh.hanoi.gov.vn/truong-lien-cap-co-loa",
             "mapUrl": "",
             "lat": 21.120672,
@@ -835,7 +835,7 @@ window.STORYTELLING_SCHOOLS = {
                 "classes": 30,
                 "students": 1166,
                 "mapUrl": "https://maps.app.goo.gl/GcygcijfbK7Jd5xu9",
-                "photo": "/js/picture/th-co-loa.png",
+                "photo": "/js/picture/th-co-loa.webp",
                 "lat": 21.138,
                 "lng": 105.862
             },
@@ -847,7 +847,7 @@ window.STORYTELLING_SCHOOLS = {
                 "classes": 22,
                 "students": 928,
                 "mapUrl": "https://maps.app.goo.gl/1oqNZHW83BEhREhL6",
-                "photo": "/js/picture/thcscoloa.png",
+                "photo": "/js/picture/thcscoloa.webp",
                 "lat": 21.121026,
                 "lng": 105.869214
             }
@@ -878,7 +878,7 @@ window.STORYTELLING_SCHOOLS = {
             "classes": 50,
             "students": 1717,
             "ratio": "34.3 HS/lớp (Tiểu học & THCS)",
-            "photo": "/js/picture/thcsdaoduytung.png",
+            "photo": "/js/picture/thcsdaoduytung.webp",
             "qrCode": "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://donganh.hanoi.gov.vn/truong-lien-cap-dao-duy-tung",
             "mapUrl": "https://maps.app.goo.gl/Cw9pHCojcVXydk3y5",
             "lat": 21.129444,
@@ -893,7 +893,7 @@ window.STORYTELLING_SCHOOLS = {
                 "classes": 31,
                 "students": 1016,
                 "mapUrl": "https://maps.app.goo.gl/kPXrcwaKSjAeNEzZ7",
-                "photo": "/js/picture/thdaoduytung.png",
+                "photo": "/js/picture/thdaoduytung.webp",
                 "lat": 21.141,
                 "lng": 105.855
             },
@@ -905,7 +905,7 @@ window.STORYTELLING_SCHOOLS = {
                 "classes": 19,
                 "students": 701,
                 "mapUrl": "https://maps.app.goo.gl/Cw9pHCojcVXydk3y5",
-                "photo": "/js/picture/thcsdaoduytung.png",
+                "photo": "/js/picture/thcsdaoduytung.webp",
                 "lat": 21.129444,
                 "lng": 105.857167
             }
@@ -936,7 +936,7 @@ window.STORYTELLING_SCHOOLS = {
             "classes": 60,
             "students": 2298,
             "ratio": "38.3 HS/lớp (Tiểu học & THCS)",
-            "photo": "/js/picture/thcsductu.png",
+            "photo": "/js/picture/thcsductu.webp",
             "qrCode": "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://donganh.hanoi.gov.vn/truong-lien-cap-duc-tu",
             "mapUrl": "",
             "lat": 21.115023,
@@ -951,7 +951,7 @@ window.STORYTELLING_SCHOOLS = {
                 "classes": 29,
                 "students": 1109,
                 "mapUrl": "https://maps.app.goo.gl/WLg8devognqCKaHV6",
-                "photo": "/js/picture/th-duc-tu.png",
+                "photo": "/js/picture/th-duc-tu.webp",
                 "lat": 21.125,
                 "lng": 105.895
             },
@@ -963,7 +963,7 @@ window.STORYTELLING_SCHOOLS = {
                 "classes": 31,
                 "students": 1189,
                 "mapUrl": "https://maps.app.goo.gl/5Kjczsm5pvCCojgJ6",
-                "photo": "/js/picture/thcsductu.png",
+                "photo": "/js/picture/thcsductu.webp",
                 "lat": 21.115537,
                 "lng": 105.895709
             }
@@ -994,7 +994,7 @@ window.STORYTELLING_SCHOOLS = {
             "classes": 50,
             "students": 1493,
             "ratio": "29.9 HS/lớp (Tiểu học & THCS)",
-            "photo": "/js/picture/thcs-uy-no.png",
+            "photo": "/js/picture/thcs-uy-no.webp",
             "qrCode": "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://donganh.hanoi.gov.vn/truong-lien-cap-uy-no",
             "mapUrl": "",
             "lat": 21.141534,
@@ -1009,7 +1009,7 @@ window.STORYTELLING_SCHOOLS = {
                 "classes": 29,
                 "students": 892,
                 "mapUrl": "https://maps.app.goo.gl/31tkH16AY87TvTtk8",
-                "photo": "/js/picture/th-uy-no.png",
+                "photo": "/js/picture/th-uy-no.webp",
                 "lat": 21.139,
                 "lng": 105.85
             },
@@ -1021,7 +1021,7 @@ window.STORYTELLING_SCHOOLS = {
                 "classes": 21,
                 "students": 601,
                 "mapUrl": "https://maps.app.goo.gl/6fpYhqfbRfXQP7um7",
-                "photo": "/js/picture/thcs-uy-no.png",
+                "photo": "/js/picture/thcs-uy-no.webp",
                 "lat": 21.139301,
                 "lng": 105.858884
             }

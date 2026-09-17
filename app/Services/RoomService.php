@@ -3,72 +3,86 @@
 namespace App\Services;
 
 use App\Domain\Room\RoomData;
-use App\Domain\Room\Actions\CreateRoomAction;
-use App\Domain\Room\Actions\UpdateRoomAction;
 use App\Helpers\R2Helper;
+use App\Models\Eatery;
 use App\Models\Room;
-use App\Services\EateryApiService;
 
 class RoomService
 {
-    public function __construct(
-        protected CreateRoomAction $createAction,
-        protected UpdateRoomAction $updateAction
-    ) {}
-
-    public function create(RoomData $data, ?string $connName = null): Room
+    public function create(RoomData|array $data): ?Room
     {
-        $imagePath = $this->resolveImagePath($data->image, $data->image_url);
-        
-        $action = $this->createAction;
-        if ($connName) {
-            \App\Models\Room::setConnectionResolver(app('db'));
+        if ($data instanceof RoomData) {
+            $imagePath = $this->resolveImagePath($data->image, $data->image_url);
+            $attributes = [
+                'eatery_id' => $data->eatery_id,
+                'name' => $data->name,
+                'room_type' => $data->room_type,
+                'price' => $data->price,
+                'capacity' => $data->capacity,
+                'amenities' => $data->amenities,
+                'description' => $data->description,
+                'image_path' => $imagePath,
+            ];
+        } else {
+            $attributes = $data;
         }
-        
-        $room = $action->execute($data, $imagePath);
-        if ($connName) {
-            $room->setConnection($connName);
-            $room->save();
+
+        return $this->storeRoom($attributes);
+    }
+
+    public function update($id, RoomData|array $data): ?Room
+    {
+        $room = Room::find($id);
+        if (!$room) return null;
+
+        if ($data instanceof RoomData) {
+            $imagePath = $this->resolveImagePath($data->image, $data->image_url) ?? $room->image_path;
+            $attributes = [
+                'eatery_id' => $data->eatery_id,
+                'name' => $data->name,
+                'room_type' => $data->room_type,
+                'price' => $data->price,
+                'capacity' => $data->capacity,
+                'amenities' => $data->amenities,
+                'description' => $data->description,
+                'image_path' => $imagePath,
+            ];
+        } else {
+            $attributes = $data;
         }
+
+        $room->update($attributes);
         return $room;
     }
 
-    public function update($id, RoomData $data, ?string $connName = null): Room
+    public function storeRoom(array $data): ?Room
     {
-        $connections = ['mysql'];
-        $room = null;
-        $activeConn = $connName;
+        $eatery = Eatery::find($data['eatery_id'] ?? null);
+        if (!$eatery) return null;
 
-        if ($connName) {
-            $room = Room::on($connName)->find($id);
-        } else {
-            foreach ($connections as $conn) {
-                $rm = Room::on($conn)->find($id);
-                if ($rm) {
-                    $room = $rm;
-                    $activeConn = $conn;
-                    break;
-                }
-            }
-        }
+        return Room::create($data);
+    }
 
-        if (!$room) {
-            throw new \Exception('Phòng nghỉ không tồn tại!');
-        }
+    public function updateRoom($id, array $data): ?Room
+    {
+        $room = Room::find($id);
+        if (!$room) return null;
 
-        $imagePath = $room->image_path;
-        if ($data->image) {
-            $imagePath = R2Helper::upload($data->image, 'rooms');
-        } elseif ($data->image_url) {
-            $imagePath = $this->resolveImagePath(null, $data->image_url);
-        }
-
-        return $this->updateAction->execute($room, $data, $imagePath);
+        $room->update($data);
+        return $room;
     }
 
     public function delete($id): bool
     {
-        return EateryApiService::deleteRoom($id);
+        $room = Room::find($id);
+        if (!$room) return false;
+
+        return (bool) $room->delete();
+    }
+
+    public function deleteRoom($id): bool
+    {
+        return $this->delete($id);
     }
 
     protected function resolveImagePath($imageFile, ?string $imageUrl): ?string

@@ -4,6 +4,7 @@
 @section('meta_description', 'Bản tin cập nhật các bài viết mới nhất từ các Trường học, Profile cá nhân và Gian hàng Đông Anh.')
 
 @section('content')
+<link rel="stylesheet" href="{{ asset('css/facebook-feed.css') }}?v={{ file_exists(public_path('css/facebook-feed.css')) ? filemtime(public_path('css/facebook-feed.css')) : '2.2' }}">
 <!-- Ambient Glowing Orbs -->
 <div style="position: fixed; top: 10%; left: -10%; width: 550px; height: 550px; background: radial-gradient(circle, rgba(14, 165, 233, 0.07) 0%, rgba(14, 165, 233, 0) 70%); filter: blur(120px); pointer-events: none; z-index: 1;"></div>
 <div style="position: fixed; bottom: 10%; right: -10%; width: 550px; height: 550px; background: radial-gradient(circle, rgba(16, 185, 129, 0.07) 0%, rgba(16, 185, 129, 0) 70%); filter: blur(120px); pointer-events: none; z-index: 1;"></div>

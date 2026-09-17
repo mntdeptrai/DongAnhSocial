@@ -151,142 +151,142 @@
 
 /* 3. Facebook Multi-Photo Grid System (1, 2, 3, 4+ photos with +N overlay) */
 .fb-photo-grid {
-    position: relative;
-    width: auto;
-    margin: 12px 16px 14px 16px;
-    border-radius: 16px;
-    overflow: hidden;
-    background: #0f172a;
-    cursor: pointer;
-    border: 1px solid rgba(226, 232, 240, 0.9);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+    position: relative !important;
+    width: auto !important;
+    margin: 12px 16px 14px 16px !important;
+    border-radius: 16px !important;
+    overflow: hidden !important;
+    background: #0f172a !important;
+    cursor: pointer !important;
+    border: 1px solid rgba(226, 232, 240, 0.9) !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04) !important;
 }
 
 /* Grid 1 Image */
 .fb-grid-1 {
-    display: block;
-    width: auto;
-    max-height: 480px;
-    overflow: hidden;
+    display: block !important;
+    width: 100% !important;
+    max-height: 480px !important;
+    overflow: hidden !important;
 }
 .fb-grid-1 img {
-    width: 100%;
-    height: auto;
-    max-height: 480px;
-    object-fit: cover;
-    display: block;
-    transition: transform 0.3s ease;
+    width: 100% !important;
+    height: auto !important;
+    max-height: 480px !important;
+    object-fit: cover !important;
+    display: block !important;
+    transition: transform 0.3s ease !important;
 }
 .fb-grid-1 img:hover {
-    transform: scale(1.015);
+    transform: scale(1.015) !important;
 }
 
 /* Grid 2 Images */
 .fb-grid-2 {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 3px;
-    height: 350px;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 3px !important;
+    height: 350px !important;
 }
 .fb-grid-2 img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.3s ease;
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    transition: transform 0.3s ease !important;
 }
 .fb-grid-2 img:hover {
-    transform: scale(1.02);
+    transform: scale(1.02) !important;
 }
 
 /* Grid 3 Images (1 Left Hero + 2 Right Stacked) */
 .fb-grid-3 {
-    display: grid;
-    grid-template-columns: 1.4fr 1fr;
-    gap: 3px;
-    height: 380px;
+    display: grid !important;
+    grid-template-columns: 1.4fr 1fr !important;
+    gap: 3px !important;
+    height: 380px !important;
 }
 .fb-grid-3-col-right {
-    display: grid;
-    grid-template-rows: 1fr 1fr;
-    gap: 3px;
-    height: 100%;
+    display: grid !important;
+    grid-template-rows: 1fr 1fr !important;
+    gap: 3px !important;
+    height: 100% !important;
 }
 .fb-grid-3 img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.3s ease;
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    transition: transform 0.3s ease !important;
 }
 .fb-grid-3 img:hover {
-    transform: scale(1.02);
+    transform: scale(1.02) !important;
 }
 
 /* Grid 4 Images (1 Left Hero + 3 Right Stacked) */
 .fb-grid-4 {
-    display: grid;
-    grid-template-columns: 1.3fr 1fr;
-    gap: 3px;
-    height: 390px;
+    display: grid !important;
+    grid-template-columns: 1.3fr 1fr !important;
+    gap: 3px !important;
+    height: 390px !important;
 }
 .fb-grid-4-col-right {
-    display: grid;
-    grid-template-rows: repeat(3, 1fr);
-    gap: 3px;
-    height: 100%;
+    display: grid !important;
+    grid-template-rows: repeat(3, 1fr) !important;
+    gap: 3px !important;
+    height: 100% !important;
 }
 .fb-grid-4 img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.3s ease;
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    transition: transform 0.3s ease !important;
 }
 .fb-grid-4 img:hover {
-    transform: scale(1.02);
+    transform: scale(1.02) !important;
 }
 
 /* Grid 5+ Images (Facebook Standard 2 Top + 3 Bottom Grid Layout) */
 .fb-grid-5 {
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-    height: 400px;
-    background: #0f172a;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 3px !important;
+    height: 400px !important;
+    background: #0f172a !important;
 }
 
 .fb-grid-5-row-top {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 3px;
-    height: 58%;
-    overflow: hidden;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 3px !important;
+    height: 58% !important;
+    overflow: hidden !important;
 }
 
 .fb-grid-5-row-top img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.3s ease;
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    transition: transform 0.3s ease !important;
 }
 .fb-grid-5-row-top img:hover {
-    transform: scale(1.02);
+    transform: scale(1.02) !important;
 }
 
 .fb-grid-5-row-bottom {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 3px;
-    height: 42%;
-    overflow: hidden;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr 1fr !important;
+    gap: 3px !important;
+    height: 42% !important;
+    overflow: hidden !important;
 }
 
 .fb-grid-5-row-bottom img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.3s ease;
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    transition: transform 0.3s ease !important;
 }
 .fb-grid-5-row-bottom img:hover {
-    transform: scale(1.02);
+    transform: scale(1.02) !important;
 }
 
 .fb-photo-thumb-box {

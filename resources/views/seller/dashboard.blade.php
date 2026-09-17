@@ -188,7 +188,7 @@
                     <td><strong>#{{ $idx + 1 }}</strong></td>
                     <td>
                         <div style="width: 48px; height: 48px; border-radius: 10px; overflow: hidden; background: #fff7ed; border: 1px solid #ffedd5;">
-                            <img src="{{ $p->image_path ?: '/images/stalls/food.png' }}" style="width: 100%; height: 100%; object-fit: cover;" alt="{{ $p->name }}">
+                            <img src="{{ $p->image_path ?: '/images/stalls/food.webp' }}" style="width: 100%; height: 100%; object-fit: cover;" alt="{{ $p->name }}">
                         </div>
                     </td>
                     <td style="font-weight: 800; color: #1e293b; font-size: 0.94rem;">{{ $p->name }}</td>

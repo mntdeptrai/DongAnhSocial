@@ -3,72 +3,86 @@
 namespace App\Services;
 
 use App\Domain\Wellness\WellnessServiceData;
-use App\Domain\Wellness\Actions\CreateWellnessServiceAction;
-use App\Domain\Wellness\Actions\UpdateWellnessServiceAction;
 use App\Helpers\R2Helper;
+use App\Models\Eatery;
 use App\Models\WellnessService;
-use App\Services\EateryApiService;
 
 class WellnessMapService
 {
-    public function __construct(
-        protected CreateWellnessServiceAction $createAction,
-        protected UpdateWellnessServiceAction $updateAction
-    ) {}
-
-    public function create(WellnessServiceData $data, ?string $connName = null): WellnessService
+    public function create(WellnessServiceData|array $data): ?WellnessService
     {
-        $imagePath = $this->resolveImagePath($data->image, $data->image_url);
-        
-        $action = $this->createAction;
-        if ($connName) {
-            \App\Models\WellnessService::setConnectionResolver(app('db'));
+        if ($data instanceof WellnessServiceData) {
+            $imagePath = $this->resolveImagePath($data->image, $data->image_url);
+            $attributes = [
+                'eatery_id' => $data->eatery_id,
+                'name' => $data->name,
+                'type' => $data->type,
+                'price' => $data->price,
+                'duration' => $data->duration,
+                'target_audience' => $data->target_audience,
+                'description' => $data->description,
+                'image_path' => $imagePath,
+            ];
+        } else {
+            $attributes = $data;
         }
-        
-        $service = $action->execute($data, $imagePath);
-        if ($connName) {
-            $service->setConnection($connName);
-            $service->save();
+
+        return $this->storeWellnessService($attributes);
+    }
+
+    public function update($id, WellnessServiceData|array $data): ?WellnessService
+    {
+        $service = WellnessService::find($id);
+        if (!$service) return null;
+
+        if ($data instanceof WellnessServiceData) {
+            $imagePath = $this->resolveImagePath($data->image, $data->image_url) ?? $service->image_path;
+            $attributes = [
+                'eatery_id' => $data->eatery_id,
+                'name' => $data->name,
+                'type' => $data->type,
+                'price' => $data->price,
+                'duration' => $data->duration,
+                'target_audience' => $data->target_audience,
+                'description' => $data->description,
+                'image_path' => $imagePath,
+            ];
+        } else {
+            $attributes = $data;
         }
+
+        $service->update($attributes);
         return $service;
     }
 
-    public function update($id, WellnessServiceData $data, ?string $connName = null): WellnessService
+    public function storeWellnessService(array $data): ?WellnessService
     {
-        $connections = ['mysql'];
-        $service = null;
-        $activeConn = $connName;
+        $eatery = Eatery::find($data['eatery_id'] ?? null);
+        if (!$eatery) return null;
 
-        if ($connName) {
-            $service = WellnessService::on($connName)->find($id);
-        } else {
-            foreach ($connections as $conn) {
-                $ws = WellnessService::on($conn)->find($id);
-                if ($ws) {
-                    $service = $ws;
-                    $activeConn = $conn;
-                    break;
-                }
-            }
-        }
+        return WellnessService::create($data);
+    }
 
-        if (!$service) {
-            throw new \Exception('Dịch vụ sức khỏe không tồn tại!');
-        }
+    public function updateWellnessService($id, array $data): ?WellnessService
+    {
+        $service = WellnessService::find($id);
+        if (!$service) return null;
 
-        $imagePath = $service->image_path;
-        if ($data->image) {
-            $imagePath = R2Helper::upload($data->image, 'wellness');
-        } elseif ($data->image_url) {
-            $imagePath = $this->resolveImagePath(null, $data->image_url);
-        }
-
-        return $this->updateAction->execute($service, $data, $imagePath);
+        $service->update($data);
+        return $service;
     }
 
     public function delete($id): bool
     {
-        return EateryApiService::deleteWellnessService($id);
+        $service = WellnessService::find($id);
+        if (!$service) return false;
+
+        return (bool) $service->delete();
+    }
+
+    public function deleteWellnessService($id): bool
+    {
+        return $this->delete($id);
     }
 
     protected function resolveImagePath($imageFile, ?string $imageUrl): ?string

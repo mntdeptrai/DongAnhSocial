@@ -1603,13 +1603,13 @@
                                     $coverImg = asset(ltrim($trimmedCover, '/'));
                                 }
                             } else {
-                                $coverImg = asset('images/stalls/food.png');
+                                $coverImg = asset('images/stalls/food.webp');
                                 if ($category === 'Rau củ') {
-                                    $coverImg = asset('images/stalls/veggies.png');
+                                    $coverImg = asset('images/stalls/veggies.webp');
                                 } elseif ($category === 'Thực phẩm khô' || str_contains($stallName, 'Hoa quả')) {
-                                    $coverImg = asset('images/stalls/fruits.png');
+                                    $coverImg = asset('images/stalls/fruits.webp');
                                 } elseif ($category === 'Thịt tươi') {
-                                    $coverImg = asset('images/stalls/meat.png');
+                                    $coverImg = asset('images/stalls/meat.webp');
                                 }
                             }
 
@@ -1719,7 +1719,7 @@
                                 <div style="display: flex; flex-direction: column; gap: 2px;">
                                     @foreach($stallProducts as $prod)
                                         @php
-                                            $itemImg = $prod->image_url ?: ($prod->image_path ?: '/images/stalls/food.png');
+                                            $itemImg = $prod->image_url ?: ($prod->image_path ?: '/images/stalls/food.webp');
                                             if (!empty($itemImg)) {
                                                 $trimmedItemImg = trim($itemImg);
                                                 if (str_starts_with($trimmedItemImg, '[')) {
@@ -1734,7 +1734,7 @@
                                                     $itemImgUrl = asset(ltrim($trimmedItemImg, '/'));
                                                 }
                                             } else {
-                                                $itemImgUrl = asset('/images/stalls/food.png');
+                                                $itemImgUrl = asset('/images/stalls/food.webp');
                                             }
                                         @endphp
                                         <div class="product-item-gov" style="cursor: pointer; transition: all 0.2s; border-radius: 10px; padding: 6px 10px; margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between; gap: 10px;" onmouseover="this.style.background='rgba(14, 165, 233, 0.08)';" onmouseout="this.style.background='transparent';" onclick="window.location.href='{{ route('market.stall.show', ['marketSlug' => $eatery->slug, 'stallSlug' => $safeStallSlug]) }}'">

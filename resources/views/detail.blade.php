@@ -1495,41 +1495,41 @@
 
                             <!-- Facebook Multi-Photo Grid -->
                             @if($imgCount === 1)
-                                <div class="fb-photo-grid fb-grid-1" style="border-radius: 12px; margin-bottom: 14px;" onclick="openPostLightbox('{{ $imgs[0] }}')">
+                                <div class="fb-photo-grid fb-grid-1" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 0)">
                                     <img src="{{ $imgs[0] }}" alt="{{ $p->name }}">
                                 </div>
                             @elseif($imgCount === 2)
-                                <div class="fb-photo-grid fb-grid-2" style="border-radius: 12px; margin-bottom: 14px;">
-                                    <img src="{{ $imgs[0] }}" onclick="openPostLightbox('{{ $imgs[0] }}')" alt="{{ $p->name }}">
-                                    <img src="{{ $imgs[1] }}" onclick="openPostLightbox('{{ $imgs[1] }}')" alt="{{ $p->name }}">
+                                <div class="fb-photo-grid fb-grid-2">
+                                    <img src="{{ $imgs[0] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 0)" alt="{{ $p->name }}">
+                                    <img src="{{ $imgs[1] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 1)" alt="{{ $p->name }}">
                                 </div>
                             @elseif($imgCount === 3)
-                                <div class="fb-photo-grid fb-grid-3" style="border-radius: 12px; margin-bottom: 14px;">
-                                    <img src="{{ $imgs[0] }}" onclick="openPostLightbox('{{ $imgs[0] }}')" alt="{{ $p->name }}">
+                                <div class="fb-photo-grid fb-grid-3">
+                                    <img src="{{ $imgs[0] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 0)" alt="{{ $p->name }}">
                                     <div class="fb-grid-3-col-right">
-                                        <img src="{{ $imgs[1] }}" onclick="openPostLightbox('{{ $imgs[1] }}')" alt="{{ $p->name }}">
-                                        <img src="{{ $imgs[2] }}" onclick="openPostLightbox('{{ $imgs[2] }}')" alt="{{ $p->name }}">
+                                        <img src="{{ $imgs[1] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 1)" alt="{{ $p->name }}">
+                                        <img src="{{ $imgs[2] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 2)" alt="{{ $p->name }}">
                                     </div>
                                 </div>
                             @elseif($imgCount === 4)
-                                <div class="fb-photo-grid fb-grid-4" style="border-radius: 12px; margin-bottom: 14px;">
-                                    <img src="{{ $imgs[0] }}" onclick="openPostLightbox('{{ $imgs[0] }}')" alt="{{ $p->name }}">
+                                <div class="fb-photo-grid fb-grid-4">
+                                    <img src="{{ $imgs[0] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 0)" alt="{{ $p->name }}">
                                     <div class="fb-grid-4-col-right">
-                                        <img src="{{ $imgs[1] }}" onclick="openPostLightbox('{{ $imgs[1] }}')" alt="{{ $p->name }}">
-                                        <img src="{{ $imgs[2] }}" onclick="openPostLightbox('{{ $imgs[2] }}')" alt="{{ $p->name }}">
-                                        <img src="{{ $imgs[3] }}" onclick="openPostLightbox('{{ $imgs[3] }}')" alt="{{ $p->name }}">
+                                        <img src="{{ $imgs[1] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 1)" alt="{{ $p->name }}">
+                                        <img src="{{ $imgs[2] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 2)" alt="{{ $p->name }}">
+                                        <img src="{{ $imgs[3] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 3)" alt="{{ $p->name }}">
                                     </div>
                                 </div>
                             @elseif($imgCount >= 5)
-                                <div class="fb-photo-grid fb-grid-5" style="border-radius: 12px; margin-bottom: 14px;">
+                                <div class="fb-photo-grid fb-grid-5">
                                     <div class="fb-grid-5-row-top">
-                                        <img src="{{ $imgs[0] }}" onclick="openPostLightbox('{{ $imgs[0] }}')" alt="{{ $p->name }}">
-                                        <img src="{{ $imgs[1] }}" onclick="openPostLightbox('{{ $imgs[1] }}')" alt="{{ $p->name }}">
+                                        <img src="{{ $imgs[0] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 0)" alt="{{ $p->name }}">
+                                        <img src="{{ $imgs[1] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 1)" alt="{{ $p->name }}">
                                     </div>
                                     <div class="fb-grid-5-row-bottom">
-                                        <img src="{{ $imgs[2] }}" onclick="openPostLightbox('{{ $imgs[2] }}')" alt="{{ $p->name }}">
-                                        <img src="{{ $imgs[3] }}" onclick="openPostLightbox('{{ $imgs[3] }}')" alt="{{ $p->name }}">
-                                        <div class="fb-photo-thumb-box" onclick="openPostLightbox('{{ $imgs[4] }}')">
+                                        <img src="{{ $imgs[2] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 2)" alt="{{ $p->name }}">
+                                        <img src="{{ $imgs[3] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 3)" alt="{{ $p->name }}">
+                                        <div class="fb-photo-thumb-box" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 4)">
                                             <img src="{{ $imgs[4] }}" alt="{{ $p->name }}">
                                             @if($imgCount > 5)
                                                 <div class="fb-photo-more-overlay">+{{ $imgCount - 5 }}</div>

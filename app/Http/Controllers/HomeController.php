@@ -520,11 +520,21 @@ class HomeController extends Controller
             return $post;
         });
 
-        // 4. Gợi ý Profile mới nhất
-        $featuredUsers = \App\Models\User::whereNotNull('name')
-            ->inRandomOrder()
+        // 4. Gợi ý Profile mới nhất (Dùng PRIMARY index range, 0% Full Table Scan)
+        $maxUserId = \App\Models\User::max('id') ?? 1;
+        $randomStartId = rand(1, max(1, $maxUserId - 20));
+        $featuredUsers = \App\Models\User::where('id', '>=', $randomStartId)
+            ->whereNotNull('name')
             ->take(10)
             ->get();
+        if ($featuredUsers->count() < 10) {
+            $moreUsers = \App\Models\User::whereNotNull('name')
+                ->whereNotIn('id', $featuredUsers->pluck('id'))
+                ->take(10 - $featuredUsers->count())
+                ->get();
+            $featuredUsers = $featuredUsers->merge($moreUsers);
+        }
+        $featuredUsers = $featuredUsers->shuffle();
 
         $allEateries = collect();
 

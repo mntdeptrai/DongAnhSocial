@@ -65,7 +65,10 @@ class SearchController extends Controller
         if ($keyword) {
             $words = array_filter(explode(' ', trim($keyword)));
             $query->where(function($qBuilder) use ($keyword, $words) {
-                $qBuilder->where('name', 'like', "%{$keyword}%")
+                if (mb_strlen($keyword) >= 2) {
+                    $qBuilder->whereFullText(['name', 'address'], $keyword);
+                }
+                $qBuilder->orWhere('name', 'like', "%{$keyword}%")
                          ->orWhere('slug', 'like', "%{$keyword}%")
                          ->orWhere('address', 'like', "%{$keyword}%")
                          ->orWhere('description', 'like', "%{$keyword}%")

@@ -3,64 +3,162 @@
 namespace App\Services;
 
 use App\Domain\ReviewVideo\ReviewVideoData;
-use App\Domain\ReviewVideo\Actions\CreateReviewVideoAction;
-use App\Domain\ReviewVideo\Actions\UpdateReviewVideoAction;
 use App\Helpers\R2Helper;
-use App\Services\EateryApiService;
+use App\Models\Eatery;
+use App\Models\ReviewVideo;
 use App\Services\YouTubeService;
+use Illuminate\Support\Str;
 
 class ReviewVideoService
 {
-    public function __construct(
-        protected CreateReviewVideoAction $createAction,
-        protected UpdateReviewVideoAction $updateAction
-    ) {}
-
-    public function create(ReviewVideoData $data, string $status)
+    /**
+     * Lấy toàn bộ video review đã được phê duyệt kèm thông tin cơ sở và người đăng.
+     */
+    public function getVideos()
     {
-        list($videoUrl, $videoType) = $this->resolveVideoDetails($data->video_file, $data->video_url, $data->title ?? 'Video Review Đông Anh');
-        return $this->createAction->execute($data, $videoUrl, $videoType, $status);
+        return ReviewVideo::with(['eatery.category', 'user'])
+            ->where('status', 'approved')
+            ->orderBy('id', 'desc')
+            ->get();
     }
 
-    public function update($id, ReviewVideoData $data, string $currentUrl, string $currentType, string $status)
+    public function like(int $id): bool
     {
-        $videoUrl = $currentUrl;
-        $videoType = $currentType;
+        $video = ReviewVideo::find($id);
+        if (!$video) return false;
 
-        if ($data->video_file) {
-            if ($currentType === 'local' && \Str::startsWith($currentUrl, '/uploads/videos/')) {
-                $oldFilePath = public_path($currentUrl);
-                if (file_exists($oldFilePath)) {
-                    @unlink($oldFilePath);
-                }
+        $video->increment('likes_count');
+        return true;
+    }
+
+    public function likeVideo(int $id): bool
+    {
+        return $this->like($id);
+    }
+
+    public function create(ReviewVideoData|array $data, string $status = 'pending'): ?ReviewVideo
+    {
+        if ($data instanceof ReviewVideoData) {
+            list($videoUrl, $videoType) = $this->resolveVideoDetails($data->video_file, $data->video_url, $data->title ?? 'Video Review Đông Anh');
+            $attributes = [
+                'eatery_id' => $data->eatery_id,
+                'user_id' => $data->user_id,
+                'title' => $data->title,
+                'video_url' => $videoUrl,
+                'video_type' => $videoType,
+                'thumbnail_path' => $data->thumbnail_path,
+                'likes_count' => 0,
+                'status' => $status,
+            ];
+        } else {
+            $attributes = $data;
+            if (!isset($attributes['status'])) {
+                $attributes['status'] = $status;
             }
-            list($videoUrl, $videoType) = $this->resolveVideoDetails($data->video_file, null, $data->title ?? 'Video Review Đông Anh');
-        } elseif ($data->video_url && $data->video_url !== $currentUrl) {
-            if ($currentType === 'local' && \Str::startsWith($currentUrl, '/uploads/videos/')) {
-                $oldFilePath = public_path($currentUrl);
-                if (file_exists($oldFilePath)) {
-                    @unlink($oldFilePath);
-                }
-            }
-            list($videoUrl, $videoType) = $this->resolveVideoDetails(null, $data->video_url, $data->title ?? 'Video Review Đông Anh');
         }
 
-        return $this->updateAction->execute($id, $data, $videoUrl, $videoType, $status);
+        return $this->storeVideo($attributes);
     }
 
-    public function approve($id)
+    public function update($id, ReviewVideoData|array $data, ?string $currentUrl = null, ?string $currentType = null, string $status = 'pending'): ?ReviewVideo
     {
-        return EateryApiService::approveVideo($id);
+        $video = ReviewVideo::find($id);
+        if (!$video) return null;
+
+        if ($data instanceof ReviewVideoData) {
+            $videoUrl = $currentUrl ?? $video->video_url;
+            $videoType = $currentType ?? $video->video_type;
+
+            if ($data->video_file) {
+                if ($videoType === 'local' && Str::startsWith($videoUrl, '/uploads/videos/')) {
+                    $oldFilePath = public_path($videoUrl);
+                    if (file_exists($oldFilePath)) {
+                        @unlink($oldFilePath);
+                    }
+                }
+                list($videoUrl, $videoType) = $this->resolveVideoDetails($data->video_file, null, $data->title ?? 'Video Review Đông Anh');
+            } elseif ($data->video_url && $data->video_url !== $videoUrl) {
+                if ($videoType === 'local' && Str::startsWith($videoUrl, '/uploads/videos/')) {
+                    $oldFilePath = public_path($videoUrl);
+                    if (file_exists($oldFilePath)) {
+                        @unlink($oldFilePath);
+                    }
+                }
+                list($videoUrl, $videoType) = $this->resolveVideoDetails(null, $data->video_url, $data->title ?? 'Video Review Đông Anh');
+            }
+
+            $attributes = [
+                'eatery_id' => $data->eatery_id,
+                'title' => $data->title,
+                'video_url' => $videoUrl,
+                'video_type' => $videoType,
+                'thumbnail_path' => $data->thumbnail_path ?? $video->thumbnail_path,
+                'status' => $status,
+            ];
+        } else {
+            $attributes = $data;
+        }
+
+        $video->update($attributes);
+        return $video;
     }
 
-    public function reject($id)
+    public function storeVideo(array $data): ?ReviewVideo
     {
-        return EateryApiService::rejectVideo($id);
+        $eatery = Eatery::find($data['eatery_id'] ?? null);
+        if (!$eatery) return null;
+
+        return ReviewVideo::create($data);
     }
 
-    public function delete($id): bool
+    public function updateVideo(int $id, array $data): ?ReviewVideo
     {
-        return EateryApiService::deleteVideo($id);
+        $video = ReviewVideo::find($id);
+        if (!$video) return null;
+
+        $video->update($data);
+        return $video;
+    }
+
+    public function approve(int $id): ?ReviewVideo
+    {
+        $video = ReviewVideo::find($id);
+        if (!$video) return null;
+
+        $video->update(['status' => 'approved']);
+        return $video;
+    }
+
+    public function approveVideo(int $id): ?ReviewVideo
+    {
+        return $this->approve($id);
+    }
+
+    public function reject(int $id): ?ReviewVideo
+    {
+        $video = ReviewVideo::find($id);
+        if (!$video) return null;
+
+        $video->update(['status' => 'rejected']);
+        return $video;
+    }
+
+    public function rejectVideo(int $id): ?ReviewVideo
+    {
+        return $this->reject($id);
+    }
+
+    public function delete(int $id): bool
+    {
+        $video = ReviewVideo::find($id);
+        if (!$video) return false;
+
+        return (bool) $video->delete();
+    }
+
+    public function deleteVideo(int $id): bool
+    {
+        return $this->delete($id);
     }
 
     protected function resolveVideoDetails($videoFile, ?string $videoUrl, string $title = 'Video Review Đông Anh'): array
@@ -69,7 +167,6 @@ class ReviewVideoService
         $resolvedType = 'local';
 
         if ($videoFile) {
-            // 1. Thử upload trực tiếp lên YouTube qua YouTube Data API v3 nếu đã cấu hình
             if (YouTubeService::isConfigured()) {
                 $ytResult = YouTubeService::uploadVideo($videoFile, $title, 'Video trải nghiệm ẩm thực và du lịch trên DongAnh Discovery');
                 if ($ytResult && !empty($ytResult['url'])) {
@@ -77,7 +174,6 @@ class ReviewVideoService
                 }
             }
 
-            // 2. Fallback sang Cloudflare R2 / Local Storage nếu chưa cấu hình YouTube hoặc gặp sự cố
             $resolvedUrl = R2Helper::upload($videoFile, 'videos');
             $resolvedType = 'local';
         } elseif ($videoUrl) {
@@ -85,31 +181,10 @@ class ReviewVideoService
             if (preg_match('/(?:drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?id=))([a-zA-Z0-9_-]{25,50})/i', $url, $matches)) {
                 $resolvedType = 'local';
                 $resolvedUrl = 'https://drive.google.com/uc?export=download&id=' . $matches[1];
-            }
-            elseif (preg_match('/tiktok\.com/i', $url)) {
+            } elseif (preg_match('/tiktok\.com/i', $url)) {
                 $resolvedType = 'tiktok';
                 $resolvedUrl = $url;
-                if (preg_match('/(?:vt|vm)\.tiktok\.com/i', $url) || preg_match('/tiktok\.com\/t\//i', $url)) {
-                    try {
-                        $ch = curl_init();
-                        curl_setopt($ch, CURLOPT_URL, $url);
-                        curl_setopt($ch, CURLOPT_HEADER, true);
-                        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-                        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-                        curl_setopt($ch, CURLOPT_TIMEOUT, 6);
-                        curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
-                        $response = curl_exec($ch);
-                        $finalUrl = curl_getinfo($ch, CURLINFO_EFFECTIVE_URL);
-                        curl_close($ch);
-                        if ($finalUrl) {
-                            $resolvedUrl = $finalUrl;
-                        }
-                    } catch (\Exception $e) {
-                        // Fallback
-                    }
-                }
-            } 
-            elseif (YouTubeService::isYouTubeUrl($url)) {
+            } elseif (YouTubeService::isYouTubeUrl($url)) {
                 $resolvedType = 'youtube_shorts';
                 $resolvedUrl = $url;
             } else {
@@ -121,4 +196,3 @@ class ReviewVideoService
         return [$resolvedUrl, $resolvedType];
     }
 }
-
