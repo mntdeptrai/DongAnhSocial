@@ -171,7 +171,7 @@ class CheckoutController extends Controller
                     'shipping_address' => $specificAddress,
                     'total_amount' => $totalAmount,
                     'payment_method' => $request->input('payment_method'),
-                    'status' => 'confirmed', // Tự động chuyển thẳng sang 'Sạp nhận đơn' cho cả COD và Online!
+                    'status' => 'pending', // Đơn mới tạo ở trạng thái 'Chờ xác nhận / Chờ duyệt' để chủ sạp/cơ sở tiếp nhận & duyệt
                     'notes' => $request->input('notes'),
                 ]);
 

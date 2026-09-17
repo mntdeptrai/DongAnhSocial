@@ -3292,29 +3292,19 @@
         
         L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-        // 3. Sử dụng Tileset phù hợp chế độ Sáng/Tối (Sử dụng Google Maps chính thức cho bản đồ sáng)
-        let currentTheme = localStorage.getItem('theme') || 'light';
-        let tileUrl = currentTheme === 'light' 
-            ? 'https://mt1.google.com/vt/lyrs=m&hl=vi&x={x}&y={y}&z={z}'
-            : 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
+        // 3. Sử dụng Google Maps Tileset cho bản đồ
+        let tileUrl = 'https://mt1.google.com/vt/lyrs=m&hl=vi&x={x}&y={y}&z={z}';
             
         let activeTileLayer = L.tileLayer(tileUrl, {
-            attribution: currentTheme === 'light' ? '&copy; Google Maps' : '&copy; OpenStreetMap &copy; CARTO',
-            subdomains: 'abcd',
+            attribution: '&copy; Google Maps',
             maxZoom: 20
         }).addTo(map);
 
-        // Lắng nghe sự kiện đổi chế độ Sáng/Tối để đổi lớp nền bản đồ tức thì
+        // Lắng nghe sự kiện đổi chế độ Sáng/Tối để giữ ổn định lớp nền bản đồ
         document.addEventListener('theme-changed', function(e) {
-            const nextTheme = e.detail.theme;
-            const nextTileUrl = nextTheme === 'light'
-                ? 'https://mt1.google.com/vt/lyrs=m&hl=vi&x={x}&y={y}&z={z}'
-                : 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
-            
             map.removeLayer(activeTileLayer);
-            activeTileLayer = L.tileLayer(nextTileUrl, {
-                attribution: nextTheme === 'light' ? '&copy; Google Maps' : '&copy; OpenStreetMap &copy; CARTO',
-                subdomains: 'abcd',
+            activeTileLayer = L.tileLayer(tileUrl, {
+                attribution: '&copy; Google Maps',
                 maxZoom: 20
             }).addTo(map);
         });

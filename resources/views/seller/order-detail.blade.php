@@ -1,324 +1,418 @@
 @extends('layouts.seller')
 
-@section('title', 'Chi tiết đơn hàng #ORD-' . str_pad($order->id, 5, '0', STR_PAD_LEFT))
+@section('title', 'Chi tiết đơn hàng #ORD' . str_pad($order->id, 6, '0', STR_PAD_LEFT))
 
 @section('content')
 
 @php
     $st = strtolower($order->status ?? 'pending');
-    $isConfirmed = in_array($st, ['confirmed', 'preparing', 'đang chuẩn bị']);
-    $isReady     = in_array($st, ['ready', 'sẵn sàng', 'chờ lấy']);
-    $isDone      = in_array($st, ['completed', 'delivered', 'hoàn thành', 'hoàn tất']);
+    $isConfirmed = in_array($st, ['confirmed', 'đã xác nhận']);
+    $isPreparing = in_array($st, ['preparing', 'processing', 'đang chuẩn bị']);
+    $isDone      = in_array($st, ['completed', 'delivered', 'hoàn thành']);
     $isCancelled = in_array($st, ['cancelled', 'rejected', 'đã từ chối', 'đã hủy']);
-    $isPending   = !$isConfirmed && !$isReady && !$isDone && !$isCancelled;
+    $isPending   = !$isConfirmed && !$isPreparing && !$isDone && !$isCancelled;
 
-    $badgeStyle  = 'background:#fef3c7; color:#92400e; border:1px solid #fde68a;';
-    $badgeLabel  = '🟡 Chờ xác nhận';
-    if ($isConfirmed) {
-        $badgeStyle = 'background:#ecfdf5; color:#065f46; border:1px solid #a7f3d0;';
-        $badgeLabel = '🟢 Đã nhận & Đang chuẩn bị';
-    } elseif ($isReady) {
-        $badgeStyle = 'background:#f0f9ff; color:#0369a1; border:1px solid #bae6fd;';
-        $badgeLabel = '🏪 Sẵn sàng tại sạp';
-    } elseif ($isDone) {
-        $badgeStyle = 'background:#ecfdf5; color:#047857; border:1px solid #6ee7b7;';
-        $badgeLabel = '🎉 Hoàn thành';
-    } elseif ($isCancelled) {
-        $badgeStyle = 'background:#fef2f2; color:#b91c1c; border:1px solid #fecaca;';
-        $badgeLabel = '✕ Đã từ chối';
-    }
+    $itemsList = isset($order->items) ? $order->items : collect();
+    $subtotal  = $itemsList->sum(function($i) { return ($i->price ?? 0) * ($i->quantity ?? 1); });
+    $total = $order->total_amount ?? $subtotal;
 @endphp
 
-@if(session('success'))
-    <div style="padding: 14px 20px; background: #ecfdf5; border: 1.5px solid #10b981; color: #065f46; border-radius: 12px; font-weight: 800; margin-bottom: 20px; display: flex; align-items: center; gap: 8px;">
-        <span>🎉</span> {{ session('success') }}
-    </div>
-@endif
+<style>
+    .slr-detail-header {
+        margin-bottom: 24px;
+    }
+    .slr-back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: #475569;
+        font-weight: 700;
+        font-size: 0.88rem;
+        text-decoration: none;
+        margin-bottom: 12px;
+        transition: color 0.2s;
+    }
+    .slr-back-link:hover {
+        color: #0284c7;
+    }
 
-@if(session('error'))
-    <div style="padding: 14px 20px; background: #fef2f2; border: 1.5px solid #ef4444; color: #b91c1c; border-radius: 12px; font-weight: 800; margin-bottom: 20px; display: flex; align-items: center; gap: 8px;">
-        <span>⚠️</span> {{ session('error') }}
-    </div>
-@endif
+    .slr-detail-title-row {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        flex-wrap: wrap;
+    }
 
-<!-- TOP ACTION BAR & BREADCRUMB -->
-<div style="margin-bottom: 20px;">
-    <a href="{{ route('seller.orders.index') }}" style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 12px; background: #ffffff; color: var(--slr-text-main); font-weight: 700; text-decoration: none; border: 1.5px solid var(--slr-border); transition: all 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.04);" onmouseover="this.style.borderColor='var(--slr-primary)'" onmouseout="this.style.borderColor='var(--slr-border)'">
-        ⬅️ Quay lại danh sách đơn hàng
+    .slr-detail-title {
+        font-size: 1.65rem;
+        font-weight: 800;
+        color: #0f172a;
+        margin: 0;
+    }
+
+    .status-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 0.82rem;
+        font-weight: 800;
+    }
+    .pill-pending { background: #ffedd5; color: #c2410c; border: 1px solid #fed7aa; }
+    .pill-preparing { background: #f3e8ff; color: #7e22ce; border: 1px solid #e9d5ff; }
+    .pill-confirmed { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
+    .pill-completed { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+    .pill-cancelled { background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5; }
+
+    .slr-card {
+        background: #ffffff;
+        border-radius: 16px;
+        border: 1px solid #e2e8f0;
+        padding: 24px;
+        margin-bottom: 24px;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.03);
+    }
+
+    .slr-card-title {
+        font-size: 1.05rem;
+        font-weight: 800;
+        color: #0f172a;
+        margin: 0 0 16px 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .info-group {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+    }
+    .info-item-label {
+        font-size: 0.78rem;
+        font-weight: 700;
+        color: #64748b;
+        text-transform: uppercase;
+        margin-bottom: 3px;
+    }
+    .info-item-val {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: #0f172a;
+    }
+
+    /* Timeline Stepper */
+    .timeline-list {
+        position: relative;
+        padding-left: 28px;
+        margin-top: 10px;
+    }
+    .timeline-list::before {
+        content: '';
+        position: absolute;
+        left: 9px;
+        top: 6px;
+        bottom: 6px;
+        width: 2px;
+        background: #e2e8f0;
+    }
+    .timeline-item {
+        position: relative;
+        padding-bottom: 22px;
+    }
+    .timeline-item:last-child {
+        padding-bottom: 0;
+    }
+    .timeline-dot {
+        position: absolute;
+        left: -28px;
+        top: 2px;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: #ffffff;
+        border: 3px solid #cbd5e1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .timeline-item.active .timeline-dot {
+        border-color: #10b981;
+        background: #10b981;
+    }
+    .timeline-item.active .timeline-dot::after {
+        content: '';
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #ffffff;
+    }
+    .timeline-title {
+        font-size: 0.92rem;
+        font-weight: 800;
+        color: #334155;
+    }
+    .timeline-item.active .timeline-title {
+        color: #0f172a;
+    }
+    .timeline-time {
+        font-size: 0.78rem;
+        color: #94a3b8;
+        font-weight: 600;
+        margin-top: 2px;
+    }
+</style>
+
+<!-- TOP BREADCRUMB & HEADER -->
+<div class="slr-detail-header">
+    <a href="{{ route('seller.orders.index') }}" class="slr-back-link">
+        ← Quay lại danh sách
     </a>
-</div>
+    <div class="slr-detail-title-row">
+        <h1 class="slr-detail-title">
+            Chi tiết đơn hàng #ORD{{ str_pad($order->id, 6, '0', STR_PAD_LEFT) }}
+        </h1>
 
-<!-- HEADER SECTION -->
-<div style="background: #ffffff; border: 1.5px solid var(--slr-border); border-radius: 20px; padding: 24px 28px; margin-bottom: 24px; box-shadow: 0 8px 24px -6px rgba(0,0,0,0.04); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
-    <div>
-        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 6px;">
-            <h1 style="font-size: 1.65rem; font-weight: 900; color: var(--slr-text-main); margin: 0;">
-                Chi tiết đơn hàng #ORD-{{ str_pad($order->id, 5, '0', STR_PAD_LEFT) }}
-            </h1>
-            <span style="display: inline-block; font-size: 0.8rem; font-weight: 800; padding: 6px 14px; border-radius: 20px; {{ $badgeStyle }}">
-                {{ $badgeLabel }}
-            </span>
-        </div>
-        <div style="font-size: 0.88rem; color: var(--slr-text-muted);">
-            🕒 Thời gian đặt: <strong>{{ \Carbon\Carbon::parse($order->created_at)->format('H:i - d/m/Y') }}</strong>
-        </div>
+        @if($isCancelled)
+            <span class="status-pill pill-cancelled">🔴 Đã hủy</span>
+        @elseif($isPreparing)
+            <span class="status-pill pill-preparing">🍽️ Đang chuẩn bị</span>
+        @elseif($isConfirmed)
+            <span class="status-pill pill-confirmed">🔵 Đã xác nhận</span>
+        @elseif($isDone)
+            <span class="status-pill pill-completed">🟢 Hoàn thành</span>
+        @else
+            <span class="status-pill pill-pending">🟠 Chờ xác nhận</span>
+        @endif
+
+        <span style="font-size: 0.88rem; color: #64748b; font-weight: 600; margin-left: auto;">
+            🕒 {{ \Carbon\Carbon::parse($order->created_at)->format('d/m/Y - h:i A') }}
+        </span>
     </div>
 </div>
 
-<!-- 2 COLUMN LAYOUT (LEFT 40% - RIGHT 60%) -->
-<div style="display: grid; grid-template-columns: minmax(320px, 1fr) minmax(400px, 1.4fr); gap: 24px; align-items: start;">
+@if(session('success'))
+    <div style="margin-bottom: 20px; padding: 14px 20px; background: #ecfdf5; border: 1.5px solid #10b981; color: #065f46; border-radius: 12px; font-weight: 700;">
+        🎉 {{ session('success') }}
+    </div>
+@endif
 
-    <!-- LEFT COLUMN: THÔNG TIN KHÁCH HÀNG & THAO TÁC CẬP NHẬT TRẠNG THÁI -->
-    <div style="display: flex; flex-direction: column; gap: 20px;">
+<!-- 2 COLUMN GRID LAYOUT -->
+<div style="display: grid; grid-template-columns: minmax(300px, 38%) minmax(360px, 62%); gap: 24px; align-items: start;">
 
+    <!-- LEFT COLUMN -->
+    <div>
         <!-- CARD 1: THÔNG TIN KHÁCH HÀNG -->
-        <div style="background: #ffffff; border: 1.5px solid var(--slr-border); border-radius: 18px; padding: 22px; box-shadow: 0 4px 16px rgba(0,0,0,0.03);">
-            <h3 style="font-size: 1.05rem; font-weight: 800; color: var(--slr-text-main); margin: 0 0 16px 0; display: flex; align-items: center; gap: 8px;">
+        <div class="slr-card">
+            <h3 class="slr-card-title">
                 👤 Thông tin khách hàng
             </h3>
-            <div style="display: flex; flex-direction: column; gap: 12px; font-size: 0.9rem;">
+            <div class="info-group">
                 <div>
-                    <span style="color: var(--slr-text-muted); font-size: 0.76rem; text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 2px;">Tên khách hàng</span>
-                    <strong style="color: var(--slr-text-main); font-size: 1rem;">{{ $order->customer_name ?? 'Khách lẻ' }}</strong>
+                    <div class="info-item-label">Tên khách hàng</div>
+                    <div class="info-item-val">{{ $order->customer_name ?? 'Khách lẻ' }}</div>
                 </div>
-                <div style="border-top: 1px dashed var(--slr-border); padding-top: 10px;">
-                    <span style="color: var(--slr-text-muted); font-size: 0.76rem; text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 2px;">Số điện thoại liên hệ</span>
-                    <a href="tel:{{ $order->customer_phone }}" style="color: var(--slr-primary); font-weight: 800; font-size: 1.05rem; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
-                        📞 {{ $order->customer_phone ?? 'N/A' }}
-                    </a>
+
+                <div>
+                    <div class="info-item-label">Số điện thoại</div>
+                    <div class="info-item-val">
+                        <a href="tel:{{ $order->customer_phone }}" style="color: #0284c7; text-decoration: none; font-weight: 800;">
+                            📞 {{ $order->customer_phone ?? 'N/A' }}
+                        </a>
+                    </div>
                 </div>
-                <div style="border-top: 1px dashed var(--slr-border); padding-top: 10px;">
-                    <span style="color: var(--slr-text-muted); font-size: 0.76rem; text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 2px;">📍 Hẹn lấy / Địa chỉ</span>
-                    <span style="color: var(--slr-text-main); font-weight: 600; line-height: 1.4;">{{ $order->shipping_address ?? 'Tự lấy tại chợ' }}</span>
+
+                <div>
+                    <div class="info-item-label">Địa chỉ giao hàng</div>
+                    <div class="info-item-val" style="font-size: 0.88rem; line-height: 1.4; color: #475569;">
+                        📍 {{ $order->shipping_address ?? 'Tại gian hàng' }}
+                    </div>
+                </div>
+
+                <div>
+                    <div class="info-item-label">Đối tác vận chuyển</div>
+                    <select style="width: 100%; padding: 10px 14px; border-radius: 10px; border: 1.5px solid #cbd5e1; font-weight: 700; font-size: 0.88rem; color: #334155; outline: none; background: #ffffff;">
+                        <option value="">-- Chưa chọn đối tác --</option>
+                        <option value="grab">GrabExpress</option>
+                        <option value="ahamove">Ahamove</option>
+                        <option value="self">Tự giao hàng / Shipper sạp</option>
+                    </select>
                 </div>
             </div>
         </div>
 
-        <!-- CARD 2: PHƯƠNG THỨC THANH TOÁN & GHI CHÚ -->
-        <div style="background: #ffffff; border: 1.5px solid var(--slr-border); border-radius: 18px; padding: 22px; box-shadow: 0 4px 16px rgba(0,0,0,0.03);">
-            <h3 style="font-size: 1.05rem; font-weight: 800; color: var(--slr-text-main); margin: 0 0 16px 0; display: flex; align-items: center; gap: 8px;">
-                💳 Thanh toán & Ghi chú
+        <!-- CARD 2: THÔNG TIN THANH TOÁN -->
+        <div class="slr-card">
+            <h3 class="slr-card-title">
+                💳 Thông tin thanh toán
             </h3>
-            <div style="display: flex; flex-direction: column; gap: 12px; font-size: 0.9rem;">
+            <div class="info-group">
                 <div>
-                    <span style="color: var(--slr-text-muted); font-size: 0.76rem; text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 2px;">Phương thức thanh toán</span>
-                    <span style="font-weight: 800; color: var(--slr-text-main);">
-                        {{ $order->payment_method ?? 'COD (Tiền mặt tại sạp)' }}
-                    </span>
+                    <div class="info-item-label">Phương thức thanh toán</div>
+                    <div class="info-item-val">{{ $order->payment_method ?? 'COD' }}</div>
                 </div>
-                <div style="border-top: 1px dashed var(--slr-border); padding-top: 10px;">
-                    <span style="color: var(--slr-text-muted); font-size: 0.76rem; text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 2px;">Ghi chú từ khách hàng</span>
-                    <span style="color: #92400e; font-style: italic; font-weight: 600;">
-                        "{{ $order->notes ?? 'Không có ghi chú' }}"
-                    </span>
+
+                <div>
+                    <div class="info-item-label">Ghi chú</div>
+                    <div style="font-size: 0.88rem; color: #64748b; font-style: italic;">
+                        {{ $order->notes ?? '--' }}
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- CARD 3: NÚT XỬ LÝ CẬP NHẬT TRẠNG THÁI ĐƠN HÀNG (LUỒNG A CHUẨN) -->
-        <div style="background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%); border: 2px solid #fdba74; border-radius: 18px; padding: 24px; box-shadow: 0 8px 24px -6px rgba(234, 88, 12, 0.15);">
-            <h3 style="font-size: 1.1rem; font-weight: 900; color: #c2410c; margin: 0 0 12px 0; display: flex; align-items: center; gap: 8px;">
-                ⚡ Cập nhật trạng thái đơn
-            </h3>
-            <p style="font-size: 0.84rem; color: #9a3412; margin: 0 0 18px 0; line-height: 1.4;">
-                Tiểu thương thao tác cập nhật tiến trình đơn hàng để thông báo cho khách hàng biết:
-            </p>
-
+        <!-- CARD 3: CẬP NHẬT TRẠNG THÁI (PRIMARY ACTIONS) -->
+        <div style="background: #ffffff; border-radius: 16px; border: 1.5px solid #e2e8f0; padding: 20px; box-shadow: 0 4px 16px rgba(0,0,0,0.03);">
             @if($isPending)
-                <div style="display: flex; flex-direction: column; gap: 10px;">
-                    <form action="{{ route('seller.orders.update-status', $order->id) }}" method="POST"
-                          onsubmit="return confirm('Xác nhận nhận đơn hàng #ORD-{{ str_pad($order->id, 5, '0', STR_PAD_LEFT) }} và tiến hành đóng gói chuẩn bị?')">
-                        @csrf
-                        @method('PUT')
-                        <input type="hidden" name="status" value="confirmed">
-                        <button type="submit" style="width: 100%; padding: 14px 20px; border-radius: 14px; border: none; background: #10b981; color: #ffffff; font-weight: 900; font-size: 0.95rem; cursor: pointer; box-shadow: 0 6px 18px rgba(16, 185, 129, 0.35); display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s;" onmouseover="this.style.background='#059669'" onmouseout="this.style.background='#10b981'">
-                            ✅ Nhận đơn hàng & Chuẩn bị đồ
-                        </button>
-                    </form>
-
-                    <form action="{{ route('seller.orders.update-status', $order->id) }}" method="POST"
-                          onsubmit="return confirm('Từ chối đơn hàng #ORD-{{ str_pad($order->id, 5, '0', STR_PAD_LEFT) }}?')">
-                        @csrf
-                        @method('PUT')
-                        <input type="hidden" name="status" value="cancelled">
-                        <button type="submit" style="width: 100%; padding: 12px 20px; border-radius: 14px; border: 1.5px solid #fca5a5; background: #fef2f2; color: #dc2626; font-weight: 800; font-size: 0.88rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s;" onmouseover="this.style.background='#fee2e2'" onmouseout="this.style.background='#fef2f2'">
-                            ✕ Từ chối đơn hàng này
-                        </button>
-                    </form>
-                </div>
-
-            @elseif($isConfirmed)
-                <div style="display: flex; flex-direction: column; gap: 10px;">
-                    <form action="{{ route('seller.orders.update-status', $order->id) }}" method="POST">
-                        @csrf
-                        @method('PUT')
-                        <input type="hidden" name="status" value="ready">
-                        <button type="submit" style="width: 100%; padding: 14px 20px; border-radius: 14px; border: none; background: #0284c7; color: #ffffff; font-weight: 900; font-size: 0.95rem; cursor: pointer; box-shadow: 0 6px 18px rgba(2, 132, 199, 0.35); display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s;" onmouseover="this.style.background='#0369a1'" onmouseout="this.style.background='#0284c7'">
-                            🏪 Xác nhận chuẩn bị xong (Sẵn sàng tại sạp)
-                        </button>
-                    </form>
-
-                    <form action="{{ route('seller.orders.update-status', $order->id) }}" method="POST"
-                          onsubmit="return confirm('Từ chối / Hủy đơn hàng #ORD-{{ str_pad($order->id, 5, '0', STR_PAD_LEFT) }}?')">
-                        @csrf
-                        @method('PUT')
-                        <input type="hidden" name="status" value="cancelled">
-                        <button type="submit" style="width: 100%; padding: 12px 20px; border-radius: 14px; border: 1.5px solid #fca5a5; background: #fef2f2; color: #dc2626; font-weight: 800; font-size: 0.88rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s;" onmouseover="this.style.background='#fee2e2'" onmouseout="this.style.background='#fef2f2'">
-                            ✕ Từ chối / Hủy đơn hàng
-                        </button>
-                    </form>
-                </div>
-
-            @elseif($isReady)
-                <form action="{{ route('seller.orders.update-status', $order->id) }}" method="POST"
-                      onsubmit="return confirm('Xác nhận khách đã đến sạp nhận túi đồ và hoàn tất đơn?')">
+                <form action="{{ route('seller.orders.update-status', $order->id) }}" method="POST" style="margin-bottom: 10px;" onsubmit="return confirm('Xác nhận nhận đơn hàng này?')">
                     @csrf
                     @method('PUT')
-                    <input type="hidden" name="status" value="completed">
-                    <button type="submit" style="width: 100%; padding: 14px 20px; border-radius: 14px; border: none; background: #059669; color: #ffffff; font-weight: 900; font-size: 0.95rem; cursor: pointer; box-shadow: 0 6px 18px rgba(5, 150, 105, 0.35); display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s;" onmouseover="this.style.background='#047857'" onmouseout="this.style.background='#059669'">
-                        🎉 Khách đã đến lấy đồ (Hoàn thành đơn hàng)
+                    <input type="hidden" name="status" value="confirmed">
+                    <button type="submit" style="width: 100%; padding: 14px 20px; border-radius: 12px; border: none; background: #0284c7; color: #ffffff; font-weight: 800; font-size: 0.95rem; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 14px rgba(2, 132, 199, 0.3);">
+                        Xác nhận đơn hàng
                     </button>
                 </form>
 
+                <form action="{{ route('seller.orders.update-status', $order->id) }}" method="POST" onsubmit="return confirm('Từ chối đơn hàng này?')">
+                    @csrf
+                    @method('PUT')
+                    <input type="hidden" name="status" value="cancelled">
+                    <button type="submit" style="width: 100%; padding: 10px; border-radius: 10px; border: 1.5px solid #fca5a5; background: #fef2f2; color: #dc2626; font-weight: 700; font-size: 0.85rem; cursor: pointer;">
+                        Từ chối đơn hàng
+                    </button>
+                </form>
+            @elseif($isConfirmed)
+                <form action="{{ route('seller.orders.update-status', $order->id) }}" method="POST">
+                    @csrf
+                    @method('PUT')
+                    <input type="hidden" name="status" value="preparing">
+                    <button type="submit" style="width: 100%; padding: 14px 20px; border-radius: 12px; border: none; background: #7e22ce; color: #ffffff; font-weight: 800; font-size: 0.95rem; cursor: pointer; transition: all 0.2s;">
+                        Xác nhận bắt đầu chuẩn bị hàng
+                    </button>
+                </form>
+            @elseif($isPreparing)
+                <form action="{{ route('seller.orders.update-status', $order->id) }}" method="POST">
+                    @csrf
+                    @method('PUT')
+                    <input type="hidden" name="status" value="completed">
+                    <button type="submit" style="width: 100%; padding: 14px 20px; border-radius: 12px; border: none; background: #15803d; color: #ffffff; font-weight: 800; font-size: 0.95rem; cursor: pointer; transition: all 0.2s;">
+                        Xác nhận đã hoàn thành đơn hàng
+                    </button>
+                </form>
             @elseif($isDone)
-                <div style="padding: 14px; background: #ecfdf5; border: 1.5px solid #10b981; color: #047857; border-radius: 12px; font-weight: 800; text-align: center; display: flex; align-items: center; justify-content: center; gap: 8px;">
-                    🎉 Đơn hàng đã giao thành công và hoàn tất!
+                <div style="padding: 12px; background: #dcfce7; color: #15803d; border-radius: 10px; font-weight: 800; text-align: center; font-size: 0.9rem;">
+                    ✅ Đơn hàng đã hoàn thành
                 </div>
-
             @elseif($isCancelled)
-                <div style="padding: 14px; background: #fef2f2; border: 1.5px solid #ef4444; color: #b91c1c; border-radius: 12px; font-weight: 800; text-align: center; display: flex; align-items: center; justify-content: center; gap: 8px;">
-                    ✕ Đơn hàng này đã bị từ chối / hủy.
+                <div style="padding: 12px; background: #fee2e2; color: #dc2626; border-radius: 10px; font-weight: 800; text-align: center; font-size: 0.9rem;">
+                    🔴 Đơn hàng đã bị hủy
                 </div>
             @endif
         </div>
 
     </div>
 
-    <!-- RIGHT COLUMN: DANH SÁCH MÓN ĐẶT MUA & TIMELINE LỊCH SỬ -->
-    <div style="display: flex; flex-direction: column; gap: 20px;">
-
-        <!-- CARD 1: CHI TIẾT SẢN PHẨM / MÓN ĂN ĐẶT MUA -->
-        <div style="background: #ffffff; border: 1.5px solid var(--slr-border); border-radius: 18px; padding: 24px; box-shadow: 0 4px 16px rgba(0,0,0,0.03);">
-            <h3 style="font-size: 1.1rem; font-weight: 800; color: var(--slr-text-main); margin: 0 0 16px 0; display: flex; align-items: center; gap: 8px;">
-                🍱 Chi tiết sản phẩm đặt mua
+    <!-- RIGHT COLUMN -->
+    <div>
+        <!-- CARD 1: CHI TIẾT SẢN PHẨM -->
+        <div class="slr-card">
+            <h3 class="slr-card-title">
+                📦 Chi tiết sản phẩm
             </h3>
 
-            <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem; margin-bottom: 20px;">
                 <thead>
-                    <tr style="border-bottom: 2px solid #f1f5f9; text-align: left; color: var(--slr-text-muted); font-size: 0.78rem; text-transform: uppercase;">
-                        <th style="padding: 8px 0;">Sản phẩm</th>
-                        <th style="padding: 8px; text-align: center;">Số lượng</th>
-                        <th style="padding: 8px; text-align: right;">Đơn giá</th>
-                        <th style="padding: 8px 0; text-align: right;">Thành tiền</th>
+                    <tr style="border-bottom: 2px solid #f1f5f9; text-align: left; color: #64748b; font-size: 0.8rem; text-transform: uppercase;">
+                        <th style="padding: 10px 0;">Tên sản phẩm</th>
+                        <th style="padding: 10px; text-align: center;">Số lượng</th>
+                        <th style="padding: 10px; text-align: right;">Đơn giá</th>
+                        <th style="padding: 10px 0; text-align: right;">Thành tiền</th>
                     </tr>
                 </thead>
                 <tbody>
                     @if(isset($order->items) && count($order->items) > 0)
                         @foreach($order->items as $item)
                             <tr style="border-bottom: 1px solid #f8fafc;">
-                                <td style="padding: 14px 0;">
-                                    <div style="font-weight: 700; color: var(--slr-text-main); font-size: 0.95rem;">
-                                        {{ $item->dish_name ?? $item->product_name ?? $item->name ?? 'Sản phẩm' }}
-                                    </div>
+                                <td style="padding: 14px 0; font-weight: 700; color: #0f172a;">
+                                    {{ $item->name }}
                                 </td>
-                                <td style="padding: 14px; text-align: center; font-weight: 800; color: var(--slr-primary);">
+                                <td style="padding: 14px; text-align: center; font-weight: 800; color: #334155;">
                                     {{ $item->quantity }}
                                 </td>
-                                <td style="padding: 14px; text-align: right; color: var(--slr-text-muted);">
-                                    {{ number_format($item->price ?? 0, 0, ',', '.') }}đ
+                                <td style="padding: 14px; text-align: right; color: #64748b; font-weight: 600;">
+                                    {{ number_format($item->price, 0, ',', '.') }} đ
                                 </td>
-                                <td style="padding: 14px 0; text-align: right; font-weight: 800; color: var(--slr-text-main);">
-                                    {{ number_format(($item->price ?? 0) * ($item->quantity ?? 1), 0, ',', '.') }}đ
+                                <td style="padding: 14px 0; text-align: right; font-weight: 800; color: #0f172a;">
+                                    {{ number_format($item->price * $item->quantity, 0, ',', '.') }} đ
                                 </td>
                             </tr>
                         @endforeach
                     @else
                         <tr>
-                            <td colspan="4" style="padding: 16px 0; color: var(--slr-text-muted); text-align: center;">
-                                Không có thông tin món ăn chi tiết.
+                            <td colspan="4" style="padding: 20px; text-align: center; color: #94a3b8; font-style: italic;">
+                                Không có chi tiết mặt hàng
                             </td>
                         </tr>
                     @endif
                 </tbody>
             </table>
 
-            <!-- BẢNG TỔNG CỘNG TIỀN -->
-            <div style="border-top: 2px dashed var(--slr-border); margin-top: 16px; padding-top: 16px; display: flex; flex-direction: column; gap: 8px; font-size: 0.9rem;">
-                <div style="display: flex; justify-content: space-between; color: var(--slr-text-muted);">
+            <!-- SUMMARY TOTALS -->
+            <div style="border-top: 2px solid #f1f5f9; padding-top: 14px; display: flex; flex-direction: column; gap: 8px; font-size: 0.9rem;">
+                <div style="display: flex; justify-content: space-between; color: #64748b;">
                     <span>Tạm tính</span>
-                    <span>{{ number_format($order->subtotal ?? $order->total_amount ?? 0, 0, ',', '.') }}đ</span>
+                    <span style="font-weight: 700; color: #334155;">{{ number_format($subtotal, 0, ',', '.') }} đ</span>
                 </div>
-                <div style="display: flex; justify-content: space-between; color: var(--slr-text-muted);">
-                    <span>Phí vận chuyển / Hẹn lấy</span>
-                    <span style="color: #10b981; font-weight: 700;">Miễn phí (Lấy tại chợ)</span>
+                <div style="display: flex; justify-content: space-between; color: #64748b;">
+                    <span>Phí giao hàng</span>
+                    <span style="font-weight: 700; color: #334155;">0 đ</span>
                 </div>
-                <div style="display: flex; justify-content: space-between; font-size: 1.15rem; font-weight: 900; border-top: 1px solid #f1f5f9; padding-top: 12px; margin-top: 6px;">
-                    <span style="color: var(--slr-text-main);">Tổng cộng thanh toán:</span>
-                    <span style="color: #10b981; font-size: 1.35rem;">{{ number_format($order->total_amount ?? 0, 0, ',', '.') }}đ</span>
+                <div style="display: flex; justify-content: space-between; color: #64748b;">
+                    <span>Giảm giá</span>
+                    <span style="font-weight: 700; color: #334155;">0 đ</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding-top: 10px; border-top: 1px dashed #cbd5e1; font-size: 1.15rem; font-weight: 900; color: #0f172a;">
+                    <span>Tổng cộng</span>
+                    <span style="color: #0284c7;">{{ number_format($total, 0, ',', '.') }} đ</span>
                 </div>
             </div>
         </div>
 
-        <!-- CARD 2: TIMELINE LỊCH SỬ ĐƠN HÀNG (LUỒNG A 4 BƯỚC) -->
-        <div style="background: #ffffff; border: 1.5px solid var(--slr-border); border-radius: 18px; padding: 24px; box-shadow: 0 4px 16px rgba(0,0,0,0.03);">
-            <h3 style="font-size: 1.1rem; font-weight: 800; color: var(--slr-text-main); margin: 0 0 20px 0; display: flex; align-items: center; gap: 8px;">
-                🔄 Lịch sử & Tiến trình đơn hàng
+        <!-- CARD 2: LỊCH SỬ ĐƠN HÀNG -->
+        <div class="slr-card">
+            <h3 class="slr-card-title">
+                ⏳ Lịch sử đơn hàng
             </h3>
 
-            <div style="display: flex; flex-direction: column; gap: 16px; position: relative; padding-left: 28px;">
-                <!-- Dải đường kẻ dọc -->
-                <div style="position: absolute; top: 10px; bottom: 10px; left: 10px; width: 3px; background: #e2e8f0; border-radius: 2px;"></div>
-
-                <!-- Mốc 1: Đặt đơn -->
-                <div style="position: relative;">
-                    <div style="position: absolute; left: -28px; top: 2px; width: 18px; height: 18px; border-radius: 50%; background: #10b981; border: 3px solid #ffffff; box-shadow: 0 0 0 2px #10b981;"></div>
-                    <div style="font-weight: 800; color: var(--slr-text-main); font-size: 0.92rem;">
-                        📝 Khách hàng gửi đơn hàng
-                    </div>
-                    <div style="font-size: 0.78rem; color: var(--slr-text-muted);">
-                        {{ \Carbon\Carbon::parse($order->created_at)->format('H:i - d/m/Y') }}
-                    </div>
+            <div class="timeline-list">
+                <!-- Step 1: Đơn hàng đã được tạo -->
+                <div class="timeline-item active">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-title">Đơn hàng đã được tạo</div>
+                    <div class="timeline-time">{{ \Carbon\Carbon::parse($order->created_at)->format('d/m/Y - h:i A') }}</div>
                 </div>
 
-                <!-- Mốc 2: Nhận đơn -->
-                <div style="position: relative;">
-                    @php $m2Active = $isConfirmed || $isReady || $isDone; @endphp
-                    <div style="position: absolute; left: -28px; top: 2px; width: 18px; height: 18px; border-radius: 50%; background: {{ $m2Active ? '#10b981' : '#cbd5e1' }}; border: 3px solid #ffffff; box-shadow: 0 0 0 2px {{ $m2Active ? '#10b981' : '#cbd5e1' }};"></div>
-                    <div style="font-weight: 800; color: {{ $m2Active ? 'var(--slr-text-main)' : '#94a3b8' }}; font-size: 0.92rem;">
-                        📋 Sạp nhận đơn & tiến hành chuẩn bị đồ
-                    </div>
-                    <div style="font-size: 0.78rem; color: var(--slr-text-muted);">
-                        {{ $m2Active ? \Carbon\Carbon::parse($order->updated_at)->format('H:i - d/m/Y') : 'Chờ xử lý...' }}
-                    </div>
+                <!-- Step 2: Đơn hàng đã được xác nhận -->
+                <div class="timeline-item {{ ($isConfirmed || $isPreparing || $isDone) ? 'active' : '' }}">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-title">Đơn hàng đã được xác nhận</div>
+                    <div class="timeline-time">{{ ($isConfirmed || $isPreparing || $isDone) ? \Carbon\Carbon::parse($order->updated_at)->format('d/m/Y - h:i A') : '--' }}</div>
                 </div>
 
-                <!-- Mốc 3: Sẵn sàng tại sạp -->
-                <div style="position: relative;">
-                    @php $m3Active = $isReady || $isDone; @endphp
-                    <div style="position: absolute; left: -28px; top: 2px; width: 18px; height: 18px; border-radius: 50%; background: {{ $m3Active ? '#0284c7' : '#cbd5e1' }}; border: 3px solid #ffffff; box-shadow: 0 0 0 2px {{ $m3Active ? '#0284c7' : '#cbd5e1' }};"></div>
-                    <div style="font-weight: 800; color: {{ $m3Active ? 'var(--slr-text-main)' : '#94a3b8' }}; font-size: 0.92rem;">
-                        🏪 Đồ đã đóng gói sẵn sàng tại sạp (Chờ khách lấy)
-                    </div>
-                    <div style="font-size: 0.78rem; color: var(--slr-text-muted);">
-                        {{ $m3Active ? \Carbon\Carbon::parse($order->updated_at)->format('H:i - d/m/Y') : 'Chờ cập nhật...' }}
-                    </div>
+                <!-- Step 3: Đơn hàng đang được giao -->
+                <div class="timeline-item {{ ($isPreparing || $isDone) ? 'active' : '' }}">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-title">Đơn hàng đang được chuẩn bị / giao</div>
+                    <div class="timeline-time">{{ ($isPreparing || $isDone) ? \Carbon\Carbon::parse($order->updated_at)->format('d/m/Y - h:i A') : '--' }}</div>
                 </div>
 
-                <!-- Mốc 4: Hoàn thành -->
-                <div style="position: relative;">
-                    <div style="position: absolute; left: -28px; top: 2px; width: 18px; height: 18px; border-radius: 50%; background: {{ $isDone ? '#059669' : ($isCancelled ? '#ef4444' : '#cbd5e1') }}; border: 3px solid #ffffff; box-shadow: 0 0 0 2px {{ $isDone ? '#059669' : ($isCancelled ? '#ef4444' : '#cbd5e1') }};"></div>
-                    <div style="font-weight: 800; color: {{ $isDone ? '#059669' : ($isCancelled ? '#ef4444' : '#94a3b8') }}; font-size: 0.92rem;">
-                        @if($isCancelled)
-                            ✕ Đơn hàng đã bị từ chối / hủy
-                        @else
-                            🎉 Khách đã nhận đồ & Đơn hàng hoàn thành
-                        @endif
-                    </div>
-                    <div style="font-size: 0.78rem; color: var(--slr-text-muted);">
-                        {{ ($isDone || $isCancelled) ? \Carbon\Carbon::parse($order->updated_at)->format('H:i - d/m/Y') : 'Chờ hoàn tất...' }}
-                    </div>
+                <!-- Step 4: Đơn hàng đã hoàn thành -->
+                <div class="timeline-item {{ $isDone ? 'active' : '' }}">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-title">Đơn hàng đã hoàn thành</div>
+                    <div class="timeline-time">{{ $isDone ? \Carbon\Carbon::parse($order->updated_at)->format('d/m/Y - h:i A') : '--' }}</div>
                 </div>
-
             </div>
         </div>
 

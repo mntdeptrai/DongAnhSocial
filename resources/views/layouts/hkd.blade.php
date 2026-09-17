@@ -186,7 +186,7 @@
         <nav class="hkd-nav">
             <a href="{{ route('hkd.dashboard') }}" class="hkd-nav-item {{ request()->routeIs('hkd.dashboard') ? 'active' : '' }}">
                 <i class="fa-solid fa-chart-pie"></i>
-                <span>Tổng Quan & HT10</span>
+                <span>Tổng Quan Kinh Doanh</span>
             </a>
             <a href="{{ route('hkd.profile') }}" class="hkd-nav-item {{ request()->routeIs('hkd.profile') ? 'active' : '' }}">
                 <i class="fa-solid fa-store"></i>
@@ -202,7 +202,7 @@
             </a>
             <a href="{{ route('hkd.reports') }}" class="hkd-nav-item {{ request()->routeIs('hkd.reports') ? 'active' : '' }}">
                 <i class="fa-solid fa-file-invoice-dollar"></i>
-                <span>Báo Cáo Doanh Thu HT10</span>
+                <span>Báo Cáo Doanh Thu & Hiệu Quả</span>
             </a>
             <a href="{{ route('hkd.qr') }}" class="hkd-nav-item {{ request()->routeIs('hkd.qr') ? 'active' : '' }}">
                 <i class="fa-solid fa-qrcode"></i>

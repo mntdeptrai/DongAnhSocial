@@ -1,7 +1,7 @@
 @extends('layouts.hkd')
 
-@section('title', 'Báo Cáo Doanh Thu & Chỉ Số HT10 — ' . $eatery->name)
-@section('title_header', 'Báo Cáo Phân Tích Số Liệu & Chỉ Tiêu Điều Hành (HT10)')
+@section('title', 'Báo Cáo Doanh Thu & Hiệu Quả — ' . $eatery->name)
+@section('title_header', 'Báo Cáo Phân Tích Số Liệu & Chỉ Tiêu Operating')
 
 @section('content')
 
@@ -14,18 +14,18 @@
     .hkd-kpi-num { font-size: 1.8rem; font-weight: 900; color: #0f172a; margin: 8px 0 4px 0; }
     .hkd-kpi-title { font-size: 0.8rem; font-weight: 700; color: #64748b; text-transform: uppercase; }
 
-    .hkd-ht10-badge {
+    .hkd-banner-badge {
         background: linear-gradient(135deg, #059669 0%, #0284c7 100%); color: #ffffff;
         padding: 24px; border-radius: 18px; margin-bottom: 28px; box-shadow: 0 8px 20px rgba(5,150,105,0.25);
     }
 </style>
 
-<!-- BANNER HƯỚNG DẪN HT10 -->
-<div class="hkd-ht10-badge">
+<!-- BANNER HƯỚNG DẪN QUẢN TRỊ -->
+<div class="hkd-banner-badge">
     <div style="font-size: 0.78rem; font-weight: 800; text-transform: uppercase; color: #a7f3d0; letter-spacing: 0.05em;">
-        📋 Hướng Dẫn Nền Tảng Số HT10 Cấp Xã / Huyện
+        📋 Trung Tâm Báo Cáo & Phân Tích Doanh Thu
     </div>
-    <h2 style="font-size: 1.4rem; font-weight: 900; margin: 8px 0 10px 0;">Báo Cáo Số Liệu & Tích Hợp Hệ Thống Chuyển Đổi Số</h2>
+    <h2 style="font-size: 1.4rem; font-weight: 900; margin: 8px 0 10px 0;">Báo Cáo Số Liệu & Tích Hợp Hệ Thống Quản Trị Kinh Doanh</h2>
     <p style="font-size: 0.92rem; color: #f0fdf4; line-height: 1.6; max-width: 900px;">
         Hệ thống tự động lập Bảng theo dõi số liệu, chỉ tiêu điều hành; phân tích doanh thu, chi phí ước tính, lợi nhuận, và quản lý danh mục mặt hàng kinh doanh cho cơ sở. Cung cấp nền tảng kết nối thanh toán ngân hàng điện tử VietQR giúp tự động hóa quy trình.
     </p>
@@ -55,17 +55,17 @@
     </div>
 </div>
 
-<!-- BẢNG BÁO CÁO CHI TIẾT THEO TIÊU CHUẨN HT10 -->
+<!-- BẢNG BÁO CÁO CHI TIẾT CƠ SỞ -->
 <div class="hkd-card">
     <div class="hkd-card-title">
         <i class="fa-solid fa-chart-line" style="color: #059669;"></i>
-        <span>Bảng Tổng Hợp Chỉ Tiêu Điều Hành & Chuyển Đổi Số</span>
+        <span>Bảng Tổng Hợp Chỉ Tiêu Điều Hành & Hoạt Động Số</span>
     </div>
 
     <table style="width: 100%; border-collapse: collapse;">
         <thead>
             <tr style="background: #f8fafc; border-bottom: 2px solid #e2e8f0;">
-                <th style="padding: 14px; text-align: left; font-size: 0.85rem; font-weight: 800; color: #334155;">Chỉ tiêu báo cáo HT10</th>
+                <th style="padding: 14px; text-align: left; font-size: 0.85rem; font-weight: 800; color: #334155;">Chỉ tiêu báo cáo hoạt động</th>
                 <th style="padding: 14px; text-align: right; font-size: 0.85rem; font-weight: 800; color: #334155;">Giá trị / Trạng thái</th>
                 <th style="padding: 14px; text-align: center; font-size: 0.85rem; font-weight: 800; color: #334155;">Đánh giá số hóa</th>
             </tr>
@@ -105,7 +105,7 @@
 
     <div style="margin-top: 24px; text-align: right;">
         <button onclick="window.print()" class="hkd-btn-action hkd-btn-emerald" style="padding: 12px 24px;">
-            <i class="fa-solid fa-print"></i> In Báo Cáo / Xuất File HT10
+            <i class="fa-solid fa-print"></i> In Báo Cáo / Xuất File
         </button>
     </div>
 </div>

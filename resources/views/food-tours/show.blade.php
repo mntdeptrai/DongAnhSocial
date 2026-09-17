@@ -719,17 +719,13 @@
         // Add standard zoom control at top right
         L.control.zoom({ position: 'topright' }).addTo(map);
 
-        // Dark/Light theme tiles mapper (CARTO Voyager cho Sáng & CARTO Dark Matter cho Tối)
         const getTileUrl = (theme) => {
-            return theme === 'light'
-                ? 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'
-                : 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
+            return 'https://mt1.google.com/vt/lyrs=m&hl=vi&x={x}&y={y}&z={z}';
         };
 
         const currentTheme = document.documentElement.getAttribute('data-theme') || (localStorage.getItem('theme') || 'light');
         let tileLayer = L.tileLayer(getTileUrl(currentTheme), {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
-            subdomains: 'abcd',
+            attribution: '&copy; Google Maps',
             maxZoom: 20
         }).addTo(map);
 

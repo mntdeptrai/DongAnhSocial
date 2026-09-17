@@ -2143,26 +2143,17 @@
             scrollWheelZoom: false
         }).setView([eateryLat, eateryLng], 15);
 
-        // Lớp nền phù hợp chế độ Sáng/Tối (Sử dụng Google Maps chính thức cho bản đồ sáng)
-        let currentTheme = localStorage.getItem('theme') || 'dark';
-        let tileUrl = currentTheme === 'light' 
-            ? 'https://mt1.google.com/vt/lyrs=m&hl=vi&x={x}&y={y}&z={z}'
-            : 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
+        let tileUrl = 'https://mt1.google.com/vt/lyrs=m&hl=vi&x={x}&y={y}&z={z}';
             
         let activeTileLayer = L.tileLayer(tileUrl, {
-            attribution: currentTheme === 'light' ? '&copy; Google Maps' : '&copy; OpenStreetMap &copy; CARTO'
+            attribution: '&copy; Google Maps'
         }).addTo(miniMap);
 
-        // Lắng nghe sự kiện đổi chế độ Sáng/Tối để đổi lớp nền bản đồ tức thì
+        // Lắng nghe sự kiện đổi chế độ Sáng/Tối
         document.addEventListener('theme-changed', function(e) {
-            const nextTheme = e.detail.theme;
-            const nextTileUrl = nextTheme === 'light'
-                ? 'https://mt1.google.com/vt/lyrs=m&hl=vi&x={x}&y={y}&z={z}'
-                : 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
-            
             miniMap.removeLayer(activeTileLayer);
-            activeTileLayer = L.tileLayer(nextTileUrl, {
-                attribution: nextTheme === 'light' ? '&copy; Google Maps' : '&copy; OpenStreetMap &copy; CARTO'
+            activeTileLayer = L.tileLayer(tileUrl, {
+                attribution: '&copy; Google Maps'
             }).addTo(miniMap);
         });
 

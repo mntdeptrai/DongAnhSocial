@@ -346,19 +346,34 @@
                             </button>
                             <div x-cloak x-show="open" x-transition class="profile-dropdown-menu">
                                 @php
-                                    $effectiveRole = session('user_role') ?: (Auth::check() ? Auth::user()->role : 'user');
+                                    $navUser = Auth::user() ?? \App\Models\User::find(session('user_id'));
+                                    $effectiveRole = session('user_role') ?: ($navUser ? $navUser->role : 'user');
+                                    $hasBusinessEatery = false;
+                                    if ($navUser) {
+                                        $hasBusinessEatery = \Illuminate\Support\Facades\DB::table('eateries')
+                                            ->where('user_id', $navUser->id)
+                                            ->orWhere('phone', $navUser->phone)
+                                            ->exists();
+                                    }
                                 @endphp
                                 <div class="user-info-header">
-                                    <div class="user-name">{{ session('user_name') ?: (Auth::check() ? Auth::user()->name : '') }}</div>
-                                    <div class="user-role">
+                                    <div class="user-name" style="display: flex; align-items: center; gap: 4px; flex-wrap: wrap;">
+                                        <span>{{ session('user_name') ?: ($navUser ? $navUser->name : '') }}</span>
+                                        @if($effectiveRole === 'admin')
+                                            <span title="Tài khoản Quản trị viên (Admin)" style="color: #ef4444; font-size: 0.9rem;">⭐</span>
+                                        @endif
+                                    </div>
+                                    <div class="user-role" style="font-weight: 700; font-size: 0.75rem; color: #059669; margin-top: 3px;">
                                         @if($effectiveRole === 'admin')
                                             🏛️ Quản trị viên Tổng
+                                        @elseif($effectiveRole === 'principal')
+                                            🏫 Hiệu trưởng Quản lý
                                         @elseif($effectiveRole === 'manager')
                                             🏛️ Ban Quản lý Chợ
                                         @elseif($effectiveRole === 'health_station')
                                             🏥 Cán bộ Trạm Y Tế
-                                        @elseif($effectiveRole === 'seller')
-                                            🛍️ Chủ Gian Hàng / Cơ Sở
+                                        @elseif(in_array($effectiveRole, ['hkd', 'dn', 'business', 'seller']) || $hasBusinessEatery)
+                                            🏢 Hộ Kinh Doanh & Doanh Nghiệp
                                         @else
                                             👤 Thành viên cộng đồng
                                         @endif
@@ -366,16 +381,22 @@
                                 </div>
                                 
                                 @if($effectiveRole === 'admin' || $effectiveRole === 'manager')
-                                    <a href="/admin/dashboard" class="dropdown-item" style="color: #0ea5e9; font-weight: 700; background: rgba(14, 165, 233, 0.06);">
-                                        <span>⚙️</span> Trang Quản Trị Chợ
+                                    <a href="/admin/dashboard" class="dropdown-item" style="color: #0ea5e9; font-weight: 700; background: rgba(14, 165, 233, 0.08);">
+                                        <span>⚙️</span> Trang Quản Trị Hệ Thống
                                     </a>
                                 @elseif($effectiveRole === 'health_station')
                                     <a href="/health-station/dashboard" class="dropdown-item" style="color: #0d9488; font-weight: 700; background: rgba(13, 148, 136, 0.08);">
                                         <span>🏥</span> Kênh Quản Lý Trạm Y Tế
                                     </a>
-                                @elseif($effectiveRole === 'seller')
-                                    <a href="/seller/dashboard" class="dropdown-item" style="color: #10b981; font-weight: 700; background: rgba(16, 185, 129, 0.06);">
-                                        <span>🛒</span> Kênh Quản Lý Gian Hàng
+                                @elseif($effectiveRole === 'principal')
+                                    <a href="/principal/schools" class="dropdown-item" style="color: #4f46e5; font-weight: 700; background: rgba(79, 70, 229, 0.08);">
+                                        <span>🏫</span> Kênh Quản Lý Trường Học
+                                    </a>
+                                @endif
+
+                                @if(in_array($effectiveRole, ['hkd', 'dn', 'business', 'seller', 'admin']) || $hasBusinessEatery)
+                                    <a href="{{ route('hkd.dashboard') }}" class="dropdown-item" style="color: #059669; font-weight: 800; background: #ecfdf5; border: 1px solid #a7f3d0;">
+                                        <span>🏢</span> Kênh Điều Hành HKD & Doanh Nghiệp
                                     </a>
                                 @endif
                                 

@@ -257,20 +257,27 @@ footer a:hover {
     transition: transform 0.2s ease;
 }
 
+.profile-dropdown {
+    position: relative;
+    display: inline-block;
+}
+
 .profile-dropdown-menu {
     position: absolute;
     right: 0;
     top: calc(100% + 8px);
     background: #ffffff;
-    border: 1px solid rgba(0, 0, 0, 0.08);
-    border-radius: 12px;
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-    width: 220px;
-    padding: 6px;
-    z-index: 1000;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    border-radius: 14px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+    min-width: 260px;
+    max-width: 320px;
+    width: max-content;
+    padding: 8px;
+    z-index: 9999;
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 4px;
 }
 
 .profile-dropdown-menu .user-info-header {
@@ -280,16 +287,19 @@ footer a:hover {
 }
 
 .profile-dropdown-menu .user-name {
-    font-weight: 700;
-    font-size: 0.85rem;
-    color: #1e293b;
-    word-break: break-all;
+    font-weight: 800;
+    font-size: 0.88rem;
+    color: #0f172a;
+    line-height: 1.35;
+    word-break: normal;
+    overflow-wrap: break-word;
 }
 
 .profile-dropdown-menu .user-role {
-    font-size: 0.72rem;
-    color: #64748b;
-    margin-top: 2px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #059669;
+    margin-top: 3px;
 }
 
 .profile-dropdown-menu .dropdown-item {

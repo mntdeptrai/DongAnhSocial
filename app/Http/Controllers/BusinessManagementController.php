@@ -114,29 +114,109 @@ class BusinessManagementController extends Controller
             return $p;
         });
 
-        // Orders count & list (safely checking if orders table exists)
+        // Orders breakdown & analytics
         $ordersCount = 0;
         $totalRevenue = 0;
+        $todayRevenue = 0;
+        $todayOrdersCount = 0;
+        $pendingOrdersCount = 0;
+        $processingOrdersCount = 0;
+        $completedOrdersCount = 0;
+        $cancelledOrdersCount = 0;
         $recentOrders = collect();
+
+        // 7-day revenue trend data initialization
+        $sevenDaysLabels = [];
+        $sevenDaysRevenue = [];
+
+        for ($i = 6; $i >= 0; $i--) {
+            $dateCarbon = now()->subDays($i);
+            $dateStr = $dateCarbon->format('Y-m-d');
+            $labelStr = $dateCarbon->format('d/m');
+            $sevenDaysLabels[] = $labelStr;
+            $sevenDaysRevenue[$dateStr] = 0;
+        }
 
         if (Schema::hasTable('orders')) {
             $ordersQuery = DB::table('orders')->where('eatery_id', $eatery->id);
             $ordersCount = (clone $ordersQuery)->count();
-            $totalRevenue = (clone $ordersQuery)->whereIn('status', ['completed', 'approved', 'delivered'])->sum('total_amount');
-            $recentOrders = (clone $ordersQuery)->orderBy('id', 'desc')->take(5)->get();
+
+            // Total & Today Revenue
+            $totalRevenue = (clone $ordersQuery)->whereIn('status', ['completed', 'approved', 'delivered', 'paid'])->sum('total_amount');
+
+            $todayDate = now()->format('Y-m-d');
+            $todayOrdersQuery = (clone $ordersQuery)->whereDate('created_at', $todayDate);
+            $todayOrdersCount = (clone $todayOrdersQuery)->count();
+            $todayRevenue = (clone $todayOrdersQuery)->whereIn('status', ['completed', 'approved', 'delivered', 'paid'])->sum('total_amount');
+
+            // Status counts
+            $pendingOrdersCount = (clone $ordersQuery)->where('status', 'pending')->count();
+            $processingOrdersCount = (clone $ordersQuery)->whereIn('status', ['processing', 'shipping', 'approved'])->count();
+            $completedOrdersCount = (clone $ordersQuery)->whereIn('status', ['completed', 'delivered', 'paid'])->count();
+            $cancelledOrdersCount = (clone $ordersQuery)->where('status', 'cancelled')->count();
+
+            // Recent orders
+            $recentOrders = (clone $ordersQuery)->orderBy('id', 'desc')->take(6)->get();
+
+            // 7-day revenue dataset
+            $startDate = now()->subDays(6)->startOfDay();
+            $dailyOrders = (clone $ordersQuery)
+                ->where('created_at', '>=', $startDate)
+                ->whereIn('status', ['completed', 'approved', 'delivered', 'paid'])
+                ->get();
+
+            foreach ($dailyOrders as $ord) {
+                $d = \Carbon\Carbon::parse($ord->created_at)->format('Y-m-d');
+                if (isset($sevenDaysRevenue[$d])) {
+                    $sevenDaysRevenue[$d] += (float) $ord->total_amount;
+                }
+            }
         }
+
+        $sevenDaysRevenueData = array_values($sevenDaysRevenue);
 
         // Check VietQR config
         $bankAccount = $storyData['bank_account'] ?? ($ctx['user']->bank_account ?? '');
         $bankName = $storyData['bank_name'] ?? ($ctx['user']->bank_name ?? '');
+        $bankOwner = $storyData['bank_owner'] ?? ($ctx['user']->bank_owner ?? $eatery->name);
         $hasVietQr = !empty($bankAccount) && !empty($bankName);
 
-        // HT10 Digital Transformation Index (Calculated)
-        $ht10Score = 40; // Base score
-        if (!empty($eatery->latitude) && !empty($eatery->longitude)) $ht10Score += 15;
-        if ($productsCount > 0) $ht10Score += 15;
-        if ($hasVietQr) $ht10Score += 15;
-        if (!empty($storyData['mst'])) $ht10Score += 15;
+        // Store Profile Completion Score (Mức độ hoàn thiện gian hàng)
+        $profileChecklist = [
+            'gps' => [
+                'title' => 'Định vị tọa độ bản đồ (GPS)',
+                'done' => !empty($eatery->latitude) && !empty($eatery->longitude),
+                'route' => route('hkd.profile'),
+                'label' => 'Cập nhật bản đồ'
+            ],
+            'mst' => [
+                'title' => 'Thông tin Mã Số Thuế / Giấy phép HKD',
+                'done' => !empty($storyData['mst']),
+                'route' => route('hkd.profile'),
+                'label' => 'Cập nhật MST'
+            ],
+            'products' => [
+                'title' => 'Đăng tải danh mục sản phẩm kinh doanh',
+                'done' => $productsCount > 0,
+                'route' => route('hkd.products.index'),
+                'label' => 'Thêm sản phẩm'
+            ],
+            'vietqr' => [
+                'title' => 'Tích hợp tài khoản thanh toán VietQR',
+                'done' => $hasVietQr,
+                'route' => route('hkd.qr'),
+                'label' => 'Cấu hình VietQR'
+            ],
+            'story' => [
+                'title' => 'Cập nhật hình ảnh & mô tả giới thiệu cơ sở',
+                'done' => !empty($eatery->description) && !empty($eatery->cover_image),
+                'route' => route('hkd.profile'),
+                'label' => 'Hoàn thiện hồ sơ'
+            ],
+        ];
+
+        $doneCount = collect($profileChecklist)->where('done', true)->count();
+        $profileScore = round(($doneCount / count($profileChecklist)) * 100);
 
         return view('hkd.dashboard', [
             'eatery' => $eatery,
@@ -145,11 +225,21 @@ class BusinessManagementController extends Controller
             'products' => $products,
             'ordersCount' => $ordersCount,
             'totalRevenue' => $totalRevenue,
+            'todayRevenue' => $todayRevenue,
+            'todayOrdersCount' => $todayOrdersCount,
+            'pendingOrdersCount' => $pendingOrdersCount,
+            'processingOrdersCount' => $processingOrdersCount,
+            'completedOrdersCount' => $completedOrdersCount,
+            'cancelledOrdersCount' => $cancelledOrdersCount,
             'recentOrders' => $recentOrders,
             'hasVietQr' => $hasVietQr,
-            'ht10Score' => min(100, $ht10Score),
             'bankAccount' => $bankAccount,
             'bankName' => $bankName,
+            'bankOwner' => $bankOwner,
+            'profileScore' => $profileScore,
+            'profileChecklist' => $profileChecklist,
+            'sevenDaysLabels' => $sevenDaysLabels,
+            'sevenDaysRevenueData' => $sevenDaysRevenueData,
         ]);
     }
 
@@ -255,6 +345,50 @@ class BusinessManagementController extends Controller
     }
 
     /**
+     * Show Create Product Form Page
+     */
+    public function createProduct(Request $request)
+    {
+        $this->verifyHkdAccess();
+        $ctx = $this->getBusinessContext();
+        $eatery = $ctx['eatery'];
+
+        return view('hkd.product-create', [
+            'eatery' => $eatery,
+        ]);
+    }
+
+    /**
+     * Show Edit Product Form Page
+     */
+    public function editProduct(Request $request, $id)
+    {
+        $this->verifyHkdAccess();
+        $ctx = $this->getBusinessContext();
+        $eatery = $ctx['eatery'];
+
+        $product = DB::table('ocop_products')
+            ->where('id', $id)
+            ->where('eatery_id', $eatery->id)
+            ->first();
+
+        if (!$product) {
+            return redirect()->route('hkd.products.index')->with('error', 'Sản phẩm không tồn tại!');
+        }
+
+        $specData = [];
+        if (!empty($product->ingredients)) {
+            $specData = is_array($product->ingredients) ? $product->ingredients : (json_decode($product->ingredients, true) ?: []);
+        }
+
+        return view('hkd.product-edit', [
+            'eatery' => $eatery,
+            'product' => $product,
+            'specData' => $specData,
+        ]);
+    }
+
+    /**
      * Store New Product
      */
     public function storeProduct(Request $request)
@@ -273,19 +407,30 @@ class BusinessManagementController extends Controller
             $imagePath = R2Helper::upload($request->file('image'), 'hkd/products');
         }
 
+        $specData = array_filter([
+            'product_type' => $request->input('product_type'),
+            'commitment_text' => $request->input('commitment_text'),
+            'delivery_text' => $request->input('delivery_text'),
+            'certificate_info' => $request->input('certificate_info'),
+            'order_policy' => $request->input('order_policy'),
+            'payment_policy' => $request->input('payment_policy'),
+            'is_signature' => $request->has('is_signature') ? 1 : 0,
+        ], function($v) { return $v !== null && $v !== ''; });
+
         DB::table('ocop_products')->insert([
             'eatery_id' => $eatery->id,
             'name' => $request->input('name'),
             'price' => $request->input('price'),
-            'unit' => $request->input('unit', 'Cái'),
+            'unit' => $request->input('unit', ''),
             'star_rating' => $request->input('star_rating'),
             'description' => $request->input('description', ''),
+            'ingredients' => !empty($specData) ? json_encode($specData, JSON_UNESCAPED_UNICODE) : null,
             'image_path' => $imagePath,
             'created_at' => now(),
             'updated_at' => now(),
         ]);
 
-        return back()->with('success', 'Đã thêm sản phẩm / mặt hàng kinh doanh mới thành công!');
+        return redirect()->route('hkd.products.index')->with('success', 'Đã thêm sản phẩm / mặt hàng kinh doanh mới thành công!');
     }
 
     /**
@@ -299,7 +444,7 @@ class BusinessManagementController extends Controller
 
         $product = DB::table('ocop_products')->where('id', $id)->where('eatery_id', $eatery->id)->first();
         if (!$product) {
-            return back()->with('error', 'Sản phẩm không tồn tại!');
+            return redirect()->route('hkd.products.index')->with('error', 'Sản phẩm không tồn tại!');
         }
 
         $request->validate([
@@ -312,17 +457,36 @@ class BusinessManagementController extends Controller
             $imagePath = R2Helper::upload($request->file('image'), 'hkd/products');
         }
 
+        $existingSpecs = [];
+        if (!empty($product->ingredients)) {
+            $existingSpecs = is_array($product->ingredients) ? $product->ingredients : (json_decode($product->ingredients, true) ?: []);
+        }
+
+        $newInputs = [
+            'product_type' => $request->input('product_type'),
+            'commitment_text' => $request->input('commitment_text'),
+            'delivery_text' => $request->input('delivery_text'),
+            'certificate_info' => $request->input('certificate_info'),
+            'order_policy' => $request->input('order_policy'),
+            'payment_policy' => $request->input('payment_policy'),
+            'is_signature' => $request->has('is_signature') ? 1 : 0,
+        ];
+        foreach ($newInputs as $k => $v) {
+            $existingSpecs[$k] = $v;
+        }
+
         DB::table('ocop_products')->where('id', $id)->update([
             'name' => $request->input('name'),
             'price' => $request->input('price'),
-            'unit' => $request->input('unit', $product->unit ?? 'Cái'),
+            'unit' => $request->input('unit', $product->unit ?? ''),
             'star_rating' => $request->input('star_rating', $product->star_rating),
             'description' => $request->input('description', ''),
+            'ingredients' => !empty($specData) ? json_encode($specData, JSON_UNESCAPED_UNICODE) : null,
             'image_path' => $imagePath,
             'updated_at' => now(),
         ]);
 
-        return back()->with('success', 'Đã cập nhật thông tin sản phẩm!');
+        return redirect()->route('hkd.products.index')->with('success', 'Đã cập nhật thông tin sản phẩm thành công!');
     }
 
     /**
@@ -356,6 +520,18 @@ class BusinessManagementController extends Controller
                 $query->where('status', $status);
             }
             $orders = $query->orderBy('id', 'desc')->paginate(15);
+
+            if (Schema::hasTable('order_items')) {
+                $orderIds = $orders->pluck('id');
+                $allItems = DB::table('order_items')
+                    ->whereIn('order_id', $orderIds)
+                    ->get()
+                    ->groupBy('order_id');
+
+                $orders->each(function ($ord) use ($allItems) {
+                    $ord->items = $allItems->get($ord->id, collect());
+                });
+            }
         }
 
         return view('hkd.orders', [
