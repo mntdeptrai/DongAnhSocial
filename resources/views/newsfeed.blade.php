@@ -510,18 +510,6 @@
             </div>
         </div>
 
-        <!-- Personalized Feed Modes Bar -->
-        <div class="nf-feed-mode-tabs" style="display: flex; gap: 8px; background: #f8fafc; padding: 5px; border-radius: 14px; margin-bottom: 14px; border: 1.5px solid #e2e8f0;">
-            <a href="?feed_type=for_you" style="flex: 1; text-align: center; padding: 10px 12px; border-radius: 10px; font-size: 0.88rem; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); {{ ($feedType ?? 'for_you') === 'for_you' ? 'background: #ffffff; color: #0284c7; box-shadow: 0 2px 8px rgba(15,23,42,0.08); font-weight: 800;' : 'color: #64748b; font-weight: 600;' }}">
-                <span>🎯</span> Dành cho bạn
-            </a>
-            <a href="?feed_type=following" style="flex: 1; text-align: center; padding: 10px 12px; border-radius: 10px; font-size: 0.88rem; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); {{ ($feedType ?? '') === 'following' ? 'background: #ffffff; color: #0284c7; box-shadow: 0 2px 8px rgba(15,23,42,0.08); font-weight: 800;' : 'color: #64748b; font-weight: 600;' }}">
-                <span>👥</span> Đang theo dõi
-            </a>
-            <a href="?feed_type=nearby" style="flex: 1; text-align: center; padding: 10px 12px; border-radius: 10px; font-size: 0.88rem; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); {{ ($feedType ?? '') === 'nearby' ? 'background: #ffffff; color: #0284c7; box-shadow: 0 2px 8px rgba(15,23,42,0.08); font-weight: 800;' : 'color: #64748b; font-weight: 600;' }}">
-                <span>📍</span> Gần tôi
-            </a>
-        </div>
 
         <!-- Filter Pills Bar -->
         <div class="nf-filter-pills">
@@ -950,16 +938,10 @@
             @endforeach
         @else
             <div class="nf-widget" style="padding: 40px 20px; text-align: center;">
-                <div style="font-size: 3.2rem; margin-bottom: 12px;">{{ ($feedType ?? '') === 'following' ? '👥' : '📰' }}</div>
-                @if(($feedType ?? '') === 'following')
-                    <h3 style="font-size: 1.15rem; font-weight: 800; color: #0f172a; margin-bottom: 6px;">Chưa có bài viết từ người bạn theo dõi</h3>
-                    <p style="font-size: 0.88rem; color: #64748b; margin-bottom: 20px;">Hãy kết bạn với những người dùng khác hoặc chuyển sang tab <strong>Dành cho bạn</strong> để xem nội dung được đề xuất!</p>
-                    <a href="?feed_type=for_you" style="display: inline-block; background: linear-gradient(135deg, #0ea5e9, #0284c7); color: #fff; padding: 12px 24px; border-radius: 100px; font-weight: 800; text-decoration: none; box-shadow: 0 4px 15px rgba(14,165,233,0.35);">🎯 Khám phá Dành cho bạn</a>
-                @else
-                    <h3 style="font-size: 1.15rem; font-weight: 800; color: #0f172a; margin-bottom: 6px;">Chưa có bài viết nào trên Bản tin</h3>
-                    <p style="font-size: 0.88rem; color: #64748b; margin-bottom: 20px;">Hãy là người đầu tiên chia sẻ thông tin hoặc bài viết mới nhất lên cộng đồng!</p>
-                    <button onclick="openNewsfeedPostModal()" style="display: inline-block; background: linear-gradient(135deg, #0ea5e9, #0284c7); color: #fff; padding: 12px 24px; border-radius: 100px; font-weight: 800; border: none; cursor: pointer; box-shadow: 0 4px 15px rgba(14,165,233,0.35);">✍️ Đăng bài ngay</button>
-                @endif
+                <div style="font-size: 3.2rem; margin-bottom: 12px;">📰</div>
+                <h3 style="font-size: 1.15rem; font-weight: 800; color: #0f172a; margin-bottom: 6px;">Chưa có bài viết nào trên Bản tin</h3>
+                <p style="font-size: 0.88rem; color: #64748b; margin-bottom: 20px;">Hãy là người đầu tiên chia sẻ thông tin hoặc bài viết mới nhất lên cộng đồng!</p>
+                <button onclick="openNewsfeedPostModal()" style="display: inline-block; background: linear-gradient(135deg, #0ea5e9, #0284c7); color: #fff; padding: 12px 24px; border-radius: 100px; font-weight: 800; border: none; cursor: pointer; box-shadow: 0 4px 15px rgba(14,165,233,0.35);">✍️ Đăng bài ngay</button>
             </div>
         @endif
 

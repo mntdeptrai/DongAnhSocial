@@ -999,7 +999,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   children: [
                     ListTile(
                       leading: const Icon(Icons.shield_outlined, color: Color(0xFF0EA5E9)),
-                      title: const Text('Chính sách bảo mật & Điều khoản (EULA)', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                      title: const Text('Chính sách bảo mật & Điều khoản', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
                       trailing: const Icon(Icons.chevron_right_rounded, color: Color(0xFF94A3B8)),
                       onTap: () {
                         Navigator.push(

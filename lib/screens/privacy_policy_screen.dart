@@ -54,7 +54,7 @@ class _PrivacyPolicyScreenState extends State<PrivacyPolicyScreen> with SingleTi
           indicatorWeight: 3,
           labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
           tabs: const [
-            Tab(text: 'Điều khoản UGC (EULA)'),
+            Tab(text: 'Điều khoản sử dụng'),
             Tab(text: 'Chính sách bảo mật'),
           ],
         ),
@@ -76,12 +76,12 @@ class _PrivacyPolicyScreenState extends State<PrivacyPolicyScreen> with SingleTi
         _buildNoticeBanner(
           icon: Icons.gavel_rounded,
           color: const Color(0xFFDC2626),
-          title: 'Quy chuẩn nội dung người dùng (EULA)',
+          title: 'Quy chuẩn nội dung người dùng',
           subtitle: 'Không khoan nhượng đối với nội dung độc hại & vi phạm pháp luật',
         ),
         const SizedBox(height: 16),
         _buildSectionCard(
-          title: '1. Chính sách không khoan nhượng (Zero Tolerance)',
+          title: '1. Chính sách không khoan nhượng',
           content:
               'Đông Anh Social nghiêm cấm tuyệt đối mọi hành vi đăng tải, phát tán các nội dung sau:\n'
               '• Nội dung phản động, chống phá pháp luật, kích động bạo lực hoặc thù hận sắc tộc/tôn giáo.\n'
@@ -101,7 +101,7 @@ class _PrivacyPolicyScreenState extends State<PrivacyPolicyScreen> with SingleTi
         ),
         const SizedBox(height: 12),
         _buildSectionCard(
-          title: '3. Quyền Chặn người dùng (Block User)',
+          title: '3. Quyền Chặn người dùng',
           content:
               'Bạn có toàn quyền chủ động bảo vệ trải nghiệm của mình:\n'
               '• Bạn có thể nhấn menu ba chấm (⋯) trên bài viết và chọn "Chặn người dùng này".\n'

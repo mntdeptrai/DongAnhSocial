@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Chính Sách Bảo Mật & Điều Khoản Sử Dụng (EULA) - Đông Anh Social')
+@section('title', 'Chính Sách Bảo Mật & Điều Khoản Sử Dụng - Đông Anh Social')
 @section('meta_description', 'Quy định tiêu chuẩn cộng đồng, chính sách kiểm duyệt 24h, bảo vệ dữ liệu cá nhân và quyền xóa tài khoản của người dùng trên nền tảng Đông Anh Social.')
 
 @section('content')
@@ -28,7 +28,7 @@
                     class="legal-tab-btn" 
                     :class="{ 'active': activeTab === 'eula' }" 
                     @click="activeTab = 'eula'">
-                📜 1. Thỏa Thuận Người Dùng & Kiểm Duyệt (EULA)
+                📜 1. Thỏa Thuận Người Dùng & Tiêu Chuẩn Cộng Đồng
             </button>
             <button type="button" 
                     class="legal-tab-btn" 
@@ -45,7 +45,7 @@
             <div class="legal-callout-warning">
                 <div class="callout-icon">⚠️</div>
                 <div>
-                    <h3 style="margin: 0 0 6px 0; font-size: 1.05rem; font-weight: 800; color: #b91c1c;">Chính Sách Không Dung Thứ (Zero Tolerance Policy)</h3>
+                    <h3 style="margin: 0 0 6px 0; font-size: 1.05rem; font-weight: 800; color: #b91c1c;">Chính Sách Không Dung Thứ Vi Phạm</h3>
                     <p style="margin: 0; font-size: 0.9rem; color: #7f1d1d; line-height: 1.5;">
                         Đông Anh Social nghiêm cấm tuyệt đối mọi hành vi đăng tải nội dung độc hại, xúc phạm danh dự, kích động bạo lực, chống phá, khiêu dâm, lừa đảo hoặc vi phạm bản quyền. Mọi vi phạm được phát hiện hoặc bị người dùng báo cáo sẽ được đội ngũ kiểm duyệt xử lý và gỡ bỏ trong vòng <strong>24 giờ</strong>.
                     </p>
@@ -60,7 +60,7 @@
             </section>
 
             <section class="legal-section">
-                <h2>2. Tiêu chuẩn nội dung do người dùng tạo (UGC)</h2>
+                <h2>2. Tiêu chuẩn nội dung do người dùng đăng tải</h2>
                 <p>Người dùng chịu hoàn toàn trách nhiệm pháp lý đối với mọi nội dung mình đăng tải (bài viết, hình ảnh, video reels, nhận xét, phát sóng trực tiếp). Tuyệt đối nghiêm cấm các hành vi sau:</p>
                 <ul class="legal-list">
                     <li><strong>Nội dung thù địch, xúc phạm:</strong> Tuyên truyền thông tin sai sự thật, vu khống, quấy rối, đe dọa, xúc phạm danh dự của bất kỳ cá nhân, tổ chức nào.</li>
@@ -78,12 +78,12 @@
                 <div class="legal-grid-features">
                     <div class="legal-feature-box">
                         <div class="feat-icon">🚩</div>
-                        <h4>Công Cụ Báo Cáo (Report)</h4>
+                        <h4>Công Cụ Báo Cáo Vi Phạm</h4>
                         <p>Mỗi bài viết, bình luận hoặc hồ sơ người dùng đều có nút menu 3 chấm với tùy chọn "Báo cáo vi phạm". Báo cáo được tự động chuyển ngay vào Hàng đợi kiểm duyệt (Moderation Queue).</p>
                     </div>
                     <div class="legal-feature-box">
                         <div class="feat-icon">🚫</div>
-                        <h4>Công Cụ Chặn Tức Thì (Block)</h4>
+                        <h4>Công Cụ Chặn Người Dùng</h4>
                         <p>Người dùng có toàn quyền chặn hoặc ẩn bất kỳ tác giả/nội dung nào. Sau khi chặn, toàn bộ bài viết của người đó sẽ biến mất ngay lập tức khỏi nguồn cấp dữ liệu của bạn.</p>
                     </div>
                     <div class="legal-feature-box">

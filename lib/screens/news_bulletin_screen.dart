@@ -30,7 +30,6 @@ class NewsBulletinScreen extends StatefulWidget {
 class _NewsBulletinScreenState extends State<NewsBulletinScreen> {
   List<PostModel> _posts = [];
   bool _isLoading = true;
-  String _feedType = 'for_you';
 
   final Set<String> _likedPosts = {};
   final Map<String, int> _likesCounts = {};
@@ -68,14 +67,12 @@ class _NewsBulletinScreenState extends State<NewsBulletinScreen> {
     _fetchNewsfeed();
   }
 
-  Future<void> _fetchNewsfeed([String? feedType]) async {
-    final typeToFetch = feedType ?? _feedType;
+  Future<void> _fetchNewsfeed() async {
     setState(() {
-      _feedType = typeToFetch;
       _isLoading = true;
     });
     try {
-      final feed = await ApiService.getNewsfeed(feedType: typeToFetch);
+      final feed = await ApiService.getNewsfeed();
       if (!mounted) return;
 
       final parsedPosts = feed.map((item) => PostModel.fromJson(Map<String, dynamic>.from(item))).toList();
@@ -1064,63 +1061,7 @@ class _NewsBulletinScreenState extends State<NewsBulletinScreen> {
     );
   }
 
-  Widget _buildFeedModeTabs() {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF1F5F9),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-      ),
-      child: Row(
-        children: [
-          _buildFeedModeTab('for_you', '🎯 Dành cho bạn'),
-          _buildFeedModeTab('following', '👥 Đang theo dõi'),
-          _buildFeedModeTab('nearby', '📍 Gần tôi'),
-        ],
-      ),
-    );
-  }
 
-  Widget _buildFeedModeTab(String type, String label) {
-    final isSelected = _feedType == type;
-    return Expanded(
-      child: GestureDetector(
-        onTap: () {
-          if (_feedType != type) {
-            _fetchNewsfeed(type);
-          }
-        },
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          decoration: BoxDecoration(
-            color: isSelected ? Colors.white : Colors.transparent,
-            borderRadius: BorderRadius.circular(10),
-            boxShadow: isSelected
-                ? [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.06),
-                      blurRadius: 4,
-                      offset: const Offset(0, 1),
-                    )
-                  ]
-                : null,
-          ),
-          alignment: Alignment.center,
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-              color: isSelected ? const Color(0xFF0284C7) : const Color(0xFF64748B),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -1139,12 +1080,10 @@ class _NewsBulletinScreenState extends State<NewsBulletinScreen> {
               )
             : ListView.builder(
                 padding: const EdgeInsets.fromLTRB(14, 10, 14, 90),
-                itemCount: filtered.isEmpty ? 8 : 7 + filtered.length,
+                itemCount: filtered.isEmpty ? 7 : 6 + filtered.length,
                 itemBuilder: (context, index) {
                   switch (index) {
                     case 0:
-                      return _buildFeedModeTabs();
-                    case 1:
                       return StoryCarousel(
                         posts: _posts,
                         onCreateStory: _showCreateStoryScreen,
@@ -1154,13 +1093,13 @@ class _NewsBulletinScreenState extends State<NewsBulletinScreen> {
                           }
                         },
                       );
+                    case 1:
+                      return const SizedBox(height: 10);
                     case 2:
-                      return const SizedBox(height: 10);
-                    case 3:
                       return _buildPostComposer(user);
-                    case 4:
+                    case 3:
                       return const SizedBox(height: 10);
-                    case 5:
+                    case 4:
                       return CategoryFilterBar(
                         categories: _categories,
                         selectedCategory: _selectedCategory,
@@ -1170,33 +1109,31 @@ class _NewsBulletinScreenState extends State<NewsBulletinScreen> {
                           });
                         },
                       );
-                    case 6:
+                    case 5:
                       return const SizedBox(height: 10);
                     default:
                       if (filtered.isEmpty) {
                         return Container(
                           padding: const EdgeInsets.all(36),
                           alignment: Alignment.center,
-                          child: Column(
+                          child: const Column(
                             children: [
                               Icon(
-                                _feedType == 'following' ? Icons.people_outline_rounded : Icons.article_outlined,
+                                Icons.article_outlined,
                                 size: 48,
-                                color: const Color(0xFF94A3B8),
+                                color: Color(0xFF94A3B8),
                               ),
-                              const SizedBox(height: 10),
+                              SizedBox(height: 10),
                               Text(
-                                _feedType == 'following'
-                                    ? 'Chưa có bài viết từ người bạn theo dõi.\nHãy kết bạn hoặc chuyển sang "Dành cho bạn"!'
-                                    : 'Chưa có bài viết nào trong mục này.',
+                                'Chưa có bài viết nào trong mục này.',
                                 textAlign: TextAlign.center,
-                                style: const TextStyle(color: Color(0xFF64748B), fontWeight: FontWeight.bold, fontSize: 13.5),
+                                style: TextStyle(color: Color(0xFF64748B), fontWeight: FontWeight.bold, fontSize: 13.5),
                               ),
                             ],
                           ),
                         );
                       }
-                      final postIndex = index - 7;
+                      final postIndex = index - 6;
                       final post = filtered[postIndex];
                       final postId = post.id;
                       final isLiked = _likedPosts.contains(postId);

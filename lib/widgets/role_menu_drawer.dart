@@ -141,7 +141,7 @@ class RoleMenuDrawer extends StatelessWidget {
                     icon: Icons.chat_bubble_outline_rounded,
                     iconColor: const Color(0xFF0284C7),
                     bgColor: const Color(0xFFE0F2FE),
-                    title: 'Tin nhắn & Gọi điện (WebRTC)',
+                    title: 'Tin nhắn & Gọi điện',
                     onTap: () {
                       Navigator.pop(context);
                       Navigator.push(
@@ -180,7 +180,7 @@ class RoleMenuDrawer extends StatelessWidget {
                     icon: Icons.shield_outlined,
                     iconColor: const Color(0xFF0EA5E9),
                     bgColor: const Color(0xFFE0F2FE),
-                    title: 'Chính sách bảo mật & Điều khoản (EULA)',
+                    title: 'Chính sách bảo mật & Điều khoản',
                     onTap: () {
                       Navigator.pop(context);
                       Navigator.push(
@@ -232,7 +232,7 @@ class RoleMenuDrawer extends StatelessWidget {
                         icon: Icons.dashboard_rounded,
                         iconColor: const Color(0xFF6366F1),
                         bgColor: const Color(0xFFEEF2FF),
-                        title: 'Dashboard Thống kê Hệ thống',
+                        title: 'Bảng Thống kê Hệ thống',
                         onTap: () {
                           Navigator.pop(context);
                           Navigator.push(
