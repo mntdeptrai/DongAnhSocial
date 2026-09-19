@@ -33,6 +33,8 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
   bool _isSpeakerOn = true;
   bool _isConnected = false;
   int _secondsElapsed = 0;
+  static const int _waitingTimeoutSeconds = 90;
+  Timer? _waitingTimer;
   Timer? _callTimer;
   Timer? _statusPollTimer;
   int? _activeCallId;
@@ -50,6 +52,7 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
     _isVideoOn = widget.isVideo;
     _activeCallId = widget.callId;
 
+    _startWaitingTimer();
     _initWebRTC();
   }
 
@@ -115,6 +118,7 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
         if (state == RTCIceConnectionState.RTCIceConnectionStateConnected ||
             state == RTCIceConnectionState.RTCIceConnectionStateCompleted) {
           if (mounted && !_isConnected) {
+            _waitingTimer?.cancel();
             setState(() => _isConnected = true);
             _startDurationTimer();
           }
@@ -326,6 +330,39 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
     }
   }
 
+  void _startWaitingTimer() {
+    _waitingTimer?.cancel();
+    _waitingTimer = Timer(const Duration(seconds: _waitingTimeoutSeconds), () {
+      if (mounted && !_isConnected && !_callEnded) {
+        _handleWaitingTimeout();
+      }
+    });
+  }
+
+  void _handleWaitingTimeout() async {
+    if (_callEnded) return;
+    _callEnded = true;
+    _waitingTimer?.cancel();
+    _statusPollTimer?.cancel();
+
+    if (_activeCallId != null) {
+      try {
+        await ApiService.hangupCall(_activeCallId!, widget.friendId, 'missed');
+      } catch (_) {}
+    }
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Người nhận không trả lời'),
+          duration: Duration(seconds: 3),
+        ),
+      );
+      widget.onCallEnded(0);
+      Navigator.of(context).pop();
+    }
+  }
+
   void _startDurationTimer() {
     _callTimer?.cancel();
     _callTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
@@ -337,6 +374,7 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
 
   @override
   void dispose() {
+    _waitingTimer?.cancel();
     _statusPollTimer?.cancel();
     _callTimer?.cancel();
     try {
@@ -491,7 +529,9 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
                     Text(
                       _isConnected
                           ? '${widget.isVideo ? "Cuộc gọi video HD" : "Cuộc gọi thoại"} • ${_formatDuration(_secondsElapsed)}'
-                          : 'Đang kết nối tín hiệu...',
+                          : (widget.isCaller
+                              ? 'Đang đổ chuông...'
+                              : 'Đang kết nối tín hiệu...'),
                       style: const TextStyle(color: Colors.white70, fontSize: 14, fontWeight: FontWeight.w500),
                     ),
                   ],

@@ -956,7 +956,7 @@ class SocialHubController extends Controller
 
         $pendingCall = CallLog::where('receiver_id', $userId)
             ->where('status', 'ringing')
-            ->where('created_at', '>=', now()->subSeconds(30))
+            ->where('created_at', '>=', now()->subSeconds(90))
             ->latest()
             ->first();
 

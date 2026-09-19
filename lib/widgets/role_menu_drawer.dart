@@ -7,6 +7,7 @@ import '../screens/video_reels_screen.dart';
 import '../screens/exp_corner_screen.dart';
 import '../screens/about_guide_screen.dart';
 import '../screens/privacy_policy_screen.dart';
+import '../screens/chat_screen.dart';
 
 class RoleMenuDrawer extends StatelessWidget {
   final String activeRole;
@@ -136,6 +137,19 @@ class RoleMenuDrawer extends StatelessWidget {
 
                   // SECTION 2: TIỆN ÍCH CỦA TÔI
                   _buildSectionHeader('TIỆN ÍCH CỦA TÔI'),
+                  _buildMenuItem(
+                    icon: Icons.chat_bubble_outline_rounded,
+                    iconColor: const Color(0xFF0284C7),
+                    bgColor: const Color(0xFFE0F2FE),
+                    title: 'Tin nhắn & Gọi điện (WebRTC)',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const ChatScreen()),
+                      );
+                    },
+                  ),
                   _buildMenuItem(
                     icon: Icons.receipt_long_rounded,
                     iconColor: const Color(0xFF6366F1),

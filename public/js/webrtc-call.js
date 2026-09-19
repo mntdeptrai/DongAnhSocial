@@ -91,6 +91,8 @@ window.DongAnhWebRTC = (function () {
     function startCallStatusPolling(callId, role) {
         if (callerStatusPollInterval) clearInterval(callerStatusPollInterval);
         let gotAnswer = false;
+        let waitingElapsedSeconds = 0;
+        const waitingTimeoutSeconds = 90;
 
         callerStatusPollInterval = setInterval(async () => {
             if (!currentCallId || currentCallId !== callId) {
@@ -98,6 +100,31 @@ window.DongAnhWebRTC = (function () {
                 callerStatusPollInterval = null;
                 return;
             }
+
+            if (role === 'caller' && !gotAnswer) {
+                waitingElapsedSeconds += 1.5;
+
+                if (waitingElapsedSeconds >= waitingTimeoutSeconds) {
+                    clearInterval(callerStatusPollInterval);
+                    callerStatusPollInterval = null;
+                    stopRingtone();
+                    hideOutgoingModal();
+                    try {
+                        fetch('/social/call/hangup', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+                            },
+                            body: JSON.stringify({ call_id: callId, reason: 'missed' })
+                        });
+                    } catch (_) {}
+                    showToast('Người nhận không trả lời (quá thời gian chờ 1 phút 30 giây).');
+                    cleanupCall();
+                    return;
+                }
+            }
+
             try {
                 const res = await fetch('/social/call/status/' + callId, {
                     headers: { 'Accept': 'application/json' }
