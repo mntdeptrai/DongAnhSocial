@@ -1,4 +1,4 @@
-  import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../screens/my_orders_screen.dart';
 import '../screens/admin_dashboard_screen.dart';
@@ -6,7 +6,7 @@ import '../screens/food_tour_screen.dart';
 import '../screens/video_reels_screen.dart';
 import '../screens/exp_corner_screen.dart';
 import '../screens/about_guide_screen.dart';
-import 'squircle_helper.dart';
+import '../screens/privacy_policy_screen.dart';
 
 class RoleMenuDrawer extends StatelessWidget {
   final String activeRole;
@@ -26,9 +26,10 @@ class RoleMenuDrawer extends StatelessWidget {
   Widget build(BuildContext context) {
     final user = ApiService.currentUser;
     final userRole = user?['role'] ?? 'user';
-    final userName = user?['name'] ?? 'Khách vãng lai';
+    final userName = user?['name'] ?? 'Khách khám phá';
     final userEmail = user?['email'] ?? 'Chưa đăng nhập';
     final userAvatar = ApiService.getAvatarUrl(user, userName);
+    final isAuthenticated = ApiService.isAuthenticated;
 
     return Drawer(
       backgroundColor: Colors.white,
@@ -38,7 +39,7 @@ class RoleMenuDrawer extends StatelessWidget {
       child: SafeArea(
         child: Column(
           children: [
-            // Drawer User Profile Header Card
+            // User Profile Header
             Container(
               padding: const EdgeInsets.all(20),
               decoration: const BoxDecoration(
@@ -51,8 +52,8 @@ class RoleMenuDrawer extends StatelessWidget {
               child: Row(
                 children: [
                   CircleAvatar(
-                    radius: 28,
-                    backgroundImage: ResizeImage(NetworkImage(userAvatar), width: 140),
+                    radius: 26,
+                    backgroundImage: ResizeImage(NetworkImage(userAvatar), width: 120),
                     backgroundColor: Colors.white24,
                   ),
                   const SizedBox(width: 14),
@@ -62,28 +63,20 @@ class RoleMenuDrawer extends StatelessWidget {
                       children: [
                         Text(
                           userName,
-                          style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(height: 2),
+                        const SizedBox(height: 3),
                         Text(
-                          userEmail,
+                          isAuthenticated ? 'Thành viên Đông Anh' : userEmail,
                           style: const TextStyle(color: Colors.white70, fontSize: 12),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 6),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: Colors.white24,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            'QUYỀN HẠN: ${userRole.toUpperCase()}',
-                            style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
-                          ),
                         ),
                       ],
                     ),
@@ -92,187 +85,157 @@ class RoleMenuDrawer extends StatelessWidget {
               ),
             ),
 
-            // Scrollable Menu List
+            // Navigation Menu List
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 children: [
-                  // Dedicated Management Portal Action Card for Privilege Roles
-                  if (userRole == 'seller') ...[
-                    const Text(
-                      'TRUNG TÂM DÀNH CHO CHỦ GIAN HÀNG',
-                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF64748B), letterSpacing: 0.8),
-                    ),
-                    const SizedBox(height: 10),
-                    _buildPortalCard(
-                      icon: Icons.storefront_rounded,
-                      title: 'Kênh Điều Hành Cửa Hàng',
-                      subtitle: 'Quản lý món ăn, thực đơn & đơn hàng cửa hàng',
-                      color: const Color(0xFF059669),
-                      onTap: () {
-                        Navigator.pop(context);
-                        onRoleChanged?.call('seller');
-                      },
-                    ),
-                    const Divider(height: 24),
-                  ] else if (userRole == 'principal') ...[
-                    const Text(
-                      'TRUNG TÂM BAN GIÁM HIỆU TRƯỜNG HỌC',
-                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF64748B), letterSpacing: 0.8),
-                    ),
-                    const SizedBox(height: 10),
-                    _buildPortalCard(
-                      icon: Icons.school_rounded,
-                      title: 'Kênh Quản Lý Trường Học',
-                      subtitle: 'Truyền thông nhà trường, sáp nhập & chương trình giáo dục',
-                      color: const Color(0xFF0284C7),
-                      onTap: () {
-                        Navigator.pop(context);
-                        onRoleChanged?.call('principal');
-                      },
-                    ),
-                    const Divider(height: 24),
-                  ] else if (userRole == 'manager') ...[
-                    const Text(
-                      'TRUNG TÂM BAN QUẢN LÝ CHỢ',
-                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF64748B), letterSpacing: 0.8),
-                    ),
-                    const SizedBox(height: 10),
-                    _buildPortalCard(
-                      icon: Icons.admin_panel_settings_rounded,
-                      title: 'Ban Quản Lý Chợ & ATTP',
-                      subtitle: 'Giám sát gian hàng, kiểm tra ATTP & duyệt hồ sơ',
-                      color: const Color(0xFF4F46E5),
-                      onTap: () {
-                        Navigator.pop(context);
-                        onRoleChanged?.call('manager');
-                      },
-                    ),
-                    const Divider(height: 24),
-                  ] else if (userRole == 'admin') ...[
-                    const Text(
-                      'TỔNG QUAN',
-                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF64748B), letterSpacing: 0.8),
-                    ),
-                    const SizedBox(height: 8),
-                    _buildDrawerShortcut(
-                      icon: Icons.dashboard_rounded,
-                      title: 'Dashboard Thống Kê',
-                      subtitle: 'Xem tổng quan KPI, lượt truy cập & báo cáo',
-                      color: const Color(0xFF6366F1),
-                      onTap: () {
-                        Navigator.pop(context);
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (_) => const AdminDashboardScreen(initialTabIndex: 0)),
-                        );
-                      },
-                    ),
-                    const Divider(height: 24),
-                  ],
-
-
-
-                  _buildDrawerShortcut(
-                    icon: Icons.newspaper_rounded,
-                    title: '📰 Bản Tin Đông Anh',
-                    subtitle: 'Thông báo chính thức & Bài viết đa phân quyền',
-                    color: const Color(0xFF0284C7),
-                    onTap: () {
-                      Navigator.pop(context);
-                      onRoleChanged?.call('user');
-                      onNavigateTab?.call(0); // Tab 0: News Bulletin
-                    },
-                  ),
-                  _buildDrawerShortcut(
-                    icon: Icons.map_rounded,
-                    title: '🗺️ Bản Đồ & Tìm Kiếm',
-                    subtitle: 'Khám phá 8 module địa điểm Đông Anh',
-                    color: const Color(0xFF0EA5E9),
-                    onTap: () {
-                      Navigator.pop(context);
-                      onRoleChanged?.call('user');
-                      onNavigateTab?.call(2); // Tab 2: Map Screen
-                    },
-                  ),
-                  _buildDrawerShortcut(
+                  // SECTION 1: KHÁM PHÁ & TRẢI NGHIỆM
+                  _buildSectionHeader('KHÁM PHÁ & TRẢI NGHIỆM'),
+                  _buildMenuItem(
                     icon: Icons.directions_bike_rounded,
-                    title: '🚴 Food Tour AI Gemini',
-                    subtitle: 'Tạo hành trình ẩm thực tự động nối đuôi',
-                    color: const Color(0xFF059669),
+                    iconColor: const Color(0xFF0284C7),
+                    bgColor: const Color(0xFFE0F2FE),
+                    title: 'Food Tour AI',
                     onTap: () {
                       Navigator.pop(context);
-                      Navigator.push(context, MaterialPageRoute(builder: (_) => const FoodTourScreen()));
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const FoodTourScreen()),
+                      );
                     },
                   ),
-                  _buildDrawerShortcut(
-                    icon: Icons.rowing_rounded,
-                    title: '🎪 Góc Trải Nghiệm Thực Tế',
-                    subtitle: 'Làng nghề & Vui chơi giải trí bản địa Đông Anh',
-                    color: const Color(0xFF059669),
+                  _buildMenuItem(
+                    icon: Icons.palette_rounded,
+                    iconColor: const Color(0xFF059669),
+                    bgColor: const Color(0xFFD1FAE5),
+                    title: 'Làng nghề & Trải nghiệm thực tế',
                     onTap: () {
                       Navigator.pop(context);
-                      Navigator.push(context, MaterialPageRoute(builder: (_) => const ExpCornerScreen()));
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const ExpCornerScreen()),
+                      );
                     },
                   ),
-                  _buildDrawerShortcut(
+                  _buildMenuItem(
                     icon: Icons.play_circle_fill_rounded,
-                    title: '🎬 Video Shorts & Review',
-                    subtitle: 'Xem video review thực tế từ bản địa',
-                    color: const Color(0xFFEA580C),
+                    iconColor: const Color(0xFFEA580C),
+                    bgColor: const Color(0xFFFFEDD5),
+                    title: 'Video Shorts & Review',
                     onTap: () {
                       Navigator.pop(context);
-                      Navigator.push(context, MaterialPageRoute(builder: (_) => const VideoReelsScreen()));
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const VideoReelsScreen()),
+                      );
                     },
                   ),
-                  _buildDrawerShortcut(
-                    icon: Icons.photo_camera_rounded,
-                    title: '📸 Góc Check-in Khoảnh Khắc',
-                    subtitle: 'Lưu giữ & chia sẻ khoảnh khắc ăn uống',
-                    color: const Color(0xFFF59E0B),
-                    onTap: () {
-                      Navigator.pop(context);
-                      onRoleChanged?.call('user');
-                      onNavigateTab?.call(1); // Tab 1: Check-in Đông Anh (Live Camera Active)
-                    },
-                  ),
-                  _buildDrawerShortcut(
-                    icon: Icons.storefront_rounded,
-                    title: '🛍️ Chợ Số & Nông Sản OCOP',
-                    subtitle: 'Mua sắm đặc sản Đông Anh online',
-                    color: const Color(0xFF10B981),
-                    onTap: () {
-                      Navigator.pop(context);
-                      onRoleChanged?.call('user');
-                      onNavigateTab?.call(3); // Tab 3: Market Tab
-                    },
-                  ),
-                  _buildDrawerShortcut(
+
+                  const SizedBox(height: 14),
+
+                  // SECTION 2: TIỆN ÍCH CỦA TÔI
+                  _buildSectionHeader('TIỆN ÍCH CỦA TÔI'),
+                  _buildMenuItem(
                     icon: Icons.receipt_long_rounded,
-                    title: '📦 Lịch Sử & Quản Lý Đơn Hàng',
-                    subtitle: 'Theo dõi đơn hàng, hoàn hàng & mua lại',
-                    color: const Color(0xFF6366F1),
+                    iconColor: const Color(0xFF6366F1),
+                    bgColor: const Color(0xFFEEF2FF),
+                    title: 'Đơn hàng của tôi',
                     onTap: () {
                       Navigator.pop(context);
-                      Navigator.push(context, MaterialPageRoute(builder: (_) => const MyOrdersScreen()));
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const MyOrdersScreen()),
+                      );
                     },
                   ),
-                  _buildDrawerShortcut(
+                  _buildMenuItem(
                     icon: Icons.info_outline_rounded,
-                    title: 'ℹ️ Giới Thiệu & Hướng Dẫn',
-                    subtitle: 'Tìm hiểu hệ thái số hóa Đông Anh 2026',
-                    color: const Color(0xFF8B5CF6),
+                    iconColor: const Color(0xFF8B5CF6),
+                    bgColor: const Color(0xFFF3E8FF),
+                    title: 'Cẩm nang & Hướng dẫn du khách',
                     onTap: () {
                       Navigator.pop(context);
-                      Navigator.push(context, MaterialPageRoute(builder: (_) => const AboutGuideScreen()));
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const AboutGuideScreen()),
+                      );
                     },
                   ),
+                  _buildMenuItem(
+                    icon: Icons.shield_outlined,
+                    iconColor: const Color(0xFF0EA5E9),
+                    bgColor: const Color(0xFFE0F2FE),
+                    title: 'Chính sách bảo mật & Điều khoản (EULA)',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const PrivacyPolicyScreen()),
+                      );
+                    },
+                  ),
+
+                  // SECTION 3: KÊNH ĐỐI TÁC & QUẢN TRỊ (Chỉ hiển thị khi có quyền)
+                  if (userRole == 'seller' || userRole == 'principal' || userRole == 'manager' || userRole == 'admin') ...[
+                    const SizedBox(height: 14),
+                    _buildSectionHeader('KÊNH ĐIỀU HÀNH & QUẢN TRỊ'),
+                    if (userRole == 'seller' || userRole == 'admin')
+                      _buildMenuItem(
+                        icon: Icons.storefront_rounded,
+                        iconColor: const Color(0xFF059669),
+                        bgColor: const Color(0xFFD1FAE5),
+                        title: 'Kênh Quản lý Cửa hàng',
+                        onTap: () {
+                          Navigator.pop(context);
+                          onRoleChanged?.call('seller');
+                        },
+                      ),
+                    if (userRole == 'principal' || userRole == 'admin')
+                      _buildMenuItem(
+                        icon: Icons.school_rounded,
+                        iconColor: const Color(0xFF0284C7),
+                        bgColor: const Color(0xFFE0F2FE),
+                        title: 'Kênh Quản lý Trường học',
+                        onTap: () {
+                          Navigator.pop(context);
+                          onRoleChanged?.call('principal');
+                        },
+                      ),
+                    if (userRole == 'manager' || userRole == 'admin')
+                      _buildMenuItem(
+                        icon: Icons.admin_panel_settings_rounded,
+                        iconColor: const Color(0xFF4F46E5),
+                        bgColor: const Color(0xFFEEF2FF),
+                        title: 'Ban Quản lý Chợ & ATTP',
+                        onTap: () {
+                          Navigator.pop(context);
+                          onRoleChanged?.call('manager');
+                        },
+                      ),
+                    if (userRole == 'admin')
+                      _buildMenuItem(
+                        icon: Icons.dashboard_rounded,
+                        iconColor: const Color(0xFF6366F1),
+                        bgColor: const Color(0xFFEEF2FF),
+                        title: 'Dashboard Thống kê Hệ thống',
+                        onTap: () {
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const AdminDashboardScreen(initialTabIndex: 0),
+                            ),
+                          );
+                        },
+                      ),
+                  ],
                 ],
               ),
             ),
 
-            // Logout Footer Button
-            if (ApiService.isAuthenticated && onLogout != null)
+            // Logout Button
+            if (isAuthenticated && onLogout != null)
               Padding(
                 padding: const EdgeInsets.all(16),
                 child: SizedBox(
@@ -283,7 +246,10 @@ class RoleMenuDrawer extends StatelessWidget {
                       onLogout?.call();
                     },
                     icon: const Icon(Icons.logout_rounded, size: 18, color: Color(0xFFEF4444)),
-                    label: const Text('Đăng Xuất Tài Khoản', style: TextStyle(color: Color(0xFFEF4444), fontWeight: FontWeight.bold)),
+                    label: const Text(
+                      'Đăng xuất tài khoản',
+                      style: TextStyle(color: Color(0xFFEF4444), fontWeight: FontWeight.bold),
+                    ),
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       side: const BorderSide(color: Color(0xFFFCA5A5)),
@@ -298,72 +264,69 @@ class RoleMenuDrawer extends StatelessWidget {
     );
   }
 
-  Widget _buildPortalCard({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return Container(
-      decoration: SquircleHelper.decoration(
-        radius: 16,
-        color: color.withValues(alpha: 0.08),
-        borderSide: BorderSide(color: color, width: 1.5),
-      ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-        leading: CircleAvatar(
-          backgroundColor: color,
-          radius: 22,
-          child: Icon(icon, color: Colors.white, size: 22),
+  Widget _buildSectionHeader(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 4, bottom: 8, top: 4),
+      child: Text(
+        title,
+        style: const TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          color: Color(0xFF94A3B8),
+          letterSpacing: 0.6,
         ),
-        title: Text(
-          title,
-          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: color),
-        ),
-        subtitle: Text(
-          subtitle,
-          style: TextStyle(fontSize: 11, color: Colors.grey.shade700),
-        ),
-        trailing: Icon(Icons.arrow_forward_ios_rounded, size: 16, color: color),
-        onTap: onTap,
       ),
     );
   }
 
-  Widget _buildDrawerShortcut({
+  Widget _buildMenuItem({
     required IconData icon,
+    required Color iconColor,
+    required Color bgColor,
     required String title,
-    String? subtitle,
-    required Color color,
     required VoidCallback onTap,
   }) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      decoration: SquircleHelper.decoration(
-        radius: 14,
-        color: Colors.grey.shade50,
-        borderSide: BorderSide(color: Colors.grey.shade200),
-      ),
-      child: ListTile(
-        dense: true,
-        leading: CircleAvatar(
-          backgroundColor: color.withValues(alpha: 0.12),
-          child: Icon(icon, color: color, size: 20),
+      margin: const EdgeInsets.only(bottom: 6),
+      child: Material(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(14),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(14),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            child: Row(
+              children: [
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: bgColor,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(icon, color: iconColor, size: 20),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF0F172A),
+                    ),
+                  ),
+                ),
+                const Icon(
+                  Icons.chevron_right_rounded,
+                  size: 18,
+                  color: Color(0xFF94A3B8),
+                ),
+              ],
+            ),
+          ),
         ),
-        title: Text(
-          title,
-          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
-        ),
-        subtitle: subtitle != null
-            ? Text(
-                subtitle,
-                style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
-              )
-            : null,
-        trailing: const Icon(Icons.chevron_right_rounded, size: 18, color: Colors.grey),
-        onTap: onTap,
       ),
     );
   }

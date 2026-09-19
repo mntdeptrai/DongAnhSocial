@@ -104,6 +104,10 @@
                     <button type="button" onclick="shareProfilePage()" class="pro-btn-outline">
                         📤 Chia sẻ
                     </button>
+
+                    <button type="button" @click="showDeleteAccountModal = true" class="pro-btn-outline" style="color: #dc2626; border-color: #fecaca;" onmouseover="this.style.background='#fef2f2'" onmouseout="this.style.background='#ffffff'">
+                        🔒 Xóa tài khoản
+                    </button>
                 @else
                     <!-- Dành cho Khách & Người xem khác ghé thăm (Viewer / Guest View) -->
                     <!-- 1. Nút Thêm bạn bè (Friendship Button) -->
@@ -184,7 +188,13 @@
                             onclick="shareProfilePage()">
                         📤 Chia sẻ
                     </button>
-                @endif
+
+                    <!-- 8. Nút Báo cáo & Chặn hồ sơ người dùng -->
+                    <button type="button" class="pro-btn-outline" 
+                            style="color: #dc2626;" 
+                            onclick="if(typeof openReportModal === 'function') { openReportModal('{{ $user->id }}', 'user', 'Hồ sơ người dùng: {{ addslashes($user->name) }}', 'Tài khoản người dùng {{ addslashes($user->name) }}', '{{ $user->id }}', '{{ addslashes($user->name) }}', ''); } else { alert('Vui lòng vào Bảng tin để gửi báo cáo hoặc liên hệ hotline.'); }">
+                        🚩 Báo cáo
+                    </button>
             </div>
         </div>
 

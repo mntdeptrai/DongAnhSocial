@@ -510,6 +510,19 @@
             </div>
         </div>
 
+        <!-- Personalized Feed Modes Bar -->
+        <div class="nf-feed-mode-tabs" style="display: flex; gap: 8px; background: #f8fafc; padding: 5px; border-radius: 14px; margin-bottom: 14px; border: 1.5px solid #e2e8f0;">
+            <a href="?feed_type=for_you" style="flex: 1; text-align: center; padding: 10px 12px; border-radius: 10px; font-size: 0.88rem; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); {{ ($feedType ?? 'for_you') === 'for_you' ? 'background: #ffffff; color: #0284c7; box-shadow: 0 2px 8px rgba(15,23,42,0.08); font-weight: 800;' : 'color: #64748b; font-weight: 600;' }}">
+                <span>🎯</span> Dành cho bạn
+            </a>
+            <a href="?feed_type=following" style="flex: 1; text-align: center; padding: 10px 12px; border-radius: 10px; font-size: 0.88rem; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); {{ ($feedType ?? '') === 'following' ? 'background: #ffffff; color: #0284c7; box-shadow: 0 2px 8px rgba(15,23,42,0.08); font-weight: 800;' : 'color: #64748b; font-weight: 600;' }}">
+                <span>👥</span> Đang theo dõi
+            </a>
+            <a href="?feed_type=nearby" style="flex: 1; text-align: center; padding: 10px 12px; border-radius: 10px; font-size: 0.88rem; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); {{ ($feedType ?? '') === 'nearby' ? 'background: #ffffff; color: #0284c7; box-shadow: 0 2px 8px rgba(15,23,42,0.08); font-weight: 800;' : 'color: #64748b; font-weight: 600;' }}">
+                <span>📍</span> Gần tôi
+            </a>
+        </div>
+
         <!-- Filter Pills Bar -->
         <div class="nf-filter-pills">
             <button class="nf-filter-pill active" id="pill-all" onclick="filterNewsfeedPosts('all', this)">🔥 Tất cả bài viết</button>
@@ -620,7 +633,7 @@
                     $commentableClass = get_class($p);
                 @endphp
 
-                <article class="nf-post-card post-item-card" data-post-type="{{ $postTypeAttr }}" id="post-card-{{ $postDomKey }}">
+                <article class="nf-post-card post-item-card" data-post-type="{{ $postTypeAttr }}" id="post-card-{{ $postDomKey }}" data-post-id="{{ $p->id }}" data-author-id="{{ $postUser ? $postUser->id : ($p->user_id ?? '') }}" data-post-dom-key="{{ $postDomKey }}">
                     
                     <!-- Post Author Header (Strict Flex & Truncation - No Broken Lines) -->
                     <div class="nf-author-box">
@@ -644,10 +657,15 @@
                                         <span title="Tài khoản chính thức đã xác minh ⭐" style="color: #f59e0b; font-size: 0.9rem; flex-shrink: 0;">⭐</span>
                                     @endif
                                 </h4>
-                                <div style="font-size: 0.76rem; color: #64748b; margin-top: 2px; display: flex; align-items: center; gap: 6px;">
+                                <div style="font-size: 0.76rem; color: #64748b; margin-top: 2px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
                                     <span>{{ $p->created_at ? $p->created_at->diffForHumans() : 'Vừa xong' }}</span>
                                     <span>•</span>
                                     <span>🌐 Công khai</span>
+                                    @if(!empty($p->_personal_tag))
+                                        <span style="background: linear-gradient(135deg, rgba(14,165,233,0.12), rgba(99,102,241,0.12)); color: #0284c7; border: 1px solid rgba(14,165,233,0.3); font-size: 0.72rem; padding: 1px 8px; border-radius: 999px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;">
+                                            {{ $p->_personal_tag }}
+                                        </span>
+                                    @endif
                                 </div>
                             </div>
                         </a>
@@ -676,15 +694,28 @@
                                 •••
                             </button>
 
-                            <div x-cloak x-show="menuOpen" x-transition style="position: absolute; right: 0; top: 100%; margin-top: 4px; width: 175px; background: #ffffff; border: 1px solid rgba(0,0,0,0.08); border-radius: 16px; box-shadow: 0 12px 30px rgba(15,23,42,0.18); z-index: 99; overflow: hidden; padding: 5px 0;">
+                            <div x-cloak x-show="menuOpen" x-transition style="position: absolute; right: 0; top: 100%; margin-top: 4px; width: 195px; background: #ffffff; border: 1px solid rgba(0,0,0,0.08); border-radius: 16px; box-shadow: 0 12px 30px rgba(15,23,42,0.18); z-index: 99; overflow: hidden; padding: 6px 0;">
                                 @if($canManagePost)
-                                    <button type="button" onclick="deletePostAjax('{{ $p->id }}', '{{ $postDomKey }}')" style="width: 100%; text-align: left; padding: 10px 16px; background: none; border: none; font-size: 0.85rem; font-weight: 700; color: #ef4444; cursor: pointer; display: flex; align-items: center; gap: 8px;" onmouseover="this.style.background='#fef2f2'" onmouseout="this.style.background='none'">
+                                    <button type="button" onclick="deletePostAjax('{{ $p->id }}', '{{ $postDomKey }}')" style="width: 100%; text-align: left; padding: 9px 16px; background: none; border: none; font-size: 0.85rem; font-weight: 700; color: #ef4444; cursor: pointer; display: flex; align-items: center; gap: 8px;" onmouseover="this.style.background='#fef2f2'" onmouseout="this.style.background='none'">
                                         🗑️ Xóa bài viết
                                     </button>
                                 @endif
-                                <button type="button" onclick="copyPostLink('{{ $p->hashid ?? $p->id }}')" style="width: 100%; text-align: left; padding: 10px 16px; background: none; border: none; font-size: 0.85rem; font-weight: 700; color: #334155; cursor: pointer; display: flex; align-items: center; gap: 8px;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='none'">
+                                <button type="button" onclick="copyPostLink('{{ $p->hashid ?? $p->id }}')" style="width: 100%; text-align: left; padding: 9px 16px; background: none; border: none; font-size: 0.85rem; font-weight: 700; color: #334155; cursor: pointer; display: flex; align-items: center; gap: 8px;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='none'">
                                     🔗 Sao chép liên kết
                                 </button>
+                                <button type="button" onclick="hidePostClient('{{ $postDomKey }}', '{{ $p->id }}')" style="width: 100%; text-align: left; padding: 9px 16px; background: none; border: none; font-size: 0.85rem; font-weight: 700; color: #475569; cursor: pointer; display: flex; align-items: center; gap: 8px;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='none'">
+                                    👁️‍🗨️ Ẩn bài viết này
+                                </button>
+                                @if(!$isViewerAuthor && ($postUser || !empty($p->user_id)))
+                                    <button type="button" onclick="blockAuthorClient('{{ $postUser ? $postUser->id : $p->user_id }}', '{{ addslashes($authorName) }}')" style="width: 100%; text-align: left; padding: 9px 16px; background: none; border: none; font-size: 0.85rem; font-weight: 700; color: #b91c1c; cursor: pointer; display: flex; align-items: center; gap: 8px;" onmouseover="this.style.background='#fef2f2'" onmouseout="this.style.background='none'">
+                                        🚫 Chặn người dùng
+                                    </button>
+                                @endif
+                                @if(!$isViewerAuthor)
+                                    <button type="button" onclick="openReportModal('{{ $p->id }}', 'post', '{{ addslashes($p->name ?: 'Bài viết Đông Anh') }}', '{{ addslashes(Str::limit($p->description ?? '', 120)) }}', '{{ $postUser ? $postUser->id : ($p->user_id ?? '') }}', '{{ addslashes($authorName) }}', '{{ $postDomKey }}')" style="width: 100%; text-align: left; padding: 9px 16px; background: none; border: none; font-size: 0.85rem; font-weight: 700; color: #dc2626; cursor: pointer; display: flex; align-items: center; gap: 8px; border-top: 1px solid #f1f5f9;" onmouseover="this.style.background='#fef2f2'" onmouseout="this.style.background='none'">
+                                        🚩 Báo cáo vi phạm
+                                    </button>
+                                @endif
                             </div>
                         </div>
                     </div>
@@ -919,10 +950,16 @@
             @endforeach
         @else
             <div class="nf-widget" style="padding: 40px 20px; text-align: center;">
-                <div style="font-size: 3.2rem; margin-bottom: 12px;">📰</div>
-                <h3 style="font-size: 1.15rem; font-weight: 800; color: #0f172a; margin-bottom: 6px;">Chưa có bài viết nào trên Bản tin</h3>
-                <p style="font-size: 0.88rem; color: #64748b; margin-bottom: 20px;">Hãy là người đầu tiên chia sẻ thông tin hoặc bài viết mới nhất lên cộng đồng!</p>
-                <button onclick="openNewsfeedPostModal()" style="display: inline-block; background: linear-gradient(135deg, #0ea5e9, #0284c7); color: #fff; padding: 12px 24px; border-radius: 100px; font-weight: 800; border: none; cursor: pointer; box-shadow: 0 4px 15px rgba(14,165,233,0.35);">✍️ Đăng bài ngay</button>
+                <div style="font-size: 3.2rem; margin-bottom: 12px;">{{ ($feedType ?? '') === 'following' ? '👥' : '📰' }}</div>
+                @if(($feedType ?? '') === 'following')
+                    <h3 style="font-size: 1.15rem; font-weight: 800; color: #0f172a; margin-bottom: 6px;">Chưa có bài viết từ người bạn theo dõi</h3>
+                    <p style="font-size: 0.88rem; color: #64748b; margin-bottom: 20px;">Hãy kết bạn với những người dùng khác hoặc chuyển sang tab <strong>Dành cho bạn</strong> để xem nội dung được đề xuất!</p>
+                    <a href="?feed_type=for_you" style="display: inline-block; background: linear-gradient(135deg, #0ea5e9, #0284c7); color: #fff; padding: 12px 24px; border-radius: 100px; font-weight: 800; text-decoration: none; box-shadow: 0 4px 15px rgba(14,165,233,0.35);">🎯 Khám phá Dành cho bạn</a>
+                @else
+                    <h3 style="font-size: 1.15rem; font-weight: 800; color: #0f172a; margin-bottom: 6px;">Chưa có bài viết nào trên Bản tin</h3>
+                    <p style="font-size: 0.88rem; color: #64748b; margin-bottom: 20px;">Hãy là người đầu tiên chia sẻ thông tin hoặc bài viết mới nhất lên cộng đồng!</p>
+                    <button onclick="openNewsfeedPostModal()" style="display: inline-block; background: linear-gradient(135deg, #0ea5e9, #0284c7); color: #fff; padding: 12px 24px; border-radius: 100px; font-weight: 800; border: none; cursor: pointer; box-shadow: 0 4px 15px rgba(14,165,233,0.35);">✍️ Đăng bài ngay</button>
+                @endif
             </div>
         @endif
 
@@ -1861,7 +1898,7 @@ document.addEventListener('keydown', function(e) {
             <!-- Action Bar với Kiểu dáng Độc lập (Tránh xung đột CSS fb-modal-action-btn) -->
             <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; padding: 12px 14px; background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 14px; margin-bottom: 16px;">
                 <span style="font-weight: 800; color: #1e293b; font-size: 0.88rem; display: flex; align-items: center; gap: 6px;">
-                    ✨ Thêm vào bài viết
+                    📌 Thêm vào bài viết
                 </span>
                 <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
                     <!-- Chọn tệp từ Máy tính / Thư viện -->
@@ -2287,7 +2324,16 @@ function createMediaPreviewEl(item, width, height) {
     }
 }
 
-function openNewsfeedPostModal() {
+async function openNewsfeedPostModal() {
+    try {
+        const res = await fetch('/api/moderation/check-ban');
+        const banData = await res.json();
+        if (banData && banData.is_banned) {
+            alert('⚠️ Tài khoản của bạn đang bị tạm khóa tính năng đăng bài do vi phạm tiêu chuẩn cộng đồng.\nThời hạn khóa: ' + (banData.remaining_text || 'Chưa hết hạn') + '.\nVui lòng liên hệ Ban Quản Trị nếu có khiếu nại.');
+            return;
+        }
+    } catch (e) {}
+
     const m = document.getElementById('addNewsfeedPostModal');
     if (m) {
         m.classList.add('show');
@@ -2496,7 +2542,174 @@ function copyPostLink(postId) {
     }).catch(() => {});
 }
 
+let currentReportMeta = {};
+
+function openReportModal(targetId, targetType, targetTitle, targetSummary, authorId, authorName, domKey) {
+    currentReportMeta = { targetId, targetType, targetTitle, targetSummary, authorId, authorName, domKey };
+    
+    document.getElementById('report-modal-author').innerText = authorName || 'Thành viên Đông Anh';
+    document.getElementById('report-modal-preview').innerText = targetSummary || targetTitle || 'Bài viết Bảng tin';
+    document.getElementById('reportDetailsInput').value = '';
+    
+    const firstRadio = document.querySelector('input[name="report_reason_opt"]');
+    if (firstRadio) firstRadio.checked = true;
+
+    const modal = document.getElementById('webReportModal');
+    if (modal) {
+        modal.style.display = 'flex';
+    }
+}
+
+function closeReportModal() {
+    const modal = document.getElementById('webReportModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+async function submitReportAjax(e) {
+    e.preventDefault();
+    const selectedReason = document.querySelector('input[name="report_reason_opt"]:checked')?.value || 'Nội dung vi phạm tiêu chuẩn cộng đồng';
+    const details = document.getElementById('reportDetailsInput')?.value || '';
+    const submitBtn = document.getElementById('submitReportBtn');
+    
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerText = '⏳ Đang gửi báo cáo...';
+    }
+
+    try {
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        const res = await fetch('/api/moderation/report', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken || '',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                target_id: currentReportMeta.targetId,
+                target_type: currentReportMeta.targetType || 'post',
+                target_title: currentReportMeta.targetTitle,
+                target_summary: currentReportMeta.targetSummary,
+                author_id: currentReportMeta.authorId,
+                author_name: currentReportMeta.authorName,
+                reason: selectedReason,
+                details: details
+            })
+        });
+
+        const data = await res.json();
+        closeReportModal();
+
+        // Tự động ẩn bài viết trên giao diện client
+        if (currentReportMeta.domKey) {
+            hidePostClient(currentReportMeta.domKey, currentReportMeta.targetId, false);
+        }
+
+        const msg = data.message || 'Cảm ơn bạn đã gửi báo cáo! Nội dung đã được ẩn khỏi bảng tin của bạn và gửi đến Ban Kiểm Duyệt trong 24h.';
+        if (typeof window.showToast === 'function') {
+            window.showToast(msg, 'success');
+        } else {
+            alert(msg);
+        }
+    } catch (err) {
+        console.error('Report error:', err);
+        alert('Đã ghi nhận báo cáo. Bài viết sẽ được ẩn khỏi bảng tin của bạn.');
+        closeReportModal();
+        if (currentReportMeta.domKey) {
+            hidePostClient(currentReportMeta.domKey, currentReportMeta.targetId, false);
+        }
+    } finally {
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerText = '🚩 Gửi báo cáo vi phạm';
+        }
+    }
+}
+
+function hidePostClient(domKey, postId, notify = true) {
+    const cardEl = document.getElementById('post-card-' + domKey) || document.querySelector(`[data-post-id="${postId}"]`);
+    if (cardEl) {
+        cardEl.style.transition = 'all 0.35s ease';
+        cardEl.style.opacity = '0';
+        cardEl.style.transform = 'translateY(-15px)';
+        setTimeout(() => cardEl.remove(), 350);
+    }
+
+    try {
+        let hidden = JSON.parse(localStorage.getItem('donganh_hidden_posts') || '[]');
+        if (!hidden.includes(String(postId))) hidden.push(String(postId));
+        if (domKey && !hidden.includes(String(domKey))) hidden.push(String(domKey));
+        localStorage.setItem('donganh_hidden_posts', JSON.stringify(hidden));
+    } catch (e) {}
+
+    if (notify) {
+        if (typeof window.showToast === 'function') {
+            window.showToast('👁️‍🗨️ Đã ẩn bài viết này khỏi bảng tin của bạn.', 'info');
+        } else {
+            alert('👁️‍🗨️ Đã ẩn bài viết này khỏi bảng tin của bạn.');
+        }
+    }
+}
+
+function blockAuthorClient(authorId, authorName) {
+    if (!authorId) return;
+    if (!confirm(`Bạn có chắc chắn muốn chặn "${authorName}"?\nBạn sẽ không còn nhìn thấy bất kỳ bài viết nào từ người này nữa.`)) {
+        return;
+    }
+
+    try {
+        let blocked = JSON.parse(localStorage.getItem('donganh_blocked_users') || '[]');
+        if (!blocked.includes(String(authorId))) blocked.push(String(authorId));
+        localStorage.setItem('donganh_blocked_users', JSON.stringify(blocked));
+    } catch (e) {}
+
+    // Ẩn tất cả bài viết của tác giả này trên trang
+    const authorCards = document.querySelectorAll(`[data-author-id="${authorId}"]`);
+    authorCards.forEach(card => {
+        card.style.transition = 'all 0.35s ease';
+        card.style.opacity = '0';
+        card.style.transform = 'scale(0.95)';
+        setTimeout(() => card.remove(), 350);
+    });
+
+    if (typeof window.showToast === 'function') {
+        window.showToast(`🚫 Đã chặn người dùng "${authorName}".`, 'warning');
+    } else {
+        alert(`🚫 Đã chặn người dùng "${authorName}".`);
+    }
+}
+
+function applyClientModerationFilters() {
+    try {
+        const blockedUsers = JSON.parse(localStorage.getItem('donganh_blocked_users') || '[]');
+        const hiddenPosts = JSON.parse(localStorage.getItem('donganh_hidden_posts') || '[]');
+
+        document.querySelectorAll('.post-item-card').forEach(card => {
+            const authorId = card.getAttribute('data-author-id');
+            const postId = card.getAttribute('data-post-id');
+            const domKey = card.getAttribute('data-post-dom-key');
+
+            if (authorId && blockedUsers.includes(String(authorId))) {
+                card.remove();
+                return;
+            }
+            if (postId && hiddenPosts.includes(String(postId))) {
+                card.remove();
+                return;
+            }
+            if (domKey && hiddenPosts.includes(String(domKey))) {
+                card.remove();
+                return;
+            }
+        });
+    } catch (e) {}
+}
+
 document.addEventListener('DOMContentLoaded', function() {
+    applyClientModerationFilters();
+
     const urlParams = new URLSearchParams(window.location.search);
     const postId = urlParams.get('post');
     if (postId) {
@@ -2512,4 +2725,71 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
+
+<!-- ==========================================
+     REPORT VIOLATION MODAL (UGC COMPLIANCE)
+     ========================================== -->
+<div id="webReportModal" class="sch-modal" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.65); backdrop-filter: blur(6px); z-index: 99999; align-items: center; justify-content: center; padding: 16px;" onclick="if(event.target === this) closeReportModal()">
+    <div style="background: #ffffff; border-radius: 24px; max-width: 520px; width: 100%; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); overflow: hidden; position: relative; animation: modalPop 0.2s ease-out;">
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 20px 24px 14px 24px; border-bottom: 1px solid #f1f5f9;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 1.3rem;">🚩</span>
+                <h3 style="margin: 0; font-size: 1.15rem; font-weight: 800; color: #0f172a;">Báo cáo vi phạm nội dung</h3>
+            </div>
+            <button type="button" onclick="closeReportModal()" style="background: #f1f5f9; border: none; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; color: #64748b; cursor: pointer;">✕</button>
+        </div>
+
+        <form onsubmit="submitReportAjax(event)" style="padding: 20px 24px;">
+            <div style="background: #f8fafc; border-radius: 14px; padding: 12px 16px; margin-bottom: 18px; border: 1px solid #e2e8f0; font-size: 0.85rem;">
+                <div style="color: #64748b; margin-bottom: 3px;">Tác giả: <strong id="report-modal-author" style="color: #0f172a;">...</strong></div>
+                <div style="color: #334155; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Nội dung: "<span id="report-modal-preview">...</span>"</div>
+            </div>
+
+            <div style="margin-bottom: 16px;">
+                <label style="font-size: 0.88rem; font-weight: 800; color: #334155; display: block; margin-bottom: 8px;">Chọn lý do báo cáo vi phạm:</label>
+                <div style="display: flex; flex-direction: column; gap: 8px; font-size: 0.88rem;">
+                    <label style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; border: 1px solid #e2e8f0; border-radius: 12px; cursor: pointer; transition: background 0.15s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#ffffff'">
+                        <input type="radio" name="report_reason_opt" value="Nội dung phản động, kích động bạo lực, vi phạm pháp luật" checked style="accent-color: #0284c7;">
+                        <span>⚖️ Nội dung phản động, bạo lực, vi phạm pháp luật</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; border: 1px solid #e2e8f0; border-radius: 12px; cursor: pointer; transition: background 0.15s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#ffffff'">
+                        <input type="radio" name="report_reason_opt" value="Spam, tin rác, lừa đảo, cờ bạc trực tuyến" style="accent-color: #0284c7;">
+                        <span>🎰 Spam, tin rác, lừa đảo, cờ bạc trực tuyến</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; border: 1px solid #e2e8f0; border-radius: 12px; cursor: pointer; transition: background 0.15s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#ffffff'">
+                        <input type="radio" name="report_reason_opt" value="Nội dung khiêu dâm, đồi trụy, 18+" style="accent-color: #0284c7;">
+                        <span>🔞 Nội dung khiêu dâm, đồi trụy, 18+</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; border: 1px solid #e2e8f0; border-radius: 12px; cursor: pointer; transition: background 0.15s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#ffffff'">
+                        <input type="radio" name="report_reason_opt" value="Vi phạm bản quyền hình ảnh, giả mạo danh tính" style="accent-color: #0284c7;">
+                        <span>©️ Vi phạm bản quyền hình ảnh, giả mạo danh tính</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; border: 1px solid #e2e8f0; border-radius: 12px; cursor: pointer; transition: background 0.15s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#ffffff'">
+                        <input type="radio" name="report_reason_opt" value="Quấy rối, đe dọa, xúc phạm nhân phẩm" style="accent-color: #0284c7;">
+                        <span>🗣️ Quấy rối, đe dọa, xúc phạm nhân phẩm</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; border: 1px solid #e2e8f0; border-radius: 12px; cursor: pointer; transition: background 0.15s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#ffffff'">
+                        <input type="radio" name="report_reason_opt" value="Lý do khác" style="accent-color: #0284c7;">
+                        <span>📝 Lý do khác (Mô tả chi tiết bên dưới)</span>
+                    </label>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 16px;">
+                <label style="font-size: 0.88rem; font-weight: 700; color: #475569; display: block; margin-bottom: 6px;">Mô tả thêm (Tùy chọn):</label>
+                <textarea id="reportDetailsInput" rows="2" placeholder="Cung cấp thêm chi tiết để hỗ trợ Ban Kiểm Duyệt xử lý nhanh chóng..." style="width: 100%; border: 1px solid #cbd5e1; border-radius: 12px; padding: 10px 12px; font-size: 0.88rem; font-family: inherit; resize: vertical; box-sizing: border-box;"></textarea>
+            </div>
+
+            <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 10px 14px; margin-bottom: 20px; display: flex; gap: 10px; align-items: flex-start; font-size: 0.8rem; color: #166534;">
+                <span style="font-size: 1.1rem; line-height: 1;">🛡️</span>
+                <span><strong>Cam kết bảo mật:</strong> Báo cáo của bạn được giữ kín danh tính. Bài viết này sẽ lập tức được ẩn khỏi bảng tin của bạn và được Ban Kiểm Duyệt xử lý trong vòng <strong>24 giờ</strong>.</span>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                <button type="button" onclick="closeReportModal()" style="padding: 10px 20px; border-radius: 12px; background: #f1f5f9; color: #475569; border: none; font-weight: 700; font-size: 0.9rem; cursor: pointer;">Hủy bỏ</button>
+                <button type="submit" id="submitReportBtn" style="padding: 10px 22px; border-radius: 12px; background: linear-gradient(135deg, #dc2626, #b91c1c); color: #ffffff; border: none; font-weight: 800; font-size: 0.9rem; cursor: pointer; box-shadow: 0 4px 14px rgba(220, 38, 38, 0.35);">🚩 Gửi báo cáo vi phạm</button>
+            </div>
+        </form>
+    </div>
+</div>
 @endsection

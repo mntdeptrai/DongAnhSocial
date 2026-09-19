@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'core/app_constants.dart';
 import 'services/api_service.dart';
+import 'services/moderation_service.dart';
 import 'services/native_notification_service.dart';
 import 'screens/login_screen.dart';
 import 'screens/main_layout.dart';
@@ -23,6 +24,7 @@ void main() async {
   PaintingBinding.instance.imageCache.maximumSize = 50;
 
   await ApiService.init();
+  await ModerationService.init();
 
   runApp(const MyApp());
 
@@ -82,7 +84,7 @@ class MyApp extends StatelessWidget {
           },
         ),
         colorScheme: ColorScheme.fromSeed(
-          seedColor: AppConstants.primaryColor
+          seedColor: AppConstants.primaryColor,
           primary: AppConstants.primaryColor,
           secondary: AppConstants.accentColor,
           surface: Colors.white,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import '../services/moderation_service.dart';
 import '../widgets/custom_loader.dart';
 import 'map_screen.dart';
 
@@ -29,13 +30,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
   String _schoolSearchQuery = '';
   String _stallSearchQuery = '';
   final String _selectedCategoryFilter = 'Tất cả';
+  String _moderationFilter = 'pending';
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(
-      length: 5,
-      initialIndex: widget.initialTabIndex.clamp(0, 4),
+      length: 6,
+      initialIndex: widget.initialTabIndex.clamp(0, 5),
       vsync: this,
     );
     _loadAdminData();
@@ -270,7 +272,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
                   decoration: const InputDecoration(labelText: 'Trạng thái tài khoản'),
                   items: const [
                     DropdownMenuItem(value: 'active', child: Text('🟢 Hoạt động (Active)')),
-                    DropdownMenuItem(value: 'disabled', child: Text('🔴 Khóa tài khoản (Disabled)')),
+                    DropdownMenuItem(value: 'ban_24h', child: Text('⏳ Tạm khóa 24 giờ')),
+                    DropdownMenuItem(value: 'ban_3d', child: Text('⏳ Tạm khóa 3 ngày')),
+                    DropdownMenuItem(value: 'ban_7d', child: Text('⏳ Tạm khóa 7 ngày')),
+                    DropdownMenuItem(value: 'ban_30d', child: Text('⏳ Tạm khóa 30 ngày')),
+                    DropdownMenuItem(value: 'disabled', child: Text('🔴 Khóa vĩnh viễn (Disabled)')),
                   ],
                   onChanged: (val) {
                     if (val != null) setDialogState(() => selectedStatus = val);
@@ -290,12 +296,26 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
                   final phone = phoneCtrl.text.trim();
                   final messenger = ScaffoldMessenger.of(context);
                   Navigator.pop(ctx);
+                  final uId = user['id'].toString();
+                  if (selectedStatus == 'active') {
+                    await ModerationService.unblockUser(uId);
+                  } else if (selectedStatus == 'ban_24h') {
+                    await ModerationService.banUserWithDuration(userId: uId, duration: const Duration(hours: 24));
+                  } else if (selectedStatus == 'ban_3d') {
+                    await ModerationService.banUserWithDuration(userId: uId, duration: const Duration(days: 3));
+                  } else if (selectedStatus == 'ban_7d') {
+                    await ModerationService.banUserWithDuration(userId: uId, duration: const Duration(days: 7));
+                  } else if (selectedStatus == 'ban_30d') {
+                    await ModerationService.banUserWithDuration(userId: uId, duration: const Duration(days: 30));
+                  } else if (selectedStatus == 'disabled') {
+                    await ModerationService.banUserWithDuration(userId: uId, duration: null);
+                  }
                   final res = await ApiService.updateUserWeb(user['id'], {
                     'name': name,
                     'email': email,
                     'role': selectedRole,
                     'phone': phone,
-                    'status': selectedStatus,
+                    'status': selectedStatus == 'active' ? 'active' : 'disabled',
                   });
                   if (mounted) {
                     if (res['id'] != null || res['success'] == true) {
@@ -741,6 +761,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
           labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
           tabs: const [
             Tab(icon: Icon(Icons.dashboard_rounded, size: 18), text: 'Tổng quan'),
+            Tab(icon: Icon(Icons.shield_rounded, size: 18), text: 'Kiểm duyệt vi phạm'),
             Tab(icon: Icon(Icons.location_on_rounded, size: 18), text: 'Địa điểm & Cơ sở'),
             Tab(icon: Icon(Icons.school_rounded, size: 18), text: 'Trường học & Sáp nhập'),
             Tab(icon: Icon(Icons.shopping_bag_rounded, size: 18), text: 'Gian hàng & OCOP'),
@@ -758,6 +779,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
               controller: _tabController,
               children: [
                 _buildOverviewTab(),
+                _buildModerationTab(crimsonColor),
                 _buildEateriesTab(crimsonColor),
                 _buildSchoolsTab(crimsonColor),
                 _buildStallsTab(crimsonColor),
@@ -860,21 +882,21 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
           children: [
             Expanded(
               child: _buildQuickActionCard(
-                'Quản lý User',
-                '${_stats['total_users'] ?? _usersList.length} tài khoản',
-                Icons.people_alt_rounded,
-                const Color(0xFF0284C7),
-                () => _tabController.animateTo(4),
+                'Kiểm duyệt UGC',
+                '${ModerationService.pendingReportsCount} báo cáo chờ duyệt',
+                Icons.shield_rounded,
+                const Color(0xFFE11D48),
+                () => _tabController.animateTo(1),
               ),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: _buildQuickActionCard(
-                'Cơ sở Bản đồ',
-                '${_stats['total_eateries'] ?? _eateriesList.length} địa điểm',
-                Icons.storefront_rounded,
-                const Color(0xFFF59E0B),
-                () => _tabController.animateTo(1),
+                'Quản lý User',
+                '${_stats['total_users'] ?? _usersList.length} tài khoản',
+                Icons.people_alt_rounded,
+                const Color(0xFF0284C7),
+                () => _tabController.animateTo(5),
               ),
             ),
           ],
@@ -884,10 +906,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
           children: [
             Expanded(
               child: _buildQuickActionCard(
-                'Trường học',
-                '${_stats['total_schools'] ?? _schoolsList.length} trường học',
-                Icons.school_rounded,
-                const Color(0xFF8B5CF6),
+                'Cơ sở Bản đồ',
+                '${_stats['total_eateries'] ?? _eateriesList.length} địa điểm',
+                Icons.storefront_rounded,
+                const Color(0xFFF59E0B),
                 () => _tabController.animateTo(2),
               ),
             ),
@@ -898,7 +920,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
                 '${_stats['total_stalls'] ?? (_stallsList.isNotEmpty ? _stallsList.length : 33)} gian hàng',
                 Icons.shopping_bag_rounded,
                 const Color(0xFF10B981),
-                () => _tabController.animateTo(3),
+                () => _tabController.animateTo(4),
               ),
             ),
           ],
@@ -1761,6 +1783,559 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildModerationTab(Color primaryColor) {
+    final allReports = ModerationService.getReportTickets();
+    final pendingCount = allReports.where((r) => r['status'] == 'pending').length;
+    final resolvedCount = allReports.where((r) => r['status'] != 'pending').length;
+
+    final filteredReports = allReports.where((r) {
+      if (_moderationFilter == 'pending') return r['status'] == 'pending';
+      if (_moderationFilter == 'resolved') return r['status'] != 'pending';
+      return true;
+    }).toList();
+
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFF881337), Color(0xFFE11D48)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFFE11D48).withValues(alpha: 0.2),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.shield_rounded, color: Colors.white, size: 22),
+                  ),
+                  const SizedBox(width: 10),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Hàng đợi Kiểm duyệt Nội dung (UGC)',
+                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
+                        ),
+                        Text(
+                          'Cam kết xử lý gỡ bỏ vi phạm trong vòng 24 giờ',
+                          style: TextStyle(color: Colors.white70, fontSize: 11),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Chờ xử lý', style: TextStyle(color: Colors.white70, fontSize: 11)),
+                          const SizedBox(height: 4),
+                          Text(
+                            '$pendingCount',
+                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 20),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Đã xử lý', style: TextStyle(color: Colors.white70, fontSize: 11)),
+                          const SizedBox(height: 4),
+                          Text(
+                            '$resolvedCount',
+                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 20),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Thời hạn SLA', style: TextStyle(color: Colors.white70, fontSize: 11)),
+                          SizedBox(height: 4),
+                          Text(
+                            '< 24 Giờ',
+                            style: TextStyle(color: Color(0xFFFDE047), fontWeight: FontWeight.bold, fontSize: 16),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              _buildFilterChip('Chờ xử lý ($pendingCount)', 'pending'),
+              const SizedBox(width: 8),
+              _buildFilterChip('Đã xử lý ($resolvedCount)', 'resolved'),
+              const SizedBox(width: 8),
+              _buildFilterChip('Tất cả (${allReports.length})', 'all'),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        if (filteredReports.isEmpty)
+          Container(
+            padding: const EdgeInsets.all(32),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFFF1F5F9)),
+            ),
+            child: const Column(
+              children: [
+                Icon(Icons.check_circle_outline_rounded, size: 48, color: Color(0xFF10B981)),
+                SizedBox(height: 12),
+                Text(
+                  'Không có báo cáo nào cần xử lý',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF0F172A)),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  'Cộng đồng Đông Anh Social đang an toàn và tuân thủ tốt tiêu chuẩn.',
+                  style: TextStyle(color: Color(0xFF64748B), fontSize: 12),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          )
+        else
+          ...filteredReports.map((report) => _buildModerationReportCard(report)),
+      ],
+    );
+  }
+
+  Widget _buildModerationReportCard(Map<String, dynamic> report) {
+    final status = report['status'] ?? 'pending';
+    final isPending = status == 'pending';
+    final contentType = report['content_type'] ?? 'post';
+    final title = report['title'] ?? 'Nội dung';
+    final authorName = report['author_name'] ?? 'Ẩn danh';
+    final authorId = (report['author_id'] ?? '').toString();
+    final reason = report['reason'] ?? 'Vi phạm tiêu chuẩn';
+    final details = (report['details'] ?? '').toString();
+    final snippet = (report['snippet'] ?? '').toString();
+    final ticketId = (report['id'] ?? '').toString();
+
+    Color statusColor = const Color(0xFFE11D48);
+    String statusText = 'Chờ xử lý';
+    if (status == 'resolved_removed') {
+      statusColor = const Color(0xFF64748B);
+      statusText = 'Đã gỡ nội dung';
+    } else if (status == 'resolved_banned') {
+      statusColor = const Color(0xFFDC2626);
+      statusText = 'Đã khóa tài khoản';
+    } else if (status == 'dismissed') {
+      statusColor = const Color(0xFF059669);
+      statusText = 'Đã duyệt an toàn';
+    }
+
+    IconData typeIcon = Icons.article_outlined;
+    String typeText = 'Bài viết';
+    if (contentType == 'video') {
+      typeIcon = Icons.play_circle_outline_rounded;
+      typeText = 'Video Shorts';
+    } else if (contentType == 'comment') {
+      typeIcon = Icons.chat_bubble_outline_rounded;
+      typeText = 'Bình luận';
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isPending ? const Color(0xFFFECDD3) : const Color(0xFFE2E8F0),
+          width: isPending ? 1.5 : 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(typeIcon, size: 14, color: const Color(0xFF475569)),
+                    const SizedBox(width: 4),
+                    Text(typeText, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF475569))),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: statusColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  statusText,
+                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: statusColor),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFF1F2),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: const Color(0xFFFFE4E6)),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(Icons.warning_amber_rounded, size: 18, color: Color(0xFFE11D48)),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Lý do: $reason',
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5, color: Color(0xFF9F1239)),
+                      ),
+                      if (details.isNotEmpty) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          'Mô tả: $details',
+                          style: const TextStyle(fontSize: 11.5, color: Color(0xFFBE123C)),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          Text(
+            title,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF0F172A)),
+          ),
+          if (snippet.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(
+              snippet,
+              style: const TextStyle(fontSize: 12.5, color: Color(0xFF475569)),
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+          const SizedBox(height: 8),
+
+          Row(
+            children: [
+              const Icon(Icons.person_outline_rounded, size: 14, color: Color(0xFF94A3B8)),
+              const SizedBox(width: 4),
+              Text(
+                'Tác giả: $authorName',
+                style: const TextStyle(fontSize: 11.5, color: Color(0xFF64748B), fontWeight: FontWeight.w500),
+              ),
+            ],
+          ),
+
+          if (isPending) ...[
+            const SizedBox(height: 14),
+            const Divider(height: 1),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFFDC2626),
+                      side: const BorderSide(color: Color(0xFFFECDD3)),
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    onPressed: () => _confirmRemoveContent(ticketId, title),
+                    icon: const Icon(Icons.delete_outline_rounded, size: 16),
+                    label: const Text('Gỡ nội dung', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold)),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFF991B1B),
+                      side: const BorderSide(color: Color(0xFFFCA5A5)),
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    onPressed: () => _confirmBanUser(ticketId, authorId, authorName),
+                    icon: const Icon(Icons.block_rounded, size: 16),
+                    label: const Text('Khóa tác giả', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold)),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                IconButton(
+                  tooltip: 'Bác bỏ báo cáo (Nội dung an toàn)',
+                  style: IconButton.styleFrom(
+                    backgroundColor: const Color(0xFFF1F5F9),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  icon: const Icon(Icons.check_rounded, color: Color(0xFF059669), size: 18),
+                  onPressed: () async {
+                    await ModerationService.resolveReportTicket(ticketId: ticketId, action: 'dismiss');
+                    setState(() {});
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Đã bác bỏ báo cáo. Nội dung được giữ nguyên.')),
+                      );
+                    }
+                  },
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  void _confirmRemoveContent(String ticketId, String title) {
+    showDialog(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Gỡ bỏ nội dung vi phạm?'),
+        content: Text('Nội dung "$title" sẽ bị ẩn và gỡ bỏ hoàn toàn khỏi hệ thống.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(dialogCtx), child: const Text('Hủy')),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFDC2626),
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () async {
+              Navigator.pop(dialogCtx);
+              await ModerationService.resolveReportTicket(ticketId: ticketId, action: 'remove_content');
+              setState(() {});
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Đã gỡ bỏ nội dung vi phạm thành công.')),
+                );
+              }
+            },
+            child: const Text('Gỡ nội dung'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _confirmBanUser(String ticketId, String authorId, String authorName) {
+    int selectedHours = 24;
+    final reasonCtrl = TextEditingController(text: 'Vi phạm tiêu chuẩn cộng đồng');
+
+    final durations = [
+      {'label': '24 giờ (1 ngày)', 'hours': 24},
+      {'label': '3 ngày (72 giờ)', 'hours': 72},
+      {'label': '7 ngày (1 tuần)', 'hours': 168},
+      {'label': '30 ngày (1 tháng)', 'hours': 720},
+      {'label': 'Khóa vĩnh viễn', 'hours': -1},
+    ];
+
+    showDialog(
+      context: context,
+      builder: (dialogCtx) => StatefulBuilder(
+        builder: (modalCtx, setDialogState) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFEE2E2),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.block_rounded, color: Color(0xFFDC2626), size: 20),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text('Khóa tài khoản $authorName', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+              ),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Chọn thời hạn khóa:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF334155))),
+                const SizedBox(height: 8),
+                ...durations.map((d) {
+                  final isSel = selectedHours == d['hours'];
+                  return InkWell(
+                    onTap: () => setDialogState(() => selectedHours = d['hours'] as int),
+                    borderRadius: BorderRadius.circular(8),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+                      child: Row(
+                        children: [
+                          Icon(
+                            isSel ? Icons.radio_button_checked_rounded : Icons.radio_button_unchecked_rounded,
+                            color: isSel ? const Color(0xFFDC2626) : const Color(0xFF94A3B8),
+                            size: 18,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            d['label'] as String,
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: isSel ? FontWeight.bold : FontWeight.normal,
+                              color: isSel ? const Color(0xFF991B1B) : const Color(0xFF475569),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }),
+                const SizedBox(height: 12),
+                const Text('Lý do khóa:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF334155))),
+                const SizedBox(height: 6),
+                TextField(
+                  controller: reasonCtrl,
+                  decoration: InputDecoration(
+                    hintText: 'Nhập lý do vi phạm...',
+                    hintStyle: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(dialogCtx), child: const Text('Hủy')),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF991B1B),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              onPressed: () async {
+                final messenger = ScaffoldMessenger.of(context);
+                Navigator.pop(dialogCtx);
+                final Duration? duration = selectedHours > 0 ? Duration(hours: selectedHours) : null;
+                await ModerationService.resolveReportTicket(
+                  ticketId: ticketId,
+                  action: 'ban_user',
+                  banDuration: duration,
+                  banReason: reasonCtrl.text.trim(),
+                );
+                if (mounted) {
+                  setState(() {});
+                  final durationText = ModerationService.formatDurationText(duration);
+                  messenger.showSnackBar(
+                    SnackBar(content: Text('Đã khóa tài khoản $authorName ($durationText).')),
+                  );
+                }
+              },
+              child: const Text('Xác nhận khóa'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFilterChip(String label, String value) {
+    final isSelected = _moderationFilter == value;
+    return ChoiceChip(
+      label: Text(label),
+      selected: isSelected,
+      onSelected: (_) => setState(() => _moderationFilter = value),
+      selectedColor: const Color(0xFFE11D48),
+      labelStyle: TextStyle(
+        fontSize: 12,
+        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+        color: isSelected ? Colors.white : const Color(0xFF475569),
+      ),
+      backgroundColor: const Color(0xFFF1F5F9),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), side: BorderSide.none),
     );
   }
 }

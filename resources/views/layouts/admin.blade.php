@@ -125,6 +125,9 @@
             <a href="/admin/users" class="admin-menu-item {{ request()->is('admin/users*') ? 'active' : '' }}">
                 <span>👥</span> Quản Lý Tài Khoản
             </a>
+            <a href="/admin/moderation" class="admin-menu-item {{ request()->is('admin/moderation*') ? 'active' : '' }}" style="position: relative;">
+                <span>🛡️</span> Kiểm Duyệt Vi Phạm
+            </a>
 
             <div class="admin-sidebar-divider"></div>
 

@@ -336,6 +336,48 @@ class ApiService {
     await prefs.remove('current_user');
   }
 
+  static Future<bool> deleteAccount() async {
+    if (_token != null) {
+      try {
+        await http.delete(
+          Uri.parse('$baseUrl/user/account'),
+          headers: _getHeaders(),
+        );
+      } catch (_) {}
+    }
+    _token = null;
+    currentUser = null;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('auth_token');
+    await prefs.remove('current_user');
+    await prefs.remove('cart_session_id');
+    return true;
+  }
+
+  static Future<bool> reportContent({
+    required String contentId,
+    required String contentType,
+    required String reason,
+    String? details,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/moderation/report'),
+        headers: _getHeaders(),
+        body: jsonEncode({
+          'content_id': contentId,
+          'content_type': contentType,
+          'reason': reason,
+          if (details != null && details.isNotEmpty) 'details': details,
+        }),
+      );
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        return true;
+      }
+    } catch (_) {}
+    return true;
+  }
+
   // =========================================================================
   // CART API: Giỏ hàng đồng bộ với Web
   // =========================================================================
@@ -1601,11 +1643,10 @@ class ApiService {
     return controller.stream;
   }
 
-  /// GET /newsfeed — Lấy tất cả bài viết Bản tin đa phân quyền
-  static Future<List<dynamic>> getNewsfeed() async {
+  static Future<List<dynamic>> getNewsfeed({String feedType = 'for_you'}) async {
     try {
       final response = await http.get(
-        Uri.parse('$baseUrl/newsfeed'),
+        Uri.parse('$baseUrl/newsfeed?feed_type=$feedType'),
         headers: _getHeaders(),
       );
       if (response.statusCode == 200) {

@@ -5,11 +5,11 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../models/post_model.dart';
 import '../services/api_service.dart';
+import '../services/moderation_service.dart';
 import '../widgets/category_filter_bar.dart';
 import '../widgets/create_post_modal.dart';
 import '../widgets/custom_loader.dart';
 import '../widgets/post_card.dart';
-import '../widgets/squircle_helper.dart';
 import '../widgets/story_carousel.dart';
 import 'create_story_screen.dart';
 
@@ -30,6 +30,7 @@ class NewsBulletinScreen extends StatefulWidget {
 class _NewsBulletinScreenState extends State<NewsBulletinScreen> {
   List<PostModel> _posts = [];
   bool _isLoading = true;
+  String _feedType = 'for_you';
 
   final Set<String> _likedPosts = {};
   final Map<String, int> _likesCounts = {};
@@ -47,8 +48,9 @@ class _NewsBulletinScreenState extends State<NewsBulletinScreen> {
   ];
 
   List<PostModel> get _filteredPosts {
-    if (_selectedCategory == 'all') return _posts;
     return _posts.where((post) {
+      if (ModerationService.isUserBlocked(post.author.id.toString())) return false;
+      if (ModerationService.isPostHidden(post.id)) return false;
       if (_selectedCategory == 'food_tour') return post.isFoodTour;
       if (_selectedCategory == 'checkin') return post.isCheckin;
       if (_selectedCategory == 'school') return post.isSchool;
@@ -60,13 +62,20 @@ class _NewsBulletinScreenState extends State<NewsBulletinScreen> {
   @override
   void initState() {
     super.initState();
+    ModerationService.init().then((_) {
+      if (mounted) setState(() {});
+    });
     _fetchNewsfeed();
   }
 
-  Future<void> _fetchNewsfeed() async {
-    setState(() => _isLoading = true);
+  Future<void> _fetchNewsfeed([String? feedType]) async {
+    final typeToFetch = feedType ?? _feedType;
+    setState(() {
+      _feedType = typeToFetch;
+      _isLoading = true;
+    });
     try {
-      final feed = await ApiService.getNewsfeed();
+      final feed = await ApiService.getNewsfeed(feedType: typeToFetch);
       if (!mounted) return;
 
       final parsedPosts = feed.map((item) => PostModel.fromJson(Map<String, dynamic>.from(item))).toList();
@@ -247,6 +256,72 @@ class _NewsBulletinScreenState extends State<NewsBulletinScreen> {
     );
   }
 
+  void _showCommentOptions(BuildContext context, Map<String, dynamic> comment, VoidCallback onRefresh) {
+    final author = (comment['author'] ?? 'Người dùng').toString();
+    final authorId = (comment['author_id'] ?? comment['user_id'] ?? '').toString();
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.only(top: 12, bottom: 28, left: 16, right: 16),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 36,
+              height: 4,
+              decoration: BoxDecoration(color: const Color(0xFFE2E8F0), borderRadius: BorderRadius.circular(2)),
+            ),
+            const SizedBox(height: 16),
+            ListTile(
+              leading: const Icon(Icons.flag_outlined, color: Color(0xFFDC2626)),
+              title: const Text('Báo cáo bình luận vi phạm', style: TextStyle(fontWeight: FontWeight.w600, color: Color(0xFFDC2626))),
+              subtitle: const Text('Báo cáo nội dung xấu độc, quấy rối (Xử lý trong 24h)', style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+              onTap: () async {
+                Navigator.pop(ctx);
+                await ModerationService.reportContent(
+                  contentId: (comment['id'] ?? DateTime.now().millisecondsSinceEpoch).toString(),
+                  contentType: 'comment',
+                  reason: 'Bình luận vi phạm tiêu chuẩn cộng đồng',
+                  title: 'Bình luận của $author',
+                  authorName: author,
+                  authorId: authorId,
+                  snippet: (comment['text'] ?? '').toString(),
+                );
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Báo cáo bình luận đã được ghi nhận và sẽ được xử lý trong 24 giờ.')),
+                  );
+                }
+              },
+            ),
+            if (authorId.isNotEmpty)
+              ListTile(
+                leading: const Icon(Icons.block_rounded, color: Color(0xFFDC2626)),
+                title: Text('Chặn $author', style: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFFDC2626))),
+                subtitle: const Text('Ẩn tất cả bài viết và bình luận của người này', style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+                onTap: () async {
+                  Navigator.pop(ctx);
+                  await ModerationService.blockUser(authorId);
+                  onRefresh();
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Đã chặn $author. Toàn bộ nội dung đã được ẩn.')),
+                    );
+                  }
+                },
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _showCommentsBottomSheet(BuildContext context, PostModel post) {
     final postId = post.id;
     final commentsController = TextEditingController();
@@ -258,7 +333,11 @@ class _NewsBulletinScreenState extends State<NewsBulletinScreen> {
       builder: (context) => StatefulBuilder(
         builder: (context, setModalState) {
           final rawComments = (post.rawJson['comments'] is List) ? (post.rawJson['comments'] as List) : [];
-          final comments = _postComments[postId] ?? rawComments.map((c) => Map<String, dynamic>.from(c as Map)).toList();
+          final allComments = _postComments[postId] ?? rawComments.map((c) => Map<String, dynamic>.from(c as Map)).toList();
+          final comments = allComments.where((c) {
+            final aId = (c['author_id'] ?? c['user_id'] ?? '').toString();
+            return aId.isEmpty || !ModerationService.isUserBlocked(aId);
+          }).toList();
 
           return Container(
             height: MediaQuery.of(context).size.height * 0.72,
@@ -327,14 +406,26 @@ class _NewsBulletinScreenState extends State<NewsBulletinScreen> {
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        Text(
-                                          c['author']!,
-                                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF0F172A)),
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Text(
+                                              c['author'] ?? 'Người dùng',
+                                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF0F172A)),
+                                            ),
+                                            GestureDetector(
+                                              onTap: () => _showCommentOptions(context, c, () {
+                                                setModalState(() {});
+                                                setState(() {});
+                                              }),
+                                              child: const Icon(Icons.more_horiz, size: 16, color: Color(0xFF94A3B8)),
+                                            ),
+                                          ],
                                         ),
                                         const SizedBox(height: 2),
-                                        Text(c['text']!, style: const TextStyle(fontSize: 13, color: Color(0xFF334155))),
+                                        Text(c['text'] ?? '', style: const TextStyle(fontSize: 13, color: Color(0xFF334155))),
                                         const SizedBox(height: 4),
-                                        Text(c['time']!, style: const TextStyle(fontSize: 10, color: Color(0xFF94A3B8))),
+                                        Text(c['time'] ?? '', style: const TextStyle(fontSize: 10, color: Color(0xFF94A3B8))),
                                       ],
                                     ),
                                   ),
@@ -903,102 +994,129 @@ class _NewsBulletinScreenState extends State<NewsBulletinScreen> {
 
   Widget _buildPostComposer(dynamic user) {
     return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: SquircleHelper.decoration(
-        radius: 20,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
         color: Colors.white,
-        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 12, offset: const Offset(0, 3)),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
         ],
       ),
-      child: Column(
+      child: Row(
         children: [
-          GestureDetector(
-            onTap: _showCreatePostModal,
-            child: Row(
-              children: [
-                CircleAvatar(
-                  radius: 21,
-                  backgroundImage: ResizeImage(NetworkImage(ApiService.getAvatarUrl(user, user?['name'])), width: 90),
+          CircleAvatar(
+            radius: 19,
+            backgroundImage: ResizeImage(
+              NetworkImage(ApiService.getAvatarUrl(user, user?['name'])),
+              width: 90,
+            ),
+            backgroundColor: const Color(0xFFE2E8F0),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: GestureDetector(
+              onTap: _showCreatePostModal,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF8FAFC),
-                      borderRadius: BorderRadius.circular(100),
-                      border: Border.all(color: const Color(0xFFE2E8F0)),
-                    ),
-                    child: Text(
-                      ApiService.isAuthenticated
-                          ? '${user?['name'] ?? 'Bạn'} ơi, bạn đang nghĩ gì thế?'
-                          : 'Đăng nhập để chia sẻ thông tin...',
-                      style: const TextStyle(color: Color(0xFF64748B), fontSize: 13, fontWeight: FontWeight.w500),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                child: Text(
+                  ApiService.isAuthenticated
+                      ? '${user?['name'] ?? 'Bạn'} ơi, bạn đang nghĩ gì thế?'
+                      : 'Đăng nhập để chia sẻ thông tin...',
+                  style: const TextStyle(
+                    color: Color(0xFF64748B),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-              ],
+              ),
             ),
           ),
-          const SizedBox(height: 10),
-          const Divider(height: 1, color: Color(0xFFF1F5F9)),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildComposerShortcut(
-                icon: Icons.photo_library_rounded,
-                label: 'Ảnh & Video',
-                color: const Color(0xFF10B981),
-                onTap: _showCreatePostModal,
+          const SizedBox(width: 8),
+          GestureDetector(
+            onTap: _showCreatePostModal,
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFF10B981).withValues(alpha: 0.1),
+                shape: BoxShape.circle,
               ),
-              _buildComposerShortcut(
-                icon: Icons.sentiment_satisfied_alt_rounded,
-                label: 'Cảm xúc',
-                color: const Color(0xFFF59E0B),
-                onTap: _showCreatePostModal,
+              child: const Icon(
+                Icons.photo_library_rounded,
+                color: Color(0xFF10B981),
+                size: 20,
               ),
-              _buildComposerShortcut(
-                icon: Icons.location_on_rounded,
-                label: 'Check-in',
-                color: const Color(0xFFEF4444),
-                onTap: _showCreatePostModal,
-              ),
-            ],
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildComposerShortcut({
-    required IconData icon,
-    required String label,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, color: color, size: 18),
-            const SizedBox(width: 5),
-            Text(
-              label,
-              style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.bold),
+  Widget _buildFeedModeTabs() {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF1F5F9),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Row(
+        children: [
+          _buildFeedModeTab('for_you', '🎯 Dành cho bạn'),
+          _buildFeedModeTab('following', '👥 Đang theo dõi'),
+          _buildFeedModeTab('nearby', '📍 Gần tôi'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFeedModeTab(String type, String label) {
+    final isSelected = _feedType == type;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          if (_feedType != type) {
+            _fetchNewsfeed(type);
+          }
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          decoration: BoxDecoration(
+            color: isSelected ? Colors.white : Colors.transparent,
+            borderRadius: BorderRadius.circular(10),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.06),
+                      blurRadius: 4,
+                      offset: const Offset(0, 1),
+                    )
+                  ]
+                : null,
+          ),
+          alignment: Alignment.center,
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+              color: isSelected ? const Color(0xFF0284C7) : const Color(0xFF64748B),
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -1020,11 +1138,13 @@ class _NewsBulletinScreenState extends State<NewsBulletinScreen> {
                 primaryColor: Color(0xFF0EA5E9),
               )
             : ListView.builder(
-                padding: const EdgeInsets.fromLTRB(14, 12, 14, 90),
-                itemCount: filtered.isEmpty ? 9 : 8 + filtered.length,
+                padding: const EdgeInsets.fromLTRB(14, 10, 14, 90),
+                itemCount: filtered.isEmpty ? 8 : 7 + filtered.length,
                 itemBuilder: (context, index) {
                   switch (index) {
                     case 0:
+                      return _buildFeedModeTabs();
+                    case 1:
                       return StoryCarousel(
                         posts: _posts,
                         onCreateStory: _showCreateStoryScreen,
@@ -1034,13 +1154,13 @@ class _NewsBulletinScreenState extends State<NewsBulletinScreen> {
                           }
                         },
                       );
-                    case 1:
-                      return const SizedBox(height: 14);
                     case 2:
-                      return _buildPostComposer(user);
+                      return const SizedBox(height: 10);
                     case 3:
-                      return const SizedBox(height: 14);
+                      return _buildPostComposer(user);
                     case 4:
+                      return const SizedBox(height: 10);
+                    case 5:
                       return CategoryFilterBar(
                         categories: _categories,
                         selectedCategory: _selectedCategory,
@@ -1050,54 +1170,33 @@ class _NewsBulletinScreenState extends State<NewsBulletinScreen> {
                           });
                         },
                       );
-                    case 5:
-                      return const SizedBox(height: 14);
                     case 6:
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text(
-                              'BÀI VIẾT BẢN TIN',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w800,
-                                color: Color(0xFF64748B),
-                                letterSpacing: 0.8,
-                              ),
-                            ),
-                            Text(
-                              '${filtered.length} bài viết',
-                              style: const TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF94A3B8),
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    case 7:
-                      return const SizedBox(height: 8);
+                      return const SizedBox(height: 10);
                     default:
                       if (filtered.isEmpty) {
                         return Container(
                           padding: const EdgeInsets.all(36),
                           alignment: Alignment.center,
-                          child: const Column(
+                          child: Column(
                             children: [
-                              Icon(Icons.article_outlined, size: 48, color: Color(0xFF94A3B8)),
-                              SizedBox(height: 10),
+                              Icon(
+                                _feedType == 'following' ? Icons.people_outline_rounded : Icons.article_outlined,
+                                size: 48,
+                                color: const Color(0xFF94A3B8),
+                              ),
+                              const SizedBox(height: 10),
                               Text(
-                                'Chưa có bài viết nào trong mục này.',
-                                style: TextStyle(color: Color(0xFF64748B), fontWeight: FontWeight.bold, fontSize: 13.5),
+                                _feedType == 'following'
+                                    ? 'Chưa có bài viết từ người bạn theo dõi.\nHãy kết bạn hoặc chuyển sang "Dành cho bạn"!'
+                                    : 'Chưa có bài viết nào trong mục này.',
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(color: Color(0xFF64748B), fontWeight: FontWeight.bold, fontSize: 13.5),
                               ),
                             ],
                           ),
                         );
                       }
-                      final postIndex = index - 8;
+                      final postIndex = index - 7;
                       final post = filtered[postIndex];
                       final postId = post.id;
                       final isLiked = _likedPosts.contains(postId);
@@ -1121,6 +1220,8 @@ class _NewsBulletinScreenState extends State<NewsBulletinScreen> {
                         onLike: () => _toggleLike(post),
                         onComment: () => _showCommentsBottomSheet(context, post),
                         onShare: () => _showShareBottomSheet(context, post),
+                        onHidePost: () => setState(() {}),
+                        onBlockAuthor: () => setState(() {}),
                         onToggleExpand: () {
                           setState(() {
                             if (isExpanded) {

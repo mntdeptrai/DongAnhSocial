@@ -2,8 +2,41 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../services/api_service.dart';
+import '../services/moderation_service.dart';
 
 void showCreatePostModal(BuildContext context, {VoidCallback? onPostSuccess}) {
+  final currentUserId = ApiService.currentUser?['id']?.toString() ?? '';
+  if (currentUserId.isNotEmpty && ModerationService.isUserBlocked(currentUserId)) {
+    final banInfo = ModerationService.getUserBanInfo(currentUserId);
+    final remaining = banInfo?['remaining_text'] ?? 'Đang bị khóa';
+    final reason = banInfo?['reason'] ?? 'Vi phạm tiêu chuẩn cộng đồng';
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Row(
+          children: [
+            Icon(Icons.block_rounded, color: Color(0xFFDC2626)),
+            SizedBox(width: 8),
+            Text('Tài khoản bị tạm khóa'),
+          ],
+        ),
+        content: Text(
+          'Tài khoản của bạn đang bị tạm khóa ($remaining) vì lý do: $reason.\n\nBạn không thể đăng bài viết mới trong thời gian này.',
+          style: const TextStyle(fontSize: 13.5, color: Color(0xFF475569), height: 1.4),
+        ),
+        actions: [
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0EA5E9)),
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Đã hiểu', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+    return;
+  }
+
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,

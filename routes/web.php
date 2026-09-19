@@ -16,6 +16,7 @@ use App\Http\Controllers\LiveStreamController;
 use App\Http\Controllers\YouTubeAuthController;
 use App\Http\Controllers\HealthStationController;
 use App\Http\Controllers\BusinessManagementController;
+use App\Http\Controllers\ModerationController;
 
 
 /*
@@ -35,6 +36,9 @@ Route::get('/youtube/callback', [YouTubeAuthController::class, 'callback'])->nam
 // --- USER SIDE ROUTES (Giao diện người dùng) ---
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/ban-tin', [HomeController::class, 'newsfeed'])->name('newsfeed');
+Route::get('/chinh-sach-dieu-khoan', [HomeController::class, 'privacyPolicy'])->name('privacy.policy');
+Route::post('/api/moderation/report', [ModerationController::class, 'report'])->name('api.moderation.report');
+Route::get('/api/moderation/check-ban', [ModerationController::class, 'checkBan'])->name('api.moderation.check-ban');
 Route::get('/tuyen-duong-40', [HomeController::class, 'tuyenDuong40'])->name('tuyen-duong');
 Route::get('/tim-kiem', [SearchController::class, 'search'])->name('search');
 Route::get('/checkin', [HomeController::class, 'checkinFeed'])->name('checkin.feed');
@@ -119,6 +123,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/profile/cover', [AuthController::class, 'updateCoverPhoto'])->name('profile.cover');
     Route::put('/profile/password', [AuthController::class, 'changePassword'])->name('profile.password');
     Route::post('/profile/password/send-otp', [AuthController::class, 'sendOtp'])->name('profile.password.send-otp')->middleware('throttle:5,1');
+    Route::post('/profile/delete-account', [AuthController::class, 'deleteAccount'])->name('profile.delete-account');
     Route::post('/user/heartbeat', [AuthController::class, 'heartbeat'])->name('user.heartbeat');
 
     // --- SOCIAL HUB ROUTES (Inertia + React) ---
@@ -321,6 +326,8 @@ Route::post('/api/upload-media', [\App\Http\Controllers\Api\UploadApiController:
 // Bắt buộc đăng nhập (auth), phân quyền (admin, manager) và xác thực Tenant (tenant.auth)
 Route::prefix('admin')->middleware(['auth', 'role:admin,manager', 'tenant.auth'])->group(function () {
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
+    Route::get('/moderation', [AdminController::class, 'moderationIndex'])->name('admin.moderation.index');
+    Route::post('/moderation/resolve/{id}', [AdminController::class, 'resolveReport'])->name('admin.moderation.resolve');
     Route::get('/eateries/create', [AdminController::class, 'createEatery'])->name('admin.eatery.create');
     Route::post('/eateries', [AdminController::class, 'storeEatery'])->name('admin.eatery.store');
     Route::get('/eateries/{slug}/edit', [AdminController::class, 'editEatery'])->name('admin.eatery.edit');

@@ -16,6 +16,7 @@ class PostModel {
   final bool initialIsLiked;
   final List<String> images;
   final String? createdAt;
+  final String? personalTag;
   final Map<String, dynamic> rawJson;
 
   const PostModel({
@@ -34,6 +35,7 @@ class PostModel {
     this.initialIsLiked = false,
     this.images = const [],
     this.createdAt,
+    this.personalTag,
     required this.rawJson,
   });
 
@@ -65,6 +67,7 @@ class PostModel {
       initialIsLiked: json['is_liked'] == true,
       images: extractedImages,
       createdAt: json['created_at']?.toString(),
+      personalTag: json['personal_tag']?.toString(),
       rawJson: json,
     );
   }

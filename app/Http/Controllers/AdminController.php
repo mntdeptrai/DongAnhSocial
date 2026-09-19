@@ -3043,4 +3043,32 @@ class AdminController extends Controller
 
         return redirect('/admin/stalls')->with('success', 'Đã xóa Gian hàng số thành công khỏi hệ thống!');
     }
+
+    public function moderationIndex(Request $request)
+    {
+        $this->verifyAdmin();
+        $status = $request->query('status', 'all');
+        $reports = \App\Services\ModerationService::getReports($status);
+        $stats = \App\Services\ModerationService::getReportStats();
+
+        return view('admin.moderation.index', compact('reports', 'stats', 'status'));
+    }
+
+    public function resolveReport(Request $request, $id)
+    {
+        $this->verifyAdmin();
+        $action = $request->input('action', 'dismiss');
+        $duration = $request->input('ban_duration', '24h');
+        $note = $request->input('resolution_note', null);
+        $adminId = session('user_id') ?: \Illuminate\Support\Facades\Auth::id();
+
+        \App\Services\ModerationService::resolveTicket($id, $action, $adminId, $duration, $note);
+
+        $msg = 'Đã xử lý báo cáo vi phạm thành công!';
+        if ($action === 'remove') $msg = 'Đã gỡ bỏ nội dung vi phạm thành công!';
+        elseif ($action === 'ban') $msg = "Đã thực thi khóa tài khoản tác giả ({$duration}) và gỡ bài viết!";
+        elseif ($action === 'dismiss') $msg = 'Đã bác bỏ báo cáo và xác nhận nội dung an toàn!';
+
+        return redirect()->back()->with('success', $msg);
+    }
 }

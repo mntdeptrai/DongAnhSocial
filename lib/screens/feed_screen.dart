@@ -7,10 +7,6 @@ import 'package:geolocator/geolocator.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:share_plus/share_plus.dart';
-import '../core/usecases/usecase.dart';
-import '../features/eatery/data/datasources/eatery_remote_datasource.dart';
-import '../features/eatery/data/repositories/eatery_repository_impl.dart';
-import '../features/eatery/domain/usecases/get_eateries_usecase.dart';
 import '../services/api_service.dart';
 import '../widgets/public_profile_modal.dart';
 import '../widgets/custom_loader.dart';
@@ -54,14 +50,9 @@ class FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
   bool _isSendingCheckin = false;
   String? _checkinImagePath;
 
-  late final GetEateriesUseCase _getEateriesUseCase;
-
   @override
   void initState() {
     super.initState();
-    _getEateriesUseCase = GetEateriesUseCase(
-      EateryRepositoryImpl(remoteDataSource: EateryRemoteDataSourceImpl()),
-    );
     WidgetsBinding.instance.addObserver(this);
     _loadFeed();
     _loadEateries();
@@ -272,22 +263,11 @@ class FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
 
   Future<void> _loadEateries() async {
     try {
-      final result = await _getEateriesUseCase(const NoParams());
-      if (mounted && result.isSuccess && result.data != null) {
+      final eateries = await ApiService.getAllEateries();
+      if (mounted) {
         setState(() {
-          _eateries = result.data!.map((e) => {
-            'id': e.id,
-            'name': e.name,
-            'address': e.address,
-          }).toList();
+          _eateries = List<dynamic>.from(eateries);
         });
-      } else {
-        final eateries = await ApiService.getAllEateries();
-        if (mounted) {
-          setState(() {
-            _eateries = List<dynamic>.from(eateries);
-          });
-        }
       }
     } catch (e) {
       debugPrint('Eateries API fetch error: $e');

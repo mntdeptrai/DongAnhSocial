@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../models/post_model.dart';
 import '../services/api_service.dart';
+import '../services/moderation_service.dart';
 import 'optimized_image.dart';
 import 'squircle_helper.dart';
 
@@ -17,6 +18,8 @@ class PostCard extends StatefulWidget {
   final VoidCallback onShare;
   final VoidCallback onToggleExpand;
   final Function(List<String> images, int initialIndex) onOpenGallery;
+  final VoidCallback? onHidePost;
+  final VoidCallback? onBlockAuthor;
 
   const PostCard({
     super.key,
@@ -30,6 +33,8 @@ class PostCard extends StatefulWidget {
     required this.onShare,
     required this.onToggleExpand,
     required this.onOpenGallery,
+    this.onHidePost,
+    this.onBlockAuthor,
   });
 
   @override
@@ -302,16 +307,42 @@ class _PostCardState extends State<PostCard> {
                         ],
                       ),
                       const SizedBox(height: 2),
-                      const Text(
-                        'Công khai',
-                        style: TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
+                      Row(
+                        children: [
+                          const Text(
+                            'Công khai',
+                            style: TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
+                          ),
+                          if (post.personalTag != null && post.personalTag!.isNotEmpty) ...[
+                            const SizedBox(width: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF0EA5E9).withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: const Color(0xFF0EA5E9).withValues(alpha: 0.3),
+                                  width: 0.8,
+                                ),
+                              ),
+                              child: Text(
+                                post.personalTag!,
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF0284C7),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                     ],
                   ),
                 ),
                 IconButton(
                   icon: const Icon(Icons.more_horiz, color: Color(0xFF64748B)),
-                  onPressed: widget.onShare,
+                  onPressed: () => _showPostActionsSheet(context),
                 ),
               ],
             ),
@@ -431,6 +462,283 @@ class _PostCardState extends State<PostCard> {
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  void _showPostActionsSheet(BuildContext context) {
+    final post = widget.post;
+    final authorName = post.author.name;
+    final authorId = post.author.id.toString();
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) => Container(
+        padding: const EdgeInsets.only(top: 12, bottom: 28, left: 16, right: 16),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 36,
+              height: 4,
+              decoration: BoxDecoration(
+                color: const Color(0xFFE2E8F0),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 16),
+            ListTile(
+              leading: const Icon(Icons.share_outlined, color: Color(0xFF0F172A)),
+              title: const Text('Chia sẻ bài viết', style: TextStyle(fontWeight: FontWeight.w600)),
+              onTap: () {
+                Navigator.pop(sheetContext);
+                widget.onShare();
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.visibility_off_outlined, color: Color(0xFF475569)),
+              title: const Text('Ẩn bài viết này', style: TextStyle(fontWeight: FontWeight.w600)),
+              subtitle: const Text('Không hiển thị bài viết này trên bảng tin của bạn', style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+              onTap: () async {
+                Navigator.pop(sheetContext);
+                await ModerationService.hidePost(post.id);
+                widget.onHidePost?.call();
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Đã ẩn bài viết khỏi bảng tin.')),
+                  );
+                }
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.block_rounded, color: Color(0xFFDC2626)),
+              title: Text('Chặn người dùng $authorName', style: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFFDC2626))),
+              subtitle: const Text('Ẩn tất cả bài viết và bình luận của người này', style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+              onTap: () {
+                Navigator.pop(sheetContext);
+                _confirmBlockAuthor(context, authorId, authorName);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.flag_outlined, color: Color(0xFFDC2626)),
+              title: const Text('Báo cáo nội dung vi phạm', style: TextStyle(fontWeight: FontWeight.w600, color: Color(0xFFDC2626))),
+              subtitle: const Text('Báo cáo vi phạm tiêu chuẩn cộng đồng (Xử lý trong 24h)', style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+              onTap: () {
+                Navigator.pop(sheetContext);
+                _showReportModal(context);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _confirmBlockAuthor(BuildContext context, String authorId, String authorName) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text('Chặn $authorName?'),
+        content: const Text(
+          'Bạn sẽ không nhìn thấy bất kỳ bài viết hay bình luận nào từ người này nữa. Toàn bộ nội dung của họ sẽ được ẩn ngay lập tức.',
+          style: TextStyle(fontSize: 14, color: Color(0xFF475569)),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Hủy'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFDC2626),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            onPressed: () async {
+              Navigator.pop(dialogContext);
+              await ModerationService.blockUser(authorId);
+              widget.onBlockAuthor?.call();
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Đã chặn $authorName. Nội dung đã được ẩn.')),
+                );
+              }
+            },
+            child: const Text('Chặn'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showReportModal(BuildContext context) {
+    String selectedReason = 'Spam hoặc thông tin sai lệch';
+    final detailsController = TextEditingController();
+    final reasons = [
+      'Spam hoặc thông tin sai lệch',
+      'Nội dung khiêu dâm, đồi trụy',
+      'Bạo lực, đe dọa hoặc quấy rối',
+      'Nội dung chống phá hoặc thù địch',
+      'Vi phạm bản quyền sở hữu trí tuệ',
+      'Lý do khác',
+    ];
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (modalCtx) => StatefulBuilder(
+        builder: (context, setModalState) => Container(
+          padding: EdgeInsets.only(
+            top: 16,
+            left: 20,
+            right: 20,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+          ),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE2E8F0),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFEE2E2),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.flag_rounded, color: Color(0xFFDC2626), size: 22),
+                  ),
+                  const SizedBox(width: 10),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Báo cáo nội dung vi phạm',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF0F172A)),
+                        ),
+                        Text(
+                          'Cam kết xem xét & xử lý trong 24 giờ',
+                          style: TextStyle(fontSize: 12, color: Color(0xFF16A34A), fontWeight: FontWeight.w600),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded, color: Color(0xFF64748B)),
+                    onPressed: () => Navigator.pop(modalCtx),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              const Text('Chọn lý do báo cáo:', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Color(0xFF334155))),
+              const SizedBox(height: 8),
+              ...reasons.map((r) {
+                final isSelected = r == selectedReason;
+                return InkWell(
+                  onTap: () => setModalState(() => selectedReason = r),
+                  borderRadius: BorderRadius.circular(8),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+                    child: Row(
+                      children: [
+                        Icon(
+                          isSelected ? Icons.radio_button_checked_rounded : Icons.radio_button_unchecked_rounded,
+                          color: isSelected ? const Color(0xFFDC2626) : const Color(0xFF94A3B8),
+                          size: 20,
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            r,
+                            style: TextStyle(
+                              fontSize: 13.5,
+                              fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                              color: isSelected ? const Color(0xFF0F172A) : const Color(0xFF475569),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }),
+              const SizedBox(height: 8),
+              TextField(
+                controller: detailsController,
+                maxLines: 2,
+                decoration: InputDecoration(
+                  hintText: 'Mô tả chi tiết vi phạm (không bắt buộc)...',
+                  hintStyle: const TextStyle(fontSize: 12.5, color: Color(0xFF94A3B8)),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF0EA5E9))),
+                  contentPadding: const EdgeInsets.all(12),
+                ),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFDC2626),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  onPressed: () async {
+                    Navigator.pop(modalCtx);
+                    final post = widget.post;
+                    await ModerationService.reportContent(
+                      contentId: post.id,
+                      contentType: 'post',
+                      reason: selectedReason,
+                      details: detailsController.text.trim(),
+                      title: post.title.isNotEmpty ? post.title : 'Bài viết trên Bảng tin',
+                      authorName: post.author.name,
+                      authorId: post.author.id.toString(),
+                      snippet: post.content.isNotEmpty ? post.content : post.title,
+                      imageUrl: post.images.isNotEmpty ? post.images.first : null,
+                    );
+                    await ModerationService.hidePost(post.id);
+                    widget.onHidePost?.call();
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Báo cáo đã được ghi nhận. Nội dung đã được ẩn và sẽ được xử lý trong 24 giờ.'),
+                          duration: Duration(seconds: 3),
+                        ),
+                      );
+                    }
+                  },
+                  child: const Text('Gửi báo cáo vi phạm', style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

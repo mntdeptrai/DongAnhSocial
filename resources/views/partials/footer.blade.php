@@ -14,6 +14,7 @@
                         <li><a href="/" style="hover: color: var(--primary);">Trang chủ</a></li>
                         <li><a href="/tim-kiem" style="hover: color: var(--primary);">Khám phá bản đồ</a></li>
                         <li><a href="#" onclick="openGuideModal(event)" style="hover: color: var(--primary);">Giới thiệu & Hướng dẫn</a></li>
+                        <li><a href="/chinh-sach-dieu-khoan" style="hover: color: var(--primary);">🛡️ Chính sách & Điều khoản</a></li>
                         <li><a href="/auth/login" style="hover: color: var(--primary);">Đăng nhập quản trị viên</a></li>
                     </ul>
                 </div>

@@ -348,6 +348,7 @@ class HomeController extends Controller
         // THUẬT TOÁN CÁ NHÂN HÓA BẢNG TIN (Personalized Feed)
         // Mỗi user sẽ thấy thứ tự bài viết khác nhau
         // ========================================================
+        $feedType = request()->query('feed_type', 'for_you');
         $currentUserId = \Illuminate\Support\Facades\Auth::id() ?? session('user_id');
 
         // Lấy danh sách bạn bè & eatery đã theo dõi của user hiện tại
@@ -365,7 +366,6 @@ class HomeController extends Controller
                     ->toArray();
             } catch (\Throwable $e) {}
 
-            // Lấy eatery_id của user (trường/gian hàng user quản lý)
             try {
                 $user = \App\Models\User::find($currentUserId);
                 if ($user && $user->eatery_id) {
@@ -374,47 +374,88 @@ class HomeController extends Controller
             } catch (\Throwable $e) {}
         }
 
-        // Pre-load engagement counts cho tất cả bài viết (tránh N+1 query)
-        $allPostIds = $allPostsCombined->pluck('id')->toArray();
-        $engagementReactions = \App\Models\CheckinReaction::selectRaw('reactionable_id, count(*) as cnt')
-            ->whereIn('reactionable_id', $allPostIds)
-            ->groupBy('reactionable_id')
-            ->pluck('cnt', 'reactionable_id');
-        $engagementComments = \App\Models\Comment::selectRaw('commentable_id, count(*) as cnt')
-            ->whereIn('commentable_id', $allPostIds)
-            ->groupBy('commentable_id')
-            ->pluck('cnt', 'commentable_id');
+        // Lọc theo chế độ Đang theo dõi (Following)
+        if ($feedType === 'following') {
+            if (!empty($friendUserIds) || !empty($userEateryIds)) {
+                $allPostsCombined = $allPostsCombined->filter(function($post) use ($friendUserIds, $userEateryIds) {
+                    $uId = $post->user_id ?? null;
+                    $eId = $post->eatery_id ?? null;
+                    return ($uId && in_array($uId, $friendUserIds)) || ($eId && in_array($eId, $userEateryIds));
+                })->values();
+            }
+        } elseif ($feedType === 'nearby') {
+            // Lọc ưu tiên các bài đăng Check-in và Food Tour tại địa bàn Đông Anh
+            $allPostsCombined = $allPostsCombined->filter(function($post) {
+                return !empty($post->is_checkin) || !empty($post->is_food_tour) || !empty($post->eatery_id);
+            })->values();
+        }
+
+        $engagementReactions = collect();
+        $engagementComments = collect();
+        try {
+            $allPostIds = $allPostsCombined->pluck('id')->filter()->toArray();
+            if (!empty($allPostIds)) {
+                $engagementReactions = \App\Models\CheckinReaction::selectRaw('reactionable_id, count(*) as cnt')
+                    ->whereIn('reactionable_id', $allPostIds)
+                    ->groupBy('reactionable_id')
+                    ->pluck('cnt', 'reactionable_id');
+                $engagementComments = \App\Models\Comment::selectRaw('commentable_id, count(*) as cnt')
+                    ->whereIn('commentable_id', $allPostIds)
+                    ->groupBy('commentable_id')
+                    ->pluck('cnt', 'commentable_id');
+            }
+        } catch (\Throwable $e) {}
 
         // Tính điểm cá nhân hóa cho từng bài viết
-        $allPostsCombined = $allPostsCombined->map(function($post) use ($friendUserIds, $userEateryIds, $currentUserId, $engagementReactions, $engagementComments) {
+        $allPostsCombined = $allPostsCombined->map(function($post) use ($friendUserIds, $userEateryIds, $currentUserId, $engagementReactions, $engagementComments, $feedType) {
             $score = 0;
             $createdTs = $post->created_at ? $post->created_at->timestamp : 0;
             $ageHours = max(1, (time() - $createdTs) / 3600);
 
-            // Điểm thời gian: bài mới được ưu tiên (giảm dần theo giờ)
+            // Điểm thời gian: bài mới được ưu tiên
             $score += max(0, 100 - ($ageHours * 0.5));
 
-            // Điểm bạn bè: bài từ bạn bè +40 điểm
+            // Điểm bạn bè: bài từ bạn bè +45 điểm
             $postUserId = $post->user_id ?? null;
-            if ($postUserId && in_array($postUserId, $friendUserIds)) {
-                $score += 40;
+            $isFriend = $postUserId && in_array($postUserId, $friendUserIds);
+            if ($isFriend) {
+                $score += 45;
             }
 
-            // Điểm trường/gian hàng theo dõi: +30 điểm
+            // Điểm cơ sở theo dõi: +30 điểm
             $postEateryId = $post->eatery_id ?? null;
-            if ($postEateryId && in_array($postEateryId, $userEateryIds)) {
+            $isFollowedEatery = $postEateryId && in_array($postEateryId, $userEateryIds);
+            if ($isFollowedEatery) {
                 $score += 30;
             }
 
             // Điểm tương tác: bài có nhiều reaction/comment được boost
             $reactionCount = $engagementReactions->get($post->id, 0);
             $commentCount = $engagementComments->get($post->id, 0);
-            $score += min(25, ($reactionCount * 3) + ($commentCount * 5));
+            $totalEngage = ($reactionCount * 3) + ($commentCount * 5);
+            $score += min(30, $totalEngage);
 
-            // Biến thể theo user: thêm nhiễu nhẹ dựa trên user_id để mỗi người thấy khác nhau
+            // Gán nhãn cá nhân hóa
+            if ($feedType === 'following') {
+                $post->_personal_tag = '👥 Từ người bạn theo dõi';
+            } elseif ($feedType === 'nearby') {
+                $post->_personal_tag = '📍 Khám phá gần bạn';
+            } else {
+                if ($isFriend) {
+                    $post->_personal_tag = '📌 Từ bạn bè của bạn';
+                } elseif ($isFollowedEatery) {
+                    $post->_personal_tag = '🏛️ Cơ sở bạn quan tâm';
+                } elseif (($reactionCount + $commentCount) >= 4) {
+                    $post->_personal_tag = '🔥 Đang thịnh hành';
+                } else {
+                    $post->_personal_tag = '🎯 Gợi ý cho bạn';
+                }
+            }
+
+            // Biến thể ngẫu nhiên nhẹ theo từng người dùng
             if ($currentUserId) {
                 $seed = crc32($currentUserId . '_' . $post->id . '_' . date('Y-m-d'));
-                $noise = ($seed % 20) - 10; // -10 đến +10 điểm nhiễu
+                $noise = ($seed % 20) - 10;
                 $score += $noise;
             }
 
@@ -422,10 +463,10 @@ class HomeController extends Controller
             return $post;
         });
 
-        // Sắp xếp theo điểm cá nhân hóa (cao → thấp)
+        // Sắp xếp theo điểm cá nhân hóa
         $allPostsCombined = $allPostsCombined->sortByDesc('_feed_score')->values();
 
-        // Deep link: nếu có ?post=HASHID (hoặc ID), đẩy bài viết đó lên đầu tiên
+        // Deep link: đẩy bài viết cụ thể lên đầu tiên nếu có ?post=
         $highlightPostParam = request()->query('post');
         if ($highlightPostParam) {
             $pinnedPost = $allPostsCombined->first(fn($p) => (isset($p->hashid) && $p->hashid === $highlightPostParam) || $p->id == $highlightPostParam);
@@ -468,29 +509,33 @@ class HomeController extends Controller
                 });
         }
 
-        $allReactions = \App\Models\CheckinReaction::selectRaw('reactionable_type, reactionable_id, emoji, count(*) as count')
-            ->groupBy('reactionable_type', 'reactionable_id', 'emoji')
-            ->get()
-            ->groupBy(function($item) {
-                return $item->reactionable_type . '_' . $item->reactionable_id;
-            });
+        $allReactions = collect();
+        $userReactions = collect();
+        try {
+            $allReactions = \App\Models\CheckinReaction::selectRaw('reactionable_type, reactionable_id, emoji, count(*) as count')
+                ->groupBy('reactionable_type', 'reactionable_id', 'emoji')
+                ->get()
+                ->groupBy(function($item) {
+                    return $item->reactionable_type . '_' . $item->reactionable_id;
+                });
 
-        $userId = \Illuminate\Support\Facades\Auth::id() ?? session('user_id');
-        $sessionId = session()->getId();
+            $userId = \Illuminate\Support\Facades\Auth::id() ?? session('user_id');
+            $sessionId = session()->getId();
 
-        $userReactions = \App\Models\CheckinReaction::where(function($q) use ($userId, $sessionId) {
-                if ($userId) {
-                    $q->where('user_id', $userId);
-                } else if (!empty($sessionId)) {
-                    $q->whereNull('user_id')->where('session_id', $sessionId);
-                } else {
-                    $q->whereRaw('1 = 0');
-                }
-            })
-            ->get()
-            ->keyBy(function($item) {
-                return $item->reactionable_type . '_' . $item->reactionable_id;
-            });
+            $userReactions = \App\Models\CheckinReaction::where(function($q) use ($userId, $sessionId) {
+                    if ($userId) {
+                        $q->where('user_id', $userId);
+                    } else if (!empty($sessionId)) {
+                        $q->whereNull('user_id')->where('session_id', $sessionId);
+                    } else {
+                        $q->whereRaw('1 = 0');
+                    }
+                })
+                ->get()
+                ->keyBy(function($item) {
+                    return $item->reactionable_type . '_' . $item->reactionable_id;
+                });
+        } catch (\Throwable $e) {}
 
         $emojis = ['❤️', '🔥', '👍', '😂', '😍', '🤤'];
 
@@ -520,34 +565,39 @@ class HomeController extends Controller
             return $post;
         });
 
-        // 4. Gợi ý Profile mới nhất (Dùng PRIMARY index range, 0% Full Table Scan)
-        $maxUserId = \App\Models\User::max('id') ?? 1;
-        $randomStartId = rand(1, max(1, $maxUserId - 20));
-        $featuredUsers = \App\Models\User::where('id', '>=', $randomStartId)
-            ->whereNotNull('name')
-            ->take(10)
-            ->get();
-        if ($featuredUsers->count() < 10) {
-            $moreUsers = \App\Models\User::whereNotNull('name')
-                ->whereNotIn('id', $featuredUsers->pluck('id'))
-                ->take(10 - $featuredUsers->count())
+        $featuredUsers = collect();
+        try {
+            $maxUserId = \App\Models\User::max('id') ?? 1;
+            $randomStartId = rand(1, max(1, $maxUserId - 20));
+            $featuredUsers = \App\Models\User::where('id', '>=', $randomStartId)
+                ->whereNotNull('name')
+                ->take(10)
                 ->get();
-            $featuredUsers = $featuredUsers->merge($moreUsers);
-        }
-        $featuredUsers = $featuredUsers->shuffle();
+            if ($featuredUsers->count() < 10) {
+                $moreUsers = \App\Models\User::whereNotNull('name')
+                    ->whereNotIn('id', $featuredUsers->pluck('id'))
+                    ->take(10 - $featuredUsers->count())
+                    ->get();
+                $featuredUsers = $featuredUsers->merge($moreUsers);
+            }
+            $featuredUsers = $featuredUsers->shuffle();
+        } catch (\Throwable $e) {}
 
         $allEateries = collect();
 
-        $stories = \App\Models\Story::with('user')
-            ->where('created_at', '>=', now()->subHours(24))
-            ->orderBy('created_at', 'asc')
-            ->get()
-            ->map(function($s) {
-                $s->time_ago = $s->created_at ? $s->created_at->diffForHumans() : 'Vừa xong';
-                return $s;
-            });
+        $stories = collect();
+        try {
+            $stories = \App\Models\Story::with('user')
+                ->where('created_at', '>=', now()->subHours(24))
+                ->orderBy('created_at', 'asc')
+                ->get()
+                ->map(function($s) {
+                    $s->time_ago = $s->created_at ? $s->created_at->diffForHumans() : 'Vừa xong';
+                    return $s;
+                });
+        } catch (\Throwable $e) {}
 
-        return view('newsfeed', compact('posts', 'featuredUsers', 'allEateries', 'stories'));
+        return view('newsfeed', compact('posts', 'featuredUsers', 'allEateries', 'stories', 'feedType'));
     }
 
     /**
@@ -1238,6 +1288,11 @@ class HomeController extends Controller
             'shares_count' => $newShareCount,
             'message'      => 'Tăng số lượt chia sẻ thành công'
         ]);
+    }
+
+    public function privacyPolicy()
+    {
+        return view('privacy_policy');
     }
 }
 

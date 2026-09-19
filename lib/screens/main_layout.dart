@@ -18,6 +18,8 @@ import 'principal_dashboard_screen.dart';
 import 'manager_dashboard_screen.dart';
 import 'admin_dashboard_screen.dart';
 import 'active_call_screen.dart';
+import 'create_story_screen.dart';
+import '../widgets/create_post_modal.dart';
 import '../widgets/role_menu_drawer.dart';
 import '../widgets/floating_island_header.dart';
 import '../widgets/floating_dock_nav_bar.dart';
@@ -117,11 +119,11 @@ class _MainLayoutState extends State<MainLayout> with WidgetsBindingObserver {
         MaterialPageRoute(builder: (_) => const SellerDashboardScreen()),
       );
     } else {
-      // comment on post, reaction, share, new_post → go to Notifications tab
-      setState(() {
-        _currentIndex = 4;
-        _activeRole = 'user';
-      });
+      // comment on post, reaction, share, new_post → go to Notifications screen
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+      ).then((_) => _fetchDynamicCounts());
     }
   }
 
@@ -298,21 +300,16 @@ class _MainLayoutState extends State<MainLayout> with WidgetsBindingObserver {
     );
   }
 
-  /// Lazy Tab Builder: Chỉ khởi tạo screen đang active, KHÔNG tạo sẵn 6 screens.
-  /// Tiết kiệm ~80-150MB RAM so với pre-built list.
+  /// Lazy Tab Builder: 5 tabs chuẩn (Trang chủ, Bản đồ, [Tạo mới qua modal], Chợ OCOP, Cá nhân)
   Widget _buildLazyScreen() {
     switch (_currentIndex) {
       case 0:
         return const NewsBulletinScreen();
       case 1:
-        return FeedScreen(key: _feedScreenKey);
-      case 2:
         return const MapScreen();
       case 3:
         return const UtilitiesScreen();
       case 4:
-        return const NotificationsScreen();
-      case 5:
         return ProfileScreen(
           onLogout: widget.onLogout,
           onLoginRequest: widget.onLoginRequest,
@@ -320,6 +317,183 @@ class _MainLayoutState extends State<MainLayout> with WidgetsBindingObserver {
       default:
         return const NewsBulletinScreen();
     }
+  }
+
+  void _showCreateActionSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (ctx) {
+        return Container(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 36),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE2E8F0),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 18),
+              const Text(
+                'Tạo nội dung mới',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF0F172A),
+                ),
+              ),
+              const SizedBox(height: 6),
+              const Text(
+                'Chia sẻ câu chuyện & khoảnh khắc của bạn với Đông Anh',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Color(0xFF64748B),
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 20),
+
+              // Option 1: Bài viết Bảng tin
+              _buildCreateOptionItem(
+                context: ctx,
+                icon: Icons.edit_note_rounded,
+                iconColor: const Color(0xFF0284C7),
+                bgColor: const Color(0xFFE0F2FE),
+                title: 'Đăng bài viết lên Bảng tin',
+                subtitle: 'Chia sẻ thông tin, câu chuyện, hỏi đáp cộng đồng',
+                onTap: () {
+                  Navigator.pop(ctx);
+                  if (!ApiService.isAuthenticated) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Vui lòng đăng nhập để đăng bài viết!'),
+                        backgroundColor: Colors.orange,
+                      ),
+                    );
+                    return;
+                  }
+                  showCreatePostModal(context);
+                },
+              ),
+              const SizedBox(height: 12),
+
+              // Option 2: Check-in / Camera
+              _buildCreateOptionItem(
+                context: ctx,
+                icon: Icons.photo_camera_rounded,
+                iconColor: const Color(0xFF059669),
+                bgColor: const Color(0xFFD1FAE5),
+                title: 'Check-in ẩm thực & địa điểm',
+                subtitle: 'Chụp ảnh khoảnh khắc tại các quán ăn & di tích Đông Anh',
+                onTap: () {
+                  Navigator.pop(ctx);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const FeedScreen()),
+                  );
+                },
+              ),
+              const SizedBox(height: 12),
+
+              // Option 3: Story 24h
+              _buildCreateOptionItem(
+                context: ctx,
+                icon: Icons.auto_awesome_rounded,
+                iconColor: const Color(0xFF8B5CF6),
+                bgColor: const Color(0xFFEDE9FE),
+                title: 'Tạo khoảnh khắc 24h (Story)',
+                subtitle: 'Chia sẻ hình ảnh hoặc video ngắn tự biến mất sau 24 giờ',
+                onTap: () {
+                  Navigator.pop(ctx);
+                  if (!ApiService.isAuthenticated) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Vui lòng đăng nhập để tạo Story!'),
+                        backgroundColor: Colors.orange,
+                      ),
+                    );
+                    return;
+                  }
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const CreateStoryScreen()),
+                  );
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildCreateOptionItem({
+    required BuildContext context,
+    required IconData icon,
+    required Color iconColor,
+    required Color bgColor,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: const Color(0xFFF8FAFC),
+      borderRadius: BorderRadius.circular(18),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(18),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          child: Row(
+            children: [
+              Container(
+                width: 46,
+                height: 46,
+                decoration: BoxDecoration(
+                  color: bgColor,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Icon(icon, color: iconColor, size: 24),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF0F172A),
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF64748B),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Color(0xFF94A3B8)),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -345,18 +519,20 @@ class _MainLayoutState extends State<MainLayout> with WidgetsBindingObserver {
           ? FloatingIslandHeader(
               currentIndex: _currentIndex,
               onTabSelected: (index) {
+                if (index == 2) {
+                  _showCreateActionSheet(context);
+                  return;
+                }
                 setState(() {
                   _currentIndex = index;
                   _activeRole = 'user';
                 });
-                if (index == 1) {
-                  _feedScreenKey.currentState?.resumeCamera();
-                } else {
-                  _feedScreenKey.currentState?.pauseCamera();
-                }
-                if (index == 4) {
-                  _fetchDynamicCounts();
-                }
+              },
+              onNotificationsTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+                ).then((_) => _fetchDynamicCounts());
               },
               onRoleDashboardTap: (role) {
                 setState(() {
@@ -412,20 +588,16 @@ class _MainLayoutState extends State<MainLayout> with WidgetsBindingObserver {
               bottom: 0,
               child: FloatingDockNavBar(
                 currentIndex: _currentIndex,
-                unreadNotifsCount: _unreadNotifsCount,
+                onCreateTap: () => _showCreateActionSheet(context),
                 onTabSelected: (index) {
+                  if (index == 2) {
+                    _showCreateActionSheet(context);
+                    return;
+                  }
                   setState(() {
                     _currentIndex = index;
                     _activeRole = 'user';
                   });
-                  if (index == 0) {
-                    _feedScreenKey.currentState?.resumeCamera();
-                  } else {
-                    _feedScreenKey.currentState?.pauseCamera();
-                  }
-                  if (index == 4) {
-                    _fetchDynamicCounts();
-                  }
                 },
               ),
             ),

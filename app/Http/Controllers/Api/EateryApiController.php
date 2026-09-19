@@ -1515,9 +1515,35 @@ YÊU CẦU TRẢ VỀ CHỈ LÀ CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU, KHÔNG C
      */
     public function getNewsfeed(Request $request)
     {
-        $postsList = [];
+        $feedType = $request->input('feed_type', 'for_you');
+        $user = auth('sanctum')->user() ?: \Illuminate\Support\Facades\Auth::user();
+        $currentUserId = $user ? $user->id : session('user_id');
+        $sessionId = session()->getId() ?: ($request->header('X-Session-ID') ?? null);
 
-        // 1. Lấy từ bảng Post (gồm tin đăng của Trường học, User, Seller, Admin, Manager)
+        $friendUserIds = [];
+        $userEateryIds = [];
+        if ($currentUserId) {
+            try {
+                $friendUserIds = \DB::table('friendships')
+                    ->where('status', 'accepted')
+                    ->where(function($q) use ($currentUserId) {
+                        $q->where('user_id', $currentUserId)->orWhere('friend_id', $currentUserId);
+                    })
+                    ->get()
+                    ->map(fn($f) => $f->user_id == $currentUserId ? $f->friend_id : $f->user_id)
+                    ->toArray();
+            } catch (\Throwable $e) {}
+
+            try {
+                $u = \App\Models\User::find($currentUserId);
+                if ($u && $u->eatery_id) {
+                    $userEateryIds[] = $u->eatery_id;
+                }
+            } catch (\Throwable $e) {}
+        }
+
+        $items = collect();
+
         try {
             $userPostsMysqlEdu = collect();
             $userPostsMysql = collect();
@@ -1526,6 +1552,7 @@ YÊU CẦU TRẢ VỀ CHỈ LÀ CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU, KHÔNG C
                 $userPostsMysqlEdu = \App\Models\Post::on('mysql_education')
                     ->with(['user', 'eatery', 'comments.user'])
                     ->orderBy('created_at', 'desc')
+                    ->take(60)
                     ->get();
             } catch (\Throwable $e) {}
 
@@ -1533,95 +1560,14 @@ YÊU CẦU TRẢ VỀ CHỈ LÀ CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU, KHÔNG C
                 $userPostsMysql = \App\Models\Post::on('mysql')
                     ->with(['user', 'eatery', 'comments.user'])
                     ->orderBy('created_at', 'desc')
+                    ->take(60)
                     ->get();
             } catch (\Throwable $e) {}
 
             $userPosts = $userPostsMysqlEdu->concat($userPostsMysql)->unique('id');
-
-            $user = auth('sanctum')->user() ?: \Illuminate\Support\Facades\Auth::user();
-            $currentUserId = $user ? $user->id : session('user_id');
-            $sessionId = session()->getId();
-
-            foreach ($userPosts as $post) {
-                try {
-                    $authorName = $post->user ? $post->user->name : ($post->eatery ? $post->eatery->name : 'Thành viên Đông Anh');
-                    $authorAvatar = $post->user ? ($post->user->avatar_url ?: $post->user->avatar) : ($post->eatery ? ($post->eatery->image_path ?? null) : null);
-                    $authorRole = $post->user ? ($post->user->role ?? 'user') : 'user';
-
-                    $imgs = [];
-                    if (!empty($post->images)) {
-                        if (is_array($post->images)) {
-                            $imgs = $post->images;
-                        } else if (is_string($post->images)) {
-                            $decoded = json_decode($post->images, true);
-                            if (is_array($decoded)) $imgs = $decoded;
-                        }
-                    }
-                    if (empty($imgs) && !empty($post->image_paths)) {
-                        if (is_array($post->image_paths)) {
-                            $imgs = $post->image_paths;
-                        } else if (is_string($post->image_paths)) {
-                            $decoded = json_decode($post->image_paths, true);
-                            if (is_array($decoded)) $imgs = $decoded;
-                        }
-                    }
-                    if (empty($imgs) && !empty($post->image_path)) {
-                        $imgs = [$post->image_path];
-                    }
-                    $img = !empty($imgs) ? $imgs[0] : $post->image_path;
-
-                    $commentsArr = [];
-                    if ($post->relationLoaded('comments') && $post->comments) {
-                        foreach ($post->comments as $c) {
-                            $commentsArr[] = [
-                                'author' => $c->user ? $c->user->name : ($c->guest_name ?? 'Thành viên'),
-                                'text'   => $c->content ?? '',
-                                'time'   => $c->created_at ? $c->created_at->diffForHumans() : 'Vừa xong',
-                            ];
-                        }
-                    }
-
-                    // Count real likes in CheckinReaction DB table
-                    $realLikes = \App\Models\CheckinReaction::where('reactionable_type', 'post')
-                        ->where('reactionable_id', $post->id)
-                        ->count();
-
-                    $isLiked = false;
-                    if ($currentUserId) {
-                        $isLiked = \App\Models\CheckinReaction::where('reactionable_type', 'post')
-                            ->where('reactionable_id', $post->id)
-                            ->where('user_id', $currentUserId)
-                            ->exists();
-                    } else if (!empty($sessionId)) {
-                        $isLiked = \App\Models\CheckinReaction::where('reactionable_type', 'post')
-                            ->where('reactionable_id', $post->id)
-                            ->whereNull('user_id')
-                            ->where('session_id', $sessionId)
-                            ->exists();
-                    }
-
-                    $postsList[] = [
-                        'id'               => $post->id,
-                        'hashid'           => $post->hashid ?? ('post_' . $post->id),
-                        'type'             => 'post',
-                        'author_name'      => $authorName,
-                        'author_avatar'    => $authorAvatar,
-                        'author_role'      => $authorRole,
-                        'title'            => $post->name ?? $post->title ?? '',
-                        'description'      => $post->description ?? '',
-                        'image_path'       => $img,
-                        'images'           => $imgs,
-                        'likes_count'      => $realLikes,
-                        'is_liked'         => $isLiked,
-                        'comments_count'   => count($commentsArr) ?: (int) ($post->comments_count ?? 0),
-                        'created_at_human' => $post->created_at ? $post->created_at->diffForHumans() : 'Vừa xong',
-                        'comments'         => $commentsArr,
-                    ];
-                } catch (\Throwable $e) {}
-            }
+            $items = $items->concat($userPosts);
         } catch (\Throwable $e) {}
 
-        // 2. Lấy từ bảng EducationProgram (Hiệu trưởng / Trường học)
         try {
             $excludedTitles = [
                 'Hệ đào tạo THPT chính quy chuẩn quốc gia',
@@ -1638,6 +1584,7 @@ YÊU CẦU TRẢ VỀ CHỈ LÀ CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU, KHÔNG C
                     ->with(['eatery'])
                     ->whereNotIn('name', $excludedTitles)
                     ->orderBy('created_at', 'desc')
+                    ->take(30)
                     ->get();
             } catch (\Throwable $e) {}
 
@@ -1646,33 +1593,131 @@ YÊU CẦU TRẢ VỀ CHỈ LÀ CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU, KHÔNG C
                     ->with(['eatery'])
                     ->whereNotIn('name', $excludedTitles)
                     ->orderBy('created_at', 'desc')
+                    ->take(30)
                     ->get();
             } catch (\Throwable $e) {}
 
-            $eduPosts = $eduPostsMysqlEdu->concat($eduPostsMysql)->unique('id');
+            $eduPosts = $eduPostsMysqlEdu->concat($eduPostsMysql)->unique('id')->map(function($e) {
+                $e->is_edu = true;
+                return $e;
+            });
+            $items = $items->concat($eduPosts);
+        } catch (\Throwable $e) {}
 
-            foreach ($eduPosts as $edu) {
-                try {
-                    $authorName = $edu->eatery ? $edu->eatery->name : 'Ban Giám Hiệu Trường';
-                    $img = $edu->image_path ?? ($edu->eatery ? $edu->eatery->image_path : null);
+        try {
+            $checkins = \App\Models\Checkin::with(['user', 'eatery', 'comments.user'])
+                ->where('status', 'published')
+                ->orderBy('created_at', 'desc')
+                ->take(30)
+                ->get()
+                ->map(function($c) {
+                    $c->is_checkin = true;
+                    $c->name = $c->eatery ? "📍 Check-in tại " . $c->eatery->name : "📍 Bài đăng Check-in";
+                    $c->description = $c->content ?? $c->description;
+                    return $c;
+                });
+            $items = $items->concat($checkins);
+        } catch (\Throwable $e) {}
+
+        if ($feedType === 'following') {
+            if (!empty($friendUserIds) || !empty($userEateryIds)) {
+                $items = $items->filter(function($post) use ($friendUserIds, $userEateryIds) {
+                    $uId = $post->user_id ?? null;
+                    $eId = $post->eatery_id ?? null;
+                    return ($uId && in_array($uId, $friendUserIds)) || ($eId && in_array($eId, $userEateryIds));
+                })->values();
+            } else {
+                $items = collect();
+            }
+        } elseif ($feedType === 'nearby') {
+            $items = $items->filter(function($post) {
+                return !empty($post->is_checkin) || !empty($post->eatery_id);
+            })->values();
+        }
+
+        $engagementReactions = collect();
+        $engagementComments = collect();
+        try {
+            $allPostIds = $items->pluck('id')->filter()->toArray();
+            if (!empty($allPostIds)) {
+                $engagementReactions = \App\Models\CheckinReaction::selectRaw('reactionable_id, count(*) as cnt')
+                    ->whereIn('reactionable_id', $allPostIds)
+                    ->groupBy('reactionable_id')
+                    ->pluck('cnt', 'reactionable_id');
+                $engagementComments = \App\Models\Comment::selectRaw('commentable_id, count(*) as cnt')
+                    ->whereIn('commentable_id', $allPostIds)
+                    ->groupBy('commentable_id')
+                    ->pluck('cnt', 'commentable_id');
+            }
+        } catch (\Throwable $e) {}
+
+        $scoredItems = $items->map(function($post) use ($friendUserIds, $userEateryIds, $currentUserId, $engagementReactions, $engagementComments, $feedType) {
+            $score = 0;
+            $createdTs = $post->created_at ? $post->created_at->timestamp : 0;
+            $ageHours = max(1, (time() - $createdTs) / 3600);
+            $score += max(0, 100 - ($ageHours * 0.5));
+
+            $postUserId = $post->user_id ?? null;
+            $isFriend = $postUserId && in_array($postUserId, $friendUserIds);
+            if ($isFriend) $score += 45;
+
+            $postEateryId = $post->eatery_id ?? null;
+            $isFollowedEatery = $postEateryId && in_array($postEateryId, $userEateryIds);
+            if ($isFollowedEatery) $score += 30;
+
+            $reactionCount = $engagementReactions->get($post->id, 0);
+            $commentCount = $engagementComments->get($post->id, 0);
+            $score += min(30, ($reactionCount * 3) + ($commentCount * 5));
+
+            if ($feedType === 'following') {
+                $post->_personal_tag = '👥 Từ người bạn theo dõi';
+            } elseif ($feedType === 'nearby') {
+                $post->_personal_tag = '📍 Khám phá gần bạn';
+            } else {
+                if ($isFriend) {
+                    $post->_personal_tag = '📌 Từ bạn bè của bạn';
+                } elseif ($isFollowedEatery) {
+                    $post->_personal_tag = '🏛️ Cơ sở bạn quan tâm';
+                } elseif (($reactionCount + $commentCount) >= 4) {
+                    $post->_personal_tag = '🔥 Đang thịnh hành';
+                } else {
+                    $post->_personal_tag = '🎯 Gợi ý cho bạn';
+                }
+            }
+
+            if ($currentUserId) {
+                $seed = crc32($currentUserId . '_' . $post->id . '_' . date('Y-m-d'));
+                $score += ($seed % 20) - 10;
+            }
+
+            $post->_feed_score = $score;
+            return $post;
+        })->sortByDesc('_feed_score')->values();
+
+        $postsList = [];
+        foreach ($scoredItems as $item) {
+            try {
+                if (!empty($item->is_edu)) {
+                    $authorName = $item->eatery ? $item->eatery->name : 'Ban Giám Hiệu Trường';
+                    $img = $item->image_path ?? ($item->eatery ? $item->eatery->image_path : null);
 
                     $realLikes = \App\Models\CheckinReaction::where('reactionable_type', 'post')
-                        ->where('reactionable_id', $edu->id)
+                        ->where('reactionable_id', $item->id)
                         ->count();
 
                     $isLiked = false;
                     if ($currentUserId) {
                         $isLiked = \App\Models\CheckinReaction::where('reactionable_type', 'post')
-                            ->where('reactionable_id', $edu->id)
+                            ->where('reactionable_id', $item->id)
                             ->where('user_id', $currentUserId)
                             ->exists();
                     }
 
                     $eduImgs = [];
-                    if (!empty($edu->images)) {
-                        if (is_array($edu->images)) $eduImgs = $edu->images;
-                        else if (is_string($edu->images)) {
-                            $decoded = json_decode($edu->images, true);
+                    if (!empty($item->images)) {
+                        if (is_array($item->images)) $eduImgs = $item->images;
+                        else if (is_string($item->images)) {
+                            $decoded = json_decode($item->images, true);
                             if (is_array($decoded)) $eduImgs = $decoded;
                         }
                     }
@@ -1681,26 +1726,101 @@ YÊU CẦU TRẢ VỀ CHỈ LÀ CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU, KHÔNG C
                     }
 
                     $postsList[] = [
-                        'id'               => 'edu_' . $edu->id,
-                        'numeric_id'       => $edu->id,
-                        'hashid'           => 'edu_' . $edu->id,
+                        'id'               => 'edu_' . $item->id,
+                        'numeric_id'       => $item->id,
+                        'hashid'           => 'edu_' . $item->id,
                         'type'             => 'post',
                         'author_name'      => $authorName,
-                        'author_avatar'    => $edu->eatery ? $edu->eatery->image_path : null,
+                        'author_avatar'    => $item->eatery ? $item->eatery->image_path : null,
                         'author_role'      => 'principal',
-                        'title'            => $edu->name ?? '',
-                        'description'      => $edu->description ?? $edu->target_students ?? '',
+                        'title'            => $item->name ?? '',
+                        'description'      => $item->description ?? $item->target_students ?? '',
                         'image_path'       => $img,
                         'images'           => $eduImgs,
                         'likes_count'      => $realLikes,
                         'is_liked'         => $isLiked,
                         'comments_count'   => 0,
-                        'created_at_human' => $edu->created_at ? $edu->created_at->diffForHumans() : '2 ngày trước',
+                        'created_at_human' => $item->created_at ? $item->created_at->diffForHumans() : '2 ngày trước',
                         'comments'         => [],
+                        'personal_tag'     => $item->_personal_tag ?? null,
                     ];
-                } catch (\Throwable $e) {}
-            }
-        } catch (\Throwable $e) {}
+                } else {
+                    $authorName = $item->user ? $item->user->name : ($item->eatery ? $item->eatery->name : 'Thành viên Đông Anh');
+                    $authorAvatar = $item->user ? ($item->user->avatar_url ?: $item->user->avatar) : ($item->eatery ? ($item->eatery->image_path ?? null) : null);
+                    $authorRole = $item->user ? ($item->user->role ?? 'user') : 'user';
+
+                    $imgs = [];
+                    if (!empty($item->images)) {
+                        if (is_array($item->images)) {
+                            $imgs = $item->images;
+                        } else if (is_string($item->images)) {
+                            $decoded = json_decode($item->images, true);
+                            if (is_array($decoded)) $imgs = $decoded;
+                        }
+                    }
+                    if (empty($imgs) && !empty($item->image_paths)) {
+                        if (is_array($item->image_paths)) {
+                            $imgs = $item->image_paths;
+                        } else if (is_string($item->image_paths)) {
+                            $decoded = json_decode($item->image_paths, true);
+                            if (is_array($decoded)) $imgs = $decoded;
+                        }
+                    }
+                    if (empty($imgs) && !empty($item->image_path)) {
+                        $imgs = [$item->image_path];
+                    }
+                    $img = !empty($imgs) ? $imgs[0] : $item->image_path;
+
+                    $commentsArr = [];
+                    if ($item->relationLoaded('comments') && $item->comments) {
+                        foreach ($item->comments as $c) {
+                            $commentsArr[] = [
+                                'author' => $c->user ? $c->user->name : ($c->guest_name ?? 'Thành viên'),
+                                'text'   => $c->content ?? '',
+                                'time'   => $c->created_at ? $c->created_at->diffForHumans() : 'Vừa xong',
+                            ];
+                        }
+                    }
+
+                    $realLikes = \App\Models\CheckinReaction::where('reactionable_type', 'post')
+                        ->where('reactionable_id', $item->id)
+                        ->count();
+
+                    $isLiked = false;
+                    if ($currentUserId) {
+                        $isLiked = \App\Models\CheckinReaction::where('reactionable_type', 'post')
+                            ->where('reactionable_id', $item->id)
+                            ->where('user_id', $currentUserId)
+                            ->exists();
+                    } else if (!empty($sessionId)) {
+                        $isLiked = \App\Models\CheckinReaction::where('reactionable_type', 'post')
+                            ->where('reactionable_id', $item->id)
+                            ->whereNull('user_id')
+                            ->where('session_id', $sessionId)
+                            ->exists();
+                    }
+
+                    $postsList[] = [
+                        'id'               => $item->id,
+                        'hashid'           => $item->hashid ?? ('post_' . $item->id),
+                        'type'             => 'post',
+                        'author_name'      => $authorName,
+                        'author_avatar'    => $authorAvatar,
+                        'author_role'      => $authorRole,
+                        'title'            => $item->name ?? $item->title ?? '',
+                        'description'      => $item->description ?? '',
+                        'image_path'       => $img,
+                        'images'           => $imgs,
+                        'likes_count'      => $realLikes,
+                        'is_liked'         => $isLiked,
+                        'comments_count'   => count($commentsArr) ?: (int) ($item->comments_count ?? 0),
+                        'created_at_human' => $item->created_at ? $item->created_at->diffForHumans() : 'Vừa xong',
+                        'comments'         => $commentsArr,
+                        'personal_tag'     => $item->_personal_tag ?? null,
+                    ];
+                }
+            } catch (\Throwable $e) {}
+        }
 
         return response()->json($postsList, 200, [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     }

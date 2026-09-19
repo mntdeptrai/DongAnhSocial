@@ -602,6 +602,33 @@ class AuthController extends Controller
         return redirect()->back()->with('success', 'Cập nhật thông tin cá nhân và thông tin gian hàng liên kết thành công!');
     }
 
+    public function deleteAccount(Request $request)
+    {
+        $userId = session('user_id') ?: Auth::id();
+        $user = User::find($userId);
+        if (!$user) {
+            return redirect('/auth/login');
+        }
+
+        $keyword = trim((string)$request->input('confirmation_keyword', ''));
+        if (mb_strtoupper($keyword) !== 'XOA TAI KHOAN') {
+            return redirect()->back()->with('error', 'Cụm từ xác nhận không chính xác! Bạn cần nhập chính xác: XOA TAI KHOAN');
+        }
+
+        if ($user->role === 'admin') {
+            return redirect()->back()->with('error', 'Tài khoản Quản trị viên Tối cao không thể tự hủy qua kênh này. Vui lòng bàn giao quyền trước!');
+        }
+
+        \App\Services\ModerationService::deleteUserAccount($user->id);
+
+        Auth::logout();
+        session()->flush();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect('/')->with('success', 'Tài khoản và toàn bộ dữ liệu cá nhân của bạn đã được xóa vĩnh viễn khỏi hệ thống.');
+    }
+
     /**
      * Cập nhật ảnh đại diện (avatar) của người dùng
      */

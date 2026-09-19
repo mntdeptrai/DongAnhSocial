@@ -11,6 +11,7 @@
         return {
             showEditModal: false,
             showPasswordModal: false,
+            showDeleteAccountModal: false,
             activeTab: 'overview',
             otpCooldown: 0,
             cooldownText: 'Gửi mã OTP',
@@ -1358,6 +1359,41 @@
                 <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px;">
                     <button type="button" @click="showPasswordModal = false" class="pro-btn-outline" style="border-radius: 12px; padding: 10px 22px;">Hủy</button>
                     <button type="submit" class="pro-btn-primary" style="border-radius: 12px; padding: 10px 22px;">🔒 Đổi mật khẩu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ====== DELETE ACCOUNT MODAL (APPLE 5.1.1 COMPLIANCE) ====== -->
+    <div x-show="showDeleteAccountModal" x-transition.opacity style="display:none;" class="pf-modal-overlay">
+        <div @click.outside="showDeleteAccountModal = false" x-show="showDeleteAccountModal" x-transition.scale class="pf-modal-box" style="max-width: 500px;">
+            <button type="button" @click="showDeleteAccountModal = false" class="pf-modal-close">✕</button>
+            <div style="margin-bottom: 20px;">
+                <div style="display: inline-flex; align-items: center; justify-content: center; width: 50px; height: 50px; border-radius: 50%; background: #fef2f2; color: #dc2626; font-size: 1.5rem; margin-bottom: 12px;">⚠️</div>
+                <h3 style="font-size: 1.25rem; font-weight: 800; color: #991b1b; margin: 0 0 6px 0;">Xóa Tài Khoản Vĩnh Viễn</h3>
+                <p style="font-size: 0.88rem; color: #64748b; margin: 0; line-height: 1.5;">Hành động này sẽ xóa vĩnh viễn và không thể đảo ngược mọi dữ liệu gắn liền với tài khoản của bạn theo tiêu chuẩn Apple & Google.</p>
+            </div>
+
+            <div style="background: #fff1f2; border: 1px solid #fecdd3; border-radius: 14px; padding: 14px 16px; margin-bottom: 18px; font-size: 0.85rem; color: #9f1239; line-height: 1.6;">
+                <p style="margin: 0 0 8px 0; font-weight: 700;">Toàn bộ dữ liệu sau sẽ bị gỡ bỏ hoàn toàn:</p>
+                <ul style="margin: 0; padding-left: 20px;">
+                    <li>Tất cả bài viết, hình ảnh, video tải lên bảng tin</li>
+                    <li>Lịch sử check-in, đánh giá cơ sở và gian hàng</li>
+                    <li>Bình luận và lượt tương tác với thành viên khác</li>
+                    <li>Thông tin tài khoản và mã định danh người dùng</li>
+                </ul>
+            </div>
+
+            <form action="{{ route('profile.delete-account') }}" method="POST">
+                @csrf
+                <div class="pf-form-group">
+                    <label class="pf-form-label" style="font-weight: 700; color: #334155;">Nhập chữ <strong>XOA TAI KHOAN</strong> để xác nhận:</label>
+                    <input type="text" name="confirmation_keyword" required class="pf-form-input" placeholder="Gõ chính xác: XOA TAI KHOAN" autocomplete="off" style="font-weight: 700; letter-spacing: 1px; color: #dc2626; border-color: #fca5a5;">
+                </div>
+
+                <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px;">
+                    <button type="button" @click="showDeleteAccountModal = false" class="pro-btn-outline" style="border-radius: 12px; padding: 10px 22px;">Hủy bỏ</button>
+                    <button type="submit" class="pro-btn-primary" style="border-radius: 12px; padding: 10px 22px; background: #dc2626; box-shadow: 0 4px 14px rgba(220, 38, 38, 0.35);">🗑️ Xác nhận xóa tài khoản</button>
                 </div>
             </form>
         </div>

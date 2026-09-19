@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
-import '../features/auth/data/datasources/auth_remote_datasource.dart';
-import '../features/auth/data/repositories/auth_repository_impl.dart';
-import '../features/auth/domain/usecases/login_usecase.dart';
-import '../features/auth/domain/usecases/register_usecase.dart';
+import '../services/api_service.dart';
 import '../widgets/custom_loader.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -32,17 +29,6 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
   bool _obscurePassword = true;
   String? _errorMessage;
-
-  late final LoginUseCase _loginUseCase;
-  late final RegisterUseCase _registerUseCase;
-
-  @override
-  void initState() {
-    super.initState();
-    final authRepo = AuthRepositoryImpl(remoteDataSource: AuthRemoteDataSourceImpl());
-    _loginUseCase = LoginUseCase(authRepo);
-    _registerUseCase = RegisterUseCase(authRepo);
-  }
 
   @override
   void dispose() {
@@ -140,7 +126,7 @@ class _LoginScreenState extends State<LoginScreen> {
     String? message;
 
     if (_isRegister) {
-      final regResult = await _registerUseCase(RegisterParams(
+      final regResult = await ApiService.register(
         name: _nameController.text.trim(),
         email: _emailController.text.trim(),
         password: _passwordController.text,
@@ -148,26 +134,26 @@ class _LoginScreenState extends State<LoginScreen> {
         phone: _phoneController.text.trim(),
         role: _selectedRole,
         agreeTerms: _agreeTerms,
-      ));
+      );
 
-      if (regResult.isSuccess) {
-        final loginResult = await _loginUseCase(LoginParams(
-          email: _emailController.text.trim(),
-          password: _passwordController.text,
-        ));
-        success = loginResult.isSuccess;
-        message = loginResult.failure?.message;
+      if (regResult['success'] == true) {
+        final loginResult = await ApiService.login(
+          _emailController.text.trim(),
+          _passwordController.text,
+        );
+        success = loginResult['success'] == true;
+        message = loginResult['message'];
       } else {
         success = false;
-        message = regResult.failure?.message;
+        message = regResult['message'];
       }
     } else {
-      final loginResult = await _loginUseCase(LoginParams(
-        email: _emailController.text.trim(),
-        password: _passwordController.text,
-      ));
-      success = loginResult.isSuccess;
-      message = loginResult.failure?.message;
+      final loginResult = await ApiService.login(
+        _emailController.text.trim(),
+        _passwordController.text,
+      );
+      success = loginResult['success'] == true;
+      message = loginResult['message'];
     }
 
     if (mounted) {
