@@ -1822,7 +1822,49 @@ YÊU CẦU TRẢ VỀ CHỈ LÀ CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU, KHÔNG C
             } catch (\Throwable $e) {}
         }
 
-        return response()->json($postsList, 200, [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        // Inject Stories 24h vào đầu danh sách (hiển thị trên Story Cards)
+        $storyItems = [];
+        try {
+            $stories24h = \App\Models\Story::with('user')
+                ->where('created_at', '>=', now()->subHours(24))
+                ->orderBy('created_at', 'desc')
+                ->take(20)
+                ->get();
+
+            foreach ($stories24h as $story) {
+                $sAuthor = $story->user ? $story->user->name : ($story->author_name ?? 'Thành viên');
+                $sAvatar = $story->user ? ($story->user->avatar_url ?: $story->user->avatar) : $story->author_avatar;
+                $sImages = $story->media_url ? [$story->media_url] : [];
+
+                $storyItems[] = [
+                    'id'               => 'story_' . $story->id,
+                    'numeric_id'       => $story->id,
+                    'hashid'           => 'story_' . $story->id,
+                    'type'             => 'story',
+                    'is_story'         => true,
+                    'author_name'      => $sAuthor,
+                    'author_avatar'    => $sAvatar,
+                    'author_role'      => $story->user ? ($story->user->role ?? 'user') : 'user',
+                    'title'            => $story->caption ?? '',
+                    'description'      => $story->caption ?? '',
+                    'image_path'       => $story->media_url,
+                    'images'           => $sImages,
+                    'bg_gradient'      => $story->bg_gradient,
+                    'story_type'       => $story->type ?? 'image',
+                    'likes_count'      => 0,
+                    'is_liked'         => false,
+                    'comments_count'   => 0,
+                    'created_at_human' => $story->created_at ? $story->created_at->diffForHumans() : 'Vừa xong',
+                    'comments'         => [],
+                    'personal_tag'     => '📸 Tin 24h',
+                ];
+            }
+        } catch (\Throwable $e) {}
+
+        // Stories go first, then normal posts
+        $finalFeed = array_merge($storyItems, $postsList);
+
+        return response()->json($finalFeed, 200, [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     }
 
     /**
