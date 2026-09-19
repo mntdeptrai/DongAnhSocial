@@ -8,7 +8,6 @@ import 'package:url_launcher/url_launcher.dart';
 import '../services/api_service.dart';
 import '../widgets/custom_loader.dart';
 import 'eatery_detail_screen.dart';
-import 'notifications_screen.dart';
 
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
@@ -17,6 +16,1243 @@ class MapScreen extends StatefulWidget {
   State<MapScreen> createState() => _MapScreenState();
 }
 
+class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
+  final MapController _mapController = MapController();
+  final LatLng _dongAnhCenter = const LatLng(21.1352, 105.8458);
+  final TextEditingController _searchController = TextEditingController();
+  late final PageController _pageController;
+
+  List<dynamic> _allEateries = [];
+  List<dynamic> _filteredEateries = [];
+  List<dynamic> _displayedEateries = [];
+  String _selectedCategorySlug = 'all';
+  bool _isLoading = true;
+  bool _isListView = false;
+  LatLng? _userLocation;
+  int _selectedEateryIndex = 0;
+  List<Marker> _cachedMarkers = [];
+  AnimationController? _mapAnimationController;
+  bool _isProgrammaticScroll = false;
+
+  final List<Map<String, String>> _categoryTabs = const [
+    {'slug': 'all', 'name': 'Tất cả', 'icon': '🔥'},
+    {'slug': 'hanh-trinh-di-san', 'name': 'Di tích & Di sản', 'icon': '⛩️'},
+    {'slug': 'dong-anh-food-map', 'name': 'Ẩm thực', 'icon': '🍜'},
+    {'slug': 'smart-education-map', 'name': 'Trường học', 'icon': '🎓'},
+    {'slug': 'wellness-care', 'name': 'Y tế', 'icon': '🏥'},
+    {'slug': 'stay-in-dong-anh', 'name': 'Lưu trú', 'icon': '🏨'},
+    {'slug': 'dong-anh-market', 'name': 'Chợ & OCOP', 'icon': '🛍️'},
+    {'slug': 'discover-dong-anh-community-culture-hub', 'name': 'Văn hóa', 'icon': '🏛️'},
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController(viewportFraction: 0.86);
+    _loadData();
+  }
+
+  @override
+  void dispose() {
+    _mapAnimationController?.stop();
+    _mapAnimationController?.dispose();
+    _searchController.dispose();
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadData() async {
+    setState(() => _isLoading = true);
+    try {
+      final data = await ApiService.getAllEateries();
+      if (!mounted) return;
+      _allEateries = data;
+      _applyFilter();
+    } catch (e) {
+      debugPrint('Lỗi tải dữ liệu bản đồ: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  void _applyFilter() {
+    final query = _searchController.text.trim().toLowerCase();
+
+    final result = _allEateries.where((eat) {
+      final catSlug = eat['category']?['slug']?.toString() ?? '';
+      if (_selectedCategorySlug != 'all' && catSlug != _selectedCategorySlug) {
+        return false;
+      }
+
+      if (query.isNotEmpty) {
+        final name = eat['name']?.toString().toLowerCase() ?? '';
+        final address = eat['address']?.toString().toLowerCase() ?? '';
+        final catName = eat['category']?['name']?.toString().toLowerCase() ?? '';
+        if (!name.contains(query) && !address.contains(query) && !catName.contains(query)) {
+          return false;
+        }
+      }
+      return true;
+    }).toList();
+
+    result.sort((a, b) {
+      final aFeatured = (a['is_featured'] == true || a['is_featured'] == 1) ? 1 : 0;
+      final bFeatured = (b['is_featured'] == true || b['is_featured'] == 1) ? 1 : 0;
+      if (aFeatured != bFeatured) return bFeatured.compareTo(aFeatured);
+
+      final aHasImg = (a['image_path']?.toString().isNotEmpty ?? false) ? 1 : 0;
+      final bHasImg = (b['image_path']?.toString().isNotEmpty ?? false) ? 1 : 0;
+      return bHasImg.compareTo(aHasImg);
+    });
+
+    _filteredEateries = result;
+    _displayedEateries = result.take(60).toList();
+    _selectedEateryIndex = 0;
+    _rebuildMarkers();
+
+    if (_pageController.hasClients && _displayedEateries.isNotEmpty) {
+      _pageController.jumpToPage(0);
+    }
+  }
+
+  void _rebuildMarkers() {
+    final markers = <Marker>[];
+    Marker? activeSelectedMarker;
+
+    for (int i = 0; i < _displayedEateries.length; i++) {
+      final eatery = _displayedEateries[i];
+      final double? lat = double.tryParse(eatery['latitude']?.toString() ?? '');
+      final double? lng = double.tryParse(eatery['longitude']?.toString() ?? '');
+      if (lat == null || lng == null) continue;
+
+      final catSlug = eatery['category']?['slug']?.toString();
+      final color = _getCategoryColor(catSlug);
+      final iconStr = _getCategoryIcon(catSlug);
+      final isSelected = i == _selectedEateryIndex;
+      final name = eatery['name']?.toString() ?? '';
+
+      if (isSelected) {
+        activeSelectedMarker = Marker(
+          point: LatLng(lat, lng),
+          width: 140,
+          height: 76,
+          alignment: Alignment.center,
+          child: GestureDetector(
+            onTap: () => _onMarkerTapped(i, lat, lng),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF0F172A),
+                    borderRadius: BorderRadius.circular(8),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Colors.black26,
+                        blurRadius: 4,
+                        offset: Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Text(
+                    name,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: color.withValues(alpha: 0.25),
+                        border: Border.all(color: color.withValues(alpha: 0.6), width: 1.5),
+                      ),
+                    ),
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: color,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 2.5),
+                        boxShadow: [
+                          BoxShadow(
+                            color: color.withValues(alpha: 0.5),
+                            blurRadius: 8,
+                            spreadRadius: 1,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Center(
+                        child: Text(
+                          iconStr,
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      } else {
+        markers.add(
+          Marker(
+            point: LatLng(lat, lng),
+            width: 28,
+            height: 28,
+            alignment: Alignment.center,
+            child: GestureDetector(
+              onTap: () => _onMarkerTapped(i, lat, lng),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.35),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.7),
+                    width: 1.5,
+                  ),
+                ),
+                child: Center(
+                  child: Text(
+                    iconStr,
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      }
+    }
+
+    if (activeSelectedMarker != null) {
+      markers.add(activeSelectedMarker);
+    }
+
+    if (_userLocation != null) {
+      markers.add(
+        Marker(
+          point: _userLocation!,
+          width: 32,
+          height: 32,
+          child: const _UserLocationDot(),
+        ),
+      );
+    }
+
+    _cachedMarkers = markers;
+  }
+
+  void _onMarkerTapped(int index, double lat, double lng) {
+    if (_selectedEateryIndex == index) return;
+
+    setState(() {
+      _selectedEateryIndex = index;
+      _rebuildMarkers();
+    });
+
+    _animatedMapMove(LatLng(lat, lng), 15.2);
+
+    if (_pageController.hasClients) {
+      _isProgrammaticScroll = true;
+      _pageController.animateToPage(
+        index,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOutCubic,
+      ).then((_) {
+        _isProgrammaticScroll = false;
+      });
+    }
+  }
+
+  void _onCardPageChanged(int index) {
+    if (_isProgrammaticScroll) return;
+    if (index >= 0 && index < _displayedEateries.length) {
+      if (_selectedEateryIndex == index) return;
+      final eatery = _displayedEateries[index];
+      final double? lat = double.tryParse(eatery['latitude']?.toString() ?? '');
+      final double? lng = double.tryParse(eatery['longitude']?.toString() ?? '');
+
+      setState(() {
+        _selectedEateryIndex = index;
+        _rebuildMarkers();
+      });
+
+      if (lat != null && lng != null) {
+        _animatedMapMove(LatLng(lat, lng), 15.2);
+      }
+    }
+  }
+
+  void _animatedMapMove(LatLng destLocation, double destZoom) {
+    _mapAnimationController?.stop();
+    _mapAnimationController?.dispose();
+
+    final latTween = Tween<double>(
+      begin: _mapController.camera.center.latitude,
+      end: destLocation.latitude,
+    );
+    final lngTween = Tween<double>(
+      begin: _mapController.camera.center.longitude,
+      end: destLocation.longitude,
+    );
+    final zoomTween = Tween<double>(
+      begin: _mapController.camera.zoom,
+      end: destZoom,
+    );
+
+    final controller = AnimationController(
+      duration: const Duration(milliseconds: 400),
+      vsync: this,
+    );
+    _mapAnimationController = controller;
+
+    final Animation<double> animation = CurvedAnimation(
+      parent: controller,
+      curve: Curves.fastOutSlowIn,
+    );
+
+    controller.addListener(() {
+      _mapController.move(
+        LatLng(latTween.evaluate(animation), lngTween.evaluate(animation)),
+        zoomTween.evaluate(animation),
+      );
+    });
+
+    animation.addStatusListener((status) {
+      if (status == AnimationStatus.completed || status == AnimationStatus.dismissed) {
+        if (_mapAnimationController == controller) {
+          _mapAnimationController = null;
+        }
+        controller.dispose();
+      }
+    });
+
+    controller.forward();
+  }
+
+  Future<void> _getLocation() async {
+    try {
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) return;
+      }
+
+      final position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.medium,
+      );
+
+      if (mounted) {
+        setState(() {
+          _userLocation = LatLng(position.latitude, position.longitude);
+          _rebuildMarkers();
+        });
+        _animatedMapMove(_userLocation!, 15.5);
+      }
+    } catch (e) {
+      debugPrint('Lỗi vị trí: $e');
+    }
+  }
+
+  Future<void> _openGoogleMapsDirections(double lat, double lng) async {
+    final Uri googleMapsUrl = Uri.parse('https://www.google.com/maps/dir/?api=1&destination=$lat,$lng');
+    try {
+      if (await canLaunchUrl(googleMapsUrl)) {
+        await launchUrl(googleMapsUrl, mode: LaunchMode.externalApplication);
+      } else {
+        await launchUrl(googleMapsUrl, mode: LaunchMode.platformDefault);
+      }
+    } catch (e) {
+      debugPrint('Lỗi mở Google Maps: $e');
+    }
+  }
+
+  Color _getCategoryColor(String? slug) {
+    switch (slug) {
+      case 'hanh-trinh-di-san':
+        return const Color(0xFFB45309);
+      case 'smart-education-map':
+        return const Color(0xFF0284C7);
+      case 'wellness-care':
+        return const Color(0xFF10B981);
+      case 'stay-in-dong-anh':
+        return const Color(0xFF8B5CF6);
+      case 'dong-anh-market':
+        return const Color(0xFFF59E0B);
+      case 'dong-anh-food-map':
+        return const Color(0xFFEF4444);
+      case 'discover-dong-anh-community-culture-hub':
+        return const Color(0xFFEC4899);
+      default:
+        return const Color(0xFF0284C7);
+    }
+  }
+
+  String _getCategoryIcon(String? slug) {
+    switch (slug) {
+      case 'hanh-trinh-di-san':
+        return '⛩️';
+      case 'smart-education-map':
+        return '🎓';
+      case 'wellness-care':
+        return '🏥';
+      case 'stay-in-dong-anh':
+        return '🏨';
+      case 'dong-anh-market':
+        return '🛍️';
+      case 'dong-anh-food-map':
+        return '🍜';
+      case 'discover-dong-anh-community-culture-hub':
+        return '🏛️';
+      default:
+        return '📍';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC),
+      body: SafeArea(
+        child: Stack(
+          children: [
+            // 1. LAYER BẢN ĐỒ (Hoặc Danh Sách Toàn Màn Hình)
+            Positioned.fill(
+              child: _isListView ? _buildListViewMode() : _buildMapViewMode(),
+            ),
+
+            // 2. LAYER ĐIỀU KHIỂN NỔI PHÍA TRÊN (Search & Category Pills)
+            Positioned(
+              top: 10,
+              left: 12,
+              right: 12,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildFloatingSearchBar(),
+                  const SizedBox(height: 8),
+                  _buildFloatingCategoryBar(),
+                ],
+              ),
+            ),
+
+            // 3. LAYER NÚT TIỆN ÍCH NỔI BÊN PHẢI (GPS & Đổi Chế Độ Xem)
+            if (!_isListView)
+              Positioned(
+                right: 14,
+                bottom: _displayedEateries.isNotEmpty ? 165 : 20,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    FloatingActionButton.small(
+                      heroTag: 'map_mode_toggle',
+                      onPressed: () {
+                        setState(() => _isListView = true);
+                      },
+                      backgroundColor: Colors.white,
+                      foregroundColor: const Color(0xFF0284C7),
+                      elevation: 4,
+                      child: const Icon(Icons.format_list_bulleted_rounded, size: 20),
+                    ),
+                    const SizedBox(height: 10),
+                    FloatingActionButton.small(
+                      heroTag: 'map_gps_locate',
+                      onPressed: _getLocation,
+                      backgroundColor: Colors.white,
+                      foregroundColor: const Color(0xFF0284C7),
+                      elevation: 4,
+                      child: const Icon(Icons.my_location_rounded, size: 20),
+                    ),
+                  ],
+                ),
+              ),
+
+            // 4. BĂNG CHUYỀN THẺ ĐỊA ĐIỂM NỔI PHÍA DƯỚI (Bottom Card Carousel)
+            if (!_isListView && _displayedEateries.isNotEmpty)
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 14,
+                height: 135,
+                child: _buildBottomCardCarousel(),
+              ),
+
+            // 5. LOADING OVERLAY
+            if (_isLoading)
+              const Positioned.fill(
+                child: CustomPulseLoader(
+                  message: 'Đang kết nối dữ liệu bản đồ...',
+                  icon: Icons.map_rounded,
+                  primaryColor: Color(0xFF0284C7),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // --- WIDGET CẤU PHẦN BẢN ĐỒ ---
+  Widget _buildMapViewMode() {
+    return FlutterMap(
+      mapController: _mapController,
+      options: MapOptions(
+        initialCenter: _dongAnhCenter,
+        initialZoom: 12.8,
+        minZoom: 10.0,
+        maxZoom: 18.0,
+        interactionOptions: const InteractionOptions(
+          flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
+        ),
+      ),
+      children: [
+        TileLayer(
+          urlTemplate: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
+          subdomains: const ['a', 'b', 'c', 'd'],
+          userAgentPackageName: 'com.donganh.discovery',
+          maxZoom: 18,
+          keepBuffer: 2,
+          panBuffer: 1,
+        ),
+        MarkerLayer(markers: _cachedMarkers),
+      ],
+    );
+  }
+
+  // --- WIDGET CHẾ ĐỘ XEM DANH SÁCH ---
+  Widget _buildListViewMode() {
+    return Container(
+      color: const Color(0xFFF8FAFC),
+      padding: const EdgeInsets.only(top: 115),
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Row(
+              children: [
+                Text(
+                  'KẾT QUẢ (${_filteredEateries.length} địa điểm)',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF64748B),
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                const Spacer(),
+                TextButton.icon(
+                  onPressed: () {
+                    setState(() => _isListView = false);
+                  },
+                  icon: const Icon(Icons.map_rounded, size: 16),
+                  label: const Text('Xem trên bản đồ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                  style: TextButton.styleFrom(
+                    foregroundColor: const Color(0xFF0284C7),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: _filteredEateries.isEmpty
+                ? const Center(
+                    child: Text(
+                      'Không tìm thấy địa điểm nào phù hợp.',
+                      style: TextStyle(color: Color(0xFF64748B), fontSize: 13),
+                    ),
+                  )
+                : ListView.separated(
+                    padding: const EdgeInsets.fromLTRB(14, 0, 14, 80),
+                    itemCount: _filteredEateries.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 10),
+                    itemBuilder: (context, index) {
+                      final item = _filteredEateries[index];
+                      return _buildPlaceCard(item, index);
+                    },
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // --- THANH TÌM KIẾM NỔI ---
+  Widget _buildFloatingSearchBar() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: TextField(
+        controller: _searchController,
+        onChanged: (_) {
+          setState(() {
+            _applyFilter();
+          });
+        },
+        style: const TextStyle(fontSize: 13.5),
+        decoration: InputDecoration(
+          hintText: 'Tìm địa danh, trường học, ẩm thực, OCOP...',
+          hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
+          prefixIcon: const Icon(Icons.search_rounded, color: Color(0xFF0284C7), size: 22),
+          suffixIcon: _searchController.text.isNotEmpty
+              ? IconButton(
+                  icon: const Icon(Icons.clear_rounded, size: 18, color: Color(0xFF94A3B8)),
+                  onPressed: () {
+                    _searchController.clear();
+                    setState(() => _applyFilter());
+                  },
+                )
+              : null,
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+        ),
+      ),
+    );
+  }
+
+  // --- THANH CUỘN BỘ LỌC DANH MỤC NỔI ---
+  Widget _buildFloatingCategoryBar() {
+    return SizedBox(
+      height: 38,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: _categoryTabs.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemBuilder: (context, index) {
+          final tab = _categoryTabs[index];
+          final slug = tab['slug']!;
+          final isSelected = _selectedCategorySlug == slug;
+          final color = _getCategoryColor(slug);
+
+          return GestureDetector(
+            onTap: () {
+              setState(() {
+                _selectedCategorySlug = slug;
+                _applyFilter();
+              });
+            },
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: isSelected ? color : Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: isSelected
+                        ? color.withValues(alpha: 0.35)
+                        : Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+                border: Border.all(
+                  color: isSelected ? Colors.transparent : const Color(0xFFE2E8F0),
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(tab['icon']!, style: const TextStyle(fontSize: 13)),
+                  const SizedBox(width: 6),
+                  Text(
+                    tab['name']!,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                      color: isSelected ? Colors.white : const Color(0xFF334155),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  // --- BĂNG CHUYỀN THẺ ĐỊA ĐIỂM (BOTTOM CAROUSEL) ---
+  Widget _buildBottomCardCarousel() {
+    return PageView.builder(
+      controller: _pageController,
+      itemCount: _displayedEateries.length,
+      onPageChanged: _onCardPageChanged,
+      itemBuilder: (context, index) {
+        final eatery = _displayedEateries[index];
+        final isSelected = index == _selectedEateryIndex;
+
+        return AnimatedScale(
+          scale: isSelected ? 1.0 : 0.95,
+          duration: const Duration(milliseconds: 250),
+          child: _buildCarouselCard(eatery, index),
+        );
+      },
+    );
+  }
+
+  // --- THẺ ĐỊA ĐIỂM TRONG BĂNG CHUYỀN ---
+  Widget _buildCarouselCard(dynamic eatery, int index) {
+    final catSlug = eatery['category']?['slug']?.toString();
+    final color = _getCategoryColor(catSlug);
+    final icon = _getCategoryIcon(catSlug);
+    final double? lat = double.tryParse(eatery['latitude']?.toString() ?? '');
+    final double? lng = double.tryParse(eatery['longitude']?.toString() ?? '');
+
+    final String imagePath = eatery['image_path'] ?? '';
+    final String fullImgUrl = imagePath.startsWith('http')
+        ? imagePath
+        : (imagePath.isNotEmpty ? 'https://donganhdiscovery.xadonganh.com/$imagePath' : '');
+
+    return GestureDetector(
+      onTap: () => _showEateryDetails(eatery),
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.1),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            // Ảnh đại diện
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                width: 90,
+                height: 90,
+                color: color.withValues(alpha: 0.1),
+                child: fullImgUrl.isNotEmpty
+                    ? Image.network(
+                        fullImgUrl,
+                        fit: BoxFit.cover,
+                        cacheWidth: 180,
+                        filterQuality: FilterQuality.low,
+                        errorBuilder: (_, __, ___) => Center(child: Text(icon, style: const TextStyle(fontSize: 32))),
+                      )
+                    : Center(child: Text(icon, style: const TextStyle(fontSize: 32))),
+              ),
+            ),
+            const SizedBox(width: 12),
+
+            // Thông tin địa điểm
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Danh mục tag
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: color.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          eatery['category']?['name'] ?? 'Địa điểm',
+                          style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.bold),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const Spacer(),
+                      const Icon(Icons.star_rounded, color: Colors.amber, size: 14),
+                      const SizedBox(width: 2),
+                      Text(
+                        '${eatery['rating_avg'] ?? '5.0'}',
+                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+
+                  // Tên địa điểm
+                  Text(
+                    eatery['name'] ?? '',
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5, color: Color(0xFF0F172A)),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+
+                  // Địa chỉ
+                  Text(
+                    eatery['address'] ?? 'Đông Anh, Hà Nội',
+                    style: const TextStyle(color: Color(0xFF64748B), fontSize: 11),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 6),
+
+                  // Nút thao tác nhanh
+                  Row(
+                    children: [
+                      if (lat != null && lng != null)
+                        InkWell(
+                          onTap: () => _openGoogleMapsDirections(lat, lng),
+                          borderRadius: BorderRadius.circular(8),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF1F5F9),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: const Color(0xFFE2E8F0)),
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.directions_rounded, size: 13, color: Color(0xFF0284C7)),
+                                SizedBox(width: 4),
+                                Text('Chỉ đường', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold, color: Color(0xFF0284C7))),
+                              ],
+                            ),
+                          ),
+                        ),
+                      const Spacer(),
+                      const Text(
+                        'Chi tiết ➔',
+                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF64748B)),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // --- THẺ ĐỊA ĐIỂM DẠNG DANH SÁCH ---
+  Widget _buildPlaceCard(dynamic eatery, int index) {
+    final catSlug = eatery['category']?['slug']?.toString();
+    final color = _getCategoryColor(catSlug);
+    final icon = _getCategoryIcon(catSlug);
+    final double? lat = double.tryParse(eatery['latitude']?.toString() ?? '');
+    final double? lng = double.tryParse(eatery['longitude']?.toString() ?? '');
+
+    final String imagePath = eatery['image_path'] ?? '';
+    final String fullImgUrl = imagePath.startsWith('http')
+        ? imagePath
+        : (imagePath.isNotEmpty ? 'https://donganhdiscovery.xadonganh.com/$imagePath' : '');
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: Container(
+                  width: 50,
+                  height: 50,
+                  color: color.withValues(alpha: 0.12),
+                  child: fullImgUrl.isNotEmpty
+                      ? Image.network(
+                          fullImgUrl,
+                          fit: BoxFit.cover,
+                          cacheWidth: 100,
+                          filterQuality: FilterQuality.low,
+                          errorBuilder: (_, __, ___) => Center(child: Text(icon, style: const TextStyle(fontSize: 22))),
+                        )
+                      : Center(child: Text(icon, style: const TextStyle(fontSize: 22))),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      eatery['name'] ?? '',
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF0F172A)),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 3),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: color.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            eatery['category']?['name'] ?? 'Địa điểm',
+                            style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        const Icon(Icons.star_rounded, color: Colors.amber, size: 14),
+                        const SizedBox(width: 2),
+                        Text(
+                          '${eatery['rating_avg'] ?? '5.0'}',
+                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              const Icon(Icons.location_on_outlined, size: 14, color: Color(0xFF94A3B8)),
+              const SizedBox(width: 4),
+              Expanded(
+                child: Text(
+                  eatery['address'] ?? 'Đông Anh, Hà Nội',
+                  style: const TextStyle(color: Color(0xFF64748B), fontSize: 11.5),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              if (lat != null && lng != null)
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => _openGoogleMapsDirections(lat, lng),
+                    icon: const Icon(Icons.directions_rounded, size: 15),
+                    label: const Text('Chỉ đường', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFF0284C7),
+                      side: const BorderSide(color: Color(0xFF0284C7)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                    ),
+                  ),
+                ),
+              if (lat != null && lng != null) const SizedBox(width: 8),
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () => _showEateryDetails(eatery),
+                  icon: const Icon(Icons.info_outline_rounded, size: 15),
+                  label: const Text('Chi tiết', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF0284C7),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // --- MODAL CHI TIẾT ĐỊA ĐIỂM ---
+  void _showEateryDetails(dynamic eatery) {
+    final double? lat = double.tryParse(eatery['latitude']?.toString() ?? '');
+    final double? lng = double.tryParse(eatery['longitude']?.toString() ?? '');
+    final catSlug = eatery['category']?['slug']?.toString();
+    final color = _getCategoryColor(catSlug);
+    final icon = _getCategoryIcon(catSlug);
+
+    final String imagePath = eatery['image_path'] ?? '';
+    final String fullImgUrl = imagePath.startsWith('http')
+        ? imagePath
+        : (imagePath.isNotEmpty ? 'https://donganhdiscovery.xadonganh.com/$imagePath' : '');
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFCBD5E1),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              if (fullImgUrl.isNotEmpty)
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: Image.network(
+                    fullImgUrl,
+                    height: 160,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    cacheWidth: 400,
+                    filterQuality: FilterQuality.low,
+                    errorBuilder: (_, __, ___) => Container(
+                      height: 120,
+                      color: color.withValues(alpha: 0.15),
+                      child: Center(child: Text(icon, style: const TextStyle(fontSize: 40))),
+                    ),
+                  ),
+                )
+              else
+                Container(
+                  height: 100,
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Center(child: Text(icon, style: const TextStyle(fontSize: 40))),
+                ),
+              const SizedBox(height: 14),
+
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      eatery['category']?['name'] ?? 'Địa điểm',
+                      style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 11),
+                    ),
+                  ),
+                  const Spacer(),
+                  const Icon(Icons.star_rounded, color: Colors.amber, size: 16),
+                  const SizedBox(width: 3),
+                  Text(
+                    '${eatery['rating_avg'] ?? '5.0'}',
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+
+              Text(
+                eatery['name'] ?? 'Địa điểm',
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+              ),
+              const SizedBox(height: 4),
+
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.location_on_outlined, size: 16, color: Color(0xFF64748B)),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      eatery['address'] ?? 'Đông Anh, Hà Nội',
+                      style: const TextStyle(color: Color(0xFF64748B), fontSize: 12.5),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 18),
+
+              Row(
+                children: [
+                  if (lat != null && lng != null)
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          _openGoogleMapsDirections(lat, lng);
+                        },
+                        icon: const Icon(Icons.directions_rounded, size: 16),
+                        label: const Text('Chỉ đường', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5)),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          side: const BorderSide(color: Color(0xFF0284C7)),
+                          foregroundColor: const Color(0xFF0284C7),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                      ),
+                    ),
+                  if (lat != null && lng != null) const SizedBox(width: 10),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _openCheckinDialog(eatery);
+                      },
+                      icon: const Icon(Icons.camera_alt_rounded, size: 16),
+                      label: const Text('Check-in', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF0284C7),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => EateryDetailScreen(
+                          categorySlug: catSlug ?? 'dong-anh-food-map',
+                          eaterySlug: eatery['slug'] ?? '',
+                          initialData: eatery,
+                        ),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.arrow_forward_rounded, size: 16),
+                  label: const Text('Xem toàn bộ chi tiết ➔', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF0F172A),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _openCheckinDialog(dynamic eatery) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return _LoginCheckinModal(
+          eateryId: eatery['id'],
+          eateryName: eatery['name'],
+          onSubmit: (rating, comment, guestName, imagePath) async {
+            final res = await ApiService.storeCheckin(
+              eateryId: eatery['id'],
+              rating: rating,
+              comment: comment,
+              guestName: guestName,
+              imagePath: imagePath,
+            );
+            if (mounted && context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(res['message'] ?? 'Thành công'),
+                  backgroundColor: res['success'] == true ? Colors.green : Colors.red,
+                ),
+              );
+            }
+          },
+        );
+      },
+    );
+  }
+}
+
+// --- WIDGET ĐỊNH VỊ VỊ TRÍ NGƯỜI DÙNG TÁCH BIỆT (KHÔNG GÂY RE-RENDER TOÀN BỘ MAP) ---
+class _UserLocationDot extends StatelessWidget {
+  const _UserLocationDot();
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        Container(
+          width: 32,
+          height: 32,
+          decoration: BoxDecoration(
+            color: const Color(0xFF0284C7).withValues(alpha: 0.25),
+            shape: BoxShape.circle,
+          ),
+        ),
+        Container(
+          width: 14,
+          height: 14,
+          decoration: BoxDecoration(
+            color: const Color(0xFF0284C7),
+            shape: BoxShape.circle,
+            border: Border.all(color: Colors.white, width: 2.5),
+            boxShadow: const [
+              BoxShadow(color: Colors.black26, blurRadius: 4),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// --- MODAL CHECK-IN NHANH ---
 class _LoginCheckinModal extends StatefulWidget {
   final int eateryId;
   final String eateryName;
@@ -69,9 +1305,13 @@ class _LoginCheckinModalState extends State<_LoginCheckinModal> {
   Widget build(BuildContext context) {
     final isGuest = !ApiService.isAuthenticated;
 
-    return Padding(
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
       padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 20,
         left: 20,
         right: 20,
         top: 20,
@@ -80,120 +1320,98 @@ class _LoginCheckinModalState extends State<_LoginCheckinModal> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.only(bottom: 14),
+              decoration: BoxDecoration(
+                color: const Color(0xFFCBD5E1),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
           Text(
             'Check-in tại ${widget.eateryName}',
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
           if (isGuest) ...[
             TextField(
               controller: _guestNameController,
-              decoration: const InputDecoration(
-                labelText: 'Tên của bạn (Khách vãng lai)',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: 'Tên của bạn',
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
           ],
-          const Text('Đánh giá của bạn:'),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: List.generate(5, (index) {
               return IconButton(
                 icon: Icon(
-                  index < _rating ? Icons.star : Icons.star_border,
+                  index < _rating ? Icons.star_rounded : Icons.star_border_rounded,
                   color: Colors.amber,
                   size: 32,
                 ),
                 onPressed: () {
-                  setState(() {
-                    _rating = index + 1;
-                  });
+                  setState(() => _rating = index + 1);
                 },
               );
             }),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           TextField(
             controller: _commentController,
             maxLines: 3,
-            decoration: const InputDecoration(
-              labelText: 'Nhập cảm nhận của bạn...',
-              border: OutlineInputBorder(),
+            decoration: InputDecoration(
+              hintText: 'Cảm nghĩ hoặc trải nghiệm của bạn tại đây...',
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              contentPadding: const EdgeInsets.all(12),
             ),
           ),
-          const SizedBox(height: 16),
-          if (_imagePath == null)
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () => _pickImage(ImageSource.camera),
-                    icon: const Icon(Icons.camera_alt),
-                    label: const Text('Chụp ảnh'),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      side: const BorderSide(color: Color(0xFF0EA5E9)),
-                      foregroundColor: const Color(0xFF0EA5E9),
-                    ),
-                  ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              OutlinedButton.icon(
+                onPressed: () => _pickImage(ImageSource.gallery),
+                icon: const Icon(Icons.photo_library_rounded, size: 16),
+                label: const Text('Thêm ảnh', style: TextStyle(fontSize: 12)),
+                style: OutlinedButton.styleFrom(
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () => _pickImage(ImageSource.gallery),
-                    icon: const Icon(Icons.photo),
-                    label: const Text('Thư viện'),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      side: const BorderSide(color: Color(0xFF0EA5E9)),
-                      foregroundColor: const Color(0xFF0EA5E9),
-                    ),
-                  ),
+              ),
+              const SizedBox(width: 8),
+              OutlinedButton.icon(
+                onPressed: () => _pickImage(ImageSource.camera),
+                icon: const Icon(Icons.camera_alt_rounded, size: 16),
+                label: const Text('Chụp ảnh', style: TextStyle(fontSize: 12)),
+                style: OutlinedButton.styleFrom(
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
-              ],
-            )
-          else
-            Stack(
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: Image.file(
-                    File(_imagePath!),
-                    height: 140,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                  ),
-                ),
-                Positioned(
-                  top: 8,
-                  right: 8,
-                  child: GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        _imagePath = null;
-                      });
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: const BoxDecoration(
-                        color: Colors.black54,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(Icons.close, color: Colors.white, size: 20),
-                    ),
-                  ),
-                ),
-              ],
+              ),
+            ],
+          ),
+          if (_imagePath != null) ...[
+            const SizedBox(height: 10),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: Image.file(
+                File(_imagePath!),
+                height: 100,
+                width: double.infinity,
+                fit: BoxFit.cover,
+              ),
             ),
-          const SizedBox(height: 20),
+          ],
+          const SizedBox(height: 16),
           ElevatedButton(
             onPressed: _isSending
                 ? null
                 : () async {
-                    setState(() {
-                      _isSending = true;
-                    });
+                    setState(() => _isSending = true);
                     await widget.onSubmit(
                       _rating,
                       _commentController.text,
@@ -201,1049 +1419,25 @@ class _LoginCheckinModalState extends State<_LoginCheckinModal> {
                       _imagePath,
                     );
                     if (mounted && context.mounted) {
-                      setState(() {
-                        _isSending = false;
-                      });
+                      setState(() => _isSending = false);
                       Navigator.pop(context);
                     }
                   },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF0EA5E9),
+              backgroundColor: const Color(0xFF0284C7),
               foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 14),
+              padding: const EdgeInsets.symmetric(vertical: 13),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
             child: _isSending
                 ? const SizedBox(
-                    height: 20,
-                    width: 20,
+                    height: 18,
+                    width: 18,
                     child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                   )
-                : const Text('Gửi Check-in', style: TextStyle(fontWeight: FontWeight.bold)),
+                : const Text('Gửi Check-in', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
           ),
-          const SizedBox(height: 20),
         ],
-      ),
-    );
-  }
-}
-
-class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin, WidgetsBindingObserver {
-  final MapController _mapController = MapController();
-  final LatLng _center = const LatLng(21.1352, 105.8458); // Đông Anh Center
-  final TextEditingController _searchController = TextEditingController();
-  final DraggableScrollableController _sheetController = DraggableScrollableController();
-
-  late final AnimationController _pulseController;
-  late final Animation<double> _pulseAnimation;
-
-  List<dynamic> _categories = [];
-  List<dynamic> _allEateries = [];
-  List<dynamic> _filteredEateries = [];
-  final Set<String> _expandedCategories = {};
-  bool _isLoading = true;
-  LatLng? _userLocation;
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addObserver(this);
-
-    _pulseController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 2),
-    )..repeat(reverse: true);
-
-    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.4).animate(
-      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
-    );
-
-    _loadAllData();
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.paused ||
-        state == AppLifecycleState.inactive ||
-        state == AppLifecycleState.hidden) {
-      _pulseController.stop();
-    } else if (state == AppLifecycleState.resumed) {
-      if (!_pulseController.isAnimating) {
-        _pulseController.repeat(reverse: true);
-      }
-    }
-  }
-
-  @override
-  void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    _pulseController.dispose();
-    _searchController.dispose();
-    _sheetController.dispose();
-    super.dispose();
-  }
-
-  void _animatedMapMove(LatLng destLocation, double destZoom) {
-    final latTween = Tween<double>(
-      begin: _mapController.camera.center.latitude,
-      end: destLocation.latitude,
-    );
-    final lngTween = Tween<double>(
-      begin: _mapController.camera.center.longitude,
-      end: destLocation.longitude,
-    );
-    final zoomTween = Tween<double>(
-      begin: _mapController.camera.zoom,
-      end: destZoom,
-    );
-
-    final controller = AnimationController(
-      duration: const Duration(milliseconds: 850),
-      vsync: this,
-    );
-
-    final Animation<double> animation = CurvedAnimation(
-      parent: controller,
-      curve: Curves.fastOutSlowIn,
-    );
-
-    controller.addListener(() {
-      _mapController.move(
-        LatLng(latTween.evaluate(animation), lngTween.evaluate(animation)),
-        zoomTween.evaluate(animation),
-      );
-    });
-
-    animation.addStatusListener((status) {
-      if (status == AnimationStatus.completed || status == AnimationStatus.dismissed) {
-        controller.dispose();
-      }
-    });
-
-    controller.forward();
-  }
-
-  Future<void> _openGoogleMapsDirections(double lat, double lng) async {
-    final Uri googleMapsUrl = Uri.parse('https://www.google.com/maps/dir/?api=1&destination=$lat,$lng');
-    try {
-      if (await canLaunchUrl(googleMapsUrl)) {
-        await launchUrl(googleMapsUrl, mode: LaunchMode.externalApplication);
-      } else {
-        await launchUrl(googleMapsUrl, mode: LaunchMode.platformDefault);
-      }
-    } catch (e) {
-      debugPrint('Lỗi mở Google Maps: $e');
-    }
-  }
-
-  void _toggleSheet() {
-    if (_sheetController.isAttached) {
-      final currentSize = _sheetController.size;
-      final targetSize = currentSize < 0.5 ? 0.75 : 0.28;
-      _sheetController.animateTo(
-        targetSize,
-        duration: const Duration(milliseconds: 350),
-        curve: Curves.fastOutSlowIn,
-      );
-    }
-  }
-
-  void _onHeaderDragUpdate(DragUpdateDetails details) {
-    if (_sheetController.isAttached) {
-      final screenHeight = MediaQuery.of(context).size.height;
-      final delta = details.primaryDelta! / screenHeight;
-      final newSize = (_sheetController.size - delta).clamp(0.12, 0.75);
-      _sheetController.jumpTo(newSize);
-    }
-  }
-
-  void _onHeaderDragEnd(DragEndDetails details) {
-    if (_sheetController.isAttached) {
-      final velocity = details.primaryVelocity ?? 0;
-      final currentSize = _sheetController.size;
-      double targetSize = 0.28;
-      if (velocity < -300 || currentSize > 0.45) {
-        targetSize = 0.75;
-      } else if (velocity > 300 || currentSize < 0.2) {
-        targetSize = 0.12;
-      }
-      _sheetController.animateTo(
-        targetSize,
-        duration: const Duration(milliseconds: 250),
-        curve: Curves.easeOut,
-      );
-    }
-  }
-
-  Color _getCategoryColor(String? slug) {
-    switch (slug) {
-      case 'hanh-trinh-di-san':
-        return const Color(0xFF8B4513); // Nâu đất di tích
-      case 'smart-education-map':
-        return const Color(0xFF1A73E8); // Xanh blue trường học
-      case 'wellness-care':
-        return const Color(0xFF34A853); // Xanh lá y tế
-      case 'stay-in-dong-anh':
-        return const Color(0xFF9334E6); // Tím khách sạn
-      case 'dong-anh-market':
-        return const Color(0xFFF29900); // Vàng chợ
-      case 'dong-anh-food-map':
-        return const Color(0xFFEA4335); // Đỏ ẩm thực
-      case 'discover-dong-anh-community-culture-hub':
-        return const Color(0xFFE81E63); // Hồng văn hóa
-      default:
-        return const Color(0xFF0EA5E9);
-    }
-  }
-
-  String _getCategoryIcon(String? slug) {
-    switch (slug) {
-      case 'hanh-trinh-di-san':
-        return '⛩️';
-      case 'smart-education-map':
-        return '🎓';
-      case 'wellness-care':
-        return '🏥';
-      case 'stay-in-dong-anh':
-        return '🏨';
-      case 'dong-anh-market':
-        return '🛍️';
-      case 'dong-anh-food-map':
-        return '🍜';
-      case 'discover-dong-anh-community-culture-hub':
-        return '🏛️';
-      default:
-        return '📍';
-    }
-  }
-
-  String _getCategoryLabel(String? slug, String originalName) {
-    switch (slug) {
-      case 'hanh-trinh-di-san':
-        return 'DI TÍCH QUỐC GIA & DI SẢN';
-      case 'smart-education-map':
-        return 'HỆ THỐNG TRƯỜNG HỌC';
-      case 'wellness-care':
-        return 'BỆNH VIỆN & CƠ SỞ Y TẾ';
-      case 'stay-in-dong-anh':
-        return 'KHÁCH SẠN & LƯU TRÚ';
-      case 'dong-anh-market':
-        return 'NÔNG SẢN SỐ & ĐẶC SẢN OCOP';
-      case 'dong-anh-food-map':
-        return 'ĐỊA ĐIỂM ẨM THỰC';
-      case 'discover-dong-anh-community-culture-hub':
-        return 'NHÀ VĂN HÓA & THỂ THAO';
-      default:
-        return originalName.toUpperCase();
-    }
-  }
-
-  Future<void> _loadAllData() async {
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      final categories = await ApiService.getCategories();
-      _categories = categories;
-
-      final combined = await ApiService.getAllEateries();
-
-      if (mounted) {
-        setState(() {
-          _allEateries = combined;
-          _filteredEateries = combined;
-          if (_categories.isNotEmpty) {
-            _expandedCategories.add(_categories[0]['slug'].toString());
-          }
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      debugPrint('Lỗi tải dữ liệu bản đồ: $e');
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
-  }
-
-  void _onSearchChanged(String query) {
-    final q = query.trim().toLowerCase();
-    if (q.isEmpty) {
-      setState(() {
-        _filteredEateries = _allEateries;
-      });
-      return;
-    }
-
-    final filtered = _allEateries.where((eat) {
-      final name = eat['name']?.toString().toLowerCase() ?? '';
-      final address = eat['address']?.toString().toLowerCase() ?? '';
-      final catName = eat['category']?['name']?.toString().toLowerCase() ?? '';
-      return name.contains(q) || address.contains(q) || catName.contains(q);
-    }).toList();
-
-    setState(() {
-      _filteredEateries = filtered;
-    });
-  }
-
-  Future<void> _getLocation() async {
-    try {
-      LocationPermission permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.denied) return;
-      }
-
-      final position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-      );
-
-      if (mounted) {
-        setState(() {
-          _userLocation = LatLng(position.latitude, position.longitude);
-        });
-        _animatedMapMove(_userLocation!, 15.5);
-      }
-    } catch (e) {
-      debugPrint('Lỗi vị trí: $e');
-    }
-  }
-
-  Map<String, Map<String, dynamic>> _groupEateriesByCategory() {
-    final Map<String, Map<String, dynamic>> grouped = {};
-
-    for (var eat in _filteredEateries) {
-      final cat = eat['category'];
-      final slug = cat?['slug']?.toString() ?? 'other';
-      final origName = cat?['name']?.toString() ?? 'Khác';
-      final label = _getCategoryLabel(slug, origName);
-
-      if (!grouped.containsKey(slug)) {
-        grouped[slug] = {
-          'slug': slug,
-          'label': label,
-          'items': [],
-        };
-      }
-      (grouped[slug]!['items'] as List).add(eat);
-    }
-    return grouped;
-  }
-
-  void _focusAndShowEatery(dynamic eatery, double lat, double lng) {
-    _animatedMapMove(LatLng(lat, lng), 16.0);
-    _showEateryDetails(eatery);
-  }
-
-  void _showEateryDetails(dynamic eatery) {
-    double? lat = double.tryParse(eatery['latitude']?.toString() ?? '');
-    double? lng = double.tryParse(eatery['longitude']?.toString() ?? '');
-    final catSlug = eatery['category']?['slug']?.toString();
-    final color = _getCategoryColor(catSlug);
-    final icon = _getCategoryIcon(catSlug);
-
-    final String imagePath = eatery['image_path'] ?? '';
-    final String fullImgUrl = imagePath.startsWith('http')
-        ? imagePath
-        : (imagePath.isNotEmpty ? 'https://donganhdiscovery.xadonganh.com/$imagePath' : '');
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (context) {
-        final screenHeight = MediaQuery.of(context).size.height;
-        final maxSheetHeight = screenHeight * 0.75;
-        final imageHeight = screenHeight * 0.18 < 120 ? screenHeight * 0.18 : 120.0;
-
-        return ConstrainedBox(
-          constraints: BoxConstraints(maxHeight: maxSheetHeight),
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Drag handle
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    margin: const EdgeInsets.only(bottom: 12),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[300],
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-
-                // Cover image
-                if (fullImgUrl.isNotEmpty)
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(16),
-                    child: Image.network(
-                      fullImgUrl,
-                      height: imageHeight,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                      cacheWidth: 400,
-                      filterQuality: FilterQuality.low,
-                      errorBuilder: (_, __, ___) => Container(
-                        height: imageHeight,
-                        color: const Color(0xFF1E293B),
-                        child: const Icon(Icons.location_on, color: Colors.white, size: 36),
-                      ),
-                    ),
-                  )
-                else
-                  Container(
-                    height: imageHeight * 0.7,
-                    decoration: BoxDecoration(
-                      color: color.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Center(
-                      child: Text(icon, style: const TextStyle(fontSize: 36)),
-                    ),
-                  ),
-                const SizedBox(height: 10),
-
-                // Category tag + rating row
-                Row(
-                  children: [
-                    Expanded(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: color,
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Row(
-                          children: [
-                            Text(icon, style: const TextStyle(fontSize: 10)),
-                            const SizedBox(width: 3),
-                            Expanded(
-                              child: Text(
-                                eatery['category']?['name'] ?? 'Địa điểm',
-                                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 9),
-                                overflow: TextOverflow.ellipsis,
-                                maxLines: 1,
-                              ),
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.notifications_outlined, color: Colors.white),
-                              tooltip: 'Thông báo',
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(builder: (context) => const NotificationsScreen()),
-                                );
-                              },
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.star, color: Colors.amber, size: 14),
-                        const SizedBox(width: 2),
-                        Text(
-                          '${eatery['rating_avg'] ?? '5.0'}',
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-
-                // Name
-                Text(
-                  eatery['name'] ?? 'Địa điểm',
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 4),
-
-                // Address
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Icon(Icons.location_on_outlined, size: 14, color: Colors.grey),
-                    const SizedBox(width: 4),
-                    Expanded(
-                      child: Text(
-                        eatery['address'] ?? 'Đông Anh, Hà Nội',
-                        style: TextStyle(color: Colors.grey[600], fontSize: 11),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-
-                // Action buttons row
-                Row(
-                  children: [
-                    if (lat != null && lng != null)
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: () {
-                            Navigator.pop(context);
-                            _openGoogleMapsDirections(lat, lng);
-                          },
-                          icon: const Icon(Icons.directions, size: 16),
-                          label: const Text('Chỉ đường', style: TextStyle(fontSize: 12)),
-                          style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 10),
-                            side: BorderSide(color: color),
-                            foregroundColor: color,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                          ),
-                        ),
-                      ),
-                    if (lat != null && lng != null) const SizedBox(width: 8),
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: () {
-                          Navigator.pop(context);
-                          _openCheckinDialog(eatery);
-                        },
-                        icon: const Icon(Icons.camera_alt, size: 16),
-                        label: const Text('Check-in', style: TextStyle(fontSize: 12)),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF0EA5E9),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-
-                // Full detail button
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => EateryDetailScreen(
-                            categorySlug: catSlug ?? 'dong-anh-food-map',
-                            eaterySlug: eatery['slug'] ?? '',
-                            initialData: eatery,
-                          ),
-                        ),
-                      );
-                    },
-                    icon: const Icon(Icons.arrow_forward, size: 16),
-                    label: const Text('Xem chi tiết ➔', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF1E293B),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  void _openCheckinDialog(dynamic eatery) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) {
-        return _LoginCheckinModal(
-          eateryId: eatery['id'],
-          eateryName: eatery['name'],
-          onSubmit: (rating, comment, guestName, imagePath) async {
-            final res = await ApiService.storeCheckin(
-              eateryId: eatery['id'],
-              rating: rating,
-              comment: comment,
-              guestName: guestName,
-              imagePath: imagePath,
-            );
-            if (mounted && context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(res['message'] ?? 'Thành công'),
-                  backgroundColor: res['success'] == true ? Colors.green : Colors.red,
-                ),
-              );
-            }
-          },
-        );
-      },
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    const primaryColor = Color(0xFF0EA5E9);
-    final groupedData = _groupEateriesByCategory();
-
-    // Build map markers
-    final markers = <Marker>[];
-    for (var eatery in _filteredEateries) {
-      double? lat = double.tryParse(eatery['latitude']?.toString() ?? '');
-      double? lng = double.tryParse(eatery['longitude']?.toString() ?? '');
-      if (lat != null && lng != null) {
-        final catSlug = eatery['category']?['slug']?.toString();
-        final color = _getCategoryColor(catSlug);
-        final iconStr = _getCategoryIcon(catSlug);
-
-        markers.add(
-          Marker(
-            point: LatLng(lat, lng),
-            width: 44,
-            height: 44,
-            alignment: Alignment.topCenter,
-            child: GestureDetector(
-              onTap: () => _focusAndShowEatery(eatery, lat, lng),
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: color,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 2.5),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Colors.black26,
-                          blurRadius: 6,
-                          offset: Offset(0, 3),
-                        )
-                      ],
-                    ),
-                    child: Center(
-                      child: Text(
-                        iconStr,
-                        style: const TextStyle(fontSize: 18),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      }
-    }
-
-    if (_userLocation != null) {
-      markers.add(
-        Marker(
-          point: _userLocation!,
-          width: 44,
-          height: 44,
-          child: AnimatedBuilder(
-            animation: _pulseAnimation,
-            builder: (context, child) {
-              return Stack(
-                alignment: Alignment.center,
-                children: [
-                  Container(
-                    width: 32 * _pulseAnimation.value,
-                    height: 32 * _pulseAnimation.value,
-                    decoration: BoxDecoration(
-                      color: Colors.blue.withValues(alpha: 0.35 / _pulseAnimation.value),
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                  Container(
-                    width: 14,
-                    height: 14,
-                    decoration: BoxDecoration(
-                      color: Colors.blue,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 2.5),
-                      boxShadow: const [
-                        BoxShadow(color: Colors.black26, blurRadius: 4),
-                      ],
-                    ),
-                  ),
-                ],
-              );
-            },
-          ),
-        ),
-      );
-    }
-
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
-      body: SafeArea(
-        child: Stack(
-          children: [
-            // 1. Leaflet Map Viewport
-            FlutterMap(
-              mapController: _mapController,
-              options: MapOptions(
-                initialCenter: _center,
-                initialZoom: 12.5,
-              ),
-              children: [
-                TileLayer(
-                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                  userAgentPackageName: 'com.donganh.discovery',
-                  maxZoom: 17,
-                ),
-                MarkerLayer(markers: markers),
-              ],
-            ),
-
-            // 2. Top Banner Header
-            Positioned(
-              top: 10,
-              left: 12,
-              right: 12,
-              child: Column(
-                children: [
-
-
-
-                  // Real-time Search Input Box
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(14),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Colors.black12,
-                          blurRadius: 8,
-                          offset: Offset(0, 3),
-                        ),
-                      ],
-                    ),
-                    child: TextField(
-                      controller: _searchController,
-                      onChanged: _onSearchChanged,
-                      style: const TextStyle(fontSize: 13),
-                      decoration: InputDecoration(
-                        hintText: 'Tìm kiếm địa danh, trường học...',
-                        hintStyle: TextStyle(color: Colors.grey[400], fontSize: 13),
-                        prefixIcon: const Icon(Icons.search, color: Color(0xFF0EA5E9), size: 20),
-                        suffixIcon: _searchController.text.isNotEmpty
-                            ? IconButton(
-                                icon: const Icon(Icons.clear, size: 18, color: Colors.grey),
-                                onPressed: () {
-                                  _searchController.clear();
-                                  _onSearchChanged('');
-                                },
-                              )
-                            : null,
-                        border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // 3. Floating Action Buttons (GPS location button)
-            Positioned(
-              right: 14,
-              bottom: 220,
-              child: FloatingActionButton.small(
-                onPressed: _getLocation,
-                backgroundColor: Colors.white,
-                foregroundColor: primaryColor,
-                elevation: 4,
-                child: const Icon(Icons.my_location),
-              ),
-            ),
-
-            // 4. Loading Overlay Indicator
-            if (_isLoading)
-              const Positioned.fill(
-                child: CustomPulseLoader(
-                  message: 'Đang kết nối bản đồ dữ liệu...',
-                  icon: Icons.map_rounded,
-                  primaryColor: Color(0xFF0EA5E9),
-                ),
-              ),
-
-            // 5. Draggable Category Accordion Bottom Sheet (Mirroring Web Search Sidebar!)
-            DraggableScrollableSheet(
-              controller: _sheetController,
-              initialChildSize: 0.28,
-              minChildSize: 0.12,
-              maxChildSize: 0.75,
-              builder: (context, scrollController) {
-                return Material(
-                  elevation: 12,
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-                  color: Colors.white,
-                  child: Column(
-                    children: [
-                      // Interactive Sheet handle bar & Header
-                      GestureDetector(
-                        onTap: _toggleSheet,
-                        onVerticalDragUpdate: _onHeaderDragUpdate,
-                        onVerticalDragEnd: _onHeaderDragEnd,
-                        behavior: HitTestBehavior.opaque,
-                        child: Column(
-                          children: [
-                            Container(
-                              margin: const EdgeInsets.only(top: 10, bottom: 6),
-                              width: 44,
-                              height: 5,
-                              decoration: BoxDecoration(
-                                color: Colors.grey[400],
-                                borderRadius: BorderRadius.circular(3),
-                              ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                              child: Row(
-                                children: [
-                                  Text(
-                                    'DANH SÁCH ĐỊA ĐIỂM (${_filteredEateries.length})',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w900,
-                                      color: Colors.grey[700],
-                                      letterSpacing: 0.5,
-                                    ),
-                                  ),
-                                  const Spacer(),
-                                  Row(
-                                    children: [
-                                      Icon(Icons.swipe_vertical, size: 14, color: Colors.grey[500]),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        'Chạm hoặc vuốt để mở',
-                                        style: TextStyle(
-                                          fontSize: 10,
-                                          color: Colors.grey[500],
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      const Divider(height: 12),
-
-                      // Category Accordion List
-                      Expanded(
-                        child: groupedData.isEmpty
-                            ? Center(
-                                child: Text(
-                                  'Không tìm thấy địa điểm nào phù hợp.',
-                                  style: TextStyle(color: Colors.grey[500], fontSize: 13),
-                                ),
-                              )
-                            : ListView.builder(
-                                controller: scrollController,
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                                itemCount: groupedData.length,
-                                itemBuilder: (context, index) {
-                                  final groupKey = groupedData.keys.elementAt(index);
-                                  final group = groupedData[groupKey]!;
-                                  final slug = group['slug'].toString();
-                                  final label = group['label'].toString();
-                                  final items = group['items'] as List;
-                                  final isExpanded = _expandedCategories.contains(slug);
-                                  final color = _getCategoryColor(slug);
-                                  final iconStr = _getCategoryIcon(slug);
-
-                                  return Container(
-                                    margin: const EdgeInsets.only(bottom: 8),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFF8FAFC),
-                                      borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(color: Colors.grey[200]!),
-                                    ),
-                                    child: Column(
-                                      children: [
-                                        // Category Accordion Header
-                                        InkWell(
-                                          onTap: () {
-                                            setState(() {
-                                              if (isExpanded) {
-                                                _expandedCategories.remove(slug);
-                                              } else {
-                                                _expandedCategories.add(slug);
-                                              }
-                                            });
-                                          },
-                                          borderRadius: BorderRadius.circular(12),
-                                          child: Padding(
-                                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                                            child: Row(
-                                              children: [
-                                                Container(
-                                                  width: 30,
-                                                  height: 30,
-                                                  decoration: BoxDecoration(
-                                                    color: color,
-                                                    borderRadius: BorderRadius.circular(8),
-                                                  ),
-                                                  child: Center(
-                                                    child: Text(iconStr, style: const TextStyle(fontSize: 14)),
-                                                  ),
-                                                ),
-                                                const SizedBox(width: 10),
-                                                Expanded(
-                                                  child: Text(
-                                                    label,
-                                                    style: const TextStyle(
-                                                      fontWeight: FontWeight.bold,
-                                                      fontSize: 12,
-                                                      color: Color(0xFF1E293B),
-                                                    ),
-                                                  ),
-                                                ),
-                                                Container(
-                                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                                  decoration: BoxDecoration(
-                                                    color: color.withValues(alpha: 0.12),
-                                                    borderRadius: BorderRadius.circular(10),
-                                                  ),
-                                                  child: Text(
-                                                    '${items.length}',
-                                                    style: TextStyle(
-                                                      color: color,
-                                                      fontWeight: FontWeight.bold,
-                                                      fontSize: 11,
-                                                    ),
-                                                  ),
-                                                ),
-                                                const SizedBox(width: 6),
-                                                Icon(
-                                                  isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
-                                                  color: Colors.grey[600],
-                                                  size: 20,
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ),
-
-                                        // Category Items List (if expanded)
-                                        if (isExpanded) ...[
-                                          const Divider(height: 1),
-                                          ListView.separated(
-                                            shrinkWrap: true,
-                                            physics: const NeverScrollableScrollPhysics(),
-                                            itemCount: items.length,
-                                            separatorBuilder: (_, __) => Divider(height: 1, color: Colors.grey[200]),
-                                            itemBuilder: (context, itemIdx) {
-                                              final eat = items[itemIdx];
-                                              final String img = eat['image_path'] ?? '';
-                                              final String thumbUrl = img.startsWith('http')
-                                                  ? img
-                                                  : (img.isNotEmpty ? 'https://donganhdiscovery.xadonganh.com/$img' : '');
-
-                                              final double? lat = double.tryParse(eat['latitude']?.toString() ?? '');
-                                              final double? lng = double.tryParse(eat['longitude']?.toString() ?? '');
-
-                                              return Material(
-                                                color: Colors.transparent,
-                                                child: ListTile(
-                                                  dense: true,
-                                                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-                                                  leading: ClipRRect(
-                                                    borderRadius: BorderRadius.circular(8),
-                                                    child: Container(
-                                                      width: 42,
-                                                      height: 42,
-                                                      color: color.withValues(alpha: 0.1),
-                                                      child: thumbUrl.isNotEmpty
-                                                          ? Image.network(
-                                                              thumbUrl,
-                                                              fit: BoxFit.cover,
-                                                              cacheWidth: 84,
-                                                              filterQuality: FilterQuality.low,
-                                                              errorBuilder: (_, __, ___) => Center(child: Text(iconStr)),
-                                                            )
-                                                          : Center(child: Text(iconStr)),
-                                                    ),
-                                                  ),
-                                                  title: Text(
-                                                    eat['name'] ?? '',
-                                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                                                    maxLines: 1,
-                                                    overflow: TextOverflow.ellipsis,
-                                                  ),
-                                                  subtitle: Text(
-                                                    eat['address'] ?? 'Đang cập nhật địa chỉ...',
-                                                    style: TextStyle(color: Colors.grey[600], fontSize: 11),
-                                                    maxLines: 1,
-                                                    overflow: TextOverflow.ellipsis,
-                                                  ),
-                                                  trailing: IconButton(
-                                                    icon: const Icon(Icons.arrow_forward_ios, size: 13, color: Colors.grey),
-                                                    onPressed: () {
-                                                      Navigator.push(
-                                                        context,
-                                                        MaterialPageRoute(
-                                                          builder: (context) => EateryDetailScreen(
-                                                            categorySlug: slug,
-                                                            eaterySlug: eat['slug'] ?? '',
-                                                            initialData: eat,
-                                                          ),
-                                                        ),
-                                                      );
-                                                    },
-                                                  ),
-                                                  onTap: () {
-                                                    if (lat != null && lng != null) {
-                                                      _focusAndShowEatery(eat, lat, lng);
-                                                    }
-                                                  },
-                                                ),
-                                              );
-                                            },
-                                          ),
-                                        ],
-                                      ],
-                                    ),
-                                  );
-                                },
-                              ),
-                      ),
-                    ],
-                  ),
-                );
-              },
-            ),
-          ],
-        ),
       ),
     );
   }

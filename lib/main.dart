@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'core/app_constants.dart';
@@ -18,6 +19,11 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Lock orientation strictly to portrait (like Facebook, Zalo, Messenger)
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+  ]);
 
   // Low Memory (2GB RAM) optimization: Cap in-memory ImageCache to 35MB & 50 objects max
   PaintingBinding.instance.imageCache.maximumSizeBytes = 35 * 1024 * 1024;

@@ -568,7 +568,9 @@ class ApiService {
       'wellness-care',
       'dong-anh-market',
       'smart-education-map',
-      'discover-dong-anh-community-culture-hub'
+      'discover-dong-anh-community-culture-hub',
+      'traditional-market',
+      'co-so-kinh-doanh',
     ];
     for (var cat in categories) {
       if (cat == categorySlug) continue;
@@ -1732,6 +1734,44 @@ class ApiService {
       );
       if (response.statusCode == 200 || response.statusCode == 201) {
         return jsonDecode(response.body);
+      }
+    } catch (_) {}
+    return {'success': false, 'message': 'Lỗi kết nối máy chủ'};
+  }
+
+  /// POST /stories — Tạo Story 24h (hiển thị trên Story Cards, không phải bản tin)
+  static Future<Map<String, dynamic>> createStory({
+    String? caption,
+    String? mediaPath,
+    String? bgGradient,
+    String? musicInfo,
+  }) async {
+    try {
+      final request = http.MultipartRequest('POST', Uri.parse('$baseUrl/stories'));
+      final headers = _getHeaders();
+      request.headers.addAll(headers);
+      if (caption != null) request.fields['caption'] = caption;
+      if (bgGradient != null) request.fields['bg_gradient'] = bgGradient;
+
+      if (mediaPath != null && mediaPath.isNotEmpty) {
+        final file = File(mediaPath);
+        if (await file.exists()) {
+          request.files.add(await http.MultipartFile.fromPath('media_file', mediaPath));
+          final ext = mediaPath.split('.').last.toLowerCase();
+          if (['mp4', 'mov', 'avi', 'mkv', 'webm'].contains(ext)) {
+            request.fields['type'] = 'video';
+          } else {
+            request.fields['type'] = 'image';
+          }
+        }
+      } else {
+        request.fields['type'] = 'text';
+      }
+
+      final streamed = await request.send();
+      final responseBody = await streamed.stream.bytesToString();
+      if (streamed.statusCode == 200 || streamed.statusCode == 201) {
+        return jsonDecode(responseBody);
       }
     } catch (_) {}
     return {'success': false, 'message': 'Lỗi kết nối máy chủ'};
