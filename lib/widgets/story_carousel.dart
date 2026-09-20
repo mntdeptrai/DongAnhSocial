@@ -6,17 +6,20 @@ class StoryCarousel extends StatelessWidget {
   final List<PostModel> posts;
   final VoidCallback onCreateStory;
   final ValueChanged<PostModel> onStoryTap;
+  final ValueChanged<PostModel>? onDeleteStory;
 
   const StoryCarousel({
     super.key,
     required this.posts,
     required this.onCreateStory,
     required this.onStoryTap,
+    this.onDeleteStory,
   });
 
   @override
   Widget build(BuildContext context) {
     final storyPosts = posts.where((p) => p.type == 'story' || p.rawJson['is_story'] == true).take(6).toList();
+    final currentUserId = ApiService.currentUser?['id']?.toString();
 
     return SizedBox(
       height: 136,
@@ -99,9 +102,13 @@ class StoryCarousel extends StatelessWidget {
           ...storyPosts.map((post) {
             final authorName = post.author.name;
             final bgUrl = post.images.isNotEmpty ? post.images.first : null;
+            final isMyStory = currentUserId != null && post.author.id.toString() == currentUserId;
 
             return GestureDetector(
               onTap: () => onStoryTap(post),
+              onLongPress: isMyStory && onDeleteStory != null
+                  ? () => _confirmDeleteStory(context, post)
+                  : null,
               child: Container(
                 width: 92,
                 margin: const EdgeInsets.only(right: 10),
@@ -178,6 +185,33 @@ class StoryCarousel extends StatelessWidget {
               ),
             );
           }),
+        ],
+      ),
+    );
+  }
+
+  void _confirmDeleteStory(BuildContext context, PostModel post) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Xóa story?'),
+        content: const Text(
+          'Story này sẽ bị xóa hoàn toàn. Hành động này không thể hoàn tác.',
+          style: TextStyle(fontSize: 14, color: Color(0xFF475569)),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Hủy', style: TextStyle(color: Color(0xFF64748B))),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(dialogContext);
+              onDeleteStory?.call(post);
+            },
+            child: const Text('Xóa', style: TextStyle(color: Color(0xFFDC2626), fontWeight: FontWeight.bold)),
+          ),
         ],
       ),
     );

@@ -697,67 +697,6 @@ class SchoolManagementController extends Controller
         return redirect()->back()->with('success', 'Đăng bài viết mới thành công!');
     }
 
-    /**
-     * Đăng Story tin mới (Facebook / Instagram Style)
-     */
-    public function storeStory(\Illuminate\Http\Request $request)
-    {
-        $user = auth()->user() ?? (\App\Models\User::find(session('user_id')));
-
-        $mediaUrl = null;
-        $type = $request->input('type', 'image');
-
-        if ($request->hasFile('media_file')) {
-            $file = $request->file('media_file');
-            if ($file->isValid()) {
-                $mime = $file->getMimeType() ?: '';
-                $isVid = str_contains($mime, 'video') || in_array(strtolower($file->getClientOriginalExtension()), ['mp4', 'mov', 'avi', 'mkv', 'webm']);
-                if ($isVid) {
-                    $type = 'video';
-                    if (\App\Services\YouTubeService::isConfigured()) {
-                        try {
-                            $captionTitle = $request->input('caption') ?: ('Story Đông Anh - ' . ($user ? $user->name : 'Thành viên'));
-                            $ytResult = \App\Services\YouTubeService::uploadVideo(
-                                video: $file,
-                                title: \Illuminate\Support\Str::limit($captionTitle, 95),
-                                description: "Story tin ngắn đăng tải tại Đông Anh Discovery bởi " . ($user ? $user->name : 'Thành viên'),
-                                privacy: 'unlisted',
-                                tags: ['Shorts', 'DongAnh', 'Story']
-                            );
-                            if ($ytResult && !empty($ytResult['url'])) {
-                                $mediaUrl = $ytResult['url'];
-                            }
-                        } catch (\Throwable $e) {
-                            \Illuminate\Support\Facades\Log::warning('YouTube story upload warning: ' . $e->getMessage());
-                        }
-                    }
-                }
-
-                if (empty($mediaUrl)) {
-                    $uploaded = \App\Helpers\R2Helper::upload($file, 'stories');
-                    if ($uploaded) {
-                        $mediaUrl = $uploaded;
-                    }
-                }
-            }
-        }
-
-        $story = \App\Models\Story::create([
-            'user_id' => $user ? $user->id : null,
-            'author_name' => $user ? $user->name : ($request->input('author_name') ?: 'Thành viên Đông Anh'),
-            'author_avatar' => $user ? ($user->avatar_url ?? $user->avatar) : null,
-            'media_url' => $mediaUrl,
-            'caption' => $request->input('caption'),
-            'bg_gradient' => $request->input('bg_gradient', 'linear-gradient(135deg, #0ea5e9, #0284c7)'),
-            'type' => $type
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Đã chia sẻ Story tin mới thành công! ✨',
-            'story' => $story
-        ]);
-    }
 
     /**
      * Cập nhật bài viết / Chương trình học

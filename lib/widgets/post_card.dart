@@ -20,6 +20,7 @@ class PostCard extends StatefulWidget {
   final Function(List<String> images, int initialIndex) onOpenGallery;
   final VoidCallback? onHidePost;
   final VoidCallback? onBlockAuthor;
+  final VoidCallback? onDeletePost;
 
   const PostCard({
     super.key,
@@ -35,6 +36,7 @@ class PostCard extends StatefulWidget {
     required this.onOpenGallery,
     this.onHidePost,
     this.onBlockAuthor,
+    this.onDeletePost,
   });
 
   @override
@@ -470,6 +472,8 @@ class _PostCardState extends State<PostCard> {
     final post = widget.post;
     final authorName = post.author.name;
     final authorId = post.author.id.toString();
+    final currentUserId = ApiService.currentUser?['id']?.toString();
+    final isMyPost = currentUserId != null && currentUserId == authorId;
 
     showModalBottomSheet(
       context: context,
@@ -500,6 +504,16 @@ class _PostCardState extends State<PostCard> {
                 widget.onShare();
               },
             ),
+            if (isMyPost && widget.onDeletePost != null)
+              ListTile(
+                leading: const Icon(Icons.delete_outline_rounded, color: Color(0xFFDC2626)),
+                title: const Text('Xóa bài viết', style: TextStyle(fontWeight: FontWeight.w600, color: Color(0xFFDC2626))),
+                subtitle: const Text('Bài viết và ảnh/video đính kèm sẽ bị xóa hoàn toàn', style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  _confirmDeletePost(context);
+                },
+              ),
             ListTile(
               leading: const Icon(Icons.visibility_off_outlined, color: Color(0xFF475569)),
               title: const Text('Ẩn bài viết này', style: TextStyle(fontWeight: FontWeight.w600)),
@@ -515,26 +529,55 @@ class _PostCardState extends State<PostCard> {
                 }
               },
             ),
-            ListTile(
-              leading: const Icon(Icons.block_rounded, color: Color(0xFFDC2626)),
-              title: Text('Chặn người dùng $authorName', style: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFFDC2626))),
-              subtitle: const Text('Ẩn tất cả bài viết và bình luận của người này', style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
-              onTap: () {
-                Navigator.pop(sheetContext);
-                _confirmBlockAuthor(context, authorId, authorName);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.flag_outlined, color: Color(0xFFDC2626)),
-              title: const Text('Báo cáo nội dung vi phạm', style: TextStyle(fontWeight: FontWeight.w600, color: Color(0xFFDC2626))),
-              subtitle: const Text('Báo cáo vi phạm tiêu chuẩn cộng đồng (Xử lý trong 24h)', style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
-              onTap: () {
-                Navigator.pop(sheetContext);
-                _showReportModal(context);
-              },
-            ),
+            if (!isMyPost) ...[
+              ListTile(
+                leading: const Icon(Icons.block_rounded, color: Color(0xFFDC2626)),
+                title: Text('Chặn người dùng $authorName', style: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFFDC2626))),
+                subtitle: const Text('Ẩn tất cả bài viết và bình luận của người này', style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  _confirmBlockAuthor(context, authorId, authorName);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.flag_outlined, color: Color(0xFFDC2626)),
+                title: const Text('Báo cáo nội dung vi phạm', style: TextStyle(fontWeight: FontWeight.w600, color: Color(0xFFDC2626))),
+                subtitle: const Text('Báo cáo vi phạm tiêu chuẩn cộng đồng (Xử lý trong 24h)', style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  _showReportModal(context);
+                },
+              ),
+            ],
           ],
         ),
+      ),
+    );
+  }
+
+  void _confirmDeletePost(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Xóa bài viết?'),
+        content: const Text(
+          'Bài viết và ảnh/video đính kèm sẽ bị xóa hoàn toàn. Hành động này không thể hoàn tác.',
+          style: TextStyle(fontSize: 14, color: Color(0xFF475569)),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Hủy', style: TextStyle(color: Color(0xFF64748B))),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(dialogContext);
+              widget.onDeletePost?.call();
+            },
+            child: const Text('Xóa', style: TextStyle(color: Color(0xFFDC2626), fontWeight: FontWeight.bold)),
+          ),
+        ],
       ),
     );
   }

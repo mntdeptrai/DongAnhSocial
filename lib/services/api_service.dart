@@ -1777,6 +1777,30 @@ class ApiService {
     return {'success': false, 'message': 'Lỗi kết nối máy chủ'};
   }
 
+  /// DELETE /posts/{id} — Xóa bài viết của mình
+  static Future<bool> deletePost(dynamic id) async {
+    try {
+      final response = await http.delete(Uri.parse('$baseUrl/posts/$id'), headers: _getHeaders());
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data['success'] == true;
+      }
+    } catch (_) {}
+    return false;
+  }
+
+  /// DELETE /stories/{id} — Xóa story của mình
+  static Future<bool> deleteStory(dynamic id) async {
+    try {
+      final response = await http.delete(Uri.parse('$baseUrl/stories/$id'), headers: _getHeaders());
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data['success'] == true;
+      }
+    } catch (_) {}
+    return false;
+  }
+
   /// GET /exp-corner — Lấy dữ liệu Góc Trải Nghiệm Thực Tế
   /// GET /exp-corner — Lấy dữ liệu Góc Trải Nghiệm Thực Tế
   static Future<Map<String, dynamic>> getExpCorner() async {

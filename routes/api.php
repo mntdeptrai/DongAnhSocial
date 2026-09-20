@@ -2,6 +2,10 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\EateryApiController;
+use App\Http\Controllers\Api\PostApiController;
+use App\Http\Controllers\Api\FoodTourApiController;
+use App\Http\Controllers\Api\VideoApiController;
+use App\Http\Controllers\Api\NotificationApiController;
 use App\Http\Controllers\Api\AuthApiController;
 use App\Http\Controllers\Api\UserApiController;
 use App\Http\Controllers\Api\SellerApiController;
@@ -42,18 +46,18 @@ Route::prefix('v1')->group(function () {
     Route::get('/categories', [EateryApiController::class, 'getCategories']);
     Route::get('/communes', [EateryApiController::class, 'getCommunes']);
     Route::get('/market-products', [EateryApiController::class, 'getMarketProducts']);
-    Route::get('/notifications', [EateryApiController::class, 'getAppNotifications']);
-    Route::match(['get', 'post'], '/notifications/read', [EateryApiController::class, 'markAppNotificationsRead']);
-    Route::get('/newsfeed', [EateryApiController::class, 'getNewsfeed']);
+    Route::get('/notifications', [NotificationApiController::class, 'getAppNotifications']);
+    Route::match(['get', 'post'], '/notifications/read', [NotificationApiController::class, 'markAppNotificationsRead']);
+    Route::get('/newsfeed', [PostApiController::class, 'getNewsfeed']);
     Route::get('/exp-corner', [EateryApiController::class, 'getExpCorner']);
-    Route::post('/posts', [EateryApiController::class, 'storePost']);
-    Route::post('/stories', [\App\Http\Controllers\SchoolManagementController::class, 'storeStory']);
-    Route::post('/reactions/toggle', [EateryApiController::class, 'toggleReaction']);
-    Route::get('/videos', [EateryApiController::class, 'getVideos']);
-    Route::post('/videos/{id}/like', [EateryApiController::class, 'likeVideo'])->middleware('throttle:30,1');
+    Route::post('/posts', [PostApiController::class, 'storePost']);
+    Route::post('/stories', [PostApiController::class, 'storeStory']);
+    Route::post('/reactions/toggle', [PostApiController::class, 'toggleReaction']);
+    Route::get('/videos', [VideoApiController::class, 'getVideos']);
+    Route::post('/videos/{id}/like', [VideoApiController::class, 'likeVideo'])->middleware('throttle:30,1');
 
-    Route::get('/food-tours', [EateryApiController::class, 'getFoodTours']);
-    Route::get('/food-tours/{slug}', [EateryApiController::class, 'getFoodTour']);
+    Route::get('/food-tours', [FoodTourApiController::class, 'getFoodTours']);
+    Route::get('/food-tours/{slug}', [FoodTourApiController::class, 'getFoodTour']);
 
     Route::get('/{category}/eateries', [EateryApiController::class, 'index']);
     Route::get('/{category}/eateries/{slug}', [EateryApiController::class, 'show']);
@@ -96,6 +100,8 @@ Route::prefix('v1')->group(function () {
         Route::post('/upload-chunk', [UploadApiController::class, 'uploadChunk'])->middleware('throttle:uploads');
         Route::post('/profile/avatar', [\App\Http\Controllers\AuthController::class, 'updateAvatar']);
         Route::post('/profile/cover', [\App\Http\Controllers\AuthController::class, 'updateCoverPhoto']);
+        Route::delete('/posts/{id}', [\App\Http\Controllers\Api\PostApiController::class, 'destroyPost']);
+        Route::delete('/stories/{id}', [\App\Http\Controllers\Api\PostApiController::class, 'destroyStory']);
 
         // FCM Notification
         Route::post('/user/fcm-token', [SocialHubController::class, 'updateFcmToken']);
@@ -190,7 +196,7 @@ Route::prefix('v1')->group(function () {
     // Backwards compatibility public/session endpoints
     Route::middleware(['auth'])->group(function () {
         Route::post('/auth/logout', [AuthApiController::class, 'apiLogout']);
-        Route::post('/food-tours/generate-ai', [EateryApiController::class, 'generateAITour']);
-        Route::post('/food-tours/{id}/diary', [EateryApiController::class, 'storeFoodTourDiary']);
+        Route::post('/food-tours/generate-ai', [FoodTourApiController::class, 'generateAITour']);
+        Route::post('/food-tours/{id}/diary', [FoodTourApiController::class, 'storeFoodTourDiary']);
     });
 });

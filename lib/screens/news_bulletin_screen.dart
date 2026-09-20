@@ -1092,6 +1092,23 @@ class _NewsBulletinScreenState extends State<NewsBulletinScreen> {
                             _openFullscreenGallery(context, post.images, 0);
                           }
                         },
+                        onDeleteStory: (post) async {
+                          final ok = await ApiService.deleteStory(post.numericId ?? post.id);
+                          if (ok) {
+                            setState(() {
+                              _posts.removeWhere((p) => p.id == post.id);
+                            });
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('🗑️ Đã xóa story thành công!')),
+                              );
+                            }
+                          } else if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Không thể xóa story. Vui lòng thử lại.')),
+                            );
+                          }
+                        },
                       );
                     case 1:
                       return const SizedBox(height: 10);
@@ -1159,6 +1176,23 @@ class _NewsBulletinScreenState extends State<NewsBulletinScreen> {
                         onShare: () => _showShareBottomSheet(context, post),
                         onHidePost: () => setState(() {}),
                         onBlockAuthor: () => setState(() {}),
+                        onDeletePost: () async {
+                          final ok = await ApiService.deletePost(post.numericId ?? post.id);
+                          if (ok) {
+                            setState(() {
+                              _posts.removeWhere((p) => p.id == post.id);
+                            });
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('🗑️ Đã xóa bài viết thành công!')),
+                              );
+                            }
+                          } else if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Không thể xóa bài viết. Vui lòng thử lại.')),
+                            );
+                          }
+                        },
                         onToggleExpand: () {
                           setState(() {
                             if (isExpanded) {

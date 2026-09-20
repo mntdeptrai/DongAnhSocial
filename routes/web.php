@@ -161,7 +161,7 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/principal/schools/{id}', [SchoolManagementController::class, 'update'])->name('principal.schools.update');
 
     Route::post('/principal/posts', [SchoolManagementController::class, 'storePost'])->name('principal.posts.store');
-    Route::post('/stories', [SchoolManagementController::class, 'storeStory'])->name('stories.store');
+    Route::post('/stories', [\App\Http\Controllers\Api\PostApiController::class, 'storeStory'])->name('stories.store');
     Route::post('/principal/posts/{id}/update', [SchoolManagementController::class, 'updatePost'])->name('principal.posts.update');
     Route::delete('/principal/posts/{id}', [SchoolManagementController::class, 'destroyPost'])->name('principal.posts.destroy');
     Route::post('/posts/{id}/update', [SchoolManagementController::class, 'updatePost'])->name('posts.update');
