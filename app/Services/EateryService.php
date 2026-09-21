@@ -177,7 +177,11 @@ class EateryService
         $result = $query->get();
 
         if ($cacheKey !== null) {
-            Cache::put($cacheKey, $result, 300);
+            try {
+                Cache::put($cacheKey, $result, 300);
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning("Cache::put failed for key {$cacheKey}: " . $e->getMessage());
+            }
         }
 
         if (!$categorySlug && !$hasFilters) {

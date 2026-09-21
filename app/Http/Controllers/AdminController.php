@@ -8,6 +8,7 @@ use App\Models\Eatery;
 use App\Models\Review;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use App\Services\EateryApiService;
 use App\Helpers\R2Helper;
@@ -19,9 +20,26 @@ class AdminController extends Controller
      */
     private function verifyAdmin()
     {
-        $role = session('user_role');
+        if (!Auth::check() && session()->has('user_id')) {
+            $u = User::find(session('user_id'));
+            if ($u) {
+                Auth::login($u);
+            }
+        }
+        $user = Auth::user();
+        if (!$user) {
+            abort(401, 'Vui lòng đăng nhập!');
+        }
+        $role = session('user_role') ?: $user->role;
         if (!in_array($role, ['admin', 'seller', 'manager'])) {
             abort(403, 'Bạn không có quyền truy cập trang quản lý này!');
+        }
+        if (!session()->has('user_role')) {
+            session([
+                'user_id'   => $user->id,
+                'user_name' => $user->name,
+                'user_role' => $user->role,
+            ]);
         }
     }
 
@@ -32,9 +50,10 @@ class AdminController extends Controller
     {
         $this->verifyAdmin();
 
-        $role = session('user_role');
+        $user = Auth::user();
+        $role = session('user_role') ?: ($user ? $user->role : null);
         $isSeller = in_array($role, ['seller', 'manager']);
-        $sellerId = session('user_id');
+        $sellerId = session('user_id') ?: ($user ? $user->id : null);
 
         $allEateries = EateryApiService::getEateries();
         $sellerEateries = $isSeller ? $allEateries->where('user_id', $sellerId) : $allEateries;

@@ -2360,7 +2360,7 @@
 
 <!-- FLOATING CHAT BUBBLE & PANEL FOR CHỢ SỐ 4.0 -->
 <!-- Floating Trigger Bubble -->
-<div id="marketChatBubbleTrigger" onclick="toggleFloatingChat()" style="position: fixed; bottom: 95px; right: 24px; width: 62px; height: 62px; border-radius: 50%; background: linear-gradient(135deg, #FF9F43, #FF7A00); color: white; display: flex; align-items: center; justify-content: center; font-size: 1.7rem; cursor: pointer; box-shadow: 0 6px 20px rgba(255, 122, 0, 0.35); z-index: 99999; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);" onmouseover="this.style.transform='scale(1.08) translateY(-2px)'" onmouseout="this.style.transform='none'">
+<div id="marketChatBubbleTrigger" onclick="toggleFloatingChat()" style="position: fixed; bottom: 92px; right: 24px; width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, #FF9F43, #FF7A00); color: white; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; cursor: pointer; box-shadow: 0 6px 20px rgba(255, 122, 0, 0.35); z-index: 99998; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);" onmouseover="this.style.transform='scale(1.08) translateY(-2px)'" onmouseout="this.style.transform='none'">
     💬
     <!-- Unread indicator count -->
     <span id="chatBubbleUnreadBadge" style="display: none; position: absolute; top: -2px; right: -2px; background: #ef4444; color: white; font-size: 0.68rem; font-weight: 800; padding: 2px 6px; border-radius: 10px; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">0</span>

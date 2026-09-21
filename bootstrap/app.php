@@ -50,7 +50,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
             $friendlyMessage = 'Đã xảy ra lỗi khi thao tác dữ liệu. Vui lòng kiểm tra lại thông tin nhập hoặc thử lại sau.';
 
-            if ($request->expectsJson() || $request->ajax()) {
+            if ($request->expectsJson() || $request->ajax() || $request->is('api/*')) {
                 return response()->json([
                     'success' => false,
                     'message' => $friendlyMessage,
@@ -65,7 +65,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
             $friendlyMessage = 'Lỗi kết nối cơ sở dữ liệu (MySQL/MariaDB). Vui lòng kiểm tra dịch vụ MySQL đang chạy.';
 
-            if ($request->expectsJson() || $request->ajax()) {
+            if ($request->expectsJson() || $request->ajax() || $request->is('api/*')) {
                 return response()->json([
                     'success' => false,
                     'message' => $friendlyMessage,
@@ -85,7 +85,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
                 $friendlyMessage = 'Hệ thống đã ghi nhận sự cố. Vui lòng thử lại sau.';
 
-                if ($request->expectsJson() || $request->ajax()) {
+                if ($request->expectsJson() || $request->ajax() || $request->is('api/*')) {
                     return response()->json([
                         'success' => false,
                         'message' => $friendlyMessage,

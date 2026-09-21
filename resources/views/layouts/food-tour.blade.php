@@ -394,7 +394,7 @@
                                     </a>
                                 @endif
 
-                                @if(in_array($effectiveRole, ['hkd', 'dn', 'business', 'seller', 'admin']) || $hasBusinessEatery)
+                                @if(in_array($effectiveRole, ['hkd', 'dn', 'business', 'seller']) || $hasBusinessEatery)
                                     <a href="{{ route('hkd.dashboard') }}" class="dropdown-item" style="color: #059669; font-weight: 800; background: #ecfdf5; border: 1px solid #a7f3d0;">
                                         <span>🏢</span> Kênh Điều Hành HKD & Doanh Nghiệp
                                     </a>

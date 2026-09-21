@@ -15,6 +15,22 @@ class AuthController extends Controller
 {
     public function showLogin(Request $request)
     {
+        if (Auth::check() || session()->has('user_id')) {
+            $user = Auth::user() ?: User::find(session('user_id'));
+            if ($user) {
+                if (in_array($user->role, ['admin', 'manager'])) {
+                    return redirect('/admin/dashboard');
+                } elseif ($user->role === 'health_station') {
+                    return redirect('/health-station/dashboard');
+                } elseif ($user->role === 'principal') {
+                    return redirect('/principal/schools');
+                } elseif ($user->role === 'seller' || in_array($user->role, ['hkd', 'dn', 'business'])) {
+                    return redirect('/hkd/dashboard');
+                }
+                return redirect('/');
+            }
+        }
+
         if ($request->has('redirect')) {
             session(['url.intended' => $request->query('redirect')]);
         }

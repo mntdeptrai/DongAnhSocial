@@ -22,6 +22,37 @@ class VendorController extends Controller
     }
 
     /**
+     * Lọc chính xác các đơn hàng phát sinh thuộc về Thực thể / Gian hàng hiện tại
+     */
+    private function applyVendorOrderQuery($query, array $context)
+    {
+        $stallName = $context['stallName'] ?? null;
+        $eateryId = $context['eateryId'] ?? null;
+        $isBusinessMode = $context['isBusinessMode'] ?? false;
+
+        if ($stallName && !$isBusinessMode) {
+            // Mode Gian Hàng Chợ: Đơn hàng bắt buộc phải khớp đúng tên Gian hàng (stall_name)
+            // và nếu có eatery_id (chợ ID) thì phải thuộc chợ đó
+            $query->where('stall_name', $stallName);
+            if (!empty($eateryId)) {
+                $query->where('eatery_id', $eateryId);
+            }
+        } elseif (!empty($eateryId)) {
+            // Mode Cơ sở kinh doanh độc lập: Khớp eatery_id của cơ sở
+            $query->where('eatery_id', $eateryId);
+            if (!empty($stallName)) {
+                $query->where(function($sub) use ($stallName) {
+                    $sub->whereNull('stall_name')
+                        ->orWhere('stall_name', '')
+                        ->orWhere('stall_name', $stallName);
+                });
+            }
+        }
+
+        return $query;
+    }
+
+    /**
      * Lấy thông tin Gian hàng và danh sách sản phẩm thuộc Stall Tenant hiện tại
      */
     private function getVendorStallContext()
@@ -318,15 +349,8 @@ class VendorController extends Controller
         $totalRevenue = 0;
         $recentOrders = collect();
         if (\Illuminate\Support\Facades\Schema::hasTable('orders')) {
-            $orderQuery = DB::table('orders')
-                ->where(function($q) use ($context) {
-                    if (!empty($context['stallName'])) {
-                        $q->where('stall_name', $context['stallName']);
-                    }
-                    if (!empty($context['eateryId'])) {
-                        $q->orWhere('eatery_id', $context['eateryId']);
-                    }
-                });
+            $orderQuery = DB::table('orders');
+            $orderQuery = $this->applyVendorOrderQuery($orderQuery, $context);
 
             $recentOrders = (clone $orderQuery)->latest()->take(10)->get();
             $ordersCount = (clone $orderQuery)->count();
@@ -570,17 +594,10 @@ class VendorController extends Controller
 
         $orders = collect();
         if (\Illuminate\Support\Facades\Schema::hasTable('orders')) {
-            $orders = DB::table('orders')
-                ->where(function($q) use ($context) {
-                    if (!empty($context['stallName'])) {
-                        $q->where('stall_name', $context['stallName']);
-                    }
-                    if (!empty($context['eateryId'])) {
-                        $q->orWhere('eatery_id', $context['eateryId']);
-                    }
-                })
-                ->latest()
-                ->paginate(20);
+            $query = DB::table('orders');
+            $query = $this->applyVendorOrderQuery($query, $context);
+
+            $orders = $query->latest()->paginate(20);
 
             $orderIds = $orders->pluck('id');
             $allItems = DB::table('order_items')
@@ -636,26 +653,52 @@ class VendorController extends Controller
     {
         $this->verifyVendor();
         $request->validate([
-            'status' => 'required|string|in:confirmed,ready,completed,cancelled'
+            'status' => 'required|string|in:confirmed,ready,preparing,processing,shipping,completed,cancelled',
+            'cancel_reason' => 'nullable|string|max:255'
         ], [
             'status.in' => 'Trạng thái đơn hàng không hợp lệ!'
         ]);
 
+        $status = $request->input('status');
+
         if (\Illuminate\Support\Facades\Schema::hasTable('orders')) {
-            DB::table('orders')->where('id', $id)->update([
-                'status' => $request->status,
+            $updateData = [
+                'status' => $status,
                 'updated_at' => now(),
-            ]);
+            ];
+
+            if ($status === 'confirmed') {
+                $updateData['confirmed_at'] = now();
+            } elseif ($status === 'preparing' || $status === 'processing') {
+                $updateData['preparing_at'] = now();
+            } elseif ($status === 'ready') {
+                $updateData['ready_at'] = now();
+            } elseif ($status === 'shipping') {
+                $updateData['shipping_at'] = now();
+            } elseif ($status === 'completed') {
+                $updateData['completed_at'] = now();
+            } elseif ($status === 'cancelled') {
+                $updateData['cancelled_at'] = now();
+                $updateData['cancelled_by'] = 'seller';
+                if ($request->filled('cancel_reason')) {
+                    $updateData['cancel_reason'] = trim($request->input('cancel_reason'));
+                }
+            }
+
+            DB::table('orders')->where('id', $id)->update($updateData);
         }
 
         $msgMap = [
-            'confirmed' => '✅ Đã nhận đơn và chuyển sang trạng thái đang chuẩn bị!',
-            'ready' => '🏪 Đã chuyển đơn hàng sang trạng thái: Sẵn sàng tại sạp (Chờ khách lấy)!',
+            'confirmed' => '✅ Đã xác nhận đơn hàng!',
+            'preparing' => '⚡ Đã chuyển đơn hàng sang trạng thái: Đang chuẩn bị hàng!',
+            'processing' => '⚡ Đã chuyển đơn hàng sang trạng thái: Đang chuẩn bị hàng!',
+            'ready'     => '🏪 Đã chuyển đơn hàng sang trạng thái: Sẵn sàng tại sạp (Chờ khách lấy)!',
+            'shipping'  => '🛵 Đã chuyển đơn hàng sang trạng thái: Đang giao hàng!',
             'completed' => '🎉 Đã hoàn thành đơn hàng thành công!',
             'cancelled' => '❌ Đã từ chối / hủy đơn hàng!',
         ];
 
-        $msg = $msgMap[$request->status] ?? 'Đã cập nhật trạng thái đơn hàng!';
+        $msg = $msgMap[$status] ?? 'Đã cập nhật trạng thái đơn hàng!';
         return redirect()->back()->with('success', $msg);
     }
 
@@ -671,23 +714,7 @@ class VendorController extends Controller
         $rawOrders = collect();
         if (\Illuminate\Support\Facades\Schema::hasTable('orders')) {
             $query = DB::table('orders');
-            if ($context['stallName']) {
-                $query->where(function($q) use ($context) {
-                    $q->where('stall_name', $context['stallName']);
-                    if (!empty($context['eateryId'])) {
-                        $q->orWhere(function($sub) use ($context) {
-                            $sub->where('eatery_id', $context['eateryId'])
-                                ->where(function($s2) use ($context) {
-                                    $s2->whereNull('stall_name')
-                                       ->orWhere('stall_name', '')
-                                       ->orWhere('stall_name', $context['stallName']);
-                                });
-                        });
-                    }
-                });
-            } elseif (!empty($context['eateryId'])) {
-                $query->where('eatery_id', $context['eateryId']);
-            }
+            $query = $this->applyVendorOrderQuery($query, $context);
 
             $rawOrders = $query->latest()->limit(50)->get();
 
