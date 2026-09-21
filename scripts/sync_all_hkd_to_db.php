@@ -213,3 +213,6 @@ echo "Total in Category 'co-so-kinh-doanh': " . Eatery::where('category_id', $ca
 echo "Total Users in DB: " . User::count() . "\n";
 echo "Execution Time: {$elapsed}s\n";
 
+\Illuminate\Support\Facades\Cache::flush();
+echo "Cleared application cache successfully!\n";
+
