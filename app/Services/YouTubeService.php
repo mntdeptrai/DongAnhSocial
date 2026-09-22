@@ -51,35 +51,102 @@ class YouTubeService
     public static function getAccessToken(): ?string
     {
         if (!self::isConfigured()) {
-            Log::warning('YouTubeService: Chưa cấu hình đầy đủ client_id, client_secret hoặc refresh_token trong .env / storage');
+            Log::warning('[YouTubeService] Chưa cấu hình đầy đủ client_id, client_secret hoặc refresh_token');
             return null;
         }
+
+        try {
+            $cachedToken = Cache::get('youtube_api_access_token');
+            if (!empty($cachedToken)) {
+                return $cachedToken;
+            }
+        } catch (\Throwable $e) {}
 
         $clientId = config('services.youtube.client_id') ?: env('YOUTUBE_CLIENT_ID');
         $clientSecret = config('services.youtube.client_secret') ?: env('YOUTUBE_CLIENT_SECRET');
         $refreshToken = self::getRefreshToken();
 
-        return Cache::remember('youtube_api_access_token', 3300, function () use ($clientId, $clientSecret, $refreshToken) {
-            try {
-                $response = Http::asForm()->post(self::TOKEN_URL, [
-                    'client_id'     => $clientId,
-                    'client_secret' => $clientSecret,
-                    'refresh_token' => $refreshToken,
-                    'grant_type'    => 'refresh_token',
-                ]);
+        try {
+            $response = Http::asForm()->post(self::TOKEN_URL, [
+                'client_id'     => $clientId,
+                'client_secret' => $clientSecret,
+                'refresh_token' => $refreshToken,
+                'grant_type'    => 'refresh_token',
+            ]);
 
-                if ($response->successful()) {
-                    $data = $response->json();
-                    return $data['access_token'] ?? null;
+            if ($response->successful()) {
+                $data = $response->json();
+                $accessToken = $data['access_token'] ?? null;
+                if (!empty($accessToken)) {
+                    try {
+                        $expiresIn = max(60, ($data['expires_in'] ?? 3600) - 300);
+                        Cache::put('youtube_api_access_token', $accessToken, $expiresIn);
+                    } catch (\Throwable $e) {}
+                    return $accessToken;
                 }
-
-                Log::error('YouTubeService: Lỗi làm mới Access Token: ' . $response->body());
-                return null;
-            } catch (\Throwable $e) {
-                Log::error('YouTubeService: Exception khi lấy Access Token: ' . $e->getMessage());
-                return null;
             }
-        });
+
+            $body = $response->body();
+            Log::error('[YouTubeService] Lỗi làm mới Access Token: ' . $body);
+            if (str_contains($body, 'invalid_grant')) {
+                Log::critical('[YouTubeService] CRITICAL: Google OAuth Refresh Token đã hết hạn hoặc bị hủy (invalid_grant). Cần cấp lại quyền tại: ' . url('/youtube/auth'));
+            }
+            return null;
+        } catch (\Throwable $e) {
+            Log::error('[YouTubeService] Exception khi lấy Access Token: ' . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Kiểm tra trạng thái kết nối tới YouTube API
+     */
+    public static function testConnection(): array
+    {
+        if (!self::isConfigured()) {
+            return [
+                'ok'      => false,
+                'message' => 'Chưa cấu hình đầy đủ Client ID, Client Secret hoặc Refresh Token trong .env / storage.',
+            ];
+        }
+
+        $accessToken = self::getAccessToken();
+        if (!$accessToken) {
+            return [
+                'ok'      => false,
+                'message' => 'Không thể lấy Access Token từ Google. Refresh Token có thể đã hết hạn (invalid_grant). Vui lòng truy cập /youtube/auth để cấp quyền mới.',
+            ];
+        }
+
+        try {
+            $response = Http::withHeaders([
+                'Authorization' => 'Bearer ' . $accessToken,
+            ])->get('https://www.googleapis.com/youtube/v3/channels', [
+                'part' => 'snippet',
+                'mine' => 'true',
+            ]);
+
+            if ($response->successful()) {
+                $items = $response->json('items') ?? [];
+                $channel = !empty($items) ? ($items[0]['snippet'] ?? null) : null;
+                return [
+                    'ok'                  => true,
+                    'channel_title'       => $channel['title'] ?? 'Kênh YouTube',
+                    'channel_description' => $channel['description'] ?? '',
+                    'message'             => 'Kết nối YouTube Data API v3 hoạt động bình thường! Sẵn sàng upload video.',
+                ];
+            }
+
+            return [
+                'ok'      => false,
+                'message' => 'YouTube API trả về lỗi: ' . $response->body(),
+            ];
+        } catch (\Throwable $e) {
+            return [
+                'ok'      => false,
+                'message' => 'Exception khi kết nối YouTube: ' . $e->getMessage(),
+            ];
+        }
     }
 
     /**

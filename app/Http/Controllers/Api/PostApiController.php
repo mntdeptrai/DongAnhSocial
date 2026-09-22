@@ -558,24 +558,28 @@ class PostApiController extends Controller
                     }
                 }
             } catch (\Throwable $e) {}
-        } else if ($request->hasFile('image_file')) {
+        } else if ($request->hasFile('image_file') || $request->hasFile('video_file') || $request->hasFile('file') || $request->hasFile('media_file')) {
             try {
-                $file = $request->file('image_file');
-                $filename = 'posts/post_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-                $r2PublicUrl = rtrim(env('R2_PUBLIC_URL', 'https://media.xadonganh.com'), '/');
-                if (env('R2_ACCESS_KEY_ID') && env('R2_BUCKET')) {
-                    try {
-                        Storage::disk('r2')->putFileAs('', $file, $filename, 'public');
-                        $savedImagePath = $r2PublicUrl . '/' . $filename;
-                    } catch (\Throwable $r2Err) {
-                        $file->move(public_path('storage/posts'), basename($filename));
-                        $savedImagePath = 'storage/posts/' . basename($filename);
+                $file = $request->file('image_file')
+                    ?: ($request->file('video_file')
+                    ?: ($request->file('file')
+                    ?: $request->file('media_file')));
+
+                $uploadedUrl = R2Helper::upload($file, 'posts');
+                if (!empty($uploadedUrl)) {
+                    $isYt = str_contains($uploadedUrl, 'youtube.com') || str_contains($uploadedUrl, 'youtu.be');
+                    $mime = $file->getClientMimeType() ?: '';
+                    $isVid = $isYt || str_starts_with($mime, 'video/') || in_array(strtolower($file->getClientOriginalExtension()), ['mp4', 'mov', 'avi', 'mkv', 'webm', '3gp', 'm4v']);
+                    if ($isVid) {
+                        $videos = is_array($videos) ? array_merge($videos, [$uploadedUrl]) : [$uploadedUrl];
+                    } else {
+                        $savedImagePath = $uploadedUrl;
+                        $images = is_array($images) ? array_merge($images, [$uploadedUrl]) : [$uploadedUrl];
                     }
-                } else {
-                    $file->move(public_path('storage/posts'), basename($filename));
-                    $savedImagePath = 'storage/posts/' . basename($filename);
                 }
-            } catch (\Throwable $e) {}
+            } catch (\Throwable $e) {
+                Log::warning('PostApiController storePost file upload error: ' . $e->getMessage());
+            }
         }
 
         if (empty($savedImagePath) && !empty($images) && is_array($images)) {
@@ -598,13 +602,13 @@ class PostApiController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Đã đăng bài viết thành công lên Bản tin!',
+            'message' => 'Bài viết đã được đăng thành công!',
             'post'    => $post
-        ], 201, [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        ], 201);
     }
 
     /**
-     * POST /api/v1/stories hoặc POST /stories — Đăng Story tin mới 24h (Facebook / Instagram Style)
+     * POST /stories — Tạo Story 24h
      */
     public function storeStory(Request $request)
     {
@@ -618,32 +622,12 @@ class PostApiController extends Controller
             if ($file->isValid()) {
                 $mime = $file->getMimeType() ?: '';
                 $isVid = str_contains($mime, 'video') || in_array(strtolower($file->getClientOriginalExtension()), ['mp4', 'mov', 'avi', 'mkv', 'webm', '3gp', 'm4v']) || $request->input('type') === 'video';
-                if ($isVid) {
-                    $type = 'video';
-                    if (YouTubeService::isConfigured()) {
-                        try {
-                            $captionTitle = $request->input('caption') ?: ('Story Đông Anh - ' . ($user ? $user->name : 'Thành viên'));
-                            $ytResult = YouTubeService::uploadVideo(
-                                video: $file,
-                                title: Str::limit($captionTitle, 95),
-                                description: "Story tin ngắn đăng tải tại Đông Anh Discovery bởi " . ($user ? $user->name : 'Thành viên'),
-                                privacy: 'unlisted',
-                                tags: ['Shorts', 'DongAnh', 'Story']
-                            );
-                            if ($ytResult && !empty($ytResult['url'])) {
-                                $mediaUrl = $ytResult['url'];
-                            }
-                        } catch (\Throwable $e) {
-                            Log::warning('YouTube story upload warning: ' . $e->getMessage());
-                        }
-                    }
-                }
 
-                if (empty($mediaUrl)) {
-                    $uploaded = R2Helper::upload($file, 'stories');
-                    if ($uploaded) {
-                        $mediaUrl = $uploaded;
-                    }
+                $uploaded = R2Helper::upload($file, 'stories');
+                if (!empty($uploaded)) {
+                    $mediaUrl = $uploaded;
+                    $isYt = str_contains($uploaded, 'youtube.com') || str_contains($uploaded, 'youtu.be');
+                    $type = ($isVid || $isYt) ? 'video' : 'image';
                 }
             }
         }
