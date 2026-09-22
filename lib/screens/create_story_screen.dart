@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:photo_manager/photo_manager.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:video_player/video_player.dart';
 import '../services/api_service.dart';
 import '../services/music_api_service.dart';
 
@@ -163,11 +164,74 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
   int _rotationQuarterTurns = 0;
   bool _isVideoStory = false;
   String? _originalVideoPath;
+  VideoPlayerController? _videoPlayerController;
+  bool _isVideoInitialized = false;
+  bool _isVideoPlaying = true;
+  bool _isVideoMuted = false;
 
   bool _isPathVideo(String? path) {
     if (path == null || path.isEmpty) return false;
     final ext = path.split('.').last.toLowerCase();
     return ['mp4', 'mov', 'avi', 'mkv', 'webm', '3gp', 'm4v'].contains(ext);
+  }
+
+  Future<void> _initVideoPreview(String videoPath) async {
+    await _disposeVideoController();
+    try {
+      final controller = VideoPlayerController.file(File(videoPath));
+      await controller.initialize();
+      await controller.setLooping(true);
+      await controller.setVolume(1.0);
+      await controller.play();
+      if (mounted) {
+        setState(() {
+          _videoPlayerController = controller;
+          _isVideoInitialized = true;
+          _isVideoPlaying = true;
+          _isVideoMuted = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('[CreateStoryScreen] Video init error: $e');
+      if (mounted) {
+        setState(() {
+          _isVideoInitialized = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _disposeVideoController() async {
+    if (_videoPlayerController != null) {
+      final old = _videoPlayerController;
+      _videoPlayerController = null;
+      _isVideoInitialized = false;
+      try {
+        await old?.pause();
+        await old?.dispose();
+      } catch (_) {}
+    }
+  }
+
+  void _toggleVideoPlayPause() {
+    if (_videoPlayerController == null || !_isVideoInitialized) return;
+    setState(() {
+      if (_videoPlayerController!.value.isPlaying) {
+        _videoPlayerController!.pause();
+        _isVideoPlaying = false;
+      } else {
+        _videoPlayerController!.play();
+        _isVideoPlaying = true;
+      }
+    });
+  }
+
+  void _toggleVideoMute() {
+    if (_videoPlayerController == null || !_isVideoInitialized) return;
+    setState(() {
+      _isVideoMuted = !_isVideoMuted;
+      _videoPlayerController!.setVolume(_isVideoMuted ? 0.0 : 1.0);
+    });
   }
 
   // --- AUDIO PLAYER STATE ---
@@ -521,6 +585,7 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
 
   @override
   void dispose() {
+    _disposeVideoController();
     _audioPlayer.stop();
     _audioPlayer.dispose();
     PhotoManager.removeChangeCallback(_onPhotosChanged);
@@ -534,15 +599,21 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
 
   Future<void> _pickFromGallery() async {
     try {
-      final XFile? file = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 90);
+      final XFile? file = await _picker.pickMedia();
       if (file != null) {
+        final isVideo = _isPathVideo(file.path);
         setState(() {
           _previewMedia = file;
           _isTextStoryMode = false;
-          _isVideoStory = false;
-          _originalVideoPath = null;
+          _isVideoStory = isVideo;
+          _originalVideoPath = isVideo ? file.path : null;
           _rotationQuarterTurns = 0;
         });
+        if (isVideo) {
+          await _initVideoPreview(file.path);
+        } else {
+          await _disposeVideoController();
+        }
       }
     } catch (e) {
       _showToast('Không thể mở thư viện ảnh: $e', isError: true);
@@ -553,6 +624,7 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
     try {
       final XFile? photo = await _picker.pickImage(source: ImageSource.camera, imageQuality: 90);
       if (photo != null) {
+        await _disposeVideoController();
         setState(() {
           _previewMedia = photo;
           _isTextStoryMode = false;
@@ -1007,7 +1079,23 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
                       child: Stack(
                         fit: StackFit.expand,
                         children: [
-                          if (_previewMedia != null && !_isPathVideo(_previewMedia!.path))
+                          if (_isVideoStory && _videoPlayerController != null && _isVideoInitialized)
+                            GestureDetector(
+                              onTap: _toggleVideoPlayPause,
+                              behavior: HitTestBehavior.opaque,
+                              child: SizedBox.expand(
+                                child: FittedBox(
+                                  fit: BoxFit.cover,
+                                  clipBehavior: Clip.hardEdge,
+                                  child: SizedBox(
+                                    width: _videoPlayerController!.value.size.width,
+                                    height: _videoPlayerController!.value.size.height,
+                                    child: VideoPlayer(_videoPlayerController!),
+                                  ),
+                                ),
+                              ),
+                            )
+                          else if (_previewMedia != null && !_isPathVideo(_previewMedia!.path))
                             Image.file(
                               File(_previewMedia!.path),
                               fit: BoxFit.cover,
@@ -1022,40 +1110,79 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
                             Container(
                               color: const Color(0xFF0F172A),
                               child: const Center(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(Icons.videocam_rounded, color: Color(0xFF38BDF8), size: 64),
-                                    SizedBox(height: 12),
-                                    Text(
-                                      'Video Story 24h',
-                                      style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
-                                    ),
-                                  ],
-                                ),
+                                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                               ),
                             ),
-                          if (_isVideoStory)
+                          if (_isVideoStory) ...[
+                            // Top overlay: Live Video Story badge + Mute/Unmute
                             Positioned(
                               top: 60,
-                              left: 20,
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                                decoration: BoxDecoration(
-                                  color: Colors.black.withValues(alpha: 0.75),
-                                  borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(color: const Color(0xFF0EA5E9), width: 1.2),
-                                ),
-                                child: const Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(Icons.videocam_rounded, color: Color(0xFF38BDF8), size: 16),
-                                    SizedBox(width: 5),
-                                    Text('Video Story 24h', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
-                                  ],
-                                ),
+                              left: 16,
+                              right: 16,
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                    decoration: BoxDecoration(
+                                      color: Colors.black.withValues(alpha: 0.75),
+                                      borderRadius: BorderRadius.circular(20),
+                                      border: Border.all(color: const Color(0xFF0EA5E9), width: 1.2),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Icon(Icons.play_circle_fill_rounded, color: Color(0xFF38BDF8), size: 16),
+                                        const SizedBox(width: 5),
+                                        Text(
+                                          _videoPlayerController != null && _isVideoInitialized
+                                              ? 'Video Story (${_videoPlayerController!.value.duration.inSeconds}s)'
+                                              : 'Video Story 24h',
+                                          style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  GestureDetector(
+                                    onTap: _toggleVideoMute,
+                                    child: Container(
+                                      padding: const EdgeInsets.all(7),
+                                      decoration: BoxDecoration(
+                                        color: Colors.black.withValues(alpha: 0.75),
+                                        shape: BoxShape.circle,
+                                        border: Border.all(color: Colors.white38),
+                                      ),
+                                      child: Icon(
+                                        _isVideoMuted ? Icons.volume_off_rounded : Icons.volume_up_rounded,
+                                        color: Colors.white,
+                                        size: 18,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
+                            // Center Play/Pause icon when paused
+                            if (!_isVideoPlaying)
+                              Center(
+                                child: GestureDetector(
+                                  onTap: _toggleVideoPlayPause,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(16),
+                                    decoration: BoxDecoration(
+                                      color: Colors.black.withValues(alpha: 0.6),
+                                      shape: BoxShape.circle,
+                                      border: Border.all(color: Colors.white30, width: 2),
+                                    ),
+                                    child: const Icon(
+                                      Icons.play_arrow_rounded,
+                                      color: Colors.white,
+                                      size: 48,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ],
                         ],
                       ),
                     ),
@@ -1195,6 +1322,7 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
                 _buildCircleIconButton(
                   icon: Icons.arrow_back_ios_new_rounded,
                   onPressed: () {
+                    _disposeVideoController();
                     setState(() {
                       _previewMedia = null;
                       _isTextStoryMode = false;
@@ -3327,6 +3455,7 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
               File? file = await asset.file;
               file ??= await asset.originFile;
               if (file != null && mounted) {
+                final loadedFile = file;
                 if (isVideo) {
                   Uint8List? thumbBytes;
                   try {
@@ -3349,15 +3478,18 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
                   }
 
                   setState(() {
-                    _previewMedia = XFile(thumbPath ?? file!.path);
-                    _originalVideoPath = file!.path;
+                    _previewMedia = XFile(thumbPath ?? loadedFile.path);
+                    _originalVideoPath = loadedFile.path;
                     _isVideoStory = true;
                     _isTextStoryMode = false;
                     _rotationQuarterTurns = 0;
                   });
+
+                  await _initVideoPreview(loadedFile.path);
                 } else {
+                  await _disposeVideoController();
                   setState(() {
-                    _previewMedia = XFile(file!.path);
+                    _previewMedia = XFile(loadedFile.path);
                     _originalVideoPath = null;
                     _isVideoStory = false;
                     _isTextStoryMode = false;

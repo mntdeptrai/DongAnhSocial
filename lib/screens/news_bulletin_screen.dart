@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'package:video_player/video_player.dart';
+
 import '../models/post_model.dart';
 import '../services/api_service.dart';
 import '../services/moderation_service.dart';
@@ -1088,9 +1090,12 @@ class _NewsBulletinScreenState extends State<NewsBulletinScreen> {
                         posts: _posts,
                         onCreateStory: _showCreateStoryScreen,
                         onStoryTap: (post) {
-                          if (post.images.isNotEmpty) {
-                            _openFullscreenGallery(context, post.images, 0);
-                          }
+                          showDialog(
+                            context: context,
+                            useSafeArea: false,
+                            barrierDismissible: true,
+                            builder: (_) => _StoryViewerDialog(post: post),
+                          );
                         },
                         onDeleteStory: (post) async {
                           final ok = await ApiService.deleteStory(post.numericId ?? post.id);
@@ -1209,6 +1214,279 @@ class _NewsBulletinScreenState extends State<NewsBulletinScreen> {
                   }
                 },
               ),
+      ),
+    );
+  }
+}
+
+class _StoryViewerDialog extends StatefulWidget {
+  final PostModel post;
+  const _StoryViewerDialog({required this.post});
+
+  @override
+  State<_StoryViewerDialog> createState() => _StoryViewerDialogState();
+}
+
+class _StoryViewerDialogState extends State<_StoryViewerDialog> with SingleTickerProviderStateMixin {
+  VideoPlayerController? _videoController;
+  AnimationController? _progressController;
+  bool _isVideo = false;
+  bool _isInitialized = false;
+  bool _isMuted = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _initMedia();
+  }
+
+  void _initMedia() async {
+    final post = widget.post;
+    final mediaUrl = post.images.isNotEmpty
+        ? post.images.first
+        : (post.rawJson['image_path'] ?? post.rawJson['media_url'] ?? '').toString();
+    final rawType = (post.rawJson['story_type'] ?? post.rawJson['type'] ?? post.type).toString().toLowerCase();
+    final isVideoExt = mediaUrl.endsWith('.mp4') ||
+        mediaUrl.endsWith('.mov') ||
+        mediaUrl.endsWith('.webm') ||
+        mediaUrl.contains('.mp4?') ||
+        mediaUrl.contains('.mov?');
+
+    _isVideo = rawType == 'video' || isVideoExt;
+
+    if (_isVideo && mediaUrl.isNotEmpty) {
+      try {
+        final fullUrl = mediaUrl.startsWith('http')
+            ? mediaUrl
+            : 'https://donganhdiscovery.xadonganh.com/${mediaUrl.startsWith('/') ? mediaUrl.substring(1) : mediaUrl}';
+        final uri = Uri.parse(fullUrl);
+        final controller = VideoPlayerController.networkUrl(uri);
+        await controller.initialize();
+        await controller.setLooping(false);
+        await controller.setVolume(1.0);
+        await controller.play();
+
+        controller.addListener(() {
+          if (mounted &&
+              controller.value.isInitialized &&
+              controller.value.duration > Duration.zero &&
+              controller.value.position >= controller.value.duration) {
+            Navigator.of(context).pop();
+          }
+        });
+
+        if (mounted) {
+          setState(() {
+            _videoController = controller;
+            _isInitialized = true;
+          });
+        }
+      } catch (e) {
+        debugPrint('[StoryViewer] Video error: $e');
+        if (mounted) setState(() => _isInitialized = true);
+      }
+    } else {
+      _progressController = AnimationController(vsync: this, duration: const Duration(seconds: 5))
+        ..addStatusListener((status) {
+          if (status == AnimationStatus.completed && mounted) {
+            Navigator.of(context).pop();
+          }
+        })
+        ..forward();
+      if (mounted) setState(() => _isInitialized = true);
+    }
+  }
+
+  @override
+  void dispose() {
+    _videoController?.pause();
+    _videoController?.dispose();
+    _progressController?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final post = widget.post;
+    final authorName = post.author.name;
+    final authorAvatar = post.author.avatarUrl;
+    final caption = post.title.isNotEmpty ? post.title : post.content;
+    final mediaUrl = post.images.isNotEmpty
+        ? post.images.first
+        : (post.rawJson['image_path'] ?? post.rawJson['media_url'] ?? '').toString();
+
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          // 1. Background Content
+          if (!_isInitialized)
+            const Center(
+              child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+            )
+          else if (_isVideo && _videoController != null && _videoController!.value.isInitialized)
+            GestureDetector(
+              onTap: () {
+                setState(() {
+                  if (_videoController!.value.isPlaying) {
+                    _videoController!.pause();
+                  } else {
+                    _videoController!.play();
+                  }
+                });
+              },
+              child: Center(
+                child: AspectRatio(
+                  aspectRatio: _videoController!.value.aspectRatio,
+                  child: VideoPlayer(_videoController!),
+                ),
+              ),
+            )
+          else if (!_isVideo && mediaUrl.isNotEmpty)
+            Center(
+              child: Image.network(
+                mediaUrl.startsWith('http')
+                    ? mediaUrl
+                    : 'https://donganhdiscovery.xadonganh.com/${mediaUrl.startsWith('/') ? mediaUrl.substring(1) : mediaUrl}',
+                fit: BoxFit.contain,
+                errorBuilder: (_, __, ___) => const Center(
+                  child: Icon(Icons.broken_image_rounded, color: Colors.white54, size: 64),
+                ),
+              ),
+            )
+          else
+            Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFF0EA5E9), Color(0xFF6366F1)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+              ),
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Text(
+                    caption,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+            ),
+
+          // 2. Top Progress Bar & Header
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 8,
+            left: 12,
+            right: 12,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(2),
+                  child: Container(
+                    height: 3,
+                    color: Colors.white24,
+                    child: _isVideo && _videoController != null && _videoController!.value.isInitialized
+                        ? ValueListenableBuilder<VideoPlayerValue>(
+                            valueListenable: _videoController!,
+                            builder: (context, value, _) {
+                              final progress = value.duration.inMilliseconds > 0
+                                  ? value.position.inMilliseconds / value.duration.inMilliseconds
+                                  : 0.0;
+                              return LinearProgressIndicator(
+                                value: progress.clamp(0.0, 1.0),
+                                backgroundColor: Colors.transparent,
+                                valueColor: const AlwaysStoppedAnimation(Colors.white),
+                              );
+                            },
+                          )
+                        : (_progressController != null
+                            ? AnimatedBuilder(
+                                animation: _progressController!,
+                                builder: (context, _) => LinearProgressIndicator(
+                                  value: _progressController!.value,
+                                  backgroundColor: Colors.transparent,
+                                  valueColor: const AlwaysStoppedAnimation(Colors.white),
+                                ),
+                              )
+                            : const SizedBox.shrink()),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 18,
+                      backgroundColor: Colors.white24,
+                      backgroundImage: (authorAvatar != null && authorAvatar.isNotEmpty)
+                          ? NetworkImage(authorAvatar.startsWith('http')
+                              ? authorAvatar
+                              : 'https://donganhdiscovery.xadonganh.com/${authorAvatar.startsWith('/') ? authorAvatar.substring(1) : authorAvatar}')
+                          : null,
+                      child: (authorAvatar == null || authorAvatar.isEmpty)
+                          ? const Icon(Icons.person, color: Colors.white, size: 20)
+                          : null,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            authorName,
+                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13.5),
+                          ),
+                          Text(
+                            post.createdAt ?? 'Tin 24h',
+                            style: const TextStyle(color: Colors.white70, fontSize: 11),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (_isVideo && _videoController != null)
+                      IconButton(
+                        icon: Icon(_isMuted ? Icons.volume_off_rounded : Icons.volume_up_rounded, color: Colors.white),
+                        onPressed: () {
+                          setState(() {
+                            _isMuted = !_isMuted;
+                            _videoController!.setVolume(_isMuted ? 0.0 : 1.0);
+                          });
+                        },
+                      ),
+                    IconButton(
+                      icon: const Icon(Icons.close_rounded, color: Colors.white, size: 26),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          // 3. Caption overlay at bottom
+          if (caption.isNotEmpty && (mediaUrl.isNotEmpty || _isVideo))
+            Positioned(
+              bottom: MediaQuery.of(context).padding.bottom + 20,
+              left: 16,
+              right: 16,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.65),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  caption,
+                  style: const TextStyle(color: Colors.white, fontSize: 14),
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }
