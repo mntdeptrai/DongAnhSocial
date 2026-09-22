@@ -106,6 +106,77 @@ class _PostCardState extends State<PostCard> {
     return RichText(text: TextSpan(children: spans));
   }
 
+  bool _isPathVideo(String path) {
+    final lower = path.toLowerCase();
+    return lower.endsWith('.mp4') ||
+        lower.endsWith('.mov') ||
+        lower.endsWith('.m4v') ||
+        lower.endsWith('.webm') ||
+        lower.endsWith('.avi') ||
+        lower.contains('.mp4?') ||
+        lower.contains('.mov?');
+  }
+
+  Widget _buildMediaThumbnail({
+    required String url,
+    double? width,
+    double? height,
+    BoxFit fit = BoxFit.cover,
+  }) {
+    final isVid = _isPathVideo(url);
+    final imageWidget = OptimizedNetworkImage(
+      imageUrl: url,
+      width: width,
+      height: height,
+      fit: fit,
+    );
+
+    if (!isVid) return imageWidget;
+
+    return Stack(
+      fit: StackFit.passthrough,
+      alignment: Alignment.center,
+      children: [
+        Container(
+          width: width,
+          height: height,
+          color: const Color(0xFF0F172A),
+          child: imageWidget,
+        ),
+        Center(
+          child: Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.65),
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white70, width: 1.5),
+            ),
+            child: const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 36),
+          ),
+        ),
+        Positioned(
+          bottom: 8,
+          left: 8,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.75),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.videocam_rounded, color: Colors.white, size: 13),
+                SizedBox(width: 4),
+                Text('VIDEO', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildMultiImageGrid(List<String> images) {
     if (images.isEmpty) return const SizedBox.shrink();
 
@@ -117,8 +188,8 @@ class _PostCardState extends State<PostCard> {
       return GestureDetector(
         onTap: () => openGallery(0),
         child: ClipRRect(
-          child: OptimizedNetworkImage(
-            imageUrl: images[0],
+          child: _buildMediaThumbnail(
+            url: images[0],
             width: double.infinity,
             height: 250,
             fit: BoxFit.cover,
@@ -135,14 +206,14 @@ class _PostCardState extends State<PostCard> {
             Expanded(
               child: GestureDetector(
                 onTap: () => openGallery(0),
-                child: OptimizedNetworkImage(imageUrl: images[0], height: 200, fit: BoxFit.cover),
+                child: _buildMediaThumbnail(url: images[0], height: 200, fit: BoxFit.cover),
               ),
             ),
             const SizedBox(width: 2),
             Expanded(
               child: GestureDetector(
                 onTap: () => openGallery(1),
-                child: OptimizedNetworkImage(imageUrl: images[1], height: 200, fit: BoxFit.cover),
+                child: _buildMediaThumbnail(url: images[1], height: 200, fit: BoxFit.cover),
               ),
             ),
           ],
@@ -159,7 +230,7 @@ class _PostCardState extends State<PostCard> {
               flex: 2,
               child: GestureDetector(
                 onTap: () => openGallery(0),
-                child: OptimizedNetworkImage(imageUrl: images[0], height: 240, fit: BoxFit.cover),
+                child: _buildMediaThumbnail(url: images[0], height: 240, fit: BoxFit.cover),
               ),
             ),
             const SizedBox(width: 2),
@@ -170,14 +241,14 @@ class _PostCardState extends State<PostCard> {
                   Expanded(
                     child: GestureDetector(
                       onTap: () => openGallery(1),
-                      child: OptimizedNetworkImage(imageUrl: images[1], width: double.infinity, fit: BoxFit.cover),
+                      child: _buildMediaThumbnail(url: images[1], width: double.infinity, fit: BoxFit.cover),
                     ),
                   ),
                   const SizedBox(height: 2),
                   Expanded(
                     child: GestureDetector(
                       onTap: () => openGallery(2),
-                      child: OptimizedNetworkImage(imageUrl: images[2], width: double.infinity, fit: BoxFit.cover),
+                      child: _buildMediaThumbnail(url: images[2], width: double.infinity, fit: BoxFit.cover),
                     ),
                   ),
                 ],
@@ -200,14 +271,14 @@ class _PostCardState extends State<PostCard> {
                 Expanded(
                   child: GestureDetector(
                     onTap: () => openGallery(0),
-                    child: OptimizedNetworkImage(imageUrl: images[0], height: double.infinity, width: double.infinity, fit: BoxFit.cover),
+                    child: _buildMediaThumbnail(url: images[0], height: double.infinity, width: double.infinity, fit: BoxFit.cover),
                   ),
                 ),
                 const SizedBox(width: 2),
                 Expanded(
                   child: GestureDetector(
                     onTap: () => openGallery(1),
-                    child: OptimizedNetworkImage(imageUrl: images[1], height: double.infinity, width: double.infinity, fit: BoxFit.cover),
+                    child: _buildMediaThumbnail(url: images[1], height: double.infinity, width: double.infinity, fit: BoxFit.cover),
                   ),
                 ),
               ],
@@ -220,7 +291,7 @@ class _PostCardState extends State<PostCard> {
                 Expanded(
                   child: GestureDetector(
                     onTap: () => openGallery(2),
-                    child: OptimizedNetworkImage(imageUrl: images[2], height: double.infinity, width: double.infinity, fit: BoxFit.cover),
+                    child: _buildMediaThumbnail(url: images[2], height: double.infinity, width: double.infinity, fit: BoxFit.cover),
                   ),
                 ),
                 const SizedBox(width: 2),
@@ -230,7 +301,7 @@ class _PostCardState extends State<PostCard> {
                     child: Stack(
                       fit: StackFit.expand,
                       children: [
-                        OptimizedNetworkImage(imageUrl: images[3], height: double.infinity, width: double.infinity, fit: BoxFit.cover),
+                        _buildMediaThumbnail(url: images[3], height: double.infinity, width: double.infinity, fit: BoxFit.cover),
                         if (remainingCount > 0)
                           Container(
                             color: Colors.black.withValues(alpha: 0.55),

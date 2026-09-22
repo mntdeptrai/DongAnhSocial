@@ -235,17 +235,7 @@ class _NewsBulletinScreenState extends State<NewsBulletinScreen> {
                   });
                 },
                 itemBuilder: (context, index) {
-                  return InteractiveViewer(
-                    minScale: 0.8,
-                    maxScale: 4.0,
-                    child: Center(
-                      child: Image.network(
-                        images[index],
-                        fit: BoxFit.contain,
-                        errorBuilder: (_, __, ___) => const Icon(Icons.broken_image, color: Colors.white54, size: 64),
-                      ),
-                    ),
-                  );
+                  return _GalleryMediaItem(mediaUrl: images[index]);
                 },
               ),
             );
@@ -254,6 +244,7 @@ class _NewsBulletinScreenState extends State<NewsBulletinScreen> {
       },
     );
   }
+
 
   void _showCommentOptions(BuildContext context, Map<String, dynamic> comment, VoidCallback onRefresh) {
     final author = (comment['author'] ?? 'Người dùng').toString();
@@ -1219,9 +1210,199 @@ class _NewsBulletinScreenState extends State<NewsBulletinScreen> {
   }
 }
 
+class _GalleryMediaItem extends StatefulWidget {
+  final String mediaUrl;
+  const _GalleryMediaItem({required this.mediaUrl});
+
+  @override
+  State<_GalleryMediaItem> createState() => _GalleryMediaItemState();
+}
+
+class _GalleryMediaItemState extends State<_GalleryMediaItem> {
+  VideoPlayerController? _controller;
+  bool _isVideo = false;
+  bool _isInitialized = false;
+  bool _isPlaying = true;
+  bool _isMuted = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkAndInit();
+  }
+
+  bool _isPathVideo(String path) {
+    final lower = path.toLowerCase();
+    return lower.endsWith('.mp4') ||
+        lower.endsWith('.mov') ||
+        lower.endsWith('.m4v') ||
+        lower.endsWith('.webm') ||
+        lower.endsWith('.avi') ||
+        lower.contains('.mp4?') ||
+        lower.contains('.mov?');
+  }
+
+  void _checkAndInit() async {
+    final url = widget.mediaUrl.trim();
+    if (_isPathVideo(url)) {
+      _isVideo = true;
+      try {
+        final fullUrl = url.startsWith('http')
+            ? url
+            : 'https://donganhdiscovery.xadonganh.com/${url.startsWith('/') ? url.substring(1) : url}';
+        final controller = VideoPlayerController.networkUrl(Uri.parse(fullUrl));
+        await controller.initialize();
+        await controller.setLooping(true);
+        await controller.setVolume(1.0);
+        await controller.play();
+        if (mounted) {
+          setState(() {
+            _controller = controller;
+            _isInitialized = true;
+            _isPlaying = true;
+            _isMuted = false;
+          });
+        }
+      } catch (e) {
+        debugPrint('[GalleryVideo] Init error: $e');
+        if (mounted) setState(() => _isInitialized = true);
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller?.pause();
+    _controller?.dispose();
+    super.dispose();
+  }
+
+  void _togglePlayPause() {
+    if (_controller == null || !_isInitialized) return;
+    setState(() {
+      if (_controller!.value.isPlaying) {
+        _controller!.pause();
+        _isPlaying = false;
+      } else {
+        _controller!.play();
+        _isPlaying = true;
+      }
+    });
+  }
+
+  void _toggleMute() {
+    if (_controller == null || !_isInitialized) return;
+    setState(() {
+      _isMuted = !_isMuted;
+      _controller!.setVolume(_isMuted ? 0.0 : 1.0);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final url = widget.mediaUrl;
+    final fullUrl = url.startsWith('http')
+        ? url
+        : 'https://donganhdiscovery.xadonganh.com/${url.startsWith('/') ? url.substring(1) : url}';
+
+    if (_isVideo) {
+      if (!_isInitialized) {
+        return const Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircularProgressIndicator(color: Color(0xFF0EA5E9), strokeWidth: 3),
+              SizedBox(height: 12),
+              Text('Đang tải video & âm thanh...', style: TextStyle(color: Colors.white70, fontSize: 13)),
+            ],
+          ),
+        );
+      }
+
+      if (_controller != null && _controller!.value.isInitialized) {
+        return GestureDetector(
+          onTap: _togglePlayPause,
+          behavior: HitTestBehavior.opaque,
+          child: Stack(
+            fit: StackFit.expand,
+            alignment: Alignment.center,
+            children: [
+              Center(
+                child: AspectRatio(
+                  aspectRatio: _controller!.value.aspectRatio,
+                  child: VideoPlayer(_controller!),
+                ),
+              ),
+              if (!_isPlaying)
+                Center(
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.65),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 48),
+                  ),
+                ),
+              Positioned(
+                bottom: 24,
+                left: 16,
+                right: 16,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.6),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        icon: Icon(_isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded, color: Colors.white, size: 24),
+                        onPressed: _togglePlayPause,
+                      ),
+                      Expanded(
+                        child: VideoProgressIndicator(
+                          _controller!,
+                          allowScrubbing: true,
+                          colors: const VideoProgressColors(
+                            playedColor: Color(0xFF0EA5E9),
+                            bufferedColor: Colors.white38,
+                            backgroundColor: Colors.white12,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        icon: Icon(_isMuted ? Icons.volume_off_rounded : Icons.volume_up_rounded, color: Colors.white, size: 22),
+                        onPressed: _toggleMute,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      }
+    }
+
+    return InteractiveViewer(
+      minScale: 0.8,
+      maxScale: 4.0,
+      child: Center(
+        child: Image.network(
+          fullUrl,
+          fit: BoxFit.contain,
+          errorBuilder: (_, __, ___) => const Icon(Icons.broken_image, color: Colors.white54, size: 64),
+        ),
+      ),
+    );
+  }
+}
+
 class _StoryViewerDialog extends StatefulWidget {
   final PostModel post;
   const _StoryViewerDialog({required this.post});
+
 
   @override
   State<_StoryViewerDialog> createState() => _StoryViewerDialogState();

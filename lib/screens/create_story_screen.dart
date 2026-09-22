@@ -178,7 +178,15 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
   Future<void> _initVideoPreview(String videoPath) async {
     await _disposeVideoController();
     try {
-      final controller = VideoPlayerController.file(File(videoPath));
+      File fileToPlay = File(videoPath);
+      final ext = videoPath.split('.').last.toLowerCase();
+      if (!['mp4', 'mov', 'm4v', '3gp'].contains(ext)) {
+        final tempDir = Directory.systemTemp;
+        final safeFile = File('${tempDir.path}/preview_video_${DateTime.now().millisecondsSinceEpoch}.mp4');
+        fileToPlay = await fileToPlay.copy(safeFile.path);
+      }
+
+      final controller = VideoPlayerController.file(fileToPlay);
       await controller.initialize();
       await controller.setLooping(true);
       await controller.setVolume(1.0);
@@ -200,6 +208,7 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
       }
     }
   }
+
 
   Future<void> _disposeVideoController() async {
     if (_videoPlayerController != null) {
@@ -1079,23 +1088,41 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
                       child: Stack(
                         fit: StackFit.expand,
                         children: [
-                          if (_isVideoStory && _videoPlayerController != null && _isVideoInitialized)
-                            GestureDetector(
-                              onTap: _toggleVideoPlayPause,
-                              behavior: HitTestBehavior.opaque,
-                              child: SizedBox.expand(
-                                child: FittedBox(
-                                  fit: BoxFit.cover,
-                                  clipBehavior: Clip.hardEdge,
-                                  child: SizedBox(
-                                    width: _videoPlayerController!.value.size.width,
-                                    height: _videoPlayerController!.value.size.height,
-                                    child: VideoPlayer(_videoPlayerController!),
+                          if (_isVideoStory)
+                            if (_videoPlayerController != null && _isVideoInitialized)
+                              GestureDetector(
+                                onTap: _toggleVideoPlayPause,
+                                behavior: HitTestBehavior.opaque,
+                                child: SizedBox.expand(
+                                  child: FittedBox(
+                                    fit: BoxFit.cover,
+                                    clipBehavior: Clip.hardEdge,
+                                    child: SizedBox(
+                                      width: _videoPlayerController!.value.size.width,
+                                      height: _videoPlayerController!.value.size.height,
+                                      child: VideoPlayer(_videoPlayerController!),
+                                    ),
                                   ),
                                 ),
-                              ),
-                            )
-                          else if (_previewMedia != null && !_isPathVideo(_previewMedia!.path))
+                              )
+                            else
+                              Container(
+                                color: const Color(0xFF0F172A),
+                                child: const Center(
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      CircularProgressIndicator(color: Color(0xFF0EA5E9), strokeWidth: 3),
+                                      SizedBox(height: 12),
+                                      Text(
+                                        'Đang nạp video & âm thanh...',
+                                        style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              )
+                          else if (_previewMedia != null)
                             Image.file(
                               File(_previewMedia!.path),
                               fit: BoxFit.cover,
@@ -1113,6 +1140,7 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
                                 child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                               ),
                             ),
+
                           if (_isVideoStory) ...[
                             // Top overlay: Live Video Story badge + Mute/Unmute
                             Positioned(
@@ -3457,28 +3485,8 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
               if (file != null && mounted) {
                 final loadedFile = file;
                 if (isVideo) {
-                  Uint8List? thumbBytes;
-                  try {
-                    thumbBytes = await asset.thumbnailDataWithSize(
-                      const ThumbnailSize(1080, 1920),
-                      quality: 90,
-                    );
-                    thumbBytes ??= await asset.thumbnailData;
-                  } catch (te) {
-                    debugPrint('[CreateStoryScreen] Video thumb error: $te');
-                  }
-
-                  String? thumbPath;
-                  if (thumbBytes != null) {
-                    final tempDir = Directory.systemTemp;
-                    final safeId = asset.id.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
-                    final tempThumb = File('${tempDir.path}/video_thumb_$safeId.jpg');
-                    await tempThumb.writeAsBytes(thumbBytes);
-                    thumbPath = tempThumb.path;
-                  }
-
                   setState(() {
-                    _previewMedia = XFile(thumbPath ?? loadedFile.path);
+                    _previewMedia = XFile(loadedFile.path);
                     _originalVideoPath = loadedFile.path;
                     _isVideoStory = true;
                     _isTextStoryMode = false;

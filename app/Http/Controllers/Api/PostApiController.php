@@ -288,7 +288,20 @@ class PostApiController extends Controller
                     if (empty($imgs) && !empty($item->image_path)) {
                         $imgs = [$item->image_path];
                     }
-                    $img = !empty($imgs) ? $imgs[0] : $item->image_path;
+
+                    $vids = [];
+                    if (!empty($item->videos)) {
+                        if (is_array($item->videos)) {
+                            $vids = $item->videos;
+                        } else if (is_string($item->videos)) {
+                            $decoded = json_decode($item->videos, true);
+                            if (is_array($decoded)) $vids = $decoded;
+                        }
+                    }
+                    if (empty($imgs) && !empty($vids)) {
+                        $imgs = $vids;
+                    }
+                    $img = !empty($imgs) ? $imgs[0] : (!empty($vids) ? $vids[0] : $item->image_path);
 
                     $commentsArr = [];
                     if ($item->relationLoaded('comments') && $item->comments) {
@@ -334,6 +347,7 @@ class PostApiController extends Controller
                         'description'      => $item->description ?? '',
                         'image_path'       => $img,
                         'images'           => $imgs,
+                        'videos'           => $vids,
                         'likes_count'      => $realLikes,
                         'is_liked'         => $isLiked,
                         'comments_count'   => count($commentsArr) ?: (int) ($item->comments_count ?? 0),
@@ -601,7 +615,7 @@ class PostApiController extends Controller
             $file = $request->file('media_file');
             if ($file->isValid()) {
                 $mime = $file->getMimeType() ?: '';
-                $isVid = str_contains($mime, 'video') || in_array(strtolower($file->getClientOriginalExtension()), ['mp4', 'mov', 'avi', 'mkv', 'webm']);
+                $isVid = str_contains($mime, 'video') || in_array(strtolower($file->getClientOriginalExtension()), ['mp4', 'mov', 'avi', 'mkv', 'webm', '3gp', 'm4v']) || $request->input('type') === 'video';
                 if ($isVid) {
                     $type = 'video';
                     if (YouTubeService::isConfigured()) {

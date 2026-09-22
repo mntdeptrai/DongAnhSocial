@@ -126,6 +126,41 @@ class PostModel {
       addUrl(item['image_path']);
     }
 
+    if (item['videos'] is List) {
+      for (var vid in item['videos']) {
+        addUrl(vid);
+      }
+    } else if (item['videos'] is String && item['videos'].toString().isNotEmpty) {
+      try {
+        final decoded = item['videos'].toString().startsWith('[') ? (item['videos'] as String) : null;
+        if (decoded != null) {
+          final List list = (item['videos'] as String)
+              .replaceAll('[', '')
+              .replaceAll(']', '')
+              .replaceAll('"', '')
+              .split(',');
+          for (var vid in list) {
+            addUrl(vid);
+          }
+        } else {
+          addUrl(item['videos']);
+        }
+      } catch (_) {
+        addUrl(item['videos']);
+      }
+    }
+
+    if (item['video_urls'] is List) {
+      for (var vid in item['video_urls']) {
+        addUrl(vid);
+      }
+    }
+
+    if (item['video_path'] != null && item['video_path'].toString().isNotEmpty) {
+      addUrl(item['video_path']);
+    }
+
     return urls;
   }
 }
+
