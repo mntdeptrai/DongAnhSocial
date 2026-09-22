@@ -165,7 +165,32 @@ class PostApiController extends Controller
                     ->groupBy('commentable_id')
                     ->pluck('cnt', 'commentable_id');
             }
-        } catch (\Throwable $e) {}
+        } catch (\Throwable $e) {
+            Log::warning('[getNewsfeed] Engagement query error: ' . $e->getMessage());
+        }
+
+        // Batch-fetch liked post IDs to avoid N+1 queries in serialization loop
+        $likedPostIds = [];
+        $likedPostIdsBySession = [];
+        try {
+            $allPostIds2 = $items->pluck('id')->filter()->toArray();
+            if (!empty($allPostIds2) && $currentUserId) {
+                $likedPostIds = CheckinReaction::where('reactionable_type', 'post')
+                    ->whereIn('reactionable_id', $allPostIds2)
+                    ->where('user_id', $currentUserId)
+                    ->pluck('reactionable_id')
+                    ->toArray();
+            } elseif (!empty($allPostIds2) && !empty($sessionId)) {
+                $likedPostIdsBySession = CheckinReaction::where('reactionable_type', 'post')
+                    ->whereIn('reactionable_id', $allPostIds2)
+                    ->whereNull('user_id')
+                    ->where('session_id', $sessionId)
+                    ->pluck('reactionable_id')
+                    ->toArray();
+            }
+        } catch (\Throwable $e) {
+            Log::warning('[getNewsfeed] Batch liked query error: ' . $e->getMessage());
+        }
 
         $scoredItems = $items->map(function($post) use ($friendUserIds, $userEateryIds, $currentUserId, $engagementReactions, $engagementComments, $feedType) {
             $score = 0;
@@ -217,17 +242,9 @@ class PostApiController extends Controller
                     $authorName = $item->eatery ? $item->eatery->name : 'Ban Giám Hiệu Trường';
                     $img = $item->image_path ?? ($item->eatery ? $item->eatery->image_path : null);
 
-                    $realLikes = CheckinReaction::where('reactionable_type', 'post')
-                        ->where('reactionable_id', $item->id)
-                        ->count();
+                    $realLikes = $engagementReactions->get($item->id, 0);
 
-                    $isLiked = false;
-                    if ($currentUserId) {
-                        $isLiked = CheckinReaction::where('reactionable_type', 'post')
-                            ->where('reactionable_id', $item->id)
-                            ->where('user_id', $currentUserId)
-                            ->exists();
-                    }
+                    $isLiked = in_array($item->id, $likedPostIds);
 
                     $eduImgs = [];
                     if (!empty($item->images)) {
@@ -314,22 +331,13 @@ class PostApiController extends Controller
                         }
                     }
 
-                    $realLikes = CheckinReaction::where('reactionable_type', 'post')
-                        ->where('reactionable_id', $item->id)
-                        ->count();
+                    $realLikes = $engagementReactions->get($item->id, 0);
 
                     $isLiked = false;
                     if ($currentUserId) {
-                        $isLiked = CheckinReaction::where('reactionable_type', 'post')
-                            ->where('reactionable_id', $item->id)
-                            ->where('user_id', $currentUserId)
-                            ->exists();
+                        $isLiked = in_array($item->id, $likedPostIds);
                     } else if (!empty($sessionId)) {
-                        $isLiked = CheckinReaction::where('reactionable_type', 'post')
-                            ->where('reactionable_id', $item->id)
-                            ->whereNull('user_id')
-                            ->where('session_id', $sessionId)
-                            ->exists();
+                        $isLiked = in_array($item->id, $likedPostIdsBySession);
                     }
 
                     $postUserId = $item->user_id ?? ($item->user ? $item->user->id : null);
@@ -356,7 +364,9 @@ class PostApiController extends Controller
                         'personal_tag'     => $item->_personal_tag ?? null,
                     ];
                 }
-            } catch (\Throwable $e) {}
+            } catch (\Throwable $e) {
+                Log::warning('[getNewsfeed] Item serialization error for ID ' . ($item->id ?? '?') . ': ' . $e->getMessage());
+            }
         }
 
         // Inject Stories 24h vào đầu danh sách (hiển thị trên Story Cards)
@@ -533,14 +543,34 @@ class PostApiController extends Controller
                 $decodedBytes = base64_decode($base64Data);
 
                 if ($decodedBytes !== false) {
-                    $filename = 'posts/post_' . time() . '_' . uniqid() . '.' . $type;
-                    $r2PublicUrl = rtrim(env('R2_PUBLIC_URL', 'https://media.xadonganh.com'), '/');
-                    if (env('R2_ACCESS_KEY_ID') && env('R2_BUCKET')) {
-                        try {
-                            Storage::disk('r2')->put($filename, $decodedBytes, 'public');
-                            $savedImagePath = $r2PublicUrl . '/' . $filename;
-                        } catch (\Throwable $r2Err) {
-                            Log::warning("R2 Upload Error: " . $r2Err->getMessage());
+                    $videoExts = ['mp4', 'mov', 'avi', 'mkv', 'webm', '3gp', 'm4v'];
+                    if (in_array($type, $videoExts)) {
+                        // Route base64 video through R2Helper for YouTube upload
+                        $tmpPath = tempnam(sys_get_temp_dir(), 'vid_') . '.' . $type;
+                        file_put_contents($tmpPath, $decodedBytes);
+                        $tmpFile = new \Illuminate\Http\UploadedFile($tmpPath, 'video.' . $type, 'video/' . $type, null, true);
+                        $uploadedUrl = R2Helper::upload($tmpFile, 'posts');
+                        @unlink($tmpPath);
+                        if (!empty($uploadedUrl)) {
+                            $videos = is_array($videos) ? array_merge($videos, [$uploadedUrl]) : [$uploadedUrl];
+                        }
+                    } else {
+                        $filename = 'posts/post_' . time() . '_' . uniqid() . '.' . $type;
+                        $r2PublicUrl = rtrim(config('filesystems.disks.r2.url', 'https://media.xadonganh.com'), '/');
+                        if (config('filesystems.disks.r2.key') && config('filesystems.disks.r2.bucket')) {
+                            try {
+                                Storage::disk('r2')->put($filename, $decodedBytes, 'public');
+                                $savedImagePath = $r2PublicUrl . '/' . $filename;
+                            } catch (\Throwable $r2Err) {
+                                Log::warning("R2 Upload Error: " . $r2Err->getMessage());
+                                $destinationPath = public_path('storage/posts');
+                                if (!file_exists($destinationPath)) {
+                                    mkdir($destinationPath, 0755, true);
+                                }
+                                file_put_contents(public_path('storage/' . $filename), $decodedBytes);
+                                $savedImagePath = 'storage/' . $filename;
+                            }
+                        } else {
                             $destinationPath = public_path('storage/posts');
                             if (!file_exists($destinationPath)) {
                                 mkdir($destinationPath, 0755, true);
@@ -548,16 +578,11 @@ class PostApiController extends Controller
                             file_put_contents(public_path('storage/' . $filename), $decodedBytes);
                             $savedImagePath = 'storage/' . $filename;
                         }
-                    } else {
-                        $destinationPath = public_path('storage/posts');
-                        if (!file_exists($destinationPath)) {
-                            mkdir($destinationPath, 0755, true);
-                        }
-                        file_put_contents(public_path('storage/' . $filename), $decodedBytes);
-                        $savedImagePath = 'storage/' . $filename;
                     }
                 }
-            } catch (\Throwable $e) {}
+            } catch (\Throwable $e) {
+                Log::warning('[storePost] base64 upload error: ' . $e->getMessage());
+            }
         } else if ($request->hasFile('image_file') || $request->hasFile('video_file') || $request->hasFile('file') || $request->hasFile('media_file')) {
             try {
                 $file = $request->file('image_file')

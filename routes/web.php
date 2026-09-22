@@ -29,9 +29,11 @@ use App\Http\Controllers\ModerationController;
 */
 
 // --- YOUTUBE API OAUTH ROUTES (Kết nối 1-click) ---
-Route::get('/youtube/auth', [YouTubeAuthController::class, 'redirect'])->name('youtube.auth');
+Route::middleware('auth')->group(function () {
+    Route::get('/youtube/auth', [YouTubeAuthController::class, 'redirect'])->name('youtube.auth');
+    Route::get('/youtube/status', [YouTubeAuthController::class, 'status'])->name('youtube.status');
+});
 Route::get('/youtube/callback', [YouTubeAuthController::class, 'callback'])->name('youtube.callback');
-Route::get('/youtube/status', [YouTubeAuthController::class, 'status'])->name('youtube.status');
 
 
 // --- USER SIDE ROUTES (Giao diện người dùng) ---

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
 
@@ -13,8 +14,8 @@ class YouTubeAuthController extends Controller
      */
     public function redirect(Request $request)
     {
-        $clientId = config('services.youtube.client_id') ?: env('YOUTUBE_CLIENT_ID');
-        $configuredRedirect = config('services.youtube.redirect_uri') ?: env('YOUTUBE_REDIRECT_URI');
+        $clientId = config('services.youtube.client_id');
+        $configuredRedirect = config('services.youtube.redirect_uri');
         
         $currentHost = preg_replace('/^http:\/\//', 'https://', $request->getSchemeAndHttpHost());
         $redirectUri = !empty($configuredRedirect) ? $configuredRedirect : ($currentHost . '/youtube/callback');
@@ -60,9 +61,9 @@ class YouTubeAuthController extends Controller
             ], 400);
         }
 
-        $clientId     = config('services.youtube.client_id') ?: env('YOUTUBE_CLIENT_ID');
-        $clientSecret = config('services.youtube.client_secret') ?: env('YOUTUBE_CLIENT_SECRET');
-        $configuredRedirect = config('services.youtube.redirect_uri') ?: env('YOUTUBE_REDIRECT_URI');
+        $clientId     = config('services.youtube.client_id');
+        $clientSecret = config('services.youtube.client_secret');
+        $configuredRedirect = config('services.youtube.redirect_uri');
         $currentHost  = preg_replace('/^http:\/\//', 'https://', $request->getSchemeAndHttpHost());
         $redirectUri  = !empty($configuredRedirect) ? $configuredRedirect : ($currentHost . '/youtube/callback');
 
@@ -103,7 +104,7 @@ class YouTubeAuthController extends Controller
             }
 
             // Xóa cache access token cũ để nhận token mới ngay lập tức
-            \Illuminate\Support\Facades\Cache::forget('youtube_api_access_token');
+            Cache::forget('youtube_api_access_token');
 
             return response()->view('youtube_auth_success', [
                 'hasRefresh' => !empty($refreshToken),

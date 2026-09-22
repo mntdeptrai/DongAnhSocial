@@ -17,7 +17,7 @@ class YouTubeService
      */
     public static function getRefreshToken(): ?string
     {
-        $token = config('services.youtube.refresh_token') ?: env('YOUTUBE_REFRESH_TOKEN');
+        $token = config('services.youtube.refresh_token');
         if (!empty($token)) {
             return $token;
         }
@@ -38,8 +38,8 @@ class YouTubeService
      */
     public static function isConfigured(): bool
     {
-        $clientId = config('services.youtube.client_id') ?: env('YOUTUBE_CLIENT_ID');
-        $clientSecret = config('services.youtube.client_secret') ?: env('YOUTUBE_CLIENT_SECRET');
+        $clientId = config('services.youtube.client_id');
+        $clientSecret = config('services.youtube.client_secret');
         $refreshToken = self::getRefreshToken();
 
         return !empty($clientId) && !empty($clientSecret) && !empty($refreshToken);
@@ -62,8 +62,8 @@ class YouTubeService
             }
         } catch (\Throwable $e) {}
 
-        $clientId = config('services.youtube.client_id') ?: env('YOUTUBE_CLIENT_ID');
-        $clientSecret = config('services.youtube.client_secret') ?: env('YOUTUBE_CLIENT_SECRET');
+        $clientId = config('services.youtube.client_id');
+        $clientSecret = config('services.youtube.client_secret');
         $refreshToken = self::getRefreshToken();
 
         try {
