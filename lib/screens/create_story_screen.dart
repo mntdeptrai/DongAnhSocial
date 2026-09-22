@@ -1090,20 +1090,29 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
                         children: [
                           if (_isVideoStory)
                             if (_videoPlayerController != null && _isVideoInitialized)
-                              GestureDetector(
-                                onTap: _toggleVideoPlayPause,
-                                behavior: HitTestBehavior.opaque,
-                                child: SizedBox.expand(
-                                  child: FittedBox(
-                                    fit: BoxFit.cover,
-                                    clipBehavior: Clip.hardEdge,
-                                    child: SizedBox(
-                                      width: _videoPlayerController!.value.size.width,
-                                      height: _videoPlayerController!.value.size.height,
-                                      child: VideoPlayer(_videoPlayerController!),
+                              Builder(
+                                builder: (context) {
+                                  final val = _videoPlayerController!.value;
+                                  final isRotated = val.rotationCorrection == 90 || val.rotationCorrection == 270;
+                                  final double vidW = isRotated ? val.size.height : val.size.width;
+                                  final double vidH = isRotated ? val.size.width : val.size.height;
+
+                                  return GestureDetector(
+                                    onTap: _toggleVideoPlayPause,
+                                    behavior: HitTestBehavior.opaque,
+                                    child: SizedBox.expand(
+                                      child: FittedBox(
+                                        fit: BoxFit.cover,
+                                        clipBehavior: Clip.hardEdge,
+                                        child: SizedBox(
+                                          width: vidW > 0 ? vidW : 1,
+                                          height: vidH > 0 ? vidH : 1,
+                                          child: VideoPlayer(_videoPlayerController!),
+                                        ),
+                                      ),
                                     ),
-                                  ),
-                                ),
+                                  );
+                                },
                               )
                             else
                               Container(

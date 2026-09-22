@@ -1094,9 +1094,24 @@ class _LocalVideoPreviewDialogState extends State<_LocalVideoPreviewDialog> {
                 child: Stack(
                   alignment: Alignment.center,
                   children: [
-                    AspectRatio(
-                      aspectRatio: _controller!.value.aspectRatio,
-                      child: VideoPlayer(_controller!),
+                    Builder(
+                      builder: (context) {
+                        final val = _controller!.value;
+                        final isRotated = val.rotationCorrection == 90 || val.rotationCorrection == 270;
+                        final double vidW = isRotated ? val.size.height : val.size.width;
+                        final double vidH = isRotated ? val.size.width : val.size.height;
+                        return SizedBox.expand(
+                          child: FittedBox(
+                            fit: BoxFit.contain,
+                            clipBehavior: Clip.hardEdge,
+                            child: SizedBox(
+                              width: vidW > 0 ? vidW : 1,
+                              height: vidH > 0 ? vidH : 1,
+                              child: VideoPlayer(_controller!),
+                            ),
+                          ),
+                        );
+                      },
                     ),
                     if (!_isPlaying)
                       Container(
