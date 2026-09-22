@@ -241,11 +241,14 @@ class PostApiController extends Controller
                         $eduImgs = [$img];
                     }
 
+                    $eduUserId = $item->user_id ?? ($item->eatery ? $item->eatery->user_id : null);
                     $postsList[] = [
                         'id'               => 'edu_' . $item->id,
                         'numeric_id'       => $item->id,
                         'hashid'           => 'edu_' . $item->id,
                         'type'             => 'post',
+                        'user_id'          => $eduUserId,
+                        'author_id'        => $eduUserId,
                         'author_name'      => $authorName,
                         'author_avatar'    => $item->eatery ? $item->eatery->image_path : null,
                         'author_role'      => 'principal',
@@ -316,10 +319,14 @@ class PostApiController extends Controller
                             ->exists();
                     }
 
+                    $postUserId = $item->user_id ?? ($item->user ? $item->user->id : null);
                     $postsList[] = [
                         'id'               => $item->id,
+                        'numeric_id'       => $item->id,
                         'hashid'           => $item->hashid ?? ('post_' . $item->id),
                         'type'             => 'post',
+                        'user_id'          => $postUserId,
+                        'author_id'        => $postUserId,
                         'author_name'      => $authorName,
                         'author_avatar'    => $authorAvatar,
                         'author_role'      => $authorRole,
@@ -351,6 +358,7 @@ class PostApiController extends Controller
                 $sAuthor = $story->user ? $story->user->name : ($story->author_name ?? 'Thành viên');
                 $sAvatar = $story->user ? ($story->user->avatar_url ?: $story->user->avatar) : $story->author_avatar;
                 $sImages = $story->media_url ? [$story->media_url] : [];
+                $sUserId = $story->user_id ?? ($story->user ? $story->user->id : null);
 
                 $storyItems[] = [
                     'id'               => 'story_' . $story->id,
@@ -358,6 +366,8 @@ class PostApiController extends Controller
                     'hashid'           => 'story_' . $story->id,
                     'type'             => 'story',
                     'is_story'         => true,
+                    'user_id'          => $sUserId,
+                    'author_id'        => $sUserId,
                     'author_name'      => $sAuthor,
                     'author_avatar'    => $sAvatar,
                     'author_role'      => $story->user ? ($story->user->role ?? 'user') : 'user',
@@ -649,17 +659,21 @@ class PostApiController extends Controller
             return response()->json(['success' => false, 'message' => 'Chưa đăng nhập!'], 401);
         }
 
-        $post = Post::on('mysql_education')->find($id)
-             ?: Post::on('mysql')->find($id)
-             ?: EducationProgram::on('mysql_education')->find($id)
-             ?: EducationProgram::on('mysql')->find($id);
+        $cleanId = str_replace(['post_', 'edu_', 'checkin_'], '', $id);
+
+        $post = Post::on('mysql_education')->find($cleanId)
+             ?: Post::on('mysql')->find($cleanId)
+             ?: Checkin::find($cleanId)
+             ?: EducationProgram::on('mysql_education')->find($cleanId)
+             ?: EducationProgram::on('mysql')->find($cleanId);
 
         if (!$post) {
             return response()->json(['success' => false, 'message' => 'Không tìm thấy bài viết!'], 404);
         }
 
-        $isOwner = ($user->isAdmin() || $user->role === 'admin')
-                || (isset($post->user_id) && $post->user_id == $user->id);
+        $userRole = strtolower($user->role ?? '');
+        $isAdmin = ($user->isAdmin() || $userRole === 'admin' || $userRole === 'superadmin');
+        $isOwner = $isAdmin || (isset($post->user_id) && $post->user_id == $user->id);
 
         if (!$isOwner && !empty($post->eatery_id)) {
             $school = Eatery::on('mysql_education')->find($post->eatery_id)
@@ -688,13 +702,15 @@ class PostApiController extends Controller
             return response()->json(['success' => false, 'message' => 'Chưa đăng nhập!'], 401);
         }
 
-        $story = Story::find($id);
+        $cleanId = str_replace('story_', '', $id);
+        $story = Story::find($cleanId);
         if (!$story) {
             return response()->json(['success' => false, 'message' => 'Không tìm thấy story!'], 404);
         }
 
-        $isOwner = ($user->isAdmin() || $user->role === 'admin')
-                || ($story->user_id && $story->user_id == $user->id);
+        $userRole = strtolower($user->role ?? '');
+        $isAdmin = ($user->isAdmin() || $userRole === 'admin' || $userRole === 'superadmin');
+        $isOwner = $isAdmin || ($story->user_id && $story->user_id == $user->id);
 
         if (!$isOwner) {
             return response()->json(['success' => false, 'message' => 'Quyền truy cập bị từ chối!'], 403);

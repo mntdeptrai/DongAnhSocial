@@ -470,10 +470,28 @@ class _PostCardState extends State<PostCard> {
 
   void _showPostActionsSheet(BuildContext context) {
     final post = widget.post;
-    final authorName = post.author.name;
+    final authorName = post.author.name.trim();
     final authorId = post.author.id.toString();
-    final currentUserId = ApiService.currentUser?['id']?.toString();
-    final isMyPost = currentUserId != null && currentUserId == authorId;
+    final postUserId = post.userId?.toString() ??
+        post.rawJson['user_id']?.toString() ??
+        post.rawJson['author_id']?.toString() ??
+        (post.rawJson['user'] is Map ? post.rawJson['user']['id']?.toString() : null);
+
+    final currentUser = ApiService.currentUser;
+    final currentUserId = currentUser?['id']?.toString();
+    final currentUserName = currentUser?['name']?.toString().trim();
+    final currentUserRole = currentUser?['role']?.toString().toLowerCase();
+    final isAdmin = currentUserRole == 'admin' || currentUserRole == 'superadmin';
+
+    final bool isMyPost = (currentUserId != null && (
+      (authorId != '0' && currentUserId == authorId) ||
+      (postUserId != null && currentUserId == postUserId)
+    )) || (
+      currentUserName != null && currentUserName.isNotEmpty &&
+      currentUserName.toLowerCase() == authorName.toLowerCase()
+    );
+
+    final bool canDelete = (isMyPost || isAdmin) && widget.onDeletePost != null;
 
     showModalBottomSheet(
       context: context,
@@ -504,10 +522,13 @@ class _PostCardState extends State<PostCard> {
                 widget.onShare();
               },
             ),
-            if (isMyPost && widget.onDeletePost != null)
+            if (canDelete)
               ListTile(
                 leading: const Icon(Icons.delete_outline_rounded, color: Color(0xFFDC2626)),
-                title: const Text('Xóa bài viết', style: TextStyle(fontWeight: FontWeight.w600, color: Color(0xFFDC2626))),
+                title: Text(
+                  isAdmin && !isMyPost ? 'Xóa bài viết (Quyền Quản trị viên)' : 'Xóa bài viết',
+                  style: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFFDC2626)),
+                ),
                 subtitle: const Text('Bài viết và ảnh/video đính kèm sẽ bị xóa hoàn toàn', style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
                 onTap: () {
                   Navigator.pop(sheetContext);

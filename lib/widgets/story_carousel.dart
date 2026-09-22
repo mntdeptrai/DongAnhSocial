@@ -102,7 +102,15 @@ class StoryCarousel extends StatelessWidget {
           ...storyPosts.map((post) {
             final authorName = post.author.name;
             final bgUrl = post.images.isNotEmpty ? post.images.first : null;
-            final isMyStory = currentUserId != null && post.author.id.toString() == currentUserId;
+            final currentUserName = ApiService.currentUser?['name']?.toString().trim().toLowerCase();
+            final storyAuthorName = authorName.trim().toLowerCase();
+            final postUserId = post.userId ?? post.rawJson['user_id']?.toString() ?? post.rawJson['author_id']?.toString();
+            final isMyStory = (currentUserId != null && (
+              (post.author.id.toString() != '0' && post.author.id.toString() == currentUserId) ||
+              (postUserId != null && postUserId == currentUserId)
+            )) || (
+              currentUserName != null && currentUserName.isNotEmpty && currentUserName == storyAuthorName
+            );
 
             return GestureDetector(
               onTap: () => onStoryTap(post),

@@ -4,6 +4,7 @@ class PostModel {
   final String id;
   final dynamic numericId;
   final String? hashId;
+  final String? userId;
   final String title;
   final String content;
   final String type;
@@ -23,6 +24,7 @@ class PostModel {
     required this.id,
     this.numericId,
     this.hashId,
+    this.userId,
     required this.title,
     required this.content,
     required this.type,
@@ -46,13 +48,18 @@ class PostModel {
     final isSch = rawType == 'school' || json['author_role'] == 'principal' || json['is_school'] == true;
 
     final extractedImages = parseImageUrls(json);
+    final rawUserId = (json['user_id'] ??
+        json['author_id'] ??
+        (json['author'] is Map ? json['author']['id'] : null) ??
+        (json['user'] is Map ? json['user']['id'] : null))?.toString();
 
     return PostModel(
       id: (json['id'] ?? '').toString(),
       numericId: json['numeric_id'] ?? json['id'],
       hashId: json['hashid']?.toString(),
+      userId: rawUserId,
       title: (json['title'] ?? json['name'] ?? '').toString(),
-      content: (json['content'] ?? json['title'] ?? json['name'] ?? '').toString(),
+      content: (json['content'] ?? json['description'] ?? json['title'] ?? json['name'] ?? '').toString(),
       type: rawType.isEmpty ? 'post' : rawType,
       isFoodTour: isFood,
       isCheckin: isCheck,
