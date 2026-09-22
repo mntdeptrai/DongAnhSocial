@@ -161,6 +161,14 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
   XFile? _previewMedia;
   bool _isTextStoryMode = false;
   int _rotationQuarterTurns = 0;
+  bool _isVideoStory = false;
+  String? _originalVideoPath;
+
+  bool _isPathVideo(String? path) {
+    if (path == null || path.isEmpty) return false;
+    final ext = path.split('.').last.toLowerCase();
+    return ['mp4', 'mov', 'avi', 'mkv', 'webm', '3gp', 'm4v'].contains(ext);
+  }
 
   // --- AUDIO PLAYER STATE ---
   final AudioPlayer _audioPlayer = AudioPlayer();
@@ -531,6 +539,8 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
         setState(() {
           _previewMedia = file;
           _isTextStoryMode = false;
+          _isVideoStory = false;
+          _originalVideoPath = null;
           _rotationQuarterTurns = 0;
         });
       }
@@ -546,6 +556,8 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
         setState(() {
           _previewMedia = photo;
           _isTextStoryMode = false;
+          _isVideoStory = false;
+          _originalVideoPath = null;
           _rotationQuarterTurns = 0;
         });
       }
@@ -592,8 +604,13 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
     });
 
     try {
-      final capturedPath = await _captureStoryImage();
-      final effectivePath = capturedPath ?? _previewMedia?.path;
+      String? effectivePath;
+      if (_isVideoStory && _originalVideoPath != null) {
+        effectivePath = _originalVideoPath;
+      } else {
+        final capturedPath = await _captureStoryImage();
+        effectivePath = capturedPath ?? _previewMedia?.path;
+      }
 
       final textCaption = _textStoryController.text.trim().isNotEmpty
           ? _textStoryController.text.trim()
@@ -987,9 +1004,59 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
                   else
                     ColorFiltered(
                       colorFilter: ColorFilter.matrix(activeFilter.matrix),
-                      child: Image.file(
-                        File(_previewMedia!.path),
-                        fit: BoxFit.cover,
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          if (_previewMedia != null && !_isPathVideo(_previewMedia!.path))
+                            Image.file(
+                              File(_previewMedia!.path),
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) => Container(
+                                color: const Color(0xFF0F172A),
+                                child: const Center(
+                                  child: Icon(Icons.broken_image_rounded, color: Colors.white54, size: 48),
+                                ),
+                              ),
+                            )
+                          else
+                            Container(
+                              color: const Color(0xFF0F172A),
+                              child: const Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.videocam_rounded, color: Color(0xFF38BDF8), size: 64),
+                                    SizedBox(height: 12),
+                                    Text(
+                                      'Video Story 24h',
+                                      style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          if (_isVideoStory)
+                            Positioned(
+                              top: 60,
+                              left: 20,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withValues(alpha: 0.75),
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(color: const Color(0xFF0EA5E9), width: 1.2),
+                                ),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.videocam_rounded, color: Color(0xFF38BDF8), size: 16),
+                                    SizedBox(width: 5),
+                                    Text('Video Story 24h', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                                  ],
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
                     ),
 
@@ -1131,6 +1198,8 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
                     setState(() {
                       _previewMedia = null;
                       _isTextStoryMode = false;
+                      _isVideoStory = false;
+                      _originalVideoPath = null;
                       _strokes.clear();
                       _textItems.clear();
                       _stickerItems.clear();
@@ -1138,63 +1207,73 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
                     });
                   },
                 ),
-                // Creative Editing Tools
-                Row(
-                  children: [
-                    if (_isTextStoryMode)
-                      _buildCircleIconButton(
-                        icon: Icons.palette_outlined,
-                        tooltip: 'Đổi dải màu nền',
-                        onPressed: () {
-                          setState(() {
-                            _selectedGradientIndex = (_selectedGradientIndex + 1) % _storyGradients.length;
-                          });
-                        },
-                      ),
-                    const SizedBox(width: 8),
-                    _buildCircleIconButton(
-                      icon: Icons.rotate_right_rounded,
-                      tooltip: 'Xoay ảnh 90°',
-                      onPressed: () {
-                        setState(() {
-                          _rotationQuarterTurns = (_rotationQuarterTurns + 1) % 4;
-                        });
-                      },
+                const SizedBox(width: 8),
+                // Creative Editing Tools (Scrollable to prevent overflow on smaller screens)
+                Expanded(
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    reverse: true,
+                    physics: const BouncingScrollPhysics(),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (_isTextStoryMode) ...[
+                          _buildCircleIconButton(
+                            icon: Icons.palette_outlined,
+                            tooltip: 'Đổi dải màu nền',
+                            onPressed: () {
+                              setState(() {
+                                _selectedGradientIndex = (_selectedGradientIndex + 1) % _storyGradients.length;
+                              });
+                            },
+                          ),
+                          const SizedBox(width: 8),
+                        ],
+                        _buildCircleIconButton(
+                          icon: Icons.rotate_right_rounded,
+                          tooltip: 'Xoay ảnh 90°',
+                          onPressed: () {
+                            setState(() {
+                              _rotationQuarterTurns = (_rotationQuarterTurns + 1) % 4;
+                            });
+                          },
+                        ),
+                        const SizedBox(width: 8),
+                        _buildCircleIconButton(
+                          icon: _isDoodleMode ? Icons.check_rounded : Icons.gesture_rounded,
+                          color: _isDoodleMode ? const Color(0xFF0EA5E9) : null,
+                          tooltip: 'Bút vẽ cọ',
+                          onPressed: () {
+                            setState(() => _isDoodleMode = !_isDoodleMode);
+                          },
+                        ),
+                        const SizedBox(width: 8),
+                        _buildCircleIconButton(
+                          icon: Icons.title_rounded,
+                          tooltip: 'Thêm chữ nghệ thuật',
+                          onPressed: _showAddTextModal,
+                        ),
+                        const SizedBox(width: 8),
+                        _buildCircleIconButton(
+                          icon: Icons.sentiment_satisfied_alt_rounded,
+                          tooltip: 'Nhãn dán & Sticker',
+                          onPressed: _showStickerModal,
+                        ),
+                        const SizedBox(width: 8),
+                        _buildCircleIconButton(
+                          icon: Icons.location_on_outlined,
+                          tooltip: 'Gắn địa danh Đông Anh',
+                          onPressed: _showLocationModal,
+                        ),
+                        const SizedBox(width: 8),
+                        _buildCircleIconButton(
+                          icon: Icons.music_note_rounded,
+                          tooltip: 'Nhạc nền',
+                          onPressed: _showMusicModal,
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 8),
-                    _buildCircleIconButton(
-                      icon: _isDoodleMode ? Icons.check_rounded : Icons.gesture_rounded,
-                      color: _isDoodleMode ? const Color(0xFF0EA5E9) : null,
-                      tooltip: 'Bút vẽ cọ',
-                      onPressed: () {
-                        setState(() => _isDoodleMode = !_isDoodleMode);
-                      },
-                    ),
-                    const SizedBox(width: 8),
-                    _buildCircleIconButton(
-                      icon: Icons.title_rounded,
-                      tooltip: 'Thêm chữ nghệ thuật',
-                      onPressed: _showAddTextModal,
-                    ),
-                    const SizedBox(width: 8),
-                    _buildCircleIconButton(
-                      icon: Icons.sentiment_satisfied_alt_rounded,
-                      tooltip: 'Nhãn dán & Sticker',
-                      onPressed: _showStickerModal,
-                    ),
-                    const SizedBox(width: 8),
-                    _buildCircleIconButton(
-                      icon: Icons.location_on_outlined,
-                      tooltip: 'Gắn địa danh Đông Anh',
-                      onPressed: _showLocationModal,
-                    ),
-                    const SizedBox(width: 8),
-                    _buildCircleIconButton(
-                      icon: Icons.music_note_rounded,
-                      tooltip: 'Nhạc nền',
-                      onPressed: _showMusicModal,
-                    ),
-                  ],
+                  ),
                 ),
               ],
             ),
@@ -3248,17 +3327,49 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
               File? file = await asset.file;
               file ??= await asset.originFile;
               if (file != null && mounted) {
-                setState(() {
-                  _previewMedia = XFile(file!.path);
-                  _isTextStoryMode = false;
-                  _rotationQuarterTurns = 0;
-                });
+                if (isVideo) {
+                  Uint8List? thumbBytes;
+                  try {
+                    thumbBytes = await asset.thumbnailDataWithSize(
+                      const ThumbnailSize(1080, 1920),
+                      quality: 90,
+                    );
+                    thumbBytes ??= await asset.thumbnailData;
+                  } catch (te) {
+                    debugPrint('[CreateStoryScreen] Video thumb error: $te');
+                  }
+
+                  String? thumbPath;
+                  if (thumbBytes != null) {
+                    final tempDir = Directory.systemTemp;
+                    final safeId = asset.id.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
+                    final tempThumb = File('${tempDir.path}/video_thumb_$safeId.jpg');
+                    await tempThumb.writeAsBytes(thumbBytes);
+                    thumbPath = tempThumb.path;
+                  }
+
+                  setState(() {
+                    _previewMedia = XFile(thumbPath ?? file!.path);
+                    _originalVideoPath = file!.path;
+                    _isVideoStory = true;
+                    _isTextStoryMode = false;
+                    _rotationQuarterTurns = 0;
+                  });
+                } else {
+                  setState(() {
+                    _previewMedia = XFile(file!.path);
+                    _originalVideoPath = null;
+                    _isVideoStory = false;
+                    _isTextStoryMode = false;
+                    _rotationQuarterTurns = 0;
+                  });
+                }
               } else if (mounted) {
                 _showToast('Không thể tải tệp từ thiết bị', isError: true);
               }
             } catch (e) {
               if (mounted) {
-                _showToast('Lỗi khi mở ảnh: $e', isError: true);
+                _showToast('Lỗi khi mở tệp: $e', isError: true);
               }
             } finally {
               if (mounted) {
