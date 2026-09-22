@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/post_model.dart';
 import '../services/api_service.dart';
+import '../core/youtube_helper.dart';
 
 class StoryCarousel extends StatelessWidget {
   final List<PostModel> posts;
@@ -101,7 +102,14 @@ class StoryCarousel extends StatelessWidget {
           // User Stories Highlights
           ...storyPosts.map((post) {
             final authorName = post.author.name;
-            final bgUrl = post.images.isNotEmpty ? post.images.first : null;
+            final rawBg = post.images.isNotEmpty
+                ? post.images.first
+                : (post.rawJson['media_url'] ?? post.rawJson['image_path']);
+            final rawBgStr = rawBg?.toString();
+            final isYt = YouTubeHelper.isYouTubeUrl(rawBgStr);
+            final bgUrl = isYt ? YouTubeHelper.getThumbnailUrl(rawBgStr) : rawBgStr;
+            final isVideo = isYt || post.rawJson['story_type'] == 'video' || (rawBgStr != null && (rawBgStr.endsWith('.mp4') || rawBgStr.endsWith('.mov')));
+
             final currentUserName = ApiService.currentUser?['name']?.toString().trim().toLowerCase();
             final storyAuthorName = authorName.trim().toLowerCase();
             final postUserId = post.userId ?? post.rawJson['user_id']?.toString() ?? post.rawJson['author_id']?.toString();
@@ -123,7 +131,7 @@ class StoryCarousel extends StatelessWidget {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(16),
                   color: const Color(0xFF1E293B),
-                  image: bgUrl != null
+                  image: bgUrl != null && bgUrl.isNotEmpty
                       ? DecorationImage(
                           image: NetworkImage(bgUrl),
                           fit: BoxFit.cover,
@@ -171,6 +179,29 @@ class StoryCarousel extends StatelessWidget {
                         ),
                       ),
                     ),
+                    if (isVideo)
+                      Positioned(
+                        top: 8,
+                        right: 8,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: isYt ? const Color(0xFFFF0000) : Colors.black.withValues(alpha: 0.7),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(isYt ? Icons.smart_display_rounded : Icons.videocam_rounded, color: Colors.white, size: 10),
+                              const SizedBox(width: 2),
+                              Text(
+                                isYt ? 'YT' : 'VID',
+                                style: const TextStyle(color: Colors.white, fontSize: 8.5, fontWeight: FontWeight.bold),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
                     Positioned(
                       bottom: 8,
                       left: 6,

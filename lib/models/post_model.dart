@@ -1,4 +1,5 @@
 import 'user_model.dart';
+import '../core/youtube_helper.dart';
 
 class PostModel {
   final String id;
@@ -160,7 +161,41 @@ class PostModel {
       addUrl(item['video_path']);
     }
 
+    if (item['media_url'] != null && item['media_url'].toString().isNotEmpty) {
+      addUrl(item['media_url']);
+    }
+
     return urls;
+  }
+
+  /// Danh sách tất cả đường dẫn video (YouTube hoặc tệp MP4/MOV) của bài viết
+  List<String> get videoUrls {
+    final vids = <String>[];
+    if (rawJson['videos'] is List) {
+      for (var v in rawJson['videos']) {
+        if (v != null && v.toString().trim().isNotEmpty) {
+          final s = v.toString().trim();
+          if (!vids.contains(s)) vids.add(s);
+        }
+      }
+    }
+    for (var u in images) {
+      final lower = u.toLowerCase();
+      if (YouTubeHelper.isYouTubeUrl(u) ||
+          lower.endsWith('.mp4') ||
+          lower.endsWith('.mov') ||
+          lower.endsWith('.webm') ||
+          lower.endsWith('.m4v') ||
+          lower.endsWith('.avi')) {
+        if (!vids.contains(u)) vids.add(u);
+      }
+    }
+    return vids;
+  }
+
+  /// Kiểm tra bài viết này có chứa video YouTube không
+  bool get hasYouTubeVideo {
+    return videoUrls.any((u) => YouTubeHelper.isYouTubeUrl(u));
   }
 }
 

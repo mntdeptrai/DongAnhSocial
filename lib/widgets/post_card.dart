@@ -2,6 +2,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../models/post_model.dart';
+import '../core/youtube_helper.dart';
 import '../services/api_service.dart';
 import '../services/moderation_service.dart';
 import 'optimized_image.dart';
@@ -107,6 +108,7 @@ class _PostCardState extends State<PostCard> {
   }
 
   bool _isPathVideo(String path) {
+    if (YouTubeHelper.isYouTubeUrl(path)) return true;
     final lower = path.toLowerCase();
     return lower.endsWith('.mp4') ||
         lower.endsWith('.mov') ||
@@ -123,9 +125,12 @@ class _PostCardState extends State<PostCard> {
     double? height,
     BoxFit fit = BoxFit.cover,
   }) {
-    final isVid = _isPathVideo(url);
+    final isYt = YouTubeHelper.isYouTubeUrl(url);
+    final isVid = isYt || _isPathVideo(url);
+    final displayUrl = isYt ? YouTubeHelper.getThumbnailUrl(url) : url;
+
     final imageWidget = OptimizedNetworkImage(
-      imageUrl: url,
+      imageUrl: displayUrl,
       width: width,
       height: height,
       fit: fit,
@@ -147,9 +152,17 @@ class _PostCardState extends State<PostCard> {
           child: Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.65),
+              color: isYt ? const Color(0xFFFF0000).withValues(alpha: 0.9) : Colors.black.withValues(alpha: 0.65),
               shape: BoxShape.circle,
-              border: Border.all(color: Colors.white70, width: 1.5),
+              border: Border.all(color: Colors.white, width: 1.5),
+              boxShadow: [
+                if (isYt)
+                  BoxShadow(
+                    color: const Color(0xFFFF0000).withValues(alpha: 0.45),
+                    blurRadius: 12,
+                    offset: const Offset(0, 3),
+                  ),
+              ],
             ),
             child: const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 36),
           ),
@@ -160,15 +173,18 @@ class _PostCardState extends State<PostCard> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
             decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.75),
+              color: isYt ? const Color(0xFFCC0000) : Colors.black.withValues(alpha: 0.75),
               borderRadius: BorderRadius.circular(6),
             ),
-            child: const Row(
+            child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.videocam_rounded, color: Colors.white, size: 13),
-                SizedBox(width: 4),
-                Text('VIDEO', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                Icon(isYt ? Icons.smart_display_rounded : Icons.videocam_rounded, color: Colors.white, size: 13),
+                const SizedBox(width: 4),
+                Text(
+                  isYt ? 'YOUTUBE' : 'VIDEO',
+                  style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                ),
               ],
             ),
           ),
@@ -181,6 +197,11 @@ class _PostCardState extends State<PostCard> {
     if (images.isEmpty) return const SizedBox.shrink();
 
     void openGallery(int initialIndex) {
+      final selected = images[initialIndex];
+      if (YouTubeHelper.isYouTubeUrl(selected)) {
+        YouTubeHelper.launchYouTube(selected);
+        return;
+      }
       widget.onOpenGallery(images, initialIndex);
     }
 

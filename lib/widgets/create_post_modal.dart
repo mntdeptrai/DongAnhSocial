@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:video_player/video_player.dart';
 import '../services/api_service.dart';
 import '../services/moderation_service.dart';
+import '../core/youtube_helper.dart';
 
 void showCreatePostModal(BuildContext context, {VoidCallback? onPostSuccess}) {
   final currentUserId = ApiService.currentUser?['id']?.toString() ?? '';
@@ -348,7 +349,7 @@ class _CreatePostModalState extends State<CreatePostModal> {
 
     if (_selectedFiles.isNotEmpty) {
       setState(() {
-        _uploadStatus = 'Đang tải ${_selectedFiles.length} tệp lên Cloudflare R2...';
+        _uploadStatus = 'Đang tải ${_selectedFiles.length} tệp (ảnh lên R2, video lên YouTube)...';
       });
 
       final localPaths = _selectedFiles.map((f) => f.path).toList();
@@ -358,7 +359,19 @@ class _CreatePostModalState extends State<CreatePostModal> {
         final url = item['url'];
         final type = item['type'];
         if (url != null) {
-          if (type == 'video' || url.endsWith('.mp4') || url.endsWith('.mov') || url.endsWith('.avi') || url.endsWith('.mkv')) {
+          final isYt = YouTubeHelper.isYouTubeUrl(url);
+          final lower = url.toLowerCase();
+          final isVid = type == 'video' ||
+              isYt ||
+              lower.endsWith('.mp4') ||
+              lower.endsWith('.mov') ||
+              lower.endsWith('.avi') ||
+              lower.endsWith('.mkv') ||
+              lower.endsWith('.webm') ||
+              lower.endsWith('.3gp') ||
+              lower.endsWith('.m4v');
+
+          if (isVid) {
             videoUrls.add(url);
           } else {
             imageUrls.add(url);

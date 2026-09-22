@@ -13,6 +13,7 @@ import '../widgets/create_post_modal.dart';
 import '../widgets/custom_loader.dart';
 import '../widgets/post_card.dart';
 import '../widgets/story_carousel.dart';
+import '../core/youtube_helper.dart';
 import 'create_story_screen.dart';
 
 class NewsBulletinScreen extends StatefulWidget {
@@ -1221,6 +1222,7 @@ class _GalleryMediaItem extends StatefulWidget {
 class _GalleryMediaItemState extends State<_GalleryMediaItem> {
   VideoPlayerController? _controller;
   bool _isVideo = false;
+  bool _isYouTube = false;
   bool _isInitialized = false;
   bool _isPlaying = true;
   bool _isMuted = false;
@@ -1233,6 +1235,7 @@ class _GalleryMediaItemState extends State<_GalleryMediaItem> {
   }
 
   bool _isPathVideo(String path) {
+    if (YouTubeHelper.isYouTubeUrl(path)) return true;
     final lower = path.toLowerCase();
     return lower.endsWith('.mp4') ||
         lower.endsWith('.mov') ||
@@ -1245,6 +1248,13 @@ class _GalleryMediaItemState extends State<_GalleryMediaItem> {
 
   void _checkAndInit() async {
     final url = widget.mediaUrl.trim();
+    if (YouTubeHelper.isYouTubeUrl(url)) {
+      _isYouTube = true;
+      _isVideo = true;
+      _isInitialized = true;
+      if (mounted) setState(() {});
+      return;
+    }
     if (_isPathVideo(url)) {
       _isVideo = true;
       try {
@@ -1305,6 +1315,70 @@ class _GalleryMediaItemState extends State<_GalleryMediaItem> {
     final fullUrl = url.startsWith('http')
         ? url
         : 'https://donganhdiscovery.xadonganh.com/${url.startsWith('/') ? url.substring(1) : url}';
+
+    if (_isYouTube) {
+      final thumbUrl = YouTubeHelper.getThumbnailUrl(url, highRes: true);
+      return Stack(
+        fit: StackFit.expand,
+        alignment: Alignment.center,
+        children: [
+          Image.network(
+            thumbUrl,
+            fit: BoxFit.contain,
+            errorBuilder: (_, __, ___) => const Center(
+              child: Icon(Icons.broken_image_rounded, color: Colors.white54, size: 64),
+            ),
+          ),
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Colors.black.withValues(alpha: 0.3),
+                  Colors.transparent,
+                  Colors.black.withValues(alpha: 0.6),
+                ],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+            ),
+          ),
+          Center(
+            child: GestureDetector(
+              onTap: () => YouTubeHelper.launchYouTube(url),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFF0000),
+                  borderRadius: BorderRadius.circular(30),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFFF0000).withValues(alpha: 0.5),
+                      blurRadius: 18,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.play_arrow_rounded, color: Colors.white, size: 30),
+                    SizedBox(width: 8),
+                    Text(
+                      'Phát trên YouTube',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
 
     if (_isVideo) {
       if (!_isInitialized) {
@@ -1433,6 +1507,7 @@ class _StoryViewerDialogState extends State<_StoryViewerDialog> with SingleTicke
   VideoPlayerController? _videoController;
   AnimationController? _progressController;
   bool _isVideo = false;
+  bool _isYouTube = false;
   bool _isInitialized = false;
   bool _isMuted = false;
 
@@ -1448,6 +1523,22 @@ class _StoryViewerDialogState extends State<_StoryViewerDialog> with SingleTicke
         ? post.images.first
         : (post.rawJson['image_path'] ?? post.rawJson['media_url'] ?? '').toString();
     final rawType = (post.rawJson['story_type'] ?? post.rawJson['type'] ?? post.type).toString().toLowerCase();
+
+    _isYouTube = YouTubeHelper.isYouTubeUrl(mediaUrl);
+
+    if (_isYouTube) {
+      _isVideo = true;
+      _progressController = AnimationController(vsync: this, duration: const Duration(seconds: 10))
+        ..addStatusListener((status) {
+          if (status == AnimationStatus.completed && mounted) {
+            Navigator.of(context).pop();
+          }
+        })
+        ..forward();
+      if (mounted) setState(() => _isInitialized = true);
+      return;
+    }
+
     final isVideoExt = mediaUrl.endsWith('.mp4') ||
         mediaUrl.endsWith('.mov') ||
         mediaUrl.endsWith('.webm') ||
@@ -1526,6 +1617,85 @@ class _StoryViewerDialogState extends State<_StoryViewerDialog> with SingleTicke
           if (!_isInitialized)
             const Center(
               child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+            )
+          else if (_isYouTube)
+            GestureDetector(
+              onTap: () {
+                _progressController?.stop();
+                YouTubeHelper.launchYouTube(mediaUrl);
+              },
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  Image.network(
+                    YouTubeHelper.getThumbnailUrl(mediaUrl, highRes: true),
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => const Center(
+                      child: Icon(Icons.broken_image_rounded, color: Colors.white54, size: 64),
+                    ),
+                  ),
+                  Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          Colors.black.withValues(alpha: 0.5),
+                          Colors.black.withValues(alpha: 0.2),
+                          Colors.black.withValues(alpha: 0.8),
+                        ],
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                      ),
+                    ),
+                  ),
+                  Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(18),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFF0000),
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFFFF0000).withValues(alpha: 0.5),
+                                blurRadius: 24,
+                                offset: const Offset(0, 8),
+                              ),
+                            ],
+                          ),
+                          child: const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 48),
+                        ),
+                        const SizedBox(height: 16),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.7),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: Colors.white24, width: 1),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.smart_display_rounded, color: Color(0xFFFF0000), size: 18),
+                              SizedBox(width: 6),
+                              Text(
+                                'Xem Video trên YouTube',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 0.3,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             )
           else if (_isVideo && _videoController != null && _videoController!.value.isInitialized)
             GestureDetector(

@@ -5,6 +5,8 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:http_parser/http_parser.dart';
+import '../core/youtube_helper.dart';
 import 'cart_service.dart';
 
 /// Top-level function dùng cho Flutter Isolate compute()
@@ -1670,7 +1672,18 @@ class ApiService {
       for (String path in filePaths) {
         final file = File(path);
         if (await file.exists()) {
-          request.files.add(await http.MultipartFile.fromPath('files[]', path));
+          final ext = path.split('.').last.toLowerCase();
+          MediaType? mediaType;
+          if (['mp4', 'mov', 'avi', 'mkv', 'webm', '3gp', 'm4v'].contains(ext)) {
+            mediaType = MediaType('video', ext == 'mov' ? 'quicktime' : (ext == 'mp4' ? 'mp4' : ext));
+          } else if (['jpg', 'jpeg', 'png', 'webp', 'gif'].contains(ext)) {
+            mediaType = MediaType('image', ext == 'jpg' ? 'jpeg' : ext);
+          }
+          request.files.add(await http.MultipartFile.fromPath(
+            'files[]',
+            path,
+            contentType: mediaType,
+          ));
         }
       }
 
@@ -1683,9 +1696,14 @@ class ApiService {
           final List<Map<String, String>> uploadedList = [];
           for (var item in data['files']) {
             if (item['url'] != null) {
+              final url = item['url'].toString();
+              var type = (item['file_type'] ?? item['type'] ?? 'image').toString();
+              if (YouTubeHelper.isYouTubeUrl(url)) {
+                type = 'video';
+              }
               uploadedList.add({
-                'url': item['url'].toString(),
-                'type': (item['file_type'] ?? item['type'] ?? 'image').toString(),
+                'url': url,
+                'type': type,
               });
             }
           }
@@ -1756,13 +1774,20 @@ class ApiService {
       if (mediaPath != null && mediaPath.isNotEmpty) {
         final file = File(mediaPath);
         if (await file.exists()) {
-          request.files.add(await http.MultipartFile.fromPath('media_file', mediaPath));
           final ext = mediaPath.split('.').last.toLowerCase();
-          if (['mp4', 'mov', 'avi', 'mkv', 'webm'].contains(ext)) {
-            request.fields['type'] = 'video';
+          final isVid = ['mp4', 'mov', 'avi', 'mkv', 'webm', '3gp', 'm4v'].contains(ext);
+          MediaType? mediaType;
+          if (isVid) {
+            mediaType = MediaType('video', ext == 'mov' ? 'quicktime' : (ext == 'mp4' ? 'mp4' : ext));
           } else {
-            request.fields['type'] = 'image';
+            mediaType = MediaType('image', ext == 'jpg' ? 'jpeg' : ext);
           }
+          request.files.add(await http.MultipartFile.fromPath(
+            'media_file',
+            mediaPath,
+            contentType: mediaType,
+          ));
+          request.fields['type'] = isVid ? 'video' : 'image';
         }
       } else {
         request.fields['type'] = 'text';

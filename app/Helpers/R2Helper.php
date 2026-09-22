@@ -98,9 +98,13 @@ class R2Helper
             if (!($file instanceof UploadedFile) || !$file->isValid()) {
                 continue;
             }
-            $mimeType = $file->getClientMimeType();
-            $fileType = str_starts_with($mimeType, 'video/') ? 'video' : 'image';
+            $mimeType = $file->getClientMimeType() ?: '';
+            $extension = strtolower($file->getClientOriginalExtension());
+            $isVideo = str_starts_with($mimeType, 'video/') || in_array($extension, ['mp4', 'mov', 'avi', 'mkv', 'webm', '3gp', 'm4v']);
             $url = self::upload($file, $folder, $maxDimension);
+
+            $isYouTube = str_contains($url, 'youtube.com') || str_contains($url, 'youtu.be');
+            $fileType = ($isVideo || $isYouTube) ? 'video' : 'image';
 
             $results[] = [
                 'original_name' => $file->getClientOriginalName(),
