@@ -51,6 +51,7 @@ class _NewsBulletinScreenState extends State<NewsBulletinScreen> {
 
   List<PostModel> get _filteredPosts {
     return _posts.where((post) {
+      if (post.isStory) return false;
       if (ModerationService.isUserBlocked(post.author.id.toString())) return false;
       if (ModerationService.isPostHidden(post.id)) return false;
       if (_selectedCategory == 'food_tour') return post.isFoodTour;
@@ -1510,6 +1511,7 @@ class _StoryViewerDialogState extends State<_StoryViewerDialog> with SingleTicke
   bool _isYouTube = false;
   bool _isInitialized = false;
   bool _isMuted = false;
+  bool _isCoverFit = false;
 
   @override
   void initState() {
@@ -1528,6 +1530,7 @@ class _StoryViewerDialogState extends State<_StoryViewerDialog> with SingleTicke
 
     if (_isYouTube) {
       _isVideo = true;
+      _isCoverFit = false;
       _progressController = AnimationController(vsync: this, duration: const Duration(seconds: 10))
         ..addStatusListener((status) {
           if (status == AnimationStatus.completed && mounted) {
@@ -1569,9 +1572,16 @@ class _StoryViewerDialogState extends State<_StoryViewerDialog> with SingleTicke
         });
 
         if (mounted) {
+          final val = controller.value;
+          final isRotated = val.rotationCorrection == 90 || val.rotationCorrection == 270;
+          final double vidW = isRotated ? val.size.height : val.size.width;
+          final double vidH = isRotated ? val.size.width : val.size.height;
+          final autoCover = (vidW > 0 && vidH > 0 && (vidH / vidW) >= 1.6);
+
           setState(() {
             _videoController = controller;
             _isInitialized = true;
+            _isCoverFit = autoCover;
           });
         }
       } catch (e) {
@@ -1629,7 +1639,7 @@ class _StoryViewerDialogState extends State<_StoryViewerDialog> with SingleTicke
                 children: [
                   Image.network(
                     YouTubeHelper.getThumbnailUrl(mediaUrl, highRes: true),
-                    fit: BoxFit.cover,
+                    fit: _isCoverFit ? BoxFit.cover : BoxFit.contain,
                     errorBuilder: (_, __, ___) => const Center(
                       child: Icon(Icons.broken_image_rounded, color: Colors.white54, size: 64),
                     ),
@@ -1708,9 +1718,15 @@ class _StoryViewerDialogState extends State<_StoryViewerDialog> with SingleTicke
                   }
                 });
               },
+              onDoubleTap: () {
+                setState(() {
+                  _isCoverFit = !_isCoverFit;
+                });
+              },
+              behavior: HitTestBehavior.opaque,
               child: SizedBox.expand(
                 child: FittedBox(
-                  fit: BoxFit.cover,
+                  fit: _isCoverFit ? BoxFit.cover : BoxFit.contain,
                   clipBehavior: Clip.hardEdge,
                   child: Builder(
                     builder: (context) {
@@ -1730,14 +1746,21 @@ class _StoryViewerDialogState extends State<_StoryViewerDialog> with SingleTicke
               ),
             )
           else if (!_isVideo && mediaUrl.isNotEmpty)
-            SizedBox.expand(
-              child: Image.network(
-                mediaUrl.startsWith('http')
-                    ? mediaUrl
-                    : 'https://donganhdiscovery.xadonganh.com/${mediaUrl.startsWith('/') ? mediaUrl.substring(1) : mediaUrl}',
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => const Center(
-                  child: Icon(Icons.broken_image_rounded, color: Colors.white54, size: 64),
+            GestureDetector(
+              onDoubleTap: () {
+                setState(() {
+                  _isCoverFit = !_isCoverFit;
+                });
+              },
+              child: SizedBox.expand(
+                child: Image.network(
+                  mediaUrl.startsWith('http')
+                      ? mediaUrl
+                      : 'https://donganhdiscovery.xadonganh.com/${mediaUrl.startsWith('/') ? mediaUrl.substring(1) : mediaUrl}',
+                  fit: _isCoverFit ? BoxFit.cover : BoxFit.contain,
+                  errorBuilder: (_, __, ___) => const Center(
+                    child: Icon(Icons.broken_image_rounded, color: Colors.white54, size: 64),
+                  ),
                 ),
               ),
             )
@@ -1832,6 +1855,19 @@ class _StoryViewerDialogState extends State<_StoryViewerDialog> with SingleTicke
                         ],
                       ),
                     ),
+                    if ((_isVideo && _videoController != null) || _isYouTube || (!_isVideo && mediaUrl.isNotEmpty))
+                      IconButton(
+                        icon: Icon(
+                          _isCoverFit ? Icons.fit_screen_rounded : Icons.fullscreen_rounded,
+                          color: Colors.white,
+                        ),
+                        tooltip: _isCoverFit ? 'Thu vừa khung hình' : 'Phóng to toàn màn hình',
+                        onPressed: () {
+                          setState(() {
+                            _isCoverFit = !_isCoverFit;
+                          });
+                        },
+                      ),
                     if (_isVideo && _videoController != null)
                       IconButton(
                         icon: Icon(_isMuted ? Icons.volume_off_rounded : Icons.volume_up_rounded, color: Colors.white),

@@ -168,6 +168,7 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
   bool _isVideoInitialized = false;
   bool _isVideoPlaying = true;
   bool _isVideoMuted = false;
+  bool _isVideoCoverFit = false;
 
   bool _isPathVideo(String? path) {
     if (path == null || path.isEmpty) return false;
@@ -192,11 +193,18 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
       await controller.setVolume(1.0);
       await controller.play();
       if (mounted) {
+        final val = controller.value;
+        final isRotated = val.rotationCorrection == 90 || val.rotationCorrection == 270;
+        final double vidW = isRotated ? val.size.height : val.size.width;
+        final double vidH = isRotated ? val.size.width : val.size.height;
+        final autoCover = (vidW > 0 && vidH > 0 && (vidH / vidW) >= 1.6);
+
         setState(() {
           _videoPlayerController = controller;
           _isVideoInitialized = true;
           _isVideoPlaying = true;
           _isVideoMuted = false;
+          _isVideoCoverFit = autoCover;
         });
       }
     } catch (e) {
@@ -1099,10 +1107,15 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
 
                                   return GestureDetector(
                                     onTap: _toggleVideoPlayPause,
+                                    onDoubleTap: () {
+                                      setState(() {
+                                        _isVideoCoverFit = !_isVideoCoverFit;
+                                      });
+                                    },
                                     behavior: HitTestBehavior.opaque,
                                     child: SizedBox.expand(
                                       child: FittedBox(
-                                        fit: BoxFit.cover,
+                                        fit: _isVideoCoverFit ? BoxFit.cover : BoxFit.contain,
                                         clipBehavior: Clip.hardEdge,
                                         child: SizedBox(
                                           width: vidW > 0 ? vidW : 1,
@@ -1180,21 +1193,47 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
                                       ],
                                     ),
                                   ),
-                                  GestureDetector(
-                                    onTap: _toggleVideoMute,
-                                    child: Container(
-                                      padding: const EdgeInsets.all(7),
-                                      decoration: BoxDecoration(
-                                        color: Colors.black.withValues(alpha: 0.75),
-                                        shape: BoxShape.circle,
-                                        border: Border.all(color: Colors.white38),
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      GestureDetector(
+                                        onTap: () {
+                                          setState(() {
+                                            _isVideoCoverFit = !_isVideoCoverFit;
+                                          });
+                                        },
+                                        child: Container(
+                                          padding: const EdgeInsets.all(7),
+                                          decoration: BoxDecoration(
+                                            color: Colors.black.withValues(alpha: 0.75),
+                                            shape: BoxShape.circle,
+                                            border: Border.all(color: Colors.white38),
+                                          ),
+                                          child: Icon(
+                                            _isVideoCoverFit ? Icons.fit_screen_rounded : Icons.fullscreen_rounded,
+                                            color: Colors.white,
+                                            size: 18,
+                                          ),
+                                        ),
                                       ),
-                                      child: Icon(
-                                        _isVideoMuted ? Icons.volume_off_rounded : Icons.volume_up_rounded,
-                                        color: Colors.white,
-                                        size: 18,
+                                      const SizedBox(width: 8),
+                                      GestureDetector(
+                                        onTap: _toggleVideoMute,
+                                        child: Container(
+                                          padding: const EdgeInsets.all(7),
+                                          decoration: BoxDecoration(
+                                            color: Colors.black.withValues(alpha: 0.75),
+                                            shape: BoxShape.circle,
+                                            border: Border.all(color: Colors.white38),
+                                          ),
+                                          child: Icon(
+                                            _isVideoMuted ? Icons.volume_off_rounded : Icons.volume_up_rounded,
+                                            color: Colors.white,
+                                            size: 18,
+                                          ),
+                                        ),
                                       ),
-                                    ),
+                                    ],
                                   ),
                                 ],
                               ),

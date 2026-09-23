@@ -19,7 +19,7 @@ class StoryCarousel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final storyPosts = posts.where((p) => p.type == 'story' || p.rawJson['is_story'] == true).take(6).toList();
+    final storyPosts = posts.where((p) => p.isStory).take(6).toList();
     final currentUserId = ApiService.currentUser?['id']?.toString();
 
     return SizedBox(

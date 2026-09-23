@@ -197,5 +197,14 @@ class PostModel {
   bool get hasYouTubeVideo {
     return videoUrls.any((u) => YouTubeHelper.isYouTubeUrl(u));
   }
+
+  /// Kiểm tra xem đây có phải là tin Story 24h (chỉ hiển thị ở thanh Story trên cùng)
+  bool get isStory {
+    return type == 'story' ||
+        rawJson['is_story'] == true ||
+        rawJson['story_type'] != null ||
+        id.startsWith('story_') ||
+        personalTag == '📸 Tin 24h';
+  }
 }
 
