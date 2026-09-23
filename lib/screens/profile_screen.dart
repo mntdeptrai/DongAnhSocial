@@ -5,6 +5,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:image_picker/image_picker.dart';
 import '../services/api_service.dart';
 import 'privacy_policy_screen.dart';
+import 'personal_info_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   final VoidCallback onLogout;
@@ -362,64 +363,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (mounted) setState(() => _isLoadingActivity = false);
     }
   }
-  void _showEditProfileDialog(BuildContext context) {
-    final user = ApiService.currentUser;
-    final nameController = TextEditingController(text: user?['name'] ?? '');
-
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Row(
-          children: [
-            Icon(Icons.edit_note_rounded, color: Color(0xFF0EA5E9)),
-            SizedBox(width: 8),
-            Text('Chỉnh sửa hồ sơ'),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Họ và tên', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-            const SizedBox(height: 6),
-            TextField(
-              controller: nameController,
-              decoration: InputDecoration(
-                hintText: 'Nhập họ tên mới...',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              ),
-            ),
-            const SizedBox(height: 12),
-            Text('Email: ${user?['email'] ?? 'Chưa cập nhật'}', style: const TextStyle(color: Colors.grey, fontSize: 12)),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Hủy'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Đã cập nhật thông tin cá nhân thành công!'),
-                  backgroundColor: Color(0xFF059669),
-                ),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF0EA5E9),
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            ),
-            child: const Text('Lưu thay đổi'),
-          ),
-        ],
-      ),
+  Future<void> _showEditProfileDialog(BuildContext context) async {
+    final updated = await Navigator.push<Map<String, dynamic>>(
+      context,
+      MaterialPageRoute(builder: (_) => const PersonalInfoScreen()),
     );
+    if (updated != null && mounted) {
+      setState(() {});
+      _fetchMyActivity();
+    }
   }
 
   void _showChangePasswordDialog(BuildContext context) {
@@ -701,6 +653,44 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           user?['email'] ?? '',
                           style: const TextStyle(color: Color(0xFF64748B), fontSize: 13),
                         ),
+                        if (user != null && (user['commune'] != null || user['address'] != null)) ...[
+                          const SizedBox(height: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3.5),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFE0F2FE),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.location_on_rounded, color: Color(0xFF0284C7), size: 13),
+                                const SizedBox(width: 4),
+                                Text(
+                                  user['commune'] != null ? '${user['commune']}, Đông Anh' : (user['address'] ?? '').toString(),
+                                  style: const TextStyle(color: Color(0xFF0369A1), fontSize: 12, fontWeight: FontWeight.w700),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                        if (user != null && user['bio'] != null && user['bio'].toString().trim().isNotEmpty) ...[
+                          const SizedBox(height: 8),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                            child: Text(
+                              user['bio'].toString().trim(),
+                              style: const TextStyle(
+                                color: Color(0xFF475569),
+                                fontSize: 12.5,
+                                fontStyle: FontStyle.italic,
+                              ),
+                              textAlign: TextAlign.center,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
                         const SizedBox(height: 16),
 
                         // Social Stats Counters Row

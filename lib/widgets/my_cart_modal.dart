@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../services/cart_service.dart';
+import '../screens/personal_info_screen.dart';
 import 'custom_loader.dart';
 import 'squircle_helper.dart';
 
@@ -30,6 +31,7 @@ class _MyCartModalState extends State<MyCartModal> {
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _addressController = TextEditingController();
   final TextEditingController _noteController = TextEditingController();
+  String? _commune;
 
   @override
   void initState() {
@@ -85,6 +87,9 @@ class _MyCartModalState extends State<MyCartModal> {
           }
           if (_addressController.text.isEmpty && u['address'] != null) {
             _addressController.text = u['address'].toString();
+          }
+          if (_commune == null && u['commune'] != null) {
+            _commune = u['commune'].toString();
           }
         }
 
@@ -156,12 +161,20 @@ class _MyCartModalState extends State<MyCartModal> {
 
     if (_nameController.text.trim().isEmpty || _phoneController.text.trim().isEmpty || _addressController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('⚠️ Vui lòng nhập đầy đủ Họ tên, SĐT và Địa chỉ giao hàng!'),
-          backgroundColor: Color(0xFFDC2626),
+        SnackBar(
+          content: const Row(
+            children: [
+              Icon(Icons.info_outline_rounded, color: Colors.white, size: 20),
+              SizedBox(width: 8),
+              Expanded(child: Text('Vui lòng thiết lập thông tin cá nhân & địa chỉ giao hàng!')),
+            ],
+          ),
+          backgroundColor: const Color(0xFFDC2626),
           behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
       );
+      _openEditPersonalInfo();
       return;
     }
 
@@ -200,29 +213,237 @@ class _MyCartModalState extends State<MyCartModal> {
     }
   }
 
-  InputDecoration _buildInputDecoration({
-    required String label,
-    required IconData icon,
-  }) {
-    return InputDecoration(
-      labelText: label,
-      labelStyle: const TextStyle(color: Color(0xFF64748B), fontSize: 13),
-      prefixIcon: Icon(icon, color: const Color(0xFF0EA5E9), size: 20),
-      filled: true,
-      fillColor: const Color(0xFFF8FAFC),
-      isDense: true,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+  Future<void> _openEditPersonalInfo() async {
+    final res = await PersonalInfoScreen.showModal(
+      context,
+      onSaved: (updatedUser) {
+        if (mounted) {
+          setState(() {
+            _nameController.text = (updatedUser['name'] ?? '').toString();
+            _phoneController.text = (updatedUser['phone'] ?? '').toString();
+            _addressController.text = (updatedUser['address'] ?? '').toString();
+            _commune = updatedUser['commune']?.toString();
+          });
+        }
+      },
+    );
+    if (res != null && mounted) {
+      setState(() {
+        _nameController.text = (res['name'] ?? '').toString();
+        _phoneController.text = (res['phone'] ?? '').toString();
+        _addressController.text = (res['address'] ?? '').toString();
+        _commune = res['commune']?.toString();
+      });
+    }
+  }
+
+  Widget _buildDeliveryInfoSection() {
+    final hasInfo = _nameController.text.trim().isNotEmpty &&
+        _phoneController.text.trim().isNotEmpty &&
+        _addressController.text.trim().isNotEmpty;
+
+    if (hasInfo) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(color: const Color(0xFFE2E8F0)),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF0F172A).withValues(alpha: 0.03),
+              blurRadius: 10,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(7),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE0F2FE),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(Icons.local_shipping_outlined, color: Color(0xFF0284C7), size: 18),
+                    ),
+                    const SizedBox(width: 10),
+                    const Text(
+                      'THÔNG TIN GIAO NHẬN',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 12.5,
+                        color: Color(0xFF0F172A),
+                        letterSpacing: 0.4,
+                      ),
+                    ),
+                  ],
+                ),
+                InkWell(
+                  onTap: _openEditPersonalInfo,
+                  borderRadius: BorderRadius.circular(20),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: const Color(0xFFCBD5E1)),
+                    ),
+                    child: const Row(
+                      children: [
+                        Icon(Icons.edit_rounded, color: Color(0xFF0EA5E9), size: 13),
+                        SizedBox(width: 4),
+                        Text(
+                          'Thay đổi',
+                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF0EA5E9)),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            const Divider(height: 1, color: Color(0xFFF1F5F9)),
+            const SizedBox(height: 12),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(Icons.person_pin_circle_rounded, color: Color(0xFF0EA5E9), size: 24),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              _nameController.text.trim(),
+                              style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w800, color: Color(0xFF0F172A)),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            '•  ${_phoneController.text.trim()}',
+                            style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: Color(0xFF64748B)),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 5),
+                      Text(
+                        _addressController.text.trim() + (_commune != null && !_addressController.text.contains(_commune!) ? ', $_commune' : ''),
+                        style: const TextStyle(fontSize: 13, color: Color(0xFF334155), height: 1.35),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            TextField(
+              controller: _noteController,
+              style: const TextStyle(fontSize: 13.5, color: Color(0xFF0F172A)),
+              decoration: InputDecoration(
+                hintText: 'Ghi chú cho gian hàng (VD: giao giờ hành chính, gọi trước)...',
+                hintStyle: const TextStyle(fontSize: 12.5, color: Color(0xFF94A3B8)),
+                prefixIcon: const Icon(Icons.edit_note_rounded, color: Color(0xFF64748B), size: 20),
+                filled: true,
+                fillColor: const Color(0xFFF8FAFC),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: const BorderSide(color: Color(0xFF0EA5E9), width: 1.5),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: const Color(0xFFBAE6FD)),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0284C7).withValues(alpha: 0.05),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: Color(0xFF0EA5E9), width: 1.8),
-      ),
-      errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: Color(0xFFEF4444)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(9),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE0F2FE),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.contact_mail_rounded, color: Color(0xFF0284C7), size: 22),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Thông tin nhận hàng',
+                      style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w800, color: Color(0xFF0F172A)),
+                    ),
+                    SizedBox(height: 2),
+                    Text(
+                      'Thiết lập hồ sơ cá nhân để nhận hàng OCOP tận nơi',
+                      style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          SizedBox(
+            width: double.infinity,
+            height: 44,
+            child: ElevatedButton.icon(
+              onPressed: _openEditPersonalInfo,
+              icon: const Icon(Icons.add_location_alt_rounded, size: 18),
+              label: const Text(
+                'Nhập Thông Tin Cá Nhân & Địa Chỉ',
+                style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF0EA5E9),
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -566,85 +787,7 @@ class _MyCartModalState extends State<MyCartModal> {
                           const SizedBox(height: 10),
 
                           // Customer Delivery Order Form Section
-                          Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: const Color(0xFFE2E8F0)),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: const Color(0xFF0F172A).withValues(alpha: 0.03),
-                                  blurRadius: 10,
-                                  offset: const Offset(0, 3),
-                                ),
-                              ],
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.all(6),
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFFE0F2FE),
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                      child: const Icon(Icons.local_shipping_outlined, color: Color(0xFF0284C7), size: 18),
-                                    ),
-                                    const SizedBox(width: 10),
-                                    const Text(
-                                      'THÔNG TIN GIAO HÀNG',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 13,
-                                        color: Color(0xFF0F172A),
-                                        letterSpacing: 0.3,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 14),
-                                TextField(
-                                  controller: _nameController,
-                                  style: const TextStyle(fontSize: 14, color: Color(0xFF0F172A), fontWeight: FontWeight.w500),
-                                  decoration: _buildInputDecoration(
-                                    label: 'Họ và tên người nhận *',
-                                    icon: Icons.person_outline_rounded,
-                                  ),
-                                ),
-                                const SizedBox(height: 12),
-                                TextField(
-                                  controller: _phoneController,
-                                  keyboardType: TextInputType.phone,
-                                  style: const TextStyle(fontSize: 14, color: Color(0xFF0F172A), fontWeight: FontWeight.w500),
-                                  decoration: _buildInputDecoration(
-                                    label: 'Số điện thoại liên hệ *',
-                                    icon: Icons.phone_outlined,
-                                  ),
-                                ),
-                                const SizedBox(height: 12),
-                                TextField(
-                                  controller: _addressController,
-                                  style: const TextStyle(fontSize: 14, color: Color(0xFF0F172A), fontWeight: FontWeight.w500),
-                                  decoration: _buildInputDecoration(
-                                    label: 'Địa chỉ nhận hàng chi tiết *',
-                                    icon: Icons.location_on_outlined,
-                                  ),
-                                ),
-                                const SizedBox(height: 12),
-                                TextField(
-                                  controller: _noteController,
-                                  style: const TextStyle(fontSize: 14, color: Color(0xFF0F172A), fontWeight: FontWeight.w500),
-                                  decoration: _buildInputDecoration(
-                                    label: 'Ghi chú cho gian hàng (tùy chọn)',
-                                    icon: Icons.edit_note_rounded,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
+                          _buildDeliveryInfoSection(),
                           const SizedBox(height: 16),
 
                           // Bill Payment Summary Card

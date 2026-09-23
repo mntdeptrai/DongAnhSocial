@@ -43,6 +43,11 @@ class UserApiController extends Controller
                 'username'        => $user->username,
                 'email'           => $user->email,
                 'phone'           => $user->phone,
+                'address'         => $user->address,
+                'commune'         => $user->commune,
+                'bio'             => $user->bio,
+                'gender'          => $user->gender,
+                'birthday'        => $user->birthday ? (is_string($user->birthday) ? $user->birthday : $user->birthday->format('Y-m-d')) : null,
                 'role'            => $user->role,
                 'avatar'          => $user->avatar ?? '👤',
                 'avatar_url'      => $user->avatar_url,
@@ -58,7 +63,7 @@ class UserApiController extends Controller
     }
 
     /**
-     * Cập nhật thông tin hồ sơ cá nhân (Tên, Số điện thoại, Avatar)
+     * Cập nhật thông tin hồ sơ cá nhân (Tên, Số điện thoại, Địa chỉ, Xã/Thị trấn, Tiểu sử, Giới tính, Ngày sinh, Avatar)
      */
     public function updateProfile(Request $request)
     {
@@ -68,9 +73,14 @@ class UserApiController extends Controller
         }
 
         $request->validate([
-            'name'   => 'nullable|string|max:255',
-            'phone'  => 'nullable|string|max:20',
-            'avatar' => 'nullable|string',
+            'name'     => 'nullable|string|max:255',
+            'phone'    => 'nullable|string|max:20',
+            'address'  => 'nullable|string|max:1000',
+            'commune'  => 'nullable|string|max:100',
+            'bio'      => 'nullable|string|max:2000',
+            'gender'   => 'nullable|string|max:20',
+            'birthday' => 'nullable|string|max:50',
+            'avatar'   => 'nullable|string',
         ]);
 
         if ($request->has('name') && !empty($request->name)) {
@@ -78,6 +88,21 @@ class UserApiController extends Controller
         }
         if ($request->has('phone')) {
             $user->phone = $request->phone;
+        }
+        if ($request->has('address')) {
+            $user->address = $request->address;
+        }
+        if ($request->has('commune')) {
+            $user->commune = $request->commune;
+        }
+        if ($request->has('bio')) {
+            $user->bio = $request->bio;
+        }
+        if ($request->has('gender')) {
+            $user->gender = $request->gender;
+        }
+        if ($request->has('birthday')) {
+            $user->birthday = $request->birthday;
         }
         if ($request->has('avatar')) {
             $user->avatar = $request->avatar;
@@ -88,7 +113,23 @@ class UserApiController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Cập nhật thông tin cá nhân thành công!',
-            'user'    => $user,
+            'user'    => [
+                'id'         => $user->id,
+                'name'       => $user->name,
+                'username'   => $user->username,
+                'email'      => $user->email,
+                'phone'      => $user->phone,
+                'address'    => $user->address,
+                'commune'    => $user->commune,
+                'bio'        => $user->bio,
+                'gender'     => $user->gender,
+                'birthday'   => $user->birthday ? (is_string($user->birthday) ? $user->birthday : $user->birthday->format('Y-m-d')) : null,
+                'role'       => $user->role,
+                'avatar'     => $user->avatar ?? '👤',
+                'avatar_url' => $user->avatar_url,
+                'cover'      => $user->cover,
+                'cover_url'  => $user->cover_url,
+            ],
         ], 200, [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     }
 

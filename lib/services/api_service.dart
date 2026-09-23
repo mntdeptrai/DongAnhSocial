@@ -791,6 +791,55 @@ class ApiService {
     return currentUser;
   }
 
+  /// PUT /user/profile — Cập nhật thông tin cá nhân & giao nhận đầy đủ
+  static Future<Map<String, dynamic>> updateProfile({
+    String? name,
+    String? phone,
+    String? address,
+    String? commune,
+    String? bio,
+    String? gender,
+    String? birthday,
+    String? avatar,
+  }) async {
+    try {
+      final Map<String, dynamic> body = {};
+      if (name != null) body['name'] = name;
+      if (phone != null) body['phone'] = phone;
+      if (address != null) body['address'] = address;
+      if (commune != null) body['commune'] = commune;
+      if (bio != null) body['bio'] = bio;
+      if (gender != null) body['gender'] = gender;
+      if (birthday != null) body['birthday'] = birthday;
+      if (avatar != null) body['avatar'] = avatar;
+
+      final response = await http.put(
+        Uri.parse('$baseUrl/user/profile'),
+        headers: _getHeaders(),
+        body: jsonEncode(body),
+      );
+
+      final data = jsonDecode(response.body);
+      if (response.statusCode == 200 && data['success'] == true && data['user'] != null) {
+        final updatedUser = Map<String, dynamic>.from(currentUser ?? {});
+        if (data['user'] is Map) {
+          updatedUser.addAll(Map<String, dynamic>.from(data['user']));
+        }
+        currentUser = updatedUser;
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('current_user', jsonEncode(currentUser));
+        return {
+          'success': true,
+          'message': data['message'] ?? 'Cập nhật thông tin cá nhân thành công!',
+          'user': currentUser
+        };
+      }
+      return {'success': false, 'message': data['message'] ?? 'Cập nhật thất bại!'};
+    } catch (e) {
+      return {'success': false, 'message': 'Lỗi kết nối máy chủ: $e'};
+    }
+  }
+
   /// GET /user/posts — Danh sách bài viết cá nhân thực tế từ DB
   static Future<List<dynamic>> getMyPosts() async {
     try {

@@ -38,6 +38,11 @@ class User extends Authenticatable
         'stall_id',
         'is_verified',
         'fcm_token',
+        'address',
+        'commune',
+        'bio',
+        'gender',
+        'birthday',
     ];
 
     /**

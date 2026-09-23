@@ -123,7 +123,7 @@ Route::prefix('v1')->group(function () {
         // ===================================================================
         Route::prefix('user')->group(function () {
             Route::get('/profile', [UserApiController::class, 'getProfile']);
-            Route::put('/profile', [UserApiController::class, 'updateProfile']);
+            Route::match(['put', 'post'], '/profile', [UserApiController::class, 'updateProfile']);
             Route::post('/change-password', [UserApiController::class, 'changePassword']);
             Route::get('/orders', [UserApiController::class, 'getMyOrders']);
             Route::get('/orders/{id}', [UserApiController::class, 'getOrderDetail']);
