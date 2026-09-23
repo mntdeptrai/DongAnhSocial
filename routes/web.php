@@ -40,6 +40,8 @@ Route::get('/youtube/callback', [YouTubeAuthController::class, 'callback'])->nam
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/ban-tin', [HomeController::class, 'newsfeed'])->name('newsfeed');
 Route::get('/chinh-sach-dieu-khoan', [HomeController::class, 'privacyPolicy'])->name('privacy.policy');
+Route::get('/privacy-policy', [HomeController::class, 'privacyPolicy'])->name('privacy.en');
+Route::get('/terms', [HomeController::class, 'privacyPolicy'])->name('terms');
 Route::post('/api/moderation/report', [ModerationController::class, 'report'])->name('api.moderation.report');
 Route::get('/api/moderation/check-ban', [ModerationController::class, 'checkBan'])->name('api.moderation.check-ban');
 Route::get('/tuyen-duong-40', [HomeController::class, 'tuyenDuong40'])->name('tuyen-duong');
