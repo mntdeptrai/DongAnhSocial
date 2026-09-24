@@ -128,6 +128,13 @@
                             <span class="tiktok-bag-badge" id="viewer-cart-mobile-count">{{ $stream->products->count() }}</span>
                         </button>
 
+                        @if($relatedStreams->count() > 0)
+                            <button type="button" class="btn-tiktok-switch" onclick="openSwitchLiveModal()" title="Chuyển phòng Live">
+                                <span class="tiktok-switch-icon">📺</span>
+                                <span class="tiktok-switch-badge">{{ $relatedStreams->count() }}</span>
+                            </button>
+                        @endif
+
                         <form onsubmit="event.preventDefault(); submitViewerComment();" class="tiktok-chat-form">
                             <input type="text" id="viewer-comment-input-mobile" placeholder="{{ Auth::check() || session('user_id') ? 'Thêm bình luận...' : 'Đăng nhập để chat...' }}" class="tiktok-chat-input" autocomplete="off">
                             <button type="submit" class="btn-tiktok-send-icon" title="Gửi">
@@ -347,6 +354,46 @@
     </div>
 </div>
 
+<!-- Modal Chuyển Phòng Live (Mobile Bottom Sheet) -->
+<div id="switch-live-modal" class="live-modal-backdrop" onclick="if(event.target === this) closeSwitchLiveModal()">
+    <div class="live-modal-dialog">
+        <div class="live-modal-header">
+            <div class="modal-title-with-icon">
+                <span class="modal-icon-lg">📺</span>
+                <div>
+                    <h3 class="live-modal-title">Chuyển Phòng Live</h3>
+                    <span class="modal-sub-text">{{ $relatedStreams->count() }} phòng đang phát sóng</span>
+                </div>
+            </div>
+            <button type="button" class="live-modal-close" onclick="closeSwitchLiveModal()">✕</button>
+        </div>
+        <div class="switch-live-list">
+            @forelse($relatedStreams as $rel)
+                <a href="{{ route('livestream.show', $rel->code_or_id) }}" class="switch-live-item">
+                    <div class="switch-live-thumb">
+                        <img src="{{ $rel->cover_image ? (str_starts_with($rel->cover_image, 'http') ? $rel->cover_image : asset($rel->cover_image)) : 'https://images.unsplash.com/photo-1516280440614-37939bbacd81?auto=format&fit=crop&w=400&q=80' }}" alt="{{ $rel->title }}">
+                        <span class="switch-live-badge">LIVE</span>
+                    </div>
+                    <div class="switch-live-info">
+                        <div class="switch-live-name">{{ $rel->title }}</div>
+                        <div class="switch-live-meta">
+                            <img src="{{ $rel->user->avatar_url ?: ('https://ui-avatars.com/api/?name=' . urlencode($rel->user->name) . '&background=0ea5e9&color=fff') }}" class="switch-live-avatar" alt="{{ $rel->user->name }}">
+                            <span>{{ $rel->user->name }}</span>
+                            <span class="switch-live-viewers">👥 {{ number_format($rel->viewer_count) }}</span>
+                        </div>
+                    </div>
+                    <div class="switch-live-arrow">→</div>
+                </a>
+            @empty
+                <div class="empty-viewer-cart">
+                    <span>📡</span>
+                    <p>Không có phòng Live nào khác đang phát sóng.</p>
+                </div>
+            @endforelse
+        </div>
+    </div>
+</div>
+
 @php
     $productsMap = [];
     foreach ($stream->products as $p) {
@@ -465,6 +512,15 @@ function openViewerCart() {
 }
 function closeViewerCart() {
     const modal = document.getElementById('viewer-cart-modal');
+    if (modal) modal.classList.remove('is-open');
+}
+
+function openSwitchLiveModal() {
+    const modal = document.getElementById('switch-live-modal');
+    if (modal) modal.classList.add('is-open');
+}
+function closeSwitchLiveModal() {
+    const modal = document.getElementById('switch-live-modal');
     if (modal) modal.classList.remove('is-open');
 }
 
@@ -1054,6 +1110,96 @@ function showCopiedToast() {
 /* Mobile TikTok Action Bar (Hidden on Desktop) */
 .mobile-tiktok-action-bar {
     display: none;
+}
+/* Switch Live Button (Hidden on Desktop, visible only in mobile bottom bar) */
+.btn-tiktok-switch {
+    display: none;
+}
+/* Switch Live List defaults for desktop */
+.switch-live-list {
+    padding: 16px 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: 520px;
+}
+.switch-live-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.2s;
+}
+.switch-live-item:hover {
+    background: #f1f5f9;
+    transform: translateX(4px);
+}
+.switch-live-thumb {
+    position: relative;
+    width: 80px;
+    height: 52px;
+    border-radius: 10px;
+    overflow: hidden;
+    flex-shrink: 0;
+    background: #0f172a;
+}
+.switch-live-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.switch-live-badge {
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    background: #ef4444;
+    color: #fff;
+    font-size: 0.6rem;
+    font-weight: 900;
+    padding: 1px 5px;
+    border-radius: 3px;
+}
+.switch-live-info {
+    flex: 1;
+    min-width: 0;
+}
+.switch-live-name {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #0f172a;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 4px;
+}
+.switch-live-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.78rem;
+    color: #64748b;
+}
+.switch-live-avatar {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+.switch-live-viewers {
+    margin-left: auto;
+    font-weight: 600;
+}
+.switch-live-arrow {
+    color: #94a3b8;
+    font-size: 1.1rem;
+    font-weight: 700;
+    flex-shrink: 0;
 }
 
 /* Details Card */
@@ -1746,10 +1892,16 @@ function showCopiedToast() {
         background: #000000 !important;
     }
 
-    .viewer-main-video, .viewer-replay-video, .viewer-replay-frame {
+    .viewer-main-video {
         width: 100% !important;
         height: 100% !important;
         object-fit: cover !important;
+    }
+    .viewer-replay-video, .viewer-replay-frame, .viewer-youtube-frame {
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: contain !important;
+        background: #000000 !important;
     }
 
     /* Hide desktop details & related section on mobile live screen */
@@ -2085,6 +2237,123 @@ function showCopiedToast() {
     .quickview-media {
         max-width: 200px !important;
         margin: 0 auto !important;
+    }
+
+    /* Switch Live Button */
+    .btn-tiktok-switch {
+        width: 44px !important;
+        height: 44px !important;
+        border-radius: 50% !important;
+        background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
+        border: none !important;
+        color: #ffffff !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        font-size: 1.3rem !important;
+        position: relative !important;
+        flex-shrink: 0 !important;
+        box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4) !important;
+        cursor: pointer !important;
+    }
+    .tiktok-switch-badge {
+        position: absolute !important;
+        top: -3px !important;
+        right: -3px !important;
+        background: #22c55e !important;
+        color: #ffffff !important;
+        font-size: 0.65rem !important;
+        font-weight: 900 !important;
+        padding: 1px 5px !important;
+        border-radius: 10px !important;
+        border: 1.5px solid #ffffff !important;
+    }
+
+    /* Switch Live List */
+    .switch-live-list {
+        padding: 12px 16px !important;
+        overflow-y: auto !important;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 10px !important;
+        max-height: 55vh !important;
+    }
+    .switch-live-item {
+        display: flex !important;
+        align-items: center !important;
+        gap: 12px !important;
+        padding: 10px 12px !important;
+        background: #f8fafc !important;
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 14px !important;
+        text-decoration: none !important;
+        color: inherit !important;
+        transition: all 0.2s !important;
+    }
+    .switch-live-item:active {
+        background: #f1f5f9 !important;
+        transform: scale(0.98) !important;
+    }
+    .switch-live-thumb {
+        position: relative !important;
+        width: 72px !important;
+        height: 48px !important;
+        border-radius: 10px !important;
+        overflow: hidden !important;
+        flex-shrink: 0 !important;
+        background: #0f172a !important;
+    }
+    .switch-live-thumb img {
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: cover !important;
+    }
+    .switch-live-badge {
+        position: absolute !important;
+        top: 4px !important;
+        left: 4px !important;
+        background: #ef4444 !important;
+        color: #fff !important;
+        font-size: 0.55rem !important;
+        font-weight: 900 !important;
+        padding: 1px 4px !important;
+        border-radius: 3px !important;
+    }
+    .switch-live-info {
+        flex: 1 !important;
+        min-width: 0 !important;
+    }
+    .switch-live-name {
+        font-size: 0.88rem !important;
+        font-weight: 700 !important;
+        color: #0f172a !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        margin-bottom: 4px !important;
+    }
+    .switch-live-meta {
+        display: flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        font-size: 0.76rem !important;
+        color: #64748b !important;
+    }
+    .switch-live-avatar {
+        width: 18px !important;
+        height: 18px !important;
+        border-radius: 50% !important;
+        object-fit: cover !important;
+    }
+    .switch-live-viewers {
+        margin-left: auto !important;
+        font-weight: 600 !important;
+    }
+    .switch-live-arrow {
+        color: #94a3b8 !important;
+        font-size: 1.1rem !important;
+        font-weight: 700 !important;
+        flex-shrink: 0 !important;
     }
 }
 </style>

@@ -157,8 +157,9 @@ window.DongAnhLiveHost = (function () {
 
     /**
      * Lấy stream Camera + Mic
+     * @param {boolean} skipRecording - Nếu true, không khởi tạo lại MediaRecorder (dùng khi đổi camera)
      */
-    async function startLocalMedia() {
+    async function startLocalMedia(skipRecording = false) {
         const constraints = {
             audio: { echoCancellation: true, noiseSuppression: true },
             video: {
@@ -179,8 +180,10 @@ window.DongAnhLiveHost = (function () {
             videoElement.srcObject = localStream;
         }
 
-        // Tự động ghi hình phiên Live để lưu trữ và tải lên YouTube
-        startRecording(localStream);
+        // Chỉ khởi tạo ghi hình lần đầu, không restart khi đổi camera
+        if (!skipRecording) {
+            startRecording(localStream);
+        }
 
         // Cập nhật track tới tất cả viewers hiện có
         peerConnections.forEach((pc) => {
@@ -436,8 +439,45 @@ window.DongAnhLiveHost = (function () {
      * Đổi Camera Trước / Sau (Trên điện thoại / iPad)
      */
     async function switchCamera() {
+        const btn = document.getElementById('btn-host-switch-cam');
+        const prevFacingMode = currentFacingMode;
         currentFacingMode = (currentFacingMode === 'user') ? 'environment' : 'user';
-        await startLocalMedia();
+
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '⏳ <span class="btn-text">Đang đổi...</span>';
+        }
+
+        try {
+            await startLocalMedia(true);
+
+            if (btn) {
+                btn.disabled = false;
+                const label = currentFacingMode === 'user' ? 'Cam trước' : 'Cam sau';
+                btn.innerHTML = '🔄 <span class="btn-text">' + label + '</span>';
+            }
+
+            console.log('[LiveHost] Camera switched to:', currentFacingMode);
+        } catch (err) {
+            console.error('[LiveHost] switchCamera error:', err);
+            // Revert facingMode on failure
+            currentFacingMode = prevFacingMode;
+
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = '🔄 <span class="btn-text">Đổi Cam</span>';
+            }
+
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Không thể đổi camera',
+                    text: 'Thiết bị không hỗ trợ hoặc camera đang bị chiếm dụng. Vui lòng thử lại.',
+                    timer: 3000,
+                    showConfirmButton: false
+                });
+            }
+        }
     }
 
     /**

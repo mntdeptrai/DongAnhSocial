@@ -141,6 +141,7 @@
             </div>
             <div class="past-live-grid">
                 @foreach($endedStreams as $stream)
+                    <a href="{{ route('livestream.show', $stream->code_or_id) }}" class="past-live-card-link">
                     <div class="past-live-card">
                         <div class="past-thumb">
                             @if($stream->cover_image)
@@ -158,7 +159,7 @@
                             <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;">
                                 <h4 class="past-title" style="margin-bottom: 0;">{{ $stream->title }}</h4>
                                 @if($currentUser && ($stream->user_id === $currentUser->id || $currentUser->role === 'admin'))
-                                    <button type="button" class="btn-delete-past-live" onclick="deletePastLive({{ $stream->id }}, this)" title="Xóa phiên phát sóng này">
+                                    <button type="button" class="btn-delete-past-live" onclick="event.preventDefault(); event.stopPropagation(); deletePastLive({{ $stream->id }}, this)" title="Xóa phiên phát sóng này">
                                         🗑️
                                     </button>
                                 @endif
@@ -170,6 +171,7 @@
                             </div>
                         </div>
                     </div>
+                    </a>
                 @endforeach
             </div>
         </div>
@@ -706,6 +708,19 @@ function deletePastLive(streamId, btn) {
     display: flex;
     align-items: center;
     gap: 6px;
+}
+.past-live-card-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
+.past-live-card-link:hover .past-live-card {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.06);
+    border-color: #cbd5e1;
+}
+.past-live-card {
+    transition: transform 0.2s, box-shadow 0.2s;
 }
 
 @media (max-width: 768px) {
