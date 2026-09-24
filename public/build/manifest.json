@@ -1,6 +1,6 @@
 {
   "resources/css/app.css": {
-    "file": "assets/app-BAiygIK6.css",
+    "file": "assets/app-INVTe6hj.css",
     "src": "resources/css/app.css",
     "isEntry": true,
     "name": "app",
@@ -9,7 +9,7 @@
     ]
   },
   "resources/js/Pages/SocialHub.jsx": {
-    "file": "assets/SocialHub-DraLIulY.js",
+    "file": "assets/SocialHub-DPl47GnB.js",
     "name": "SocialHub",
     "src": "resources/js/Pages/SocialHub.jsx",
     "isDynamicEntry": true,
@@ -18,7 +18,7 @@
     ]
   },
   "resources/js/app.jsx": {
-    "file": "assets/app-DnHkkCAm.js",
+    "file": "assets/app-CM3hzGSB.js",
     "name": "app",
     "src": "resources/js/app.jsx",
     "isEntry": true,
