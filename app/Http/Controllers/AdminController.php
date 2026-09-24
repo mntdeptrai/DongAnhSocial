@@ -1594,6 +1594,9 @@ class AdminController extends Controller
      */
     public function exportUsers(Request $request)
     {
+        ini_set('memory_limit', '512M');
+        set_time_limit(300);
+
         $this->verifyAdmin();
         $role = session('user_role');
         if (!in_array($role, ['admin', 'manager'])) {
@@ -1743,19 +1746,71 @@ class AdminController extends Controller
             }
         } catch (\Exception $ex) {}
         try {
-            $eList1 = \Illuminate\Support\Facades\DB::connection('mysql_market')->table('eateries')->get();
+            $eList1 = \Illuminate\Support\Facades\DB::connection('mysql_market')->table('eateries')->get(['id', 'name']);
             foreach ($eList1 as $e) {
                 $eateriesMap[$e->id] = $e->name;
             }
         } catch (\Exception $ex) {}
         try {
-            $eList2 = \Illuminate\Support\Facades\DB::connection('mysql')->table('eateries')->get();
+            $eList2 = \Illuminate\Support\Facades\DB::connection('mysql')->table('eateries')->get(['id', 'name']);
             foreach ($eList2 as $e) {
                 if (!isset($eateriesMap[$e->id])) {
                     $eateriesMap[$e->id] = $e->name;
                 }
             }
         } catch (\Exception $ex) {}
+
+        // Pre-fetch Stalls map (bằng id, user_id, seller_phone) để tránh N+1 Query
+        $stallsById = [];
+        $stallsByUserId = [];
+        $stallsByPhone = [];
+        foreach (['mysql_market', 'mysql'] as $conn) {
+            try {
+                $stalls = \Illuminate\Support\Facades\DB::connection($conn)->table('ocop_products')->get(['id', 'user_id', 'seller_phone', 'stall_name', 'name', 'eatery_id']);
+                foreach ($stalls as $s) {
+                    if (!isset($stallsById[$s->id])) {
+                        $stallsById[$s->id] = $s;
+                    }
+                    if ($s->user_id && !isset($stallsByUserId[$s->user_id])) {
+                        $stallsByUserId[$s->user_id] = $s;
+                    }
+                    if (!empty($s->seller_phone) && !isset($stallsByPhone[$s->seller_phone])) {
+                        $stallsByPhone[$s->seller_phone] = $s;
+                    }
+                }
+            } catch (\Exception $ex) {}
+        }
+
+        // Pre-fetch Owned Eateries map theo user_id
+        $ownedEateriesByUserId = [];
+        foreach (['mysql_market', 'mysql'] as $conn) {
+            try {
+                $userEateries = \Illuminate\Support\Facades\DB::connection($conn)->table('eateries')->whereNotNull('user_id')->get(['id', 'user_id', 'name']);
+                foreach ($userEateries as $ue) {
+                    if (!isset($ownedEateriesByUserId[$ue->user_id])) {
+                        $ownedEateriesByUserId[$ue->user_id] = [];
+                    }
+                    $ownedEateriesByUserId[$ue->user_id][] = ['id' => $ue->id, 'name' => $ue->name];
+                }
+            } catch (\Exception $ex) {}
+        }
+
+        // Pre-fetch Route Businesses map theo user_id và phone
+        $routeByUserId = [];
+        $routeByPhone = [];
+        if (\Illuminate\Support\Facades\Schema::hasTable('route_businesses')) {
+            try {
+                $rbList = \App\Models\RouteBusiness::get(['id', 'user_id', 'phone', 'name', 'village_name']);
+                foreach ($rbList as $rb) {
+                    if ($rb->user_id) {
+                        $routeByUserId[$rb->user_id][] = $rb;
+                    }
+                    if ($rb->phone) {
+                        $routeByPhone[$rb->phone][] = $rb;
+                    }
+                }
+            } catch (\Exception $ex) {}
+        }
 
         $filename = 'Danh_sach_tai_khoan_nguoi_dung_' . date('Y-m-d_H-i') . '.xls';
 
@@ -1785,9 +1840,17 @@ class AdminController extends Controller
             $marketName = 'Chưa thuộc chợ nào';
 
             if (in_array($u->role, ['seller', 'hkd']) || !empty($u->stall_id) || !empty($u->eatery_id)) {
-                $stall           = $u->getStall();
-                $ownedEateries   = $u->getOwnedEateries();
-                $routeBusinesses = $u->getRouteBusinesses();
+                $stall = null;
+                if (!empty($u->stall_id) && isset($stallsById[$u->stall_id])) {
+                    $stall = $stallsById[$u->stall_id];
+                } elseif (isset($stallsByUserId[$u->id])) {
+                    $stall = $stallsByUserId[$u->id];
+                } elseif (!empty($u->phone) && isset($stallsByPhone[$u->phone])) {
+                    $stall = $stallsByPhone[$u->phone];
+                }
+
+                $ownedEateries = $ownedEateriesByUserId[$u->id] ?? [];
+                $routeBusinesses = $routeByUserId[$u->id] ?? (!empty($u->phone) ? ($routeByPhone[$u->phone] ?? []) : []);
 
                 if ($stall) {
                     $stallName = $stall->stall_name ?: ($stall->name ?: 'Gian hàng #' . $stall->id);
@@ -1808,11 +1871,12 @@ class AdminController extends Controller
                     if (!empty($mNames)) {
                         $marketName = implode(', ', array_unique($mNames));
                     }
-                } elseif ($routeBusinesses && $routeBusinesses->count() > 0) {
-                    $stallName = $routeBusinesses->pluck('name')->implode(', ');
-                    $mNames    = $routeBusinesses->pluck('village_name')->filter()->unique()->toArray();
-                    if (!empty($mNames)) {
-                        $marketName = 'Tuyến 4.0 (' . implode(', ', $mNames) . ')';
+                } elseif (!empty($routeBusinesses)) {
+                    $rNames = array_filter(array_map(fn($r) => is_object($r) ? $r->name : ($r['name'] ?? ''), $routeBusinesses));
+                    $vNames = array_unique(array_filter(array_map(fn($r) => is_object($r) ? $r->village_name : ($r['village_name'] ?? ''), $routeBusinesses)));
+                    $stallName = implode(', ', $rNames);
+                    if (!empty($vNames)) {
+                        $marketName = 'Tuyến 4.0 (' . implode(', ', $vNames) . ')';
                     }
                 }
             }
