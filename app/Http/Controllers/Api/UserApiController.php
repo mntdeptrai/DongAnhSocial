@@ -78,8 +78,8 @@ class UserApiController extends Controller
             'address'  => 'nullable|string|max:1000',
             'commune'  => 'nullable|string|max:100',
             'bio'      => 'nullable|string|max:2000',
-            'gender'   => 'nullable|string|max:20',
-            'birthday' => 'nullable|string|max:50',
+            'gender'   => 'nullable|string|in:male,female,other',
+            'birthday' => 'nullable|date_format:Y-m-d',
             'avatar'   => 'nullable|string',
         ]);
 

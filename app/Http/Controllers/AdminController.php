@@ -1589,13 +1589,9 @@ class AdminController extends Controller
     /**
      * Xuất danh sách người dùng & gian hàng chợ ra file Excel (.csv / .xls)
      */
-    /**
-     * Xuất danh sách người dùng & gian hàng chợ ra file Excel (.csv / .xls)
-     */
     public function exportUsers(Request $request)
     {
-        ini_set('memory_limit', '512M');
-        set_time_limit(300);
+        set_time_limit(180);
 
         $this->verifyAdmin();
         $role = session('user_role');
@@ -1737,36 +1733,41 @@ class AdminController extends Controller
 
         $users = $query->orderBy('created_at', 'desc')->get();
 
-        // Nạp danh sách chợ (Eateries) từ mọi nguồn kết nối DB để tra cứu tên chợ chính xác nhất
-        $eateriesMap = [];
-        try {
-            $apiEateries = EateryApiService::getEateries();
-            foreach ($apiEateries as $e) {
-                $eateriesMap[$e->id] = $e->name;
-            }
-        } catch (\Exception $ex) {}
-        try {
-            $eList1 = \Illuminate\Support\Facades\DB::connection('mysql_market')->table('eateries')->get(['id', 'name']);
-            foreach ($eList1 as $e) {
-                $eateriesMap[$e->id] = $e->name;
-            }
-        } catch (\Exception $ex) {}
-        try {
-            $eList2 = \Illuminate\Support\Facades\DB::connection('mysql')->table('eateries')->get(['id', 'name']);
-            foreach ($eList2 as $e) {
-                if (!isset($eateriesMap[$e->id])) {
-                    $eateriesMap[$e->id] = $e->name;
-                }
-            }
-        } catch (\Exception $ex) {}
+        // Thu thập các tập khóa ngoại từ danh sách người dùng cần xuất để lọc chính xác (Tránh Full Table Scan & N+1)
+        $userIds       = $users->pluck('id')->filter()->unique()->values()->all();
+        $userStallIds  = $users->pluck('stall_id')->filter()->unique()->values()->all();
+        $userPhones    = $users->pluck('phone')->filter()->unique()->values()->all();
+        $userEateryIds = $users->pluck('eatery_id')->filter()->unique()->values()->all();
 
-        // Pre-fetch Stalls map (bằng id, user_id, seller_phone) để tránh N+1 Query
-        $stallsById = [];
+        // 1. Pre-fetch Stalls map (bằng id, user_id, seller_phone) có điều kiện lọc WHERE IN
+        $stallsById     = [];
         $stallsByUserId = [];
-        $stallsByPhone = [];
+        $stallsByPhone  = [];
+        $stallEateryIds = [];
+
         foreach (['mysql_market', 'mysql'] as $conn) {
             try {
-                $stalls = \Illuminate\Support\Facades\DB::connection($conn)->table('ocop_products')->get(['id', 'user_id', 'seller_phone', 'stall_name', 'name', 'eatery_id']);
+                if (empty($userStallIds) && empty($userIds) && empty($userPhones)) {
+                    continue;
+                }
+
+                $stallsQuery = \Illuminate\Support\Facades\DB::connection($conn)->table('ocop_products');
+                $stallsQuery->where(function($q) use ($userStallIds, $userIds, $userPhones) {
+                    $hasCond = false;
+                    if (!empty($userStallIds)) {
+                        $q->whereIn('id', $userStallIds);
+                        $hasCond = true;
+                    }
+                    if (!empty($userIds)) {
+                        $hasCond ? $q->orWhereIn('user_id', $userIds) : $q->whereIn('user_id', $userIds);
+                        $hasCond = true;
+                    }
+                    if (!empty($userPhones)) {
+                        $hasCond ? $q->orWhereIn('seller_phone', $userPhones) : $q->whereIn('seller_phone', $userPhones);
+                    }
+                });
+
+                $stalls = $stallsQuery->get(['id', 'user_id', 'seller_phone', 'stall_name', 'name', 'eatery_id']);
                 foreach ($stalls as $s) {
                     if (!isset($stallsById[$s->id])) {
                         $stallsById[$s->id] = $s;
@@ -1777,30 +1778,82 @@ class AdminController extends Controller
                     if (!empty($s->seller_phone) && !isset($stallsByPhone[$s->seller_phone])) {
                         $stallsByPhone[$s->seller_phone] = $s;
                     }
+                    if (!empty($s->eatery_id)) {
+                        $stallEateryIds[] = $s->eatery_id;
+                    }
                 }
-            } catch (\Exception $ex) {}
+            } catch (\Throwable $ex) {
+                \Illuminate\Support\Facades\Log::warning("Lỗi pre-fetch ocop_products từ {$conn}: " . $ex->getMessage());
+            }
         }
 
-        // Pre-fetch Owned Eateries map theo user_id
+        // 2. Pre-fetch Eateries map & Owned Eateries theo user_id với điều kiện WHERE IN
+        $eateriesMap = [];
         $ownedEateriesByUserId = [];
+
+        try {
+            $apiEateries = EateryApiService::getEateries();
+            foreach ($apiEateries as $e) {
+                $eateriesMap[$e->id] = $e->name;
+            }
+        } catch (\Throwable $ex) {
+            \Illuminate\Support\Facades\Log::warning('Lỗi nạp EateryApiService: ' . $ex->getMessage());
+        }
+
+        $allEateryIds = array_values(array_unique(array_filter(array_merge($userEateryIds, $stallEateryIds))));
+
         foreach (['mysql_market', 'mysql'] as $conn) {
             try {
-                $userEateries = \Illuminate\Support\Facades\DB::connection($conn)->table('eateries')->whereNotNull('user_id')->get(['id', 'user_id', 'name']);
-                foreach ($userEateries as $ue) {
-                    if (!isset($ownedEateriesByUserId[$ue->user_id])) {
-                        $ownedEateriesByUserId[$ue->user_id] = [];
-                    }
-                    $ownedEateriesByUserId[$ue->user_id][] = ['id' => $ue->id, 'name' => $ue->name];
+                if (empty($allEateryIds) && empty($userIds)) {
+                    continue;
                 }
-            } catch (\Exception $ex) {}
+
+                $eQuery = \Illuminate\Support\Facades\DB::connection($conn)->table('eateries');
+                $eQuery->where(function($q) use ($allEateryIds, $userIds) {
+                    $hasCond = false;
+                    if (!empty($allEateryIds)) {
+                        $q->whereIn('id', $allEateryIds);
+                        $hasCond = true;
+                    }
+                    if (!empty($userIds)) {
+                        $hasCond ? $q->orWhereIn('user_id', $userIds) : $q->whereIn('user_id', $userIds);
+                    }
+                });
+
+                $eList = $eQuery->get(['id', 'user_id', 'name']);
+                foreach ($eList as $e) {
+                    if (!isset($eateriesMap[$e->id])) {
+                        $eateriesMap[$e->id] = $e->name;
+                    }
+                    if ($e->user_id) {
+                        if (!isset($ownedEateriesByUserId[$e->user_id])) {
+                            $ownedEateriesByUserId[$e->user_id] = [];
+                        }
+                        $ownedEateriesByUserId[$e->user_id][] = ['id' => $e->id, 'name' => $e->name];
+                    }
+                }
+            } catch (\Throwable $ex) {
+                \Illuminate\Support\Facades\Log::warning("Lỗi pre-fetch eateries từ {$conn}: " . $ex->getMessage());
+            }
         }
 
-        // Pre-fetch Route Businesses map theo user_id và phone
+        // 3. Pre-fetch Route Businesses map theo user_id và phone với điều kiện WHERE IN
         $routeByUserId = [];
-        $routeByPhone = [];
-        if (\Illuminate\Support\Facades\Schema::hasTable('route_businesses')) {
+        $routeByPhone  = [];
+        if (\Illuminate\Support\Facades\Schema::hasTable('route_businesses') && (!empty($userIds) || !empty($userPhones))) {
             try {
-                $rbList = \App\Models\RouteBusiness::get(['id', 'user_id', 'phone', 'name', 'village_name']);
+                $rbQuery = \App\Models\RouteBusiness::query();
+                $rbQuery->where(function($q) use ($userIds, $userPhones) {
+                    $hasCond = false;
+                    if (!empty($userIds)) {
+                        $q->whereIn('user_id', $userIds);
+                        $hasCond = true;
+                    }
+                    if (!empty($userPhones)) {
+                        $hasCond ? $q->orWhereIn('phone', $userPhones) : $q->whereIn('phone', $userPhones);
+                    }
+                });
+                $rbList = $rbQuery->get(['id', 'user_id', 'phone', 'name', 'village_name']);
                 foreach ($rbList as $rb) {
                     if ($rb->user_id) {
                         $routeByUserId[$rb->user_id][] = $rb;
@@ -1809,7 +1862,9 @@ class AdminController extends Controller
                         $routeByPhone[$rb->phone][] = $rb;
                     }
                 }
-            } catch (\Exception $ex) {}
+            } catch (\Throwable $ex) {
+                \Illuminate\Support\Facades\Log::warning('Lỗi pre-fetch route_businesses: ' . $ex->getMessage());
+            }
         }
 
         $filename = 'Danh_sach_tai_khoan_nguoi_dung_' . date('Y-m-d_H-i') . '.xls';
@@ -1839,7 +1894,7 @@ class AdminController extends Controller
             $stallName  = 'Chưa gán gian hàng';
             $marketName = 'Chưa thuộc chợ nào';
 
-            if (in_array($u->role, ['seller', 'hkd']) || !empty($u->stall_id) || !empty($u->eatery_id)) {
+            if (in_array($u->role, ['seller', 'hkd', 'dn']) || !empty($u->stall_id) || !empty($u->eatery_id)) {
                 $stall = null;
                 if (!empty($u->stall_id) && isset($stallsById[$u->stall_id])) {
                     $stall = $stallsById[$u->stall_id];

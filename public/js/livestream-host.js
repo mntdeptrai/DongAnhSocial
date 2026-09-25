@@ -157,9 +157,8 @@ window.DongAnhLiveHost = (function () {
 
     /**
      * Lấy stream Camera + Mic
-     * @param {boolean} skipRecording - Nếu true, không khởi tạo lại MediaRecorder (dùng khi đổi camera)
      */
-    async function startLocalMedia(skipRecording = false) {
+    async function startLocalMedia() {
         const constraints = {
             audio: { echoCancellation: true, noiseSuppression: true },
             video: {
@@ -180,10 +179,8 @@ window.DongAnhLiveHost = (function () {
             videoElement.srcObject = localStream;
         }
 
-        // Chỉ khởi tạo ghi hình lần đầu, không restart khi đổi camera
-        if (!skipRecording) {
-            startRecording(localStream);
-        }
+        // Tự động ghi hình phiên Live để lưu trữ và tải lên YouTube
+        startRecording(localStream, true);
 
         // Cập nhật track tới tất cả viewers hiện có
         peerConnections.forEach((pc) => {
@@ -449,7 +446,49 @@ window.DongAnhLiveHost = (function () {
         }
 
         try {
-            await startLocalMedia(true);
+            if (!localStream) {
+                await startLocalMedia();
+            } else {
+                // Chỉ lấy video track mới theo facingMode mới, không làm gián đoạn audio/mic
+                const newVideoStream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        facingMode: currentFacingMode,
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 },
+                        frameRate: { ideal: 30 }
+                    }
+                });
+                const newVideoTrack = newVideoStream.getVideoTracks()[0];
+
+                const oldVideoTrack = localStream.getVideoTracks()[0];
+                if (oldVideoTrack) {
+                    localStream.removeTrack(oldVideoTrack);
+                    oldVideoTrack.stop();
+                }
+                localStream.addTrack(newVideoTrack);
+
+                const videoElement = document.getElementById('host-preview-video');
+                if (videoElement) {
+                    videoElement.srcObject = localStream;
+                }
+
+                // Cập nhật track tới tất cả viewers hiện có
+                peerConnections.forEach((pc) => {
+                    const sender = pc.getSenders().find(s => s.track && s.track.kind === 'video');
+                    if (sender) {
+                        sender.replaceTrack(newVideoTrack);
+                    }
+                });
+
+                // Cập nhật MediaRecorder: chốt dữ liệu cũ và ghi tiếp trên stream mới mà không xóa chunks
+                if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                    try {
+                        mediaRecorder.requestData();
+                        mediaRecorder.stop();
+                    } catch (e) {}
+                    startRecording(localStream, false);
+                }
+            }
 
             if (btn) {
                 btn.disabled = false;
@@ -873,11 +912,15 @@ window.DongAnhLiveHost = (function () {
 
     /**
      * Tự động ghi hình phiên Livestream (MediaRecorder)
+     * @param {MediaStream} stream
+     * @param {boolean} resetChunks - Nếu true, khởi tạo lại mảng recordedChunks (chỉ dùng lần đầu)
      */
-    function startRecording(stream) {
+    function startRecording(stream, resetChunks = true) {
         if (!window.MediaRecorder || !stream) return;
         try {
-            recordedChunks = [];
+            if (resetChunks) {
+                recordedChunks = [];
+            }
             const mimeTypes = [
                 'video/webm;codecs=vp9,opus',
                 'video/webm;codecs=vp8,opus',
@@ -892,7 +935,7 @@ window.DongAnhLiveHost = (function () {
                 }
             };
             mediaRecorder.start(2500);
-            console.log('[LiveHost] MediaRecorder started with mime:', mime);
+            console.log('[LiveHost] MediaRecorder started with mime:', mime, 'resetChunks:', resetChunks);
         } catch (e) {
             console.warn('[LiveHost] MediaRecorder error:', e);
         }
@@ -928,9 +971,18 @@ window.DongAnhLiveHost = (function () {
             });
         }
 
-        // 1. Dừng ghi hình và chuẩn bị tệp video
+        // 1. Dừng ghi hình và đợi flush toàn bộ dữ liệu vào recordedChunks
         if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-            try { mediaRecorder.stop(); } catch(e) {}
+            await new Promise((resolve) => {
+                mediaRecorder.onstop = resolve;
+                try {
+                    mediaRecorder.requestData();
+                    mediaRecorder.stop();
+                } catch(e) {
+                    resolve();
+                }
+                setTimeout(resolve, 800);
+            });
         }
 
         let ytResultData = null;

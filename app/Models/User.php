@@ -82,6 +82,7 @@ class User extends Authenticatable
             'password' => 'hashed',
             'last_active_at' => 'datetime',
             'is_verified' => 'boolean',
+            'birthday' => 'date:Y-m-d',
         ];
     }
 
