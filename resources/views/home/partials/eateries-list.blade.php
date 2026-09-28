@@ -557,9 +557,25 @@
                                     @endif
                                 </div>
                                 @if($isOcopItem)
-                                    <a href="{{ isset($card['product_id']) ? route('ocop.product.show', $card['product_id']) : route('eatery.show', $eat->slug) }}" class="ocop-explore-btn" onclick="event.stopPropagation();">
-                                        <span>🌾 Xem Chi Tiết Sản Phẩm OCOP</span> ➔
-                                    </a>
+                                    <div class="ocop-card-actions" style="display: flex; gap: 8px; margin-top: 10px; width: 100%;">
+                                        <button type="button" 
+                                                class="add-to-cart-btn ocop-buy-btn" 
+                                                data-id="{{ $card['product_id'] ?? $eat->id }}" 
+                                                data-type="ocop_product" 
+                                                onclick="addToCart(event, this); if(typeof animateFlyToCart === 'function') animateFlyToCart(this, '🌾');" 
+                                                style="flex: 1.1; background: linear-gradient(135deg, #059669 0%, #10b981 100%); color: #ffffff; border: none; border-radius: 10px; padding: 9px 12px; font-weight: 700; font-size: 0.82rem; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 12px rgba(5, 150, 105, 0.25); transition: all 0.2s;"
+                                                onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 16px rgba(5, 150, 105, 0.35)'" 
+                                                onmouseout="this.style.transform='none'; this.style.boxShadow='0 4px 12px rgba(5, 150, 105, 0.25)'">
+                                            <i class="bi bi-cart-plus-fill" style="font-size: 0.95rem;"></i>
+                                            <span>Mua hàng</span>
+                                        </button>
+                                        <a href="{{ isset($card['product_id']) ? route('ocop.product.show', $card['product_id']) : route('eatery.show', $eat->slug) }}" 
+                                           class="ocop-explore-btn" 
+                                           onclick="event.stopPropagation();" 
+                                           style="flex: 1; margin-top: 0; display: inline-flex; align-items: center; justify-content: center; text-align: center;">
+                                            <span>🌾 Chi Tiết</span> ➔
+                                        </a>
+                                    </div>
                                 @elseif($isMarket)
                                     <a href="{{ route('eatery.show', $eat->slug) }}" class="market-explore-btn" onclick="event.stopPropagation();">
                                         <span>🛒 Xem Gian Hàng Số & Sơ Đồ Chợ</span> ➔
@@ -674,8 +690,11 @@
 
                     <!-- Quick Action Buttons -->
                     <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                        <a id="hpmCallBtn" href="tel:" style="flex: 1; min-width: 140px; background: #059669; color: #ffffff; text-align: center; padding: 10px 16px; border-radius: 10px; font-weight: 700; font-size: 0.88rem; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 10px rgba(5, 150, 105, 0.25);">
-                            📞 Liên hệ chủ sạp
+                        <button id="hpmBuyBtn" type="button" class="add-to-cart-btn" data-id="" data-type="ocop_product" onclick="addToCart(event, this); if(typeof animateFlyToCart === 'function') animateFlyToCart(this, '🌾');" style="flex: 1.1; min-width: 130px; background: linear-gradient(135deg, #059669 0%, #10b981 100%); color: #ffffff; text-align: center; padding: 10px 16px; border-radius: 10px; font-weight: 700; font-size: 0.88rem; border: none; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='none'">
+                            <i class="bi bi-cart-plus-fill" style="font-size: 1rem;"></i> Mua hàng ngay
+                        </button>
+                        <a id="hpmCallBtn" href="tel:" style="flex: 1; min-width: 130px; background: #0284c7; color: #ffffff; text-align: center; padding: 10px 16px; border-radius: 10px; font-weight: 700; font-size: 0.88rem; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 10px rgba(2, 132, 199, 0.25);">
+                            📞 Liên hệ hotline
                         </a>
                         <a id="hpmEateryLink" href="#" style="background: #f1f5f9; color: #334155; padding: 10px 16px; border-radius: 10px; font-weight: 700; font-size: 0.88rem; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; border: 1px solid #cbd5e1;">
                             🏪 Trang gian hàng

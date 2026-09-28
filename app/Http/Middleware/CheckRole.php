@@ -31,17 +31,17 @@ class CheckRole
             }
 
             $userRole = $request->user()->role;
-            if (($userRole === 'admin' || $userRole === 'manager') && !$request->is('admin/*')) {
-                return redirect('/admin/dashboard')->with('error', 'Bạn không có quyền truy cập chức năng này!');
+            if (in_array($userRole, ['admin', 'manager'])) {
+                return redirect('/admin/dashboard')->with('error', 'Bạn không có quyền truy cập khu vực này!');
             }
-            if ($userRole === 'health_station' && !$request->is('health-station/*')) {
-                return redirect('/health-station/dashboard')->with('error', 'Bạn không có quyền truy cập chức năng này!');
+            if ($userRole === 'health_station') {
+                return redirect('/health-station/dashboard')->with('error', 'Bạn không có quyền truy cập khu vực này!');
             }
-            if ($userRole === 'seller' && !$request->is('seller/*')) {
-                return redirect('/seller/dashboard')->with('error', 'Bạn không có quyền truy cập chức năng này!');
+            if ($userRole === 'principal') {
+                return redirect('/principal/schools')->with('error', 'Bạn không có quyền truy cập khu vực này!');
             }
-            if (in_array($userRole, ['hkd', 'dn', 'business']) && !$request->is('hkd/*')) {
-                return redirect('/hkd/dashboard')->with('error', 'Bạn không có quyền truy cập chức năng này!');
+            if (in_array($userRole, ['seller', 'hkd', 'dn', 'business'])) {
+                return redirect('/hkd/dashboard')->with('error', 'Bạn không có quyền truy cập khu vực này!');
             }
 
             abort(403, 'Bạn không có quyền truy cập khu vực này!');

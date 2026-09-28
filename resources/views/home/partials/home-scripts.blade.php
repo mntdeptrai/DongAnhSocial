@@ -745,9 +745,25 @@
                                         ${card.price}
                                     </div>
                                 </div>
-                                <a href="${card.id ? `/san-pham-ocop/${card.id}` : `/dia-diem/${eat.slug}`}" class="ocop-explore-btn" onclick="event.stopPropagation();">
-                                    <span>🌾 Xem Chi Tiết Sản Phẩm OCOP</span> ➔
-                                </a>
+                                <div class="ocop-card-actions" style="display: flex; gap: 8px; margin-top: 10px; width: 100%;">
+                                    <button type="button" 
+                                            class="add-to-cart-btn ocop-buy-btn" 
+                                            data-id="${card.id || eat.id}" 
+                                            data-type="ocop_product" 
+                                            onclick="addToCart(event, this); if(typeof animateFlyToCart === 'function') animateFlyToCart(this, '🌾');" 
+                                            style="flex: 1.1; background: linear-gradient(135deg, #059669 0%, #10b981 100%); color: #ffffff; border: none; border-radius: 10px; padding: 9px 12px; font-weight: 700; font-size: 0.82rem; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 12px rgba(5, 150, 105, 0.25); transition: all 0.2s;"
+                                            onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 16px rgba(5, 150, 105, 0.35)'" 
+                                            onmouseout="this.style.transform='none'; this.style.boxShadow='0 4px 12px rgba(5, 150, 105, 0.25)'">
+                                        <i class="bi bi-cart-plus-fill" style="font-size: 0.95rem;"></i>
+                                        <span>Mua hàng</span>
+                                    </button>
+                                    <a href="${card.id ? `/san-pham-ocop/${card.id}` : `/dia-diem/${eat.slug}`}" 
+                                       class="ocop-explore-btn" 
+                                       onclick="event.stopPropagation();" 
+                                       style="flex: 1; margin-top: 0; display: inline-flex; align-items: center; justify-content: center; text-align: center;">
+                                        <span>🌾 Chi Tiết</span> ➔
+                                    </a>
+                                </div>
                             </div>
                         </div>
                     `;
@@ -1222,9 +1238,25 @@
                                             ${formattedPrice}
                                         </div>
                                     </div>
-                                    <a href="/san-pham-ocop/${p.id}" class="ocop-explore-btn" onclick="event.stopPropagation();">
-                                        <span>🌾 Xem Chi Tiết Sản Phẩm OCOP</span> ➔
-                                    </a>
+                                    <div class="ocop-card-actions" style="display: flex; gap: 8px; margin-top: 10px; width: 100%;">
+                                        <button type="button" 
+                                                class="add-to-cart-btn ocop-buy-btn" 
+                                                data-id="${p.id}" 
+                                                data-type="ocop_product" 
+                                                onclick="addToCart(event, this); if(typeof animateFlyToCart === 'function') animateFlyToCart(this, '🌾');" 
+                                                style="flex: 1.1; background: linear-gradient(135deg, #059669 0%, #10b981 100%); color: #ffffff; border: none; border-radius: 10px; padding: 9px 12px; font-weight: 700; font-size: 0.82rem; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 12px rgba(5, 150, 105, 0.25); transition: all 0.2s;"
+                                                onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 16px rgba(5, 150, 105, 0.35)'" 
+                                                onmouseout="this.style.transform='none'; this.style.boxShadow='0 4px 12px rgba(5, 150, 105, 0.25)'">
+                                            <i class="bi bi-cart-plus-fill" style="font-size: 0.95rem;"></i>
+                                            <span>Mua hàng</span>
+                                        </button>
+                                        <a href="/san-pham-ocop/${p.id}" 
+                                           class="ocop-explore-btn" 
+                                           onclick="event.stopPropagation();" 
+                                           style="flex: 1; margin-top: 0; display: inline-flex; align-items: center; justify-content: center; text-align: center;">
+                                            <span>🌾 Chi Tiết</span> ➔
+                                        </a>
+                                    </div>
                                 </div>
                             </div>
                         `;
@@ -1704,6 +1736,17 @@
         document.getElementById('hpmPrice').textContent = product.price || 'Liên hệ';
         document.getElementById('hpmSeller').textContent = product.seller_name || 'Cơ sở sản xuất Đông Anh';
         document.getElementById('hpmAddress').textContent = '📍 ' + (product.address || 'Đông Anh, Hà Nội');
+        
+        // Buy button data id setup
+        const buyBtn = document.getElementById('hpmBuyBtn');
+        if (buyBtn) {
+            buyBtn.setAttribute('data-id', product.id || product.product_id || '');
+            if (product.id || product.product_id) {
+                buyBtn.style.display = 'inline-flex';
+            } else {
+                buyBtn.style.display = 'none';
+            }
+        }
         
         // Call phone button
         const callBtn = document.getElementById('hpmCallBtn');

@@ -27,13 +27,13 @@ class HealthStationController extends Controller
 
         $eatery = null;
         if ($user->eatery_id) {
-            $eatery = $db->table('eateries')->where('id', $user->eatery_id)->first();
+            $eatery = $db->table('eateries')->where('id', $user->eatery_id)->where('category_id', $catId)->first();
         }
         if (!$eatery) {
-            $eatery = $db->table('eateries')->where('user_id', $user->id)->first();
+            $eatery = $db->table('eateries')->where('user_id', $user->id)->where('category_id', $catId)->first();
         }
         if (!$eatery && !empty($user->phone)) {
-            $eatery = $db->table('eateries')->where('phone', $user->phone)->first();
+            $eatery = $db->table('eateries')->where('phone', $user->phone)->where('category_id', $catId)->first();
         }
 
         // Nếu người dùng là admin/manager và chưa có eatery cá nhân, lấy Trạm Y tế xã Đông Anh làm mặc định
@@ -42,6 +42,10 @@ class HealthStationController extends Controller
         }
 
         if (!$eatery) {
+            if (in_array($user->role, ['seller', 'hkd', 'dn', 'business'])) {
+                redirect()->route('hkd.dashboard')->send();
+                exit;
+            }
             abort(403, 'Tài khoản của bạn chưa liên kết với Cơ sở Y tế nào trên hệ thống.');
         }
 

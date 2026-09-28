@@ -273,7 +273,7 @@ Route::prefix('hkd')->middleware(['auth', 'role:seller,hkd,dn,business,admin,man
 });
 
 // --- HEALTH STATION MANAGEMENT ROUTES (Kênh Điều Hành Trạm Y Tế & Cơ Sở Sức Khỏe) ---
-Route::prefix('health-station')->middleware(['auth', 'role:health_station,seller,admin,manager'])->group(function () {
+Route::prefix('health-station')->middleware(['auth', 'role:health_station,admin,manager'])->group(function () {
     Route::get('/dashboard', [HealthStationController::class, 'dashboard'])->name('health-station.dashboard');
     Route::get('/profile', [HealthStationController::class, 'showProfile'])->name('health-station.profile');
     Route::post('/profile', [HealthStationController::class, 'updateProfile'])->name('health-station.profile.update');

@@ -531,6 +531,46 @@
             });
         }
 
+        if (typeof window.animateFlyToCart !== 'function') {
+            window.animateFlyToCart = function(button, customEmoji) {
+                if (!button) return;
+                const cartIcon = document.getElementById('floatingCartButton') ||
+                                  document.querySelector('.header-action-btn[title="Giỏ hàng"]') || 
+                                  document.querySelector('.header-cart-btn') || 
+                                  document.querySelector('[href*="/cart"]');
+                if (!cartIcon) return;
+
+                const btnRect = button.getBoundingClientRect();
+                const cartRect = cartIcon.getBoundingClientRect();
+
+                const flyingEl = document.createElement('div');
+                flyingEl.innerHTML = customEmoji || '🛒';
+                flyingEl.style.cssText = `
+                    position: fixed;
+                    z-index: 9999999;
+                    left: ${btnRect.left + btnRect.width / 2}px;
+                    top: ${btnRect.top + btnRect.height / 2}px;
+                    font-size: 1.5rem;
+                    pointer-events: none;
+                    transition: all 0.7s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+                    transform: translate(-50%, -50%) scale(1);
+                    opacity: 1;
+                `;
+                document.body.appendChild(flyingEl);
+
+                requestAnimationFrame(() => {
+                    flyingEl.style.left = `${cartRect.left + cartRect.width / 2}px`;
+                    flyingEl.style.top = `${cartRect.top + cartRect.height / 2}px`;
+                    flyingEl.style.transform = 'translate(-50%, -50%) scale(0.3)';
+                    flyingEl.style.opacity = '0.7';
+                });
+
+                setTimeout(() => {
+                    flyingEl.remove();
+                }, 700);
+            };
+        }
+
         function animateValue(el, newText, color) {
             if (!el) return;
             el.style.transform = 'scale(1.35)';

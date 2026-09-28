@@ -89,10 +89,12 @@ class AuthController extends Controller
                     ->join('categories', 'eateries.category_id', '=', 'categories.id')
                     ->where('categories.slug', 'wellness-care')
                     ->where(function($q) use ($user) {
-                        $q->where('eateries.user_id', $user->id)
-                          ->orWhere('eateries.phone', $user->phone);
+                        $q->where('eateries.user_id', $user->id);
+                        if (!empty($user->phone)) {
+                            $q->orWhere('eateries.phone', $user->phone);
+                        }
                     })->exists();
-                if ($hasWellness) {
+                if ($hasWellness && $user->role === 'health_station') {
                     return redirect('/health-station/dashboard');
                 }
 
@@ -112,11 +114,11 @@ class AuthController extends Controller
                             $q->orWhere('eateries.phone', $cleanPhone);
                         }
                     })->exists();
-                if ($isHkdBusiness || in_array($user->role, ['hkd', 'dn', 'business'])) {
+                if ($isHkdBusiness || in_array($user->role, ['hkd', 'dn', 'business', 'seller'])) {
                     return redirect('/hkd/dashboard');
                 }
 
-                return redirect('/seller/dashboard');
+                return redirect('/hkd/dashboard');
             } elseif ($user->role === 'principal') {
                 return redirect('/principal/schools');
             }
