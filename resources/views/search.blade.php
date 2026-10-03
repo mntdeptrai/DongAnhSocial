@@ -3,6 +3,10 @@
 @section('title', 'Khám phá Đông Anh - Bản đồ Địa điểm, Trường học, Dịch vụ Xã Đông Anh')
 
 @section('content')
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.Default.css" />
+
 <style>
     /* Ẩn navbar và footer mặc định để layout full screen map giống Google Maps */
     body { overflow: hidden; }
@@ -470,6 +474,7 @@
 
     // ==================== INIT ====================
     document.addEventListener("DOMContentLoaded", async function() {
+        await ensureLeaflet();
         try {
             initMap();
         } catch (err) {
@@ -478,6 +483,36 @@
         await loadCategories();
         setupSearch();
     });
+
+    async function ensureLeaflet() {
+        if (typeof L !== 'undefined' && typeof L.markerClusterGroup === 'function') {
+            return true;
+        }
+        // Chờ Leaflet tải xong (tối đa 3s)
+        for (let i = 0; i < 30; i++) {
+            await new Promise(r => setTimeout(r, 100));
+            if (typeof L !== 'undefined') {
+                break;
+            }
+        }
+        // Fallback: nếu vẫn chưa có thì nạp trực tiếp qua script tag
+        if (typeof L === 'undefined') {
+            await new Promise((resolve) => {
+                const s = document.createElement('script');
+                s.src = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js';
+                s.onload = () => {
+                    const sc = document.createElement('script');
+                    sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.js';
+                    sc.onload = () => resolve();
+                    sc.onerror = () => resolve();
+                    document.head.appendChild(sc);
+                };
+                s.onerror = () => resolve();
+                document.head.appendChild(s);
+            });
+        }
+        return true;
+    }
 
     function initMap() {
         if (searchMap) return;
@@ -509,6 +544,11 @@
             ? L.markerClusterGroup(clusterOptions)
             : L.featureGroup();
         searchMap.addLayer(clusterGroup);
+
+        // Force Leaflet tính lại kích thước sau khi render flexbox
+        setTimeout(() => {
+            if (searchMap) searchMap.invalidateSize();
+        }, 250);
     }
 
     // ==================== CATEGORIES ====================
@@ -577,6 +617,9 @@
 
     // ==================== TOGGLE CATEGORY (LAZY LOAD) ====================
     function toggleCategory(slug) {
+        if (!searchMap) {
+            initMap();
+        }
         const el = document.getElementById('cat-items-' + slug);
         const header = document.getElementById('header-' + slug);
         if (!el || !header) return;
@@ -929,6 +972,10 @@
                 '<div class="sidebar-loading">❌ Lỗi tìm kiếm</div>';
         }
     }
+
+    window.addEventListener('resize', () => {
+        if (searchMap) searchMap.invalidateSize();
+    });
 
 })();
 </script>

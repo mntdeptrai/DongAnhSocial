@@ -85,7 +85,7 @@
     
     @if(request()->is('/', 'tim-kiem*', 'dia-diem*', 'tuyen-duong*', 'checkin*', 'food-tour*', 'ban-tin*'))
     <!-- Leaflet.js Map Assets -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" integrity="sha512-Zcn6bjR/8RZbLEpLIeOwNtzREBAJnUKESxces60Mpoj+2okopSAcSUIUOsedSTKIqQkgtN55lmbapuIRdlKGmsg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.Default.css" />
     @endif
@@ -308,7 +308,7 @@
 
     @if(request()->is('/', 'tim-kiem*', 'dia-diem*', 'tuyen-duong*', 'checkin*', 'food-tour*', 'ban-tin*'))
     <!-- Leaflet.js Map Library (Cloudflare CDN for Vietnam ISP reliability) -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js" integrity="sha512-BwHfrr4c9kmRkLw6iXFdzcdWV/PGkVgiIyIWLLlTSXzSmGyk97FJCIpnFmGNeS795vzS0J64wp4KLNiAhucyjQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.js"></script>
     @endif
     
