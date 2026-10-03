@@ -55,6 +55,14 @@ class MarketStallController extends Controller
         $first       = $stallProducts->first();
         $sellerName  = $first->seller_name ?? 'Tiểu thương';
         $sellerPhone = $first->seller_phone ?? '';
+
+        $sellerUser = null;
+        if (!empty($first->user_id)) {
+            $sellerUser = \App\Models\User::find($first->user_id);
+        } elseif (!empty($sellerPhone)) {
+            $sellerUser = \App\Models\User::where('phone', $sellerPhone)->first();
+        }
+
         $lat         = ($first->latitude ?? null) ?: ($eatery->latitude ?? 21.1571);
         $lng         = ($first->longitude ?? null) ?: ($eatery->longitude ?? 105.8448);
 
@@ -139,6 +147,7 @@ class MarketStallController extends Controller
             'stallProducts',
             'sellerName',
             'sellerPhone',
+            'sellerUser',
             'lat',
             'lng',
             'category',

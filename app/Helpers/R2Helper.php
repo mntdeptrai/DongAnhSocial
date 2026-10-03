@@ -27,6 +27,33 @@ class R2Helper
 
         $mimeType = $file->getClientMimeType() ?: '';
         $isImage = str_starts_with($mimeType, 'image/');
+        $isVideo = str_starts_with($mimeType, 'video/') || in_array(strtolower($file->getClientOriginalExtension()), ['mp4', 'mov', 'avi', 'mkv', 'webm', '3gp', 'm4v']);
+
+        // 🎬 TỰ ĐỘNG ĐẨY TOÀN BỘ VIDEO LÊN KÊNH YOUTUBE NẾU ĐÃ CẤU HÌNH
+        if ($isVideo && \App\Services\YouTubeService::isConfigured()) {
+            try {
+                $categoryName = ucfirst(str_replace('_', ' ', $folder));
+                $originalBaseName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+                $cleanTitle = $originalBaseName && strlen($originalBaseName) > 3 ? $originalBaseName : ('Video ' . $categoryName);
+                $cleanTitle .= ' - DongAnh Discovery (' . date('d/m/Y H:i') . ')';
+
+                $ytResult = \App\Services\YouTubeService::uploadVideo(
+                    video: $file,
+                    title: Str::limit($cleanTitle, 95),
+                    description: "Video đăng tải tại nền tảng DongAnh Discovery\nChuyên mục: " . $categoryName . "\nThời gian: " . date('d/m/Y H:i:s'),
+                    privacy: config('services.youtube.default_privacy', 'unlisted'),
+                    tags: ['DongAnh', 'Discovery', $categoryName]
+                );
+
+                if ($ytResult && !empty($ytResult['url'])) {
+                    Log::info('[R2Helper] Video auto-uploaded to YouTube successfully: ' . $ytResult['url']);
+                    return $ytResult['url'];
+                }
+            } catch (\Throwable $e) {
+                Log::warning('[R2Helper] YouTube auto-upload warning, falling back to R2: ' . $e->getMessage());
+            }
+        }
+
         $extension = $file->getClientOriginalExtension() ?: 'jpg';
         $safeName  = $folder . '/' . time() . '_' . Str::random(8) . '.' . $extension;
 
@@ -48,7 +75,7 @@ class R2Helper
 
         try {
             Storage::disk('r2')->put($safeName, $content, 'public');
-            return rtrim(env('R2_PUBLIC_URL'), '/') . '/' . $safeName;
+            return rtrim(config('filesystems.disks.r2.url'), '/') . '/' . $safeName;
         } catch (\Throwable $e) {
             Log::error('[R2Helper] Upload failed: ' . $e->getMessage());
             return self::fallbackLocal($file, $folder, $resizedContent);
@@ -71,9 +98,13 @@ class R2Helper
             if (!($file instanceof UploadedFile) || !$file->isValid()) {
                 continue;
             }
-            $mimeType = $file->getClientMimeType();
-            $fileType = str_starts_with($mimeType, 'video/') ? 'video' : 'image';
+            $mimeType = $file->getClientMimeType() ?: '';
+            $extension = strtolower($file->getClientOriginalExtension());
+            $isVideo = str_starts_with($mimeType, 'video/') || in_array($extension, ['mp4', 'mov', 'avi', 'mkv', 'webm', '3gp', 'm4v']);
             $url = self::upload($file, $folder, $maxDimension);
+
+            $isYouTube = str_contains($url, 'youtube.com') || str_contains($url, 'youtu.be');
+            $fileType = ($isVideo || $isYouTube) ? 'video' : 'image';
 
             $results[] = [
                 'original_name' => $file->getClientOriginalName(),
@@ -128,20 +159,44 @@ class R2Helper
             }
             fclose($out);
 
-            $safeName = $folder . '/' . $finalFilename;
-            $content = file_get_contents($mergedPath);
+            $finalUrl = '';
 
-            try {
-                Storage::disk('r2')->put($safeName, $content, 'public');
-                $finalUrl = rtrim(env('R2_PUBLIC_URL'), '/') . '/' . $safeName;
-            } catch (\Throwable $e) {
-                Log::error('[R2Helper] Chunk merge R2 upload failed: ' . $e->getMessage());
-                $destDir = public_path('uploads/' . $folder);
-                if (!file_exists($destDir)) {
-                    mkdir($destDir, 0755, true);
+            // 🎬 TỰ ĐỘNG ĐẨY VIDEO LÊN KÊNH YOUTUBE NẾU ĐÃ CẤU HÌNH
+            if (\App\Services\YouTubeService::isConfigured()) {
+                try {
+                    $categoryName = ucfirst(str_replace('_', ' ', $folder));
+                    $ytResult = \App\Services\YouTubeService::uploadVideo(
+                        video: $mergedPath,
+                        title: 'Video ' . $categoryName . ' - DongAnh Discovery (' . date('d/m/Y H:i') . ')',
+                        description: "Video đăng tải tại nền tảng DongAnh Discovery\nChuyên mục: " . $categoryName . "\nThời gian: " . date('d/m/Y H:i:s'),
+                        privacy: config('services.youtube.default_privacy', 'unlisted'),
+                        tags: ['DongAnh', 'Discovery', $categoryName]
+                    );
+                    if ($ytResult && !empty($ytResult['url'])) {
+                        $finalUrl = $ytResult['url'];
+                        Log::info('[R2Helper] Chunk merged video auto-uploaded to YouTube: ' . $finalUrl);
+                    }
+                } catch (\Throwable $e) {
+                    Log::warning('[R2Helper] Chunk merge YouTube upload warning: ' . $e->getMessage());
                 }
-                rename($mergedPath, $destDir . '/' . $finalFilename);
-                $finalUrl = '/uploads/' . $folder . '/' . $finalFilename;
+            }
+
+            if (empty($finalUrl)) {
+                $safeName = $folder . '/' . $finalFilename;
+                $content = file_get_contents($mergedPath);
+
+                try {
+                    Storage::disk('r2')->put($safeName, $content, 'public');
+                    $finalUrl = rtrim(config('filesystems.disks.r2.url'), '/') . '/' . $safeName;
+                } catch (\Throwable $e) {
+                    Log::error('[R2Helper] Chunk merge R2 upload failed: ' . $e->getMessage());
+                    $destDir = public_path('uploads/' . $folder);
+                    if (!file_exists($destDir)) {
+                        mkdir($destDir, 0755, true);
+                    }
+                    rename($mergedPath, $destDir . '/' . $finalFilename);
+                    $finalUrl = '/uploads/' . $folder . '/' . $finalFilename;
+                }
             }
 
             // Cleanup temp chunk files
@@ -208,7 +263,7 @@ class R2Helper
 
             try {
                 Storage::disk('r2')->put($safeName, $buffer, 'public');
-                $segUrl = rtrim(env('R2_PUBLIC_URL'), '/') . '/' . $safeName;
+                $segUrl = rtrim(config('filesystems.disks.r2.url'), '/') . '/' . $safeName;
             } catch (\Throwable $e) {
                 Log::error('[R2Helper] Segment R2 upload failed: ' . $e->getMessage());
                 $destDir = public_path('uploads/' . $folder);
@@ -237,7 +292,7 @@ class R2Helper
 
         try {
             Storage::disk('r2')->put($safeMasterName, json_encode($masterMetadata, JSON_PRETTY_PRINT), 'public');
-            $masterUrl = rtrim(env('R2_PUBLIC_URL'), '/') . '/' . $safeMasterName;
+            $masterUrl = rtrim(config('filesystems.disks.r2.url'), '/') . '/' . $safeMasterName;
         } catch (\Throwable $e) {
             $masterUrl = $segmentUrls[0];
         }
@@ -274,7 +329,7 @@ class R2Helper
 
         try {
             Storage::disk('r2')->put($safeName, $content, 'public');
-            return rtrim(env('R2_PUBLIC_URL'), '/') . '/' . $safeName;
+            return rtrim(config('filesystems.disks.r2.url'), '/') . '/' . $safeName;
         } catch (\Throwable $e) {
             Log::error('[R2Helper] uploadRaw failed: ' . $e->getMessage());
             // Fallback to local public path
@@ -432,7 +487,7 @@ class R2Helper
         }
 
         try {
-            $r2PublicUrl = rtrim(env('R2_PUBLIC_URL', ''), '/');
+            $r2PublicUrl = rtrim(config('filesystems.disks.r2.url', ''), '/');
             $path = $urlOrPath;
 
             if ($r2PublicUrl && str_starts_with($path, $r2PublicUrl)) {

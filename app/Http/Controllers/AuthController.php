@@ -16,16 +16,21 @@ class AuthController extends Controller
     public function showLogin(Request $request)
     {
         if (Auth::check() || session()->has('user_id')) {
-            $role = session('user_role') ?: (Auth::user() ? Auth::user()->role : 'user');
-            if (in_array($role, ['admin', 'manager'])) {
-                return redirect('/admin/dashboard');
-            } elseif ($role === 'seller') {
-                return redirect('/seller/dashboard');
-            } elseif ($role === 'principal') {
-                return redirect('/principal/schools');
+            $user = Auth::user() ?: User::find(session('user_id'));
+            if ($user) {
+                if (in_array($user->role, ['admin', 'manager'])) {
+                    return redirect('/admin/dashboard');
+                } elseif ($user->role === 'health_station') {
+                    return redirect('/health-station/dashboard');
+                } elseif ($user->role === 'principal') {
+                    return redirect('/principal/schools');
+                } elseif ($user->role === 'seller' || in_array($user->role, ['hkd', 'dn', 'business'])) {
+                    return redirect('/hkd/dashboard');
+                }
+                return redirect('/');
             }
-            return redirect('/');
         }
+
         if ($request->has('redirect')) {
             session(['url.intended' => $request->query('redirect')]);
         }
@@ -76,13 +81,48 @@ class AuthController extends Controller
             }
 
             if (in_array($user->role, ['admin', 'manager'])) {
-                return redirect()->intended('/admin/dashboard');
-            } elseif ($user->role === 'seller') {
-                return redirect()->intended('/seller/dashboard');
+                return redirect('/admin/dashboard');
+            } elseif ($user->role === 'health_station') {
+                return redirect('/health-station/dashboard');
+            } elseif ($user->role === 'seller' || in_array($user->role, ['hkd', 'dn', 'business'])) {
+                $hasWellness = \Illuminate\Support\Facades\DB::table('eateries')
+                    ->join('categories', 'eateries.category_id', '=', 'categories.id')
+                    ->where('categories.slug', 'wellness-care')
+                    ->where(function($q) use ($user) {
+                        $q->where('eateries.user_id', $user->id);
+                        if (!empty($user->phone)) {
+                            $q->orWhere('eateries.phone', $user->phone);
+                        }
+                    })->exists();
+                if ($hasWellness && $user->role === 'health_station') {
+                    return redirect('/health-station/dashboard');
+                }
+
+                $cleanPhone = preg_replace('/[^0-9]/', '', $user->phone ?? '');
+                $isHkdBusiness = \Illuminate\Support\Facades\DB::table('eateries')
+                    ->join('categories', 'eateries.category_id', '=', 'categories.id')
+                    ->where('categories.slug', 'co-so-kinh-doanh')
+                    ->where(function($q) use ($user, $cleanPhone) {
+                        $q->where('eateries.user_id', $user->id);
+                        if (!empty($user->eatery_id)) {
+                            $q->orWhere('eateries.id', $user->eatery_id);
+                        }
+                        if (!empty($user->phone)) {
+                            $q->orWhere('eateries.phone', $user->phone);
+                        }
+                        if (!empty($cleanPhone)) {
+                            $q->orWhere('eateries.phone', $cleanPhone);
+                        }
+                    })->exists();
+                if ($isHkdBusiness || in_array($user->role, ['hkd', 'dn', 'business', 'seller'])) {
+                    return redirect('/hkd/dashboard');
+                }
+
+                return redirect('/hkd/dashboard');
             } elseif ($user->role === 'principal') {
-                return redirect()->intended('/principal/schools');
+                return redirect('/principal/schools');
             }
-            return redirect()->intended('/');
+            return redirect('/');
         }
 
         if ($request->wantsJson()) {
@@ -578,6 +618,33 @@ class AuthController extends Controller
         session(['user_name' => $user->name]);
 
         return redirect()->back()->with('success', 'Cập nhật thông tin cá nhân và thông tin gian hàng liên kết thành công!');
+    }
+
+    public function deleteAccount(Request $request)
+    {
+        $userId = session('user_id') ?: Auth::id();
+        $user = User::find($userId);
+        if (!$user) {
+            return redirect('/auth/login');
+        }
+
+        $keyword = trim((string)$request->input('confirmation_keyword', ''));
+        if (mb_strtoupper($keyword) !== 'XOA TAI KHOAN') {
+            return redirect()->back()->with('error', 'Cụm từ xác nhận không chính xác! Bạn cần nhập chính xác: XOA TAI KHOAN');
+        }
+
+        if ($user->role === 'admin') {
+            return redirect()->back()->with('error', 'Tài khoản Quản trị viên Tối cao không thể tự hủy qua kênh này. Vui lòng bàn giao quyền trước!');
+        }
+
+        \App\Services\ModerationService::deleteUserAccount($user->id);
+
+        Auth::logout();
+        session()->flush();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect('/')->with('success', 'Tài khoản và toàn bộ dữ liệu cá nhân của bạn đã được xóa vĩnh viễn khỏi hệ thống.');
     }
 
     /**

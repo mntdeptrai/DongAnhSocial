@@ -87,11 +87,178 @@ document.addEventListener('DOMContentLoaded', function () {
     };
 
     window.cancelOrder = function (orderId) {
-        const reason = prompt('Nhập lý do hủy đơn hàng (hoặc để trống):');
-        if (reason === null) return;
-        
-        const btn = document.querySelector(`.btn-cancel[data-id="${orderId}"]`);
-        if (btn) btn.disabled = true;
+        let modal = document.getElementById('customerCancelModal');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'customerCancelModal';
+            modal.className = 'custom-cancel-modal-backdrop';
+            modal.innerHTML = `
+                <div class="custom-cancel-modal-card">
+                    <div class="custom-cancel-modal-header">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span style="font-size: 1.5rem; background: #fef2f2; width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; border: 1px solid #fecaca; flex-shrink: 0;">🚫</span>
+                            <div>
+                                <h3 style="margin: 0; font-size: 1.1rem; font-weight: 800; color: #0f172a; font-family: var(--font-heading);">Hủy đơn hàng</h3>
+                                <div style="font-size: 0.78rem; color: #64748b; font-weight: 500;">Vui lòng chọn lý do bạn muốn hủy đơn hàng này</div>
+                            </div>
+                        </div>
+                        <button class="custom-cancel-modal-close" onclick="closeCustomerCancelModal()">&times;</button>
+                    </div>
+
+                    <div class="custom-cancel-modal-body">
+                        <input type="hidden" id="customerCancelTargetOrderId" value="">
+                        
+                        <div class="cancel-preset-options">
+                            <label class="cancel-reason-chip">
+                                <input type="radio" name="customer_cancel_preset" value="🛒 Muốn thay đổi món ăn / Đặt lại đơn mới" checked>
+                                <span>🛒 Muốn thay đổi món ăn / Đặt lại đơn mới</span>
+                            </label>
+                            <label class="cancel-reason-chip">
+                                <input type="radio" name="customer_cancel_preset" value="📍 Muốn thay đổi địa chỉ hoặc giờ nhận đồ">
+                                <span>📍 Muốn thay đổi địa chỉ hoặc giờ nhận đồ</span>
+                            </label>
+                            <label class="cancel-reason-chip">
+                                <input type="radio" name="customer_cancel_preset" value="⏱️ Thời gian chờ nhận đơn quá lâu">
+                                <span>⏱️ Thời gian chờ nhận đơn quá lâu</span>
+                            </label>
+                            <label class="cancel-reason-chip">
+                                <input type="radio" name="customer_cancel_preset" value="💸 Đổi ý, không còn nhu cầu mua">
+                                <span>💸 Đổi ý, không còn nhu cầu mua</span>
+                            </label>
+                            <label class="cancel-reason-chip">
+                                <input type="radio" name="customer_cancel_preset" value="other">
+                                <span>✏️ Lý do khác (Nhập chi tiết)</span>
+                            </label>
+                        </div>
+
+                        <div id="customerCancelOtherWrapper" style="margin-top: 14px; display: none;">
+                            <textarea id="customerCancelOtherText" class="custom-cancel-textarea" placeholder="Nhập chi tiết lý do hủy đơn hàng..."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="custom-cancel-modal-footer">
+                        <button class="btn-cancel-submit" onclick="submitCustomerCancelOrder()">
+                            🚫 Xác nhận hủy đơn
+                        </button>
+                        <button class="btn-cancel-dismiss" onclick="closeCustomerCancelModal()">
+                            Quay lại
+                        </button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+
+            if (!document.getElementById('custom-cancel-modal-styles')) {
+                const style = document.createElement('style');
+                style.id = 'custom-cancel-modal-styles';
+                style.textContent = `
+                    .custom-cancel-modal-backdrop {
+                        position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+                        background: rgba(15, 23, 42, 0.65);
+                        backdrop-filter: blur(6px);
+                        display: flex; align-items: center; justify-content: center;
+                        z-index: 99999; padding: 20px;
+                        opacity: 0; animation: fadeInModal 0.2s forwards ease;
+                    }
+                    @keyframes fadeInModal { to { opacity: 1; } }
+                    .custom-cancel-modal-card {
+                        background: #ffffff; border-radius: 20px;
+                        width: 100%; max-width: 480px;
+                        box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+                        border: 1px solid rgba(255,255,255,0.8);
+                        overflow: hidden; animation: slideUpModal 0.2s forwards ease;
+                    }
+                    @keyframes slideUpModal { from { transform: translateY(16px); } to { transform: translateY(0); } }
+                    .custom-cancel-modal-header {
+                        display: flex; justify-content: space-between; align-items: center;
+                        padding: 16px 20px; border-bottom: 1px solid #f1f5f9;
+                    }
+                    .custom-cancel-modal-close {
+                        background: none; border: none; font-size: 1.8rem; color: #94a3b8;
+                        cursor: pointer; padding: 0; line-height: 1; transition: color 0.2s;
+                    }
+                    .custom-cancel-modal-close:hover { color: #0f172a; }
+                    .custom-cancel-modal-body { padding: 18px 20px; }
+                    .cancel-preset-options { display: flex; flex-direction: column; gap: 8px; }
+                    .cancel-reason-chip {
+                        display: flex; align-items: center; gap: 12px;
+                        padding: 11px 14px; border: 1.5px solid #e2e8f0;
+                        border-radius: 12px; cursor: pointer; font-size: 0.85rem;
+                        font-weight: 600; color: #334155; transition: all 0.2s ease;
+                        background: #f8fafc; user-select: none;
+                    }
+                    .cancel-reason-chip:hover {
+                        border-color: #fca5a5; background: #fef2f2; color: #dc2626;
+                    }
+                    .cancel-reason-chip input[type="radio"] {
+                        accent-color: #dc2626; width: 17px; height: 17px; margin: 0; cursor: pointer; flex-shrink: 0;
+                    }
+                    .custom-cancel-textarea {
+                        width: 100%; height: 80px; border-radius: 12px;
+                        border: 1.5px solid #cbd5e1; padding: 12px;
+                        font-family: inherit; font-size: 0.85rem; outline: none;
+                        transition: border-color 0.2s; resize: none; box-sizing: border-box;
+                    }
+                    .custom-cancel-textarea:focus { border-color: #dc2626; }
+                    .custom-cancel-modal-footer {
+                        padding: 14px 20px; background: #f8fafc; border-top: 1px solid #f1f5f9;
+                        display: flex; gap: 10px; justify-content: flex-end;
+                    }
+                    .btn-cancel-submit {
+                        background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+                        color: #ffffff; border: none; font-weight: 800; font-size: 0.85rem;
+                        padding: 11px 18px; border-radius: 12px; cursor: pointer;
+                        box-shadow: 0 4px 14px rgba(220, 38, 38, 0.3); transition: all 0.2s;
+                    }
+                    .btn-cancel-submit:hover { opacity: 0.92; transform: translateY(-1px); }
+                    .btn-cancel-dismiss {
+                        background: #ffffff; color: #64748b; border: 1.5px solid #cbd5e1;
+                        font-weight: 700; font-size: 0.85rem; padding: 11px 16px;
+                        border-radius: 12px; cursor: pointer; transition: all 0.2s;
+                    }
+                    .btn-cancel-dismiss:hover { background: #f1f5f9; color: #0f172a; }
+                `;
+                document.head.appendChild(style);
+            }
+
+            const radios = modal.querySelectorAll('input[name="customer_cancel_preset"]');
+            const otherWrapper = modal.querySelector('#customerCancelOtherWrapper');
+            radios.forEach(radio => {
+                radio.addEventListener('change', function() {
+                    if (this.value === 'other') {
+                        otherWrapper.style.display = 'block';
+                    } else {
+                        otherWrapper.style.display = 'none';
+                    }
+                });
+            });
+        }
+
+        document.getElementById('customerCancelTargetOrderId').value = orderId;
+        modal.style.display = 'flex';
+    };
+
+    window.closeCustomerCancelModal = function() {
+        const modal = document.getElementById('customerCancelModal');
+        if (modal) modal.style.display = 'none';
+    };
+
+    window.submitCustomerCancelOrder = function() {
+        const modal = document.getElementById('customerCancelModal');
+        if (!modal) return;
+
+        const orderId = document.getElementById('customerCancelTargetOrderId').value;
+        const selectedRadio = modal.querySelector('input[name="customer_cancel_preset"]:checked');
+        const otherText = document.getElementById('customerCancelOtherText').value.trim();
+
+        let finalReason = selectedRadio ? selectedRadio.value : '';
+        if (finalReason === 'other') {
+            finalReason = otherText ? `Lý do khác: ${otherText}` : 'Lý do khác';
+        }
+
+        const submitBtn = modal.querySelector('.btn-cancel-submit');
+        submitBtn.disabled = true;
+        submitBtn.textContent = '⏳ Đang xử lý...';
 
         fetch(`/api/orders/${orderId}/cancel`, {
             method: 'POST',
@@ -100,10 +267,14 @@ document.addEventListener('DOMContentLoaded', function () {
                 'X-CSRF-TOKEN': getCsrfToken(),
                 'Accept': 'application/json'
             },
-            body: JSON.stringify({ reason: reason })
+            body: JSON.stringify({ reason: finalReason })
         })
         .then(res => res.json())
         .then(data => {
+            submitBtn.disabled = false;
+            submitBtn.textContent = '🚫 Xác nhận hủy đơn';
+            closeCustomerCancelModal();
+
             if (data.success) {
                 showNotification(data.message || 'Đã hủy đơn hàng thành công!', 'success');
                 if (document.getElementById('orders-list-container')) {
@@ -113,13 +284,14 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             } else {
                 showNotification(data.message || 'Không thể hủy đơn hàng.', 'error');
-                if (btn) btn.disabled = false;
             }
         })
         .catch(err => {
             console.error('Error cancelling order:', err);
+            submitBtn.disabled = false;
+            submitBtn.textContent = '🚫 Xác nhận hủy đơn';
+            closeCustomerCancelModal();
             showNotification('Có lỗi xảy ra khi gửi yêu cầu hủy đơn.', 'error');
-            if (btn) btn.disabled = false;
         });
     };
 
@@ -699,8 +871,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (orderId) {
             loadOrderDetail(orderId);
-            // Real-time polling 5 giây để cập nhật trạng thái đơn ngay khi Seller thao tác
-            setInterval(() => pollOrderDetailSilent(orderId), 5000);
+            // Real-time polling 2 giây để cập nhật trạng thái đơn tức thì khi Seller thao tác
+            setInterval(() => pollOrderDetailSilent(orderId), 2000);
         }
 
         function pollOrderDetailSilent(id) {
@@ -711,8 +883,21 @@ document.addEventListener('DOMContentLoaded', function () {
             .then(resData => {
                 if (resData.success && resData.data) {
                     if (lastOrderStatus !== resData.data.status) {
+                        const oldStatus = lastOrderStatus;
                         lastOrderStatus = resData.data.status;
+                        
+                        // If order transitioned to preparing or beyond while customer has cancel modal open, close it
+                        if (['preparing', 'ready', 'shipping', 'delivering', 'completed'].indexOf(resData.data.status) !== -1) {
+                            if (typeof closeCustomerCancelModal === 'function') {
+                                closeCustomerCancelModal();
+                            }
+                        }
+
                         renderOrderDetail(resData.data);
+
+                        if (oldStatus && resData.data.status === 'preparing') {
+                            showNotification('👨‍🍳 Gian hàng đã nhận đơn & đang bắt đầu chuẩn bị đồ!', 'info');
+                        }
                     }
                 }
             })
@@ -759,7 +944,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         function renderOrderDetail(order) {
-            const stepperHtml = renderHorizontalStepper(order.status, order.category_slug === 'dong-anh-market');
+            const stepperHtml = renderHorizontalStepper(order);
 
             // Render Items List
             let itemsHtml = '';
@@ -838,7 +1023,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     </a>
                 `;
             }
-            if (order.status === 'pending' || order.status === 'paid') {
+            if (['pending', 'paid', 'confirmed'].indexOf(order.status) !== -1) {
                 headerActionsHtml += `
                     <button class="btn-premium-action btn-cancel" data-id="${order.id}" onclick="cancelOrder(${order.id})">
                         ❌ Hủy đơn hàng
@@ -872,7 +1057,36 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             let noticeBannerHtml = '';
-            if (order.status === 'ready' || order.status === 'shipping' || order.status === 'delivering') {
+            if (order.status === 'cancelled') {
+                const who = order.cancelled_by === 'seller' ? 'Chủ gian hàng đã từ chối đơn' : (order.cancelled_by === 'customer' ? 'Bạn đã hủy đơn hàng này' : 'Đơn hàng đã bị hủy');
+                noticeBannerHtml = `
+                    <div style="background: linear-gradient(135deg, #fef2f2 0%, #ffe4e4 100%); border: 1.5px solid #fca5a5; border-radius: 14px; padding: 14px 18px; margin-top: 6px; display: flex; align-items: center; gap: 12px;">
+                        <div style="font-size: 1.8rem;">🔴</div>
+                        <div>
+                            <div style="font-weight: 800; color: #991b1b; font-size: 0.95rem; margin-bottom: 2px;">
+                                🔴 ${who}
+                            </div>
+                            <div style="font-size: 0.84rem; color: #b91c1c; line-height: 1.4;">
+                                Lý do hủy: <strong>"${order.cancel_reason || 'Đơn hàng bị hủy'}"</strong>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else if (order.status === 'completed') {
+                noticeBannerHtml = `
+                    <div style="background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); border: 1.5px solid #10b981; border-radius: 14px; padding: 14px 18px; margin-top: 6px; display: flex; align-items: center; gap: 12px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.1);">
+                        <div style="font-size: 1.8rem;">🎉</div>
+                        <div>
+                            <div style="font-weight: 800; color: #065f46; font-size: 0.95rem; margin-bottom: 2px;">
+                                🎉 Đơn hàng đã hoàn thành thành công!
+                            </div>
+                            <div style="font-size: 0.84rem; color: #047857; line-height: 1.4;">
+                                Cảm ơn bạn đã mua sắm tại <strong>${order.stall_name || order.eatery_name || 'gian hàng'}</strong>. Chúc bạn có trải nghiệm tuyệt vời!
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else if (order.status === 'ready') {
                 noticeBannerHtml = `
                     <div style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border: 1.5px solid #7dd3fc; border-radius: 14px; padding: 14px 18px; margin-top: 6px; display: flex; align-items: center; gap: 12px; box-shadow: 0 4px 12px rgba(2, 132, 199, 0.08);">
                         <div style="font-size: 1.8rem;">🏪</div>
@@ -886,7 +1100,21 @@ document.addEventListener('DOMContentLoaded', function () {
                         </div>
                     </div>
                 `;
-            } else if (order.status === 'confirmed' || order.status === 'preparing') {
+            } else if (order.status === 'shipping' || order.status === 'delivering') {
+                noticeBannerHtml = `
+                    <div style="background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%); border: 1.5px solid #fdba74; border-radius: 14px; padding: 14px 18px; margin-top: 6px; display: flex; align-items: center; gap: 12px; box-shadow: 0 4px 12px rgba(249, 115, 22, 0.08);">
+                        <div style="font-size: 1.8rem;">🛵</div>
+                        <div>
+                            <div style="font-weight: 800; color: #c2410c; font-size: 0.95rem; margin-bottom: 2px;">
+                                🛵 Đơn hàng đang trên đường giao tới bạn!
+                            </div>
+                            <div style="font-size: 0.84rem; color: #ea580c; line-height: 1.4;">
+                                Đối tác vận chuyển đang giao hàng tới địa chỉ <strong>${order.shipping_address ? order.shipping_address.replace('[Ghé sạp lấy đồ]', '').trim() : ''}</strong>. Vui lòng giữ máy liên lạc nhé!
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else if (order.status === 'confirmed' || order.status === 'preparing' || order.status === 'processing') {
                 noticeBannerHtml = `
                     <div style="background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); border: 1.5px solid #6ee7b7; border-radius: 14px; padding: 14px 18px; margin-top: 6px; display: flex; align-items: center; gap: 12px;">
                         <div style="font-size: 1.8rem;">👨‍🍳</div>
@@ -1021,33 +1249,64 @@ document.addEventListener('DOMContentLoaded', function () {
             `;
         }
 
-        function renderHorizontalStepper(status, isMarket = true) {
-            // Luồng 4 bước chuẩn Chợ 4.0: Khách đặt -> Sạp nhận -> Chờ lấy tại sạp -> Hoàn thành
-            const steps = [
+        function renderHorizontalStepper(order) {
+            const status = order ? order.status : 'pending';
+            const isPickup = order && order.shipping_address && order.shipping_address.includes('[Ghé sạp lấy đồ]');
+
+            // Distinguish Pickup at Stall vs Delivery with 5 standard milestones
+            const steps = isPickup ? [
                 { key: 'placed', label: 'Khách đặt', icon: '📝', check: true },
                 { key: 'confirmed', label: 'Sạp nhận đơn', icon: '📋', check: false },
+                { key: 'preparing', label: 'Đang chuẩn bị', icon: '🍳', check: false },
                 { key: 'ready', label: 'Chờ lấy tại sạp', icon: '🏪', check: false },
+                { key: 'completed', label: 'Hoàn thành', icon: '🎉', check: false }
+            ] : [
+                { key: 'placed', label: 'Khách đặt', icon: '📝', check: true },
+                { key: 'confirmed', label: 'Đã xác nhận', icon: '📋', check: false },
+                { key: 'preparing', label: 'Đang chuẩn bị', icon: '🍳', check: false },
+                { key: 'shipping', label: 'Đang giao hàng', icon: '🛵', check: false },
                 { key: 'completed', label: 'Hoàn thành', icon: '🎉', check: false }
             ];
 
             if (status === 'pending') {
                 steps[0].check = true;
-            } else if (status === 'confirmed' || status === 'paid' || status === 'processing' || status === 'preparing') {
+            } else if (status === 'confirmed' || status === 'paid' || status === 'processing') {
                 steps[0].check = true;
                 steps[1].check = true;
+            } else if (status === 'preparing') {
+                steps[0].check = true;
+                steps[1].check = true;
+                steps[2].check = true;
             } else if (status === 'ready' || status === 'shipping' || status === 'delivering') {
                 steps[0].check = true;
                 steps[1].check = true;
                 steps[2].check = true;
+                steps[3].check = true;
             } else if (status === 'completed') {
                 steps[0].check = true;
                 steps[1].check = true;
                 steps[2].check = true;
                 steps[3].check = true;
+                steps[4].check = true;
             } else if (status === 'cancelled') {
+                const cancelledByText = order && order.cancelled_by === 'seller' ? 'Chủ gian hàng từ chối' : (order && order.cancelled_by === 'customer' ? 'Khách hàng hủy' : 'Hệ thống / Người dùng');
+                const reasonText = order && order.cancel_reason ? order.cancel_reason : 'Theo yêu cầu';
                 return `
-                    <div style="background: rgba(239, 68, 68, 0.04); border: 1.5px solid rgba(239, 68, 68, 0.15); border-radius: 12px; padding: 16px; text-align: center; color: var(--danger); font-weight: 750; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; gap: 8px;">
-                        <span>🚫</span> Đơn hàng đã bị từ chối / hủy.
+                    <div style="background: rgba(239, 68, 68, 0.05); border: 1.5px solid rgba(239, 68, 68, 0.25); border-radius: 16px; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; box-shadow: 0 4px 14px rgba(239, 68, 68, 0.06);">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <span style="font-size: 1.8rem;">🚫</span>
+                            <div>
+                                <div style="font-weight: 800; color: #dc2626; font-size: 0.95rem; margin-bottom: 2px;">
+                                    Đơn hàng đã bị hủy (${cancelledByText})
+                                </div>
+                                <div style="font-size: 0.84rem; color: #b91c1c;">
+                                    Lý do: <strong>"${reasonText}"</strong>
+                                </div>
+                            </div>
+                        </div>
+                        <button class="btn-premium-action btn-reorder" onclick="reorderItems(${order ? order.id : 0})" style="background: #ffffff; color: #dc2626; border: 1.5px solid #fca5a5; font-weight: 800; border-radius: 10px; padding: 8px 16px; font-size: 0.82rem;">
+                            🔄 Đặt lại món này
+                        </button>
                     </div>
                 `;
             }
@@ -1085,45 +1344,37 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         function renderVerticalTimeline(order) {
-            const status = order.status;
-            const time = order.created_at_formatted;
-            const isMarket = order.category_slug === 'dong-anh-market';
+            const status = order ? order.status : 'pending';
+            const isPickup = order && order.shipping_address && order.shipping_address.includes('[Ghé sạp lấy đồ]');
+            
+            const timeCreated = order.created_at_formatted || '--';
+            const timeConfirmed = order.confirmed_at_formatted || (inArray(status, ['confirmed', 'preparing', 'ready', 'shipping', 'delivering', 'completed']) ? (order.updated_at_formatted || timeCreated) : 'Đang chờ...');
+            const timePreparing = order.preparing_at_formatted || (inArray(status, ['preparing', 'ready', 'shipping', 'delivering', 'completed']) ? (order.updated_at_formatted || timeCreated) : 'Đang chờ...');
+            const timeReadyOrShip = isPickup ? (order.ready_at_formatted || (inArray(status, ['ready', 'completed']) ? (order.updated_at_formatted || timeCreated) : 'Đang chờ...')) : (order.shipping_at_formatted || (inArray(status, ['shipping', 'delivering', 'completed']) ? (order.updated_at_formatted || timeCreated) : 'Đang chờ...'));
+            const timeCompleted = order.completed_at_formatted || (status === 'completed' ? (order.updated_at_formatted || timeCreated) : 'Đang chờ...');
 
-            const events = [
-                { title: isMarket ? 'Nhận hàng thành công' : 'Giao hàng thành công', time: 'Đang chờ...', active: false },
-                { title: isMarket ? 'Sẵn sàng chờ khách lấy' : 'Đơn hàng đang giao', time: 'Đang chờ...', active: false },
-                { title: 'Đơn hàng đã được chuẩn bị xong', time: 'Đang chuẩn bị...', active: false },
-                { title: 'Đơn hàng đã được xác nhận', time: 'Đang chờ...', active: false },
-                { title: 'Đặt đơn hàng thành công', time: time, active: true }
-            ];
-
-            if (status === 'completed') {
-                events[0].active = true;
-                events[0].time = time;
-                events[1].active = true;
-                events[1].time = time;
-                events[2].active = true;
-                events[2].time = time;
-                events[3].active = true;
-                events[3].time = time;
-            } else if (status === 'shipping' || status === 'delivering') {
-                events[1].active = true;
-                events[1].time = time;
-                events[2].active = true;
-                events[2].time = time;
-                events[3].active = true;
-                events[3].time = time;
-            } else if (status === 'paid' || status === 'processing') {
-                events[2].active = true;
-                events[2].time = time;
-                events[3].active = true;
-                events[3].time = time;
-            } else if (status === 'confirmed') {
-                events[3].active = true;
-                events[3].time = time;
-            } else if (status === 'cancelled') {
-                events.unshift({ title: 'Đơn hàng bị hủy', time: time, active: true, isRed: true });
+            function inArray(needle, haystack) {
+                return haystack.indexOf(needle) !== -1;
             }
+
+            let events = [];
+            if (status === 'cancelled') {
+                const cancelledByText = order && order.cancelled_by === 'seller' ? 'Chủ gian hàng' : (order && order.cancelled_by === 'customer' ? 'Khách hàng' : 'Hệ thống');
+                const timeCancelled = order.cancelled_at_formatted || order.updated_at_formatted || '--';
+                events.push({ title: `Đơn hàng bị hủy (${cancelledByText})`, time: timeCancelled, active: true, isRed: true });
+            }
+
+            events.push(
+                { title: 'Đặt hàng thành công', time: timeCreated, active: true },
+                { title: 'Chủ gian hàng đã xác nhận', time: timeConfirmed, active: inArray(status, ['confirmed', 'preparing', 'ready', 'shipping', 'delivering', 'completed']) },
+                { title: 'Đang chuẩn bị món', time: timePreparing, active: inArray(status, ['preparing', 'ready', 'shipping', 'delivering', 'completed']) },
+                { 
+                    title: isPickup ? 'Đã chuẩn bị xong (Chờ lấy tại sạp)' : 'Đang giao hàng (Ship tận nơi)', 
+                    time: timeReadyOrShip, 
+                    active: isPickup ? inArray(status, ['ready', 'completed']) : inArray(status, ['shipping', 'delivering', 'completed']) 
+                },
+                { title: 'Hoàn thành đơn hàng', time: timeCompleted, active: status === 'completed' }
+            );
 
             let html = '<div class="timeline-vertical" style="display: flex; flex-direction: column; gap: 20px; position: relative; padding-left: 18px; margin-top: 10px;">';
             html += '<div style="position: absolute; top: 6px; bottom: 6px; left: 5px; width: 2px; background: rgba(0,0,0,0.06); z-index: 1;"></div>';

@@ -1430,41 +1430,41 @@
 
                             <!-- Facebook Multi-Photo Grid -->
                             @if($imgCount === 1)
-                                <div class="fb-photo-grid fb-grid-1" style="border-radius: 12px; margin-bottom: 14px;" onclick="openPostLightbox('{{ $imgs[0] }}')">
+                                <div class="fb-photo-grid fb-grid-1" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 0)">
                                     <img src="{{ $imgs[0] }}" alt="{{ $p->name }}">
                                 </div>
                             @elseif($imgCount === 2)
-                                <div class="fb-photo-grid fb-grid-2" style="border-radius: 12px; margin-bottom: 14px;">
-                                    <img src="{{ $imgs[0] }}" onclick="openPostLightbox('{{ $imgs[0] }}')" alt="{{ $p->name }}">
-                                    <img src="{{ $imgs[1] }}" onclick="openPostLightbox('{{ $imgs[1] }}')" alt="{{ $p->name }}">
+                                <div class="fb-photo-grid fb-grid-2">
+                                    <img src="{{ $imgs[0] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 0)" alt="{{ $p->name }}">
+                                    <img src="{{ $imgs[1] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 1)" alt="{{ $p->name }}">
                                 </div>
                             @elseif($imgCount === 3)
-                                <div class="fb-photo-grid fb-grid-3" style="border-radius: 12px; margin-bottom: 14px;">
-                                    <img src="{{ $imgs[0] }}" onclick="openPostLightbox('{{ $imgs[0] }}')" alt="{{ $p->name }}">
+                                <div class="fb-photo-grid fb-grid-3">
+                                    <img src="{{ $imgs[0] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 0)" alt="{{ $p->name }}">
                                     <div class="fb-grid-3-col-right">
-                                        <img src="{{ $imgs[1] }}" onclick="openPostLightbox('{{ $imgs[1] }}')" alt="{{ $p->name }}">
-                                        <img src="{{ $imgs[2] }}" onclick="openPostLightbox('{{ $imgs[2] }}')" alt="{{ $p->name }}">
+                                        <img src="{{ $imgs[1] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 1)" alt="{{ $p->name }}">
+                                        <img src="{{ $imgs[2] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 2)" alt="{{ $p->name }}">
                                     </div>
                                 </div>
                             @elseif($imgCount === 4)
-                                <div class="fb-photo-grid fb-grid-4" style="border-radius: 12px; margin-bottom: 14px;">
-                                    <img src="{{ $imgs[0] }}" onclick="openPostLightbox('{{ $imgs[0] }}')" alt="{{ $p->name }}">
+                                <div class="fb-photo-grid fb-grid-4">
+                                    <img src="{{ $imgs[0] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 0)" alt="{{ $p->name }}">
                                     <div class="fb-grid-4-col-right">
-                                        <img src="{{ $imgs[1] }}" onclick="openPostLightbox('{{ $imgs[1] }}')" alt="{{ $p->name }}">
-                                        <img src="{{ $imgs[2] }}" onclick="openPostLightbox('{{ $imgs[2] }}')" alt="{{ $p->name }}">
-                                        <img src="{{ $imgs[3] }}" onclick="openPostLightbox('{{ $imgs[3] }}')" alt="{{ $p->name }}">
+                                        <img src="{{ $imgs[1] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 1)" alt="{{ $p->name }}">
+                                        <img src="{{ $imgs[2] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 2)" alt="{{ $p->name }}">
+                                        <img src="{{ $imgs[3] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 3)" alt="{{ $p->name }}">
                                     </div>
                                 </div>
                             @elseif($imgCount >= 5)
-                                <div class="fb-photo-grid fb-grid-5" style="border-radius: 12px; margin-bottom: 14px;">
+                                <div class="fb-photo-grid fb-grid-5">
                                     <div class="fb-grid-5-row-top">
-                                        <img src="{{ $imgs[0] }}" onclick="openPostLightbox('{{ $imgs[0] }}')" alt="{{ $p->name }}">
-                                        <img src="{{ $imgs[1] }}" onclick="openPostLightbox('{{ $imgs[1] }}')" alt="{{ $p->name }}">
+                                        <img src="{{ $imgs[0] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 0)" alt="{{ $p->name }}">
+                                        <img src="{{ $imgs[1] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 1)" alt="{{ $p->name }}">
                                     </div>
                                     <div class="fb-grid-5-row-bottom">
-                                        <img src="{{ $imgs[2] }}" onclick="openPostLightbox('{{ $imgs[2] }}')" alt="{{ $p->name }}">
-                                        <img src="{{ $imgs[3] }}" onclick="openPostLightbox('{{ $imgs[3] }}')" alt="{{ $p->name }}">
-                                        <div class="fb-photo-thumb-box" onclick="openPostLightbox('{{ $imgs[4] }}')">
+                                        <img src="{{ $imgs[2] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 2)" alt="{{ $p->name }}">
+                                        <img src="{{ $imgs[3] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 3)" alt="{{ $p->name }}">
+                                        <div class="fb-photo-thumb-box" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 4)">
                                             <img src="{{ $imgs[4] }}" alt="{{ $p->name }}">
                                             @if($imgCount > 5)
                                                 <div class="fb-photo-more-overlay">+{{ $imgCount - 5 }}</div>
@@ -2385,26 +2385,17 @@
             scrollWheelZoom: false
         }).setView([eateryLat, eateryLng], 15);
 
-        // Lớp nền phù hợp chế độ Sáng/Tối (Sử dụng Google Maps chính thức cho bản đồ sáng)
-        let currentTheme = localStorage.getItem('theme') || 'dark';
-        let tileUrl = currentTheme === 'light' 
-            ? 'https://mt1.google.com/vt/lyrs=m&hl=vi&x={x}&y={y}&z={z}'
-            : 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
+        let tileUrl = 'https://mt1.google.com/vt/lyrs=m&hl=vi&x={x}&y={y}&z={z}';
             
         let activeTileLayer = L.tileLayer(tileUrl, {
-            attribution: currentTheme === 'light' ? '&copy; Google Maps' : '&copy; OpenStreetMap &copy; CARTO'
+            attribution: '&copy; Google Maps'
         }).addTo(miniMap);
 
-        // Lắng nghe sự kiện đổi chế độ Sáng/Tối để đổi lớp nền bản đồ tức thì
+        // Lắng nghe sự kiện đổi chế độ Sáng/Tối
         document.addEventListener('theme-changed', function(e) {
-            const nextTheme = e.detail.theme;
-            const nextTileUrl = nextTheme === 'light'
-                ? 'https://mt1.google.com/vt/lyrs=m&hl=vi&x={x}&y={y}&z={z}'
-                : 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
-            
             miniMap.removeLayer(activeTileLayer);
-            activeTileLayer = L.tileLayer(nextTileUrl, {
-                attribution: nextTheme === 'light' ? '&copy; Google Maps' : '&copy; OpenStreetMap &copy; CARTO'
+            activeTileLayer = L.tileLayer(tileUrl, {
+                attribution: '&copy; Google Maps'
             }).addTo(miniMap);
         });
 

@@ -12,6 +12,12 @@ use App\Http\Controllers\SocialHubController;
 use App\Http\Controllers\SchoolManagementController;
 use App\Http\Controllers\MarketStallController;
 use App\Http\Controllers\ManagerOrderController;
+use App\Http\Controllers\LiveStreamController;
+use App\Http\Controllers\YouTubeAuthController;
+use App\Http\Controllers\HealthStationController;
+use App\Http\Controllers\BusinessManagementController;
+use App\Http\Controllers\ModerationController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -22,11 +28,31 @@ use App\Http\Controllers\ManagerOrderController;
 |
 */
 
+// --- YOUTUBE API OAUTH ROUTES (Kết nối 1-click) ---
+Route::middleware('auth')->group(function () {
+    Route::get('/youtube/auth', [YouTubeAuthController::class, 'redirect'])->name('youtube.auth');
+    Route::get('/youtube/status', [YouTubeAuthController::class, 'status'])->name('youtube.status');
+});
+Route::get('/youtube/callback', [YouTubeAuthController::class, 'callback'])->name('youtube.callback');
+
+
 // --- USER SIDE ROUTES (Giao diện người dùng) ---
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/ban-tin', [HomeController::class, 'newsfeed'])->name('newsfeed');
+Route::get('/chinh-sach-dieu-khoan', [HomeController::class, 'privacyPolicy'])->name('privacy.policy');
+Route::get('/privacy-policy', [HomeController::class, 'privacyPolicy'])->name('privacy.en');
+Route::get('/terms', [HomeController::class, 'privacyPolicy'])->name('terms');
+Route::post('/api/moderation/report', [ModerationController::class, 'report'])->name('api.moderation.report');
+Route::get('/api/moderation/check-ban', [ModerationController::class, 'checkBan'])->name('api.moderation.check-ban');
 Route::get('/tuyen-duong-40', [HomeController::class, 'tuyenDuong40'])->name('tuyen-duong');
 Route::get('/tim-kiem', [SearchController::class, 'search'])->name('search');
+
+// --- MAP PAGE LAZY-LOAD API (Trang Bản đồ số - tối ưu hiệu năng) ---
+Route::get('/api/map/categories', [\App\Http\Controllers\Api\MapApiController::class, 'categories'])->name('api.map.categories');
+Route::get('/api/map/markers', [\App\Http\Controllers\Api\MapApiController::class, 'markers'])->name('api.map.markers');
+Route::get('/api/map/sidebar', [\App\Http\Controllers\Api\MapApiController::class, 'sidebar'])->name('api.map.sidebar');
+Route::get('/api/map/detail/{slug}', [\App\Http\Controllers\Api\MapApiController::class, 'detail'])->name('api.map.detail');
+
 Route::get('/checkin', [HomeController::class, 'checkinFeed'])->name('checkin.feed');
 Route::post('/checkin', [HomeController::class, 'storeCheckin'])->name('checkin.store');
 Route::post('/comments', [\App\Http\Controllers\CommentController::class, 'store'])->name('comments.store');
@@ -66,9 +92,31 @@ Route::get('/api/comments', [HomeController::class, 'getComments'])->name('api.c
 Route::post('/api/comments', [HomeController::class, 'storeComment'])->name('api.comments.store');
 Route::post('/api/posts/increment-share', [HomeController::class, 'incrementShare'])->name('api.posts.share');
 
+// --- LIVESTREAM ROUTES (Phát trực tiếp Đông Anh) ---
+Route::get('/livestream', [LiveStreamController::class, 'index'])->name('livestream.index');
+Route::get('/livestream/create', [LiveStreamController::class, 'create'])->name('livestream.create');
+Route::post('/livestream', [LiveStreamController::class, 'store'])->name('livestream.store');
+Route::get('/livestream/host/{id}', [LiveStreamController::class, 'host'])->name('livestream.host');
+Route::get('/livestream/{id}', [LiveStreamController::class, 'show'])->name('livestream.show');
+Route::post('/livestream/{id}/comment', [LiveStreamController::class, 'sendComment'])->name('livestream.comment');
+Route::post('/livestream/{id}/reaction', [LiveStreamController::class, 'sendReaction'])->name('livestream.reaction');
+Route::post('/livestream/{id}/pin-product', [LiveStreamController::class, 'pinProduct'])->name('livestream.pin-product');
+Route::get('/livestream/{id}/products', [LiveStreamController::class, 'getProducts'])->name('livestream.products');
+Route::post('/livestream/{id}/products', [LiveStreamController::class, 'addProduct'])->name('livestream.products.add');
+Route::delete('/livestream/{id}/products/{productId}', [LiveStreamController::class, 'removeProduct'])->name('livestream.products.remove');
+Route::post('/livestream/{id}/signal', [LiveStreamController::class, 'sendSignal'])->name('livestream.signal');
+Route::get('/livestream/{id}/signals', [LiveStreamController::class, 'getSignals'])->name('livestream.signals');
+Route::post('/livestream/{id}/youtube-live', [LiveStreamController::class, 'updateYouTubeLive'])->name('livestream.update-youtube');
+Route::post('/livestream/{id}/viewer-count', [LiveStreamController::class, 'updateViewerCount'])->name('livestream.viewer-count');
+Route::post('/livestream/{id}/upload-recording', [LiveStreamController::class, 'uploadRecording'])->name('livestream.upload-recording');
+Route::post('/livestream/{id}/end', [LiveStreamController::class, 'endStream'])->name('livestream.end');
+Route::delete('/livestream/{id}', [LiveStreamController::class, 'destroy'])->name('livestream.destroy');
+
+
 // --- FOOD TOUR JOURNEY ROUTES (Trải nghiệm hành trình ẩm thực) ---
 Route::get('/food-tours', [FoodTourController::class, 'index'])->name('food-tours.index');
 Route::get('/exp-corner', [FoodTourController::class, 'cookingIndex'])->name('cooking-tours.index');
+
 
 // Xem trang cá nhân công khai (Khách không đăng nhập vẫn xem được)
 Route::get('/profile/{identifier?}', [AuthController::class, 'profile'])->name('profile');
@@ -87,6 +135,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/profile/cover', [AuthController::class, 'updateCoverPhoto'])->name('profile.cover');
     Route::put('/profile/password', [AuthController::class, 'changePassword'])->name('profile.password');
     Route::post('/profile/password/send-otp', [AuthController::class, 'sendOtp'])->name('profile.password.send-otp')->middleware('throttle:5,1');
+    Route::post('/profile/delete-account', [AuthController::class, 'deleteAccount'])->name('profile.delete-account');
     Route::post('/user/heartbeat', [AuthController::class, 'heartbeat'])->name('user.heartbeat');
 
     // --- SOCIAL HUB ROUTES (Inertia + React) ---
@@ -124,7 +173,7 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/principal/schools/{id}', [SchoolManagementController::class, 'update'])->name('principal.schools.update');
 
     Route::post('/principal/posts', [SchoolManagementController::class, 'storePost'])->name('principal.posts.store');
-    Route::post('/stories', [SchoolManagementController::class, 'storeStory'])->name('stories.store');
+    Route::post('/stories', [\App\Http\Controllers\Api\PostApiController::class, 'storeStory'])->name('stories.store');
     Route::post('/principal/posts/{id}/update', [SchoolManagementController::class, 'updatePost'])->name('principal.posts.update');
     Route::delete('/principal/posts/{id}', [SchoolManagementController::class, 'destroyPost'])->name('principal.posts.destroy');
     Route::post('/posts/{id}/update', [SchoolManagementController::class, 'updatePost'])->name('posts.update');
@@ -210,6 +259,48 @@ Route::prefix('seller')->middleware(['auth', 'role:seller,admin', 'tenant.auth']
     Route::get('/business-profile', [VendorController::class, 'showBusinessProfile'])->name('seller.business-profile');
 });
 
+// --- HKD & DOANH NGHIỆP MANAGEMENT ROUTES (Kênh Điều Hành Hộ Kinh Doanh & Doanh Nghiệp Số) ---
+Route::prefix('hkd')->middleware(['auth', 'role:seller,hkd,dn,business,admin,manager'])->group(function () {
+    Route::post('/switch-business', [BusinessManagementController::class, 'switchBusiness'])->name('hkd.switch-business');
+    Route::get('/dashboard', [BusinessManagementController::class, 'dashboard'])->name('hkd.dashboard');
+    Route::get('/profile', [BusinessManagementController::class, 'showProfile'])->name('hkd.profile');
+    Route::post('/profile', [BusinessManagementController::class, 'updateProfile'])->name('hkd.profile.update');
+    Route::get('/products', [BusinessManagementController::class, 'products'])->name('hkd.products.index');
+    Route::get('/products/create', [BusinessManagementController::class, 'createProduct'])->name('hkd.products.create');
+    Route::get('/products/{id}/edit', [BusinessManagementController::class, 'editProduct'])->name('hkd.products.edit');
+    Route::post('/products', [BusinessManagementController::class, 'storeProduct'])->name('hkd.products.store');
+    Route::put('/products/{id}', [BusinessManagementController::class, 'updateProduct'])->name('hkd.products.update');
+    Route::delete('/products/{id}', [BusinessManagementController::class, 'destroyProduct'])->name('hkd.products.destroy');
+    Route::get('/orders', [BusinessManagementController::class, 'orders'])->name('hkd.orders.index');
+    Route::get('/orders/{id}', [BusinessManagementController::class, 'showOrder'])->name('hkd.orders.show');
+    Route::put('/orders/{id}/status', [BusinessManagementController::class, 'updateOrderStatus'])->name('hkd.orders.update-status');
+    Route::get('/reports', [BusinessManagementController::class, 'reports'])->name('hkd.reports');
+    Route::get('/qr', [BusinessManagementController::class, 'qr'])->name('hkd.qr');
+    Route::get('/chat', [BusinessManagementController::class, 'chatIndex'])->name('hkd.chat.index');
+});
+
+// --- HEALTH STATION MANAGEMENT ROUTES (Kênh Điều Hành Trạm Y Tế & Cơ Sở Sức Khỏe) ---
+Route::prefix('health-station')->middleware(['auth', 'role:health_station,admin,manager'])->group(function () {
+    Route::get('/dashboard', [HealthStationController::class, 'dashboard'])->name('health-station.dashboard');
+    Route::get('/profile', [HealthStationController::class, 'showProfile'])->name('health-station.profile');
+    Route::post('/profile', [HealthStationController::class, 'updateProfile'])->name('health-station.profile.update');
+    
+    // Dịch vụ y tế & Kỹ thuật
+    Route::get('/services', [HealthStationController::class, 'services'])->name('health-station.services');
+    Route::post('/services', [HealthStationController::class, 'storeService'])->name('health-station.services.store');
+    Route::put('/services/{id}', [HealthStationController::class, 'updateService'])->name('health-station.services.update');
+    Route::delete('/services/{id}', [HealthStationController::class, 'destroyService'])->name('health-station.services.destroy');
+    
+    // Bác sĩ & Lịch trực
+    Route::get('/doctors', [HealthStationController::class, 'doctors'])->name('health-station.doctors');
+    Route::post('/doctors', [HealthStationController::class, 'storeDoctor'])->name('health-station.doctors.store');
+    Route::put('/doctors/{id}', [HealthStationController::class, 'updateDoctor'])->name('health-station.doctors.update');
+    Route::delete('/doctors/{id}', [HealthStationController::class, 'destroyDoctor'])->name('health-station.doctors.destroy');
+
+    // API Giải Mã Link Google Maps Rút Gọn Tức Thì
+    Route::post('/resolve-map-link', [HealthStationController::class, 'resolveMapLink'])->name('health-station.resolve-map-link');
+});
+
 // Route dọn dẹp khẩn cấp bình luận rác & bot spam
 Route::get('/clean-spam-comments', function() {
     $deletedUsersCount = \Illuminate\Support\Facades\DB::table('users')
@@ -247,6 +338,8 @@ Route::post('/api/upload-media', [\App\Http\Controllers\Api\UploadApiController:
 // Bắt buộc đăng nhập (auth), phân quyền (admin, manager) và xác thực Tenant (tenant.auth)
 Route::prefix('admin')->middleware(['auth', 'role:admin,manager', 'tenant.auth'])->group(function () {
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
+    Route::get('/moderation', [AdminController::class, 'moderationIndex'])->name('admin.moderation.index');
+    Route::post('/moderation/resolve/{id}', [AdminController::class, 'resolveReport'])->name('admin.moderation.resolve');
     Route::get('/eateries/create', [AdminController::class, 'createEatery'])->name('admin.eatery.create');
     Route::post('/eateries', [AdminController::class, 'storeEatery'])->name('admin.eatery.store');
     Route::get('/eateries/{slug}/edit', [AdminController::class, 'editEatery'])->name('admin.eatery.edit');

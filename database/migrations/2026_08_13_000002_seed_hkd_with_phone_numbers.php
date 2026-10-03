@@ -16,6 +16,23 @@ return new class extends Migration
      */
     public function up(): void
     {
+        try {
+            DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+        } catch (\Throwable $e) {}
+
+        if (\Illuminate\Support\Facades\Schema::hasTable('users')) {
+            if (!\Illuminate\Support\Facades\Schema::hasColumn('users', 'eatery_id')) {
+                \Illuminate\Support\Facades\Schema::table('users', function ($table) {
+                    $table->unsignedBigInteger('eatery_id')->nullable()->index()->after('id');
+                });
+            }
+            if (!\Illuminate\Support\Facades\Schema::hasColumn('users', 'stall_id')) {
+                \Illuminate\Support\Facades\Schema::table('users', function ($table) {
+                    $table->unsignedBigInteger('stall_id')->nullable()->index()->after('eatery_id');
+                });
+            }
+        }
+
         // 1. Lấy hoặc tạo Category 'co-so-kinh-doanh' (Cơ sở kinh doanh, Doanh nghiệp)
         $category = Category::where('slug', 'co-so-kinh-doanh')->first();
         if (!$category) {
@@ -124,6 +141,10 @@ return new class extends Migration
             // Gán eatery_id vào User
             $user->update(['eatery_id' => $eatery->id]);
         }
+
+        try {
+            DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+        } catch (\Throwable $e) {}
     }
 
     /**

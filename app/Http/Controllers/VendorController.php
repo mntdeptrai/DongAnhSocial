@@ -22,6 +22,37 @@ class VendorController extends Controller
     }
 
     /**
+     * Lọc chính xác các đơn hàng phát sinh thuộc về Thực thể / Gian hàng hiện tại
+     */
+    private function applyVendorOrderQuery($query, array $context)
+    {
+        $stallName = $context['stallName'] ?? null;
+        $eateryId = $context['eateryId'] ?? null;
+        $isBusinessMode = $context['isBusinessMode'] ?? false;
+
+        if ($stallName && !$isBusinessMode) {
+            // Mode Gian Hàng Chợ: Đơn hàng bắt buộc phải khớp đúng tên Gian hàng (stall_name)
+            // và nếu có eatery_id (chợ ID) thì phải thuộc chợ đó
+            $query->where('stall_name', $stallName);
+            if (!empty($eateryId)) {
+                $query->where('eatery_id', $eateryId);
+            }
+        } elseif (!empty($eateryId)) {
+            // Mode Cơ sở kinh doanh độc lập: Khớp eatery_id của cơ sở
+            $query->where('eatery_id', $eateryId);
+            if (!empty($stallName)) {
+                $query->where(function($sub) use ($stallName) {
+                    $sub->whereNull('stall_name')
+                        ->orWhere('stall_name', '')
+                        ->orWhere('stall_name', $stallName);
+                });
+            }
+        }
+
+        return $query;
+    }
+
+    /**
      * Lấy thông tin Gian hàng và danh sách sản phẩm thuộc Stall Tenant hiện tại
      */
     private function getVendorStallContext()
@@ -64,31 +95,39 @@ class VendorController extends Controller
             ];
         }
 
-        // 1b. Tìm Cơ sở kinh doanh / Doanh nghiệp độc lập (Category 9 hoặc khác chợ)
+        // 1b. Tìm Cơ sở kinh doanh / Doanh nghiệp / Cơ sở y tế / Trường học độc lập thuộc sở hữu của User
         if ($userId) {
             $businessEatery = $db->table('eateries')
                 ->where('user_id', $userId)
-                ->where('category_id', 9)
                 ->first();
         }
         if (!$businessEatery && !empty($userPhone)) {
             $businessEatery = $db->table('eateries')
                 ->where('phone', $userPhone)
-                ->where('category_id', 9)
                 ->first();
         }
         if (!$businessEatery && $user && $user->eatery_id) {
-            $eateryCandidate = $db->table('eateries')->where('id', $user->eatery_id)->first();
-            if ($eateryCandidate && $eateryCandidate->category_id == 9) {
-                $businessEatery = $eateryCandidate;
-            }
+            $businessEatery = $db->table('eateries')->where('id', $user->eatery_id)->first();
         }
 
         if ($businessEatery) {
+            $catRec = $db->table('categories')->where('id', $businessEatery->category_id)->first();
+            $cSlug = $catRec ? $catRec->slug : '';
+            $badge = '🏢 Hộ kinh doanh / Doanh nghiệp';
+            if ($cSlug === 'wellness-care') {
+                $badge = '🩺 Cơ sở Y tế & Chăm sóc sức khỏe';
+            } elseif ($cSlug === 'smart-education-map') {
+                $badge = '🏫 Trường học & Giáo dục';
+            } elseif ($cSlug === 'stay-in-dong-anh') {
+                $badge = '🏨 Cơ sở Lưu trú & Khách sạn';
+            } elseif ($cSlug === 'dong-anh-food-map') {
+                $badge = '🍽️ Nhà hàng & Quán ăn';
+            }
+
             $managedEntities[] = [
                 'key' => 'business_' . $businessEatery->id,
                 'type' => 'business',
-                'badge' => '🏢 Hộ kinh doanh / Doanh nghiệp',
+                'badge' => $badge,
                 'name' => $businessEatery->name,
                 'sub' => '📍 ' . ($businessEatery->address ?: 'Đông Anh, Hà Nội'),
                 'id' => $businessEatery->id,
@@ -159,22 +198,41 @@ class VendorController extends Controller
                 ->where('stall_name', $stallName)
                 ->get();
         } elseif ($isBusinessMode && $businessEatery) {
-            $dishes = $db->table('dishes')->where('eatery_id', $businessEatery->id)->get();
-            $products = $dishes->map(function($d) use ($businessEatery) {
-                return (object)[
-                    'id' => $d->id,
-                    'eatery_id' => $businessEatery->id,
-                    'stall_name' => $businessEatery->name,
-                    'seller_name' => $businessEatery->name,
-                    'seller_phone' => $businessEatery->phone,
-                    'name' => $d->name,
-                    'price' => $d->price,
-                    'unit' => 'mặt hàng',
-                    'description' => $d->description,
-                    'image_path' => $d->image_path,
-                    'star_rating' => null,
-                ];
-            });
+            if ($categorySlug === 'wellness-care' && \Illuminate\Support\Facades\Schema::hasTable('wellness_services')) {
+                $services = $db->table('wellness_services')->where('eatery_id', $businessEatery->id)->get();
+                $products = $services->map(function($s) use ($businessEatery) {
+                    return (object)[
+                        'id' => $s->id,
+                        'eatery_id' => $businessEatery->id,
+                        'stall_name' => $businessEatery->name,
+                        'seller_name' => $businessEatery->name,
+                        'seller_phone' => $businessEatery->phone,
+                        'name' => $s->name,
+                        'price' => $s->price,
+                        'unit' => 'dịch vụ y tế',
+                        'description' => $s->description,
+                        'image_path' => $s->image_path,
+                        'star_rating' => null,
+                    ];
+                });
+            } else {
+                $dishes = $db->table('dishes')->where('eatery_id', $businessEatery->id)->get();
+                $products = $dishes->map(function($d) use ($businessEatery) {
+                    return (object)[
+                        'id' => $d->id,
+                        'eatery_id' => $businessEatery->id,
+                        'stall_name' => $businessEatery->name,
+                        'seller_name' => $businessEatery->name,
+                        'seller_phone' => $businessEatery->phone,
+                        'name' => $d->name,
+                        'price' => $d->price,
+                        'unit' => 'mặt hàng',
+                        'description' => $d->description,
+                        'image_path' => $d->image_path,
+                        'star_rating' => null,
+                    ];
+                });
+            }
         } else {
             $products = $db->table('ocop_products')->where('eatery_id', $eateryId)->get();
         }
@@ -280,6 +338,10 @@ class VendorController extends Controller
     {
         $this->verifyVendor();
         $context = $this->getVendorStallContext();
+
+        if (isset($context['categorySlug']) && $context['categorySlug'] === 'wellness-care') {
+            return redirect()->route('health-station.dashboard');
+        }
         
         $productsCount = $context['products']->count();
         
@@ -287,13 +349,14 @@ class VendorController extends Controller
         $totalRevenue = 0;
         $recentOrders = collect();
         if (\Illuminate\Support\Facades\Schema::hasTable('orders')) {
-            $orderQuery = DB::table('orders')
-                ->where('stall_name', $context['stallName']);
+            $orderQuery = DB::table('orders');
+            $orderQuery = $this->applyVendorOrderQuery($orderQuery, $context);
 
             $recentOrders = (clone $orderQuery)->latest()->take(10)->get();
             $ordersCount = (clone $orderQuery)->count();
             $totalRevenue = (clone $orderQuery)->where('status', '!=', 'cancelled')->sum('total_amount');
         }
+
 
         $viewName = !empty($context['isOcopSeller']) ? 'seller.dashboard-ocop' : 'seller.dashboard';
 
@@ -424,11 +487,18 @@ class VendorController extends Controller
             $description = $description ? ($originText . '. ' . $description) : $originText;
         }
 
+        $existingStallImg = DB::connection('mysql_market')->table('ocop_products')
+            ->where('eatery_id', $context['eateryId'])
+            ->where('stall_name', $context['stallName'])
+            ->whereNotNull('stall_image')
+            ->value('stall_image');
+
         DB::connection('mysql_market')->table('ocop_products')->insert([
             'eatery_id' => $context['eateryId'],
             'stall_name' => $context['stallName'],
             'seller_name' => $context['sellerName'],
             'seller_phone' => $context['sellerPhone'],
+            'stall_image' => $existingStallImg ?: null,
             'name' => $request->name,
             'price' => $numericPrice,
             'unit' => $request->unit ?: 'kg',
@@ -524,10 +594,10 @@ class VendorController extends Controller
 
         $orders = collect();
         if (\Illuminate\Support\Facades\Schema::hasTable('orders')) {
-            $orders = DB::table('orders')
-                ->where('stall_name', $context['stallName'])
-                ->latest()
-                ->paginate(20);
+            $query = DB::table('orders');
+            $query = $this->applyVendorOrderQuery($query, $context);
+
+            $orders = $query->latest()->paginate(20);
 
             $orderIds = $orders->pluck('id');
             $allItems = DB::table('order_items')
@@ -558,12 +628,20 @@ class VendorController extends Controller
         }
 
         // Bảo mật context
-        if ($context['stallName'] && $order->stall_name !== $context['stallName']) {
+        $hasAccess = false;
+        if (!empty($context['stallName']) && $order->stall_name === $context['stallName']) {
+            $hasAccess = true;
+        }
+        if (!empty($context['eateryId']) && (int)$order->eatery_id === (int)$context['eateryId']) {
+            $hasAccess = true;
+        }
+        if (!$hasAccess && session('user_role') !== 'admin') {
             abort(403, 'Gian hàng của bạn không có quyền xem đơn hàng này!');
         }
 
         $items = DB::table('order_items')->where('order_id', $order->id)->get();
         $order->items = $items;
+
 
         return view('seller.order-detail', array_merge($context, ['order' => $order]));
     }
@@ -575,26 +653,52 @@ class VendorController extends Controller
     {
         $this->verifyVendor();
         $request->validate([
-            'status' => 'required|string|in:confirmed,ready,completed,cancelled'
+            'status' => 'required|string|in:confirmed,ready,preparing,processing,shipping,completed,cancelled',
+            'cancel_reason' => 'nullable|string|max:255'
         ], [
             'status.in' => 'Trạng thái đơn hàng không hợp lệ!'
         ]);
 
+        $status = $request->input('status');
+
         if (\Illuminate\Support\Facades\Schema::hasTable('orders')) {
-            DB::table('orders')->where('id', $id)->update([
-                'status' => $request->status,
+            $updateData = [
+                'status' => $status,
                 'updated_at' => now(),
-            ]);
+            ];
+
+            if ($status === 'confirmed') {
+                $updateData['confirmed_at'] = now();
+            } elseif ($status === 'preparing' || $status === 'processing') {
+                $updateData['preparing_at'] = now();
+            } elseif ($status === 'ready') {
+                $updateData['ready_at'] = now();
+            } elseif ($status === 'shipping') {
+                $updateData['shipping_at'] = now();
+            } elseif ($status === 'completed') {
+                $updateData['completed_at'] = now();
+            } elseif ($status === 'cancelled') {
+                $updateData['cancelled_at'] = now();
+                $updateData['cancelled_by'] = 'seller';
+                if ($request->filled('cancel_reason')) {
+                    $updateData['cancel_reason'] = trim($request->input('cancel_reason'));
+                }
+            }
+
+            DB::table('orders')->where('id', $id)->update($updateData);
         }
 
         $msgMap = [
-            'confirmed' => '✅ Đã nhận đơn và chuyển sang trạng thái đang chuẩn bị!',
-            'ready' => '🏪 Đã chuyển đơn hàng sang trạng thái: Sẵn sàng tại sạp (Chờ khách lấy)!',
+            'confirmed' => '✅ Đã xác nhận đơn hàng!',
+            'preparing' => '⚡ Đã chuyển đơn hàng sang trạng thái: Đang chuẩn bị hàng!',
+            'processing' => '⚡ Đã chuyển đơn hàng sang trạng thái: Đang chuẩn bị hàng!',
+            'ready'     => '🏪 Đã chuyển đơn hàng sang trạng thái: Sẵn sàng tại sạp (Chờ khách lấy)!',
+            'shipping'  => '🛵 Đã chuyển đơn hàng sang trạng thái: Đang giao hàng!',
             'completed' => '🎉 Đã hoàn thành đơn hàng thành công!',
             'cancelled' => '❌ Đã từ chối / hủy đơn hàng!',
         ];
 
-        $msg = $msgMap[$request->status] ?? 'Đã cập nhật trạng thái đơn hàng!';
+        $msg = $msgMap[$status] ?? 'Đã cập nhật trạng thái đơn hàng!';
         return redirect()->back()->with('success', $msg);
     }
 
@@ -610,23 +714,7 @@ class VendorController extends Controller
         $rawOrders = collect();
         if (\Illuminate\Support\Facades\Schema::hasTable('orders')) {
             $query = DB::table('orders');
-            if ($context['stallName']) {
-                $query->where(function($q) use ($context) {
-                    $q->where('stall_name', $context['stallName']);
-                    if (!empty($context['eateryId'])) {
-                        $q->orWhere(function($sub) use ($context) {
-                            $sub->where('eatery_id', $context['eateryId'])
-                                ->where(function($s2) use ($context) {
-                                    $s2->whereNull('stall_name')
-                                       ->orWhere('stall_name', '')
-                                       ->orWhere('stall_name', $context['stallName']);
-                                });
-                        });
-                    }
-                });
-            } elseif (!empty($context['eateryId'])) {
-                $query->where('eatery_id', $context['eateryId']);
-            }
+            $query = $this->applyVendorOrderQuery($query, $context);
 
             $rawOrders = $query->latest()->limit(50)->get();
 
@@ -736,6 +824,13 @@ class VendorController extends Controller
             $stallImagePath = trim($request->input('stall_image_url'));
         }
 
+        $ownerAvatarPath = null;
+        if ($request->hasFile('avatar')) {
+            $ownerAvatarPath = R2Helper::upload($request->file('avatar'), 'avatars');
+        } elseif ($request->filled('avatar_url')) {
+            $ownerAvatarPath = trim($request->input('avatar_url'));
+        }
+
         // 1. Cập nhật thông tin trên bảng User hiện tại
         if ($user) {
             $userUpdate = [
@@ -745,8 +840,8 @@ class VendorController extends Controller
                 'bank_name' => $bankName ?: null,
                 'updated_at' => now()
             ];
-            if ($stallImagePath) {
-                $userUpdate['avatar'] = $stallImagePath;
+            if ($ownerAvatarPath) {
+                $userUpdate['avatar'] = $ownerAvatarPath;
             }
             DB::table('users')->where('id', $user->id)->update($userUpdate);
 
@@ -760,8 +855,8 @@ class VendorController extends Controller
                     'bank_name' => $bankName ?: null,
                     'updated_at' => now(),
                 ];
-                if ($stallImagePath) {
-                    $routeUpdate['image_url'] = $stallImagePath;
+                if ($ownerAvatarPath) {
+                    $routeUpdate['image_url'] = $ownerAvatarPath;
                 }
                 \App\Models\RouteBusiness::where('user_id', $user->id)
                     ->orWhere('phone', $sellerPhone)
@@ -781,14 +876,24 @@ class VendorController extends Controller
             $productQuery->where('stall_name', $context['stallName']);
         }
 
+        // Cập nhật Cơ sở kinh doanh (eateries) nếu ở chế độ Doanh nghiệp / Hộ độc lập
+        if (!empty($context['isBusinessMode']) && !empty($context['businessEatery'])) {
+            $eateryUpdate = [
+                'name'       => $stallName,
+                'phone'      => $sellerPhone,
+                'updated_at' => now(),
+            ];
+            if (!empty($address)) $eateryUpdate['address'] = $address;
+            if ($latitude !== null) $eateryUpdate['latitude'] = $latitude;
+            if ($longitude !== null) $eateryUpdate['longitude'] = $longitude;
+            if ($stallImagePath) $eateryUpdate['image_path'] = $stallImagePath;
+            $db->table('eateries')->where('id', $context['businessEatery']->id)->update($eateryUpdate);
+        }
+
         $ocopData = [
             'stall_name'   => $stallName,
             'seller_name'  => $sellerName,
             'seller_phone' => $sellerPhone,
-            'address'      => $address ?: null,
-            'map_link'     => $mapLink ?: null,
-            'latitude'     => $latitude,
-            'longitude'    => $longitude,
             'bank_name'    => $bankName ?: null,
             'bank_account' => $bankAccount ?: null,
             'bank_holder'  => $bankHolder ?: null,
@@ -796,7 +901,9 @@ class VendorController extends Controller
             'updated_at'   => now(),
         ];
         if ($stallImagePath) {
-            $ocopData['image_path'] = $stallImagePath;
+            try {
+                $ocopData['stall_image'] = $stallImagePath;
+            } catch (\Throwable $e) {}
         }
 
         // Tạo chuỗi mô tả kết hợp đầy đủ Nguồn gốc & ATTP

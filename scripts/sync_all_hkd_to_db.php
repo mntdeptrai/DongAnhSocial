@@ -32,20 +32,22 @@ $category = Category::firstOrCreate(
 $communes = Commune::select('id', 'name')->get();
 $defaultCommune = $communes->first();
 
-// 3. Load input dataset
+// 3. Load input datasets
 $jsonPath = database_path('data/hkd_with_phones.json');
-if (!file_exists($jsonPath)) {
-    echo "ERROR: hkd_with_phones.json not found!\n";
-    exit(1);
-}
+$dnJsonPath = database_path('data/doanh_nghiep_with_phones.json');
 
-$hkdList = json_decode(file_get_contents($jsonPath), true);
-if (!is_array($hkdList)) {
-    echo "ERROR: Could not parse hkd_with_phones.json!\n";
-    exit(1);
-}
+$hkdList = file_exists($jsonPath) ? json_decode(file_get_contents($jsonPath), true) : [];
+$dnList = file_exists($dnJsonPath) ? json_decode(file_get_contents($dnJsonPath), true) : [];
 
-echo "Total items in JSON: " . count($hkdList) . "\n";
+if (!is_array($hkdList)) $hkdList = [];
+if (!is_array($dnList)) $dnList = [];
+
+$allList = array_merge($hkdList, $dnList);
+
+echo "Loaded HKD: " . count($hkdList) . " items | Doanh Nghiệp: " . count($dnList) . " items (Total: " . count($allList) . ")\n";
+
+// Use $allList as main dataset
+$hkdList = $allList;
 
 /**
  * Standard Phone Normalization Function
@@ -117,6 +119,9 @@ DB::transaction(function () use (
         // Find existing user in memory
         $user = $existingUsersByPhone->get($rawPhone) ?? $existingUsersByUsername->get($username);
 
+        $sectionType = $item['section_type'] ?? '';
+        $role = $sectionType === 'Doanh nghiệp' ? 'dn' : 'hkd';
+
         if (!$user) {
             $user = User::create([
                 'name'         => $item['name'] ?? 'Hộ kinh doanh',
@@ -124,7 +129,7 @@ DB::transaction(function () use (
                 'email'        => null,
                 'phone'        => $rawPhone,
                 'password'     => $defaultPassword,
-                'role'         => 'seller',
+                'role'         => $role,
                 'status'       => 'active',
                 'is_verified'  => true,
             ]);
@@ -132,8 +137,10 @@ DB::transaction(function () use (
             $existingUsersByUsername->put($username, $user);
             $createdUsers++;
         } else {
-            if ($user->role !== 'admin') {
+            if (!in_array($user->role, ['admin', 'manager'])) {
                 $user->update([
+                    'name'        => !empty($item['name']) ? $item['name'] : $user->name,
+                    'role'        => $role,
                     'status'      => 'active',
                     'is_verified' => true,
                 ]);
@@ -167,7 +174,7 @@ DB::transaction(function () use (
                 'longitude'         => 105.8458,
                 'storytelling_data' => [
                     'tax_code'      => $item['mst'] ?? null,
-                    'business_type' => 'Cơ sở kinh doanh, Doanh nghiệp',
+                    'business_type' => $item['section_type'] ?? 'Hộ kinh doanh',
                     'stt'           => $item['stt'] ?? null,
                 ],
             ]);
@@ -178,12 +185,13 @@ DB::transaction(function () use (
             if (!empty($item['mst'])) {
                 $storyData['tax_code'] = $item['mst'];
             }
-            $storyData['business_type'] = 'Cơ sở kinh doanh, Doanh nghiệp';
+            $storyData['business_type'] = $item['section_type'] ?? $storyData['business_type'] ?? 'Hộ kinh doanh';
             if (!empty($item['stt'])) {
                 $storyData['stt'] = $item['stt'];
             }
 
             $eatery->update([
+                'name'              => !empty($item['name']) ? $item['name'] : $eatery->name,
                 'category_id'       => $category->id,
                 'address'           => !empty($item['address']) ? $item['address'] : $eatery->address,
                 'description'       => !empty($item['industry']) ? $item['industry'] : $eatery->description,
@@ -204,4 +212,7 @@ echo "Updated Eateries: $updatedEateries\n";
 echo "Total in Category 'co-so-kinh-doanh': " . Eatery::where('category_id', $category->id)->count() . "\n";
 echo "Total Users in DB: " . User::count() . "\n";
 echo "Execution Time: {$elapsed}s\n";
+
+\Illuminate\Support\Facades\Cache::flush();
+echo "Cleared application cache successfully!\n";
 

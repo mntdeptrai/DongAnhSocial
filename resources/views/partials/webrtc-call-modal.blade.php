@@ -187,9 +187,9 @@
 </style>
 @endif
 
-<script src="https://cdn.jsdelivr.net/npm/pusher-js@8.4.0/dist/web/pusher.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/simple-peer@9.11.1/simplepeer.min.js"></script>
-<script src="{{ asset('js/webrtc-call.js') }}?v={{ time() }}"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/pusher-js@8.4.0/dist/web/pusher.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/simple-peer@9.11.1/simplepeer.min.js"></script>
+<script defer src="{{ asset('js/webrtc-call.js') }}?v={{ file_exists(public_path('js/webrtc-call.js')) ? filemtime(public_path('js/webrtc-call.js')) : '1.0.0' }}"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         if (typeof window.Echo === 'undefined') {

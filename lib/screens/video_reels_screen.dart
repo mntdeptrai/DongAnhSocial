@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import '../services/moderation_service.dart';
 
 class VideoReelsScreen extends StatefulWidget {
   const VideoReelsScreen({super.key});
@@ -24,7 +25,7 @@ class _VideoReelsScreenState extends State<VideoReelsScreen> {
       final res = await ApiService.getVideos();
       if (mounted) {
         setState(() {
-          _videos = res;
+          _videos = res.where((v) => !ModerationService.isPostHidden('video_${v['id']}')).toList();
           _isLoading = false;
         });
       }
@@ -141,6 +142,15 @@ class _VideoReelsScreenState extends State<VideoReelsScreen> {
                             backgroundColor: Colors.white24,
                             child: Icon(Icons.share_rounded, color: Colors.white, size: 20),
                           ),
+                          const SizedBox(height: 16),
+                          GestureDetector(
+                            onTap: () => _showVideoModerationSheet(context, item, index),
+                            child: const CircleAvatar(
+                              radius: 24,
+                              backgroundColor: Colors.white24,
+                              child: Icon(Icons.more_horiz_rounded, color: Colors.white, size: 20),
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -148,6 +158,71 @@ class _VideoReelsScreenState extends State<VideoReelsScreen> {
                 );
               },
             ),
+    );
+  }
+
+  void _showVideoModerationSheet(BuildContext context, Map<String, dynamic> item, int index) {
+    final videoId = (item['id'] ?? '').toString();
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.only(top: 12, bottom: 28, left: 16, right: 16),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 36,
+              height: 4,
+              decoration: BoxDecoration(color: const Color(0xFFE2E8F0), borderRadius: BorderRadius.circular(2)),
+            ),
+            const SizedBox(height: 16),
+            ListTile(
+              leading: const Icon(Icons.visibility_off_outlined, color: Color(0xFF475569)),
+              title: const Text('Ẩn video này', style: TextStyle(fontWeight: FontWeight.w600)),
+              onTap: () async {
+                Navigator.pop(ctx);
+                await ModerationService.hidePost('video_$videoId');
+                setState(() {
+                  _videos.removeAt(index);
+                });
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Đã ẩn video khỏi danh sách.')),
+                  );
+                }
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.flag_outlined, color: Color(0xFFDC2626)),
+              title: const Text('Báo cáo video vi phạm', style: TextStyle(fontWeight: FontWeight.w600, color: Color(0xFFDC2626))),
+              subtitle: const Text('Báo cáo nội dung xấu độc, phản cảm (Xử lý trong 24h)', style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+              onTap: () async {
+                Navigator.pop(ctx);
+                await ModerationService.reportContent(
+                  contentId: videoId,
+                  contentType: 'video',
+                  reason: 'Video vi phạm tiêu chuẩn cộng đồng',
+                );
+                await ModerationService.hidePost('video_$videoId');
+                setState(() {
+                  _videos.removeAt(index);
+                });
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Báo cáo đã được ghi nhận. Video đã được ẩn và sẽ được xử lý trong 24 giờ.')),
+                  );
+                }
+              },
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

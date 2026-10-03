@@ -13,10 +13,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        // Áp dụng CheckUserStatus & HandleInertiaRequests cho toàn bộ web routes
+        // Áp dụng CheckUserStatus, HandleInertiaRequests & OptimizeResponseMiddleware cho toàn bộ web routes
         $middleware->web(append: [
             \App\Http\Middleware\CheckUserStatus::class,
             \App\Http\Middleware\HandleInertiaRequests::class,
+            \App\Http\Middleware\OptimizeResponseMiddleware::class,
         ]);
 
         // Thêm session & cookie middleware vào API group
@@ -24,6 +25,8 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->api(prepend: [
             \Illuminate\Cookie\Middleware\EncryptCookies::class,
             \Illuminate\Session\Middleware\StartSession::class,
+        ], append: [
+            \App\Http\Middleware\OptimizeResponseMiddleware::class,
         ]);
 
         $middleware->alias([
@@ -47,29 +50,29 @@ return Application::configure(basePath: dirname(__DIR__))
 
             $friendlyMessage = 'Đã xảy ra lỗi khi thao tác dữ liệu. Vui lòng kiểm tra lại thông tin nhập hoặc thử lại sau.';
 
-            if ($request->expectsJson() || $request->ajax()) {
+            if ($request->expectsJson() || $request->ajax() || $request->is('api/*')) {
                 return response()->json([
                     'success' => false,
                     'message' => $friendlyMessage,
                 ], 500);
             }
 
-            return back()->with('error', $friendlyMessage);
+            return back()->withInput()->with('error', $friendlyMessage);
         });
 
         $exceptions->render(function (\PDOException $e, $request) {
             \Illuminate\Support\Facades\Log::error('PDO Exception: ' . $e->getMessage());
 
-            $friendlyMessage = 'Lỗi kết nối cơ sở dữ liệu. Vui lòng thử lại sau.';
+            $friendlyMessage = 'Lỗi kết nối cơ sở dữ liệu (MySQL/MariaDB). Vui lòng kiểm tra dịch vụ MySQL đang chạy.';
 
-            if ($request->expectsJson() || $request->ajax()) {
+            if ($request->expectsJson() || $request->ajax() || $request->is('api/*')) {
                 return response()->json([
                     'success' => false,
                     'message' => $friendlyMessage,
                 ], 500);
             }
 
-            return back()->with('error', $friendlyMessage);
+            return back()->withInput()->with('error', $friendlyMessage);
         });
 
         // Intercept uncaught exceptions when debug mode is disabled
@@ -82,7 +85,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
                 $friendlyMessage = 'Hệ thống đã ghi nhận sự cố. Vui lòng thử lại sau.';
 
-                if ($request->expectsJson() || $request->ajax()) {
+                if ($request->expectsJson() || $request->ajax() || $request->is('api/*')) {
                     return response()->json([
                         'success' => false,
                         'message' => $friendlyMessage,

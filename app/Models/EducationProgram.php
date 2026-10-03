@@ -52,13 +52,33 @@ class EducationProgram extends Model
     public function getAllImagesAttribute(): array
     {
         $list = [];
-        if (!empty($this->images) && is_array($this->images)) {
-            $list = array_values(array_filter($this->images));
+        if (!empty($this->images)) {
+            $rawImages = is_string($this->images) ? json_decode($this->images, true) : $this->images;
+            if (is_array($rawImages)) {
+                $list = array_values(array_filter($rawImages));
+            }
         }
         if (empty($list) && !empty($this->image_path)) {
-            $list[] = $this->image_path;
+            $rawPath = is_string($this->image_path) ? json_decode($this->image_path, true) : null;
+            if (is_array($rawPath)) {
+                $list = array_values(array_filter($rawPath));
+            } else {
+                $list[] = $this->image_path;
+            }
         }
-        return $list;
+
+        $formatted = [];
+        foreach ($list as $img) {
+            if (!empty($img) && is_string($img)) {
+                if (\Illuminate\Support\Str::startsWith($img, ['http://', 'https://', 'data:'])) {
+                    $formatted[] = $img;
+                } else {
+                    $formatted[] = asset(ltrim($img, '/'));
+                }
+            }
+        }
+
+        return $formatted;
     }
 
     /**

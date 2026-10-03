@@ -37,6 +37,12 @@ class User extends Authenticatable
         'eatery_id',
         'stall_id',
         'is_verified',
+        'fcm_token',
+        'address',
+        'commune',
+        'bio',
+        'gender',
+        'birthday',
     ];
 
     /**
@@ -76,6 +82,7 @@ class User extends Authenticatable
             'password' => 'hashed',
             'last_active_at' => 'datetime',
             'is_verified' => 'boolean',
+            'birthday' => 'date:Y-m-d',
         ];
     }
 

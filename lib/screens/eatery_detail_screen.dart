@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../services/api_service.dart';
 import '../widgets/custom_loader.dart';
@@ -27,16 +29,30 @@ class _EateryDetailScreenState extends State<EateryDetailScreen> {
   void initState() {
     super.initState();
     if (widget.initialData != null) {
-      _eatery = widget.initialData;
+      _eatery = Map<String, dynamic>.from(widget.initialData!);
     }
     _fetchDetail();
   }
 
   Future<void> _fetchDetail() async {
     try {
-      final detail = await ApiService.getEateryDetail(widget.categorySlug, widget.eaterySlug);
-      if (detail != null) {
-        _eatery = Map<String, dynamic>.from(detail);
+      final effectiveCatSlug = widget.categorySlug.isNotEmpty
+          ? widget.categorySlug
+          : (_eatery?['category']?['slug']?.toString() ??
+              _eatery?['category_slug']?.toString() ??
+              'dong-anh-food-map');
+      final effectiveEaterySlug = widget.eaterySlug.isNotEmpty
+          ? widget.eaterySlug
+          : (_eatery?['slug']?.toString() ?? '');
+
+      if (effectiveEaterySlug.isNotEmpty) {
+        final detail = await ApiService.getEateryDetail(effectiveCatSlug, effectiveEaterySlug);
+        if (detail != null) {
+          _eatery = {
+            ...?widget.initialData,
+            ...detail,
+          };
+        }
       }
     } catch (e) {
       debugPrint('Lỗi tải chi tiết: $e');
@@ -351,6 +367,10 @@ class _EateryDetailScreenState extends State<EateryDetailScreen> {
         return const Color(0xFFEA4335);
       case 'discover-dong-anh-community-culture-hub':
         return const Color(0xFFE81E63);
+      case 'co-so-kinh-doanh':
+        return const Color(0xFF0D9488);
+      case 'traditional-market':
+        return const Color(0xFFD97706);
       default:
         return const Color(0xFF0EA5E9);
     }
@@ -372,9 +392,579 @@ class _EateryDetailScreenState extends State<EateryDetailScreen> {
         return '🍜';
       case 'discover-dong-anh-community-culture-hub':
         return '🏛️';
+      case 'co-so-kinh-doanh':
+        return '🏪';
+      case 'traditional-market':
+        return '🏮';
       default:
         return '📍';
     }
+  }
+
+  Future<void> _makePhoneCall(String phoneNumber) async {
+    final cleanPhone = phoneNumber.replaceAll(RegExp(r'[^0-9+]'), '');
+    final Uri launchUri = Uri(
+      scheme: 'tel',
+      path: cleanPhone,
+    );
+    try {
+      if (await canLaunchUrl(launchUri)) {
+        await launchUrl(launchUri);
+      }
+    } catch (e) {
+      debugPrint('Lỗi gọi điện: $e');
+    }
+  }
+
+  void _openCheckinModal(BuildContext context, dynamic eatery) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _DetailCheckinModal(
+        eatery: eatery,
+        onSubmit: (rating, comment, guestName, imagePath) async {
+          final res = await ApiService.storeCheckin(
+            eateryId: eatery['id'] ?? 0,
+            rating: rating,
+            comment: comment,
+            guestName: guestName,
+            imagePath: imagePath,
+          );
+          if (mounted && context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(res['message'] ?? 'Thành công'),
+                backgroundColor: res['success'] == true ? Colors.green : Colors.red,
+              ),
+            );
+            _fetchDetail();
+          }
+        },
+      ),
+    );
+  }
+
+  Widget _buildOperatingInfoCard(Map<String, dynamic> eatery, Color catColor, String catSlug) {
+    final phone = eatery['phone']?.toString().trim() ?? '';
+    final rawHours = eatery['opening_hours']?.toString().trim() ?? '';
+    final hours = rawHours.isNotEmpty
+        ? rawHours
+        : (catSlug == 'wellness-care' ? 'Trực cấp cứu 24/7' : '07:00 - 22:00 hàng ngày');
+    final price = eatery['price_range']?.toString().trim() ?? '';
+    final commune = (eatery['commune'] is Map)
+        ? eatery['commune']['name']?.toString()
+        : eatery['commune_name']?.toString();
+    final bType = (eatery['storytelling_data'] is Map)
+        ? eatery['storytelling_data']['business_type']?.toString()
+        : null;
+    final cert = eatery['food_safety_certificate'] ?? eatery['foodSafetyCertificate'];
+    final announcements = eatery['announcements']?.toString().trim() ?? '';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (announcements.isNotEmpty) ...[
+          Container(
+            padding: const EdgeInsets.all(12),
+            margin: const EdgeInsets.only(bottom: 14),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFFBEB),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFFDE68A)),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(Icons.campaign_rounded, color: Color(0xFFD97706), size: 20),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    announcements,
+                    style: const TextStyle(fontSize: 12.5, color: Color(0xFF92400E), height: 1.4),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.03),
+                blurRadius: 10,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(7),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(Icons.access_time_rounded, size: 16, color: Color(0xFF0284C7)),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Thời gian hoạt động', style: TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+                        Text(hours, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const Divider(height: 18, color: Color(0xFFF1F5F9)),
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(7),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(Icons.payments_outlined, size: 16, color: Color(0xFF10B981)),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Chi phí / Mức giá', style: TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+                        Text(
+                          price.isNotEmpty ? price : 'Theo quy định / Liên hệ',
+                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              if (phone.isNotEmpty) ...[
+                const Divider(height: 18, color: Color(0xFFF1F5F9)),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(7),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF1F5F9),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(Icons.phone_rounded, size: 16, color: Color(0xFF0D9488)),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Hotline / Điện thoại', style: TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+                          Text(phone, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+                        ],
+                      ),
+                    ),
+                    InkWell(
+                      onTap: () => _makePhoneCall(phone),
+                      borderRadius: BorderRadius.circular(8),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFCCFBF1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.call_rounded, size: 13, color: Color(0xFF0F766E)),
+                            SizedBox(width: 4),
+                            Text('Gọi', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Color(0xFF0F766E))),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+              if (commune != null && commune.isNotEmpty) ...[
+                const Divider(height: 18, color: Color(0xFFF1F5F9)),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(7),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF1F5F9),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(Icons.holiday_village_rounded, size: 16, color: Color(0xFFF59E0B)),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Khu vực hành chính', style: TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+                          Text(commune, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+                        ],
+                      ),
+                    ),
+                    if (bType != null)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF8FAFC),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(color: const Color(0xFFCBD5E1)),
+                        ),
+                        child: Text(bType, style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w600, color: Color(0xFF475569))),
+                      ),
+                  ],
+                ),
+              ],
+            ],
+          ),
+        ),
+        if (cert != null && cert is Map) ...[
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFECFDF5),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: const Color(0xFFA7F3D0)),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.verified_user_rounded, color: Color(0xFF059669), size: 28),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'CHỨNG NHẬN VỆ SINH AN TOÀN THỰC PHẨM',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11.5, color: Color(0xFF065F46)),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Số: ${cert['certificate_number'] ?? 'Đã xác thực'}',
+                        style: const TextStyle(fontSize: 11, color: Color(0xFF047857), fontWeight: FontWeight.w600),
+                      ),
+                      if (cert['issued_by'] != null)
+                        Text(
+                          'Cấp bởi: ${cert['issued_by']}',
+                          style: const TextStyle(fontSize: 10.5, color: Color(0xFF065F46)),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+        const SizedBox(height: 20),
+      ],
+    );
+  }
+
+  Widget _buildWellnessServicesSection(Map<String, dynamic> eatery, Color catColor) {
+    final List services = (eatery['wellness_services'] is List && (eatery['wellness_services'] as List).isNotEmpty)
+        ? eatery['wellness_services'] as List
+        : ((eatery['wellnessServices'] is List && (eatery['wellnessServices'] as List).isNotEmpty)
+            ? eatery['wellnessServices'] as List
+            : []);
+
+    if (services.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Icon(Icons.local_hospital_rounded, color: Color(0xFF059669), size: 20),
+            const SizedBox(width: 8),
+            Text(
+              'Dịch vụ Y tế & Chuyên khoa (${services.length})',
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        ListView.separated(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: services.length,
+          separatorBuilder: (_, __) => const SizedBox(height: 10),
+          itemBuilder: (context, idx) {
+            final s = services[idx];
+            final name = s['name']?.toString() ?? 'Dịch vụ y tế';
+            final desc = s['description']?.toString() ?? '';
+            final duration = s['duration']?.toString() ?? '';
+            final priceRaw = double.tryParse(s['price']?.toString() ?? '0') ?? 0;
+            final priceStr = priceRaw > 0
+                ? '${priceRaw.toInt().toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')}đ'
+                : 'Khám BHYT / Miễn phí';
+
+            return Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+                boxShadow: [
+                  BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 6, offset: const Offset(0, 2)),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          name,
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF0F172A)),
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFECFDF5),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: const Color(0xFFA7F3D0)),
+                        ),
+                        child: Text(
+                          priceStr,
+                          style: const TextStyle(color: Color(0xFF059669), fontSize: 11, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (duration.isNotEmpty) ...[
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        const Icon(Icons.access_time_rounded, size: 13, color: Color(0xFF64748B)),
+                        const SizedBox(width: 4),
+                        Text(
+                          duration,
+                          style: const TextStyle(fontSize: 11.5, color: Color(0xFF64748B), fontWeight: FontWeight.w500),
+                        ),
+                      ],
+                    ),
+                  ],
+                  if (desc.isNotEmpty) ...[
+                    const SizedBox(height: 6),
+                    Text(
+                      desc,
+                      style: const TextStyle(fontSize: 12.5, color: Color(0xFF475569), height: 1.4),
+                    ),
+                  ],
+                ],
+              ),
+            );
+          },
+        ),
+        const SizedBox(height: 24),
+      ],
+    );
+  }
+
+  Widget _buildRoomsSection(Map<String, dynamic> eatery, Color catColor) {
+    final List rooms = (eatery['rooms'] is List && (eatery['rooms'] as List).isNotEmpty)
+        ? eatery['rooms'] as List
+        : [];
+
+    if (rooms.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Icon(Icons.hotel_rounded, color: Color(0xFF9334E6), size: 20),
+            const SizedBox(width: 8),
+            Text(
+              'Hạng phòng & Lưu trú (${rooms.length})',
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        ListView.separated(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: rooms.length,
+          separatorBuilder: (_, __) => const SizedBox(height: 10),
+          itemBuilder: (context, idx) {
+            final r = rooms[idx];
+            final name = r['name']?.toString() ?? 'Hạng phòng';
+            final desc = r['description']?.toString() ?? '';
+            final bed = r['bed_type']?.toString() ?? '';
+            final cap = r['capacity']?.toString() ?? '';
+            final priceRaw = double.tryParse(r['price']?.toString() ?? '0') ?? 0;
+            final priceStr = priceRaw > 0
+                ? '${priceRaw.toInt().toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')}đ / đêm'
+                : 'Liên hệ';
+
+            return Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          name,
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF0F172A)),
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF3E8FF),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: const Color(0xFFD8B4FE)),
+                        ),
+                        child: Text(
+                          priceStr,
+                          style: const TextStyle(color: Color(0xFF7E22CE), fontSize: 11, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (bed.isNotEmpty || cap.isNotEmpty) ...[
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        if (bed.isNotEmpty) ...[
+                          const Icon(Icons.bed_rounded, size: 14, color: Color(0xFF64748B)),
+                          const SizedBox(width: 4),
+                          Text(bed, style: const TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+                          const SizedBox(width: 12),
+                        ],
+                        if (cap.isNotEmpty) ...[
+                          const Icon(Icons.people_outline_rounded, size: 14, color: Color(0xFF64748B)),
+                          const SizedBox(width: 4),
+                          Text('$cap người', style: const TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+                        ],
+                      ],
+                    ),
+                  ],
+                  if (desc.isNotEmpty) ...[
+                    const SizedBox(height: 6),
+                    Text(desc, style: const TextStyle(fontSize: 12.5, color: Color(0xFF475569))),
+                  ],
+                ],
+              ),
+            );
+          },
+        ),
+        const SizedBox(height: 24),
+      ],
+    );
+  }
+
+  Widget _buildEducationProgramsSection(Map<String, dynamic> eatery, Color catColor) {
+    final List progs = (eatery['education_programs'] is List && (eatery['education_programs'] as List).isNotEmpty)
+        ? eatery['education_programs'] as List
+        : ((eatery['educationPrograms'] is List && (eatery['educationPrograms'] as List).isNotEmpty)
+            ? eatery['educationPrograms'] as List
+            : []);
+
+    if (progs.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Icon(Icons.school_rounded, color: Color(0xFF1A73E8), size: 20),
+            const SizedBox(width: 8),
+            Text(
+              'Chương trình Giáo dục & Tuyển sinh (${progs.length})',
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        ListView.separated(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: progs.length,
+          separatorBuilder: (_, __) => const SizedBox(height: 10),
+          itemBuilder: (context, idx) {
+            final p = progs[idx];
+            final name = p['name']?.toString() ?? 'Chương trình đào tạo';
+            final desc = p['description']?.toString() ?? '';
+            final fee = p['tuition_fee']?.toString() ?? '';
+            final duration = p['duration']?.toString() ?? '';
+
+            return Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          name,
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF0F172A)),
+                        ),
+                      ),
+                      if (fee.isNotEmpty)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFEFF6FF),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: const Color(0xFFBFDBFE)),
+                          ),
+                          child: Text(
+                            fee,
+                            style: const TextStyle(color: Color(0xFF1D4ED8), fontSize: 11, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                    ],
+                  ),
+                  if (duration.isNotEmpty) ...[
+                    const SizedBox(height: 6),
+                    Text('Thời lượng: $duration', style: const TextStyle(fontSize: 11.5, color: Color(0xFF64748B))),
+                  ],
+                  if (desc.isNotEmpty) ...[
+                    const SizedBox(height: 6),
+                    Text(desc, style: const TextStyle(fontSize: 12.5, color: Color(0xFF475569))),
+                  ],
+                ],
+              ),
+            );
+          },
+        ),
+        const SizedBox(height: 24),
+      ],
+    );
   }
 
   @override
@@ -395,6 +985,7 @@ class _EateryDetailScreenState extends State<EateryDetailScreen> {
 
     final double? lat = double.tryParse(eatery?['latitude']?.toString() ?? '');
     final double? lng = double.tryParse(eatery?['longitude']?.toString() ?? '');
+    final phone = eatery?['phone']?.toString().trim() ?? '';
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
@@ -558,18 +1149,36 @@ class _EateryDetailScreenState extends State<EateryDetailScreen> {
                             ),
                             const SizedBox(height: 16),
 
-                            // Action Buttons Row
+                            // Action Buttons Row (Call, Directions, Check-in)
                             Row(
                               children: [
-                                if (lat != null && lng != null)
+                                if (phone.isNotEmpty) ...[
+                                  Expanded(
+                                    child: OutlinedButton.icon(
+                                      onPressed: () => _makePhoneCall(phone),
+                                      icon: const Icon(Icons.call_rounded, size: 17),
+                                      label: const Text('Gọi điện', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                                      style: OutlinedButton.styleFrom(
+                                        padding: const EdgeInsets.symmetric(vertical: 12),
+                                        side: const BorderSide(color: Color(0xFF0D9488), width: 1.2),
+                                        foregroundColor: const Color(0xFF0D9488),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(10),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                ],
+                                if (lat != null && lng != null) ...[
                                   Expanded(
                                     child: OutlinedButton.icon(
                                       onPressed: () => _openGoogleMapsDirections(lat, lng),
-                                      icon: const Icon(Icons.directions, size: 18),
-                                      label: const Text('Chỉ đường'),
+                                      icon: const Icon(Icons.directions, size: 17),
+                                      label: const Text('Chỉ đường', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
                                       style: OutlinedButton.styleFrom(
                                         padding: const EdgeInsets.symmetric(vertical: 12),
-                                        side: BorderSide(color: catColor),
+                                        side: BorderSide(color: catColor, width: 1.2),
                                         foregroundColor: catColor,
                                         shape: RoundedRectangleBorder(
                                           borderRadius: BorderRadius.circular(10),
@@ -577,21 +1186,17 @@ class _EateryDetailScreenState extends State<EateryDetailScreen> {
                                       ),
                                     ),
                                   ),
-                                if (lat != null && lng != null) const SizedBox(width: 10),
+                                  const SizedBox(width: 8),
+                                ],
                                 Expanded(
                                   child: ElevatedButton.icon(
-                                    onPressed: () {
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        const SnackBar(
-                                          content: Text('Vui lòng quay lại bản đồ hoặc feed để check-in.'),
-                                        ),
-                                      );
-                                    },
-                                    icon: const Icon(Icons.camera_alt, size: 18),
-                                    label: const Text('Check-in'),
+                                    onPressed: () => _openCheckinModal(context, eatery),
+                                    icon: const Icon(Icons.camera_alt, size: 17),
+                                    label: const Text('Check-in', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: const Color(0xFF0EA5E9),
                                       foregroundColor: Colors.white,
+                                      elevation: 0,
                                       padding: const EdgeInsets.symmetric(vertical: 12),
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(10),
@@ -602,30 +1207,61 @@ class _EateryDetailScreenState extends State<EateryDetailScreen> {
                               ],
                             ),
 
-                            const Divider(height: 32),
+                            const SizedBox(height: 20),
 
-                            // Description Section
-                            if (eatery['description'] != null &&
-                                eatery['description'].toString().trim().isNotEmpty) ...[
-                              const Text(
-                                'Giới thiệu',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF0F172A),
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                eatery['description'].toString().replaceAll(RegExp(r'<[^>]*>'), ''),
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  height: 1.5,
-                                  color: Colors.grey[800],
-                                ),
-                              ),
-                              const SizedBox(height: 24),
-                            ],
+                            // Operating & Administrative Information Card
+                            _buildOperatingInfoCard(eatery, catColor, catSlug),
+
+                            // Medical & Wellness Services (Hospitals, Clinics)
+                            _buildWellnessServicesSection(eatery, catColor),
+
+                            // Accommodations & Rooms (Hotels, Homestays)
+                            _buildRoomsSection(eatery, catColor),
+
+                            // Education Programs (Schools, Training Centers)
+                            _buildEducationProgramsSection(eatery, catColor),
+
+                            // Description Section with Smart Contextual Fallback
+                            Builder(
+                              builder: (context) {
+                                final rawDesc = eatery['description']?.toString().replaceAll(RegExp(r'<[^>]*>'), '').trim() ?? '';
+                                final fallbackDesc = catSlug == 'wellness-care'
+                                    ? '${eatery['name']} là cơ sở y tế, chăm sóc sức khỏe phục vụ nhân dân và người lao động trên địa bàn Đông Anh và khu vực lân cận. Cơ sở cung cấp dịch vụ thăm khám, chẩn đoán và điều trị với đội ngũ y bác sĩ tận tâm.'
+                                    : catSlug == 'co-so-kinh-doanh'
+                                        ? '${eatery['name']} là cơ sở sản xuất kinh doanh, thương mại dịch vụ uy tín tại huyện Đông Anh, phục vụ nhu cầu đời sống, sản xuất và tiêu dùng của nhân dân địa phương.'
+                                        : catSlug == 'traditional-market'
+                                            ? '${eatery['name']} là chợ truyền thống lâu đời trên địa bàn Đông Anh, nơi diễn ra các hoạt động giao thương sầm uất, cung cấp thực phẩm tươi sống, nông sản và nhu yếu phẩm hàng ngày.'
+                                            : catSlug == 'education'
+                                                ? '${eatery['name']} là đơn vị đào tạo, cơ sở giáo dục trên địa bàn Đông Anh với chương trình giảng dạy chuẩn mực và cơ sở vật chất đáp ứng nhu cầu học tập.'
+                                                : '${eatery['name']} là địa điểm hoạt động phục vụ đời sống văn hóa, xã hội và kinh tế trên địa bàn huyện Đông Anh, TP. Hà Nội.';
+
+                                final descToShow = rawDesc.isNotEmpty ? rawDesc : fallbackDesc;
+
+                                return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'Giới thiệu',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xFF0F172A),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      descToShow,
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        height: 1.5,
+                                        color: Colors.grey[800],
+                                      ),
+                                    ),
+                                    const SizedBox(height: 24),
+                                  ],
+                                );
+                              },
+                            ),
 
                             // Menu / OCOP Products / Dishes / Offerings List Section
                             Builder(
@@ -842,7 +1478,46 @@ class _EateryDetailScreenState extends State<EateryDetailScreen> {
                                   }
                                 }
 
-                                if (combinedReviews.isEmpty) return const SizedBox.shrink();
+                                if (combinedReviews.isEmpty) {
+                                  return Container(
+                                    width: double.infinity,
+                                    margin: const EdgeInsets.only(bottom: 24),
+                                    padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(14),
+                                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                                    ),
+                                    child: Column(
+                                      children: [
+                                        const Icon(Icons.rate_review_outlined, color: Color(0xFF94A3B8), size: 36),
+                                        const SizedBox(height: 8),
+                                        const Text(
+                                          'Chưa có đánh giá hoặc check-in nào',
+                                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF475569)),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        const Text(
+                                          'Hãy là người đầu tiên chia sẻ cảm nhận hoặc hình ảnh tại đây!',
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                                        ),
+                                        const SizedBox(height: 14),
+                                        ElevatedButton.icon(
+                                          onPressed: () => _openCheckinModal(context, eatery),
+                                          icon: const Icon(Icons.star_rounded, size: 16),
+                                          label: const Text('Viết đánh giá & Check-in'),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: catColor,
+                                            foregroundColor: Colors.white,
+                                            elevation: 0,
+                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                }
 
                                 return Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -964,6 +1639,226 @@ class _EateryDetailScreenState extends State<EateryDetailScreen> {
                     ),
                   ],
                 ),
+    );
+  }
+}
+
+class _DetailCheckinModal extends StatefulWidget {
+  final dynamic eatery;
+  final Function(int rating, String comment, String guestName, String? imagePath) onSubmit;
+
+  const _DetailCheckinModal({
+    required this.eatery,
+    required this.onSubmit,
+  });
+
+  @override
+  State<_DetailCheckinModal> createState() => _DetailCheckinModalState();
+}
+
+class _DetailCheckinModalState extends State<_DetailCheckinModal> {
+  int _rating = 5;
+  final TextEditingController _nameController = TextEditingController(text: 'Khách Đông Anh');
+  final TextEditingController _commentController = TextEditingController();
+  File? _selectedImage;
+  bool _isSubmitting = false;
+
+  final ImagePicker _picker = ImagePicker();
+
+  Future<void> _pickImage(ImageSource source) async {
+    try {
+      final XFile? picked = await _picker.pickImage(source: source, imageQuality: 85);
+      if (picked != null) {
+        setState(() {
+          _selectedImage = File(picked.path);
+        });
+      }
+    } catch (e) {
+      debugPrint('Lỗi chọn ảnh: $e');
+    }
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _commentController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+    final eateryName = widget.eatery?['name']?.toString() ?? 'Địa điểm';
+
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      padding: EdgeInsets.fromLTRB(20, 16, 20, 20 + bottomInset),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Đánh giá & Check-in',
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                      ),
+                      Text(
+                        eateryName,
+                        style: const TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close, color: Colors.grey),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Center(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: List.generate(5, (index) {
+                  final starVal = index + 1;
+                  return IconButton(
+                    onPressed: () => setState(() => _rating = starVal),
+                    icon: Icon(
+                      starVal <= _rating ? Icons.star_rounded : Icons.star_outline_rounded,
+                      color: Colors.amber,
+                      size: 34,
+                    ),
+                  );
+                }),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _nameController,
+              decoration: InputDecoration(
+                labelText: 'Họ tên người đánh giá',
+                labelStyle: const TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _commentController,
+              maxLines: 3,
+              decoration: InputDecoration(
+                hintText: 'Chia sẻ trải nghiệm hoặc cảm nghĩ của bạn tại đây...',
+                hintStyle: const TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
+                contentPadding: const EdgeInsets.all(12),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+            ),
+            const SizedBox(height: 14),
+            if (_selectedImage != null) ...[
+              Stack(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: Image.file(_selectedImage!, height: 120, width: double.infinity, fit: BoxFit.cover),
+                  ),
+                  Positioned(
+                    top: 6,
+                    right: 6,
+                    child: CircleAvatar(
+                      backgroundColor: Colors.black54,
+                      radius: 14,
+                      child: IconButton(
+                        padding: EdgeInsets.zero,
+                        icon: const Icon(Icons.close, color: Colors.white, size: 16),
+                        onPressed: () => setState(() => _selectedImage = null),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+            ] else ...[
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () => _pickImage(ImageSource.camera),
+                      icon: const Icon(Icons.camera_alt_outlined, size: 18),
+                      label: const Text('Chụp ảnh', style: TextStyle(fontSize: 13)),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () => _pickImage(ImageSource.gallery),
+                      icon: const Icon(Icons.photo_library_outlined, size: 18),
+                      label: const Text('Chọn ảnh', style: TextStyle(fontSize: 13)),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+            ],
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: _isSubmitting
+                    ? null
+                    : () async {
+                        setState(() => _isSubmitting = true);
+                        Navigator.pop(context);
+                        await widget.onSubmit(
+                          _rating,
+                          _commentController.text.trim(),
+                          _nameController.text.trim().isNotEmpty ? _nameController.text.trim() : 'Khách Đông Anh',
+                          _selectedImage?.path,
+                        );
+                      },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF0EA5E9),
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(vertical: 13),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+                child: _isSubmitting
+                    ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                    : const Text('Gửi đánh giá & Check-in', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

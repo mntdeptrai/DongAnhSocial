@@ -121,6 +121,7 @@ class HomeController extends Controller
                 'dan-di' => 'Đường Đản Dị',
                 'mai-lam' => 'Đường Dốc Vân',
                 'duc-tu' => 'Đường Phía Nam Dục Tú',
+                'dan-mo' => 'Đường Đản Mỗ',
             ];
             if (isset($vMap[$b->village_key])) {
                 $vName = $vMap[$b->village_key];
@@ -143,6 +144,28 @@ class HomeController extends Controller
                 $addr = trim($addr, " \t\n\r\0\x0B,");
             }
 
+            $img = $b->image_url;
+            if (!$img) {
+                $typeImages = [
+                    'quan-an'   => 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=600&q=80',
+                    'nha-hang'  => 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=600&q=80',
+                    'tap-hoa'   => 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?auto=format&fit=crop&w=600&q=80',
+                    'thuc-pham' => 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=600&q=80',
+                    'thoi-trang'=> 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=600&q=80',
+                    'y-te'      => 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=600&q=80',
+                    'dich-vu'   => 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=600&q=80',
+                ];
+                $img = $typeImages[$b->type] ?? 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?auto=format&fit=crop&w=600&q=80';
+            }
+
+            $menuItems = $b->menu;
+            if (is_string($menuItems)) {
+                $menuItems = json_decode($menuItems, true);
+            }
+            if (empty($menuItems)) {
+                $menuItems = ['Hộ kinh doanh thực tế'];
+            }
+
             return [
                 'id' => $b->id,
                 'name' => $b->name,
@@ -156,8 +179,8 @@ class HomeController extends Controller
                 'bankAccount' => $b->bank_account,
                 'bank' => $b->bank_name,
                 'open' => (bool)$b->is_open,
-                'menu' => $b->menu ?? [],
-                'image' => $b->image_url,
+                'menu' => $menuItems,
+                'image' => $img,
                 'lat' => (float)$b->lat,
                 'lng' => (float)$b->lng,
             ];
@@ -210,16 +233,29 @@ class HomeController extends Controller
      */
     public function newsfeed()
     {
-        // Tự động dọn dẹp sạch tất cả bình luận rác bot HfJNUIYZ & SQL Injection ngay khi load trang
+        // Tự động dọn dẹp sạch tất cả bình luận rác bot HfJNUIYZ, Command Injection & Scanner payloads
         try {
             \Illuminate\Support\Facades\DB::table('comments')
                 ->where('guest_name', 'LIKE', '%HfJNUIYZ%')
                 ->orWhereRaw('LOWER(guest_name) LIKE ?', ['%hfjnuiyz%'])
-                ->orWhereRaw('content LIKE ?', ['%sleep(%'])
-                ->orWhereRaw('content LIKE ?', ['%redirtest%'])
-                ->orWhereRaw('content LIKE ?', ['%!(O&&!*%'])
+                ->orWhereRaw('LOWER(guest_name) LIKE ?', ['%acunetix%'])
+                ->orWhereRaw('LOWER(guest_name) LIKE ?', ['%sqlmap%'])
+                ->orWhereRaw('LOWER(content) LIKE ?', ['%echo %'])
+                ->orWhereRaw('LOWER(content) LIKE ?', ['%zgnrlq%'])
+                ->orWhereRaw('LOWER(content) LIKE ?', ['%bosujf%'])
+                ->orWhereRaw('LOWER(content) LIKE ?', ['%tnazcm%'])
+                ->orWhereRaw('LOWER(content) LIKE ?', ['%hulhnr%'])
+                ->orWhereRaw('LOWER(content) LIKE ?', ['%passwd%'])
+                ->orWhereRaw('LOWER(content) LIKE ?', ['%esi:include%'])
+                ->orWhereRaw('LOWER(content) LIKE ?', ['%bxss.me%'])
+                ->orWhereRaw('LOWER(content) LIKE ?', ['%sleep(%'])
+                ->orWhereRaw('LOWER(content) LIKE ?', ['%redirtest%'])
+                ->orWhereRaw('LOWER(content) LIKE ?', ['%9999256%'])
                 ->orWhereRaw('LOWER(content) LIKE ?', ['%hfjnuiyz%'])
                 ->orWhere('content', '1BE7D4CSVY0')
+                ->orWhere('content', '"()')
+                ->orWhere('content', '\'"()')
+                ->orWhere('content', '1')
                 ->delete();
         } catch (\Throwable $e) {}
 
@@ -312,6 +348,7 @@ class HomeController extends Controller
         // THUẬT TOÁN CÁ NHÂN HÓA BẢNG TIN (Personalized Feed)
         // Mỗi user sẽ thấy thứ tự bài viết khác nhau
         // ========================================================
+        $feedType = request()->query('feed_type', 'for_you');
         $currentUserId = \Illuminate\Support\Facades\Auth::id() ?? session('user_id');
 
         // Lấy danh sách bạn bè & eatery đã theo dõi của user hiện tại
@@ -329,7 +366,6 @@ class HomeController extends Controller
                     ->toArray();
             } catch (\Throwable $e) {}
 
-            // Lấy eatery_id của user (trường/gian hàng user quản lý)
             try {
                 $user = \App\Models\User::find($currentUserId);
                 if ($user && $user->eatery_id) {
@@ -338,47 +374,88 @@ class HomeController extends Controller
             } catch (\Throwable $e) {}
         }
 
-        // Pre-load engagement counts cho tất cả bài viết (tránh N+1 query)
-        $allPostIds = $allPostsCombined->pluck('id')->toArray();
-        $engagementReactions = \App\Models\CheckinReaction::selectRaw('reactionable_id, count(*) as cnt')
-            ->whereIn('reactionable_id', $allPostIds)
-            ->groupBy('reactionable_id')
-            ->pluck('cnt', 'reactionable_id');
-        $engagementComments = \App\Models\Comment::selectRaw('commentable_id, count(*) as cnt')
-            ->whereIn('commentable_id', $allPostIds)
-            ->groupBy('commentable_id')
-            ->pluck('cnt', 'commentable_id');
+        // Lọc theo chế độ Đang theo dõi (Following)
+        if ($feedType === 'following') {
+            if (!empty($friendUserIds) || !empty($userEateryIds)) {
+                $allPostsCombined = $allPostsCombined->filter(function($post) use ($friendUserIds, $userEateryIds) {
+                    $uId = $post->user_id ?? null;
+                    $eId = $post->eatery_id ?? null;
+                    return ($uId && in_array($uId, $friendUserIds)) || ($eId && in_array($eId, $userEateryIds));
+                })->values();
+            }
+        } elseif ($feedType === 'nearby') {
+            // Lọc ưu tiên các bài đăng Check-in và Food Tour tại địa bàn Đông Anh
+            $allPostsCombined = $allPostsCombined->filter(function($post) {
+                return !empty($post->is_checkin) || !empty($post->is_food_tour) || !empty($post->eatery_id);
+            })->values();
+        }
+
+        $engagementReactions = collect();
+        $engagementComments = collect();
+        try {
+            $allPostIds = $allPostsCombined->pluck('id')->filter()->toArray();
+            if (!empty($allPostIds)) {
+                $engagementReactions = \App\Models\CheckinReaction::selectRaw('reactionable_id, count(*) as cnt')
+                    ->whereIn('reactionable_id', $allPostIds)
+                    ->groupBy('reactionable_id')
+                    ->pluck('cnt', 'reactionable_id');
+                $engagementComments = \App\Models\Comment::selectRaw('commentable_id, count(*) as cnt')
+                    ->whereIn('commentable_id', $allPostIds)
+                    ->groupBy('commentable_id')
+                    ->pluck('cnt', 'commentable_id');
+            }
+        } catch (\Throwable $e) {}
 
         // Tính điểm cá nhân hóa cho từng bài viết
-        $allPostsCombined = $allPostsCombined->map(function($post) use ($friendUserIds, $userEateryIds, $currentUserId, $engagementReactions, $engagementComments) {
+        $allPostsCombined = $allPostsCombined->map(function($post) use ($friendUserIds, $userEateryIds, $currentUserId, $engagementReactions, $engagementComments, $feedType) {
             $score = 0;
             $createdTs = $post->created_at ? $post->created_at->timestamp : 0;
             $ageHours = max(1, (time() - $createdTs) / 3600);
 
-            // Điểm thời gian: bài mới được ưu tiên (giảm dần theo giờ)
+            // Điểm thời gian: bài mới được ưu tiên
             $score += max(0, 100 - ($ageHours * 0.5));
 
-            // Điểm bạn bè: bài từ bạn bè +40 điểm
+            // Điểm bạn bè: bài từ bạn bè +45 điểm
             $postUserId = $post->user_id ?? null;
-            if ($postUserId && in_array($postUserId, $friendUserIds)) {
-                $score += 40;
+            $isFriend = $postUserId && in_array($postUserId, $friendUserIds);
+            if ($isFriend) {
+                $score += 45;
             }
 
-            // Điểm trường/gian hàng theo dõi: +30 điểm
+            // Điểm cơ sở theo dõi: +30 điểm
             $postEateryId = $post->eatery_id ?? null;
-            if ($postEateryId && in_array($postEateryId, $userEateryIds)) {
+            $isFollowedEatery = $postEateryId && in_array($postEateryId, $userEateryIds);
+            if ($isFollowedEatery) {
                 $score += 30;
             }
 
             // Điểm tương tác: bài có nhiều reaction/comment được boost
             $reactionCount = $engagementReactions->get($post->id, 0);
             $commentCount = $engagementComments->get($post->id, 0);
-            $score += min(25, ($reactionCount * 3) + ($commentCount * 5));
+            $totalEngage = ($reactionCount * 3) + ($commentCount * 5);
+            $score += min(30, $totalEngage);
 
-            // Biến thể theo user: thêm nhiễu nhẹ dựa trên user_id để mỗi người thấy khác nhau
+            // Gán nhãn cá nhân hóa
+            if ($feedType === 'following') {
+                $post->_personal_tag = '👥 Từ người bạn theo dõi';
+            } elseif ($feedType === 'nearby') {
+                $post->_personal_tag = '📍 Khám phá gần bạn';
+            } else {
+                if ($isFriend) {
+                    $post->_personal_tag = '📌 Từ bạn bè của bạn';
+                } elseif ($isFollowedEatery) {
+                    $post->_personal_tag = '🏛️ Cơ sở bạn quan tâm';
+                } elseif (($reactionCount + $commentCount) >= 4) {
+                    $post->_personal_tag = '🔥 Đang thịnh hành';
+                } else {
+                    $post->_personal_tag = '🎯 Gợi ý cho bạn';
+                }
+            }
+
+            // Biến thể ngẫu nhiên nhẹ theo từng người dùng
             if ($currentUserId) {
                 $seed = crc32($currentUserId . '_' . $post->id . '_' . date('Y-m-d'));
-                $noise = ($seed % 20) - 10; // -10 đến +10 điểm nhiễu
+                $noise = ($seed % 20) - 10;
                 $score += $noise;
             }
 
@@ -386,10 +463,10 @@ class HomeController extends Controller
             return $post;
         });
 
-        // Sắp xếp theo điểm cá nhân hóa (cao → thấp)
+        // Sắp xếp theo điểm cá nhân hóa
         $allPostsCombined = $allPostsCombined->sortByDesc('_feed_score')->values();
 
-        // Deep link: nếu có ?post=HASHID (hoặc ID), đẩy bài viết đó lên đầu tiên
+        // Deep link: đẩy bài viết cụ thể lên đầu tiên nếu có ?post=
         $highlightPostParam = request()->query('post');
         if ($highlightPostParam) {
             $pinnedPost = $allPostsCombined->first(fn($p) => (isset($p->hashid) && $p->hashid === $highlightPostParam) || $p->id == $highlightPostParam);
@@ -399,52 +476,66 @@ class HomeController extends Controller
             }
         }
 
-        // Attach comments and reactions
-        $commentsGroup = \App\Models\Comment::with('user')
-            ->where(function($q) use ($allPostsCombined) {
-                foreach ($allPostsCombined as $p) {
-                    $cType = get_class($p);
-                    $q->orWhere(function($sub) use ($cType, $p) {
-                        $sub->whereIn('commentable_type', [$cType, strtolower(class_basename($cType))])
-                            ->where('commentable_id', $p->id);
-                    });
-                }
-            })
-            ->get()
-            ->groupBy(function($c) {
-                $normType = match (true) {
-                    str_contains($c->commentable_type, 'Checkin') => 'checkin',
-                    str_contains($c->commentable_type, 'FoodTourDiary') => 'diary',
-                    str_contains($c->commentable_type, 'Eatery') => 'eatery',
-                    str_contains($c->commentable_type, 'EducationProgram') => 'education',
-                    default => 'post',
-                };
-                return $normType . '_' . $c->commentable_id;
-            });
+        // Attach comments and reactions efficiently using grouped whereIn
+        $idsByType = [];
+        foreach ($allPostsCombined as $p) {
+            $cType = get_class($p);
+            $baseType = strtolower(class_basename($cType));
+            $idsByType[$cType][] = $p->id;
+            $idsByType[$baseType][] = $p->id;
+        }
 
-        $allReactions = \App\Models\CheckinReaction::selectRaw('reactionable_type, reactionable_id, emoji, count(*) as count')
-            ->groupBy('reactionable_type', 'reactionable_id', 'emoji')
-            ->get()
-            ->groupBy(function($item) {
-                return $item->reactionable_type . '_' . $item->reactionable_id;
-            });
+        $commentsGroup = collect();
+        if (!empty($idsByType)) {
+            $commentsGroup = \App\Models\Comment::with('user')
+                ->where(function($q) use ($idsByType) {
+                    foreach ($idsByType as $type => $ids) {
+                        $q->orWhere(function($sub) use ($type, $ids) {
+                            $sub->where('commentable_type', $type)
+                                ->whereIn('commentable_id', array_unique($ids));
+                        });
+                    }
+                })
+                ->get()
+                ->groupBy(function($c) {
+                    $normType = match (true) {
+                        str_contains($c->commentable_type, 'Checkin') => 'checkin',
+                        str_contains($c->commentable_type, 'FoodTourDiary') => 'diary',
+                        str_contains($c->commentable_type, 'Eatery') => 'eatery',
+                        str_contains($c->commentable_type, 'EducationProgram') => 'education',
+                        default => 'post',
+                    };
+                    return $normType . '_' . $c->commentable_id;
+                });
+        }
 
-        $userId = \Illuminate\Support\Facades\Auth::id() ?? session('user_id');
-        $sessionId = session()->getId();
+        $allReactions = collect();
+        $userReactions = collect();
+        try {
+            $allReactions = \App\Models\CheckinReaction::selectRaw('reactionable_type, reactionable_id, emoji, count(*) as count')
+                ->groupBy('reactionable_type', 'reactionable_id', 'emoji')
+                ->get()
+                ->groupBy(function($item) {
+                    return $item->reactionable_type . '_' . $item->reactionable_id;
+                });
 
-        $userReactions = \App\Models\CheckinReaction::where(function($q) use ($userId, $sessionId) {
-                if ($userId) {
-                    $q->where('user_id', $userId);
-                } else if (!empty($sessionId)) {
-                    $q->whereNull('user_id')->where('session_id', $sessionId);
-                } else {
-                    $q->whereRaw('1 = 0');
-                }
-            })
-            ->get()
-            ->keyBy(function($item) {
-                return $item->reactionable_type . '_' . $item->reactionable_id;
-            });
+            $userId = \Illuminate\Support\Facades\Auth::id() ?? session('user_id');
+            $sessionId = session()->getId();
+
+            $userReactions = \App\Models\CheckinReaction::where(function($q) use ($userId, $sessionId) {
+                    if ($userId) {
+                        $q->where('user_id', $userId);
+                    } else if (!empty($sessionId)) {
+                        $q->whereNull('user_id')->where('session_id', $sessionId);
+                    } else {
+                        $q->whereRaw('1 = 0');
+                    }
+                })
+                ->get()
+                ->keyBy(function($item) {
+                    return $item->reactionable_type . '_' . $item->reactionable_id;
+                });
+        } catch (\Throwable $e) {}
 
         $emojis = ['❤️', '🔥', '👍', '😂', '😍', '🤤'];
 
@@ -474,24 +565,39 @@ class HomeController extends Controller
             return $post;
         });
 
-        // 4. Gợi ý Profile mới nhất
-        $featuredUsers = \App\Models\User::whereNotNull('name')
-            ->inRandomOrder()
-            ->take(10)
-            ->get();
+        $featuredUsers = collect();
+        try {
+            $maxUserId = \App\Models\User::max('id') ?? 1;
+            $randomStartId = rand(1, max(1, $maxUserId - 20));
+            $featuredUsers = \App\Models\User::where('id', '>=', $randomStartId)
+                ->whereNotNull('name')
+                ->take(10)
+                ->get();
+            if ($featuredUsers->count() < 10) {
+                $moreUsers = \App\Models\User::whereNotNull('name')
+                    ->whereNotIn('id', $featuredUsers->pluck('id'))
+                    ->take(10 - $featuredUsers->count())
+                    ->get();
+                $featuredUsers = $featuredUsers->merge($moreUsers);
+            }
+            $featuredUsers = $featuredUsers->shuffle();
+        } catch (\Throwable $e) {}
 
         $allEateries = collect();
 
-        $stories = \App\Models\Story::with('user')
-            ->where('created_at', '>=', now()->subHours(24))
-            ->orderBy('created_at', 'asc')
-            ->get()
-            ->map(function($s) {
-                $s->time_ago = $s->created_at ? $s->created_at->diffForHumans() : 'Vừa xong';
-                return $s;
-            });
+        $stories = collect();
+        try {
+            $stories = \App\Models\Story::with('user')
+                ->where('created_at', '>=', now()->subHours(24))
+                ->orderBy('created_at', 'asc')
+                ->get()
+                ->map(function($s) {
+                    $s->time_ago = $s->created_at ? $s->created_at->diffForHumans() : 'Vừa xong';
+                    return $s;
+                });
+        } catch (\Throwable $e) {}
 
-        return view('newsfeed', compact('posts', 'featuredUsers', 'allEateries', 'stories'));
+        return view('newsfeed', compact('posts', 'featuredUsers', 'allEateries', 'stories', 'feedType'));
     }
 
     /**
@@ -1182,6 +1288,11 @@ class HomeController extends Controller
             'shares_count' => $newShareCount,
             'message'      => 'Tăng số lượt chia sẻ thành công'
         ]);
+    }
+
+    public function privacyPolicy()
+    {
+        return view('privacy_policy');
     }
 }
 

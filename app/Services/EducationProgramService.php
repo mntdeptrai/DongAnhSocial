@@ -3,72 +3,88 @@
 namespace App\Services;
 
 use App\Domain\Education\EducationProgramData;
-use App\Domain\Education\Actions\CreateEducationProgramAction;
-use App\Domain\Education\Actions\UpdateEducationProgramAction;
 use App\Helpers\R2Helper;
+use App\Models\Eatery;
 use App\Models\EducationProgram;
-use App\Services\EateryApiService;
 
 class EducationProgramService
 {
-    public function __construct(
-        protected CreateEducationProgramAction $createAction,
-        protected UpdateEducationProgramAction $updateAction
-    ) {}
-
-    public function create(EducationProgramData $data, ?string $connName = null): EducationProgram
+    public function create(EducationProgramData|array $data): ?EducationProgram
     {
-        $imagePath = $this->resolveImagePath($data->image, $data->image_url);
-        
-        $action = $this->createAction;
-        if ($connName) {
-            \App\Models\EducationProgram::setConnectionResolver(app('db'));
+        if ($data instanceof EducationProgramData) {
+            $imagePath = $this->resolveImagePath($data->image, $data->image_url);
+            $attributes = [
+                'eatery_id' => $data->eatery_id,
+                'name' => $data->name,
+                'program_type' => $data->program_type,
+                'target_age' => $data->target_age,
+                'tuition_fee' => $data->tuition_fee,
+                'schedule' => $data->schedule,
+                'highlights' => $data->highlights,
+                'description' => $data->description,
+                'image_path' => $imagePath,
+            ];
+        } else {
+            $attributes = $data;
         }
-        
-        $program = $action->execute($data, $imagePath);
-        if ($connName) {
-            $program->setConnection($connName);
-            $program->save();
+
+        return $this->storeEducationProgram($attributes);
+    }
+
+    public function update($id, EducationProgramData|array $data): ?EducationProgram
+    {
+        $program = EducationProgram::find($id);
+        if (!$program) return null;
+
+        if ($data instanceof EducationProgramData) {
+            $imagePath = $this->resolveImagePath($data->image, $data->image_url) ?? $program->image_path;
+            $attributes = [
+                'eatery_id' => $data->eatery_id,
+                'name' => $data->name,
+                'program_type' => $data->program_type,
+                'target_age' => $data->target_age,
+                'tuition_fee' => $data->tuition_fee,
+                'schedule' => $data->schedule,
+                'highlights' => $data->highlights,
+                'description' => $data->description,
+                'image_path' => $imagePath,
+            ];
+        } else {
+            $attributes = $data;
         }
+
+        $program->update($attributes);
         return $program;
     }
 
-    public function update($id, EducationProgramData $data, ?string $connName = null): EducationProgram
+    public function storeEducationProgram(array $data): ?EducationProgram
     {
-        $connections = ['mysql'];
-        $program = null;
-        $activeConn = $connName;
+        $eatery = Eatery::find($data['eatery_id'] ?? null);
+        if (!$eatery) return null;
 
-        if ($connName) {
-            $program = EducationProgram::on($connName)->find($id);
-        } else {
-            foreach ($connections as $conn) {
-                $ep = EducationProgram::on($conn)->find($id);
-                if ($ep) {
-                    $program = $ep;
-                    $activeConn = $conn;
-                    break;
-                }
-            }
-        }
+        return EducationProgram::create($data);
+    }
 
-        if (!$program) {
-            throw new \Exception('Chương trình đào tạo không tồn tại!');
-        }
+    public function updateEducationProgram($id, array $data): ?EducationProgram
+    {
+        $program = EducationProgram::find($id);
+        if (!$program) return null;
 
-        $imagePath = $program->image_path;
-        if ($data->image) {
-            $imagePath = R2Helper::upload($data->image, 'education');
-        } elseif ($data->image_url) {
-            $imagePath = $this->resolveImagePath(null, $data->image_url);
-        }
-
-        return $this->updateAction->execute($program, $data, $imagePath);
+        $program->update($data);
+        return $program;
     }
 
     public function delete($id): bool
     {
-        return EateryApiService::deleteEducationProgram($id);
+        $program = EducationProgram::find($id);
+        if (!$program) return false;
+
+        return (bool) $program->delete();
+    }
+
+    public function deleteEducationProgram($id): bool
+    {
+        return $this->delete($id);
     }
 
     protected function resolveImagePath($imageFile, ?string $imageUrl): ?string

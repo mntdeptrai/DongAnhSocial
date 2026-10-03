@@ -40,4 +40,29 @@ class OcopProduct extends Model
     {
         return $this->belongsTo(Eatery::class);
     }
+
+    public function getAllImagesAttribute(): array
+    {
+        if (empty($this->image_path)) return [];
+        $trimmed = trim($this->image_path);
+        if (str_starts_with($trimmed, '[')) {
+            $decoded = json_decode($trimmed, true);
+            if (is_array($decoded)) {
+                $filtered = array_values(array_filter($decoded));
+                if (!empty($filtered)) return $filtered;
+            }
+        }
+        if (str_contains($trimmed, ',')) {
+            $filtered = array_values(array_filter(array_map('trim', explode(',', $trimmed))));
+            if (!empty($filtered)) return $filtered;
+        }
+        return [$trimmed];
+    }
+
+    public function getImageUrlAttribute(): ?string
+    {
+        $all = $this->all_images;
+        return !empty($all) ? $all[0] : null;
+    }
 }
+

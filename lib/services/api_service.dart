@@ -5,6 +5,8 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:http_parser/http_parser.dart';
+import '../core/youtube_helper.dart';
 import 'cart_service.dart';
 
 /// Top-level function dùng cho Flutter Isolate compute()
@@ -336,6 +338,48 @@ class ApiService {
     await prefs.remove('current_user');
   }
 
+  static Future<bool> deleteAccount() async {
+    if (_token != null) {
+      try {
+        await http.delete(
+          Uri.parse('$baseUrl/user/account'),
+          headers: _getHeaders(),
+        );
+      } catch (_) {}
+    }
+    _token = null;
+    currentUser = null;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('auth_token');
+    await prefs.remove('current_user');
+    await prefs.remove('cart_session_id');
+    return true;
+  }
+
+  static Future<bool> reportContent({
+    required String contentId,
+    required String contentType,
+    required String reason,
+    String? details,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/moderation/report'),
+        headers: _getHeaders(),
+        body: jsonEncode({
+          'content_id': contentId,
+          'content_type': contentType,
+          'reason': reason,
+          if (details != null && details.isNotEmpty) 'details': details,
+        }),
+      );
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        return true;
+      }
+    } catch (_) {}
+    return true;
+  }
+
   // =========================================================================
   // CART API: Giỏ hàng đồng bộ với Web
   // =========================================================================
@@ -526,7 +570,9 @@ class ApiService {
       'wellness-care',
       'dong-anh-market',
       'smart-education-map',
-      'discover-dong-anh-community-culture-hub'
+      'discover-dong-anh-community-culture-hub',
+      'traditional-market',
+      'co-so-kinh-doanh',
     ];
     for (var cat in categories) {
       if (cat == categorySlug) continue;
@@ -743,6 +789,55 @@ class ApiService {
       }
     } catch (_) {}
     return currentUser;
+  }
+
+  /// PUT /user/profile — Cập nhật thông tin cá nhân & giao nhận đầy đủ
+  static Future<Map<String, dynamic>> updateProfile({
+    String? name,
+    String? phone,
+    String? address,
+    String? commune,
+    String? bio,
+    String? gender,
+    String? birthday,
+    String? avatar,
+  }) async {
+    try {
+      final Map<String, dynamic> body = {};
+      if (name != null) body['name'] = name;
+      if (phone != null) body['phone'] = phone;
+      if (address != null) body['address'] = address;
+      if (commune != null) body['commune'] = commune;
+      if (bio != null) body['bio'] = bio;
+      if (gender != null) body['gender'] = gender;
+      if (birthday != null) body['birthday'] = birthday;
+      if (avatar != null) body['avatar'] = avatar;
+
+      final response = await http.put(
+        Uri.parse('$baseUrl/user/profile'),
+        headers: _getHeaders(),
+        body: jsonEncode(body),
+      );
+
+      final data = jsonDecode(response.body);
+      if (response.statusCode == 200 && data['success'] == true && data['user'] != null) {
+        final updatedUser = Map<String, dynamic>.from(currentUser ?? {});
+        if (data['user'] is Map) {
+          updatedUser.addAll(Map<String, dynamic>.from(data['user']));
+        }
+        currentUser = updatedUser;
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('current_user', jsonEncode(currentUser));
+        return {
+          'success': true,
+          'message': data['message'] ?? 'Cập nhật thông tin cá nhân thành công!',
+          'user': currentUser
+        };
+      }
+      return {'success': false, 'message': data['message'] ?? 'Cập nhật thất bại!'};
+    } catch (e) {
+      return {'success': false, 'message': 'Lỗi kết nối máy chủ: $e'};
+    }
   }
 
   /// GET /user/posts — Danh sách bài viết cá nhân thực tế từ DB
@@ -1601,11 +1696,10 @@ class ApiService {
     return controller.stream;
   }
 
-  /// GET /newsfeed — Lấy tất cả bài viết Bản tin đa phân quyền
-  static Future<List<dynamic>> getNewsfeed() async {
+  static Future<List<dynamic>> getNewsfeed({String feedType = 'for_you'}) async {
     try {
       final response = await http.get(
-        Uri.parse('$baseUrl/newsfeed'),
+        Uri.parse('$baseUrl/newsfeed?feed_type=$feedType'),
         headers: _getHeaders(),
       );
       if (response.statusCode == 200) {
@@ -1627,7 +1721,18 @@ class ApiService {
       for (String path in filePaths) {
         final file = File(path);
         if (await file.exists()) {
-          request.files.add(await http.MultipartFile.fromPath('files[]', path));
+          final ext = path.split('.').last.toLowerCase();
+          MediaType? mediaType;
+          if (['mp4', 'mov', 'avi', 'mkv', 'webm', '3gp', 'm4v'].contains(ext)) {
+            mediaType = MediaType('video', ext == 'mov' ? 'quicktime' : (ext == 'mp4' ? 'mp4' : ext));
+          } else if (['jpg', 'jpeg', 'png', 'webp', 'gif'].contains(ext)) {
+            mediaType = MediaType('image', ext == 'jpg' ? 'jpeg' : ext);
+          }
+          request.files.add(await http.MultipartFile.fromPath(
+            'files[]',
+            path,
+            contentType: mediaType,
+          ));
         }
       }
 
@@ -1640,9 +1745,14 @@ class ApiService {
           final List<Map<String, String>> uploadedList = [];
           for (var item in data['files']) {
             if (item['url'] != null) {
+              final url = item['url'].toString();
+              var type = (item['file_type'] ?? item['type'] ?? 'image').toString();
+              if (YouTubeHelper.isYouTubeUrl(url)) {
+                type = 'video';
+              }
               uploadedList.add({
-                'url': item['url'].toString(),
-                'type': (item['file_type'] ?? item['type'] ?? 'image').toString(),
+                'url': url,
+                'type': type,
               });
             }
           }
@@ -1694,6 +1804,75 @@ class ApiService {
       }
     } catch (_) {}
     return {'success': false, 'message': 'Lỗi kết nối máy chủ'};
+  }
+
+  /// POST /stories — Tạo Story 24h (hiển thị trên Story Cards, không phải bản tin)
+  static Future<Map<String, dynamic>> createStory({
+    String? caption,
+    String? mediaPath,
+    String? bgGradient,
+    String? musicInfo,
+  }) async {
+    try {
+      final request = http.MultipartRequest('POST', Uri.parse('$baseUrl/stories'));
+      final headers = _getHeaders();
+      request.headers.addAll(headers);
+      if (caption != null) request.fields['caption'] = caption;
+      if (bgGradient != null) request.fields['bg_gradient'] = bgGradient;
+
+      if (mediaPath != null && mediaPath.isNotEmpty) {
+        final file = File(mediaPath);
+        if (await file.exists()) {
+          final ext = mediaPath.split('.').last.toLowerCase();
+          final isVid = ['mp4', 'mov', 'avi', 'mkv', 'webm', '3gp', 'm4v'].contains(ext);
+          MediaType? mediaType;
+          if (isVid) {
+            mediaType = MediaType('video', ext == 'mov' ? 'quicktime' : (ext == 'mp4' ? 'mp4' : ext));
+          } else {
+            mediaType = MediaType('image', ext == 'jpg' ? 'jpeg' : ext);
+          }
+          request.files.add(await http.MultipartFile.fromPath(
+            'media_file',
+            mediaPath,
+            contentType: mediaType,
+          ));
+          request.fields['type'] = isVid ? 'video' : 'image';
+        }
+      } else {
+        request.fields['type'] = 'text';
+      }
+
+      final streamed = await request.send();
+      final responseBody = await streamed.stream.bytesToString();
+      if (streamed.statusCode == 200 || streamed.statusCode == 201) {
+        return jsonDecode(responseBody);
+      }
+    } catch (_) {}
+    return {'success': false, 'message': 'Lỗi kết nối máy chủ'};
+  }
+
+  /// DELETE /posts/{id} — Xóa bài viết của mình
+  static Future<bool> deletePost(dynamic id) async {
+    try {
+      final response = await http.delete(Uri.parse('$baseUrl/posts/$id'), headers: _getHeaders());
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data['success'] == true;
+      }
+    } catch (_) {}
+    return false;
+  }
+
+  /// DELETE /stories/{id} — Xóa story của mình
+  static Future<bool> deleteStory(dynamic id) async {
+    try {
+      final response = await http.delete(Uri.parse('$baseUrl/stories/$id'), headers: _getHeaders());
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data['success'] == true;
+      }
+    } catch (_) {}
+    return false;
   }
 
   /// GET /exp-corner — Lấy dữ liệu Góc Trải Nghiệm Thực Tế

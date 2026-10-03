@@ -3,73 +3,127 @@
 namespace App\Services;
 
 use App\Domain\OcopProduct\OcopProductData;
-use App\Domain\OcopProduct\Actions\CreateOcopProductAction;
-use App\Domain\OcopProduct\Actions\UpdateOcopProductAction;
 use App\Helpers\R2Helper;
+use App\Models\Eatery;
 use App\Models\OcopProduct;
-use App\Services\EateryApiService;
+use Illuminate\Support\Facades\Log;
 
 class OcopProductService
 {
-    public function __construct(
-        protected CreateOcopProductAction $createAction,
-        protected UpdateOcopProductAction $updateAction
-    ) {}
-
-    public function create(OcopProductData $data, ?string $connName = null): OcopProduct
+    /**
+     * Lấy danh sách sản phẩm OCOP từ database kèm quan hệ cơ sở sản xuất.
+     */
+    public function getOcopProducts(array $filters = [])
     {
-        $imagePath = $this->resolveImagePath($data->image, $data->image_url);
-        return $this->createAction->execute($data, $imagePath, $connName ?: 'mysql_market');
+        $products = collect();
+
+        try {
+            $dbProducts = OcopProduct::whereHas('eatery.category', function($q) {
+                    $q->where('slug', 'dong-anh-market');
+                })
+                ->with(['eatery.commune', 'eatery.category'])
+                ->get();
+
+            foreach ($dbProducts as $p) {
+                if ($p->eatery && $p->eatery->category && $p->eatery->category->slug === 'dong-anh-market') {
+                    if (isset($filters['commune_id']) && $filters['commune_id']) {
+                        if ($p->eatery->commune_id != $filters['commune_id']) continue;
+                    }
+                    if (isset($filters['q']) && $filters['q']) {
+                        $q = strtolower($filters['q']);
+                        $text = strtolower(($p->name ?? '') . ' ' . ($p->seller_name ?? '') . ' ' . ($p->description ?? ''));
+                        if (!str_contains($text, $q)) continue;
+                    }
+                    $products->push($p);
+                }
+            }
+        } catch (\Exception $e) {
+            Log::warning("Lỗi khi truy vấn ocop_products: " . $e->getMessage());
+        }
+
+        return $products;
     }
 
-    public function update($id, OcopProductData $data, ?string $connName = null): OcopProduct
+    public function create(OcopProductData|array $data): ?OcopProduct
     {
-        $connections = ['mysql'];
-        $product = null;
-        $activeConn = $connName;
-
-        if ($connName) {
-            $product = OcopProduct::on($connName)->find($id);
+        if ($data instanceof OcopProductData) {
+            $imagePath = $this->resolveImagePath($data->image, $data->image_url);
+            $attributes = [
+                'eatery_id' => $data->eatery_id,
+                'name' => $data->name,
+                'price' => $data->price,
+                'unit' => $data->unit,
+                'star_rating' => $data->star_rating,
+                'year_awarded' => $data->year_awarded,
+                'origin' => $data->origin,
+                'seller_name' => $data->seller_name,
+                'seller_phone' => $data->seller_phone,
+                'description' => $data->description,
+                'image_path' => $imagePath,
+            ];
         } else {
-            foreach ($connections as $conn) {
-                $p = OcopProduct::on($conn)->find($id);
-                if ($p) {
-                    $product = $p;
-                    $activeConn = $conn;
-                    break;
-                }
-            }
+            $attributes = $data;
         }
 
-        if (!$product) {
-            throw new \Exception('Sản phẩm OCOP không tồn tại!');
+        return $this->storeOcopProduct($attributes);
+    }
+
+    public function update($id, OcopProductData|array $data): ?OcopProduct
+    {
+        $product = OcopProduct::find($id);
+        if (!$product) return null;
+
+        if ($data instanceof OcopProductData) {
+            $imagePath = $this->resolveImagePath($data->image, $data->image_url) ?? $product->image_path;
+            $attributes = [
+                'eatery_id' => $data->eatery_id,
+                'name' => $data->name,
+                'price' => $data->price,
+                'unit' => $data->unit,
+                'star_rating' => $data->star_rating,
+                'year_awarded' => $data->year_awarded,
+                'origin' => $data->origin,
+                'seller_name' => $data->seller_name,
+                'seller_phone' => $data->seller_phone,
+                'description' => $data->description,
+                'image_path' => $imagePath,
+            ];
+        } else {
+            $attributes = $data;
         }
 
-        $oldImagePath = $product->image_path;
-        $imagePath = $oldImagePath;
+        $product->update($attributes);
+        return $product;
+    }
 
-        if ($data->image) {
-            $imagePath = R2Helper::upload($data->image, 'ocop');
-            // Tự động xóa ảnh cũ trên Cloudflare R2 khi người dùng upload thay thế ảnh mới
-            if ($oldImagePath && $oldImagePath !== $imagePath) {
-                R2Helper::delete($oldImagePath);
-            }
-        } elseif ($data->image_url) {
-            $newUrl = $this->resolveImagePath(null, $data->image_url);
-            if ($newUrl && $newUrl !== $oldImagePath) {
-                $imagePath = $newUrl;
-                if ($oldImagePath) {
-                    R2Helper::delete($oldImagePath);
-                }
-            }
-        }
+    public function storeOcopProduct(array $data): ?OcopProduct
+    {
+        $eatery = Eatery::find($data['eatery_id'] ?? null);
+        if (!$eatery) return null;
 
-        return $this->updateAction->execute($product, $data, $imagePath);
+        return OcopProduct::create($data);
+    }
+
+    public function updateOcopProduct($id, array $data): ?OcopProduct
+    {
+        $product = OcopProduct::find($id);
+        if (!$product) return null;
+
+        $product->update($data);
+        return $product;
     }
 
     public function delete($id): bool
     {
-        return EateryApiService::deleteOcopProduct($id);
+        $product = OcopProduct::find($id);
+        if (!$product) return false;
+
+        return (bool) $product->delete();
+    }
+
+    public function deleteOcopProduct($id): bool
+    {
+        return $this->delete($id);
     }
 
     protected function resolveImagePath($imageFile, ?string $imageUrl): ?string

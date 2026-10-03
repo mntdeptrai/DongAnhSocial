@@ -4,6 +4,7 @@
 @section('meta_description', 'Bản tin cập nhật các bài viết mới nhất từ các Trường học, Profile cá nhân và Gian hàng Đông Anh.')
 
 @section('content')
+<link rel="stylesheet" href="{{ asset('css/facebook-feed.css') }}?v={{ file_exists(public_path('css/facebook-feed.css')) ? filemtime(public_path('css/facebook-feed.css')) : '2.2' }}">
 <!-- Ambient Glowing Orbs -->
 <div style="position: fixed; top: 10%; left: -10%; width: 550px; height: 550px; background: radial-gradient(circle, rgba(14, 165, 233, 0.07) 0%, rgba(14, 165, 233, 0) 70%); filter: blur(120px); pointer-events: none; z-index: 1;"></div>
 <div style="position: fixed; bottom: 10%; right: -10%; width: 550px; height: 550px; background: radial-gradient(circle, rgba(16, 185, 129, 0.07) 0%, rgba(16, 185, 129, 0) 70%); filter: blur(120px); pointer-events: none; z-index: 1;"></div>
@@ -111,9 +112,10 @@
     }
     .mobile-explore-grid {
         display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 8px;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 6px;
     }
+
     .mobile-explore-item {
         display: flex;
         flex-direction: column;
@@ -400,6 +402,13 @@
                     <span>🗺️</span> Bản đồ Địa điểm
                 </a>
 
+                <a href="/livestream" class="nf-sidebar-nav-item" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-radius: 12px; color: #ef4444; font-weight: 700; font-size: 0.88rem; text-decoration: none; background: #fef2f2; transition: background 0.2s ease;" onmouseover="this.style.background='#fee2e2'" onmouseout="this.style.background='#fef2f2'">
+                    <span style="display: flex; align-items: center; gap: 10px;">
+                        <span>🔴</span> Livestream Trực Tiếp
+                    </span>
+                    <span style="font-size: 0.68rem; background: #ef4444; color: #fff; padding: 2px 6px; border-radius: 6px; font-weight: 800;">LIVE</span>
+                </a>
+
                 @if(auth()->check())
                     <a href="/social" class="nf-sidebar-nav-item" style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 12px; color: #475569; font-weight: 700; font-size: 0.88rem; text-decoration: none; transition: background 0.2s ease;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
                         <span>👥</span> Kết nối Bạn bè
@@ -411,6 +420,7 @@
                 @endif
             </div>
         </div>
+
 
     </aside>
 
@@ -457,38 +467,6 @@
                     </div>
                 @endforeach
             @endif
-
-            <!-- Featured Story 1: Co Loa -->
-            <div class="nf-story-card story-item-card" style="background-image: url('https://images.unsplash.com/photo-1596402184320-417e7178b2cd?auto=format&fit=crop&w=300&q=80');" onclick="openStoryViewer({{ $groupCardIdx++ }})">
-                <div class="nf-story-overlay">
-                    <img src="https://media.xadonganh.com/eateries/1780392421_hfPQH7HB.png" class="nf-story-avatar" alt="Cổ Loa" onerror="this.src='https://ui-avatars.com/api/?name=Co+Loa&background=0ea5e9&color=fff'">
-                    <span class="nf-story-name">Lễ hội Cổ Loa ⛩️</span>
-                </div>
-            </div>
-
-            <!-- Featured Story 2: Truong Mua Mua -->
-            <div class="nf-story-card story-item-card" style="background-image: url('https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=300&q=80');" onclick="openStoryViewer({{ $groupCardIdx++ }})">
-                <div class="nf-story-overlay">
-                    <img src="https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=150&q=80" class="nf-story-avatar" alt="Trường học" onerror="this.src='https://ui-avatars.com/api/?name=School&background=10b981&color=fff'">
-                    <span class="nf-story-name">Chào năm học mới 🏫</span>
-                </div>
-            </div>
-
-            <!-- Featured Story 3: Food Tour -->
-            <div class="nf-story-card story-item-card" style="background-image: url('https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=300&q=80');" onclick="openStoryViewer({{ $groupCardIdx++ }})">
-                <div class="nf-story-overlay">
-                    <img src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=150&q=80" class="nf-story-avatar" alt="Food Tour" onerror="this.src='https://ui-avatars.com/api/?name=Food&background=f59e0b&color=fff'">
-                    <span class="nf-story-name">Ẩm thực Đông Anh 🍲</span>
-                </div>
-            </div>
-
-            <!-- Featured Story 4: Checkin -->
-            <div class="nf-story-card story-item-card" style="background-image: url('https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=300&q=80');" onclick="openStoryViewer({{ $groupCardIdx++ }})">
-                <div class="nf-story-overlay">
-                    <img src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=150&q=80" class="nf-story-avatar" alt="Checkin" onerror="this.src='https://ui-avatars.com/api/?name=Checkin&background=ec4899&color=fff'">
-                    <span class="nf-story-name">Góc Check-in Hot 🎈</span>
-                </div>
-            </div>
         </div>
 
         <!-- Mobile Explore Menu Bar (Displayed only on Mobile Screens) -->
@@ -512,7 +490,13 @@
                     <span class="mobile-explore-icon">🗺️</span>
                     <span class="mobile-explore-label">Bản đồ</span>
                 </a>
+                <a href="/livestream" class="mobile-explore-item" style="color: #ef4444;">
+                    <span class="mobile-explore-icon">🔴</span>
+                    <span class="mobile-explore-label">Live</span>
+                    <span class="mobile-explore-badge" style="background: #ef4444; color: #fff;">LIVE</span>
+                </a>
                 @if(auth()->check())
+
                     <a href="/social" class="mobile-explore-item">
                         <span class="mobile-explore-icon">👥</span>
                         <span class="mobile-explore-label">Kết nối</span>
@@ -525,6 +509,7 @@
                 @endif
             </div>
         </div>
+
 
         <!-- Filter Pills Bar -->
         <div class="nf-filter-pills">
@@ -615,7 +600,18 @@
                     $isVerifiedAuthor = ($postUser && ($postUser->is_verified || in_array($postUser->role, ['admin', 'principal', 'seller']))) || ($p instanceof \App\Models\EducationProgram);
                     $isAdminAuthor = $postUser && ($postUser->role === 'admin');
 
-                    $imgs = method_exists($p, 'getAllImagesAttribute') ? $p->all_images : ($p->image_path ? [$p->image_path] : []);
+                    $rawImgs = method_exists($p, 'getAllImagesAttribute') ? $p->all_images : ($p->image_path ? [$p->image_path] : (!empty($p->images) ? (is_array($p->images) ? $p->images : json_decode($p->images, true)) : []));
+                    if (!is_array($rawImgs)) $rawImgs = [];
+                    $imgs = [];
+                    foreach ($rawImgs as $imgItem) {
+                        if (!empty($imgItem) && is_string($imgItem)) {
+                            if (\Illuminate\Support\Str::startsWith($imgItem, ['http://', 'https://', 'data:'])) {
+                                $imgs[] = $imgItem;
+                            } else {
+                                $imgs[] = asset(ltrim($imgItem, '/'));
+                            }
+                        }
+                    }
                     $imgCount = count($imgs);
                     $isFoodTour = $p->is_food_tour ?? false;
                     $isCheckin = $p->is_checkin ?? false;
@@ -625,7 +621,7 @@
                     $commentableClass = get_class($p);
                 @endphp
 
-                <article class="nf-post-card post-item-card" data-post-type="{{ $postTypeAttr }}" id="post-card-{{ $postDomKey }}">
+                <article class="nf-post-card post-item-card" data-post-type="{{ $postTypeAttr }}" id="post-card-{{ $postDomKey }}" data-post-id="{{ $p->id }}" data-author-id="{{ $postUser ? $postUser->id : ($p->user_id ?? '') }}" data-post-dom-key="{{ $postDomKey }}">
                     
                     <!-- Post Author Header (Strict Flex & Truncation - No Broken Lines) -->
                     <div class="nf-author-box">
@@ -649,17 +645,35 @@
                                         <span title="Tài khoản chính thức đã xác minh ⭐" style="color: #f59e0b; font-size: 0.9rem; flex-shrink: 0;">⭐</span>
                                     @endif
                                 </h4>
-                                <div style="font-size: 0.76rem; color: #64748b; margin-top: 2px; display: flex; align-items: center; gap: 6px;">
+                                <div style="font-size: 0.76rem; color: #64748b; margin-top: 2px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
                                     <span>{{ $p->created_at ? $p->created_at->diffForHumans() : 'Vừa xong' }}</span>
                                     <span>•</span>
                                     <span>🌐 Công khai</span>
+                                    @if(!empty($p->_personal_tag))
+                                        <span style="background: linear-gradient(135deg, rgba(14,165,233,0.12), rgba(99,102,241,0.12)); color: #0284c7; border: 1px solid rgba(14,165,233,0.3); font-size: 0.72rem; padding: 1px 8px; border-radius: 999px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;">
+                                            {{ $p->_personal_tag }}
+                                        </span>
+                                    @endif
                                 </div>
                             </div>
                         </a>
 
                         @php
-                            $currentUserId = Auth::id() ?? session('user_id');
-                            $canManagePost = $currentUserId && ($isAdminAuthor || (isset($p->user_id) && $p->user_id == $currentUserId) || (isset($authUser) && $authUser->role === 'admin'));
+                            $currentAuthUser = Auth::user() ?? (session('user_id') ? \App\Models\User::find(session('user_id')) : null);
+                            $isViewerAdmin = $currentAuthUser && ($currentAuthUser->role === 'admin' || (method_exists($currentAuthUser, 'isAdmin') && $currentAuthUser->isAdmin()));
+                            
+                            // Người xem chỉ có quyền xóa nếu: Là Admin HOẶC Là chính tác giả bài viết
+                            $isViewerAuthor = false;
+                            if ($currentAuthUser) {
+                                if (isset($p->user_id) && $p->user_id == $currentAuthUser->id) {
+                                    $isViewerAuthor = true;
+                                } elseif (isset($p->eatery) && $p->eatery->user_id == $currentAuthUser->id) {
+                                    $isViewerAuthor = true;
+                                } elseif (isset($postUser) && $postUser && $postUser->id == $currentAuthUser->id) {
+                                    $isViewerAuthor = true;
+                                }
+                            }
+                            $canManagePost = $isViewerAdmin || $isViewerAuthor;
                         @endphp
 
                         <!-- Post Action Options (3 Dots Menu) -->
@@ -668,15 +682,28 @@
                                 •••
                             </button>
 
-                            <div x-cloak x-show="menuOpen" x-transition style="position: absolute; right: 0; top: 100%; margin-top: 4px; width: 175px; background: #ffffff; border: 1px solid rgba(0,0,0,0.08); border-radius: 16px; box-shadow: 0 12px 30px rgba(15,23,42,0.18); z-index: 99; overflow: hidden; padding: 5px 0;">
+                            <div x-cloak x-show="menuOpen" x-transition style="position: absolute; right: 0; top: 100%; margin-top: 4px; width: 195px; background: #ffffff; border: 1px solid rgba(0,0,0,0.08); border-radius: 16px; box-shadow: 0 12px 30px rgba(15,23,42,0.18); z-index: 99; overflow: hidden; padding: 6px 0;">
                                 @if($canManagePost)
-                                    <button type="button" onclick="deletePostAjax('{{ $p->id }}', '{{ $postDomKey }}')" style="width: 100%; text-align: left; padding: 10px 16px; background: none; border: none; font-size: 0.85rem; font-weight: 700; color: #ef4444; cursor: pointer; display: flex; align-items: center; gap: 8px;" onmouseover="this.style.background='#fef2f2'" onmouseout="this.style.background='none'">
+                                    <button type="button" onclick="deletePostAjax('{{ $p->id }}', '{{ $postDomKey }}')" style="width: 100%; text-align: left; padding: 9px 16px; background: none; border: none; font-size: 0.85rem; font-weight: 700; color: #ef4444; cursor: pointer; display: flex; align-items: center; gap: 8px;" onmouseover="this.style.background='#fef2f2'" onmouseout="this.style.background='none'">
                                         🗑️ Xóa bài viết
                                     </button>
                                 @endif
-                                <button type="button" onclick="copyPostLink('{{ $p->hashid ?? $p->id }}')" style="width: 100%; text-align: left; padding: 10px 16px; background: none; border: none; font-size: 0.85rem; font-weight: 700; color: #334155; cursor: pointer; display: flex; align-items: center; gap: 8px;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='none'">
+                                <button type="button" onclick="copyPostLink('{{ $p->hashid ?? $p->id }}')" style="width: 100%; text-align: left; padding: 9px 16px; background: none; border: none; font-size: 0.85rem; font-weight: 700; color: #334155; cursor: pointer; display: flex; align-items: center; gap: 8px;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='none'">
                                     🔗 Sao chép liên kết
                                 </button>
+                                <button type="button" onclick="hidePostClient('{{ $postDomKey }}', '{{ $p->id }}')" style="width: 100%; text-align: left; padding: 9px 16px; background: none; border: none; font-size: 0.85rem; font-weight: 700; color: #475569; cursor: pointer; display: flex; align-items: center; gap: 8px;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='none'">
+                                    👁️‍🗨️ Ẩn bài viết này
+                                </button>
+                                @if(!$isViewerAuthor && ($postUser || !empty($p->user_id)))
+                                    <button type="button" onclick="blockAuthorClient('{{ $postUser ? $postUser->id : $p->user_id }}', '{{ addslashes($authorName) }}')" style="width: 100%; text-align: left; padding: 9px 16px; background: none; border: none; font-size: 0.85rem; font-weight: 700; color: #b91c1c; cursor: pointer; display: flex; align-items: center; gap: 8px;" onmouseover="this.style.background='#fef2f2'" onmouseout="this.style.background='none'">
+                                        🚫 Chặn người dùng
+                                    </button>
+                                @endif
+                                @if(!$isViewerAuthor)
+                                    <button type="button" onclick="openReportModal('{{ $p->id }}', 'post', '{{ addslashes($p->name ?: 'Bài viết Đông Anh') }}', '{{ addslashes(Str::limit($p->description ?? '', 120)) }}', '{{ $postUser ? $postUser->id : ($p->user_id ?? '') }}', '{{ addslashes($authorName) }}', '{{ $postDomKey }}')" style="width: 100%; text-align: left; padding: 9px 16px; background: none; border: none; font-size: 0.85rem; font-weight: 700; color: #dc2626; cursor: pointer; display: flex; align-items: center; gap: 8px; border-top: 1px solid #f1f5f9;" onmouseover="this.style.background='#fef2f2'" onmouseout="this.style.background='none'">
+                                        🚩 Báo cáo vi phạm
+                                    </button>
+                                @endif
                             </div>
                         </div>
                     </div>
@@ -712,41 +739,41 @@
                     <!-- Multi-Photo Grid Gallery (Facebook Full-Bleed Edge-to-Edge) -->
                     @if($imgCount === 1)
                         <div class="fb-photo-grid fb-grid-1" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 0)">
-                            <img src="{{ $imgs[0] }}" alt="{{ $p->name ?? 'Ảnh' }}" style="width: 100%; max-height: 520px; object-fit: cover; cursor: pointer;">
+                            <img src="{{ $imgs[0] }}" loading="lazy" decoding="async" alt="{{ $p->name ?? 'Ảnh' }}" style="width: 100%; max-height: 520px; object-fit: cover; cursor: pointer;">
                         </div>
                     @elseif($imgCount === 2)
                         <div class="fb-photo-grid fb-grid-2">
-                            <img src="{{ $imgs[0] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 0)" alt="{{ $p->name ?? 'Ảnh' }}">
-                            <img src="{{ $imgs[1] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 1)" alt="{{ $p->name ?? 'Ảnh' }}">
+                            <img src="{{ $imgs[0] }}" loading="lazy" decoding="async" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 0)" alt="{{ $p->name ?? 'Ảnh' }}">
+                            <img src="{{ $imgs[1] }}" loading="lazy" decoding="async" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 1)" alt="{{ $p->name ?? 'Ảnh' }}">
                         </div>
                     @elseif($imgCount === 3)
                         <div class="fb-photo-grid fb-grid-3">
-                            <img src="{{ $imgs[0] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 0)" alt="{{ $p->name ?? 'Ảnh' }}">
+                            <img src="{{ $imgs[0] }}" loading="lazy" decoding="async" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 0)" alt="{{ $p->name ?? 'Ảnh' }}">
                             <div class="fb-grid-3-col-right">
-                                <img src="{{ $imgs[1] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 1)" alt="{{ $p->name ?? 'Ảnh' }}">
-                                <img src="{{ $imgs[2] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 2)" alt="{{ $p->name ?? 'Ảnh' }}">
+                                <img src="{{ $imgs[1] }}" loading="lazy" decoding="async" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 1)" alt="{{ $p->name ?? 'Ảnh' }}">
+                                <img src="{{ $imgs[2] }}" loading="lazy" decoding="async" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 2)" alt="{{ $p->name ?? 'Ảnh' }}">
                             </div>
                         </div>
                     @elseif($imgCount === 4)
                         <div class="fb-photo-grid fb-grid-4">
-                            <img src="{{ $imgs[0] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 0)" alt="{{ $p->name ?? 'Ảnh' }}">
+                            <img src="{{ $imgs[0] }}" loading="lazy" decoding="async" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 0)" alt="{{ $p->name ?? 'Ảnh' }}">
                             <div class="fb-grid-4-col-right">
-                                <img src="{{ $imgs[1] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 1)" alt="{{ $p->name ?? 'Ảnh' }}">
-                                <img src="{{ $imgs[2] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 2)" alt="{{ $p->name ?? 'Ảnh' }}">
-                                <img src="{{ $imgs[3] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 3)" alt="{{ $p->name ?? 'Ảnh' }}">
+                                <img src="{{ $imgs[1] }}" loading="lazy" decoding="async" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 1)" alt="{{ $p->name ?? 'Ảnh' }}">
+                                <img src="{{ $imgs[2] }}" loading="lazy" decoding="async" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 2)" alt="{{ $p->name ?? 'Ảnh' }}">
+                                <img src="{{ $imgs[3] }}" loading="lazy" decoding="async" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 3)" alt="{{ $p->name ?? 'Ảnh' }}">
                             </div>
                         </div>
                     @elseif($imgCount >= 5)
                         <div class="fb-photo-grid fb-grid-5">
                             <div class="fb-grid-5-row-top">
-                                <img src="{{ $imgs[0] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 0)" alt="{{ $p->name ?? 'Ảnh' }}">
-                                <img src="{{ $imgs[1] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 1)" alt="{{ $p->name ?? 'Ảnh' }}">
+                                <img src="{{ $imgs[0] }}" loading="lazy" decoding="async" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 0)" alt="{{ $p->name ?? 'Ảnh' }}">
+                                <img src="{{ $imgs[1] }}" loading="lazy" decoding="async" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 1)" alt="{{ $p->name ?? 'Ảnh' }}">
                             </div>
                             <div class="fb-grid-5-row-bottom">
-                                <img src="{{ $imgs[2] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 2)" alt="{{ $p->name ?? 'Ảnh' }}">
-                                <img src="{{ $imgs[3] }}" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 3)" alt="{{ $p->name ?? 'Ảnh' }}">
+                                <img src="{{ $imgs[2] }}" loading="lazy" decoding="async" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 2)" alt="{{ $p->name ?? 'Ảnh' }}">
+                                <img src="{{ $imgs[3] }}" loading="lazy" decoding="async" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 3)" alt="{{ $p->name ?? 'Ảnh' }}">
                                 <div class="fb-photo-thumb-box" onclick="openPostLightboxGallery({{ json_encode($imgs) }}, 4)" style="position: relative !important; width: 100% !important; height: 100% !important; overflow: hidden !important; display: block !important;">
-                                    <img src="{{ $imgs[4] }}" alt="{{ $p->name ?? 'Ảnh' }}" style="width: 100%; height: 100%; object-fit: cover; display: block;">
+                                    <img src="{{ $imgs[4] }}" loading="lazy" decoding="async" alt="{{ $p->name ?? 'Ảnh' }}" style="width: 100%; height: 100%; object-fit: cover; display: block;">
                                     @if($imgCount > 5)
                                         <div class="fb-photo-more-overlay" style="position: absolute !important; inset: 0 !important; width: 100% !important; height: 100% !important; display: flex !important; align-items: center !important; justify-content: center !important; background: rgba(0, 0, 0, 0.52) !important; backdrop-filter: blur(4px) !important; -webkit-backdrop-filter: blur(4px) !important; z-index: 10 !important; pointer-events: none !important; margin: 0 !important; padding: 0 !important; color: #ffffff !important; font-size: 2.8rem !important; font-weight: 900 !important;">
                                             <span class="fb-photo-more-count" style="color: #ffffff !important; font-size: 2.8rem !important; font-weight: 900 !important; line-height: 1 !important; text-shadow: 0 3px 12px rgba(0,0,0,0.8) !important; display: inline-block !important; margin: 0 !important; padding: 0 !important; text-align: center !important; transform: none !important;">+{{ $imgCount - 5 }}</span>
@@ -800,10 +827,35 @@
 
                     <!-- Expandable Comments Drawer -->
                     <div class="comments-section" id="comments-section-{{ $postDomKey }}" style="display: none; padding: 14px 16px; background: #f8fafc; border-top: 1px solid #e2e8f0;">
-                        <div class="comments-list" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px;">
+                        <div class="comments-list" id="comments-list-{{ $postDomKey }}" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px;">
                             @if($p->comments && $p->comments->isNotEmpty())
-                                @foreach($p->comments as $comment)
+                                @php
+                                    $allCommentsList = $p->comments->values();
+                                    $totalCommentsCount = $allCommentsList->count();
+                                    $visibleLimit = 3; // Mặc định chỉ hiển thị 3 bình luận mới nhất
+                                    $hasHiddenComments = $totalCommentsCount > $visibleLimit;
+                                    $hiddenCount = $totalCommentsCount - $visibleLimit;
+                                @endphp
+
+                                @if($hasHiddenComments)
+                                    <!-- Nút Xem thêm các bình luận trước đó -->
+                                    <div class="more-comments-wrapper" style="text-align: left; margin-bottom: 2px;">
+                                        <button type="button" 
+                                                class="btn-toggle-more-comments" 
+                                                onclick="toggleMoreComments('{{ $postDomKey }}', this)" 
+                                                data-expanded="false"
+                                                data-hidden-count="{{ $hiddenCount }}"
+                                                style="background: transparent; border: none; padding: 4px 8px; border-radius: 8px; color: #0284c7; font-weight: 700; font-size: 0.84rem; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; font-family: inherit; transition: all 0.15s ease;"
+                                                onmouseover="this.style.background='#e0f2fe'" 
+                                                onmouseout="this.style.background='transparent'">
+                                            <span>🔽 Xem {{ $hiddenCount }} bình luận trước đó</span>
+                                        </button>
+                                    </div>
+                                @endif
+
+                                @foreach($allCommentsList as $cIdx => $comment)
                                     @php
+                                        $isHidden = $hasHiddenComments && ($cIdx < $hiddenCount);
                                         $rawContent = $comment->content;
                                         $isReply = str_starts_with(trim($rawContent), '@');
                                         
@@ -814,8 +866,9 @@
                                         }
                                     @endphp
 
-                                    <div class="comment-item {{ $isReply ? 'comment-reply-item' : '' }}" 
-                                         style="display: flex; gap: 10px; align-items: flex-start; 
+                                    <div class="comment-item {{ $isReply ? 'comment-reply-item' : '' }} {{ $isHidden ? 'comment-prev-hidden' : '' }}" 
+                                         data-comment-id="{{ $comment->id }}"
+                                         style="display: {{ $isHidden ? 'none' : 'flex' }}; gap: 10px; align-items: flex-start; 
                                                 background: {{ $isReply ? '#f0f9ff' : '#ffffff' }}; 
                                                 border-radius: 14px; padding: 10px 14px; 
                                                 border: 1px solid {{ $isReply ? '#bae6fd' : '#e2e8f0' }}; 
@@ -993,7 +1046,7 @@
 </div>
 
 <!-- Modal 2: Viewer Xem Story Toàn Màn Hình (FB / IG Fullscreen Story Viewer) -->
-<div id="storyViewerModal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.95); backdrop-filter: blur(16px); z-index: 999999; align-items: center; justify-content: center; overflow: hidden;">
+<div id="storyViewerModal" onclick="if(event.target === this) closeStoryViewer()" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.95); backdrop-filter: blur(16px); z-index: 999999; align-items: center; justify-content: center; overflow: hidden;">
     
     <!-- Top Close Button -->
     <button type="button" onclick="closeStoryViewer()" style="position: absolute; top: 20px; right: 20px; width: 44px; height: 44px; border-radius: 50%; background: rgba(255,255,255,0.2); color: #fff; border: none; font-size: 1.4rem; cursor: pointer; z-index: 100000; display: flex; align-items: center; justify-content: center; transition: background 0.2s ease;" title="Đóng Story">✕</button>
@@ -1022,7 +1075,7 @@
         <!-- Story Media / Background Box -->
         <div id="viewerContentBox" style="width: 100%; height: 100%; position: absolute; inset: 0; z-index: 1; background-size: cover; background-position: center; display: flex; align-items: center; justify-content: center;">
             <img id="viewerMediaImage" src="" style="width: 100%; height: 100%; object-fit: cover; display: none;">
-            <video id="viewerMediaVideo" src="" autoplay playsinline loop style="width: 100%; height: 100%; object-fit: contain; display: none; background: #000;"></video>
+            <video id="viewerMediaVideo" playsinline style="width: 100%; height: 100%; object-fit: contain; display: none; background: #000;"></video>
             
             <!-- Story Caption Text Overlay -->
             <div id="viewerCaptionText" style="position: absolute; bottom: 75px; left: 0; right: 0; padding: 20px 16px 16px 16px; color: #ffffff; font-size: 1.1rem; font-weight: 800; text-align: center; line-height: 1.5; text-shadow: 0 2px 10px rgba(0,0,0,0.9); z-index: 10; background: linear-gradient(0deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0) 100%); word-break: break-word; pointer-events: none; display: none;"></div>
@@ -1098,6 +1151,32 @@ window.scrollToNotifTarget = function() {
 };
 
 document.addEventListener("DOMContentLoaded", window.scrollToNotifTarget);
+
+// Xem thêm / Thu gọn các bình luận trước đó (Pagination / Expand Comments)
+function toggleMoreComments(postDomKey, btn) {
+    const list = document.getElementById('comments-list-' + postDomKey);
+    if (!list) return;
+    const hiddenItems = list.querySelectorAll('.comment-prev-hidden');
+    const isExpanded = btn.getAttribute('data-expanded') === 'true';
+    const hiddenCount = btn.getAttribute('data-hidden-count') || '';
+
+    if (!isExpanded) {
+        // Mở rộng toàn bộ bình luận cũ
+        hiddenItems.forEach(item => {
+            item.style.display = 'flex';
+            item.style.animation = 'fadeIn 0.25s ease forwards';
+        });
+        btn.setAttribute('data-expanded', 'true');
+        btn.innerHTML = '<span>🔼 Thu gọn bình luận cũ</span>';
+    } else {
+        // Thu gọn lại chỉ hiển thị 3 bình luận mới nhất
+        hiddenItems.forEach(item => {
+            item.style.display = 'none';
+        });
+        btn.setAttribute('data-expanded', 'false');
+        btn.innerHTML = `<span>🔽 Xem ${hiddenCount} bình luận trước đó</span>`;
+    }
+}
 
 // Trả lời bình luận (Reply to comment)
 function replyToComment(postDomKey, authorName) {
@@ -1330,6 +1409,16 @@ function openCreateStoryModal() {
 function closeCreateStoryModal() {
     const modal = document.getElementById('createStoryModal');
     if (modal) modal.style.display = 'none';
+    const vid = document.getElementById('igCanvasVid');
+    if (vid) {
+        try {
+            vid.pause();
+            vid.currentTime = 0;
+            vid.removeAttribute('src');
+            vid.load();
+        } catch (e) {}
+        vid.style.display = 'none';
+    }
 }
 
 function cycleIgGradientColor() {
@@ -1425,37 +1514,6 @@ let currentGroupIndex = 0;
 let currentGroupStoryIndex = 0;
 let storyTimer = null;
 
-const presetStoriesList = [
-    {
-        author_name: 'Lễ hội Cổ Loa ⛩️',
-        author_avatar: 'https://media.xadonganh.com/eateries/1780392421_hfPQH7HB.png',
-        media_url: 'https://images.unsplash.com/photo-1596402184320-417e7178b2cd?auto=format&fit=crop&w=1200&q=80',
-        caption: 'Hòa mình vào không khí Lễ hội di tích quốc gia Cổ Loa năm 2026! ⛩️',
-        created_at: '2 giờ trước'
-    },
-    {
-        author_name: 'Chào năm học mới 🏫',
-        author_avatar: 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=150&q=80',
-        media_url: 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=1200&q=80',
-        caption: 'Chúc các bé Trường Mầm Nhỏ có một năm học mới tràn đầy niềm vui 🎒',
-        created_at: '4 giờ trước'
-    },
-    {
-        author_name: 'Ẩm thực Đông Anh 🍲',
-        author_avatar: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=150&q=80',
-        media_url: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=1200&q=80',
-        caption: 'Food tour bún chả & đặc sản Đông Anh hấp dẫn không thể bỏ qua! 🍲',
-        created_at: '5 giờ trước'
-    },
-    {
-        author_name: 'Góc Check-in Hot 🎈',
-        author_avatar: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=150&q=80',
-        media_url: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1200&q=80',
-        caption: 'Góc chụp ảnh chill cực đẹp tại Đông Anh 🎈',
-        created_at: '6 giờ trước'
-    }
-];
-
 const userStoriesDb = @json(isset($stories) ? $stories : []);
 
 function formatStoryTimeAgo(dateStr) {
@@ -1499,6 +1557,7 @@ function buildStoryGroups() {
                 author_avatar: authorAvatar,
                 media_url: s.media_url,
                 caption: s.caption || '',
+                type: s.type || '',
                 bg_gradient: s.bg_gradient || 'linear-gradient(135deg, #0ea5e9, #0284c7)',
                 created_at: s.time_ago || formatStoryTimeAgo(s.created_at)
             });
@@ -1508,15 +1567,21 @@ function buildStoryGroups() {
             storyGroups.push(g);
         });
     }
+}
 
-    // 2. Add Preset Featured Stories (each preset story is its own group)
-    presetStoriesList.forEach(p => {
-        storyGroups.push({
-            author_name: p.author_name,
-            author_avatar: p.author_avatar,
-            stories: [p]
-        });
-    });
+function stopCurrentStoryVideo() {
+    const vid = document.getElementById('viewerMediaVideo');
+    if (vid) {
+        try {
+            vid.pause();
+            vid.currentTime = 0;
+            vid.ontimeupdate = null;
+            vid.onended = null;
+            vid.removeAttribute('src');
+            vid.load();
+        } catch (e) {}
+        vid.style.display = 'none';
+    }
 }
 
 function openStoryViewer(groupIdx) {
@@ -1532,9 +1597,11 @@ function openStoryViewer(groupIdx) {
 }
 
 function renderCurrentStory() {
+    stopCurrentStoryVideo();
+
     if (!storyGroups[currentGroupIndex]) return;
     const group = storyGroups[currentGroupIndex];
-    if (!group.stories[currentGroupStoryIndex]) return;
+    if (!group || !group.stories || !group.stories[currentGroupStoryIndex]) return;
 
     const st = group.stories[currentGroupStoryIndex];
 
@@ -1547,20 +1614,29 @@ function renderCurrentStory() {
     const txt = document.getElementById('viewerCaptionText');
     const box = document.getElementById('viewerContentBox');
 
-    if (st.media_url) {
+    const isVideo = (st.type === 'video') || (st.media_url && (/\.(mp4|webm|mov|m4v|ogv|ogg)$/i.test(st.media_url) || st.media_url.includes('/video/')));
+
+    if (st.media_url && isVideo) {
         box.style.background = '#0f172a';
-        if (st.media_url.match(/\.(mp4|webm|mov)$/i)) {
-            vid.src = st.media_url;
-            vid.style.display = 'block';
-            img.style.display = 'none';
-        } else {
-            img.src = st.media_url;
-            img.style.display = 'block';
-            vid.style.display = 'none';
+        img.style.display = 'none';
+        img.src = '';
+
+        vid.src = st.media_url;
+        vid.style.display = 'block';
+        vid.currentTime = 0;
+        const playPromise = vid.play();
+        if (playPromise !== undefined) {
+            playPromise.catch(err => {
+                console.log('Video autoplay handled:', err);
+            });
         }
+    } else if (st.media_url) {
+        box.style.background = '#0f172a';
+        img.src = st.media_url;
+        img.style.display = 'block';
     } else {
         img.style.display = 'none';
-        vid.style.display = 'none';
+        img.src = '';
         box.style.background = st.bg_gradient || 'linear-gradient(135deg, #0ea5e9, #0284c7)';
     }
 
@@ -1572,7 +1648,7 @@ function renderCurrentStory() {
         txt.style.display = 'none';
     }
 
-    startStoryProgress();
+    startStoryProgress(isVideo);
 }
 
 function renderStoryProgressBars() {
@@ -1598,12 +1674,44 @@ function renderStoryProgressBars() {
     });
 }
 
-function startStoryProgress() {
+function startStoryProgress(isVideo = false) {
     clearInterval(storyTimer);
     renderStoryProgressBars();
 
     const inner = document.getElementById(`storySegInner_${currentGroupStoryIndex}`);
     if (!inner) return;
+
+    if (isVideo) {
+        const vid = document.getElementById('viewerMediaVideo');
+        if (vid) {
+            vid.ontimeupdate = function() {
+                if (vid.duration && !isNaN(vid.duration) && vid.duration > 0) {
+                    const pct = (vid.currentTime / vid.duration) * 100;
+                    inner.style.width = Math.min(pct, 100) + '%';
+                }
+            };
+            vid.onended = function() {
+                vid.ontimeupdate = null;
+                vid.onended = null;
+                nextStorySlide();
+            };
+
+            // Fallback timer if video duration metadata is not immediately available
+            let secCount = 0;
+            storyTimer = setInterval(() => {
+                secCount += 0.1;
+                if (!vid.duration || isNaN(vid.duration)) {
+                    const pct = (secCount / 5) * 100;
+                    inner.style.width = Math.min(pct, 100) + '%';
+                    if (pct >= 100) {
+                        clearInterval(storyTimer);
+                        nextStorySlide();
+                    }
+                }
+            }, 100);
+            return;
+        }
+    }
 
     let pct = 0;
     storyTimer = setInterval(() => {
@@ -1652,6 +1760,7 @@ function prevStorySlide() {
 
 function closeStoryViewer() {
     clearInterval(storyTimer);
+    stopCurrentStoryVideo();
     const modal = document.getElementById('storyViewerModal');
     if (modal) modal.style.display = 'none';
 }
@@ -1708,6 +1817,20 @@ function sendStoryReply() {
         })
     }).catch(err => {});
 }
+
+// Global keydown handler to close stories on ESC key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        const vModal = document.getElementById('storyViewerModal');
+        if (vModal && vModal.style.display !== 'none') {
+            closeStoryViewer();
+        }
+        const cModal = document.getElementById('createStoryModal');
+        if (cModal && cModal.style.display !== 'none') {
+            closeCreateStoryModal();
+        }
+    }
+});
 </script>
 
 <!-- Newsfeed Post Creation Modal -->
@@ -1757,7 +1880,7 @@ function sendStoryReply() {
             <!-- Action Bar với Kiểu dáng Độc lập (Tránh xung đột CSS fb-modal-action-btn) -->
             <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; padding: 12px 14px; background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 14px; margin-bottom: 16px;">
                 <span style="font-weight: 800; color: #1e293b; font-size: 0.88rem; display: flex; align-items: center; gap: 6px;">
-                    ✨ Thêm vào bài viết
+                    📌 Thêm vào bài viết
                 </span>
                 <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
                     <!-- Chọn tệp từ Máy tính / Thư viện -->
@@ -2183,7 +2306,16 @@ function createMediaPreviewEl(item, width, height) {
     }
 }
 
-function openNewsfeedPostModal() {
+async function openNewsfeedPostModal() {
+    try {
+        const res = await fetch('/api/moderation/check-ban');
+        const banData = await res.json();
+        if (banData && banData.is_banned) {
+            alert('⚠️ Tài khoản của bạn đang bị tạm khóa tính năng đăng bài do vi phạm tiêu chuẩn cộng đồng.\nThời hạn khóa: ' + (banData.remaining_text || 'Chưa hết hạn') + '.\nVui lòng liên hệ Ban Quản Trị nếu có khiếu nại.');
+            return;
+        }
+    } catch (e) {}
+
     const m = document.getElementById('addNewsfeedPostModal');
     if (m) {
         m.classList.add('show');
@@ -2392,7 +2524,174 @@ function copyPostLink(postId) {
     }).catch(() => {});
 }
 
+let currentReportMeta = {};
+
+function openReportModal(targetId, targetType, targetTitle, targetSummary, authorId, authorName, domKey) {
+    currentReportMeta = { targetId, targetType, targetTitle, targetSummary, authorId, authorName, domKey };
+    
+    document.getElementById('report-modal-author').innerText = authorName || 'Thành viên Đông Anh';
+    document.getElementById('report-modal-preview').innerText = targetSummary || targetTitle || 'Bài viết Bảng tin';
+    document.getElementById('reportDetailsInput').value = '';
+    
+    const firstRadio = document.querySelector('input[name="report_reason_opt"]');
+    if (firstRadio) firstRadio.checked = true;
+
+    const modal = document.getElementById('webReportModal');
+    if (modal) {
+        modal.style.display = 'flex';
+    }
+}
+
+function closeReportModal() {
+    const modal = document.getElementById('webReportModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+async function submitReportAjax(e) {
+    e.preventDefault();
+    const selectedReason = document.querySelector('input[name="report_reason_opt"]:checked')?.value || 'Nội dung vi phạm tiêu chuẩn cộng đồng';
+    const details = document.getElementById('reportDetailsInput')?.value || '';
+    const submitBtn = document.getElementById('submitReportBtn');
+    
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerText = '⏳ Đang gửi báo cáo...';
+    }
+
+    try {
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        const res = await fetch('/api/moderation/report', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken || '',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                target_id: currentReportMeta.targetId,
+                target_type: currentReportMeta.targetType || 'post',
+                target_title: currentReportMeta.targetTitle,
+                target_summary: currentReportMeta.targetSummary,
+                author_id: currentReportMeta.authorId,
+                author_name: currentReportMeta.authorName,
+                reason: selectedReason,
+                details: details
+            })
+        });
+
+        const data = await res.json();
+        closeReportModal();
+
+        // Tự động ẩn bài viết trên giao diện client
+        if (currentReportMeta.domKey) {
+            hidePostClient(currentReportMeta.domKey, currentReportMeta.targetId, false);
+        }
+
+        const msg = data.message || 'Cảm ơn bạn đã gửi báo cáo! Nội dung đã được ẩn khỏi bảng tin của bạn và gửi đến Ban Kiểm Duyệt trong 24h.';
+        if (typeof window.showToast === 'function') {
+            window.showToast(msg, 'success');
+        } else {
+            alert(msg);
+        }
+    } catch (err) {
+        console.error('Report error:', err);
+        alert('Đã ghi nhận báo cáo. Bài viết sẽ được ẩn khỏi bảng tin của bạn.');
+        closeReportModal();
+        if (currentReportMeta.domKey) {
+            hidePostClient(currentReportMeta.domKey, currentReportMeta.targetId, false);
+        }
+    } finally {
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerText = '🚩 Gửi báo cáo vi phạm';
+        }
+    }
+}
+
+function hidePostClient(domKey, postId, notify = true) {
+    const cardEl = document.getElementById('post-card-' + domKey) || document.querySelector(`[data-post-id="${postId}"]`);
+    if (cardEl) {
+        cardEl.style.transition = 'all 0.35s ease';
+        cardEl.style.opacity = '0';
+        cardEl.style.transform = 'translateY(-15px)';
+        setTimeout(() => cardEl.remove(), 350);
+    }
+
+    try {
+        let hidden = JSON.parse(localStorage.getItem('donganh_hidden_posts') || '[]');
+        if (!hidden.includes(String(postId))) hidden.push(String(postId));
+        if (domKey && !hidden.includes(String(domKey))) hidden.push(String(domKey));
+        localStorage.setItem('donganh_hidden_posts', JSON.stringify(hidden));
+    } catch (e) {}
+
+    if (notify) {
+        if (typeof window.showToast === 'function') {
+            window.showToast('👁️‍🗨️ Đã ẩn bài viết này khỏi bảng tin của bạn.', 'info');
+        } else {
+            alert('👁️‍🗨️ Đã ẩn bài viết này khỏi bảng tin của bạn.');
+        }
+    }
+}
+
+function blockAuthorClient(authorId, authorName) {
+    if (!authorId) return;
+    if (!confirm(`Bạn có chắc chắn muốn chặn "${authorName}"?\nBạn sẽ không còn nhìn thấy bất kỳ bài viết nào từ người này nữa.`)) {
+        return;
+    }
+
+    try {
+        let blocked = JSON.parse(localStorage.getItem('donganh_blocked_users') || '[]');
+        if (!blocked.includes(String(authorId))) blocked.push(String(authorId));
+        localStorage.setItem('donganh_blocked_users', JSON.stringify(blocked));
+    } catch (e) {}
+
+    // Ẩn tất cả bài viết của tác giả này trên trang
+    const authorCards = document.querySelectorAll(`[data-author-id="${authorId}"]`);
+    authorCards.forEach(card => {
+        card.style.transition = 'all 0.35s ease';
+        card.style.opacity = '0';
+        card.style.transform = 'scale(0.95)';
+        setTimeout(() => card.remove(), 350);
+    });
+
+    if (typeof window.showToast === 'function') {
+        window.showToast(`🚫 Đã chặn người dùng "${authorName}".`, 'warning');
+    } else {
+        alert(`🚫 Đã chặn người dùng "${authorName}".`);
+    }
+}
+
+function applyClientModerationFilters() {
+    try {
+        const blockedUsers = JSON.parse(localStorage.getItem('donganh_blocked_users') || '[]');
+        const hiddenPosts = JSON.parse(localStorage.getItem('donganh_hidden_posts') || '[]');
+
+        document.querySelectorAll('.post-item-card').forEach(card => {
+            const authorId = card.getAttribute('data-author-id');
+            const postId = card.getAttribute('data-post-id');
+            const domKey = card.getAttribute('data-post-dom-key');
+
+            if (authorId && blockedUsers.includes(String(authorId))) {
+                card.remove();
+                return;
+            }
+            if (postId && hiddenPosts.includes(String(postId))) {
+                card.remove();
+                return;
+            }
+            if (domKey && hiddenPosts.includes(String(domKey))) {
+                card.remove();
+                return;
+            }
+        });
+    } catch (e) {}
+}
+
 document.addEventListener('DOMContentLoaded', function() {
+    applyClientModerationFilters();
+
     const urlParams = new URLSearchParams(window.location.search);
     const postId = urlParams.get('post');
     if (postId) {
@@ -2408,4 +2707,71 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
+
+<!-- ==========================================
+     REPORT VIOLATION MODAL (UGC COMPLIANCE)
+     ========================================== -->
+<div id="webReportModal" class="sch-modal" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.65); backdrop-filter: blur(6px); z-index: 99999; align-items: center; justify-content: center; padding: 16px;" onclick="if(event.target === this) closeReportModal()">
+    <div style="background: #ffffff; border-radius: 24px; max-width: 520px; width: 100%; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); overflow: hidden; position: relative; animation: modalPop 0.2s ease-out;">
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 20px 24px 14px 24px; border-bottom: 1px solid #f1f5f9;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 1.3rem;">🚩</span>
+                <h3 style="margin: 0; font-size: 1.15rem; font-weight: 800; color: #0f172a;">Báo cáo vi phạm nội dung</h3>
+            </div>
+            <button type="button" onclick="closeReportModal()" style="background: #f1f5f9; border: none; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; color: #64748b; cursor: pointer;">✕</button>
+        </div>
+
+        <form onsubmit="submitReportAjax(event)" style="padding: 20px 24px;">
+            <div style="background: #f8fafc; border-radius: 14px; padding: 12px 16px; margin-bottom: 18px; border: 1px solid #e2e8f0; font-size: 0.85rem;">
+                <div style="color: #64748b; margin-bottom: 3px;">Tác giả: <strong id="report-modal-author" style="color: #0f172a;">...</strong></div>
+                <div style="color: #334155; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Nội dung: "<span id="report-modal-preview">...</span>"</div>
+            </div>
+
+            <div style="margin-bottom: 16px;">
+                <label style="font-size: 0.88rem; font-weight: 800; color: #334155; display: block; margin-bottom: 8px;">Chọn lý do báo cáo vi phạm:</label>
+                <div style="display: flex; flex-direction: column; gap: 8px; font-size: 0.88rem;">
+                    <label style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; border: 1px solid #e2e8f0; border-radius: 12px; cursor: pointer; transition: background 0.15s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#ffffff'">
+                        <input type="radio" name="report_reason_opt" value="Nội dung phản động, kích động bạo lực, vi phạm pháp luật" checked style="accent-color: #0284c7;">
+                        <span>⚖️ Nội dung phản động, bạo lực, vi phạm pháp luật</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; border: 1px solid #e2e8f0; border-radius: 12px; cursor: pointer; transition: background 0.15s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#ffffff'">
+                        <input type="radio" name="report_reason_opt" value="Spam, tin rác, lừa đảo, cờ bạc trực tuyến" style="accent-color: #0284c7;">
+                        <span>🎰 Spam, tin rác, lừa đảo, cờ bạc trực tuyến</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; border: 1px solid #e2e8f0; border-radius: 12px; cursor: pointer; transition: background 0.15s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#ffffff'">
+                        <input type="radio" name="report_reason_opt" value="Nội dung khiêu dâm, đồi trụy, 18+" style="accent-color: #0284c7;">
+                        <span>🔞 Nội dung khiêu dâm, đồi trụy, 18+</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; border: 1px solid #e2e8f0; border-radius: 12px; cursor: pointer; transition: background 0.15s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#ffffff'">
+                        <input type="radio" name="report_reason_opt" value="Vi phạm bản quyền hình ảnh, giả mạo danh tính" style="accent-color: #0284c7;">
+                        <span>©️ Vi phạm bản quyền hình ảnh, giả mạo danh tính</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; border: 1px solid #e2e8f0; border-radius: 12px; cursor: pointer; transition: background 0.15s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#ffffff'">
+                        <input type="radio" name="report_reason_opt" value="Quấy rối, đe dọa, xúc phạm nhân phẩm" style="accent-color: #0284c7;">
+                        <span>🗣️ Quấy rối, đe dọa, xúc phạm nhân phẩm</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; border: 1px solid #e2e8f0; border-radius: 12px; cursor: pointer; transition: background 0.15s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#ffffff'">
+                        <input type="radio" name="report_reason_opt" value="Lý do khác" style="accent-color: #0284c7;">
+                        <span>📝 Lý do khác (Mô tả chi tiết bên dưới)</span>
+                    </label>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 16px;">
+                <label style="font-size: 0.88rem; font-weight: 700; color: #475569; display: block; margin-bottom: 6px;">Mô tả thêm (Tùy chọn):</label>
+                <textarea id="reportDetailsInput" rows="2" placeholder="Cung cấp thêm chi tiết để hỗ trợ Ban Kiểm Duyệt xử lý nhanh chóng..." style="width: 100%; border: 1px solid #cbd5e1; border-radius: 12px; padding: 10px 12px; font-size: 0.88rem; font-family: inherit; resize: vertical; box-sizing: border-box;"></textarea>
+            </div>
+
+            <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 10px 14px; margin-bottom: 20px; display: flex; gap: 10px; align-items: flex-start; font-size: 0.8rem; color: #166534;">
+                <span style="font-size: 1.1rem; line-height: 1;">🛡️</span>
+                <span><strong>Cam kết bảo mật:</strong> Báo cáo của bạn được giữ kín danh tính. Bài viết này sẽ lập tức được ẩn khỏi bảng tin của bạn và được Ban Kiểm Duyệt xử lý trong vòng <strong>24 giờ</strong>.</span>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                <button type="button" onclick="closeReportModal()" style="padding: 10px 20px; border-radius: 12px; background: #f1f5f9; color: #475569; border: none; font-weight: 700; font-size: 0.9rem; cursor: pointer;">Hủy bỏ</button>
+                <button type="submit" id="submitReportBtn" style="padding: 10px 22px; border-radius: 12px; background: linear-gradient(135deg, #dc2626, #b91c1c); color: #ffffff; border: none; font-weight: 800; font-size: 0.9rem; cursor: pointer; box-shadow: 0 4px 14px rgba(220, 38, 38, 0.35);">🚩 Gửi báo cáo vi phạm</button>
+            </div>
+        </form>
+    </div>
+</div>
 @endsection

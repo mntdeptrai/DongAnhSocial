@@ -41,7 +41,15 @@ class CheckoutController extends Controller
             $dishes = !empty($dishIds) ? Dish::on('mysql')->with('eatery')->whereIn('id', $dishIds)->get()->keyBy('id') : collect();
             $ocopProducts = !empty($ocopIds) ? OcopProduct::on('mysql_market')->with('eatery')->whereIn('id', $ocopIds)->get()->keyBy('id') : collect();
 
-            $cartItems = $itemsToCheckout->map(function ($item) use ($dishes, $ocopProducts) {
+            // Resolve actual category slug for each ocop product's eatery
+            $ocopEateryIds = $ocopProducts->pluck('eatery_id')->filter()->unique()->values()->all();
+            $eateryCatSlugs = !empty($ocopEateryIds)
+                ? DB::table('eateries')->join('categories', 'eateries.category_id', '=', 'categories.id')
+                    ->whereIn('eateries.id', $ocopEateryIds)
+                    ->pluck('categories.slug', 'eateries.id')
+                : collect();
+
+            $cartItems = $itemsToCheckout->map(function ($item) use ($dishes, $ocopProducts, $eateryCatSlugs) {
                 $product = null;
                 if ($item->dish_id) {
                     $product = $dishes->get($item->dish_id);
@@ -62,7 +70,9 @@ class CheckoutController extends Controller
                     'eatery_id' => $eatery ? $eatery->id : ($product ? $product->eatery_id : null),
                     'eatery_name' => $eatery ? $eatery->name : 'Gian hàng Đông Anh',
                     'stall_name' => ($product && isset($product->stall_name)) ? $product->stall_name : null,
-                    'category_slug' => $item->dish_id ? 'dong-anh-food-map' : 'dong-anh-market'
+                    'category_slug' => $item->dish_id
+                        ? 'dong-anh-food-map'
+                        : ($product ? ($eateryCatSlugs->get($product->eatery_id) ?? 'dong-anh-market') : 'dong-anh-market'),
                 ];
             })->toArray();
 
@@ -161,7 +171,7 @@ class CheckoutController extends Controller
                     'shipping_address' => $specificAddress,
                     'total_amount' => $totalAmount,
                     'payment_method' => $request->input('payment_method'),
-                    'status' => 'confirmed', // Tự động chuyển thẳng sang 'Sạp nhận đơn' cho cả COD và Online!
+                    'status' => 'pending', // Đơn mới tạo ở trạng thái 'Chờ xác nhận / Chờ duyệt' để chủ sạp/cơ sở tiếp nhận & duyệt
                     'notes' => $request->input('notes'),
                 ]);
 
@@ -518,10 +528,18 @@ class CheckoutController extends Controller
             'id' => $order->id,
             'order_code' => 'ORD' . str_pad($order->id, 3, '0', STR_PAD_LEFT),
             'order_code_full' => 'ORD' . str_pad($order->id, 6, '0', STR_PAD_LEFT),
-            'created_at_formatted' => $order->created_at->format('H:i d/m/Y'),
+            'created_at_formatted' => $order->created_at ? $order->created_at->format('H:i d/m/Y') : '',
+            'confirmed_at_formatted' => $order->confirmed_at ? \Carbon\Carbon::parse($order->confirmed_at)->format('H:i d/m/Y') : null,
+            'preparing_at_formatted' => $order->preparing_at ? \Carbon\Carbon::parse($order->preparing_at)->format('H:i d/m/Y') : null,
+            'ready_at_formatted' => $order->ready_at ? \Carbon\Carbon::parse($order->ready_at)->format('H:i d/m/Y') : null,
+            'shipping_at_formatted' => $order->shipping_at ? \Carbon\Carbon::parse($order->shipping_at)->format('H:i d/m/Y') : null,
+            'completed_at_formatted' => $order->completed_at ? \Carbon\Carbon::parse($order->completed_at)->format('H:i d/m/Y') : null,
+            'cancelled_at_formatted' => $order->cancelled_at ? \Carbon\Carbon::parse($order->cancelled_at)->format('H:i d/m/Y') : null,
             'status' => $order->status,
             'status_label' => $this->getStatusLabel($order->status),
             'status_class' => $this->getStatusClass($order->status),
+            'cancel_reason' => $order->cancel_reason,
+            'cancelled_by' => $order->cancelled_by,
             'items' => $items,
             'subtotal' => $subtotal,
             'shipping_fee' => $shipping_fee,
@@ -553,11 +571,14 @@ class CheckoutController extends Controller
     {
         switch ($status) {
             case 'pending': return 'Chờ xác nhận';
-            case 'paid': return 'Đã thanh toán';
-            case 'processing': return 'Đang chuẩn bị';
+            case 'confirmed': return 'Sạp đã nhận đơn';
+            case 'preparing':
+            case 'processing':
+            case 'paid': return 'Đang chuẩn bị hàng';
+            case 'ready': return 'Sẵn sàng chờ lấy';
             case 'shipping':
             case 'delivering': return 'Đang giao';
-            case 'completed': return 'Đã nhận / Hoàn thành';
+            case 'completed': return 'Đã hoàn thành';
             case 'cancelled': return 'Đã hủy';
             case 'returned': return 'Đã hoàn hàng';
             case 'return_requested': return 'Yêu cầu hoàn hàng';
@@ -569,8 +590,11 @@ class CheckoutController extends Controller
     {
         switch ($status) {
             case 'pending': return 'status-pending';
-            case 'paid': return 'status-paid';
-            case 'processing': return 'status-processing';
+            case 'confirmed': return 'status-confirmed';
+            case 'preparing':
+            case 'processing':
+            case 'paid': return 'status-processing';
+            case 'ready': return 'status-ready';
             case 'shipping':
             case 'delivering': return 'status-shipping';
             case 'completed': return 'status-completed';
@@ -608,6 +632,7 @@ class CheckoutController extends Controller
             DB::beginTransaction();
 
             $order->status = 'completed';
+            $order->completed_at = now();
             $order->save();
 
             // Automatic COD payment success transition upon receipt
@@ -683,10 +708,10 @@ class CheckoutController extends Controller
         $id = $this->resolveOrderId($codeOrId);
         $order = Order::where('user_id', Auth::user()->id)->findOrFail($id);
 
-        if (!in_array($order->status, ['pending', 'paid'])) {
+        if (!in_array($order->status, ['pending', 'paid', 'confirmed'])) {
             return response()->json([
                 'success' => false,
-                'message' => 'Không thể hủy đơn hàng ở trạng thái này. Chỉ có thể hủy đơn hàng chưa được xử lý.'
+                'message' => 'Không thể hủy đơn hàng khi gian hàng đã bắt đầu chuẩn bị món.'
             ], 422);
         }
 
@@ -696,7 +721,10 @@ class CheckoutController extends Controller
             DB::beginTransaction();
 
             $order->status = 'cancelled';
-            if ($reason) {
+            $order->cancel_reason = $reason;
+            $order->cancelled_by = 'customer';
+            $order->cancelled_at = now();
+            if ($reason && !str_contains($order->notes ?? '', 'Lý do hủy')) {
                 $order->notes = trim(($order->notes ? $order->notes . ' | ' : '') . '🚫 [Lý do hủy: ' . $reason . ']');
             }
             $order->save();

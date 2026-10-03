@@ -98,6 +98,24 @@
     
     // Check if food safety cert exists
     $hasCert = $eatery && $eatery->foodSafetyCertificate;
+
+    // Parse custom seller inputs (product_type, commitment_text, delivery_text, certificate_info)
+    $specData = [];
+    if (!empty($product->ingredients)) {
+        if (is_array($product->ingredients)) {
+            $specData = $product->ingredients;
+        } elseif (is_string($product->ingredients)) {
+            try { $specData = json_decode($product->ingredients, true) ?: []; } catch (\Throwable $e) {}
+        }
+    }
+
+    $customType = !empty($specData['product_type']) ? trim($specData['product_type']) : null;
+    $customCommitment = !empty($specData['commitment_text']) ? trim($specData['commitment_text']) : null;
+    $customDelivery = !empty($specData['delivery_text']) ? trim($specData['delivery_text']) : null;
+    $customCert = !empty($specData['certificate_info']) ? trim($specData['certificate_info']) : null;
+    $customOrderPolicy = !empty($specData['order_policy']) ? trim($specData['order_policy']) : null;
+    $customPaymentPolicy = !empty($specData['payment_policy']) ? trim($specData['payment_policy']) : null;
+    $isSignature = !empty($product->is_signature) || (!empty($specData['is_signature']) && (int)$specData['is_signature'] === 1);
 @endphp
 
 <style>
@@ -285,9 +303,9 @@
     /* Tabs Styling */
     .prod-tab-btns {
         display: flex;
-        gap: 12px;
-        border-bottom: 1px solid var(--border-glow);
-        padding-bottom: 16px;
+        gap: 10px;
+        border-bottom: 1.5px solid #e2e8f0;
+        padding-bottom: 14px;
         margin-bottom: 24px;
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
@@ -299,23 +317,29 @@
     }
 
     .prod-tab-btn {
-        background: transparent;
-        border: 1px solid transparent;
-        color: var(--text-muted);
+        background: #f1f5f9;
+        border: 1px solid #cbd5e1;
+        color: #475569;
         padding: 10px 20px;
         border-radius: 30px;
         font-weight: 700;
-        font-size: 0.95rem;
+        font-size: 0.92rem;
         cursor: pointer;
         white-space: nowrap;
-        transition: all 0.3s ease;
+        transition: all 0.25s ease;
         flex-shrink: 0;
     }
 
+    .prod-tab-btn:hover {
+        background: #e2e8f0;
+        color: #0f172a;
+    }
+
     .prod-tab-btn.active {
-        background: rgba(2, 132, 199, 0.12);
-        border-color: rgba(2, 132, 199, 0.3);
-        color: #0284c7;
+        background: #0284c7 !important;
+        border-color: #0284c7 !important;
+        color: #ffffff !important;
+        box-shadow: 0 4px 14px rgba(2, 132, 199, 0.35);
     }
 
     .prod-tab-content {
@@ -362,9 +386,9 @@
     .related-prod-card {
         display: flex !important;
         flex-direction: column !important;
-        background: var(--bg-card);
-        border: 1px solid var(--border-glow);
-        border-radius: 16px;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 18px;
         overflow: hidden;
         transition: all 0.3s ease;
         cursor: pointer;
@@ -384,6 +408,22 @@
         height: 180px !important;
         object-fit: cover !important;
         display: block !important;
+    }
+
+    .related-prod-img-placeholder {
+        width: 100% !important;
+        height: 180px !important;
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        border-bottom: 1px solid #e2e8f0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        color: #0369a1;
+        padding: 12px;
+        box-sizing: border-box;
+        text-align: center;
     }
 
     .related-prod-body {
@@ -524,10 +564,12 @@
             <div>
                 <div class="prod-image-wrapper">
                     <div class="prod-badge-floating">
-                        <span style="background: rgba(2, 132, 199, 0.9); color: #fff; padding: 6px 14px; border-radius: 20px; font-size: 0.8rem; font-weight: 800; backdrop-filter: blur(8px); display: inline-flex; align-items: center; gap: 6px;">
-                            🏪 Sản phẩm Cơ sở Kinh doanh
-                        </span>
-                        @if($product->is_signature)
+                        @if($customType)
+                            <span style="background: rgba(2, 132, 199, 0.9); color: #fff; padding: 6px 14px; border-radius: 20px; font-size: 0.8rem; font-weight: 800; backdrop-filter: blur(8px); display: inline-flex; align-items: center; gap: 6px;">
+                                🏷️ {{ $customType }}
+                            </span>
+                        @endif
+                        @if($isSignature)
                             <span style="background: rgba(255, 126, 41, 0.95); color: #fff; padding: 6px 14px; border-radius: 20px; font-size: 0.8rem; font-weight: 800; backdrop-filter: blur(8px); display: inline-flex; align-items: center; gap: 6px;">
                                 ★ Món / Sản phẩm đặc trưng
                             </span>
@@ -588,21 +630,68 @@
                         </span>
                     </div>
                 </div>
+    @php
+        $catSlug = $eatery?->category?->slug ?? ($eatery?->category_slug ?? '');
+        $isFoodCategory = in_array($catSlug, ['dong-anh-food-map', 'am-thuc', 'nha-hang', 'quan-an', 'thuc-pham', 'do-uong', 'bep-an']);
+        
+        $prodNameLower = mb_strtolower($product->name ?? '');
+        $foodKeywords = ['bún', 'phở', 'lẩu', 'nướng', 'bánh', 'trà', 'cà phê', 'xôi', 'cơm', 'gà', 'vịt', 'bò', 'heo', 'chè', 'nước', 'giò', 'chả', 'sữa', 'hải sản', 'thịt', 'thực phẩm', 'đồ ăn', 'đồ uống', 'món'];
+        
+        $hasFoodKw = false;
+        foreach ($foodKeywords as $kw) {
+            if (\Illuminate\Support\Str::contains($prodNameLower, $kw)) {
+                $hasFoodKw = true;
+                break;
+            }
+        }
+
+        if ($customType) {
+            $cTypeLower = mb_strtolower($customType);
+            if (\Illuminate\Support\Str::contains($cTypeLower, ['thực phẩm', 'ẩm thực', 'đồ ăn', 'đồ uống', 'am_thuc', 'nong_san', 'bún', 'phở', 'lẩu'])) {
+                $isFoodItem = true;
+            } else {
+                $isFoodItem = false;
+            }
+        } else {
+            $isFoodItem = $isFoodCategory || $hasFoodKw;
+        }
+
+        $cert = $eatery?->foodSafetyCertificate;
+        $certImg = $cert?->image_path ? (\Illuminate\Support\Str::startsWith($cert->image_path, ['http://', 'https://']) ? $cert->image_path : asset($cert->image_path)) : null;
+        $hasCertData = !empty($cert?->certificate_number) || !empty($certImg);
+    @endphp
 
                 <!-- Product Features Bullet List -->
                 <ul class="prod-highlight-list">
+                    @if($customType)
+                        <li class="prod-highlight-item">
+                            <span style="color: #10b981; font-size: 1.1rem;">✔</span>
+                            <span><strong>Loại hình / Danh mục:</strong> {{ $customType }}</span>
+                        </li>
+                    @else
+                        <li class="prod-highlight-item">
+                            <span style="color: #10b981; font-size: 1.1rem;">✔</span>
+                            <span><strong>Phục vụ đa dạng:</strong> {{ $isFoodItem ? 'Cho cỗ tiệc, trường học, nhà hàng, sự kiện & hộ gia đình.' : 'Dành cho cá nhân, hộ gia đình, cơ quan, doanh nghiệp & sự kiện.' }}</span>
+                        </li>
+                    @endif
+
                     <li class="prod-highlight-item">
                         <span style="color: #10b981; font-size: 1.1rem;">✔</span>
-                        <span><strong>Cung cấp đa dạng:</strong> Cho cỗ tiệc, trường học, nhà hàng, sự kiện & hộ gia đình.</span>
+                        <span><strong>Chất lượng cam kết:</strong> {{ $customCommitment ?: ($isFoodItem ? 'Tươi sống ngon sạch hàng ngày, nguồn gốc xuất xứ rõ ràng.' : 'Đảm bảo tiêu chuẩn chất lượng cao, đúng mô tả & cam kết hợp đồng.') }}</span>
                     </li>
+
                     <li class="prod-highlight-item">
                         <span style="color: #10b981; font-size: 1.1rem;">✔</span>
-                        <span><strong>Chất lượng cam kết:</strong> Tươi sống ngon sạch hàng ngày, nguồn gốc xuất xứ rõ ràng.</span>
+                        <span><strong>Cung ứng & Bàn giao:</strong> {{ $customDelivery ?: ($isFoodItem ? 'Nhận đơn & giao nhanh tận nơi trong khu vực Đông Anh.' : 'Hỗ trợ tư vấn, vận chuyển & bàn giao tận nơi tại Đông Anh.') }}</span>
                     </li>
-                    <li class="prod-highlight-item">
-                        <span style="color: #10b981; font-size: 1.1rem;">✔</span>
-                        <span><strong>Giao hàng hỏa tốc:</strong> Nhận đơn & giao nhanh tận nơi trong khu vực Đông Anh.</span>
-                    </li>
+
+                    @if($customCert)
+                        <li class="prod-highlight-item">
+                            <span style="color: #10b981; font-size: 1.1rem;">✔</span>
+                            <span><strong>Giấy phép / Tiêu chuẩn:</strong> {{ $customCert }}</span>
+                        </li>
+                    @endif
+
                     @if($eatery && $eatery->phone)
                         <li class="prod-highlight-item">
                             <span style="color: #10b981; font-size: 1.1rem;">✔</span>
@@ -648,85 +737,6 @@
         </div>
     </div>
 
-    <!-- VSATTP FOOD SAFETY CERTIFICATE SHOWCASE BLOCK -->
-    @php
-        $cert = $eatery?->foodSafetyCertificate;
-        $certImg = $cert?->image_path ? (\Illuminate\Support\Str::startsWith($cert->image_path, ['http://', 'https://']) ? $cert->image_path : asset($cert->image_path)) : null;
-    @endphp
-
-    <div class="vsattp-card">
-        
-        <div style="display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; border-bottom: 1px dashed #bbf7d0; padding-bottom: 16px;">
-            <h3 style="font-size: 1.35rem; font-weight: 800; color: #065f46; margin: 0; font-family: var(--font-heading); display: flex; align-items: center; gap: 10px;">
-                🛡️ Giấy Chứng Nhận An Toàn Vệ Sinh Thực Phẩm (VSATTP)
-            </h3>
-            <span style="background: #10b981; color: #ffffff; font-weight: 800; font-size: 0.85rem; padding: 6px 16px; border-radius: 30px; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);">
-                ✓ Đủ Điều Kiện An Toàn VSTP
-            </span>
-        </div>
-
-        <div class="vsattp-grid" style="grid-template-columns: {{ $certImg ? '' : '1fr' }};">
-            @if($certImg)
-                <div style="position: relative; cursor: pointer; border-radius: 16px; overflow: hidden; border: 2px solid #10b981; box-shadow: 0 8px 20px rgba(0,0,0,0.1);" onclick="openCertImageModal('{{ $certImg }}')">
-                    <img src="{{ $certImg }}" alt="Giấy chứng nhận VSATTP {{ $eatery?->name }}" style="width: 100%; height: 250px; object-fit: cover; display: block; transition: transform 0.3s ease;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
-                    <div style="position: absolute; inset: 0; background: rgba(0,0,0,0.35); opacity: 0; transition: opacity 0.3s; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 0.85rem; text-align: center; padding: 10px;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0'">
-                        🔍 Bấm xem ảnh Chứng nhận
-                    </div>
-                </div>
-            @endif
-
-            <div>
-                <div style="background: #ffffff; border: 1px solid #a7f3d0; border-radius: 18px; padding: 20px; margin-bottom: 16px;">
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; font-size: 0.95rem; color: #1e293b;">
-                        <div>
-                            <span style="color: #64748b; font-size: 0.8rem; font-weight: 700; display: block; text-transform: uppercase;">CƠ SỞ KINH DOANH:</span>
-                            <strong style="color: #065f46; font-size: 1.05rem;">{{ $product->seller_name ?: ($eatery?->name ?: 'Cơ sở kinh doanh Đông Anh') }}</strong>
-                        </div>
-                        <div>
-                            <span style="color: #64748b; font-size: 0.8rem; font-weight: 700; display: block; text-transform: uppercase;">SỐ GIẤY CHỨNG NHẬN:</span>
-                            <strong style="color: #0284c7; font-size: 1rem;">{{ $cert?->certificate_number ?: 'Đã xác minh ATTP' }}</strong>
-                        </div>
-                        <div>
-                            <span style="color: #64748b; font-size: 0.8rem; font-weight: 700; display: block; text-transform: uppercase;">CƠ QUAN CẤP CHỨNG NHẬN:</span>
-                            <strong>{{ $cert?->issued_by ?: 'Chi cục An toàn Vệ sinh Thực phẩm Hà Nội' }}</strong>
-                        </div>
-                        <div>
-                            <span style="color: #64748b; font-size: 0.8rem; font-weight: 700; display: block; text-transform: uppercase;">TRẠNG THÁI HIỆU LỰC:</span>
-                            <span style="color: #10b981; font-weight: 800;">✓ Đang có hiệu lực lưu hành</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div style="font-size: 0.95rem; line-height: 1.7; color: #334155;">
-                    <p style="margin: 0 0 6px 0; font-weight: 600;">
-                        📋 <strong>Cam kết chất lượng:</strong> Sản phẩm {{ $product->name }} được kiểm soát nguồn gốc nghiêm ngặt, đáp ứng toàn bộ quy chuẩn vệ sinh an toàn thực phẩm.
-                    </p>
-                    <p style="margin: 0; color: #64748b; font-size: 0.88rem;">
-                        Nhận cung cấp cho cỗ đám tiệc, bếp ăn trường học, nhà hàng & hộ gia đình trên địa bàn Đông Anh.
-                    </p>
-                </div>
-            </div>
-        </div>
-
-    </div>
-
-    <!-- CERTIFICATE IMAGE ZOOM MODAL -->
-    <div id="certImgZoomModal" style="display: none; position: fixed; inset: 0; z-index: 9999999; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(8px); align-items: center; justify-content: center; padding: 20px;" onclick="closeCertImageModal()">
-        <div style="position: relative; max-width: 90vw; max-height: 90vh;" onclick="event.stopPropagation()">
-            <button onclick="closeCertImageModal()" style="position: absolute; top: -16px; right: -16px; background: #ef4444; color: white; border: none; width: 36px; height: 36px; border-radius: 50%; font-size: 1.2rem; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 10;">✕</button>
-            <img id="certImgZoomTarget" src="" style="max-width: 90vw; max-height: 85vh; border-radius: 16px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); object-fit: contain;">
-        </div>
-    </div>
-    <script>
-        function openCertImageModal(url) {
-            document.getElementById('certImgZoomTarget').src = url;
-            document.getElementById('certImgZoomModal').style.display = 'flex';
-        }
-        function closeCertImageModal() {
-            document.getElementById('certImgZoomModal').style.display = 'none';
-        }
-    </script>
-
     <!-- Detailed Tabs & Content -->
     <div class="prod-glass-card" style="margin-bottom: 40px;">
         <div class="prod-tab-btns">
@@ -746,7 +756,7 @@
             <div style="margin-top: 24px; padding: 20px; background: rgba(2, 132, 199, 0.04); border-left: 4px solid #0284c7; border-radius: 8px;">
                 <h4 style="margin: 0 0 8px 0; color: #0284c7; font-size: 1.05rem;">💡 Phạm vi phục vụ & Cung ứng:</h4>
                 <p style="margin: 0; color: var(--text-muted); font-size: 0.95rem; line-height: 1.6;">
-                    Sản phẩm <strong>{{ $product->name }}</strong> được cung cấp chính hãng bởi <strong>{{ $eatery ? $eatery->name : 'cơ sở kinh doanh' }}</strong>. Nhận cung cấp số lượng lớn theo hợp đồng cho trường học, nhà hàng, khách sạn và các sự kiện lớn nhỏ trên địa bàn Đông Anh & khu vực lân cận.
+                    {{ $customDelivery ?: ("Sản phẩm " . $product->name . " được cung cấp chính hãng bởi " . ($eatery ? $eatery->name : 'cơ sở kinh doanh') . ". Nhận cung cấp số lượng lớn theo hợp đồng cho trường học, nhà hàng, khách sạn và các sự kiện lớn nhỏ trên địa bàn Đông Anh & khu vực lân cận.") }}
                 </p>
             </div>
         </div>
@@ -783,36 +793,242 @@
         <div id="tab-policy" class="prod-tab-content">
             <h3 style="color: var(--text-main); font-size: 1.3rem; margin-top: 0; margin-bottom: 16px;">Chính sách đặt hàng & Giao vận</h3>
             <ul style="line-height: 1.8; color: var(--text-main); padding-left: 20px;">
-                <li><strong>Giao hàng nội thành Đông Anh:</strong> Nhận giao hàng nhanh tận nhà, trường học, bếp ăn.</li>
-                <li><strong>Đơn hàng lớn / Hợp đồng:</strong> Quý khách đặt mua cho trường học, cỗ tiệc vui lòng gọi hotline trước 1-2 ngày để được hỗ trợ giá ưu đãi.</li>
-                <li><strong>Phương thức thanh toán:</strong> Tiền mặt khi nhận hàng (COD), Chuyển khoản VietQR, Hóa đơn VAT (nếu yêu cầu).</li>
+                @if($customDelivery)
+                    <li><strong>Chính sách giao vận & phục vụ:</strong> {{ $customDelivery }}</li>
+                @else
+                    <li><strong>Giao hàng nội thành Đông Anh:</strong> Nhận giao hàng nhanh tận nhà, trường học, bếp ăn, nhà hàng.</li>
+                @endif
+                @if($customCommitment)
+                    <li><strong>Cam kết chất lượng:</strong> {{ $customCommitment }}</li>
+                @endif
+                @if($customCert)
+                    <li><strong>Giấy phép / Tiêu chuẩn xác minh:</strong> {{ $customCert }}</li>
+                @endif
+                <li><strong>Đơn hàng lớn / Hợp đồng:</strong> {{ $customOrderPolicy ?: 'Quý khách đặt mua cho trường học, cỗ tiệc, doanh nghiệp vui lòng gọi hotline trước 1-2 ngày để được hỗ trợ giá ưu đãi.' }}</li>
+                <li><strong>Phương thức thanh toán & Hóa đơn:</strong> {{ $customPaymentPolicy ?: 'Tiền mặt khi nhận hàng (COD), Chuyển khoản VietQR, Hóa đơn VAT (nếu yêu cầu).' }}</li>
             </ul>
         </div>
 
         <!-- Tab 4: Đánh giá -->
         <div id="tab-reviews" class="prod-tab-content">
-            <h3 style="color: var(--text-main); font-size: 1.3rem; margin-top: 0; margin-bottom: 16px;">Đánh giá từ khách hàng</h3>
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; border-bottom: 1.5px solid #e2e8f0; padding-bottom: 14px;">
+                <h3 style="color: var(--text-main); font-size: 1.25rem; font-weight: 800; margin: 0; font-family: var(--font-heading);">
+                    ⭐ Đánh Giá & Phản Hồi Khách Hàng ({{ $reviews->count() }})
+                </h3>
+                @if($eatery)
+                    <button onclick="toggleReviewForm()" class="btn-action-primary" style="padding: 9px 20px; font-size: 0.88rem;">
+                        ✍️ Viết Đánh Giá
+                    </button>
+                @endif
+            </div>
+
+            @if($eatery)
+                <!-- FORM GỬI ĐÁNH GIÁ -->
+                <div id="reviewFormCard" style="background: #f0f9ff; border: 1.5px dashed #bae6fd; border-radius: 20px; padding: 22px; margin-bottom: 28px;">
+                    <h4 style="margin: 0 0 14px 0; color: #0369a1; font-size: 1.05rem; font-weight: 800; display: flex; align-items: center; gap: 8px;">
+                        ✍️ Gửi Đánh Giá Trải Nghiệm Sản Phẩm / Dịch Vụ
+                    </h4>
+                    <form action="{{ route('eatery.review.store', $eatery->id) }}" method="POST" enctype="multipart/form-data">
+                        @csrf
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 16px;">
+                            <div>
+                                <label style="font-weight: 700; font-size: 0.85rem; color: #334155; display: block; margin-bottom: 6px;">Họ & Tên của bạn <span style="color:#ef4444;">*</span></label>
+                                <input type="text" name="user_name" class="hkd-form-input" required placeholder="Nhập tên của bạn..." value="{{ Auth::check() ? Auth::user()->name : '' }}" style="width: 100%; box-sizing: border-box;">
+                            </div>
+
+                            <div>
+                                <label style="font-weight: 700; font-size: 0.85rem; color: #334155; display: block; margin-bottom: 6px;">Số sao đánh giá</label>
+                                <div class="star-rating-select" style="display: flex; gap: 6px; align-items: center; font-size: 1.6rem; cursor: pointer;">
+                                    <input type="hidden" name="rating" id="reviewRatingInput" value="5">
+                                    <span onclick="setRating(1)" class="star-btn" data-val="1" style="color: #f59e0b;">★</span>
+                                    <span onclick="setRating(2)" class="star-btn" data-val="2" style="color: #f59e0b;">★</span>
+                                    <span onclick="setRating(3)" class="star-btn" data-val="3" style="color: #f59e0b;">★</span>
+                                    <span onclick="setRating(4)" class="star-btn" data-val="4" style="color: #f59e0b;">★</span>
+                                    <span onclick="setRating(5)" class="star-btn" data-val="5" style="color: #f59e0b;">★</span>
+                                    <span id="starRatingLabel" style="font-size: 0.85rem; font-weight: 700; color: #d97706; margin-left: 8px;">5 / 5 Tuyệt vời</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="margin-bottom: 16px;">
+                            <label style="font-weight: 700; font-size: 0.85rem; color: #334155; display: block; margin-bottom: 6px;">Nội dung nhận xét & đánh giá</label>
+                            <textarea name="comment" rows="3" class="hkd-form-textarea" placeholder="Nhập cảm nhận thực tế của bạn về chất lượng sản phẩm, dịch vụ phục vụ, thái độ bàn giao..." style="width: 100%; box-sizing: border-box;"></textarea>
+                        </div>
+
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+                            <div>
+                                <label style="font-weight: 700; font-size: 0.82rem; color: #64748b; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; background: #ffffff; border: 1px solid #cbd5e1; padding: 8px 16px; border-radius: 20px;">
+                                    <i class="fa-solid fa-paperclip" style="color: #0284c7;"></i> Đính kèm ảnh / video
+                                    <input type="file" name="media[]" multiple accept="image/*,video/*" style="display: none;" onchange="alert('Đã chọn ' + this.files.length + ' tệp đính kèm')">
+                                </label>
+                            </div>
+                            <button type="submit" class="btn-action-primary" style="padding: 10px 24px; font-size: 0.92rem;">
+                                🚀 Gửi Đánh Giá Ngay
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            @endif
+
+            <!-- REVIEW LIST -->
             @if($reviews->count() > 0)
                 <div style="display: flex; flex-direction: column; gap: 16px;">
                     @foreach($reviews as $rev)
-                        <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-glow); border-radius: 14px; padding: 16px;">
+                        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 18px; box-shadow: 0 4px 12px rgba(0,0,0,0.02);">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                                <strong style="color: var(--text-main); font-size: 0.95rem;">👤 {{ $rev->user_name }}</strong>
-                                <span style="color: #ffc107; font-size: 0.9rem;">
+                                <strong style="color: #0f172a; font-size: 0.98rem; display: flex; align-items: center; gap: 8px;">
+                                    👤 {{ $rev->user_name }}
+                                </strong>
+                                <span style="color: #f59e0b; font-size: 1.05rem;">
                                     @for($i=1; $i<=5; $i++)
-                                        {{ $i <= $rev->rating ? '★' : '☆' }}
+                                        {{ $i <= ($rev->rating ?: 5) ? '★' : '☆' }}
                                     @endfor
                                 </span>
                             </div>
-                            <p style="margin: 0; color: var(--text-muted); font-size: 0.9rem;">{{ $rev->comment }}</p>
+                            <p style="margin: 0; color: #334155; font-size: 0.95rem; line-height: 1.6;">{{ $rev->comment }}</p>
+                            @if(!empty($rev->created_at))
+                                <div style="font-size: 0.78rem; color: #94a3b8; margin-top: 8px;">
+                                    🕒 {{ \Carbon\Carbon::parse($rev->created_at)->format('H:i d/m/Y') }}
+                                </div>
+                            @endif
                         </div>
                     @endforeach
                 </div>
             @else
-                <p style="color: var(--text-muted);">Chưa có đánh giá nào. Hãy là người đầu tiên trải nghiệm và chia sẻ nhận xét!</p>
+                <div style="text-align: center; padding: 36px 20px; background: #f8fafc; border-radius: 18px; border: 1.5px dashed #cbd5e1;">
+                    <div style="font-size: 2.5rem; margin-bottom: 8px;">⭐</div>
+                    <h4 style="margin: 0 0 6px 0; color: #0f172a; font-size: 1.05rem; font-weight: 800;">Chưa có đánh giá nào cho gian hàng này</h4>
+                    <p style="margin: 0; color: #64748b; font-size: 0.88rem;">Hãy bấm nút <strong>"✍️ Viết Đánh Giá"</strong> ở trên để chia sẻ nhận xét đầu tiên!</p>
+                </div>
             @endif
         </div>
     </div>
+
+    <!-- VERIFICATION / CERTIFICATE SHOWCASE BLOCK -->
+    @if($isFoodItem)
+        <!-- FOOD SAFETY CERTIFICATE (VSATTP) SHOWCASE BLOCK FOR FOOD ITEMS -->
+        <div class="vsattp-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; border-bottom: 1px dashed #bbf7d0; padding-bottom: 16px;">
+                <h3 style="font-size: 1.35rem; font-weight: 800; color: #065f46; margin: 0; font-family: var(--font-heading); display: flex; align-items: center; gap: 10px;">
+                    🛡️ Giấy Chứng Nhận An Toàn Vệ Sinh Thực Phẩm (VSATTP)
+                </h3>
+                <span style="background: #10b981; color: #ffffff; font-weight: 800; font-size: 0.85rem; padding: 6px 16px; border-radius: 30px; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);">
+                    ✓ Đủ Điều Kiện An Toàn VSTP
+                </span>
+            </div>
+
+            <div class="vsattp-grid" style="grid-template-columns: {{ $certImg ? '' : '1fr' }};">
+                @if($certImg)
+                    <div style="position: relative; cursor: pointer; border-radius: 16px; overflow: hidden; border: 2px solid #10b981; box-shadow: 0 8px 20px rgba(0,0,0,0.1);" onclick="openCertImageModal('{{ $certImg }}')">
+                        <img src="{{ $certImg }}" alt="Giấy chứng nhận VSATTP {{ $eatery?->name }}" style="width: 100%; height: 250px; object-fit: cover; display: block; transition: transform 0.3s ease;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                        <div style="position: absolute; inset: 0; background: rgba(0,0,0,0.35); opacity: 0; transition: opacity 0.3s; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 0.85rem; text-align: center; padding: 10px;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0'">
+                            🔍 Bấm xem ảnh Chứng nhận
+                        </div>
+                    </div>
+                @endif
+
+                <div>
+                    <div style="background: #ffffff; border: 1px solid #a7f3d0; border-radius: 18px; padding: 20px; margin-bottom: 16px;">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; font-size: 0.95rem; color: #1e293b;">
+                            <div>
+                                <span style="color: #64748b; font-size: 0.8rem; font-weight: 700; display: block; text-transform: uppercase;">CƠ SỞ KINH DOANH:</span>
+                                <strong style="color: #065f46; font-size: 1.05rem;">{{ $product->seller_name ?: ($eatery?->name ?: 'Cơ sở kinh doanh Đông Anh') }}</strong>
+                            </div>
+                            <div>
+                                <span style="color: #64748b; font-size: 0.8rem; font-weight: 700; display: block; text-transform: uppercase;">SỐ GIẤY CHỨNG NHẬN:</span>
+                                <strong style="color: #0284c7; font-size: 1rem;">{{ $cert?->certificate_number ?: 'Đã xác minh ATTP' }}</strong>
+                            </div>
+                            <div>
+                                <span style="color: #64748b; font-size: 0.8rem; font-weight: 700; display: block; text-transform: uppercase;">CƠ QUAN CẤP CHỨNG NHẬN:</span>
+                                <strong>{{ $cert?->issued_by ?: 'Chi cục An toàn Vệ sinh Thực phẩm Hà Nội' }}</strong>
+                            </div>
+                            <div>
+                                <span style="color: #64748b; font-size: 0.8rem; font-weight: 700; display: block; text-transform: uppercase;">TRẠNG THÁI HIỆU LỰC:</span>
+                                <span style="color: #10b981; font-weight: 800;">✓ Đang có hiệu lực lưu hành</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="font-size: 0.95rem; line-height: 1.7; color: #334155;">
+                        <p style="margin: 0 0 6px 0; font-weight: 600;">
+                            📋 <strong>Cam kết chất lượng:</strong> Sản phẩm {{ $product->name }} được kiểm soát nguồn gốc nghiêm ngặt, đáp ứng toàn bộ quy chuẩn vệ sinh an toàn thực phẩm.
+                        </p>
+                        <p style="margin: 0; color: #64748b; font-size: 0.88rem;">
+                            Nhận cung cấp cho cỗ đám tiệc, bếp ăn trường học, nhà hàng & hộ gia đình trên địa bàn Đông Anh.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @else
+        <!-- GENERAL BUSINESS VERIFICATION BLOCK FOR NON-FOOD HKD & ENTERPRISES -->
+        @php
+            $storyData = [];
+            if (!empty($eatery?->storytelling_data)) {
+                $storyData = is_string($eatery->storytelling_data) ? json_decode($eatery->storytelling_data, true) : (array)$eatery->storytelling_data;
+            }
+            $mstNum = $storyData['mst'] ?? ($storyData['tax_code'] ?? 'Đã xác minh HKD/DN');
+        @endphp
+        <div class="vsattp-card" style="background: linear-gradient(135deg, #f0f9ff 0%, #ffffff 100%); border-color: #bae6fd;">
+            <div style="display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; border-bottom: 1px dashed #93c5fd; padding-bottom: 16px;">
+                <h3 style="font-size: 1.35rem; font-weight: 800; color: #0369a1; margin: 0; font-family: var(--font-heading); display: flex; align-items: center; gap: 10px;">
+                    🏢 Thông Tin Giấy Phép & Xác Minh Cơ Sở Kinh Doanh
+                </h3>
+                <span style="background: #0284c7; color: #ffffff; font-weight: 800; font-size: 0.85rem; padding: 6px 16px; border-radius: 30px; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);">
+                    ✓ Đã Xác Minh Hộ Kinh Doanh / Doanh Nghiệp
+                </span>
+            </div>
+
+            <div>
+                <div style="background: #ffffff; border: 1px solid #bae6fd; border-radius: 18px; padding: 20px; margin-bottom: 16px;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; font-size: 0.95rem; color: #1e293b;">
+                        <div>
+                            <span style="color: #64748b; font-size: 0.8rem; font-weight: 700; display: block; text-transform: uppercase;">CƠ SỞ KINH DOANH:</span>
+                            <strong style="color: #0369a1; font-size: 1.05rem;">{{ $product->seller_name ?: ($eatery?->name ?: 'Cơ sở kinh doanh Đông Anh') }}</strong>
+                        </div>
+                        <div>
+                            <span style="color: #64748b; font-size: 0.8rem; font-weight: 700; display: block; text-transform: uppercase;">MÃ SỐ THUẾ / MST:</span>
+                            <strong style="color: #059669; font-size: 1rem;">{{ $mstNum }}</strong>
+                        </div>
+                        <div>
+                            <span style="color: #64748b; font-size: 0.8rem; font-weight: 700; display: block; text-transform: uppercase;">GIẤY PHÉP / XÁC MINH:</span>
+                            <strong style="color: #0284c7; font-size: 0.95rem;">{{ $customCert ?: 'Đã xác minh HKD/DN chính thức' }}</strong>
+                        </div>
+                        <div>
+                            <span style="color: #64748b; font-size: 0.8rem; font-weight: 700; display: block; text-transform: uppercase;">TRẠNG THÁI NIÊM YẾT:</span>
+                            <span style="color: #0284c7; font-weight: 800;">✓ Đang hoạt động & Phục vụ công khai</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="font-size: 0.95rem; line-height: 1.7; color: #334155;">
+                    <p style="margin: 0 0 8px 0; font-weight: 600;">
+                        📋 <strong>Cam kết dịch vụ & sản phẩm:</strong> {{ $customCommitment ?: ("Sản phẩm / Dịch vụ " . $product->name . " được cung cấp chính hãng bởi " . ($eatery?->name ?? 'cơ sở kinh doanh') . ", đảm bảo đúng quy chuẩn chất lượng, nguồn gốc xuất xứ và thỏa thuận phục vụ.") }}
+                    </p>
+                    <p style="margin: 0; color: #64748b; font-size: 0.88rem;">
+                        🚚 <strong>Chính sách giao hàng & Cung ứng:</strong> {{ $customDelivery ?: "Nhận cung cấp cho cá nhân, hộ gia đình, trường học, nhà hàng, khách sạn & các sự kiện trên địa bàn Đông Anh & khu vực lân cận." }}
+                    </p>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    <!-- CERTIFICATE IMAGE ZOOM MODAL -->
+    <div id="certImgZoomModal" style="display: none; position: fixed; inset: 0; z-index: 9999999; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(8px); align-items: center; justify-content: center; padding: 20px;" onclick="closeCertImageModal()">
+        <div style="position: relative; max-width: 90vw; max-height: 90vh;" onclick="event.stopPropagation()">
+            <button onclick="closeCertImageModal()" style="position: absolute; top: -16px; right: -16px; background: #ef4444; color: white; border: none; width: 36px; height: 36px; border-radius: 50%; font-size: 1.2rem; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 10;">✕</button>
+            <img id="certImgZoomTarget" src="" style="max-width: 90vw; max-height: 85vh; border-radius: 16px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); object-fit: contain;">
+        </div>
+    </div>
+    <script>
+        function openCertImageModal(url) {
+            document.getElementById('certImgZoomTarget').src = url;
+            document.getElementById('certImgZoomModal').style.display = 'flex';
+        }
+        function closeCertImageModal() {
+            document.getElementById('certImgZoomModal').style.display = 'none';
+        }
+    </script>
 
     <!-- Related Products Section -->
     @if($otherEstablishmentProducts->count() > 0)
@@ -822,12 +1038,23 @@
             </h3>
             <div class="related-products-grid">
                 @foreach($otherEstablishmentProducts as $item)
+                    @php
+                        $rawItemImg = $item->image_path ?: ($item->image ?? null);
+                        $itemImg = $rawItemImg ? (\Illuminate\Support\Str::startsWith($rawItemImg, ['http://', 'https://']) ? $rawItemImg : asset(ltrim($rawItemImg, '/'))) : null;
+                    @endphp
                     <div class="related-prod-card" onclick="window.location.href='{{ route('business.product.show', $item->id) }}'">
-                        <img src="{{ $formatMediaUrl($item->image_path) }}" class="related-prod-img" alt="{{ $item->name }}">
+                        @if($itemImg)
+                            <img src="{{ $itemImg }}" class="related-prod-img" alt="{{ $item->name }}">
+                        @else
+                            <div class="related-prod-img-placeholder">
+                                <i class="fa-solid fa-store" style="font-size: 2.2rem; color: #0284c7;"></i>
+                                <span>{{ $item->name }}</span>
+                            </div>
+                        @endif
                         <div class="related-prod-body">
                             <h4 style="margin: 0 0 6px 0; color: var(--text-main); font-size: 1rem; font-weight: 800; line-height: 1.3;">{{ $item->name }}</h4>
                             <p style="margin: 0 0 10px 0; color: var(--text-muted); font-size: 0.85rem; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
-                                {{ $item->description }}
+                                {{ $item->description ?: 'Sản phẩm kinh doanh niêm yết chính thức.' }}
                             </p>
                             <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: auto; flex-wrap: wrap;">
                                 <strong style="color: #10b981; font-size: 1rem;">
@@ -887,6 +1114,25 @@
     function closeVietQRModal() {
         const m = document.getElementById('vietQrModal');
         if (m) m.style.display = 'none';
+    }
+
+    function setRating(val) {
+        const input = document.getElementById('reviewRatingInput');
+        if (input) input.value = val;
+        const labels = {1: '1 / 5 Kém', 2: '2 / 5 Trung bình', 3: '3 / 5 Khá', 4: '4 / 5 Tốt', 5: '5 / 5 Tuyệt vời'};
+        const labelEl = document.getElementById('starRatingLabel');
+        if (labelEl) labelEl.textContent = labels[val] || (val + ' / 5');
+        document.querySelectorAll('.star-rating-select .star-btn').forEach(btn => {
+            const v = parseInt(btn.dataset.val);
+            btn.style.color = v <= val ? '#f59e0b' : '#cbd5e1';
+        });
+    }
+
+    function toggleReviewForm() {
+        const card = document.getElementById('reviewFormCard');
+        if (card) {
+            card.style.display = (card.style.display === 'none' || card.style.display === '') ? 'block' : 'none';
+        }
     }
 </script>
 

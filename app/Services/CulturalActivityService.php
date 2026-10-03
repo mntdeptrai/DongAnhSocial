@@ -3,78 +3,117 @@
 namespace App\Services;
 
 use App\Domain\CulturalActivity\CulturalActivityData;
-use App\Domain\CulturalActivity\Actions\CreateCulturalActivityAction;
-use App\Domain\CulturalActivity\Actions\UpdateCulturalActivityAction;
 use App\Helpers\R2Helper;
 use App\Models\CulturalActivity;
-use App\Services\EateryApiService;
+use App\Models\Eatery;
+use Illuminate\Support\Facades\Log;
 
 class CulturalActivityService
 {
-    public function __construct(
-        protected CreateCulturalActivityAction $createAction,
-        protected UpdateCulturalActivityAction $updateAction
-    ) {}
-
-    public function create(CulturalActivityData $data, ?string $connName = null): CulturalActivity
+    /**
+     * Lấy toàn bộ hoạt động văn hóa và di sản kèm thông tin di tích.
+     */
+    public function getAllCulturalActivities()
     {
-        $imagePath = $this->resolveImagePath($data->image, $data->image_url);
-        
-        $action = $this->createAction;
-        if ($connName) {
-            \App\Models\CulturalActivity::setConnectionResolver(app('db'));
+        $activities = collect();
+        try {
+            $connActivities = CulturalActivity::select('id', 'eatery_id', 'name', 'type', 'price', 'unit', 'discount_note', 'description', 'image_path')
+                ->with(['eatery:id,name,slug,category_id,address,phone,latitude,longitude,rating', 'eatery.category:id,name,slug,icon'])
+                ->get();
+
+            foreach ($connActivities as $activity) {
+                if ($activity->eatery) {
+                    $activity->eatery->category_slug = $activity->eatery->category->slug ?? 'hanh-trinh-di-san';
+                    $activities->push($activity);
+                }
+            }
+        } catch (\Exception $e) {
+            Log::warning("Lỗi khi lấy danh sách cultural activities: " . $e->getMessage());
         }
-        
-        $activity = $action->execute($data, $imagePath);
-        if ($connName) {
-            $activity->setConnection($connName);
-            $activity->save();
+
+        return $activities->unique('id')->values();
+    }
+
+    public function create(CulturalActivityData|array $data): ?CulturalActivity
+    {
+        if ($data instanceof CulturalActivityData) {
+            $imagePath = $this->resolveImagePath($data->image, $data->image_url);
+            $attributes = [
+                'eatery_id' => $data->eatery_id,
+                'name' => $data->name,
+                'type' => $data->type,
+                'price' => $data->price,
+                'unit' => $data->unit,
+                'discount_note' => $data->discount_note,
+                'description' => $data->description,
+                'image_path' => $imagePath,
+            ];
+        } else {
+            $attributes = $data;
         }
+
+        return $this->storeCulturalActivity($attributes);
+    }
+
+    public function update($id, CulturalActivityData|array $data): ?CulturalActivity
+    {
+        $activity = CulturalActivity::find($id);
+        if (!$activity) return null;
+
+        if ($data instanceof CulturalActivityData) {
+            $imagePath = $this->resolveImagePath($data->image, $data->image_url) ?? $activity->image_path;
+            $attributes = [
+                'eatery_id' => $data->eatery_id,
+                'name' => $data->name,
+                'type' => $data->type,
+                'price' => $data->price,
+                'unit' => $data->unit,
+                'discount_note' => $data->discount_note,
+                'description' => $data->description,
+                'image_path' => $imagePath,
+            ];
+        } else {
+            $attributes = $data;
+        }
+
+        $activity->update($attributes);
         return $activity;
     }
 
-    public function update($id, CulturalActivityData $data, ?string $connName = null): CulturalActivity
+    public function storeCulturalActivity(array $data): ?CulturalActivity
     {
-        $connections = ['mysql'];
-        $activity = null;
-        $activeConn = $connName;
+        $eatery = Eatery::find($data['eatery_id'] ?? null);
+        if (!$eatery) return null;
 
-        if ($connName) {
-            $activity = CulturalActivity::on($connName)->find($id);
-        } else {
-            foreach ($connections as $conn) {
-                $act = CulturalActivity::on($conn)->find($id);
-                if ($act) {
-                    $activity = $act;
-                    $activeConn = $conn;
-                    break;
-                }
-            }
-        }
+        return CulturalActivity::create($data);
+    }
 
-        if (!$activity) {
-            throw new \Exception('Hoạt động văn hóa không tồn tại!');
-        }
+    public function updateCulturalActivity($id, array $data): ?CulturalActivity
+    {
+        $activity = CulturalActivity::find($id);
+        if (!$activity) return null;
 
-        $imagePath = $activity->image_path;
-        if ($data->image) {
-            $imagePath = R2Helper::upload($data->image, 'cultural_activities');
-        } elseif ($data->image_url) {
-            $imagePath = $this->resolveImagePath(null, $data->image_url);
-        }
-
-        return $this->updateAction->execute($activity, $data, $imagePath);
+        $activity->update($data);
+        return $activity;
     }
 
     public function delete($id): bool
     {
-        return EateryApiService::deleteCulturalActivity($id);
+        $activity = CulturalActivity::find($id);
+        if (!$activity) return false;
+
+        return (bool) $activity->delete();
+    }
+
+    public function deleteCulturalActivity($id): bool
+    {
+        return $this->delete($id);
     }
 
     protected function resolveImagePath($imageFile, ?string $imageUrl): ?string
     {
         if ($imageFile) {
-            return R2Helper::upload($imageFile, 'cultural_activities');
+            return R2Helper::upload($imageFile, 'culture');
         }
 
         if ($imageUrl) {

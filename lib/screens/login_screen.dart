@@ -122,9 +122,11 @@ class _LoginScreenState extends State<LoginScreen> {
       _errorMessage = null;
     });
 
-    Map<String, dynamic> result;
+    bool success = false;
+    String? message;
+
     if (_isRegister) {
-      result = await ApiService.register(
+      final regResult = await ApiService.register(
         name: _nameController.text.trim(),
         email: _emailController.text.trim(),
         password: _passwordController.text,
@@ -133,18 +135,25 @@ class _LoginScreenState extends State<LoginScreen> {
         role: _selectedRole,
         agreeTerms: _agreeTerms,
       );
-      if (result['success'] == true) {
-        // Auto login after registration
-        result = await ApiService.login(
+
+      if (regResult['success'] == true) {
+        final loginResult = await ApiService.login(
           _emailController.text.trim(),
           _passwordController.text,
         );
+        success = loginResult['success'] == true;
+        message = loginResult['message'];
+      } else {
+        success = false;
+        message = regResult['message'];
       }
     } else {
-      result = await ApiService.login(
+      final loginResult = await ApiService.login(
         _emailController.text.trim(),
         _passwordController.text,
       );
+      success = loginResult['success'] == true;
+      message = loginResult['message'];
     }
 
     if (mounted) {
@@ -152,11 +161,11 @@ class _LoginScreenState extends State<LoginScreen> {
         _isLoading = false;
       });
 
-      if (result['success'] == true) {
+      if (success) {
         widget.onLoginSuccess();
       } else {
         setState(() {
-          _errorMessage = result['message'] ?? 'Đã xảy ra lỗi.';
+          _errorMessage = message ?? 'Đã xảy ra lỗi.';
         });
       }
     }
@@ -512,7 +521,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           child: _isLoading
                               ? const ButtonDotsLoader(color: Colors.white, size: 7.0)
                               : Text(
-                                  _isRegister ? 'ĐĂNG KÝ TÀI KHOẢN ✨' : 'ĐĂNG NHẬP NGAY ✨',
+                                  _isRegister ? 'ĐĂNG KÝ TÀI KHOẢN' : 'ĐĂNG NHẬP NGAY',
                                   style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Colors.white),
                                 ),
                         ),

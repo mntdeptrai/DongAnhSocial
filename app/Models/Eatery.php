@@ -95,7 +95,12 @@ class Eatery extends Model
      */
     public function getHeritageDossierAttribute(): ?array
     {
-        if (is_array($this->storytelling_data) && (!empty($this->storytelling_data['story']) || !empty($this->storytelling_data['heritage_year']))) {
+        // Cơ sở Y tế và Trường học không hiển thị Hồ sơ di sản món ăn / OCOP
+        if ($this->category && in_array($this->category->slug, ['wellness-care', 'smart-education-map'])) {
+            return null;
+        }
+
+        if (is_array($this->storytelling_data) && (!empty($this->storytelling_data['story']) || !empty($this->storytelling_data['ocop_stars']))) {
             $stars = 4;
             if (isset($this->storytelling_data['ocop_stars'])) {
                 preg_match('/(\d+)/', (string)$this->storytelling_data['ocop_stars'], $matches);

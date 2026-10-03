@@ -253,7 +253,7 @@ class _RoadTripTheme {
             '🍲 Ghé ăn bún mạch Trạ & bánh chưng Lỗ Khê...',
             '🏰 Đang băng qua cổng thành Cổ Loa sáng sớm...',
             '🌾 Khám phá Chợ số & Nông sản OCOP Đông Anh...',
-            '✨ Đang nạp dữ liệu chuyến đi ngày mới...',
+            'Đang nạp dữ liệu chuyến đi ngày mới...',
           ],
         );
 
@@ -275,7 +275,7 @@ class _RoadTripTheme {
             '🍲 Trạm dừng chân ẩm thực sinh thái Cổ Loa...',
             '🛵 Vi vu dạo quanh làng nghề mây tre đan...',
             '🌾 Sắp tới gian hàng OCOP Đông Anh uy tín...',
-            '✨ Đang tối ưu kết nối dữ liệu tốc độ cao...',
+            'Đang tối ưu kết nối dữ liệu tốc độ cao...',
           ],
         );
 
@@ -297,7 +297,7 @@ class _RoadTripTheme {
             '📸 Check-in sống ảo hoàng hôn thành Cổ Loa...',
             '☕ Thưởng trà chiều tại không gian sinh thái...',
             '🛵 Lướt nhẹ qua những con đường rợp bóng cây...',
-            '✨ Đang tải nhanh danh sách điểm đến hoàng hôn...',
+            'Đang tải nhanh danh sách điểm đến hoàng hôn...',
           ],
         );
 
@@ -317,7 +317,7 @@ class _RoadTripTheme {
           quotes: const [
             '🌙 Đêm phố cổ lung linh ánh đèn huyền ảo...',
             '🍢 Khám phá ẩm thực đêm & đồ nướng Cổ Loa...',
-            '✨ Dạo bước dưới bầu trời ngàn sao Đông Anh...',
+            'Dạo bước dưới bầu trời ngàn sao Đông Anh...',
             '🎧 Vi vu phố đêm chill cùng âm nhạc...',
             '🚀 Đang truyền dữ liệu siêu tốc 4K về đêm...',
           ],

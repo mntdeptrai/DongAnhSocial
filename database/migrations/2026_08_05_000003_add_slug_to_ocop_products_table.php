@@ -13,10 +13,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        if (!Schema::hasColumn('ocop_products', 'slug')) {
+        if (Schema::hasTable('ocop_products') && !Schema::hasColumn('ocop_products', 'slug')) {
             Schema::table('ocop_products', function (Blueprint $table) {
                 $table->string('slug')->nullable()->after('name')->index();
             });
+
 
             // Populate existing products with unique slugs
             $products = OcopProduct::all();

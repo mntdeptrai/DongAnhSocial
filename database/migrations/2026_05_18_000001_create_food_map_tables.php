@@ -48,7 +48,9 @@ return new class extends Migration
             $table->boolean('is_featured')->default(false);
             $table->decimal('rating', 3, 2)->default(5.00);
             $table->string('status')->default('active'); // active, inactive
+            $table->json('announcements')->nullable();
             $table->timestamps();
+
 
             // Indexes
             $table->index('name');

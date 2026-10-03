@@ -122,7 +122,7 @@
                 <tr>
                     <td>{{ $idx + 1 }}</td>
                     <td>
-                        <img src="{{ $p->image_path ?: '/images/stalls/food.png' }}"
+                        <img src="{{ $p->image_path ?: '/images/stalls/food.webp' }}"
                              style="width: 64px; height: 64px; border-radius: 10px; object-fit: cover; border: 1.5px solid #fde68a;">
                     </td>
                     <td style="font-weight: 700; font-size: 0.95rem; color: var(--slr-text-main);">
@@ -405,7 +405,7 @@ function openDetailModal(name, price, unit, description, imagePath, starRating) 
     document.getElementById('detail-name').textContent = name;
     document.getElementById('detail-unit').textContent = unit ? ('/' + unit) : '';
     document.getElementById('detail-price').textContent = price > 0 ? (parseInt(price).toLocaleString('vi-VN') + 'đ') : 'Liên hệ';
-    document.getElementById('detail-img').src = imagePath || '/images/stalls/food.png';
+    document.getElementById('detail-img').src = imagePath || '/images/stalls/food.webp';
     document.getElementById('detail-star').textContent = '⭐ ' + (starRating || '4 sao');
     
     let originVal = 'Chưa cập nhật';
@@ -546,7 +546,7 @@ function openEditModal(id, name, price, unit, description, imagePath) {
 
     /* Image preview */
     const imgEl = document.getElementById('edit-current-img');
-    imgEl.src = imagePath || '/images/stalls/food.png';
+    imgEl.src = imagePath || '/images/stalls/food.webp';
 
     /* Update subtitle */
     document.getElementById('edit-modal-subtitle').textContent = 'Đang sửa: ' + name;

@@ -39,4 +39,12 @@ return [
         'key' => env('GEMINI_API_KEY'),
     ],
 
+    'youtube' => [
+        'client_id'       => env('YOUTUBE_CLIENT_ID'),
+        'client_secret'   => env('YOUTUBE_CLIENT_SECRET'),
+        'refresh_token'   => env('YOUTUBE_REFRESH_TOKEN'),
+        'default_privacy' => env('YOUTUBE_DEFAULT_PRIVACY', 'unlisted'), // 'public' | 'unlisted' | 'private'
+        'redirect_uri'    => env('YOUTUBE_REDIRECT_URI', 'https://developers.google.com/oauthplayground'),
+    ],
+
 ];

@@ -51,7 +51,8 @@ class BusinessProductController extends Controller
         }
 
         // 2. Chuyển hướng nếu sản phẩm có sao chứng nhận OCOP (sang route OCOP chuẩn)
-        if (!empty($product->star_rating)) {
+        $categorySlug = $product->eatery?->category?->slug;
+        if (!empty($product->star_rating) && $categorySlug !== 'co-so-kinh-doanh') {
             return redirect()->route('ocop.product.show', $product->slug ?: $product->id, 301);
         }
 

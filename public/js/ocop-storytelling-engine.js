@@ -29,9 +29,9 @@ class OcopStoryteller {
             zoomAnimation: true
         }).setView([21.135, 105.865], 12);
 
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-            maxZoom: 19,
-            subdomains: 'abcd'
+        L.tileLayer('https://mt1.google.com/vt/lyrs=m&hl=vi&x={x}&y={y}&z={z}', {
+            maxZoom: 20,
+            attribution: '&copy; Google Maps'
         }).addTo(this.map);
     }
 

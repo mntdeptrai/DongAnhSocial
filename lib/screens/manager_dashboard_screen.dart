@@ -43,7 +43,7 @@ class _ManagerDashboardScreenState extends State<ManagerDashboardScreen> with Si
       if (mounted) {
         if (res['success'] == true) {
           _managerStats = res['stats'] ?? {};
-          _marketName = res['market_name'] ?? 'Chợ Trung Tâm Đông Anh';
+          _marketName = res['market_name'] ?? '';
           if (res['stalls'] is List) {
             _stalls = List<dynamic>.from(res['stalls']);
           }

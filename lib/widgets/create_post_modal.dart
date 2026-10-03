@@ -1,9 +1,44 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:video_player/video_player.dart';
 import '../services/api_service.dart';
+import '../services/moderation_service.dart';
+import '../core/youtube_helper.dart';
 
 void showCreatePostModal(BuildContext context, {VoidCallback? onPostSuccess}) {
+  final currentUserId = ApiService.currentUser?['id']?.toString() ?? '';
+  if (currentUserId.isNotEmpty && ModerationService.isUserBlocked(currentUserId)) {
+    final banInfo = ModerationService.getUserBanInfo(currentUserId);
+    final remaining = banInfo?['remaining_text'] ?? 'Đang bị khóa';
+    final reason = banInfo?['reason'] ?? 'Vi phạm tiêu chuẩn cộng đồng';
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Row(
+          children: [
+            Icon(Icons.block_rounded, color: Color(0xFFDC2626)),
+            SizedBox(width: 8),
+            Text('Tài khoản bị tạm khóa'),
+          ],
+        ),
+        content: Text(
+          'Tài khoản của bạn đang bị tạm khóa ($remaining) vì lý do: $reason.\n\nBạn không thể đăng bài viết mới trong thời gian này.',
+          style: const TextStyle(fontSize: 13.5, color: Color(0xFF475569), height: 1.4),
+        ),
+        actions: [
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0EA5E9)),
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Đã hiểu', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+    return;
+  }
+
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
@@ -257,6 +292,41 @@ class _CreatePostModalState extends State<CreatePostModal> {
     });
   }
 
+  void _previewLocalMedia(XFile file) {
+    final isVideo = file.path.endsWith('.mp4') ||
+        file.path.endsWith('.mov') ||
+        file.path.endsWith('.avi') ||
+        file.path.endsWith('.m4v');
+    showDialog(
+      context: context,
+      barrierColor: Colors.black87,
+      builder: (ctx) {
+        if (!isVideo) {
+          return Dialog(
+            backgroundColor: Colors.transparent,
+            insetPadding: const EdgeInsets.all(16),
+            child: Stack(
+              alignment: Alignment.topRight,
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: Image.file(File(file.path), fit: BoxFit.contain),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close_rounded, color: Colors.white, size: 28),
+                  onPressed: () => Navigator.pop(ctx),
+                ),
+              ],
+            ),
+          );
+        }
+
+        return _LocalVideoPreviewDialog(videoFile: File(file.path));
+      },
+    );
+  }
+
+
   Future<void> _handlePublish() async {
     final text = _textController.text.trim();
     if (text.isEmpty && _selectedFiles.isEmpty) {
@@ -279,7 +349,7 @@ class _CreatePostModalState extends State<CreatePostModal> {
 
     if (_selectedFiles.isNotEmpty) {
       setState(() {
-        _uploadStatus = 'Đang tải ${_selectedFiles.length} tệp lên Cloudflare R2...';
+        _uploadStatus = 'Đang tải ${_selectedFiles.length} tệp (ảnh lên R2, video lên YouTube)...';
       });
 
       final localPaths = _selectedFiles.map((f) => f.path).toList();
@@ -289,7 +359,19 @@ class _CreatePostModalState extends State<CreatePostModal> {
         final url = item['url'];
         final type = item['type'];
         if (url != null) {
-          if (type == 'video' || url.endsWith('.mp4') || url.endsWith('.mov') || url.endsWith('.avi') || url.endsWith('.mkv')) {
+          final isYt = YouTubeHelper.isYouTubeUrl(url);
+          final lower = url.toLowerCase();
+          final isVid = type == 'video' ||
+              isYt ||
+              lower.endsWith('.mp4') ||
+              lower.endsWith('.mov') ||
+              lower.endsWith('.avi') ||
+              lower.endsWith('.mkv') ||
+              lower.endsWith('.webm') ||
+              lower.endsWith('.3gp') ||
+              lower.endsWith('.m4v');
+
+          if (isVid) {
             videoUrls.add(url);
           } else {
             imageUrls.add(url);
@@ -583,22 +665,25 @@ class _CreatePostModalState extends State<CreatePostModal> {
 
                           return Stack(
                             children: [
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(14),
-                                child: Container(
-                                  width: 110,
-                                  height: 120,
-                                  color: const Color(0xFF1E293B),
-                                  child: isVideo
-                                      ? const Center(
-                                          child: Icon(Icons.play_circle_fill_rounded, color: Colors.white, size: 36),
-                                        )
-                                      : Image.file(
-                                          File(file.path),
-                                          fit: BoxFit.cover,
-                                          width: 110,
-                                          height: 120,
-                                        ),
+                              GestureDetector(
+                                onTap: () => _previewLocalMedia(file),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(14),
+                                  child: Container(
+                                    width: 110,
+                                    height: 120,
+                                    color: const Color(0xFF1E293B),
+                                    child: isVideo
+                                        ? const Center(
+                                            child: Icon(Icons.play_circle_fill_rounded, color: Colors.white, size: 36),
+                                          )
+                                        : Image.file(
+                                            File(file.path),
+                                            fit: BoxFit.cover,
+                                            width: 110,
+                                            height: 120,
+                                          ),
+                                  ),
                                 ),
                               ),
 
@@ -920,3 +1005,180 @@ class _CreatePostModalState extends State<CreatePostModal> {
     );
   }
 }
+
+class _LocalVideoPreviewDialog extends StatefulWidget {
+  final File videoFile;
+  const _LocalVideoPreviewDialog({required this.videoFile});
+
+  @override
+  State<_LocalVideoPreviewDialog> createState() => _LocalVideoPreviewDialogState();
+}
+
+class _LocalVideoPreviewDialogState extends State<_LocalVideoPreviewDialog> {
+  VideoPlayerController? _controller;
+  bool _isInitialized = false;
+  bool _isPlaying = true;
+  bool _isMuted = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _init();
+  }
+
+  void _init() async {
+    try {
+      final ctrl = VideoPlayerController.file(widget.videoFile);
+      await ctrl.initialize();
+      await ctrl.setLooping(true);
+      await ctrl.setVolume(1.0);
+      await ctrl.play();
+      if (mounted) {
+        setState(() {
+          _controller = ctrl;
+          _isInitialized = true;
+          _isPlaying = true;
+          _isMuted = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('[LocalVideoPreview] error: $e');
+      if (mounted) setState(() => _isInitialized = true);
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller?.pause();
+    _controller?.dispose();
+    super.dispose();
+  }
+
+  void _togglePlay() {
+    if (_controller == null || !_isInitialized) return;
+    setState(() {
+      if (_controller!.value.isPlaying) {
+        _controller!.pause();
+        _isPlaying = false;
+      } else {
+        _controller!.play();
+        _isPlaying = true;
+      }
+    });
+  }
+
+  void _toggleMute() {
+    if (_controller == null || !_isInitialized) return;
+    setState(() {
+      _isMuted = !_isMuted;
+      _controller!.setVolume(_isMuted ? 0.0 : 1.0);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 40),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.black,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            if (!_isInitialized)
+              const Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    CircularProgressIndicator(color: Color(0xFF0EA5E9), strokeWidth: 3),
+                    SizedBox(height: 12),
+                    Text('Đang nạp video & âm thanh...', style: TextStyle(color: Colors.white, fontSize: 13)),
+                  ],
+                ),
+              )
+            else if (_controller != null && _controller!.value.isInitialized)
+              GestureDetector(
+                onTap: _togglePlay,
+                behavior: HitTestBehavior.opaque,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Builder(
+                      builder: (context) {
+                        final val = _controller!.value;
+                        final isRotated = val.rotationCorrection == 90 || val.rotationCorrection == 270;
+                        final double vidW = isRotated ? val.size.height : val.size.width;
+                        final double vidH = isRotated ? val.size.width : val.size.height;
+                        return SizedBox.expand(
+                          child: FittedBox(
+                            fit: BoxFit.contain,
+                            clipBehavior: Clip.hardEdge,
+                            child: SizedBox(
+                              width: vidW > 0 ? vidW : 1,
+                              height: vidH > 0 ? vidH : 1,
+                              child: VideoPlayer(_controller!),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    if (!_isPlaying)
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
+                        child: const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 48),
+                      ),
+                    Positioned(
+                      bottom: 16,
+                      left: 16,
+                      right: 16,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(12)),
+                        child: Row(
+                          children: [
+                            IconButton(
+                              icon: Icon(_isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded, color: Colors.white, size: 22),
+                              onPressed: _togglePlay,
+                            ),
+                            Expanded(
+                              child: VideoProgressIndicator(
+                                _controller!,
+                                allowScrubbing: true,
+                                colors: const VideoProgressColors(playedColor: Color(0xFF0EA5E9), bufferedColor: Colors.white38),
+                              ),
+                            ),
+                            IconButton(
+                              icon: Icon(_isMuted ? Icons.volume_off_rounded : Icons.volume_up_rounded, color: Colors.white, size: 20),
+                              onPressed: _toggleMute,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            else
+              const Center(
+                child: Text('Không thể phát video này', style: TextStyle(color: Colors.white70)),
+              ),
+            Positioned(
+              top: 10,
+              right: 10,
+              child: IconButton(
+                icon: const Icon(Icons.close_rounded, color: Colors.white, size: 26),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+

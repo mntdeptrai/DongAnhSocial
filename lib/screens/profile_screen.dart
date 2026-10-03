@@ -4,6 +4,8 @@ import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:image_picker/image_picker.dart';
 import '../services/api_service.dart';
+import 'privacy_policy_screen.dart';
+import 'personal_info_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   final VoidCallback onLogout;
@@ -361,64 +363,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (mounted) setState(() => _isLoadingActivity = false);
     }
   }
-  void _showEditProfileDialog(BuildContext context) {
-    final user = ApiService.currentUser;
-    final nameController = TextEditingController(text: user?['name'] ?? '');
-
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Row(
-          children: [
-            Icon(Icons.edit_note_rounded, color: Color(0xFF0EA5E9)),
-            SizedBox(width: 8),
-            Text('Chỉnh sửa hồ sơ'),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Họ và tên', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-            const SizedBox(height: 6),
-            TextField(
-              controller: nameController,
-              decoration: InputDecoration(
-                hintText: 'Nhập họ tên mới...',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              ),
-            ),
-            const SizedBox(height: 12),
-            Text('Email: ${user?['email'] ?? 'Chưa cập nhật'}', style: const TextStyle(color: Colors.grey, fontSize: 12)),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Hủy'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Đã cập nhật thông tin cá nhân thành công!'),
-                  backgroundColor: Color(0xFF059669),
-                ),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF0EA5E9),
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            ),
-            child: const Text('Lưu thay đổi'),
-          ),
-        ],
-      ),
+  Future<void> _showEditProfileDialog(BuildContext context) async {
+    final updated = await Navigator.push<Map<String, dynamic>>(
+      context,
+      MaterialPageRoute(builder: (_) => const PersonalInfoScreen()),
     );
+    if (updated != null && mounted) {
+      setState(() {});
+      _fetchMyActivity();
+    }
   }
 
   void _showChangePasswordDialog(BuildContext context) {
@@ -700,6 +653,44 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           user?['email'] ?? '',
                           style: const TextStyle(color: Color(0xFF64748B), fontSize: 13),
                         ),
+                        if (user != null && (user['commune'] != null || user['address'] != null)) ...[
+                          const SizedBox(height: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3.5),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFE0F2FE),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.location_on_rounded, color: Color(0xFF0284C7), size: 13),
+                                const SizedBox(width: 4),
+                                Text(
+                                  user['commune'] != null ? '${user['commune']}, Đông Anh' : (user['address'] ?? '').toString(),
+                                  style: const TextStyle(color: Color(0xFF0369A1), fontSize: 12, fontWeight: FontWeight.w700),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                        if (user != null && user['bio'] != null && user['bio'].toString().trim().isNotEmpty) ...[
+                          const SizedBox(height: 8),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                            child: Text(
+                              user['bio'].toString().trim(),
+                              style: const TextStyle(
+                                color: Color(0xFF475569),
+                                fontSize: 12.5,
+                                fontStyle: FontStyle.italic,
+                              ),
+                              textAlign: TextAlign.center,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
                         const SizedBox(height: 16),
 
                         // Social Stats Counters Row
@@ -985,10 +976,124 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
             const SizedBox(height: 24),
 
+            // Account Settings & Privacy Section
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFFF1F5F9)),
+                ),
+                child: Column(
+                  children: [
+                    ListTile(
+                      leading: const Icon(Icons.shield_outlined, color: Color(0xFF0EA5E9)),
+                      title: const Text('Chính sách bảo mật & Điều khoản', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                      trailing: const Icon(Icons.chevron_right_rounded, color: Color(0xFF94A3B8)),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const PrivacyPolicyScreen()),
+                        );
+                      },
+                    ),
+                    const Divider(height: 1, indent: 16, endIndent: 16),
+                    ListTile(
+                      leading: const Icon(Icons.logout_rounded, color: Color(0xFF64748B)),
+                      title: const Text('Đăng xuất tài khoản', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF334155))),
+                      trailing: const Icon(Icons.chevron_right_rounded, color: Color(0xFF94A3B8)),
+                      onTap: () => _confirmLogout(context),
+                    ),
+                    const Divider(height: 1, indent: 16, endIndent: 16),
+                    ListTile(
+                      leading: const Icon(Icons.delete_forever_rounded, color: Color(0xFFDC2626)),
+                      title: const Text('Xóa tài khoản vĩnh viễn', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFFDC2626))),
+                      trailing: const Icon(Icons.chevron_right_rounded, color: Color(0xFFDC2626)),
+                      onTap: () => _confirmDeleteAccount(context),
+                    ),
+                  ],
+                ),
+              ),
+            ),
 
             const SizedBox(height: 32),
           ],
         ),
+      ),
+    );
+  }
+
+  void _confirmDeleteAccount(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: Color(0xFFDC2626)),
+            SizedBox(width: 8),
+            Text('Xóa tài khoản vĩnh viễn', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: const Text(
+          'Hành động này không thể hoàn tác. Toàn bộ thông tin cá nhân, bài đăng, lịch sử check-in và dữ liệu của bạn sẽ bị xóa vĩnh viễn khỏi hệ thống.',
+          style: TextStyle(fontSize: 13.5, color: Color(0xFF475569), height: 1.4),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogCtx),
+            child: const Text('Hủy'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFDC2626),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            onPressed: () async {
+              Navigator.pop(dialogCtx);
+              await ApiService.deleteAccount();
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Tài khoản của bạn đã được xóa vĩnh viễn.')),
+                );
+              }
+              widget.onLogout();
+            },
+            child: const Text('Xác nhận xóa'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _confirmLogout(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Đăng xuất'),
+        content: const Text('Bạn có chắc chắn muốn đăng xuất khỏi tài khoản này?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogCtx),
+            child: const Text('Hủy'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF0EA5E9),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            onPressed: () async {
+              Navigator.pop(dialogCtx);
+              await ApiService.logout();
+              widget.onLogout();
+            },
+            child: const Text('Đăng xuất'),
+          ),
+        ],
       ),
     );
   }
@@ -1064,6 +1169,46 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  void _confirmDeleteMyPost(Map<String, dynamic> item) {
+    final postId = item['numeric_id'] ?? item['id'];
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Xóa bài viết?'),
+        content: const Text(
+          'Bài viết và ảnh/video đính kèm sẽ bị xóa hoàn toàn khỏi hệ thống.',
+          style: TextStyle(fontSize: 14, color: Color(0xFF475569)),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Hủy', style: TextStyle(color: Color(0xFF64748B))),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(dialogContext);
+              final ok = await ApiService.deletePost(postId);
+              if (ok) {
+                _fetchMyActivity();
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('🗑️ Đã xóa bài viết thành công!')),
+                  );
+                }
+              } else if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Không thể xóa bài viết. Vui lòng thử lại.')),
+                );
+              }
+            },
+            child: const Text('Xóa', style: TextStyle(color: Color(0xFFDC2626), fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildMyPostCard(Map<String, dynamic> item) {
     final title = item['name'] ?? item['title'] ?? '';
     final desc = item['description'] ?? item['content'] ?? '';
@@ -1106,13 +1251,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ],
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEFF6FF),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: const Text('Bản tin', style: TextStyle(color: Color(0xFF0EA5E9), fontSize: 10, fontWeight: FontWeight.bold)),
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEFF6FF),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: const Text('Bản tin', style: TextStyle(color: Color(0xFF0EA5E9), fontSize: 10, fontWeight: FontWeight.bold)),
+                  ),
+                  const SizedBox(width: 6),
+                  InkWell(
+                    onTap: () => _confirmDeleteMyPost(item),
+                    borderRadius: BorderRadius.circular(8),
+                    child: const Padding(
+                      padding: EdgeInsets.all(4),
+                      child: Icon(Icons.delete_outline_rounded, size: 18, color: Color(0xFFDC2626)),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
