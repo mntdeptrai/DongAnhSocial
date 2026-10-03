@@ -779,12 +779,16 @@
             const res = await fetch(`/api/map/detail/${slug}`);
             const eat = await res.json();
 
-            const imgUrl = eat.image_path || 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=600&q=80';
+            const color = getColor(marker._categorySlug || 'other');
+            const catIcon = getIcon(marker._categorySlug || 'other');
+            const coverHtml = eat.image_path
+                ? `<img src="${eat.image_path}" class="gm-popup-cover" alt="${eat.name}" loading="lazy">`
+                : `<div class="gm-popup-cover" style="background:${color}15;display:flex;align-items:center;justify-content:center;font-size:36px;height:90px;border-bottom:1px solid #e8eaed;">${catIcon}</div>`;
             const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${eat.latitude},${eat.longitude}`;
 
             const popupContent = `
                 <div class="gm-popup-wrapper">
-                    <img src="${imgUrl}" class="gm-popup-cover" alt="${eat.name}" loading="lazy">
+                    ${coverHtml}
                     <div class="gm-popup-body">
                         <div class="gm-popup-title">${eat.name}</div>
                         <div class="gm-popup-rating"><span>⭐</span> ${parseFloat(eat.rating || 5.0).toFixed(1)} / 5.0</div>
@@ -814,12 +818,16 @@
         const container = document.getElementById('cat-items-' + slug);
         if (!container) return;
 
+        const color = getColor(slug);
+        const catIcon = getIcon(slug);
         let html = '';
         items.forEach(eat => {
-            const imgUrl = eat.image_path || 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=150&q=80';
+            const thumbHtml = eat.image_path
+                ? `<img src="${eat.image_path}" class="map-list-item-img" alt="${eat.name}" loading="lazy" onerror="this.outerHTML='<div class=\\'map-list-item-img\\' style=\\'background:${color}15;border:1px solid ${color}35;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;\\'>${catIcon}</div>'">`
+                : `<div class="map-list-item-img" style="background:${color}15;border:1px solid ${color}35;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">${catIcon}</div>`;
             html += `
                 <div class="map-list-item" onclick="window._mapFocusEatery('${eat.slug}', ${eat.latitude}, ${eat.longitude})">
-                    <img src="${imgUrl}" class="map-list-item-img" alt="${eat.name}" loading="lazy">
+                    ${thumbHtml}
                     <div class="map-list-item-info">
                         <div class="map-list-item-name">${eat.name}</div>
                         <div class="map-list-item-addr">${eat.address || 'Đang cập nhật địa chỉ...'}</div>
@@ -944,10 +952,12 @@
                     <div class="category-items" style="display:block;">`;
 
                 grouped[catSlug].forEach(eat => {
-                    const imgUrl = eat.image_path || 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=150&q=80';
+                    const thumbHtml = eat.image_path
+                        ? `<img src="${eat.image_path}" class="map-list-item-img" alt="${eat.name}" loading="lazy" onerror="this.outerHTML='<div class=\\'map-list-item-img\\' style=\\'background:${color}15;border:1px solid ${color}35;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;\\'>${icon}</div>'">`
+                        : `<div class="map-list-item-img" style="background:${color}15;border:1px solid ${color}35;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">${icon}</div>`;
                     html += `
                         <div class="map-list-item" onclick="window._mapFocusEatery('${eat.slug}', ${eat.latitude}, ${eat.longitude})">
-                            <img src="${imgUrl}" class="map-list-item-img" alt="${eat.name}" loading="lazy">
+                            ${thumbHtml}
                             <div class="map-list-item-info">
                                 <div class="map-list-item-name">${eat.name}</div>
                                 <div class="map-list-item-addr">${eat.address || 'Đang cập nhật'}</div>
