@@ -484,13 +484,15 @@
             maxZoom: 20
         }).addTo(searchMap);
 
-        // Init MarkerCluster
-        clusterGroup = L.markerClusterGroup({
+        // Init MarkerCluster với cấu hình an toàn & spiderfy khi trùng tọa độ
+        const clusterOptions = {
             maxClusterRadius: 50,
             spiderfyOnMaxZoom: true,
-            showCoverageOnHover: false,
-            disableClusteringAtZoom: 16
-        });
+            showCoverageOnHover: false
+        };
+        clusterGroup = (typeof L.markerClusterGroup === 'function')
+            ? L.markerClusterGroup(clusterOptions)
+            : L.featureGroup();
         searchMap.addLayer(clusterGroup);
     }
 
@@ -560,7 +562,7 @@
                 clusterGroup.addLayer(markers[key]);
             }
             if (Object.keys(markers).length > 0) {
-                searchMap.fitBounds(clusterGroup.getBounds(), { padding: [60, 60] });
+                searchMap.fitBounds(clusterGroup.getBounds(), { padding: [60, 60], maxZoom: 14 });
             }
             return;
         }
@@ -614,9 +616,9 @@
                 appendLoadMoreButton(slug);
             }
 
-            // Fit bounds to visible markers
+            // Fit bounds to visible markers (giới hạn maxZoom: 14 để không bị zoom quá sâu vào 1 điểm)
             if (clusterGroup.getLayers().length > 0) {
-                searchMap.fitBounds(clusterGroup.getBounds(), { padding: [60, 60] });
+                searchMap.fitBounds(clusterGroup.getBounds(), { padding: [60, 60], maxZoom: 14 });
             }
 
             // If category has many pages, auto-load remaining markers in background (for map completeness)
@@ -633,9 +635,10 @@
         sidebarLoading = false;
     }
 
-    // Background-load remaining marker pages (for map dots only, no sidebar)
+    // Background-load remaining marker pages (for map dots only, no sidebar - tối đa 5 trang để tránh spam server)
     async function loadRemainingMarkers(slug, fromPage, lastPage) {
-        for (let p = fromPage; p <= lastPage; p++) {
+        const maxPages = Math.min(lastPage, fromPage + 5);
+        for (let p = fromPage; p <= maxPages; p++) {
             if (activeCategory !== slug) break; // User switched category
             try {
                 const res = await fetch(`/api/map/markers?category_slug=${slug}&page=${p}`);
@@ -869,7 +872,7 @@
             });
 
             if (clusterGroup.getLayers().length > 0) {
-                searchMap.fitBounds(clusterGroup.getBounds(), { padding: [60, 60] });
+                searchMap.fitBounds(clusterGroup.getBounds(), { padding: [60, 60], maxZoom: 14 });
             }
         } catch (_) {
             document.getElementById('sidebarContent').innerHTML = 
