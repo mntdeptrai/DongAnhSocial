@@ -46,6 +46,13 @@ Route::post('/api/moderation/report', [ModerationController::class, 'report'])->
 Route::get('/api/moderation/check-ban', [ModerationController::class, 'checkBan'])->name('api.moderation.check-ban');
 Route::get('/tuyen-duong-40', [HomeController::class, 'tuyenDuong40'])->name('tuyen-duong');
 Route::get('/tim-kiem', [SearchController::class, 'search'])->name('search');
+
+// --- MAP PAGE LAZY-LOAD API (Trang Bản đồ số - tối ưu hiệu năng) ---
+Route::get('/api/map/categories', [\App\Http\Controllers\Api\MapApiController::class, 'categories'])->name('api.map.categories');
+Route::get('/api/map/markers', [\App\Http\Controllers\Api\MapApiController::class, 'markers'])->name('api.map.markers');
+Route::get('/api/map/sidebar', [\App\Http\Controllers\Api\MapApiController::class, 'sidebar'])->name('api.map.sidebar');
+Route::get('/api/map/detail/{slug}', [\App\Http\Controllers\Api\MapApiController::class, 'detail'])->name('api.map.detail');
+
 Route::get('/checkin', [HomeController::class, 'checkinFeed'])->name('checkin.feed');
 Route::post('/checkin', [HomeController::class, 'storeCheckin'])->name('checkin.store');
 Route::post('/comments', [\App\Http\Controllers\CommentController::class, 'store'])->name('comments.store');

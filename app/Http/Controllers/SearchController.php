@@ -2,31 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Category;
-use App\Models\Commune;
 use App\Models\Eatery;
 use Illuminate\Http\Request;
-
-use App\Services\EateryApiService;
 
 class SearchController extends Controller
 {
     public function search(Request $request)
     {
-        $categories = EateryApiService::getCategories();
-        $communes = EateryApiService::getCommunes();
-        
         $keyword = $request->query('q');
-        $catId = $request->query('category_id');
-        $comId = $request->query('commune_id');
-        
-        $selectedCategorySlug = null;
-        if ($catId) {
-            $category = $categories->firstWhere('id', $catId);
-            if ($category) {
-                $selectedCategorySlug = $category->slug;
-            }
-        }
         
         // API phục vụ tính năng tự động gợi ý (Autocomplete Suggestions) khi gõ ô tìm kiếm - Truy vấn siêu nhanh có limit trực tiếp từ DB
         if ($request->query('ajax') === 'suggest' && $keyword) {
@@ -50,53 +33,10 @@ class SearchController extends Controller
             return response()->json($suggestions);
         }
         
-        // Tìm địa điểm cho bản đồ (chỉ chọn các trường cần thiết cho marker & sidebar, tránh load toàn bộ quan hệ nặng)
-        $query = Eatery::active()->with(['category:id,name,slug,icon', 'commune:id,name,slug'])
-            ->select('id', 'name', 'slug', 'category_id', 'commune_id', 'address', 'latitude', 'longitude', 'rating', 'image_path', 'price_range', 'opening_hours', 'phone', 'is_featured');
-        
-        if ($selectedCategorySlug) {
-            $query->whereHas('category', function($q) use ($selectedCategorySlug) {
-                $q->where('slug', $selectedCategorySlug);
-            });
-        }
-        if ($comId) {
-            $query->where('commune_id', $comId);
-        }
-        if ($keyword) {
-            $words = array_filter(explode(' ', trim($keyword)));
-            $query->where(function($qBuilder) use ($keyword, $words) {
-                if (mb_strlen($keyword) >= 2) {
-                    $qBuilder->whereFullText(['name', 'address'], $keyword);
-                }
-                $qBuilder->orWhere('name', 'like', "%{$keyword}%")
-                         ->orWhere('slug', 'like', "%{$keyword}%")
-                         ->orWhere('address', 'like', "%{$keyword}%")
-                         ->orWhere('description', 'like', "%{$keyword}%")
-                         ->orWhere('storytelling_data', 'like', "%{$keyword}%");
-                         
-                if (count($words) > 1) {
-                    $qBuilder->orWhere(function($subQ) use ($words) {
-                        foreach ($words as $w) {
-                            $subQ->where(function($wGroup) use ($w) {
-                                $wGroup->where('name', 'like', "%{$w}%")
-                                       ->orWhere('address', 'like', "%{$w}%")
-                                       ->orWhere('description', 'like', "%{$w}%")
-                                       ->orWhere('storytelling_data', 'like', "%{$w}%");
-                            });
-                        }
-                    });
-                }
-            });
-        }
-        
-        $eateries = $query->orderByDesc('is_featured')->orderByDesc('rating')->get();
-        
-        // Trả về JSON nếu yêu cầu API (cập nhật marker bản đồ thời gian thực)
-        if ($request->expectsJson() || $request->query('json') === '1') {
-            return response()->json($eateries);
-        }
-        
-        return view('search', compact('categories', 'communes', 'eateries', 'keyword', 'catId', 'comId'));
+        // Lightweight render: chỉ trả view rỗng, data sẽ được JS fetch async từ /api/map/*
+        return view('search', [
+            'keyword' => $keyword,
+        ]);
     }
 
     public function quickSearch(Request $request)
