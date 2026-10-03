@@ -470,12 +470,27 @@
 
     // ==================== INIT ====================
     document.addEventListener("DOMContentLoaded", async function() {
-        initMap();
+        try {
+            initMap();
+        } catch (err) {
+            console.error('Lỗi khởi tạo bản đồ Leaflet:', err);
+        }
         await loadCategories();
         setupSearch();
     });
 
     function initMap() {
+        if (searchMap) return;
+        const container = document.getElementById('searchMap');
+        if (!container) return;
+        if (typeof L === 'undefined') {
+            console.warn('Leaflet chưa sẵn sàng, sẽ khởi tạo khi tải xong');
+            return;
+        }
+        if (container._leaflet_id) {
+            return;
+        }
+
         searchMap = L.map('searchMap', { zoomControl: false })
             .setView([21.1352, 105.8458], 12);
         L.control.zoom({ position: 'bottomright' }).addTo(searchMap);
@@ -497,10 +512,17 @@
     }
 
     // ==================== CATEGORIES ====================
+    window._retryLoadCategories = function() {
+        document.getElementById('sidebarContent').innerHTML = '<div class="sidebar-loading">⏳ Đang tải danh mục...</div>';
+        loadCategories();
+    };
+
     async function loadCategories() {
         try {
             const res = await fetch('/api/map/categories');
+            if (!res.ok) throw new Error('HTTP ' + res.status);
             categories = await res.json();
+            if (!Array.isArray(categories)) throw new Error('Invalid categories response');
 
             // Sort by preferred order
             categories.sort((a, b) => {
@@ -510,14 +532,20 @@
             });
 
             renderCategorySidebar();
-
-            // Auto-open first category
-            if (categories.length > 0) {
-                toggleCategory(categories[0].slug);
-            }
         } catch (err) {
+            console.error('Lỗi tải danh mục:', err);
             document.getElementById('sidebarContent').innerHTML = 
-                '<div class="sidebar-loading">❌ Không thể tải dữ liệu</div>';
+                '<div class="sidebar-loading">❌ Không thể tải dữ liệu<br><button onclick="window._retryLoadCategories()" style="margin-top:10px;padding:6px 16px;background:#1a73e8;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:0.85rem;">Thử lại</button></div>';
+            return;
+        }
+
+        // Tự động mở category đầu tiên (tách riêng, lỗi map không làm mất danh mục sidebar)
+        if (categories.length > 0) {
+            try {
+                toggleCategory(categories[0].slug);
+            } catch (err) {
+                console.warn('Không thể mở category đầu tiên:', err);
+            }
         }
     }
 
@@ -527,6 +555,7 @@
             const color = getColor(cat.slug);
             const icon = getIcon(cat.slug);
             const label = getLabel(cat.slug, cat.name);
+            const count = (cat.eateries_count !== undefined && cat.eateries_count !== null) ? cat.eateries_count : 0;
 
             html += `
                 <div class="category-group" id="group-${cat.slug}">
@@ -535,7 +564,7 @@
                             ${icon}
                         </div>
                         <div style="flex:1;">
-                            ${label} <span style="color:inherit; font-weight:normal; font-size:0.85rem; opacity:0.8">(${cat.eateries_count})</span>
+                            ${label} <span style="color:inherit; font-weight:normal; font-size:0.85rem; opacity:0.8">(${count})</span>
                         </div>
                         <svg class="category-chevron" width="20" height="20" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
                     </div>
@@ -547,22 +576,27 @@
     }
 
     // ==================== TOGGLE CATEGORY (LAZY LOAD) ====================
-    window._mapToggleCategory = function(slug) {
+    function toggleCategory(slug) {
         const el = document.getElementById('cat-items-' + slug);
         const header = document.getElementById('header-' + slug);
+        if (!el || !header) return;
 
         // If clicking the currently open category → collapse & show all markers
         if (slug === activeCategory) {
             el.style.display = 'none';
             header.classList.remove('active');
             activeCategory = null;
-            // Show all loaded markers
-            clusterGroup.clearLayers();
-            for (let key in markers) {
-                clusterGroup.addLayer(markers[key]);
-            }
-            if (Object.keys(markers).length > 0) {
-                searchMap.fitBounds(clusterGroup.getBounds(), { padding: [60, 60], maxZoom: 14 });
+            if (clusterGroup && typeof clusterGroup.clearLayers === 'function') {
+                clusterGroup.clearLayers();
+                for (let key in markers) {
+                    clusterGroup.addLayer(markers[key]);
+                }
+                if (searchMap && typeof clusterGroup.getLayers === 'function' && clusterGroup.getLayers().length > 0) {
+                    const bounds = clusterGroup.getBounds();
+                    if (bounds && typeof bounds.isValid === 'function' && bounds.isValid()) {
+                        searchMap.fitBounds(bounds, { padding: [60, 60], maxZoom: 14 });
+                    }
+                }
             }
             return;
         }
@@ -579,12 +613,15 @@
         sidebarHasMore = true;
 
         // Clear old markers for this category view
-        clusterGroup.clearLayers();
+        if (clusterGroup && typeof clusterGroup.clearLayers === 'function') {
+            clusterGroup.clearLayers();
+        }
 
         // Load markers + sidebar items for this category
         el.innerHTML = '<div class="sidebar-loading">⏳ Đang tải...</div>';
         loadCategoryData(slug, 1, true);
-    };
+    }
+    window._mapToggleCategory = toggleCategory;
 
     // ==================== LOAD DATA FOR CATEGORY ====================
     async function loadCategoryData(slug, page, isFirstLoad) {
@@ -598,37 +635,49 @@
                 fetch(`/api/map/sidebar?category_slug=${slug}&page=${page}`)
             ]);
 
+            if (!markersRes.ok || !sidebarRes.ok) {
+                throw new Error('API returned error');
+            }
+
             const markersData = await markersRes.json();
             const sidebarData = await sidebarRes.json();
 
             // Add markers to map
-            addMarkersToMap(markersData.data, slug);
+            if (markersData && Array.isArray(markersData.data)) {
+                addMarkersToMap(markersData.data, slug);
+            }
 
             // Render sidebar items
-            renderSidebarItems(slug, sidebarData.data, isFirstLoad);
+            if (sidebarData && Array.isArray(sidebarData.data)) {
+                renderSidebarItems(slug, sidebarData.data, isFirstLoad);
+            }
 
             // Update pagination state
-            sidebarHasMore = markersData.meta.page < markersData.meta.last_page;
-            sidebarPage = page;
+            if (markersData && markersData.meta) {
+                sidebarHasMore = markersData.meta.page < markersData.meta.last_page;
+                sidebarPage = page;
 
-            // Add "Load more" button if needed
-            if (sidebarHasMore) {
-                appendLoadMoreButton(slug);
+                if (sidebarHasMore) {
+                    appendLoadMoreButton(slug);
+                }
+
+                if (isFirstLoad && markersData.meta.last_page > 1) {
+                    loadRemainingMarkers(slug, 2, markersData.meta.last_page);
+                }
             }
 
             // Fit bounds to visible markers (giới hạn maxZoom: 14 để không bị zoom quá sâu vào 1 điểm)
-            if (clusterGroup.getLayers().length > 0) {
-                searchMap.fitBounds(clusterGroup.getBounds(), { padding: [60, 60], maxZoom: 14 });
-            }
-
-            // If category has many pages, auto-load remaining markers in background (for map completeness)
-            if (isFirstLoad && markersData.meta.last_page > 1) {
-                loadRemainingMarkers(slug, 2, markersData.meta.last_page);
+            if (searchMap && clusterGroup && typeof clusterGroup.getLayers === 'function' && clusterGroup.getLayers().length > 0) {
+                const bounds = clusterGroup.getBounds();
+                if (bounds && typeof bounds.isValid === 'function' && bounds.isValid()) {
+                    searchMap.fitBounds(bounds, { padding: [60, 60], maxZoom: 14 });
+                }
             }
         } catch (err) {
+            console.error('Error loading category data:', err);
             const el = document.getElementById('cat-items-' + slug);
             if (el && isFirstLoad) {
-                el.innerHTML = '<div class="sidebar-loading">❌ Lỗi tải dữ liệu</div>';
+                el.innerHTML = '<div class="sidebar-loading">❌ Lỗi tải dữ liệu<br><button onclick="window._mapToggleCategory(\'' + slug + '\')" style="margin-top:8px;padding:4px 12px;background:#1a73e8;color:#fff;border:none;border-radius:4px;cursor:pointer;">Thử lại</button></div>';
             }
         }
 
@@ -650,6 +699,7 @@
 
     // ==================== MARKERS ====================
     function addMarkersToMap(markerList, categorySlug) {
+        if (!clusterGroup || typeof L === 'undefined' || !Array.isArray(markerList)) return;
         const color = getColor(categorySlug);
         const catIcon = getIcon(categorySlug);
 
@@ -880,9 +930,6 @@
         }
     }
 
-    function toggleCategory(slug) {
-        window._mapToggleCategory(slug);
-    }
 })();
 </script>
 @endsection

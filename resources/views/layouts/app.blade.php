@@ -85,9 +85,9 @@
     
     @if(request()->is('/', 'tim-kiem*', 'dia-diem*', 'tuyen-duong*', 'checkin*', 'food-tour*', 'ban-tin*'))
     <!-- Leaflet.js Map Assets -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" integrity="sha512-Zcn6bjR/8RZbLEpLIeOwNtzREBAJnUKESxces60Mpoj+2okopSAcSUIUOsedSTKIqQkgtN55lmbapuIRdlKGmsg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.Default.css" />
     @endif
     
     <!-- Google Fonts: Asynchronous Non-blocking Load with Display Swap -->
@@ -307,9 +307,9 @@
     @include('partials.footer')
 
     @if(request()->is('/', 'tim-kiem*', 'dia-diem*', 'tuyen-duong*', 'checkin*', 'food-tour*', 'ban-tin*'))
-    <!-- Leaflet.js Map Library -->
-    <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-    <script defer src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+    <!-- Leaflet.js Map Library (Cloudflare CDN for Vietnam ISP reliability) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js" integrity="sha512-BwHfrr4c9kmRkLw6iXFdzcdWV/PGkVgiIyIWLLlTSXzSmGyk97FJCIpnFmGNeS795vzS0J64wp4KLNiAhucyjQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.js"></script>
     @endif
     
     <script>
@@ -404,8 +404,6 @@
 
         </script>
     @include('partials.guide-modal')
-    
-    @yield('scripts')
 
     @if(session()->has('user_id'))
     <script>
