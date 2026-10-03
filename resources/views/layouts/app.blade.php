@@ -595,6 +595,9 @@
     <script defer src="{{ asset('js/customer-notifications.js') }}?v={{ file_exists(public_path('js/customer-notifications.js')) ? filemtime(public_path('js/customer-notifications.js')) : '1.0.0' }}"></script>
     @endif
     @endif
+
+    @yield('scripts')
+    @stack('scripts')
 </body>
 </html>
 
