@@ -393,33 +393,50 @@
 <script>
     const eateries = @json($eateries);
     let searchMap;
+    // markers[slug] = leaflet marker object (chỉ tạo khi cần - lazy)
     let markers = {};
+    // markerData[slug] = raw eatery data để tạo marker on demand
+    let markerData = {};
+    let currentCategorySlug = null;
 
     document.addEventListener("DOMContentLoaded", function() {
-        // Init Map
+        // Init Map với Canvas renderer (nhanh hơn SVG khi nhiều marker)
         searchMap = L.map('searchMap', {
             zoomControl: false,
+            preferCanvas: true,
         }).setView([21.1352, 105.8458], 12);
         
         L.control.zoom({ position: 'bottomright' }).addTo(searchMap);
         
-        // Sử dụng Google Maps Tiles - Giao diện chuẩn
+        // Sử dụng Google Maps Tiles
         L.tileLayer('https://mt1.google.com/vt/lyrs=m&hl=vi&x={x}&y={y}&z={z}', {
             attribution: '&copy; Google Maps',
             maxZoom: 20
         }).addTo(searchMap);
 
-        renderSidebarAndMap(eateries);
+        // Index tất cả eatery vào markerData (không tạo DOM)
+        eateries.forEach(eat => {
+            if (eat.slug) markerData[eat.slug] = eat;
+        });
+
+        renderSidebar(eateries);
         
-        // Gắn sự kiện tìm kiếm mượt mà
-        document.getElementById('searchInput').addEventListener('input', function(e) {
-            const val = e.target.value.toLowerCase();
-            const filtered = eateries.filter(eat => 
-                eat.name.toLowerCase().includes(val) || 
-                (eat.address && eat.address.toLowerCase().includes(val)) ||
-                (eat.category && eat.category.name.toLowerCase().includes(val))
-            );
-            renderSidebarAndMap(filtered);
+        // Search filter - debounce 250ms, chỉ re-render sidebar
+        const searchInput = document.getElementById('searchInput');
+        let searchTimer = null;
+        searchInput.addEventListener('input', function(e) {
+            clearTimeout(searchTimer);
+            searchTimer = setTimeout(() => {
+                const val = e.target.value.toLowerCase().trim();
+                const filtered = val ? eateries.filter(eat => 
+                    (eat.name && eat.name.toLowerCase().includes(val)) || 
+                    (eat.address && eat.address.toLowerCase().includes(val)) ||
+                    (eat.category && eat.category.name.toLowerCase().includes(val))
+                ) : eateries;
+                clearAllMarkers();
+                currentCategorySlug = null;
+                renderSidebar(filtered);
+            }, 250);
         });
     });
 
@@ -465,209 +482,205 @@
         }
     }
 
-    function renderSidebarAndMap(dataList) {
-        // Group by category
+    // Tạo marker Leaflet cho 1 eatery theo yêu cầu (lazy)
+    function createMarker(eat) {
+        const slug = eat.slug;
+        if (markers[slug]) return markers[slug]; // reuse nếu đã tạo
+        if (!eat.latitude || !eat.longitude) return null;
+
+        const catSlug = eat.category ? eat.category.slug : '';
+        const color = getCategoryColor(catSlug);
+        const catIcon = getCategoryIcon(catSlug);
+
+        const iconHtml = `<div style="background-color:${color};width:40px;height:40px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;border:3px solid #fff;box-shadow:2px 6px 12px rgba(0,0,0,0.4);">
+            <div style="transform:rotate(45deg);font-size:18px;line-height:1;">${catIcon}</div>
+        </div>`;
+
+        const customIcon = L.divIcon({
+            html: iconHtml,
+            className: 'gm-marker-custom',
+            iconSize: [40, 40],
+            iconAnchor: [20, 40]
+        });
+
+        // Rating thực từ DB, không hardcode
+        const rating = (eat.rating !== null && eat.rating !== undefined && eat.rating !== '')
+            ? parseFloat(eat.rating).toFixed(1)
+            : '—';
+        const imgUrl = eat.image_path || 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=600&q=80';
+        const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${eat.latitude},${eat.longitude}`;
+
+        const popupContent = `<div class="gm-popup-wrapper">
+            <img src="${imgUrl}" class="gm-popup-cover" alt="Image" loading="lazy">
+            <div class="gm-popup-body">
+                <div class="gm-popup-title">${eat.name}</div>
+                <div class="gm-popup-rating"><span>⭐</span> ${rating} / 5.0</div>
+                <div class="gm-popup-address">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="#1a73e8" style="flex-shrink:0"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                    <span>${eat.address || 'Đang cập nhật...'}</span>
+                </div>
+                <div class="gm-popup-actions">
+                    <a href="${directionsUrl}" target="_blank" class="gm-btn-direction">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"><path d="M21.71 11.29l-9-9c-.39-.39-1.02-.39-1.41 0l-9 9c-.39.39-.39 1.02 0 1.41l9 9c.39.39 1.02.39 1.41 0l9-9c.39-.38.39-1.01 0-1.41zM14 14.5V12h-4v3H8v-4c0-.55.45-1 1-1h5V7.5l3.5 3.5-3.5 3.5z"/></svg>
+                        Đường đi
+                    </a>
+                    <a href="/dia-diem/${slug}" class="gm-btn-detail">Xem chi tiết</a>
+                </div>
+            </div>
+        </div>`;
+
+        const marker = L.marker([eat.latitude, eat.longitude], { icon: customIcon })
+            .bindPopup(popupContent, { maxWidth: 300, minWidth: 300 });
+        marker.categorySlug = catSlug;
+        markers[slug] = marker;
+        return marker;
+    }
+
+    // Xóa marker khỏi bản đồ nhưng giữ lại object để reuse
+    function clearAllMarkers() {
+        for (let key in markers) {
+            if (searchMap.hasLayer(markers[key])) {
+                searchMap.removeLayer(markers[key]);
+            }
+        }
+    }
+
+    // Hiển thị marker cho 1 danh sách (lazy create + fitBounds thông minh)
+    function showMarkersForList(list) {
+        clearAllMarkers();
+        const bounds = [];
+        list.forEach(eat => {
+            if (!eat.latitude || !eat.longitude) return;
+            const marker = createMarker(eat);
+            if (marker) {
+                marker.addTo(searchMap);
+                bounds.push([eat.latitude, eat.longitude]);
+            }
+        });
+
+        if (bounds.length === 1) {
+            searchMap.setView(bounds[0], 16);
+        } else if (bounds.length > 1) {
+            // maxZoom 14 để không zoom ra quá xa - tránh trông như 1 điểm
+            searchMap.fitBounds(bounds, { padding: [60, 60], maxZoom: 14 });
+        }
+    }
+
+    // Render sidebar (không đụng đến markers - tách biệt hoàn toàn)
+    function renderSidebar(dataList) {
         const grouped = {};
         dataList.forEach(eat => {
             if (!eat.category) return;
-            const catName = getCategoryLabel(eat.category.slug, eat.category.name);
-            if (!grouped[catName]) {
-                grouped[catName] = {
-                    slug: eat.category.slug,
-                    items: []
-                };
+            const catLabel = getCategoryLabel(eat.category.slug, eat.category.name);
+            if (!grouped[catLabel]) {
+                grouped[catLabel] = { slug: eat.category.slug, items: [] };
             }
-            grouped[catName].items.push(eat);
+            grouped[catLabel].items.push(eat);
         });
 
-        // Xóa marker cũ
-        for(let key in markers) {
-            searchMap.removeLayer(markers[key]);
-        }
-        markers = {};
-
         let sidebarHtml = '';
-        let bounds = [];
         let index = 0;
+        let firstCatItems = [];
 
         for (let catName in grouped) {
             const catInfo = grouped[catName];
             const color = getCategoryColor(catInfo.slug);
-            const isOpen = index === 0 ? 'block' : 'none'; // Mở sẵn category đầu tiên
-            const activeClass = index === 0 ? 'active' : ''; // Highlight header
-            
+            const isOpen = index === 0;
+            if (index === 0) firstCatItems = catInfo.items;
+
             sidebarHtml += `
                 <div class="category-group">
-                    <div class="category-header ${activeClass}" id="header-${catInfo.slug}" onclick="toggleAccordion('${catInfo.slug}')">
-                        <div class="category-icon-wrapper" style="background-color: ${color}">
-                            ${getCategoryIcon(catInfo.slug)}
-                        </div>
-                        <div style="flex:1;">
-                            ${catName} <span style="color:inherit; font-weight:normal; font-size:0.85rem; opacity:0.8">(${catInfo.items.length})</span>
-                        </div>
-                        <svg class="category-chevron" width="20" height="20" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+                    <div class="category-header ${isOpen ? 'active' : ''}" id="header-${catInfo.slug}" onclick="toggleAccordion('${catInfo.slug}')">
+                        <div class="category-icon-wrapper" style="background-color:${color}">${getCategoryIcon(catInfo.slug)}</div>
+                        <div style="flex:1">${catName} <span style="font-weight:normal;font-size:0.85rem;opacity:0.8">(${catInfo.items.length})</span></div>
+                        <svg class="category-chevron" width="20" height="20" viewBox="0 0 24 24" style="${isOpen ? 'transform:rotate(180deg)' : ''}"><path d="M7 10l5 5 5-5z"/></svg>
                     </div>
-                    <div class="category-items" id="cat-items-${catInfo.slug}" style="display: ${isOpen};">
+                    <div class="category-items" id="cat-items-${catInfo.slug}" style="display:${isOpen ? 'block' : 'none'}">
             `;
-            
+
             catInfo.items.forEach(eat => {
-                const imgUrl = eat.image_path ? eat.image_path : 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=150&q=80';
-                
+                const imgUrl = eat.image_path || 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=150&q=80';
                 sidebarHtml += `
-                    <div class="map-list-item" onclick="focusEatery('${eat.slug}', ${eat.latitude}, ${eat.longitude})">
-                        <img src="${imgUrl}" class="map-list-item-img" alt="${eat.name}">
+                    <div class="map-list-item" onclick="focusEatery('${eat.slug}', ${eat.latitude || 'null'}, ${eat.longitude || 'null'})">
+                        <img src="${imgUrl}" class="map-list-item-img" alt="${eat.name}" loading="lazy">
                         <div class="map-list-item-info">
                             <div class="map-list-item-name">${eat.name}</div>
                             <div class="map-list-item-addr">${eat.address || 'Đang cập nhật địa chỉ...'}</div>
                         </div>
                     </div>
                 `;
-
-                // Tạo marker trên bản đồ
-                if (eat.latitude && eat.longitude) {
-                    const catIcon = getCategoryIcon(catInfo.slug);
-                    
-                    const iconHtml = `
-                        <div style="
-                            background-color: ${color}; 
-                            width: 48px; 
-                            height: 48px; 
-                            border-radius: 50% 50% 50% 0; 
-                            transform: rotate(-45deg); 
-                            display: flex; 
-                            align-items: center; 
-                            justify-content: center; 
-                            border: 3px solid #fff; 
-                            box-shadow: 2px 6px 12px rgba(0,0,0,0.4);
-                            position: relative;
-                            cursor: pointer;
-                        ">
-                            <div style="transform: rotate(45deg); font-size: 22px; text-shadow: 0 2px 4px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center;">
-                                ${catIcon}
-                            </div>
-                        </div>
-                    `;
-                    
-                    const customIcon = L.divIcon({
-                        html: iconHtml,
-                        className: 'gm-marker-custom',
-                        iconSize: [48, 48],
-                        iconAnchor: [24, 48]
-                    });
-
-                    const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${eat.latitude},${eat.longitude}`;
-                    const imgUrl = eat.image_path ? eat.image_path : 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=600&q=80';
-                    
-                    const popupContent = `
-                        <div class="gm-popup-wrapper">
-                            <img src="${imgUrl}" class="gm-popup-cover" alt="Image">
-                            <div class="gm-popup-body">
-                                <div class="gm-popup-title">${eat.name}</div>
-                                <div class="gm-popup-rating"><span>⭐</span> ${parseFloat(eat.rating || 5.0).toFixed(1)} / 5.0</div>
-                                <div class="gm-popup-address">
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="#1a73e8" style="flex-shrink:0"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
-                                    <span>${eat.address}</span>
-                                </div>
-                                <div class="gm-popup-actions">
-                                    <a href="${directionsUrl}" target="_blank" class="gm-btn-direction">
-                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"><path d="M21.71 11.29l-9-9c-.39-.39-1.02-.39-1.41 0l-9 9c-.39.39-.39 1.02 0 1.41l9 9c.39.39 1.02.39 1.41 0l9-9c.39-.38.39-1.01 0-1.41zM14 14.5V12h-4v3H8v-4c0-.55.45-1 1-1h5V7.5l3.5 3.5-3.5 3.5z"/></svg>
-                                        Đường đi
-                                    </a>
-                                    <a href="/dia-diem/${eat.slug}" class="gm-btn-detail">Xem chi tiết</a>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-
-                    const marker = L.marker([eat.latitude, eat.longitude], { icon: customIcon })
-                        .bindPopup(popupContent, { maxWidth: 300, minWidth: 300 });
-                        
-                    // Chỉ thêm marker vào map nếu nó thuộc category đầu tiên
-                    if (index === 0) {
-                        marker.addTo(searchMap);
-                        bounds.push([eat.latitude, eat.longitude]);
-                    }
-                    
-                    marker.categorySlug = catInfo.slug; // Gắn data để filter toggle
-                    markers[eat.slug] = marker;
-                }
             });
-            
-            sidebarHtml += `
-                    </div>
-                </div>
-            `;
+
+            sidebarHtml += `</div></div>`;
             index++;
         }
 
-        if(Object.keys(grouped).length === 0) {
-            sidebarHtml = `<div style="padding: 30px 20px; text-align: center; color: #70757a;">Không tìm thấy kết quả nào phù hợp.</div>`;
+        if (!sidebarHtml) {
+            sidebarHtml = `<div style="padding:30px 20px;text-align:center;color:#70757a">Không tìm thấy kết quả nào phù hợp.</div>`;
         }
 
         document.getElementById('sidebarContent').innerHTML = sidebarHtml;
 
-        if (bounds.length > 0) {
-            searchMap.fitBounds(bounds, { padding: [60, 60] });
+        // Lazy: chỉ hiện marker category đầu tiên
+        if (firstCatItems.length > 0) {
+            showMarkersForList(firstCatItems);
         }
     }
 
     window.toggleAccordion = function(clickedSlug) {
         const el = document.getElementById('cat-items-' + clickedSlug);
         const header = document.getElementById('header-' + clickedSlug);
-        
-        // Nếu click vào danh mục đang mở -> Thu gọn nó lại và hiển thị lại toàn bộ bản đồ
-        if (el && el.style.display === 'block') {
-            el.style.display = 'none';
-            if (header) header.classList.remove('active');
-            
-            // Hiển thị lại toàn bộ marker
-            let allBounds = [];
-            for(let key in markers) {
-                searchMap.addLayer(markers[key]);
-                allBounds.push(markers[key].getLatLng());
-            }
-            if (allBounds.length > 0) {
-                searchMap.fitBounds(allBounds, { padding: [60, 60] });
+        const isCurrentlyOpen = el && el.style.display === 'block';
+
+        // Thu gọn tất cả
+        document.querySelectorAll('.category-items').forEach(item => item.style.display = 'none');
+        document.querySelectorAll('.category-header').forEach(h => {
+            h.classList.remove('active');
+            const ch = h.querySelector('.category-chevron');
+            if (ch) ch.style.transform = '';
+        });
+
+        if (isCurrentlyOpen) {
+            // Click lại category đang mở → đóng, show tất cả marker có sẵn
+            clearAllMarkers();
+            currentCategorySlug = null;
+            for (let key in markers) {
+                markers[key].addTo(searchMap);
             }
             return;
         }
 
-        // Đóng tất cả các danh mục
-        document.querySelectorAll('.category-items').forEach(item => item.style.display = 'none');
-        document.querySelectorAll('.category-header').forEach(h => h.classList.remove('active'));
-
-        // Mở danh mục được click
+        // Mở category được click
         if (el && header) {
             el.style.display = 'block';
             header.classList.add('active');
+            const ch = header.querySelector('.category-chevron');
+            if (ch) ch.style.transform = 'rotate(180deg)';
         }
 
-        // Lọc lại marker trên bản đồ (Chỉ hiện marker của danh mục được click)
-        let activeBounds = [];
-        for(let key in markers) {
-            if (markers[key].categorySlug === clickedSlug) {
-                searchMap.addLayer(markers[key]);
-                activeBounds.push(markers[key].getLatLng());
-            } else {
-                searchMap.removeLayer(markers[key]);
-            }
-        }
-        
-        if (activeBounds.length > 0) {
-            searchMap.fitBounds(activeBounds, { padding: [60, 60] });
-        }
+        currentCategorySlug = clickedSlug;
+
+        // Lazy: filter và hiển thị marker cho category này
+        const items = eateries.filter(e => e.category && e.category.slug === clickedSlug);
+        showMarkersForList(items);
     }
 
     window.focusEatery = function(slug, lat, lng) {
         if (!lat || !lng) return;
-        searchMap.flyTo([lat, lng], 17, { animate: true, duration: 1.5 });
-        setTimeout(() => {
-            if (markers[slug]) {
-                markers[slug].openPopup();
+
+        const eat = markerData[slug];
+        if (eat) {
+            const marker = createMarker(eat);
+            if (marker && !searchMap.hasLayer(marker)) {
+                marker.addTo(searchMap);
             }
-        }, 1500);
-        
-        // Mobile behavior: collapse sidebar partially to see map when clicked
+            searchMap.flyTo([lat, lng], 17, { animate: true, duration: 1.5 });
+            setTimeout(() => {
+                if (markers[slug]) markers[slug].openPopup();
+            }, 1500);
+        }
+
+        // Mobile: collapse sidebar
         if (window.innerWidth <= 768) {
             document.querySelector('.map-sidebar').style.height = '20vh';
             document.querySelector('.map-area').style.height = '80vh';
