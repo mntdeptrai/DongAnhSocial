@@ -331,6 +331,12 @@
                             // 1. Kiểm tra nếu có sản phẩm OCOP trong DB
                             if ($eat->ocopProducts && $eat->ocopProducts->count() > 0) {
                                 foreach ($eat->ocopProducts as $p) {
+                                    $specs = [];
+                                    if (!empty($p->ingredients)) {
+                                        $specs = is_array($p->ingredients) ? $p->ingredients : (json_decode($p->ingredients, true) ?: []);
+                                    }
+                                    $stockStatus = $specs['stock_status'] ?? 'in_stock';
+
                                     $displayCards[] = [
                                         'title' => $p->name,
                                         'product_id' => $p->id,
@@ -341,6 +347,7 @@
                                         'price' => $p->price ? (is_numeric($p->price) ? number_format($p->price, 0, ',', '.') . 'đ' : $p->price) : $eat->price_range,
                                         'badgeText' => $p->star_rating ? '⭐ ' . $p->star_rating : 'Đặc sản OCOP',
                                         'badgeIcon' => '🌾',
+                                        'stock_status' => $stockStatus,
                                     ];
                                 }
                             } 
@@ -424,6 +431,11 @@
                              onclick="focusOnEatery({{ number_format($eat->latitude, 6, '.', '') }}, {{ number_format($eat->longitude, 6, '.', '') }}, '{{ $eat->slug }}', '{{ addslashes($card['title']) }}', '{{ $card['image'] }}', '{{ $card['price'] }}', '{{ $card['stars'] }}', '{{ addslashes($card['subtitle'] ?? '') }}')">
                             <div class="eatery-img-wrapper hover-zoom-container">
                                 <img src="{{ $card['image'] }}" class="eatery-img hover-zoom-img" alt="{{ $card['title'] }}" loading="lazy" decoding="async" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1578916171728-46686eac8d58?auto=format&fit=crop&w=600&q=80';">
+                                @if(($card['stock_status'] ?? '') === 'out_of_stock')
+                                    <div style="position: absolute; top: 8px; right: 8px; background: #dc2626; color: #ffffff; font-size: 0.7rem; font-weight: 800; padding: 4px 10px; border-radius: 8px; z-index: 5; box-shadow: 0 2px 8px rgba(220, 38, 38, 0.4);">
+                                        🔴 Hết hàng
+                                    </div>
+                                @endif
                                 @if(!$isCustomStyled)
                                     <div style="position: absolute; top: 8px; left: 8px; max-width: calc(100% - 16px); display: flex; align-items: center; gap: 4px; font-size: 0.68rem; font-weight: 700; color: #ffffff; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(4px); padding: 4px 8px; border-radius: 6px; box-shadow: 0 2px 10px rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1);">
                                         <span>{{ $card['badgeIcon'] }}</span>
@@ -539,7 +551,11 @@
                                 @endif
 
                                 @if(!empty($card['desc']) && $card['desc'] !== 'null')
-                                <p class="eatery-desc">{{ $card['desc'] }}</p>
+                                    @php
+                                        $cleanedDesc = preg_replace('/^Chủ\s+thể\s+sản\s+xuất:\s*[^;\n\.\&]+(?:\s*;\s*|\s+(?=[A-ZĐÀÁẢÃẠĂẮẰẲẴẶÂẤẦẨẪẬÊẾỀỂỄỆÔỐỒỔỖỘƠỚỜỞỠỢƯỨỪỬỮỰÍÌỈĨỊÝỲỶỸỴ]))/ui', '', $card['desc']);
+                                        $cleanedDesc = preg_replace('/^Chủ\s+thể\s+sản\s+xuất:\s*/ui', '', $cleanedDesc);
+                                    @endphp
+                                    <p class="eatery-desc">{{ $cleanedDesc }}</p>
                                 @endif
 
                                 <div class="eatery-footer">
@@ -558,17 +574,26 @@
                                 </div>
                                 @if($isOcopItem)
                                     <div class="ocop-card-actions" style="display: flex; gap: 8px; margin-top: 10px; width: 100%;">
-                                        <button type="button" 
-                                                class="add-to-cart-btn ocop-buy-btn" 
-                                                data-id="{{ $card['product_id'] ?? $eat->id }}" 
-                                                data-type="ocop_product" 
-                                                onclick="addToCart(event, this); if(typeof animateFlyToCart === 'function') animateFlyToCart(this, '🌾');" 
-                                                style="flex: 1.1; background: linear-gradient(135deg, #059669 0%, #10b981 100%); color: #ffffff; border: none; border-radius: 10px; padding: 9px 12px; font-weight: 700; font-size: 0.82rem; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 12px rgba(5, 150, 105, 0.25); transition: all 0.2s;"
-                                                onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 16px rgba(5, 150, 105, 0.35)'" 
-                                                onmouseout="this.style.transform='none'; this.style.boxShadow='0 4px 12px rgba(5, 150, 105, 0.25)'">
-                                            <i class="bi bi-cart-plus-fill" style="font-size: 0.95rem;"></i>
-                                            <span>Mua hàng</span>
-                                        </button>
+                                        @if(($card['stock_status'] ?? '') === 'out_of_stock')
+                                            <button type="button" 
+                                                    disabled
+                                                    style="flex: 1.1; background: #94a3b8; color: #ffffff; border: none; border-radius: 10px; padding: 9px 12px; font-weight: 700; font-size: 0.82rem; cursor: not-allowed; display: inline-flex; align-items: center; justify-content: center; gap: 6px; opacity: 0.85;">
+                                                <i class="bi bi-slash-circle" style="font-size: 0.95rem;"></i>
+                                                <span>🔴 Hết hàng</span>
+                                            </button>
+                                        @else
+                                            <button type="button" 
+                                                    class="add-to-cart-btn ocop-buy-btn" 
+                                                    data-id="{{ $card['product_id'] ?? $eat->id }}" 
+                                                    data-type="ocop_product" 
+                                                    onclick="addToCart(event, this); if(typeof animateFlyToCart === 'function') animateFlyToCart(this, '🌾');" 
+                                                    style="flex: 1.1; background: linear-gradient(135deg, #059669 0%, #10b981 100%); color: #ffffff; border: none; border-radius: 10px; padding: 9px 12px; font-weight: 700; font-size: 0.82rem; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 12px rgba(5, 150, 105, 0.25); transition: all 0.2s;"
+                                                    onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 16px rgba(5, 150, 105, 0.35)'" 
+                                                    onmouseout="this.style.transform='none'; this.style.boxShadow='0 4px 12px rgba(5, 150, 105, 0.25)'">
+                                                <i class="bi bi-cart-plus-fill" style="font-size: 0.95rem;"></i>
+                                                <span>Mua hàng</span>
+                                            </button>
+                                        @endif
                                         <a href="{{ isset($card['product_id']) ? route('ocop.product.show', $card['product_id']) : route('eatery.show', $eat->slug) }}" 
                                            class="ocop-explore-btn" 
                                            onclick="event.stopPropagation();" 

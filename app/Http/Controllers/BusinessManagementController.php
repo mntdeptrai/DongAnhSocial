@@ -162,22 +162,60 @@ class BusinessManagementController extends Controller
         $todayRevenue = 0;
         $todayOrdersCount = 0;
         $pendingOrdersCount = 0;
+        $pendingOrdersAmount = 0;
         $processingOrdersCount = 0;
+        $processingOrdersAmount = 0;
         $completedOrdersCount = 0;
         $cancelledOrdersCount = 0;
         $recentOrders = collect();
 
-        // 7-day revenue trend data initialization
+        // 7-day trend data initialization (Current Week vs Previous Week)
         $sevenDaysLabels = [];
+        $sevenDaysFullDates = [];
+        $prevWeekFullDates = [];
         $sevenDaysRevenue = [];
+        $prevWeekRevenue = [];
+        $sevenDaysOrders = [];
+        $prevWeekOrders = [];
+        $sevenDaysCustomers = [];
+        $prevWeekCustomers = [];
 
         for ($i = 6; $i >= 0; $i--) {
             $dateCarbon = now()->subDays($i);
             $dateStr = $dateCarbon->format('Y-m-d');
-            $labelStr = $dateCarbon->format('d/m');
-            $sevenDaysLabels[] = $labelStr;
+            $sevenDaysLabels[] = $dateCarbon->format('d/m');
+            $sevenDaysFullDates[] = $dateCarbon->format('d/m/Y');
             $sevenDaysRevenue[$dateStr] = 0;
+            $sevenDaysOrders[$dateStr] = 0;
+            $sevenDaysCustomers[$dateStr] = 0;
+
+            $prevCarbon = now()->subDays($i + 7);
+            $prevDateStr = $prevCarbon->format('Y-m-d');
+            $prevWeekFullDates[] = $prevCarbon->format('d/m/Y');
+            $prevWeekRevenue[$prevDateStr] = 0;
+            $prevWeekOrders[$prevDateStr] = 0;
+            $prevWeekCustomers[$prevDateStr] = 0;
         }
+
+        // Inventory alerts: Out of Stock & Low Stock counts
+        $outOfStockCount = 0;
+        $lowStockCount = 0;
+        $allProducts = DB::table('ocop_products')->where('eatery_id', $eatery->id)->get();
+        foreach ($allProducts as $p) {
+            $specs = [];
+            if (!empty($p->ingredients)) {
+                $specs = is_array($p->ingredients) ? $p->ingredients : (json_decode($p->ingredients, true) ?: []);
+            }
+            $st = $specs['stock_status'] ?? 'in_stock';
+            if ($st === 'out_of_stock') {
+                $outOfStockCount++;
+            } elseif ($st === 'pre_order' || (!empty($specs['stock_qty']) && (int)$specs['stock_qty'] <= 5)) {
+                $lowStockCount++;
+            }
+        }
+
+        // Daily breakdown table
+        $dailyTableData = [];
 
         if (Schema::hasTable('orders')) {
             $ordersQuery = DB::table('orders')->where('eatery_id', $eatery->id);
@@ -191,31 +229,147 @@ class BusinessManagementController extends Controller
             $todayOrdersCount = (clone $todayOrdersQuery)->count();
             $todayRevenue = (clone $todayOrdersQuery)->whereIn('status', ['completed', 'approved', 'delivered', 'paid'])->sum('total_amount');
 
-            // Status counts
-            $pendingOrdersCount = (clone $ordersQuery)->where('status', 'pending')->count();
-            $processingOrdersCount = (clone $ordersQuery)->whereIn('status', ['processing', 'shipping', 'approved'])->count();
+            // Status counts & Amounts
+            $pendingOrdersQuery = (clone $ordersQuery)->where('status', 'pending');
+            $pendingOrdersCount = (clone $pendingOrdersQuery)->count();
+            $pendingOrdersAmount = (clone $pendingOrdersQuery)->sum('total_amount');
+
+            $processingOrdersQuery = (clone $ordersQuery)->whereIn('status', ['processing', 'shipping', 'approved']);
+            $processingOrdersCount = (clone $processingOrdersQuery)->count();
+            $processingOrdersAmount = (clone $processingOrdersQuery)->sum('total_amount');
+
             $completedOrdersCount = (clone $ordersQuery)->whereIn('status', ['completed', 'delivered', 'paid'])->count();
             $cancelledOrdersCount = (clone $ordersQuery)->where('status', 'cancelled')->count();
 
             // Recent orders
             $recentOrders = (clone $ordersQuery)->orderBy('id', 'desc')->take(6)->get();
 
-            // 7-day revenue dataset
+            // Current week dataset
             $startDate = now()->subDays(6)->startOfDay();
-            $dailyOrders = (clone $ordersQuery)
+            $allCurrentWeekOrders = (clone $ordersQuery)
                 ->where('created_at', '>=', $startDate)
-                ->whereIn('status', ['completed', 'approved', 'delivered', 'paid'])
                 ->get();
 
-            foreach ($dailyOrders as $ord) {
+            foreach ($allCurrentWeekOrders as $ord) {
                 $d = \Carbon\Carbon::parse($ord->created_at)->format('Y-m-d');
-                if (isset($sevenDaysRevenue[$d])) {
-                    $sevenDaysRevenue[$d] += (float) $ord->total_amount;
+                if (isset($sevenDaysOrders[$d])) {
+                    $sevenDaysOrders[$d]++;
+                    $sevenDaysCustomers[$d]++;
                 }
+                if (in_array($ord->status, ['completed', 'approved', 'delivered', 'paid'])) {
+                    if (isset($sevenDaysRevenue[$d])) {
+                        $sevenDaysRevenue[$d] += (float) $ord->total_amount;
+                    }
+                }
+            }
+
+            // Previous week dataset
+            $prevStartDate = now()->subDays(13)->startOfDay();
+            $prevEndDate = now()->subDays(7)->endOfDay();
+            $allPrevWeekOrders = (clone $ordersQuery)
+                ->whereBetween('created_at', [$prevStartDate, $prevEndDate])
+                ->get();
+
+            foreach ($allPrevWeekOrders as $ord) {
+                $d = \Carbon\Carbon::parse($ord->created_at)->format('Y-m-d');
+                if (isset($prevWeekOrders[$d])) {
+                    $prevWeekOrders[$d]++;
+                    $prevWeekCustomers[$d]++;
+                }
+                if (in_array($ord->status, ['completed', 'approved', 'delivered', 'paid'])) {
+                    if (isset($prevWeekRevenue[$d])) {
+                        $prevWeekRevenue[$d] += (float) $ord->total_amount;
+                    }
+                }
+            }
+
+            // Generate Daily Revenue Table
+            for ($i = 0; $i < 7; $i++) {
+                $dCarbon = now()->subDays($i);
+                $dStr = $dCarbon->format('Y-m-d');
+                $dDisplay = $dCarbon->format('d/m/Y');
+
+                $dayOrders = (clone $ordersQuery)->whereDate('created_at', $dStr)->get();
+                $slDat = $dayOrders->count();
+                $tongTien = $dayOrders->whereIn('status', ['completed', 'approved', 'delivered', 'paid'])->sum('total_amount');
+
+                $dailyTableData[] = [
+                    'date' => $dDisplay,
+                    'sl_dat' => $slDat,
+                    'tra_lai' => 0,
+                    'doanh_thu_thuan' => $tongTien,
+                    'tong_tien' => $tongTien,
+                ];
             }
         }
 
         $sevenDaysRevenueData = array_values($sevenDaysRevenue);
+        $prevWeekRevenueData = array_values($prevWeekRevenue);
+        $sevenDaysOrdersData = array_values($sevenDaysOrders);
+        $prevWeekOrdersData = array_values($prevWeekOrders);
+        $sevenDaysCustomersData = array_values($sevenDaysCustomers);
+        $prevWeekCustomersData = array_values($prevWeekCustomers);
+
+        // Top 5 selling products by Quantity & Revenue calculated directly from Database (order_items & ocop_products)
+        $topProductsByQty = DB::table('ocop_products')
+            ->leftJoin('order_items', 'ocop_products.id', '=', 'order_items.ocop_product_id')
+            ->leftJoin('orders', function($join) use ($eatery) {
+                $join->on('order_items.order_id', '=', 'orders.id')
+                     ->where('orders.eatery_id', '=', $eatery->id)
+                     ->where('orders.status', '!=', 'cancelled');
+            })
+            ->where('ocop_products.eatery_id', $eatery->id)
+            ->select(
+                'ocop_products.id',
+                'ocop_products.title',
+                'ocop_products.price',
+                'ocop_products.image_path',
+                DB::raw('COALESCE(SUM(CASE WHEN orders.id IS NOT NULL THEN order_items.quantity ELSE 0 END), 0) as sold_qty'),
+                DB::raw('COALESCE(SUM(CASE WHEN orders.id IS NOT NULL THEN order_items.quantity * order_items.price ELSE 0 END), 0) as total_sales')
+            )
+            ->groupBy('ocop_products.id', 'ocop_products.title', 'ocop_products.price', 'ocop_products.image_path')
+            ->orderByDesc('sold_qty')
+            ->orderByDesc('ocop_products.id')
+            ->take(5)
+            ->get()
+            ->map(function($p) {
+                $p->image = $p->image_path ?? null;
+                $p->name = $p->title ?? ('Sản phẩm ' . $p->id);
+                $p->sold_qty = (int) $p->sold_qty;
+                $p->total_sales = (float) $p->total_sales;
+                return $p;
+            });
+
+        $topProductsByRevenue = DB::table('ocop_products')
+            ->leftJoin('order_items', 'ocop_products.id', '=', 'order_items.ocop_product_id')
+            ->leftJoin('orders', function($join) use ($eatery) {
+                $join->on('order_items.order_id', '=', 'orders.id')
+                     ->where('orders.eatery_id', '=', $eatery->id)
+                     ->where('orders.status', '!=', 'cancelled');
+            })
+            ->where('ocop_products.eatery_id', $eatery->id)
+            ->select(
+                'ocop_products.id',
+                'ocop_products.title',
+                'ocop_products.price',
+                'ocop_products.image_path',
+                DB::raw('COALESCE(SUM(CASE WHEN orders.id IS NOT NULL THEN order_items.quantity ELSE 0 END), 0) as sold_qty'),
+                DB::raw('COALESCE(SUM(CASE WHEN orders.id IS NOT NULL THEN order_items.quantity * order_items.price ELSE 0 END), 0) as total_sales')
+            )
+            ->groupBy('ocop_products.id', 'ocop_products.title', 'ocop_products.price', 'ocop_products.image_path')
+            ->orderByDesc('total_sales')
+            ->orderByDesc('ocop_products.id')
+            ->take(5)
+            ->get()
+            ->map(function($p) {
+                $p->image = $p->image_path ?? null;
+                $p->name = $p->title ?? ('Sản phẩm ' . $p->id);
+                $p->sold_qty = (int) $p->sold_qty;
+                $p->total_sales = (float) $p->total_sales;
+                return $p;
+            });
+
+        $topProducts = $topProductsByQty;
 
         // Check VietQR config
         $bankAccount = $storyData['bank_account'] ?? ($ctx['user']->bank_account ?? '');
@@ -265,14 +419,21 @@ class BusinessManagementController extends Controller
             'storyData' => $storyData,
             'productsCount' => $productsCount,
             'products' => $products,
+            'topProducts' => $topProducts,
+            'topProductsByQty' => $topProductsByQty,
+            'topProductsByRevenue' => $topProductsByRevenue,
             'ordersCount' => $ordersCount,
             'totalRevenue' => $totalRevenue,
             'todayRevenue' => $todayRevenue,
             'todayOrdersCount' => $todayOrdersCount,
             'pendingOrdersCount' => $pendingOrdersCount,
+            'pendingOrdersAmount' => $pendingOrdersAmount,
             'processingOrdersCount' => $processingOrdersCount,
+            'processingOrdersAmount' => $processingOrdersAmount,
             'completedOrdersCount' => $completedOrdersCount,
             'cancelledOrdersCount' => $cancelledOrdersCount,
+            'outOfStockCount' => $outOfStockCount,
+            'lowStockCount' => $lowStockCount,
             'recentOrders' => $recentOrders,
             'hasVietQr' => $hasVietQr,
             'bankAccount' => $bankAccount,
@@ -281,7 +442,15 @@ class BusinessManagementController extends Controller
             'profileScore' => $profileScore,
             'profileChecklist' => $profileChecklist,
             'sevenDaysLabels' => $sevenDaysLabels,
+            'sevenDaysFullDates' => $sevenDaysFullDates,
+            'prevWeekFullDates' => $prevWeekFullDates,
             'sevenDaysRevenueData' => $sevenDaysRevenueData,
+            'prevWeekRevenueData' => $prevWeekRevenueData,
+            'sevenDaysOrdersData' => $sevenDaysOrdersData,
+            'prevWeekOrdersData' => $prevWeekOrdersData,
+            'sevenDaysCustomersData' => $sevenDaysCustomersData,
+            'prevWeekCustomersData' => $prevWeekCustomersData,
+            'dailyTableData' => $dailyTableData,
         ]);
     }
 
@@ -431,6 +600,36 @@ class BusinessManagementController extends Controller
     }
 
     /**
+     * Show Product Detail View Page
+     */
+    public function showProduct(Request $request, $id)
+    {
+        $this->verifyHkdAccess();
+        $ctx = $this->getBusinessContext();
+        $eatery = $ctx['eatery'];
+
+        $product = DB::table('ocop_products')
+            ->where('id', $id)
+            ->where('eatery_id', $eatery->id)
+            ->first();
+
+        if (!$product) {
+            return redirect()->route('hkd.products.index')->with('error', 'Sản phẩm không tồn tại!');
+        }
+
+        $specData = [];
+        if (!empty($product->ingredients)) {
+            $specData = is_array($product->ingredients) ? $product->ingredients : (json_decode($product->ingredients, true) ?: []);
+        }
+
+        return view('hkd.product-show', [
+            'eatery' => $eatery,
+            'product' => $product,
+            'specData' => $specData,
+        ]);
+    }
+
+    /**
      * Store New Product
      */
     public function storeProduct(Request $request)
@@ -450,6 +649,12 @@ class BusinessManagementController extends Controller
         }
 
         $specData = array_filter([
+            'sku' => $request->input('sku'),
+            'stock_status' => $request->input('stock_status', 'in_stock'),
+            'stock_qty' => $request->input('stock_qty'),
+            'unit_conversion' => $request->input('unit_conversion'),
+            'wholesale_price' => $request->input('wholesale_price'),
+            'wholesale_qty' => $request->input('wholesale_qty'),
             'product_type' => $request->input('product_type'),
             'commitment_text' => $request->input('commitment_text'),
             'delivery_text' => $request->input('delivery_text'),
@@ -505,6 +710,12 @@ class BusinessManagementController extends Controller
         }
 
         $newInputs = [
+            'sku' => $request->input('sku'),
+            'stock_status' => $request->input('stock_status', 'in_stock'),
+            'stock_qty' => $request->input('stock_qty'),
+            'unit_conversion' => $request->input('unit_conversion'),
+            'wholesale_price' => $request->input('wholesale_price'),
+            'wholesale_qty' => $request->input('wholesale_qty'),
             'product_type' => $request->input('product_type'),
             'commitment_text' => $request->input('commitment_text'),
             'delivery_text' => $request->input('delivery_text'),
@@ -523,7 +734,7 @@ class BusinessManagementController extends Controller
             'unit' => $request->input('unit', $product->unit ?? ''),
             'star_rating' => $request->input('star_rating', $product->star_rating),
             'description' => $request->input('description', ''),
-            'ingredients' => !empty($specData) ? json_encode($specData, JSON_UNESCAPED_UNICODE) : null,
+            'ingredients' => !empty($existingSpecs) ? json_encode($existingSpecs, JSON_UNESCAPED_UNICODE) : null,
             'image_path' => $imagePath,
             'updated_at' => now(),
         ]);

@@ -736,7 +736,7 @@
                                 <div class="ocop-seller-badge">
                                     🏛️ ${card.subtitle}
                                 </div>
-                                ${card.desc && card.desc !== 'null' ? `<p class="eatery-desc">${card.desc}</p>` : ''}
+                                ${card.desc && card.desc !== 'null' ? `<p class="eatery-desc">${card.desc.replace(/^Chủ\s+thể\s+sản\s+xuất:\s*[^;\n\.\&]+(?:\s*;\s*|\s+(?=[A-ZĐÀÁẢÃẠĂẮẰẲẴẶÂẤẦẨẪẬÊẾỀỂỄỆÔỐỒỔỖỘƠỚỜỞỠỢƯỨỪỬỮỰÍÌỈĨỊÝỲỶỸỴ]))/i, '').replace(/^Chủ\s+thể\s+sản\s+xuất:\s*/i, '')}</p>` : ''}
                                 <div class="eatery-footer">
                                     <div class="eatery-meta-item">
                                         <span>📍</span> ${communeName}
@@ -1203,6 +1203,16 @@
                         const lat = eat.latitude || 21.1352;
                         const lng = eat.longitude || 105.8458;
 
+                        let isOutOfStock = false;
+                        if (p.ingredients) {
+                            try {
+                                const specObj = typeof p.ingredients === 'string' ? JSON.parse(p.ingredients) : p.ingredients;
+                                if (specObj && specObj.stock_status === 'out_of_stock') {
+                                    isOutOfStock = true;
+                                }
+                            } catch (e) {}
+                        }
+
                         cardsHtml += `
                             <div class="eatery-card glass-panel revealed hover-lift ocop-card-highlight" 
                                  data-slug="${slug}"
@@ -1215,6 +1225,7 @@
                                  onclick="focusOnEatery(${lat}, ${lng}, '${slug}', '${pName.replace(/'/g, "\\'")}', '${imgUrl}', '${formattedPrice}', '${stars}', '${sellerName.replace(/'/g, "\\'")}')">
                                 <div class="eatery-img-wrapper hover-zoom-container">
                                     <img src="${imgUrl}" class="eatery-img hover-zoom-img" alt="${pName}" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1578916171728-46686eac8d58?auto=format&fit=crop&w=600&q=80';">
+                                    ${isOutOfStock ? `<div style="position: absolute; top: 8px; right: 8px; background: #dc2626; color: #ffffff; font-size: 0.7rem; font-weight: 800; padding: 4px 10px; border-radius: 8px; z-index: 5; box-shadow: 0 2px 8px rgba(220, 38, 38, 0.4);">🔴 Hết hàng</div>` : ''}
                                 </div>
                                 <div class="eatery-info">
                                     <div style="margin-bottom: 4px;">
@@ -1229,7 +1240,7 @@
                                     <div class="ocop-seller-badge">
                                         🏛️ Chủ thể sản xuất: ${sellerName}
                                     </div>
-                                    ${p.description || eat.description ? `<p class="eatery-desc">${p.description || eat.description}</p>` : ''}
+                                    ${p.description || eat.description ? `<p class="eatery-desc">${(p.description || eat.description).replace(/^Chủ\s+thể\s+sản\s+xuất:\s*[^;\n\.\&]+(?:\s*;\s*|\s+(?=[A-ZĐÀÁẢÃẠĂẮẰẲẴẶÂẤẦẨẪẬÊẾỀỂỄỆÔỐỒỔỖỘƠỚỜỞỠỢƯỨỪỬỮỰÍÌỈĨỊÝỲỶỸỴ]))/i, '').replace(/^Chủ\s+thể\s+sản\s+xuất:\s*/i, '')}</p>` : ''}
                                     <div class="eatery-footer">
                                         <div class="eatery-meta-item">
                                             <span>📍</span> ${communeName}
@@ -1239,17 +1250,26 @@
                                         </div>
                                     </div>
                                     <div class="ocop-card-actions" style="display: flex; gap: 8px; margin-top: 10px; width: 100%;">
-                                        <button type="button" 
-                                                class="add-to-cart-btn ocop-buy-btn" 
-                                                data-id="${p.id}" 
-                                                data-type="ocop_product" 
-                                                onclick="addToCart(event, this); if(typeof animateFlyToCart === 'function') animateFlyToCart(this, '🌾');" 
-                                                style="flex: 1.1; background: linear-gradient(135deg, #059669 0%, #10b981 100%); color: #ffffff; border: none; border-radius: 10px; padding: 9px 12px; font-weight: 700; font-size: 0.82rem; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 12px rgba(5, 150, 105, 0.25); transition: all 0.2s;"
-                                                onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 16px rgba(5, 150, 105, 0.35)'" 
-                                                onmouseout="this.style.transform='none'; this.style.boxShadow='0 4px 12px rgba(5, 150, 105, 0.25)'">
-                                            <i class="bi bi-cart-plus-fill" style="font-size: 0.95rem;"></i>
-                                            <span>Mua hàng</span>
-                                        </button>
+                                        ${isOutOfStock ? `
+                                            <button type="button" 
+                                                    disabled
+                                                    style="flex: 1.1; background: #94a3b8; color: #ffffff; border: none; border-radius: 10px; padding: 9px 12px; font-weight: 700; font-size: 0.82rem; cursor: not-allowed; display: inline-flex; align-items: center; justify-content: center; gap: 6px; opacity: 0.85;">
+                                                <i class="bi bi-slash-circle" style="font-size: 0.95rem;"></i>
+                                                <span>🔴 Hết hàng</span>
+                                            </button>
+                                        ` : `
+                                            <button type="button" 
+                                                    class="add-to-cart-btn ocop-buy-btn" 
+                                                    data-id="${p.id}" 
+                                                    data-type="ocop_product" 
+                                                    onclick="addToCart(event, this); if(typeof animateFlyToCart === 'function') animateFlyToCart(this, '🌾');" 
+                                                    style="flex: 1.1; background: linear-gradient(135deg, #059669 0%, #10b981 100%); color: #ffffff; border: none; border-radius: 10px; padding: 9px 12px; font-weight: 700; font-size: 0.82rem; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 12px rgba(5, 150, 105, 0.25); transition: all 0.2s;"
+                                                    onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 16px rgba(5, 150, 105, 0.35)'" 
+                                                    onmouseout="this.style.transform='none'; this.style.boxShadow='0 4px 12px rgba(5, 150, 105, 0.25)'">
+                                                <i class="bi bi-cart-plus-fill" style="font-size: 0.95rem;"></i>
+                                                <span>Mua hàng</span>
+                                            </button>
+                                        `}
                                         <a href="/san-pham-ocop/${p.id}" 
                                            class="ocop-explore-btn" 
                                            onclick="event.stopPropagation();" 

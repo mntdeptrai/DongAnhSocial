@@ -116,6 +116,7 @@
     $customOrderPolicy = !empty($specData['order_policy']) ? trim($specData['order_policy']) : null;
     $customPaymentPolicy = !empty($specData['payment_policy']) ? trim($specData['payment_policy']) : null;
     $isSignature = !empty($product->is_signature) || (!empty($specData['is_signature']) && (int)$specData['is_signature'] === 1);
+    $stockStatus = $specData['stock_status'] ?? 'in_stock';
 @endphp
 
 <style>
@@ -625,9 +626,15 @@
                         @endif
                     </div>
                     <div style="text-align: right;">
-                        <span style="font-size: 0.85rem; color: #10b981; font-weight: 700; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); padding: 4px 12px; border-radius: 20px;">
-                            ✓ Sẵn hàng tại Đông Anh
-                        </span>
+                        @if(($stockStatus ?? '') === 'out_of_stock')
+                            <span style="font-size: 0.85rem; color: #dc2626; font-weight: 800; background: rgba(220, 38, 38, 0.1); border: 1px solid rgba(220, 38, 38, 0.3); padding: 4px 12px; border-radius: 20px;">
+                                🔴 Hết hàng (Tạm ngưng nhận đơn)
+                            </span>
+                        @else
+                            <span style="font-size: 0.85rem; color: #10b981; font-weight: 700; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); padding: 4px 12px; border-radius: 20px;">
+                                ✓ Sẵn hàng tại Đông Anh
+                            </span>
+                        @endif
                     </div>
                 </div>
     @php
@@ -711,7 +718,13 @@
                         </a>
                     @endif
 
-                    @if($product->price > 0)
+                    @if(($stockStatus ?? '') === 'out_of_stock')
+                        <button disabled
+                                class="btn-action-primary" 
+                                style="background: #94a3b8; cursor: not-allowed; box-shadow: none; opacity: 0.85;">
+                            <span>🔴 Hết hàng</span>
+                        </button>
+                    @elseif($product->price > 0)
                         <button onclick="addToCart(event, this)" 
                                 data-id="{{ $product->id }}" 
                                 data-type="dish"

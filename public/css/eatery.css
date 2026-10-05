@@ -3,6 +3,7 @@
     display: flex;
     gap: 20px;
     padding: 16px;
+    align-items: stretch;
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     border: 1px solid var(--border-glow);
@@ -16,12 +17,15 @@
 }
 
 .eatery-img-wrapper {
-    width: 140px;
-    height: 140px;
+    width: 155px;
+    min-height: 155px;
+    height: auto;
+    align-self: stretch;
     border-radius: 12px;
     overflow: hidden;
     flex-shrink: 0;
     position: relative;
+    background: rgba(0, 0, 0, 0.03);
 }
 
 .eatery-img {
@@ -47,6 +51,7 @@
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
+    gap: 8px;
 }
 
 .eatery-title {
@@ -58,10 +63,11 @@
 
 /* Custom OCOP Product Styling - High Visual Impact */
 .ocop-card-highlight {
-    border: 1.5px solid rgba(16, 185, 129, 0.4) !important;
+    border: 1.5px solid rgba(16, 185, 129, 0.35) !important;
     background: linear-gradient(145deg, #ffffff 0%, #f0fdf4 100%) !important;
     box-shadow: 0 4px 18px -2px rgba(16, 185, 129, 0.12), 0 2px 6px -1px rgba(0, 0, 0, 0.03) !important;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    border-radius: 16px !important;
 }
 
 .ocop-card-highlight:hover {
@@ -87,7 +93,7 @@
 }
 
 .ocop-product-title {
-    font-size: 1.3rem !important;
+    font-size: 1.25rem !important;
     font-weight: 800 !important;
     color: #064e3b !important;
     line-height: 1.35 !important;
@@ -95,7 +101,9 @@
     background: linear-gradient(135deg, #064e3b 0%, #047857 60%, #059669 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    margin-bottom: 6px !important;
+    margin-bottom: 4px !important;
+    flex: 1;
+    min-width: 0;
 }
 
 .ocop-seller-badge {
@@ -105,15 +113,16 @@
     font-size: 0.78rem;
     font-weight: 700;
     color: #0284c7;
-    background: rgba(14, 165, 233, 0.09);
+    background: #e0f2fe;
     border: 1px solid rgba(14, 165, 233, 0.25);
-    padding: 4px 10px;
+    padding: 5px 12px;
     border-radius: 8px;
+    margin-top: 2px;
     margin-bottom: 8px;
     max-width: 100%;
     box-sizing: border-box;
-    flex-wrap: wrap;
     word-break: break-word;
+    line-height: 1.4;
 }
 
 .ocop-star-tag {
@@ -128,6 +137,7 @@
     border-radius: 20px;
     box-shadow: 0 3px 10px rgba(245, 158, 11, 0.35);
     white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .ocop-price-tag {
@@ -140,30 +150,52 @@
     box-shadow: 0 3px 10px rgba(16, 185, 129, 0.3);
 }
 
-.ocop-explore-btn {
+.ocop-card-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+    width: 100%;
+}
+
+.ocop-card-actions .ocop-buy-btn,
+.ocop-card-actions .ocop-explore-btn {
+    flex: 1 !important;
+    width: auto !important;
+    margin-top: 0 !important;
+    height: 40px;
+    padding: 0 12px !important;
+    font-size: 0.82rem !important;
+    border-radius: 10px !important;
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
-    gap: 6px !important;
-    width: 100% !important;
-    margin-top: 10px !important;
-    padding: 10px 14px !important;
-    background: linear-gradient(135deg, #059669 0%, #10b981 100%) !important;
+    box-sizing: border-box !important;
+}
+
+.ocop-explore-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+    margin-top: 10px;
+    padding: 10px 14px;
+    background: linear-gradient(135deg, #059669 0%, #10b981 100%);
     color: #ffffff !important;
-    font-weight: 800 !important;
-    font-size: 0.85rem !important;
-    border-radius: 10px !important;
-    border: none !important;
-    box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3) !important;
-    transition: all 0.25s ease !important;
-    cursor: pointer !important;
+    font-weight: 800;
+    font-size: 0.85rem;
+    border-radius: 10px;
+    border: none;
+    box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
+    transition: all 0.25s ease;
+    cursor: pointer;
     text-decoration: none !important;
 }
 
 .ocop-explore-btn:hover {
-    background: linear-gradient(135deg, #047857 0%, #059669 100%) !important;
-    box-shadow: 0 6px 18px rgba(5, 150, 105, 0.45) !important;
-    transform: translateY(-2px) !important;
+    background: linear-gradient(135deg, #047857 0%, #059669 100%);
+    box-shadow: 0 6px 18px rgba(5, 150, 105, 0.45);
+    transform: translateY(-2px);
 }
 
 .eatery-title:hover {

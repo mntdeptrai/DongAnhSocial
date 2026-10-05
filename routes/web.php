@@ -267,6 +267,7 @@ Route::prefix('hkd')->middleware(['auth', 'role:seller,hkd,dn,business,admin,man
     Route::post('/profile', [BusinessManagementController::class, 'updateProfile'])->name('hkd.profile.update');
     Route::get('/products', [BusinessManagementController::class, 'products'])->name('hkd.products.index');
     Route::get('/products/create', [BusinessManagementController::class, 'createProduct'])->name('hkd.products.create');
+    Route::get('/products/{id}', [BusinessManagementController::class, 'showProduct'])->name('hkd.products.show');
     Route::get('/products/{id}/edit', [BusinessManagementController::class, 'editProduct'])->name('hkd.products.edit');
     Route::post('/products', [BusinessManagementController::class, 'storeProduct'])->name('hkd.products.store');
     Route::put('/products/{id}', [BusinessManagementController::class, 'updateProduct'])->name('hkd.products.update');
