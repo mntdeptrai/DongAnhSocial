@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\Eatery;
 use App\Models\PasswordOtp;
 use App\Mail\SendPasswordOtpMail;
 use App\Mail\SendRegisterOtpMail;
@@ -47,12 +48,29 @@ class AuthController extends Controller
         $login = $request->input('email');
         $password = $request->input('password');
 
+        $cleanPhone = preg_replace('/[^0-9]/', '', $login);
+
         // Tìm người dùng bằng email, username, name hoặc phone
         $user = User::where('email', $login)
             ->orWhere('username', $login)
             ->orWhere('name', $login)
-            ->orWhere('phone', $login)
-            ->first();
+            ->orWhere('phone', $login);
+
+        if (!empty($cleanPhone) && strlen($cleanPhone) >= 8) {
+            $user->orWhere('phone', 'LIKE', '%' . $cleanPhone . '%');
+        }
+
+        $user = $user->first();
+
+        if (!$user && !empty($login)) {
+            // Tìm theo MST trong storytelling_data của Eatery
+            $eatery = Eatery::where('storytelling_data->mst', $login)
+                ->orWhere('storytelling_data->tax_code', $login)
+                ->first();
+            if ($eatery && $eatery->user_id) {
+                $user = User::find($eatery->user_id);
+            }
+        }
 
         if ($user && Hash::check($password, $user->password)) {
             Auth::login($user);
