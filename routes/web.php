@@ -17,7 +17,8 @@ use App\Http\Controllers\YouTubeAuthController;
 use App\Http\Controllers\HealthStationController;
 use App\Http\Controllers\BusinessManagementController;
 use App\Http\Controllers\ModerationController;
-
+use App\Http\Controllers\ExperienceCornerController;
+use App\Http\Controllers\NongSanDongAnhController;
 
 /*
 |--------------------------------------------------------------------------
@@ -115,7 +116,18 @@ Route::delete('/livestream/{id}', [LiveStreamController::class, 'destroy'])->nam
 
 // --- FOOD TOUR JOURNEY ROUTES (Trải nghiệm hành trình ẩm thực) ---
 Route::get('/food-tours', [FoodTourController::class, 'index'])->name('food-tours.index');
-Route::get('/exp-corner', [FoodTourController::class, 'cookingIndex'])->name('cooking-tours.index');
+
+// --- EXPERIENCE CORNER & CULTURAL HERITAGE (Góc Trải nghiệm Làng nghề & Vui chơi bản địa) ---
+Route::get('/exp-corner', [ExperienceCornerController::class, 'index'])->name('exp-corner.index');
+Route::get('/goc-trai-nghiem', [ExperienceCornerController::class, 'index'])->name('goc-trai-nghiem.index');
+Route::get('/goc-trai-nghiem-thuc-te', fn() => redirect()->route('exp-corner.index'));
+Route::post('/exp-corner/feedback', [ExperienceCornerController::class, 'storeFeedback'])->name('exp-corner.feedback.store');
+Route::get('/exp-corner/legacy', fn() => redirect()->route('exp-corner.index'))->name('cooking-tours.index');
+
+// --- NÔNG SẢN ĐÔNG ANH (Danh mục Nông sản sạch & Đặc sản làng nghề Đông Anh) ---
+Route::get('/nong-san-dong-anh', [NongSanDongAnhController::class, 'index'])->name('nong-san.index');
+Route::get('/nong-san', fn() => redirect()->route('nong-san.index'));
+Route::post('/nong-san-dong-anh/order', [NongSanDongAnhController::class, 'submitOrder'])->name('nong-san.order');
 
 
 // Xem trang cá nhân công khai (Khách không đăng nhập vẫn xem được)

@@ -54,21 +54,7 @@ class FoodTourController extends Controller
         return view('food-tours.index', compact('tours', 'mood', 'communityTours'));
     }
 
-    /**
-     * Display a listing of cooking and experience tours.
-     */
-    public function cookingIndex(Request $request)
-    {
-        $tours = FoodTour::public()
-            ->where('mood', 'cooking')
-            ->with(['stops.eatery', 'diaries.user'])
-            ->withCount('diaries')
-            ->get();
-            
-        $activities = \App\Services\EateryApiService::getAllCulturalActivities();
-            
-        return view('food-tours.cooking', compact('tours', 'activities'));
-    }
+
 
     /**
      * Display the specified food tour details.

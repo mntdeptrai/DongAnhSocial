@@ -39,6 +39,12 @@
                         </a>
                     </li>
                     <li>
+                        <a href="/nong-san-dong-anh" class="nav-link {{ request()->is('nong-san*') ? 'active' : '' }}">
+                            <span><span class="nav-icon">🌾</span>Nông sản Đông Anh</span>
+                            <span class="nav-arrow">➔</span>
+                        </a>
+                    </li>
+                    <li>
                         <a href="/checkin" class="nav-link {{ request()->is('checkin*') ? 'active' : '' }}">
                             <span><span class="nav-icon">📸</span>Góc Check-in</span>
                             <span class="nav-arrow">➔</span>
