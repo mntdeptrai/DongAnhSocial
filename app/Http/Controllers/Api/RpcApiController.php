@@ -135,25 +135,21 @@ class RpcApiController extends Controller
             throw new \InvalidArgumentException('Invalid params: "updates" must be an array.');
         }
 
-        $count = 0;
-        DB::beginTransaction();
-        try {
-            foreach ($updates as $update) {
-                if (isset($update['id']) && isset($update['price'])) {
-                    $dish = Dish::find($update['id']);
-                    if ($dish) {
-                        $dish->update(['price' => $update['price']]);
-                        $count++;
-                    }
-                }
+        $rows = [];
+        foreach ($updates as $update) {
+            if (isset($update['id']) && isset($update['price'])) {
+                $rows[] = [
+                    'id'    => (int) $update['id'],
+                    'price' => $update['price'],
+                ];
             }
-            DB::commit();
-        } catch (\Exception $e) {
-            DB::rollBack();
-            throw $e;
         }
 
-        return ['success' => true, 'updated_count' => $count];
+        if (!empty($rows)) {
+            Dish::upsert($rows, ['id'], ['price']);
+        }
+
+        return ['success' => true, 'updated_count' => count($rows)];
     }
 
     /**

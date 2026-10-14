@@ -473,82 +473,97 @@
     function getLabel(slug, fallback) { return CATEGORY_LABELS[slug] || (fallback || '').toUpperCase(); }
 
     // ==================== INIT ====================
-    document.addEventListener("DOMContentLoaded", async function() {
-        await ensureLeaflet();
-        try {
-            initMap();
-        } catch (err) {
-            console.error('Lỗi khởi tạo bản đồ Leaflet:', err);
-        }
-        await loadCategories();
+    document.addEventListener("DOMContentLoaded", function() {
         setupSearch();
+        // Tải kèm bản đồ và danh mục song song, không chờ đợi lẫn nhau
+        Promise.all([
+            initMap().catch(err => console.error('Lỗi khởi tạo bản đồ Leaflet:', err)),
+            loadCategories()
+        ]);
     });
 
-    async function ensureLeaflet() {
+    let leafletReadyPromise = null;
+    function ensureLeaflet() {
         if (typeof L !== 'undefined' && typeof L.markerClusterGroup === 'function') {
-            return true;
+            return Promise.resolve(true);
         }
-        // Chờ Leaflet tải xong (tối đa 3s)
-        for (let i = 0; i < 30; i++) {
-            await new Promise(r => setTimeout(r, 100));
-            if (typeof L !== 'undefined') {
-                break;
+        if (leafletReadyPromise) {
+            return leafletReadyPromise;
+        }
+        leafletReadyPromise = (async () => {
+            // Chờ Leaflet tải xong (tối đa 3s)
+            for (let i = 0; i < 30; i++) {
+                if (typeof L !== 'undefined' && typeof L.markerClusterGroup === 'function') {
+                    return true;
+                }
+                await new Promise(r => setTimeout(r, 100));
             }
-        }
-        // Fallback: nếu vẫn chưa có thì nạp trực tiếp qua script tag
-        if (typeof L === 'undefined') {
-            await new Promise((resolve) => {
-                const s = document.createElement('script');
-                s.src = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js';
-                s.onload = () => {
-                    const sc = document.createElement('script');
-                    sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.js';
-                    sc.onload = () => resolve();
-                    sc.onerror = () => resolve();
-                    document.head.appendChild(sc);
-                };
-                s.onerror = () => resolve();
-                document.head.appendChild(s);
-            });
-        }
-        return true;
+            // Fallback: nếu vẫn chưa có thì nạp trực tiếp qua script tag
+            if (typeof L === 'undefined' || typeof L.markerClusterGroup !== 'function') {
+                await new Promise((resolve) => {
+                    const s = document.createElement('script');
+                    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js';
+                    s.onload = () => {
+                        const sc = document.createElement('script');
+                        sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.js';
+                        sc.onload = () => resolve(true);
+                        sc.onerror = () => resolve(false);
+                        document.head.appendChild(sc);
+                    };
+                    s.onerror = () => resolve(false);
+                    document.head.appendChild(s);
+                });
+            }
+            return typeof L !== 'undefined';
+        })();
+        return leafletReadyPromise;
     }
 
-    function initMap() {
-        if (searchMap) return;
-        const container = document.getElementById('searchMap');
-        if (!container) return;
-        if (typeof L === 'undefined') {
-            console.warn('Leaflet chưa sẵn sàng, sẽ khởi tạo khi tải xong');
-            return;
-        }
-        if (container._leaflet_id) {
-            return;
-        }
+    let mapInitPromise = null;
+    async function initMap() {
+        if (searchMap) return searchMap;
+        if (mapInitPromise) return mapInitPromise;
 
-        searchMap = L.map('searchMap', { zoomControl: false })
-            .setView([21.1352, 105.8458], 12);
-        L.control.zoom({ position: 'bottomright' }).addTo(searchMap);
-        L.tileLayer('https://mt1.google.com/vt/lyrs=m&hl=vi&x={x}&y={y}&z={z}', {
-            attribution: '&copy; Google Maps',
-            maxZoom: 20
-        }).addTo(searchMap);
+        mapInitPromise = (async () => {
+            await ensureLeaflet();
+            const container = document.getElementById('searchMap');
+            if (!container) return null;
+            if (typeof L === 'undefined') {
+                console.warn('Leaflet chưa sẵn sàng, sẽ khởi tạo khi tải xong');
+                return null;
+            }
+            if (searchMap || container._leaflet_id) {
+                return searchMap;
+            }
 
-        // Init MarkerCluster với cấu hình an toàn & spiderfy khi trùng tọa độ
-        const clusterOptions = {
-            maxClusterRadius: 50,
-            spiderfyOnMaxZoom: true,
-            showCoverageOnHover: false
-        };
-        clusterGroup = (typeof L.markerClusterGroup === 'function')
-            ? L.markerClusterGroup(clusterOptions)
-            : L.featureGroup();
-        searchMap.addLayer(clusterGroup);
+            searchMap = L.map('searchMap', { zoomControl: false })
+                .setView([21.1352, 105.8458], 12);
+            L.control.zoom({ position: 'bottomright' }).addTo(searchMap);
+            L.tileLayer('https://mt1.google.com/vt/lyrs=m&hl=vi&x={x}&y={y}&z={z}', {
+                attribution: '&copy; Google Maps',
+                maxZoom: 20
+            }).addTo(searchMap);
 
-        // Force Leaflet tính lại kích thước sau khi render flexbox
-        setTimeout(() => {
-            if (searchMap) searchMap.invalidateSize();
-        }, 250);
+            // Init MarkerCluster với cấu hình an toàn & spiderfy khi trùng tọa độ
+            const clusterOptions = {
+                maxClusterRadius: 50,
+                spiderfyOnMaxZoom: true,
+                showCoverageOnHover: false
+            };
+            clusterGroup = (typeof L.markerClusterGroup === 'function')
+                ? L.markerClusterGroup(clusterOptions)
+                : L.featureGroup();
+            searchMap.addLayer(clusterGroup);
+
+            // Force Leaflet tính lại kích thước sau khi render flexbox
+            setTimeout(() => {
+                if (searchMap) searchMap.invalidateSize();
+            }, 250);
+
+            return searchMap;
+        })();
+
+        return mapInitPromise;
     }
 
     // ==================== CATEGORIES ====================
@@ -672,27 +687,26 @@
         sidebarLoading = true;
 
         try {
-            // Fetch markers + sidebar in parallel
-            const [markersRes, sidebarRes] = await Promise.all([
-                fetch(`/api/map/markers?category_slug=${slug}&page=${page}`),
-                fetch(`/api/map/sidebar?category_slug=${slug}&page=${page}`)
+            // Fetch markers + sidebar in parallel with streaming JSON
+            const [markersData, sidebarData] = await Promise.all([
+                fetch(`/api/map/markers?category_slug=${slug}&page=${page}`).then(r => {
+                    if (!r.ok) throw new Error('API markers error: ' + r.status);
+                    return r.json();
+                }),
+                fetch(`/api/map/sidebar?category_slug=${slug}&page=${page}`).then(r => {
+                    if (!r.ok) throw new Error('API sidebar error: ' + r.status);
+                    return r.json();
+                })
             ]);
 
-            if (!markersRes.ok || !sidebarRes.ok) {
-                throw new Error('API returned error');
-            }
-
-            const markersData = await markersRes.json();
-            const sidebarData = await sidebarRes.json();
-
-            // Add markers to map
-            if (markersData && Array.isArray(markersData.data)) {
-                addMarkersToMap(markersData.data, slug);
-            }
-
-            // Render sidebar items
+            // Render sidebar items first for immediate UI display
             if (sidebarData && Array.isArray(sidebarData.data)) {
                 renderSidebarItems(slug, sidebarData.data, isFirstLoad);
+            }
+
+            // Add markers to map (awaits map if still initializing)
+            if (markersData && Array.isArray(markersData.data)) {
+                await addMarkersToMap(markersData.data, slug);
             }
 
             // Update pagination state
@@ -727,27 +741,39 @@
         sidebarLoading = false;
     }
 
-    // Background-load remaining marker pages (for map dots only, no sidebar - tối đa 5 trang để tránh spam server)
+    // Background-load remaining marker pages concurrently
     async function loadRemainingMarkers(slug, fromPage, lastPage) {
         const maxPages = Math.min(lastPage, fromPage + 5);
+        const pagePromises = [];
         for (let p = fromPage; p <= maxPages; p++) {
-            if (activeCategory !== slug) break; // User switched category
-            try {
-                const res = await fetch(`/api/map/markers?category_slug=${slug}&page=${p}`);
-                const data = await res.json();
-                addMarkersToMap(data.data, slug);
-            } catch (_) {}
+            pagePromises.push(
+                fetch(`/api/map/markers?category_slug=${slug}&page=${p}`)
+                    .then(res => res.ok ? res.json() : null)
+                    .then(async data => {
+                        if (activeCategory === slug && data && Array.isArray(data.data)) {
+                            await addMarkersToMap(data.data, slug);
+                        }
+                    })
+                    .catch(() => {})
+            );
         }
+        await Promise.allSettled(pagePromises);
     }
 
     // ==================== MARKERS ====================
-    function addMarkersToMap(markerList, categorySlug) {
-        if (!clusterGroup || typeof L === 'undefined' || !Array.isArray(markerList)) return;
-        const color = getColor(categorySlug);
-        const catIcon = getIcon(categorySlug);
+    async function addMarkersToMap(markerList, categorySlug) {
+        if (!Array.isArray(markerList) || markerList.length === 0) return;
+        if (!searchMap) {
+            await initMap();
+        }
+        if (!clusterGroup || typeof L === 'undefined') return;
 
         markerList.forEach(m => {
             if (!m.lat || !m.lng || markers[m.slug]) return;
+
+            const mCat = m.cat || categorySlug;
+            const color = getColor(mCat);
+            const catIcon = getIcon(mCat);
 
             const icon = L.divIcon({
                 html: `<div style="background:${color};width:36px;height:36px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;border:2px solid #fff;box-shadow:1px 4px 8px rgba(0,0,0,0.3);cursor:pointer;">
@@ -907,20 +933,25 @@
 
         // Show loading
         document.getElementById('sidebarContent').innerHTML = '<div class="sidebar-loading">🔍 Đang tìm kiếm...</div>';
-        clusterGroup.clearLayers();
+        if (clusterGroup && typeof clusterGroup.clearLayers === 'function') {
+            clusterGroup.clearLayers();
+        }
         markers = {};
         activeCategory = null;
 
         try {
-            const [markersRes, sidebarRes] = await Promise.all([
-                fetch(`/api/map/markers?q=${encodeURIComponent(keyword)}`),
-                fetch(`/api/map/sidebar?q=${encodeURIComponent(keyword)}`)
+            const [markersData, sidebarData] = await Promise.all([
+                fetch(`/api/map/markers?q=${encodeURIComponent(keyword)}`).then(r => {
+                    if (!r.ok) throw new Error('Search markers error: ' + r.status);
+                    return r.json();
+                }),
+                fetch(`/api/map/sidebar?q=${encodeURIComponent(keyword)}`).then(r => {
+                    if (!r.ok) throw new Error('Search sidebar error: ' + r.status);
+                    return r.json();
+                })
             ]);
 
-            const markersData = await markersRes.json();
-            const sidebarData = await sidebarRes.json();
-
-            if (markersData.data.length === 0) {
+            if (!markersData || !Array.isArray(markersData.data) || markersData.data.length === 0) {
                 document.getElementById('sidebarContent').innerHTML = 
                     '<div class="sidebar-loading">Không tìm thấy kết quả cho "' + keyword + '"</div>';
                 return;
@@ -969,13 +1000,11 @@
 
             document.getElementById('sidebarContent').innerHTML = html;
 
-            // Add markers
-            markersData.data.forEach(m => {
-                addMarkersToMap([m], m.cat || 'other');
-            });
+            // Add markers in bulk
+            await addMarkersToMap(markersData.data, 'search');
 
-            if (clusterGroup.getLayers().length > 0) {
-                searchMap.fitBounds(clusterGroup.getBounds(), { padding: [60, 60], maxZoom: 14 });
+            if (clusterGroup && typeof clusterGroup.getLayers === 'function' && clusterGroup.getLayers().length > 0) {
+                if (searchMap) searchMap.fitBounds(clusterGroup.getBounds(), { padding: [60, 60], maxZoom: 14 });
             }
         } catch (_) {
             document.getElementById('sidebarContent').innerHTML = 

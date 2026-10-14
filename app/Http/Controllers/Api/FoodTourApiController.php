@@ -208,13 +208,18 @@ YÊU CẦU TRẢ VỀ CHỈ LÀ CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU, KHÔNG C
 
                 $usedEateryIds[] = $selectedId;
 
-                FoodTourStop::create([
+                $stopsData[] = [
                     'food_tour_id'   => $tour->id,
                     'eatery_id'      => $selectedId,
                     'stop_order'     => $index + 1,
                     'stop_story'     => $stop['recommendation'] ?? ("Điểm đến thứ " . ($index + 1) . " trong hành trình " . $aiData['tour_name'] . "."),
-                    'estimated_time' => '45 phút'
-                ]);
+                    'estimated_time' => '45 phút',
+                    'created_at'     => now(),
+                    'updated_at'     => now(),
+                ];
+            }
+            if (!empty($stopsData)) {
+                FoodTourStop::insert($stopsData);
             }
             
             return response()->json(['success' => true, 'slug' => $slug]);

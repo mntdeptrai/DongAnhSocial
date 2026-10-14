@@ -149,6 +149,8 @@ class DistributeBusinessCoordinates extends Command
         $matchedAddressCount = 0;
         $randomizedCount = 0;
 
+        $batchUpdates = [];
+
         foreach ($eateries as $eat) {
             $phone = trim($eat->phone ?? '');
             $nameKey = mb_strtolower(trim($eat->name ?? ''));
@@ -192,11 +194,17 @@ class DistributeBusinessCoordinates extends Command
                 $randomizedCount++;
             }
 
-            $eat->update([
+            $batchUpdates[] = [
+                'id'        => $eat->id,
                 'latitude'  => $targetLat,
-                'longitude' => $targetLng
-            ]);
+                'longitude' => $targetLng,
+            ];
             $updatedCount++;
+        }
+
+        // Tối ưu hóa: Dùng upsert gom batch 500 bản ghi thay vì chạy hàng nghìn câu lệnh update đơn lẻ
+        foreach (array_chunk($batchUpdates, 500) as $chunk) {
+            Eatery::upsert($chunk, ['id'], ['latitude', 'longitude']);
         }
 
         $this->newLine();

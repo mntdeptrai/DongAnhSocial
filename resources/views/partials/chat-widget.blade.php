@@ -442,10 +442,12 @@
 
                 startPolling() {
                     if (this._pollingTimer) return;
-                    this._pollingTimer = setInterval(() => {
+                    this._pollingTimer = setInterval(async () => {
                         if (document.hidden) return; // Tạm dừng polling khi tab trình duyệt bị ẩn
-                        this.openChats.forEach(chat => {
-                            if (!chat.is_minimized) {
+
+                        const chatPromises = this.openChats
+                            .filter(chat => !chat.is_minimized)
+                            .map(chat => 
                                 fetch('/social/messages/' + chat.id)
                                     .then(res => res.json())
                                     .then(data => {
@@ -455,11 +457,10 @@
                                             this.scrollToBottom(chat.id);
                                         }
                                     })
-                                    .catch(() => {});
-                            }
-                        });
+                                    .catch(() => {})
+                            );
 
-                        fetch('/social/recent-chats', {
+                        const recentChatsPromise = fetch('/social/recent-chats', {
                             headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
                         })
                             .then(res => res.json())
@@ -474,6 +475,8 @@
                                 }
                             })
                             .catch(() => {});
+
+                        await Promise.allSettled([...chatPromises, recentChatsPromise]);
                     }, 4000);
                 },
 

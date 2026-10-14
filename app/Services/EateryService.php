@@ -414,13 +414,14 @@ class EateryService
         ]);
 
         if (!empty($data['media_urls'])) {
-            foreach ($data['media_urls'] as $url) {
-                ReviewMedia::create([
-                    'review_id' => $review->id,
-                    'media_url' => $url,
-                    'media_type' => 'image',
-                ]);
-            }
+            $mediaRows = array_map(fn($url) => [
+                'review_id'  => $review->id,
+                'media_url'  => $url,
+                'media_type' => 'image',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ], $data['media_urls']);
+            ReviewMedia::insert($mediaRows);
         }
 
         // Tự động cập nhật rating trung bình

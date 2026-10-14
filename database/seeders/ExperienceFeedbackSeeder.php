@@ -150,7 +150,10 @@ class ExperienceFeedbackSeeder extends Seeder
         }
 
         foreach ($defaultFeedbacks as $data) {
-            ExperienceFeedback::create($data);
+            ExperienceFeedback::firstOrCreate(
+                ['author_name' => $data['author_name'], 'activity_name' => $data['activity_name']],
+                $data
+            );
         }
     }
 }

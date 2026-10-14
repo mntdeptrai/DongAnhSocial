@@ -76,100 +76,76 @@ class SyncHkdFromJson extends Command
                 }
             }
 
-            // ── UPDATE existing ──────────────────────────────────────────
-            if ($eatery) {
-                $story = [];
-                if (!empty($eatery->storytelling_data)) {
-                    $story = is_string($eatery->storytelling_data)
-                        ? (json_decode($eatery->storytelling_data, true) ?: [])
-                        : (array) $eatery->storytelling_data;
-                }
-
-                $story['stt']      = $rec['stt'] ?? ($story['stt'] ?? null);
-                $story['mst']      = $mst ?: ($story['mst'] ?? '');
-                $story['industry'] = $story['industry'] ?? ($rec['industry'] ?? '');
-
-                $updates = [
-                    'storytelling_data' => json_encode($story, JSON_UNESCAPED_UNICODE),
-                    'updated_at'        => now(),
-                ];
-                if (empty($eatery->address) && !empty($rec['address'])) {
-                    $updates['address'] = $rec['address'];
-                }
-                if (empty($eatery->latitude) && !empty($rec['latitude'])) {
-                    $updates['latitude']  = $rec['latitude'];
-                    $updates['longitude'] = $rec['longitude'];
-                }
-
-                $this->line("  <info>UPDATE</info>  id={$eatery->id}  phone={$phone}  mst={$mst}  name={$eatery->name}");
-                if (!$dry) {
-                    DB::table('eateries')->where('id', $eatery->id)->update($updates);
-                }
-                $updated++;
-                continue;
-            }
-
-            // ── CREATE new ───────────────────────────────────────────────
-            // Ensure user exists
-            $userRecord = null;
-            if ($phone) {
-                $phoneNorm  = ltrim($phone, '0');
-                $userRecord = DB::table('users')
-                    ->where(function ($q) use ($phone, $phoneNorm) {
-                        $q->where('phone', $phone)
-                          ->orWhere('phone', '0' . $phoneNorm);
-                    })
-                    ->first();
-            }
-
+            $userId = null;
             if (!$dry) {
-                if (!$userRecord) {
-                    $userPhone = $phone ?: ('09' . rand(10000000, 99999999));
-                    $userId = DB::table('users')->insertGetId([
+                $userPhone = $phone ?: ('09' . rand(10000000, 99999999));
+                $userEmail = ($phone ?: (Str::slug($name) . '-' . strtolower(Str::random(6)))) . '@hkd.donganh.gov.vn';
+
+                $user = User::firstOrCreate(
+                    ['phone' => $phone],
+                    [
                         'name'        => $name ?: 'Chủ Hộ Kinh Doanh',
-                        'email'       => ($phone ?: (Str::slug($name) . '-' . strtolower(Str::random(6)))) . '@hkd.donganh.gov.vn',
+                        'email'       => $userEmail,
                         'phone'       => $userPhone,
                         'password'    => bcrypt('12345678'),
                         'role'        => 'hkd',
                         'status'      => 'active',
                         'is_verified' => true,
-                        'created_at'  => now(),
-                        'updated_at'  => now(),
-                    ]);
-                } else {
-                    $userId = $userRecord->id;
-                }
-
-                $baseSlug = Str::slug($name) ?: ('hkd-' . rand(1000, 9999));
-                $slug     = $baseSlug . '-' . strtolower(Str::random(5));
-
-                DB::table('eateries')->insert([
-                    'user_id'           => $userId,
-                    'name'              => $name ?: 'Hộ Kinh Doanh',
-                    'slug'              => $slug,
-                    'category_id'       => $categoryId,
-                    'commune_id'        => $communeId,
-                    'address'           => $rec['address']    ?? '',
-                    'phone'             => $phone,
-                    'description'       => $rec['industry']   ?? 'Hộ kinh doanh trên địa bàn xã Đông Anh',
-                    'price_range'       => $rec['price_range'] ?? 'Liên hệ',
-                    'status'            => 'active',
-                    'is_featured'       => false,
-                    'latitude'          => $rec['latitude']   ?? 21.1352,
-                    'longitude'         => $rec['longitude']  ?? 105.8458,
-                    'storytelling_data' => json_encode([
-                        'stt'        => $rec['stt'] ?? null,
-                        'mst'        => $mst,
-                        'owner_name' => $name,
-                        'industry'   => $rec['industry'] ?? '',
-                    ], JSON_UNESCAPED_UNICODE),
-                    'created_at'        => now(),
-                    'updated_at'        => now(),
-                ]);
+                    ]
+                );
+                $userId = $user->id;
             }
 
-            $this->line("  <comment>CREATE</comment>  phone={$phone}  mst={$mst}  name={$name}");
-            $created++;
+            // ── Upsert Eatery (updateOrCreate) ───────────────────────────
+            $story = [];
+            if ($eatery && !empty($eatery->storytelling_data)) {
+                $story = is_string($eatery->storytelling_data)
+                    ? (json_decode($eatery->storytelling_data, true) ?: [])
+                    : (array) $eatery->storytelling_data;
+            }
+            $story['stt']        = $rec['stt'] ?? ($story['stt'] ?? null);
+            $story['mst']        = $mst ?: ($story['mst'] ?? '');
+            $story['owner_name'] = $name ?: ($story['owner_name'] ?? '');
+            $story['industry']   = $story['industry'] ?? ($rec['industry'] ?? '');
+
+            $matchAttributes = $eatery 
+                ? ['id' => $eatery->id] 
+                : ['slug' => (Str::slug($name) ?: ('hkd-' . rand(1000, 9999))) . '-' . strtolower(Str::random(5))];
+
+            $payload = [
+                'user_id'           => $userId ?: ($eatery?->user_id ?? 1),
+                'name'              => $name ?: ($eatery?->name ?? 'Hộ Kinh Doanh'),
+                'category_id'       => $categoryId,
+                'commune_id'        => $communeId,
+                'address'           => $rec['address'] ?? ($eatery?->address ?? ''),
+                'phone'             => $phone,
+                'description'       => $rec['industry'] ?? ($eatery?->description ?? 'Hộ kinh doanh trên địa bàn xã Đông Anh'),
+                'price_range'       => $rec['price_range'] ?? ($eatery?->price_range ?? 'Liên hệ'),
+                'status'            => 'active',
+                'is_featured'       => false,
+                'latitude'          => $rec['latitude'] ?? ($eatery?->latitude ?? 21.1352),
+                'longitude'         => $rec['longitude'] ?? ($eatery?->longitude ?? 105.8458),
+                'storytelling_data' => $story,
+            ];
+
+            if (!$dry) {
+                $eateryModel = Eatery::updateOrCreate($matchAttributes, $payload);
+                if ($eateryModel->wasRecentlyCreated) {
+                    $this->line("  <comment>CREATE</comment>  phone={$phone}  mst={$mst}  name={$name}");
+                    $created++;
+                } else {
+                    $this->line("  <info>UPDATE</info>  id={$eatery->id}  phone={$phone}  mst={$mst}  name={$name}");
+                    $updated++;
+                }
+            } else {
+                if ($eatery) {
+                    $this->line("  <info>UPDATE (dry)</info>  id={$eatery->id}  phone={$phone}  mst={$mst}  name={$name}");
+                    $updated++;
+                } else {
+                    $this->line("  <comment>CREATE (dry)</comment>  phone={$phone}  mst={$mst}  name={$name}");
+                    $created++;
+                }
+            }
         }
 
         $this->newLine();

@@ -945,10 +945,13 @@ class HomeController extends Controller
             $total += $cnt;
         }
 
-        if ($type === 'checkin') {
-            try { \App\Models\Checkin::where('id', $id)->update(['likes_count' => $total]); } catch (\Throwable $e) {}
-        } elseif ($type === 'post') {
-            try { \App\Models\Post::where('id', $id)->update(['likes_count' => $total]); } catch (\Throwable $e) {}
+        $targetModel = match ($type) {
+            'checkin' => \App\Models\Checkin::class,
+            'post'    => \App\Models\Post::class,
+            default   => null,
+        };
+        if ($targetModel) {
+            rescue(fn() => $targetModel::where('id', $id)->update(['likes_count' => $total]), report: false);
         }
 
         event(new \App\Events\CheckinReacted((int) $id, $type, $emoji, $counts, $total));
@@ -1040,22 +1043,12 @@ class HomeController extends Controller
 
             // Cập nhật lại số lượng cho Post & EducationProgram nếu type là post
             if ($type === 'post') {
-                try {
-                    \App\Models\Post::where('id', $id)->update(['likes_count' => $realLikesCount]);
-                } catch (\Throwable $e) {}
-                try {
-                    \App\Models\Post::on('mysql_education')->where('id', $id)->update(['likes_count' => $realLikesCount]);
-                } catch (\Throwable $e) {}
-                try {
-                    \App\Models\EducationProgram::on('mysql_education')->where('id', $id)->update(['likes_count' => $realLikesCount]);
-                } catch (\Throwable $e) {}
-                try {
-                    \App\Models\EducationProgram::on('mysql')->where('id', $id)->update(['likes_count' => $realLikesCount]);
-                } catch (\Throwable $e) {}
+                foreach (['mysql', 'mysql_education'] as $conn) {
+                    rescue(fn() => \App\Models\Post::on($conn)->where('id', $id)->update(['likes_count' => $realLikesCount]), report: false);
+                    rescue(fn() => \App\Models\EducationProgram::on($conn)->where('id', $id)->update(['likes_count' => $realLikesCount]), report: false);
+                }
             } else if ($type === 'checkin') {
-                try {
-                    \App\Models\Checkin::where('id', $id)->update(['likes_count' => $realLikesCount]);
-                } catch (\Throwable $e) {}
+                rescue(fn() => \App\Models\Checkin::where('id', $id)->update(['likes_count' => $realLikesCount]), report: false);
             }
 
             return response()->json([

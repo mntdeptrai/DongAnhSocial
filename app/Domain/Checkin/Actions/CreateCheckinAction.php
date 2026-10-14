@@ -70,7 +70,7 @@ class CreateCheckinAction
         return Checkin::create([
             'user_id'    => $data->user_id,
             'eatery_id'  => $eateryId,
-            'guest_name' => $data->user_id ? null : ($data->guest_name ?? 'Khách vãng lai'),
+            'guest_name' => $data->user_id ? null : ($data->guest_name ?? 'KhÃ¡ch vÄƒng lai'),
             'rating'     => $data->rating,
             'comment'    => $data->comment,
             'image_path' => $imagePath,

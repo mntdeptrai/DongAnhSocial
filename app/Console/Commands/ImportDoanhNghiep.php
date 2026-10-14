@@ -65,122 +65,74 @@ class ImportDoanhNghiep extends Command
                 $existingEatery = Eatery::where('name', $name)->first();
             }
 
-            // 2. Find or Create User
-            $user = null;
+            // 2. Upsert User (giảm thiểu if-else và try-catch bằng updateOrCreate)
+            $userSearch = [];
             if ($existingEatery && $existingEatery->user_id) {
-                $user = User::find($existingEatery->user_id);
-            }
-            if (!$user && !empty($mst)) {
-                $user = User::where('username', $mst)
-                    ->orWhere('email', "{$mst}@donganh.gov.vn")
-                    ->first();
-            }
-            if (!$user && !empty($phone)) {
-                $user = User::where('phone', $phone)->first();
+                $userSearch = ['id' => $existingEatery->user_id];
+            } elseif (!empty($mst)) {
+                $userSearch = ['username' => $mst];
+            } elseif (!empty($phone)) {
+                $userSearch = ['phone' => $phone];
+            } else {
+                $userSearch = ['email' => $userEmail];
             }
 
-            $userEmail = ($mst ?: ($phone ?: Str::slug($name))) . '@donganh.gov.vn';
-
-            if (!$user) {
-                // Create user
-                $user = User::create([
-                    'name' => $name ?: 'Chủ Doanh Nghiệp',
-                    'username' => $mst ?: null,
-                    'email' => $userEmail,
-                    'phone' => $phone ?: null,
-                    'password' => bcrypt('123456'),
-                    'role' => 'dn',
-                    'is_active' => true,
+            $user = User::updateOrCreate(
+                $userSearch,
+                array_filter([
+                    'name'        => $name ?: 'Chủ Doanh Nghiệp',
+                    'username'    => $mst ?: null,
+                    'email'       => $userEmail,
+                    'phone'       => $phone ?: null,
+                    'role'        => 'dn',
+                    'is_active'   => true,
                     'is_verified' => true,
-                ]);
+                ], fn($val) => !is_null($val)) + ['password' => bcrypt('123456')]
+            );
+
+            if ($user->wasRecentlyCreated) {
                 $createdUsers++;
             } else {
-                // Update existing user fields if new values present
-                $dirtyUser = false;
-                if (!empty($mst) && empty($user->username)) {
-                    $user->username = $mst;
-                    $dirtyUser = true;
-                }
-                if (!empty($phone) && (empty($user->phone) || $user->phone !== $phone)) {
-                    $user->phone = $phone;
-                    $dirtyUser = true;
-                }
-                if (!empty($name) && $user->name !== $name) {
-                    $user->name = $name;
-                    $dirtyUser = true;
-                }
-                if ($dirtyUser) {
-                    $user->save();
-                    $updatedUsers++;
-                }
+                $updatedUsers++;
             }
 
-            // 3. Create or Update Eatery
-            if ($existingEatery) {
-                // Update existing eatery
-                $existingEatery->user_id = $user->id;
-                if (!empty($name)) {
-                    $existingEatery->name = $name;
-                }
-                if (!empty($address)) {
-                    $existingEatery->address = $address;
-                }
-                if (!empty($phone)) {
-                    $existingEatery->phone = $phone;
-                }
-                if (!empty($industry)) {
-                    $existingEatery->description = $industry;
-                }
+            // 3. Upsert Eatery
+            $storyData = is_array($existingEatery?->storytelling_data) ? $existingEatery->storytelling_data : [];
+            if (!empty($mst)) {
+                $storyData['mst'] = $mst;
+                $storyData['tax_code'] = $mst;
+            }
+            if (!empty($industry)) {
+                $storyData['industry'] = $industry;
+            }
 
-                $storyData = is_array($existingEatery->storytelling_data) ? $existingEatery->storytelling_data : [];
-                if (!empty($mst)) {
-                    $storyData['mst'] = $mst;
-                    $storyData['tax_code'] = $mst;
-                }
-                if (!empty($industry)) {
-                    $storyData['industry'] = $industry;
-                }
-                $existingEatery->storytelling_data = $storyData;
+            $eateryPayload = [
+                'user_id'           => $user->id,
+                'name'              => $name ?: ($existingEatery?->name ?: 'Doanh Nghiệp'),
+                'category_id'       => $category->id,
+                'commune_id'        => $communeId,
+                'address'           => $address ?: ($existingEatery?->address ?? ''),
+                'phone'             => $phone ?: ($existingEatery?->phone ?? ''),
+                'description'       => $industry ?: ($existingEatery?->description ?? ''),
+                'price_range'       => $item['price_range'] ?? ($existingEatery?->price_range ?? 'Liên hệ'),
+                'status'            => 'active',
+                'is_featured'       => false,
+                'latitude'          => $item['latitude'] ?? ($existingEatery?->latitude ?? 21.1352),
+                'longitude'         => $item['longitude'] ?? ($existingEatery?->longitude ?? 105.8458),
+                'storytelling_data' => $storyData,
+            ];
 
-                if (isset($item['latitude'])) $existingEatery->latitude = $item['latitude'];
-                if (isset($item['longitude'])) $existingEatery->longitude = $item['longitude'];
+            $matchAttributes = $existingEatery 
+                ? ['id' => $existingEatery->id] 
+                : ['slug' => (Str::slug($name) ?: ('dn-' . rand(1000, 9999))) . '-' . strtolower(Str::random(5))];
 
-                $existingEatery->save();
-                $updatedEateries++;
-            } else {
-                // Create new eatery
-                $baseSlug = Str::slug($name);
-                if (empty($baseSlug)) {
-                    $baseSlug = 'dn-' . rand(1000, 9999);
-                }
-                $slug = $baseSlug . '-' . strtolower(Str::random(5));
+            $eatery = Eatery::updateOrCreate($matchAttributes, $eateryPayload);
 
-                $storyData = [
-                    'tax_code' => $mst,
-                    'mst' => $mst,
-                    'owner_name' => '',
-                    'industry' => $industry,
-                ];
-
-                Eatery::create([
-                    'user_id' => $user->id,
-                    'name' => $name ?: 'Doanh Nghiệp',
-                    'slug' => $slug,
-                    'category_id' => $category->id,
-                    'commune_id' => $communeId,
-                    'address' => $address,
-                    'phone' => $phone,
-                    'description' => $industry,
-                    'price_range' => $item['price_range'] ?? 'Liên hệ',
-                    'status' => 'active',
-                    'is_featured' => false,
-                    'latitude' => $item['latitude'] ?? 21.1352,
-                    'longitude' => $item['longitude'] ?? 105.8458,
-                    'storytelling_data' => $storyData,
-                ]);
-
+            if ($eatery->wasRecentlyCreated) {
                 $createdEateries++;
                 $this->info(" + Added new: {$name} (MST: {$mst})");
+            } else {
+                $updatedEateries++;
             }
         }
 

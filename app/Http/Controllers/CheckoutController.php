@@ -175,16 +175,19 @@ class CheckoutController extends Controller
                     'notes' => $request->input('notes'),
                 ]);
 
-                // 2. Create order items
-                foreach ($items as $item) {
-                    OrderItem::create([
-                        'order_id' => $order->id,
-                        'dish_id' => $item->dish_id,
-                        'ocop_product_id' => $item->ocop_product_id,
-                        'name' => $item->product_name,
-                        'price' => $item->product_price,
-                        'quantity' => $item->quantity,
-                    ]);
+                // 2. Create order items (bulk insert)
+                $orderItemsData = collect($items)->map(fn($item) => [
+                    'order_id'        => $order->id,
+                    'dish_id'         => $item->dish_id,
+                    'ocop_product_id' => $item->ocop_product_id,
+                    'name'            => $item->product_name,
+                    'price'           => $item->product_price,
+                    'quantity'        => $item->quantity,
+                    'created_at'      => now(),
+                    'updated_at'      => now(),
+                ])->all();
+                if (!empty($orderItemsData)) {
+                    OrderItem::insert($orderItemsData);
                 }
 
                 // 3. Create payment transaction record

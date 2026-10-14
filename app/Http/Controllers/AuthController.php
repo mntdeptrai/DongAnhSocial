@@ -259,12 +259,11 @@ class AuthController extends Controller
         $otpCode = str_pad(strval(random_int(0, 999999)), 6, '0', STR_PAD_LEFT);
 
         try {
-            // Lưu OTP vào DB với thời hạn là 4 phút
-            PasswordOtp::create([
-                'email' => $email,
-                'otp' => $otpCode,
-                'expires_at' => now()->addMinutes(4),
-            ]);
+            // Lưu hoặc cập nhật OTP vào DB với thời hạn là 4 phút (upsert)
+            PasswordOtp::updateOrCreate(
+                ['email' => $email],
+                ['otp' => $otpCode, 'expires_at' => now()->addMinutes(4)]
+            );
 
             // Gửi mail OTP
             Mail::to($email)->send(new SendRegisterOtpMail($otpCode, 4));
@@ -579,58 +578,49 @@ class AuthController extends Controller
         $user->save();
 
         // 1. Cập nhật đồng bộ toàn bộ Gian hàng / Địa điểm thuộc sở hữu của User này trên mọi Database connections
-        $dbConnections = ['mysql', 'mysql_market', 'mysql_education', 'mysql_stay', 'mysql_wellness'];
-        foreach ($dbConnections as $conn) {
-            try {
-                $eateries = \App\Models\Eatery::on($conn)->where('user_id', $user->id)->get();
-                foreach ($eateries as $e) {
-                    if ($request->has('address') && $request->filled('address')) $e->address = $request->address;
-                    if ($request->has('phone') && $request->filled('phone')) $e->phone = $request->phone;
-                    if ($request->has('website')) $e->website = $request->website;
-                    if ($request->has('opening_hours')) $e->opening_hours = $request->opening_hours;
-                    if ($request->filled('bank_account')) $e->bank_account = $request->bank_account;
-                    if ($request->filled('bank_name')) $e->bank_name = $request->bank_name;
-                    $e->save();
-                }
-            } catch (\Exception $ex) {
-                // Ignore if connection not configured
+        $eateryUpdate = array_filter([
+            'address'       => $request->filled('address') ? $request->address : null,
+            'phone'         => $request->filled('phone') ? $request->phone : null,
+            'website'       => $request->has('website') ? $request->website : null,
+            'opening_hours' => $request->has('opening_hours') ? $request->opening_hours : null,
+            'bank_account'  => $request->filled('bank_account') ? $request->bank_account : null,
+            'bank_name'     => $request->filled('bank_name') ? $request->bank_name : null,
+        ], fn($v) => !is_null($v));
+
+        if (!empty($eateryUpdate)) {
+            foreach (['mysql', 'mysql_market', 'mysql_education', 'mysql_stay', 'mysql_wellness'] as $conn) {
+                rescue(fn() => \App\Models\Eatery::on($conn)->where('user_id', $user->id)->update($eateryUpdate), report: false);
             }
         }
 
         // 2. Cập nhật đồng bộ Hộ kinh doanh Tuyến đường 4.0 (RouteBusiness)
-        try {
-            $query = \App\Models\RouteBusiness::where('user_id', $user->id);
-            if (!empty($oldPhone)) {
-                $cleanOld = preg_replace('/[^0-9]/', '', $oldPhone);
-                if (!empty($cleanOld)) {
-                    $query->orWhere('phone', $oldPhone)->orWhere('phone', $cleanOld);
-                }
-            }
-            $linkedRouteBusinesses = $query->get();
+        rescue(function () use ($user, $oldPhone, $request) {
+            $rbData = array_filter([
+                'user_id'      => $user->id,
+                'owner'        => $user->name,
+                'phone'        => $request->filled('phone') ? $user->phone : null,
+                'bank_account' => $request->filled('bank_account') ? $user->bank_account : null,
+                'bank_name'    => $request->filled('bank_name') ? $user->bank_name : null,
+            ], fn($v) => !is_null($v));
 
-            foreach ($linkedRouteBusinesses as $rb) {
-                $rb->user_id = $user->id;
-                $rb->owner = $user->name;
-                if ($request->filled('phone')) $rb->phone = $user->phone;
-                if ($request->filled('bank_account')) $rb->bank_account = $user->bank_account;
-                if ($request->filled('bank_name')) $rb->bank_name = $user->bank_name;
-                $rb->save();
-            }
-        } catch (\Exception $ex) {}
+            $cleanOld = $oldPhone ? preg_replace('/[^0-9]/', '', $oldPhone) : '';
+            \App\Models\RouteBusiness::where('user_id', $user->id)
+                ->when($oldPhone, fn($q) => $q->orWhere('phone', $oldPhone))
+                ->when($cleanOld, fn($q) => $q->orWhere('phone', $cleanOld))
+                ->update($rbData);
+        }, report: false);
 
         // 3. Cập nhật sản phẩm & thông tin người bán gian hàng chợ (ocop_products)
-        try {
-            \Illuminate\Support\Facades\DB::connection('mysql_market')
-                ->table('ocop_products')
-                ->where('user_id', $user->id)
-                ->update([
-                    'seller_name'  => $user->name,
-                    'seller_phone' => $user->phone,
-                    'bank_account' => $user->bank_account,
-                    'bank_name'    => $user->bank_name,
-                    'updated_at'   => now(),
-                ]);
-        } catch (\Exception $ex) {}
+        rescue(fn() => \Illuminate\Support\Facades\DB::connection('mysql_market')
+            ->table('ocop_products')
+            ->where('user_id', $user->id)
+            ->update([
+                'seller_name'  => $user->name,
+                'seller_phone' => $user->phone,
+                'bank_account' => $user->bank_account,
+                'bank_name'    => $user->bank_name,
+                'updated_at'   => now(),
+            ]), report: false);
 
         // Cập nhật thông tin vào session
         session(['user_name' => $user->name]);
@@ -858,12 +848,11 @@ class AuthController extends Controller
         $otpCode = str_pad(strval(random_int(0, 999999)), 6, '0', STR_PAD_LEFT);
 
         try {
-            // Lưu OTP vào DB với thời hạn là 4 phút
-            PasswordOtp::create([
-                'email' => $user->email,
-                'otp' => $otpCode,
-                'expires_at' => now()->addMinutes(4),
-            ]);
+            // Lưu hoặc cập nhật OTP vào DB với thời hạn là 4 phút (upsert)
+            PasswordOtp::updateOrCreate(
+                ['email' => $user->email],
+                ['otp' => $otpCode, 'expires_at' => now()->addMinutes(4)]
+            );
 
             // Gửi mail OTP
             Mail::to($user->email)->send(new SendPasswordOtpMail($otpCode, 4));
@@ -919,12 +908,11 @@ class AuthController extends Controller
         $otpCode = str_pad(strval(random_int(0, 999999)), 6, '0', STR_PAD_LEFT);
 
         try {
-            // Lưu OTP vào DB với thời hạn là 4 phút
-            PasswordOtp::create([
-                'email' => $request->email,
-                'otp' => $otpCode,
-                'expires_at' => now()->addMinutes(4),
-            ]);
+            // Lưu hoặc cập nhật OTP vào DB với thời hạn là 4 phút (upsert)
+            PasswordOtp::updateOrCreate(
+                ['email' => $request->email],
+                ['otp' => $otpCode, 'expires_at' => now()->addMinutes(4)]
+            );
 
             // Gửi mail OTP
             Mail::to($request->email)->send(new SendPasswordOtpMail($otpCode, 4));

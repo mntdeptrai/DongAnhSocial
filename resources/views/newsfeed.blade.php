@@ -2166,8 +2166,9 @@ async function handleMediaFilesSelected(input) {
     const newFiles = Array.from(input.files);
     input.value = '';
 
-    for (const file of newFiles) {
-        const processedFile = await compressImageFile(file);
+    // Nén ảnh song song với Promise.all thay vì tuần tự từng ảnh
+    const processedFiles = await Promise.all(newFiles.map(file => compressImageFile(file)));
+    for (const processedFile of processedFiles) {
         const exists = selectedMediaFiles.some(f => f.name === processedFile.name && f.size === processedFile.size);
         if (!exists) {
             selectedMediaFiles.push(processedFile);
@@ -2351,12 +2352,13 @@ async function handleNewsfeedPostSubmit(e, form) {
         const batchSize = 5;
         const totalFiles = selectedMediaFiles.length;
         
+        const chunks = [];
         for (let i = 0; i < totalFiles; i += batchSize) {
-            const chunk = selectedMediaFiles.slice(i, i + batchSize);
-            if (submitBtn) {
-                submitBtn.innerHTML = `🚀 Đang tải lên ${Math.min(i + batchSize, totalFiles)}/${totalFiles} tệp...`;
-            }
-            
+            chunks.push(selectedMediaFiles.slice(i, i + batchSize));
+        }
+
+        let uploadedFilesCount = 0;
+        await Promise.all(chunks.map(async (chunk) => {
             const batchFormData = new FormData();
             chunk.forEach(file => batchFormData.append('files[]', file));
             batchFormData.append('folder', 'education');
@@ -2379,8 +2381,13 @@ async function handleNewsfeedPostSubmit(e, form) {
                 }
             } catch (err) {
                 console.error('Batch upload error:', err);
+            } finally {
+                uploadedFilesCount += chunk.length;
+                if (submitBtn) {
+                    submitBtn.innerHTML = `🚀 Đang tải lên ${Math.min(uploadedFilesCount, totalFiles)}/${totalFiles} tệp...`;
+                }
             }
-        }
+        }));
     }
 
     if (submitBtn) {

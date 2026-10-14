@@ -475,22 +475,12 @@ class PostApiController extends Controller
                 ->count();
 
             if ($type === 'post') {
-                try {
-                    Post::where('id', $id)->update(['likes_count' => $realLikesCount]);
-                } catch (\Throwable $e) {}
-                try {
-                    Post::on('mysql_education')->where('id', $id)->update(['likes_count' => $realLikesCount]);
-                } catch (\Throwable $e) {}
-                try {
-                    EducationProgram::on('mysql_education')->where('id', $id)->update(['likes_count' => $realLikesCount]);
-                } catch (\Throwable $e) {}
-                try {
-                    EducationProgram::on('mysql')->where('id', $id)->update(['likes_count' => $realLikesCount]);
-                } catch (\Throwable $e) {}
+                foreach (['mysql', 'mysql_education'] as $conn) {
+                    rescue(fn() => Post::on($conn)->where('id', $id)->update(['likes_count' => $realLikesCount]), report: false);
+                    rescue(fn() => EducationProgram::on($conn)->where('id', $id)->update(['likes_count' => $realLikesCount]), report: false);
+                }
             } else if ($type === 'checkin') {
-                try {
-                    Checkin::where('id', $id)->update(['likes_count' => $realLikesCount]);
-                } catch (\Throwable $e) {}
+                rescue(fn() => Checkin::where('id', $id)->update(['likes_count' => $realLikesCount]), report: false);
             }
 
             return response()->json([
