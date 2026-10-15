@@ -36,7 +36,7 @@ Route::prefix('v1')->group(function () {
     // -----------------------------------------------------------------------
     // 0. AUTHENTICATION & TOKEN MANAGEMENT (Xác thực Mobile Sanctum)
     // -----------------------------------------------------------------------
-    Route::post('/auth/token', [AuthApiController::class, 'issueToken']);
+    Route::post('/auth/token', [AuthApiController::class, 'issueToken'])->middleware('throttle:10,1');
     Route::post('/auth/login', [AuthApiController::class, 'apiLogin'])->middleware('throttle:10,1');
     Route::post('/auth/register', [AuthApiController::class, 'apiRegister'])->middleware('throttle:5,1');
 

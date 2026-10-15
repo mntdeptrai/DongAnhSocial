@@ -44,9 +44,20 @@ class MapApiController extends Controller
         $page = max(1, (int) $request->query('page', 1));
         $perPage = 50;
 
+        // Tọa độ mặc định (tâm Đông Anh) — nhiều CSKD chưa geocode dùng tọa độ này
+        $defaultLat = 21.1352;
+        $defaultLng = 105.8458;
+
         $query = Eatery::active()
             ->select('id', 'name', 'slug', 'category_id', 'latitude', 'longitude', 'is_featured')
-            ->with('category:id,slug,icon');
+            ->with('category:id,slug,icon')
+            // Chỉ lấy records có tọa độ thực (đã geocode), loại bỏ tọa độ mặc định
+            ->where(function ($q) use ($defaultLat, $defaultLng) {
+                $q->where('latitude', '!=', $defaultLat)
+                  ->orWhere('longitude', '!=', $defaultLng);
+            })
+            ->whereNotNull('latitude')
+            ->whereNotNull('longitude');
 
         if ($categorySlug) {
             $query->whereHas('category', fn($q) => $q->where('slug', $categorySlug));

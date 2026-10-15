@@ -69,10 +69,14 @@ class AuthApiController extends Controller
                 ]
             ]);
         } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('IssueToken Exception: ' . $e->getMessage(), [
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
             return response()->json([
                 'success' => false,
-                'message' => 'Đăng nhập không thành công: ' . $e->getMessage(),
-            ], 400);
+                'message' => 'Đã có lỗi xảy ra trong quá trình đăng nhập. Vui lòng thử lại sau.',
+            ], 500);
         }
     }
 

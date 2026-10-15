@@ -75,22 +75,27 @@ return Application::configure(basePath: dirname(__DIR__))
             return back()->withInput()->with('error', $friendlyMessage);
         });
 
-        // Intercept uncaught exceptions when debug mode is disabled
+        // Chặn toàn bộ Unhandled Exceptions: Không bao giờ lộ stack trace cho người dùng
         $exceptions->render(function (\Throwable $e, $request) {
+            \Illuminate\Support\Facades\Log::error('Unhandled Exception: ' . $e->getMessage(), [
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'url'  => $request->fullUrl(),
+            ]);
+
+            $friendlyMessage = 'Hệ thống đã ghi nhận sự cố. Vui lòng thử lại sau.';
+
+            // Luôn trả JSON chung chung cho API / AJAX request
+            if ($request->expectsJson() || $request->ajax() || $request->is('api/*')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $friendlyMessage,
+                ], 500);
+            }
+
+            // Đối với Web: khi tắt debug (production) trả thông báo thân thiện
             if (!config('app.debug')) {
-                \Illuminate\Support\Facades\Log::error('Unhandled Exception: ' . $e->getMessage(), [
-                    'file' => $e->getFile(),
-                    'line' => $e->getLine(),
-                ]);
-
-                $friendlyMessage = 'Hệ thống đã ghi nhận sự cố. Vui lòng thử lại sau.';
-
-                if ($request->expectsJson() || $request->ajax() || $request->is('api/*')) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => $friendlyMessage,
-                    ], 500);
-                }
+                return back()->withInput()->with('error', $friendlyMessage);
             }
         });
     })->create();
