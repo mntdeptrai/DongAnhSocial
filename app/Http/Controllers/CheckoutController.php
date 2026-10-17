@@ -233,7 +233,7 @@ class CheckoutController extends Controller
         } catch (\Throwable $e) {
             DB::rollBack();
             report($e);
-            return back()->withErrors('Không thể xử lý đơn hàng. Vui lòng thử lại: ' . $e->getMessage())->withInput();
+            return back()->withErrors('Không thể xử lý đơn hàng lúc này. Vui lòng thử lại sau hoặc liên hệ hỗ trợ.')->withInput();
         }
     }
 
@@ -655,9 +655,10 @@ class CheckoutController extends Controller
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
+            \Illuminate\Support\Facades\Log::error('Confirm order error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Lỗi hệ thống: ' . $e->getMessage()
+                'message' => 'Đã có lỗi xảy ra trong quá trình xử lý. Vui lòng thử lại sau.'
             ], 500);
         }
     }
@@ -695,9 +696,10 @@ class CheckoutController extends Controller
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
+            \Illuminate\Support\Facades\Log::error('Return order error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Lỗi hệ thống: ' . $e->getMessage()
+                'message' => 'Đã có lỗi xảy ra trong quá trình xử lý. Vui lòng thử lại sau.'
             ], 500);
         }
     }
@@ -745,9 +747,10 @@ class CheckoutController extends Controller
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
+            \Illuminate\Support\Facades\Log::error('Cancel order error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Lỗi hệ thống: ' . $e->getMessage()
+                'message' => 'Đã có lỗi xảy ra khi hủy đơn hàng. Vui lòng thử lại sau.'
             ], 500);
         }
     }
@@ -801,9 +804,10 @@ class CheckoutController extends Controller
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
+            \Illuminate\Support\Facades\Log::error('Reorder error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Lỗi hệ thống: ' . $e->getMessage()
+                'message' => 'Đã có lỗi xảy ra khi đặt lại món. Vui lòng thử lại sau.'
             ], 500);
         }
     }
@@ -881,9 +885,10 @@ class CheckoutController extends Controller
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
+            \Illuminate\Support\Facades\Log::error('Review order error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Lỗi hệ thống: ' . $e->getMessage()
+                'message' => 'Đã có lỗi xảy ra khi gửi đánh giá. Vui lòng thử lại sau.'
             ], 500);
         }
     }

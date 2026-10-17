@@ -277,7 +277,7 @@ class AuthController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Đã có lỗi xảy ra khi gửi mail: ' . $e->getMessage()
+                'message' => 'Không thể gửi mã xác nhận lúc này. Vui lòng kiểm tra lại email hoặc thử lại sau.'
             ], 500);
         }
     }
@@ -862,9 +862,10 @@ class AuthController extends Controller
                 'message' => 'Mã OTP đã được gửi thành công đến email của bạn!'
             ]);
         } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error("Lỗi gửi mail OTP cho {$email}: " . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Đã có lỗi xảy ra khi gửi mail: ' . $e->getMessage()
+                'message' => 'Không thể gửi mã xác nhận lúc này. Vui lòng kiểm tra lại email hoặc thử lại sau.'
             ], 500);
         }
     }

@@ -40,7 +40,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        // 🛡️ SECURITY AUDIT FIX: Intercept Database Query Exceptions & PDO Errors
+        // 🛡️ SECURITY & PRIVACY: Intercept Database Query Exceptions & PDO Errors
         // Prevents raw SQL, table names, host IPs & internal schema from leaking to users
         $exceptions->render(function (\Illuminate\Database\QueryException $e, $request) {
             \Illuminate\Support\Facades\Log::error('Database Query Error: ' . $e->getMessage(), [
@@ -48,13 +48,18 @@ return Application::configure(basePath: dirname(__DIR__))
                 'url' => $request->fullUrl(),
             ]);
 
-            $friendlyMessage = 'Đã xảy ra lỗi khi thao tác dữ liệu. Vui lòng kiểm tra lại thông tin nhập hoặc thử lại sau.';
+            $friendlyMessage = 'Đã có lỗi xảy ra trong quá trình xử lý. Vui lòng thử lại sau.';
 
             if ($request->expectsJson() || $request->ajax() || $request->is('api/*')) {
                 return response()->json([
                     'success' => false,
                     'message' => $friendlyMessage,
                 ], 500);
+            }
+
+            // Tránh vòng lặp redirect vô hạn nếu lỗi xảy ra khi truy cập trang web qua GET
+            if ($request->isMethod('GET') && (url()->previous() === $request->fullUrl() || empty(url()->previous()))) {
+                return response()->view('errors.500', ['message' => $friendlyMessage], 500);
             }
 
             return back()->withInput()->with('error', $friendlyMessage);
@@ -63,7 +68,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->render(function (\PDOException $e, $request) {
             \Illuminate\Support\Facades\Log::error('PDO Exception: ' . $e->getMessage());
 
-            $friendlyMessage = 'Lỗi kết nối cơ sở dữ liệu (MySQL/MariaDB). Vui lòng kiểm tra dịch vụ MySQL đang chạy.';
+            $friendlyMessage = 'Hệ thống đang bảo trì hoặc gặp sự cố kết nối. Vui lòng thử lại sau ít phút.';
 
             if ($request->expectsJson() || $request->ajax() || $request->is('api/*')) {
                 return response()->json([
@@ -72,18 +77,30 @@ return Application::configure(basePath: dirname(__DIR__))
                 ], 500);
             }
 
+            if ($request->isMethod('GET') && (url()->previous() === $request->fullUrl() || empty(url()->previous()))) {
+                return response()->view('errors.500', ['message' => $friendlyMessage], 500);
+            }
+
             return back()->withInput()->with('error', $friendlyMessage);
         });
 
         // Chặn toàn bộ Unhandled Exceptions: Không bao giờ lộ stack trace cho người dùng
         $exceptions->render(function (\Throwable $e, $request) {
+            // Không can thiệp vào các response do validation hoặc authentication đã xử lý chuẩn
+            if ($e instanceof \Illuminate\Validation\ValidationException ||
+                $e instanceof \Illuminate\Auth\AuthenticationException ||
+                $e instanceof \Symfony\Component\HttpKernel\Exception\NotFoundHttpException ||
+                $e instanceof \Symfony\Component\HttpKernel\Exception\HttpExceptionInterface) {
+                return null;
+            }
+
             \Illuminate\Support\Facades\Log::error('Unhandled Exception: ' . $e->getMessage(), [
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
                 'url'  => $request->fullUrl(),
             ]);
 
-            $friendlyMessage = 'Hệ thống đã ghi nhận sự cố. Vui lòng thử lại sau.';
+            $friendlyMessage = 'Đã có sự cố xảy ra. Vui lòng thử lại sau ít phút.';
 
             // Luôn trả JSON chung chung cho API / AJAX request
             if ($request->expectsJson() || $request->ajax() || $request->is('api/*')) {
@@ -93,9 +110,11 @@ return Application::configure(basePath: dirname(__DIR__))
                 ], 500);
             }
 
-            // Đối với Web: khi tắt debug (production) trả thông báo thân thiện
-            if (!config('app.debug')) {
-                return back()->withInput()->with('error', $friendlyMessage);
+            // Đối với Web: Tránh vòng lặp redirect nếu truy cập trực tiếp bằng GET
+            if ($request->isMethod('GET') && (url()->previous() === $request->fullUrl() || empty(url()->previous()))) {
+                return response()->view('errors.500', ['message' => $friendlyMessage], 500);
             }
+
+            return back()->withInput()->with('error', $friendlyMessage);
         });
     })->create();

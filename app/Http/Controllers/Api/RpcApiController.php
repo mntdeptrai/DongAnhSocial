@@ -96,7 +96,8 @@ class RpcApiController extends Controller
         } catch (\InvalidArgumentException $e) {
             return $this->formatErrorResponse($id, -32602, $e->getMessage());
         } catch (\Throwable $e) {
-            return $this->formatErrorResponse($id, -32000, 'Internal error: ' . $e->getMessage());
+            \Illuminate\Support\Facades\Log::error('RPC internal error: ' . $e->getMessage());
+            return $this->formatErrorResponse($id, -32000, 'Internal error');
         }
     }
 

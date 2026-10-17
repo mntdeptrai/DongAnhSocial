@@ -1058,9 +1058,10 @@ class HomeController extends Controller
                 'message'     => $isLiked ? 'Đã thích' : 'Đã bỏ thích'
             ]);
         } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('toggleLike error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage()
+                'message' => 'Đã có lỗi xảy ra. Vui lòng thử lại sau.'
             ], 400);
         }
     }

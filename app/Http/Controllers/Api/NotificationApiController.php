@@ -89,7 +89,8 @@ class NotificationApiController extends Controller
             }
             return response()->json(['success' => true]);
         } catch (\Throwable $e) {
-            return response()->json(['success' => false, 'error' => $e->getMessage()]);
+            Log::error('markAllRead Exception: ' . $e->getMessage());
+            return response()->json(['success' => false, 'error' => 'Đã có lỗi xảy ra. Vui lòng thử lại sau.']);
         }
     }
 }

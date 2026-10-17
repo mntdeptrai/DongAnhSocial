@@ -235,11 +235,12 @@ class SocialHubController extends Controller
             }
             return back()->with('success', 'Đã gửi lời mời kết bạn.');
         } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('sendFriendRequest error: ' . $e->getMessage());
             $isPureJson = !$request->header('X-Inertia') && ($request->expectsJson() || $request->ajax());
             if ($isPureJson) {
-                return response()->json(['success' => false, 'message' => $e->getMessage()], 400);
+                return response()->json(['success' => false, 'message' => 'Không thể gửi lời mời kết bạn lúc này. Vui lòng thử lại sau.'], 400);
             }
-            return back()->with('error', $e->getMessage());
+            return back()->with('error', 'Không thể gửi lời mời kết bạn lúc này. Vui lòng thử lại sau.');
         }
     }
 
@@ -256,11 +257,12 @@ class SocialHubController extends Controller
             }
             return back()->with('success', 'Đã đồng ý kết bạn.');
         } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('acceptFriendRequest error: ' . $e->getMessage());
             $isPureJson = !$request->header('X-Inertia') && ($request->expectsJson() || $request->ajax());
             if ($isPureJson) {
-                return response()->json(['success' => false, 'message' => $e->getMessage()], 400);
+                return response()->json(['success' => false, 'message' => 'Không thể xử lý yêu cầu kết bạn lúc này. Vui lòng thử lại sau.'], 400);
             }
-            return back()->with('error', $e->getMessage());
+            return back()->with('error', 'Không thể xử lý yêu cầu kết bạn lúc này. Vui lòng thử lại sau.');
         }
     }
 
@@ -277,11 +279,12 @@ class SocialHubController extends Controller
             }
             return back()->with('success', 'Đã hủy yêu cầu hoặc xóa kết bạn.');
         } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('declineFriendRequest error: ' . $e->getMessage());
             $isPureJson = !$request->header('X-Inertia') && ($request->expectsJson() || $request->ajax());
             if ($isPureJson) {
-                return response()->json(['success' => false, 'message' => $e->getMessage()], 400);
+                return response()->json(['success' => false, 'message' => 'Không thể thực hiện thao tác lúc này. Vui lòng thử lại sau.'], 400);
             }
-            return back()->with('error', $e->getMessage());
+            return back()->with('error', 'Không thể thực hiện thao tác lúc này. Vui lòng thử lại sau.');
         }
     }
     /**
@@ -636,10 +639,11 @@ class SocialHubController extends Controller
                 ]
             ]);
         } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('sendMessage error: ' . $e->getMessage());
             return response()->json([
                 'status' => 'error',
-                'message' => $e->getMessage()
-            ], 403);
+                'message' => 'Không thể gửi tin nhắn lúc này. Vui lòng thử lại sau.'
+            ], 500);
         }
     }
 

@@ -225,7 +225,8 @@ YÊU CẦU TRẢ VỀ CHỈ LÀ CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU, KHÔNG C
             return response()->json(['success' => true, 'slug' => $slug]);
             
         } catch (\Throwable $e) {
-            return response()->json(['success' => false, 'message' => 'Lỗi kết nối AI: ' . $e->getMessage()], 500);
+            \Illuminate\Support\Facades\Log::error('FoodTour AI API error: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Dịch vụ AI đang bận hoặc gặp sự cố. Vui lòng thử lại sau.'], 500);
         }
     }
 

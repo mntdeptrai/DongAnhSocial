@@ -112,9 +112,10 @@ class YouTubeAuthController extends Controller
             ]);
 
         } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Google OAuth error: ' . $e->getMessage());
             return response()->json([
                 'status'  => 'error',
-                'message' => 'Lỗi kết nối máy chủ Google: ' . $e->getMessage(),
+                'message' => 'Không thể kết nối máy chủ xác thực lúc này. Vui lòng thử lại sau.',
             ], 500);
         }
     }

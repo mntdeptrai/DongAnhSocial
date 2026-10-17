@@ -99,7 +99,8 @@ class WebhookApiController extends Controller
 
             return response()->json(['success' => true, 'stall_id' => $eatery->id]);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Sync error: ' . $e->getMessage()], 500);
+            \Illuminate\Support\Facades\Log::error('Webhook sync error: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Đã có lỗi xảy ra trong quá trình đồng bộ.'], 500);
         }
     }
 }

@@ -490,9 +490,10 @@ class PostApiController extends Controller
                 'message'     => $isLiked ? 'Đã thích' : 'Đã bỏ thích'
             ], 200, [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         } catch (\Throwable $e) {
+            Log::error('toggleLike API error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage()
+                'message' => 'Đã có lỗi xảy ra. Vui lòng thử lại sau.'
             ], 200);
         }
     }

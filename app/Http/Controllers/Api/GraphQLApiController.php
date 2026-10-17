@@ -32,7 +32,8 @@ class GraphQLApiController extends Controller
             $result = $this->parseAndExecute($queryStr);
             return response()->json(['data' => $result]);
         } catch (\Exception $e) {
-            return response()->json(['errors' => [['message' => $e->getMessage()]]], 500);
+            \Illuminate\Support\Facades\Log::error('GraphQL query error: ' . $e->getMessage());
+            return response()->json(['errors' => [['message' => 'Đã có lỗi xảy ra trong quá trình xử lý.']]], 500);
         }
     }
 

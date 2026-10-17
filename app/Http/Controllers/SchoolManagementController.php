@@ -663,7 +663,7 @@ class SchoolManagementController extends Controller
             \Illuminate\Support\Facades\Log::error('[storePost] Exception: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Có lỗi xảy ra khi lưu bài viết: ' . $e->getMessage()
+                'message' => 'Có lỗi xảy ra khi lưu bài viết. Vui lòng thử lại sau.'
             ], 500);
         }
 

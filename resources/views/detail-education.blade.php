@@ -755,7 +755,7 @@
                                 </button>
                                 <div>
                                     <strong style="color: #ffb300; display: block; font-size: 1rem;">🎧 Nghe kể chuyện di sản</strong>
-                                    <span style="font-size: 0.85rem; color: var(--text-muted);" id="audioStatusText">Bấm để lắng nghe giọng đọc AI thuyết minh văn hóa món ăn</span>
+                                    <span style="font-size: 0.85rem; color: var(--text-muted);" id="audioStatusText"></span>
                                 </div>
                             </div>
                             
@@ -1734,9 +1734,6 @@
                                                 <span style="font-size: 1.5rem;">🔍</span>
                                             </div>
                                         </div>
-                                        <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 8px; text-align: center; max-width: 140px; line-height: 1.3;">
-                                            Nhấp vào ảnh để xem chi tiết hoặc tải về
-                                        </div>
                                     </div>
                                     <div style="flex: 1; min-width: 250px;">
                                         <h4 style="color: var(--accent); font-size: 1.15rem; margin-bottom: 12px; font-weight: 700;">Giấy Chứng Nhận Đủ Điều Kiện ATTP</h4>
@@ -2478,7 +2475,7 @@
                     playBtn.classList.remove("playing");
                     eq.classList.remove("playing-audio");
                     playBtnIcon.textContent = "🔊";
-                    statusText.textContent = "Bấm để lắng nghe giọng đọc AI thuyết minh văn hóa món ăn";
+                    statusText.textContent = "";
                 } else {
                     synth.cancel();
                     
@@ -2498,7 +2495,7 @@
                         playBtn.classList.remove("playing");
                         eq.classList.remove("playing-audio");
                         playBtnIcon.textContent = "🔊";
-                        statusText.textContent = "Thuyết minh hoàn thành. Bấm để nghe lại!";
+                        statusText.textContent = "";
                     };
 
                     utterance.onerror = function(event) {
@@ -3092,7 +3089,7 @@
         }
         
         playBtnIcon.textContent = "🔊";
-        statusText.textContent = "Bấm để lắng nghe giọng đọc AI giới thiệu đặc sản";
+        statusText.textContent = "";
         eq.classList.remove("playing-audio");
 
         if (product.audio_narrative) {
@@ -3114,7 +3111,7 @@
                     newPlayBtn.classList.remove("playing");
                     eq.classList.remove("playing-audio");
                     newPlayBtn.querySelector('.play-icon').textContent = "🔊";
-                    statusText.textContent = "Bấm để lắng nghe giọng đọc AI giới thiệu đặc sản";
+                    statusText.textContent = "";
                 } else {
                     pmSynth.cancel();
                     pmIsSpeaking = true;
@@ -3136,7 +3133,7 @@
                         newPlayBtn.classList.remove("playing");
                         eq.classList.remove("playing-audio");
                         newPlayBtn.querySelector('.play-icon').textContent = "🔊";
-                        statusText.textContent = "Thuyết minh hoàn thành. Bấm để nghe lại!";
+                        statusText.textContent = "";
                     };
                     
                     pmUtterance.onerror = function() {
@@ -3209,7 +3206,7 @@
                 const prevEqualizer = currentFlatBtn.closest('.audio-storyteller-widget').querySelector('.flat-audio-equalizer');
                 const prevPlayIcon = currentFlatBtn.querySelector('.play-icon');
                 const prevDots = currentFlatBtn.closest('.audio-storyteller-widget').querySelector('.dots-placeholder');
-                if (prevStatus) prevStatus.textContent = 'Bấm để lắng nghe giọng đọc AI thuyết minh văn hóa món ăn';
+                if (prevStatus) prevStatus.textContent = '';
                 if (prevEqualizer) prevEqualizer.style.display = 'none';
                 if (prevDots) prevDots.style.display = 'block';
                 if (prevPlayIcon) prevPlayIcon.textContent = '🔊';
@@ -3238,7 +3235,7 @@
         };
 
         currentFlatUtterance.onend = function() {
-            statusText.textContent = 'Bấm để lắng nghe giọng đọc AI thuyết minh văn hóa món ăn';
+            statusText.textContent = '';
             equalizer.style.display = 'none';
             if (dots) dots.style.display = 'block';
             playIcon.textContent = '🔊';
@@ -3323,7 +3320,7 @@
                         </button>
                         <div>
                             <strong style="color: #ffb300; display: block; font-size: 0.95rem;">🎧 Nghe thuyết minh di sản đặc sản</strong>
-                            <span style="font-size: 0.8rem; color: var(--text-muted);" id="pmAudioStatusText">Bấm để lắng nghe giọng đọc AI giới thiệu đặc sản</span>
+                            <span style="font-size: 0.8rem; color: var(--text-muted);" id="pmAudioStatusText"></span>
                         </div>
                     </div>
                     <!-- Equalizer Visualizer -->
