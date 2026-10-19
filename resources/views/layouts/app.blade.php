@@ -109,17 +109,92 @@
     
     <!-- Facebook-Style Social Feed, Multi-Photo Grid & Lightbox -->
     <link rel="stylesheet" href="{{ asset('css/facebook-feed.css') }}?v={{ file_exists(public_path('css/facebook-feed.css')) ? filemtime(public_path('css/facebook-feed.css')) : '2.2' }}">
-    <script defer src="{{ asset('js/facebook-feed.js') }}?v={{ file_exists(public_path('js/facebook-feed.js')) ? filemtime(public_path('js/facebook-feed.js')) : '2.2' }}"></script>
     
     @if(request()->is('/', 'tim-kiem*', 'dia-diem*'))
-    <!-- Map-Based Storytelling CSS & GSAP Animation Library -->
+    <!-- Map-Based Storytelling CSS -->
     <link rel="stylesheet" href="{{ asset('css/storytelling.css') }}?v=2.1">
     <link rel="stylesheet" href="{{ asset('css/storytelling-mobile.css') }}?v=2.1">
     <link rel="stylesheet" href="{{ asset('css/ocop-storytelling.css') }}?v=2.1">
-    <script defer src="{{ asset('js/gsap.min.js') }}"></script>
-    <script defer src="{{ asset('js/three.min.js') }}"></script>
-    <script defer src="{{ asset('js/hero-airplane-three.js') }}?v={{ file_exists(public_path('js/hero-airplane-three.js')) ? filemtime(public_path('js/hero-airplane-three.js')) : '1.0' }}"></script>
     @endif
+
+    <!-- ⚡ HIGH-PERFORMANCE ASYNCHRONOUS PROMISE/AWAIT SERVICE ENGINE -->
+    <script>
+    window.DongAnhServices = (function() {
+        const loadedScripts = new Set();
+        const serviceRegistry = new Map();
+
+        function loadScriptAsync(src, id) {
+            if (id && document.getElementById(id)) return Promise.resolve(true);
+            if (loadedScripts.has(src)) return Promise.resolve(true);
+
+            return new Promise((resolve) => {
+                const s = document.createElement('script');
+                if (id) s.id = id;
+                s.src = src;
+                s.async = true;
+                s.onload = () => {
+                    loadedScripts.add(src);
+                    resolve(true);
+                };
+                s.onerror = (e) => {
+                    console.warn(`[ServiceLoader] Could not load: ${src}`, e);
+                    resolve(false);
+                };
+                document.head.appendChild(s);
+            });
+        }
+
+        async function bootService(name, taskFn) {
+            try {
+                const res = await taskFn();
+                serviceRegistry.set(name, { status: 'ready', res });
+                return res;
+            } catch (err) {
+                console.warn(`[ServiceLoader] Service ${name} error:`, err);
+                serviceRegistry.set(name, { status: 'error', err });
+                return null;
+            }
+        }
+
+        return {
+            loadScript: loadScriptAsync,
+            boot: bootService,
+            bootAll: async function(serviceList) {
+                return await Promise.allSettled(
+                    serviceList.map(s => bootService(s.name, s.task))
+                );
+            }
+        };
+    })();
+
+    // 🚀 KHỞI TẠO SONG SONG CÁC SERVICES ĐỘC LẬP BẰNG PROMISE/AWAIT
+    (async function() {
+        const services = [
+            // 1. Social Feed & Photo Grid Service
+            {
+                name: 'SocialFeedService',
+                task: async () => {
+                    await window.DongAnhServices.loadScript("{{ asset('js/facebook-feed.js') }}?v={{ file_exists(public_path('js/facebook-feed.js')) ? filemtime(public_path('js/facebook-feed.js')) : '2.2' }}", 'srv-feed');
+                }
+            },
+            @if(request()->is('/', 'tim-kiem*', 'dia-diem*'))
+            // 2. 3D Airplane Flight & Sky Experience Service (Three.js + GSAP + Hero Airplane)
+            {
+                name: 'HeroAirplane3DService',
+                task: async () => {
+                    await Promise.all([
+                        window.DongAnhServices.loadScript("{{ asset('js/gsap.min.js') }}", 'srv-gsap'),
+                        window.DongAnhServices.loadScript("{{ asset('js/three.min.js') }}", 'srv-three')
+                    ]);
+                    await window.DongAnhServices.loadScript("{{ asset('js/hero-airplane-three.js') }}?v={{ file_exists(public_path('js/hero-airplane-three.js')) ? filemtime(public_path('js/hero-airplane-three.js')) : '1.0' }}", 'srv-plane');
+                }
+            },
+            @endif
+        ];
+
+        await window.DongAnhServices.bootAll(services);
+    })();
+    </script>
     
     <!-- Dynamic Schema.org JSON-LD Structured Data for Google Indexing -->
     @yield('seo_schema')
@@ -590,9 +665,17 @@
     @if(!request()->is('livestream*'))
     @include('partials.webrtc-call-modal')
 
-    {{-- Real-time Customer Order & Status Notification Engine --}}
+    {{-- Real-time Customer Order & Status Notification Engine (Async Promise Loader) --}}
     @if(Auth::check() || session('user_id'))
-    <script defer src="{{ asset('js/customer-notifications.js') }}?v={{ file_exists(public_path('js/customer-notifications.js')) ? filemtime(public_path('js/customer-notifications.js')) : '1.0.0' }}"></script>
+    <script>
+    (async function() {
+        if (window.DongAnhServices) {
+            await window.DongAnhServices.boot('CustomerNotificationService', async () => {
+                await window.DongAnhServices.loadScript("{{ asset('js/customer-notifications.js') }}?v={{ file_exists(public_path('js/customer-notifications.js')) ? filemtime(public_path('js/customer-notifications.js')) : '1.0.0' }}", 'srv-customer-notif');
+            });
+        }
+    })();
+    </script>
     @endif
     @endif
 
