@@ -5,9 +5,9 @@ namespace App\Services;
 use App\Domain\Comment\CommentData;
 use App\Domain\Comment\Actions\CreateCommentAction;
 use App\Models\Comment;
-use Illuminate\Support\Facades\DB;
+use App\Contracts\CommentServiceInterface;
 
-class CommentService
+class CommentService implements CommentServiceInterface
 {
     public function __construct(
         protected CreateCommentAction $createAction

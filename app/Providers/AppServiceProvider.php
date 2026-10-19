@@ -14,7 +14,126 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Bind Nong San catalog & order inquiry interfaces (SOLID - Dependency Inversion Principle)
+        $this->app->bind(
+            \App\Contracts\NongSanCatalogInterface::class,
+            \App\Services\NongSanCatalogService::class
+        );
+
+        $this->app->bind(
+            \App\Contracts\OrderInquiryServiceInterface::class,
+            \App\Services\OrderInquiryService::class
+        );
+
+        $this->app->bind(
+            \App\Contracts\ModerationServiceInterface::class,
+            \App\Services\ModerationService::class
+        );
+
+        $this->app->bind(
+            \App\Contracts\CommentServiceInterface::class,
+            \App\Services\CommentService::class
+        );
+
+        $this->app->bind(
+            \App\Contracts\OcopProductServiceInterface::class,
+            \App\Services\OcopProductService::class
+        );
+
+        $this->app->bind(
+            \App\Contracts\SearchServiceInterface::class,
+            \App\Services\SearchService::class
+        );
+
+        $this->app->bind(
+            \App\Contracts\YouTubeAuthServiceInterface::class,
+            \App\Services\YouTubeAuthService::class
+        );
+
+        $this->app->bind(
+            \App\Contracts\ManagerOrderServiceInterface::class,
+            \App\Services\ManagerOrderService::class
+        );
+
+        $this->app->bind(
+            \App\Contracts\CartServiceInterface::class,
+            \App\Services\CartService::class
+        );
+
+        $this->app->bind(
+            \App\Contracts\MarketStallServiceInterface::class,
+            \App\Services\MarketStallService::class
+        );
+
+        $this->app->bind(
+            \App\Contracts\EateryServiceInterface::class,
+            \App\Services\EateryService::class
+        );
+
+        $this->app->bind(
+            \App\Contracts\MarketChatServiceInterface::class,
+            \App\Services\MarketChatService::class
+        );
+
+        $this->app->bind(
+            \App\Contracts\HealthStationServiceInterface::class,
+            \App\Services\HealthStationService::class
+        );
+
+        $this->app->bind(
+            \App\Contracts\ExperienceCornerServiceInterface::class,
+            \App\Services\ExperienceCornerService::class
+        );
+
+        $this->app->bind(
+            \App\Contracts\FoodTourServiceInterface::class,
+            \App\Services\FoodTourService::class
+        );
+
+        $this->app->bind(
+            \App\Contracts\LiveStreamServiceInterface::class,
+            \App\Services\LiveStreamService::class
+        );
+
+        $this->app->bind(
+            \App\Services\Interfaces\CheckoutServiceInterface::class,
+            \App\Services\CheckoutService::class
+        );
+
+        $this->app->bind(
+            \App\Services\Interfaces\BusinessManagementServiceInterface::class,
+            \App\Services\BusinessManagementService::class
+        );
+
+        $this->app->bind(
+            \App\Services\Interfaces\SchoolManagementServiceInterface::class,
+            \App\Services\SchoolManagementService::class
+        );
+
+        $this->app->bind(
+            \App\Services\Interfaces\AuthServiceInterface::class,
+            \App\Services\AuthService::class
+        );
+
+        $this->app->bind(
+            \App\Services\Interfaces\SocialHubServiceInterface::class,
+            \App\Services\SocialHubService::class
+        );
+
+        $this->app->bind(
+            \App\Services\Interfaces\VendorServiceInterface::class,
+            \App\Services\VendorService::class
+        );
+
+        $this->app->bind(
+            \App\Services\Interfaces\HomeServiceInterface::class,
+            \App\Services\HomeService::class
+        );
+
+        $this->app->bind(
+            \App\Services\Interfaces\AdminServiceInterface::class,
+            \App\Services\AdminService::class
+        );
     }
 
     /**

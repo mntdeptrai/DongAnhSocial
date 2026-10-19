@@ -2,80 +2,89 @@
 
 @section('title', 'Nông Sản Đông Anh - Tinh Hoa Nông Nghiệp & Đặc Sản Đất Cổ')
 
-@section('meta_description', 'Khám phá và đặt mua nông sản sạch, đặc sản làng nghề truyền thống Đông Anh: Bỏng chủ tiến Vua, Bún Mạch Tràng, Dưa lưới Kim Sơn, Chuối nấu giả cầy, Mâm cỗ xứ Cổ.')
+@section('meta_description', 'Khám phá và đặt mua nông sản sạch, đặc sản làng nghề truyền thống Đông Anh: Bỏng chủ tiến Vua, Bún Mạch Tràng, Dưa lưới Kim Sơn, Chuối nấu giả cầy, Mâm cỗ Cổ Loa xưa.')
 
 @section('styles')
     @include('nong-san.partials.styles')
 @endsection
 
 @section('content')
-<div style="background: var(--ns-cream); min-height: 100vh; overflow-x: hidden;">
+<div class="ns-page-wrapper">
 
     {{-- 1. CINEMATIC LUXURY HERO --}}
     @include('nong-san.partials.hero')
 
     {{-- 2. SPOTLIGHT HERITAGE GRAND BOX (MÂM CỖ CỔ LOA XƯA) --}}
-    <section class="ns-spotlight-section">
+    <section id="ns-spotlight-anchor" class="ns-spotlight-section">
         <div class="ns-mamco-card">
-            {{-- Left column: Story, 4-Bento Menu Categories & Actions --}}
-            <div>
-                <span class="ns-spotlight-tag" style="background: linear-gradient(135deg, #f59e0b 0%, #b45309 100%);">
-                    <span>👑</span> Di Sản Ẩm Thực Cố Đô • Mâm Đồng Tròn Cổ Truyền
-                </span>
+            {{-- Left column: Story, 4-Course Royal Bento Categories & Actions --}}
+            <div class="ns-mamco-left">
+                <div class="ns-spotlight-badge-wrap">
+                    <span class="ns-spotlight-tag">
+                        <span class="ns-tag-crown" aria-hidden="true">👑</span> Di Sản Ẩm Thực Cố Đô • Mâm Đồng Tròn Cổ Truyền
+                    </span>
+                </div>
                 
-                <h2 class="ns-spotlight-title" style="margin-bottom: 6px;">
+                <h2 class="ns-spotlight-title">
                     MÂM CỖ CỔ LOA XƯA
                 </h2>
                 
-                <span class="ns-mamco-slogan">
+                <p class="ns-mamco-slogan">
                     “Hương vị từ đất cổ – Nếp quê còn mãi • Một mâm cỗ – Một miền ký ức – Một Cổ Loa nghìn năm văn hiến”
-                </span>
-
-                <p class="ns-spotlight-desc" style="margin-bottom: 16px;">
-                    Mâm cỗ chính được bài trí cầu kỳ, trang trọng trên <strong>mâm đồng tròn truyền thống</strong>, tái hiện trọn vẹn văn hóa yến tiệc cung đình thời An Dương Vương và nếp nhà quê xứ Cổ, kết thúc bằng tuần <strong>trà mạn truyền thống</strong> thưởng thức cùng <strong>Bỏng chủ</strong> và <strong>Mít Cổ Loa</strong>.
                 </p>
 
-                {{-- 4-Bento Categories Grid matching user's exact menu --}}
+                <p class="ns-spotlight-desc">
+                    Mâm cỗ chính được bài trí trang trọng, đủ đầy trên <strong>mâm đồng tròn truyền thống</strong>, tái hiện trọn vẹn văn hóa yến tiệc cung đình thời An Dương Vương và nếp nhà quê xứ Cổ, kết thúc viên mãn bằng tuần <strong>trà mạn cổ truyền</strong> thưởng thức cùng <strong>Bỏng chủ ngào gừng</strong> và <strong>Mít Cổ Loa</strong>.
+                </p>
+
+                {{-- 4-Course Royal Bento Grid --}}
                 <div class="ns-mamco-categories-grid">
-                    <div class="ns-mamco-cat-box">
+                    <div class="ns-mamco-cat-box ns-cat-man">
                         <div class="ns-mamco-cat-head">
-                            <span>🥩</span> I. MÓN MẶN
+                            <span class="ns-cat-icon">🥩</span> I. MÓN MẶN
                         </div>
-                        <p class="ns-mamco-cat-items">
-                            • Gà luộc lá chanh • Giò Mo<br>
-                            • Thịt lợn trộn thính • Thịt lợn đông<br>
-                            • Chuối giả cầy • Bún xào cần • Trám đen om
-                        </p>
+                        <div class="ns-mamco-cat-chips">
+                            <span class="ns-cat-chip">Gà luộc lá chanh</span>
+                            <span class="ns-cat-chip">Giò Mo</span>
+                            <span class="ns-cat-chip">Thịt lợn trộn thính</span>
+                            <span class="ns-cat-chip">Thịt lợn đông</span>
+                            <span class="ns-cat-chip">Chuối giả cầy</span>
+                            <span class="ns-cat-chip">Bún xào cần</span>
+                            <span class="ns-cat-chip">Trám đen om</span>
+                        </div>
                     </div>
 
-                    <div class="ns-mamco-cat-box">
+                    <div class="ns-mamco-cat-box ns-cat-banh">
                         <div class="ns-mamco-cat-head">
-                            <span>🍚</span> II. BÁNH & XÔI
+                            <span class="ns-cat-icon">🍚</span> II. BÁNH & XÔI
                         </div>
-                        <p class="ns-mamco-cat-items">
-                            • Xôi trám đen • Bánh Dày<br>
-                            • Bánh đúc lạc • Bánh chưng
-                        </p>
+                        <div class="ns-mamco-cat-chips">
+                            <span class="ns-cat-chip">Xôi trám đen</span>
+                            <span class="ns-cat-chip">Bánh Dày</span>
+                            <span class="ns-cat-chip">Bánh đúc lạc</span>
+                            <span class="ns-cat-chip">Bánh chưng</span>
+                        </div>
                     </div>
 
-                    <div class="ns-mamco-cat-box">
+                    <div class="ns-mamco-cat-box ns-cat-rau">
                         <div class="ns-mamco-cat-head">
-                            <span>🥗</span> III. RAU & CANH
+                            <span class="ns-cat-icon">🥗</span> III. RAU & CANH
                         </div>
-                        <p class="ns-mamco-cat-items">
-                            • Rau theo mùa tươi ngọt<br>
-                            • Canh khoai tây hầm xương
-                        </p>
+                        <div class="ns-mamco-cat-chips">
+                            <span class="ns-cat-chip">Rau theo mùa tươi ngọt</span>
+                            <span class="ns-cat-chip">Canh khoai tây hầm xương</span>
+                        </div>
                     </div>
 
-                    <div class="ns-mamco-cat-box">
+                    <div class="ns-mamco-cat-box ns-cat-tra">
                         <div class="ns-mamco-cat-head">
-                            <span>🍵</span> IV. TRÁNG MIỆNG & TRÀ
+                            <span class="ns-cat-icon">🍵</span> IV. TRÁNG MIỆNG & TRÀ
                         </div>
-                        <p class="ns-mamco-cat-items">
-                            • Bỏng chủ Cổ Loa ngào gừng<br>
-                            • Mít Cổ Loa • Trà mạn truyền thống
-                        </p>
+                        <div class="ns-mamco-cat-chips">
+                            <span class="ns-cat-chip">Bỏng chủ ngào gừng</span>
+                            <span class="ns-cat-chip">Mít Cổ Loa</span>
+                            <span class="ns-cat-chip">Trà mạn truyền thống</span>
+                        </div>
                     </div>
                 </div>
 
@@ -83,43 +92,44 @@
                 @php
                     $spotlightJson = json_encode($spotlightProduct, JSON_UNESCAPED_UNICODE | JSON_HEX_APOS | JSON_HEX_QUOT);
                 @endphp
-                <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-                    <button type="button" class="ns-btn-quick-inquire" style="padding: 13px 24px; font-size: 0.92rem;" onclick="openNsDetailModal({{ $spotlightJson }})">
+                <div class="ns-mamco-actions-row">
+                    <button type="button" class="ns-btn-primary" onclick="openNsDetailModal({{ $spotlightJson }})">
                         <span>🏮</span> Đặt Trước Mâm Cỗ (Nhận Báo Giá)
                     </button>
-                    <button type="button" class="ns-btn-see-detail" style="padding: 12px 20px; font-size: 0.9rem;" onclick="openMamCoLightbox(currentMamCoImage, currentMamCoCaption)">
+                    <button type="button" class="ns-btn-secondary" onclick="openMamCoLightbox(currentMamCoImage, currentMamCoCaption)">
                         <span>🔍</span> Xem Bản Thực Đơn Cực Nét
                     </button>
-                    <a href="tel:0983882119" style="display: inline-flex; align-items: center; gap: 6px; color: #059669; font-weight: 800; font-size: 0.88rem; text-decoration: none; padding: 10px 14px;">
-                        <span>📞</span> Hotline: 0983.882.119
+                    <a href="tel:0983882119" class="ns-hotline-pill">
+                        <span class="ns-hotline-icon">📞</span>
+                        <span>Hotline: <strong>0983.882.119</strong></span>
                     </a>
                 </div>
             </div>
 
-            {{-- Right column: Interactive Image Switcher (Bản Thực Đơn Cổ Ưu Tiên Số 1) --}}
+            {{-- Right column: Interactive Dual-Media Showcase --}}
             <div class="ns-mamco-media-card">
-                <div class="ns-mamco-tabs-bar">
-                    <button type="button" id="tab-btn-thucdon" class="ns-mamco-tab-btn active" onclick="switchMamCoMedia('thucdon')">
+                <div class="ns-mamco-tabs-bar" role="tablist">
+                    <button type="button" id="tab-btn-thucdon" class="ns-mamco-tab-btn active" onclick="switchMamCoMedia('thucdon')" role="tab" aria-selected="true">
                         <span>📜</span> Bản Thực Đơn Cổ
                     </button>
-                    <button type="button" id="tab-btn-sodo" class="ns-mamco-tab-btn" onclick="switchMamCoMedia('sodo')">
+                    <button type="button" id="tab-btn-sodo" class="ns-mamco-tab-btn" onclick="switchMamCoMedia('sodo')" role="tab" aria-selected="false">
                         <span>🔘</span> Sơ Đồ Mâm Đồng
                     </button>
                 </div>
 
-                <div class="ns-mamco-img-frame" onclick="openMamCoLightbox(currentMamCoImage, currentMamCoCaption)" title="Bấm để phóng to xem chi tiết">
+                <div class="ns-mamco-img-frame" onclick="openMamCoLightbox(currentMamCoImage, currentMamCoCaption)" title="Bấm để phóng to xem cực nét">
                     <img id="mam-co-main-img" src="https://media.xadonganh.com/experience/mam_co_co_loa_xua_thuc_don.jpg" alt="Bản thực đơn cổ truyền Cổ Loa – Nền trống đồng Đông Sơn" loading="lazy">
                     <div class="ns-mamco-img-floating-tag">
                         <span id="mam-co-tag-lbl">📜 Bản thực đơn cổ truyền Cổ Loa</span>
-                        <span style="font-size: 0.82rem;">🔍 Phóng to</span>
+                        <span class="ns-zoom-badge">🔍 Chạm phóng to</span>
                     </div>
                 </div>
                 
-                <div style="display: flex; gap: 10px; align-items: center; justify-content: space-between;">
-                    <span style="font-size: 0.76rem; color: var(--ns-text-muted);">
-                        💡 Bấm vào ảnh hoặc đổi tab để xem chi tiết từng món.
+                <div class="ns-mamco-caption-bar">
+                    <span class="ns-caption-hint">
+                        💡 Bấm vào ảnh hoặc đổi tab để khám phá sơ đồ bài trí mâm đồng.
                     </span>
-                    <button type="button" onclick="openNsDetailModal({{ $spotlightJson }})" style="background: none; border: none; color: #059669; font-size: 0.78rem; font-weight: 800; cursor: pointer; text-decoration: underline;">
+                    <button type="button" class="ns-story-link-btn" onclick="openNsDetailModal({{ $spotlightJson }})">
                         Xem điển tích văn hóa ➔
                     </button>
                 </div>
@@ -132,62 +142,63 @@
         <div class="ns-trust-grid">
             <div class="ns-trust-card">
                 <div class="ns-trust-icon-box">🌾</div>
-                <div>
+                <div class="ns-trust-content">
                     <h4 class="ns-trust-title">100% Nguồn Gốc Bản Địa</h4>
-                    <p class="ns-trust-desc">Gạo nếp hoa vàng giống cổ, men gạo ủ chua truyền thống từ làng nghề Đông Anh.</p>
+                    <p class="ns-trust-desc">Gạo nếp cái hoa vàng thuần giống cổ, men gạo ủ chua truyền thống từ làng nghề Đông Anh.</p>
                 </div>
             </div>
 
             <div class="ns-trust-card">
                 <div class="ns-trust-icon-box">🛡️</div>
-                <div>
+                <div class="ns-trust-content">
                     <h4 class="ns-trust-title">Tiêu Chuẩn 3 KHÔNG</h4>
-                    <p class="ns-trust-desc">Không chất bảo quản - Không phụ gia tạo màu - Không tẩy trắng hóa chất.</p>
+                    <p class="ns-trust-desc">Không chất bảo quản - Không phụ gia tạo màu - Không tẩy trắng bằng hóa chất công nghiệp.</p>
                 </div>
             </div>
 
             <div class="ns-trust-card">
                 <div class="ns-trust-icon-box">🌿</div>
-                <div>
+                <div class="ns-trust-content">
                     <h4 class="ns-trust-title">VietGAP & Làng Nghề</h4>
-                    <p class="ns-trust-desc">Nông trại sinh thái công nghệ cao kết hợp tinh hoa nghệ nhân làng cổ trăm năm.</p>
+                    <p class="ns-trust-desc">Nông trại sinh thái công nghệ cao kết hợp bàn tay tài hoa của nghệ nhân làng cổ trăm năm.</p>
                 </div>
             </div>
 
             <div class="ns-trust-card">
                 <div class="ns-trust-icon-box">⚡</div>
-                <div>
+                <div class="ns-trust-content">
                     <h4 class="ns-trust-title">Giao Nhanh Tươi Ngon</h4>
-                    <p class="ns-trust-desc">Đóng gói chân không giữ trọn hương vị, giao hỏa tốc Hà Nội và gửi hàng toàn quốc.</p>
+                    <p class="ns-trust-desc">Đóng gói chân không giữ trọn hương vị tươi mới, giao hỏa tốc Hà Nội và gửi hàng toàn quốc.</p>
                 </div>
             </div>
         </div>
     </section>
 
-    {{-- 3. STICKY FILTER BAR --}}
-    <div class="ns-filter-sticky">
+    {{-- 3. STICKY FILTER & SEARCH BAR --}}
+    <div id="ns-catalog-anchor" class="ns-filter-sticky">
         <div class="ns-filter-container">
-            <div class="ns-pills-row">
+            <div class="ns-pills-row" role="tablist">
                 <button type="button" class="ns-filter-pill active" data-category="all" onclick="filterProducts('all', this)">
-                    <span>✨</span> Tất cả sản vật ({{ $totalCount }})
+                    <span class="ns-pill-icon">✨</span> Tất cả sản vật ({{ $totalCount }})
                 </button>
                 <button type="button" class="ns-filter-pill" data-category="farm" onclick="filterProducts('farm', this)">
-                    <span>🍈</span> Nông sản tươi & Trang trại
+                    <span class="ns-pill-icon">🍈</span> Nông sản tươi & Trang trại
                 </button>
                 <button type="button" class="ns-filter-pill" data-category="noodle" onclick="filterProducts('noodle', this)">
-                    <span>🍜</span> Bún Mạch Tràng & Món ngon
+                    <span class="ns-pill-icon">🍜</span> Bún Mạch Tràng & Món ngon
                 </button>
                 <button type="button" class="ns-filter-pill" data-category="cuisine" onclick="filterProducts('cuisine', this)">
-                    <span>🍲</span> Ẩm thực & Mâm cơm xứ Cổ
+                    <span class="ns-pill-icon">🍲</span> Ẩm thực & Mâm cỗ xứ Cổ
                 </button>
                 <button type="button" class="ns-filter-pill" data-category="snack" onclick="filterProducts('snack', this)">
-                    <span>🎁</span> Quà quê & Đặc sản khô
+                    <span class="ns-pill-icon">🎁</span> Quà quê & Đặc sản khô
                 </button>
             </div>
 
             <div class="ns-search-box">
-                <span style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--ns-text-muted); font-size: 0.95rem; pointer-events: none;">🔍</span>
-                <input type="text" id="nsSearchInput" class="ns-search-field" placeholder="Tìm kiếm nông sản, món ăn, đặc sản..." oninput="searchProducts()">
+                <span class="ns-search-icon" aria-hidden="true">🔍</span>
+                <input type="text" id="nsSearchInput" class="ns-search-field" placeholder="Tìm sản vật, món ăn, đặc sản..." oninput="searchProducts()" aria-label="Tìm kiếm sản phẩm">
+                <button type="button" id="nsSearchClear" class="ns-search-clear-btn" onclick="clearSearch()" aria-label="Xóa tìm kiếm" style="display: none;">✕</button>
             </div>
         </div>
     </div>
@@ -206,27 +217,27 @@
                      data-summary="{{ $product['summary'] }}"
                      onclick="openNsDetailModal({{ $productJson }})">
                     
-                    {{-- Thumbnail & Badges --}}
+                    {{-- Thumbnail & Floating Badges --}}
                     <div class="ns-thumb-container">
                         <img src="{{ $product['image'] }}" class="ns-thumb-img" alt="{{ $product['name'] }}" loading="lazy" onerror="this.src='{{ asset('images/thanhcoloa.webp') }}'">
-                        <div class="ns-thumb-gradient"></div>
+                        <div class="ns-thumb-gradient" aria-hidden="true"></div>
                         
                         <span class="ns-badge-floating">
                             {{ $product['badge'] }}
                         </span>
 
                         <div class="ns-origin-floating">
-                            <span>📍</span> {{ $product['origin'] }}
+                            <span class="ns-origin-icon" aria-hidden="true">📍</span> {{ $product['origin'] }}
                         </div>
                     </div>
 
-                    {{-- Card Content --}}
+                    {{-- Card Content Body --}}
                     <div class="ns-card-content">
-                        <h3 class="ns-item-name">
+                        <h3 class="ns-item-name" title="{{ $product['name'] }}">
                             {{ $product['name'] }}
                         </h3>
 
-                        {{-- Tasting Notes Tags --}}
+                        {{-- Tasting Notes Chips --}}
                         <div class="ns-feature-row">
                             @if(!empty($product['tasting_notes']))
                                 @foreach($product['tasting_notes'] as $tag)
@@ -239,23 +250,23 @@
                             {{ $product['summary'] }}
                         </p>
 
-                        {{-- Price Bar (Strictly "Liên hệ", 2-row layout with zero line wrap) --}}
+                        {{-- Price Bar (Strictly "Liên hệ" with Non-Breaking Text) --}}
                         <div class="ns-price-display-box">
                             <div class="ns-price-row-main">
                                 <span class="ns-price-meta-tag">
-                                    <span>🏷️</span> Giá tham khảo
+                                    <span aria-hidden="true">🏷️</span> Giá tham khảo
                                 </span>
                                 <span class="ns-price-val">
                                     {{ $product['price_label'] }}
                                 </span>
                             </div>
                             <div class="ns-unit-row">
-                                <span>📦</span>
+                                <span class="ns-unit-icon" aria-hidden="true">📦</span>
                                 <span class="ns-unit-val">{{ $product['unit'] }}</span>
                             </div>
                         </div>
 
-                        {{-- Action Buttons --}}
+                        {{-- Card Action Buttons --}}
                         <div class="ns-card-btns-row" onclick="event.stopPropagation()">
                             <button type="button" class="ns-btn-see-detail" onclick="openNsDetailModal({{ $productJson }})">
                                 <span>👁️</span> Chi tiết
@@ -270,11 +281,11 @@
         </div>
 
         {{-- Empty Search State --}}
-        <div id="ns-empty-state" style="display: none; text-align: center; padding: 70px 20px; background: var(--ns-surface); border-radius: 26px; border: 1.5px dashed var(--ns-border-light); margin-bottom: 60px;">
-            <span style="font-size: 3.5rem; display: block; margin-bottom: 14px;">🌾</span>
-            <h3 style="font-size: 1.3rem; font-weight: 800; color: var(--ns-text-dark); margin-bottom: 8px;">Không tìm thấy sản vật phù hợp</h3>
-            <p style="font-size: 0.92rem; color: var(--ns-text-muted); margin-bottom: 22px;">Hãy thử tìm kiếm với các từ khóa như "bún", "bỏng", "dưa lưới", "mâm cỗ", "chuối"...</p>
-            <button type="button" class="ns-filter-pill active" onclick="document.getElementById('nsSearchInput').value=''; filterProducts('all', document.querySelector('.ns-filter-pill[data-category=all]'));">
+        <div id="ns-empty-state" class="ns-empty-state-box" style="display: none;">
+            <span class="ns-empty-icon" aria-hidden="true">🌾</span>
+            <h3 class="ns-empty-title">Không tìm thấy sản vật phù hợp</h3>
+            <p class="ns-empty-desc">Hãy thử tìm với các từ khóa phổ biến: "bún", "bỏng", "dưa lưới", "mâm cỗ", "chuối", "bánh đúc"...</p>
+            <button type="button" class="ns-btn-primary" onclick="clearSearchAndShowAll()">
                 Xem toàn bộ {{ $totalCount }} sản vật Đông Anh
             </button>
         </div>
@@ -282,16 +293,16 @@
 
     {{-- 4.2. PROPOSAL 1: CURATED GIFT COMBOS --}}
     @if(!empty($combos))
-    <section class="ns-combos-container">
+    <section id="ns-combos-anchor" class="ns-combos-container">
         <div class="ns-section-header">
             <span class="ns-section-tag">
-                <span>🎁</span> Quà Quê Tri Ân & Biếu Tặng
+                <span aria-hidden="true">🎁</span> Quà Quê Tri Ân & Biếu Tặng
             </span>
             <h2 class="ns-section-title">
                 Bộ Sưu Tập Giỏ Quà & Combo Tiến Vua
             </h2>
             <p class="ns-section-desc">
-                Đóng gói trang trọng trong hộp mây tre đan hoặc hộp quà mỹ thuật cao cấp, kết hợp trọn vẹn những sản vật tinh hoa nhất của đất cố đô Cổ Loa và nông trại sinh thái Đông Anh.
+                Đóng gói trang trọng trong giỏ mây tre đan thủ công hoặc hộp quà mỹ thuật cao cấp, kết hợp trọn vẹn những sản vật tinh hoa nhất của đất cố đô Cổ Loa và nông trại sinh thái Đông Anh.
             </p>
         </div>
 
@@ -313,14 +324,14 @@
                         'experience_tip'=> $combo['ideal_for'],
                     ], JSON_UNESCAPED_UNICODE | JSON_HEX_APOS | JSON_HEX_QUOT);
                 @endphp
-                <div class="ns-combo-card">
+                <div class="ns-combo-card" onclick="openNsDetailModal({{ $comboJson }})">
                     <div class="ns-combo-media">
                         <img src="{{ $combo['image'] }}" alt="{{ $combo['name'] }}" loading="lazy">
                         <span class="ns-combo-badge-top">{{ $combo['badge'] }}</span>
                     </div>
 
                     <div class="ns-combo-body">
-                        <span style="font-size: 0.75rem; font-weight: 800; color: #d97706; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; display: block;">
+                        <span class="ns-combo-tag-lbl">
                             {{ $combo['tag'] }}
                         </span>
                         <h3 class="ns-combo-name">{{ $combo['name'] }}</h3>
@@ -328,7 +339,7 @@
 
                         <div class="ns-combo-items-box">
                             <span class="ns-combo-items-box-title">
-                                <span>🧺</span> Thành phần trong set:
+                                <span aria-hidden="true">🧺</span> Thành phần trong set quà:
                             </span>
                             <ul class="ns-combo-items-list">
                                 @foreach($combo['items'] as $item)
@@ -341,19 +352,19 @@
                         <div class="ns-price-display-box" style="margin-top: auto;">
                             <div class="ns-price-row-main">
                                 <span class="ns-price-meta-tag">
-                                    <span>🏷️</span> Giá tham khảo
+                                    <span aria-hidden="true">🏷️</span> Giá tham khảo
                                 </span>
                                 <span class="ns-price-val">
                                     {{ $combo['price_label'] }}
                                 </span>
                             </div>
                             <div class="ns-unit-row">
-                                <span>💡</span>
-                                <span class="ns-unit-val" style="font-size: 0.76rem; color: #047857;">{{ $combo['ideal_for'] }}</span>
+                                <span aria-hidden="true">💡</span>
+                                <span class="ns-unit-val" style="color: #047857;">{{ $combo['ideal_for'] }}</span>
                             </div>
                         </div>
 
-                        <div class="ns-card-btns-row" style="margin-top: 10px;">
+                        <div class="ns-card-btns-row" style="margin-top: 12px;" onclick="event.stopPropagation()">
                             <button type="button" class="ns-btn-see-detail" onclick="openNsDetailModal({{ $comboJson }})">
                                 <span>👁️</span> Chi tiết set
                             </button>
@@ -372,14 +383,14 @@
     @if(!empty($seasons))
     <section class="ns-calendar-container">
         <div class="ns-section-header">
-            <span class="ns-section-tag" style="background: rgba(16, 185, 129, 0.12); color: #059669; border-color: rgba(16, 185, 129, 0.35);">
-                <span>📅</span> Mùa Nào Thức Nấy
+            <span class="ns-section-tag ns-tag-calendar">
+                <span aria-hidden="true">📅</span> Mùa Nào Thức Nấy
             </span>
             <h2 class="ns-section-title">
                 Lịch Mùa Vụ & Ẩm Thực 4 Mùa Đông Anh
             </h2>
             <p class="ns-section-desc">
-                Đất bãi sông Hồng màu mỡ cùng khí hậu 4 mùa mang đến những sản vật đặc trưng, ngon nhất khi đúng vào mùa thu hoạch rộ.
+                Đất bãi sông Hồng màu mỡ cùng khí hậu bốn mùa đặc trưng mang đến những sản vật tươi ngon nhất khi vào mùa thu hoạch rộ.
             </p>
         </div>
 
@@ -410,9 +421,9 @@
     {{-- 4.4. PROPOSAL 3: FARM-TO-TABLE EXPERIENCE CTA --}}
     <section class="ns-experience-cta-wrap">
         <div class="ns-experience-cta-box">
-            <div>
-                <span style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 14px; border-radius: 50px; background: rgba(245, 158, 11, 0.2); border: 1px solid rgba(245, 158, 11, 0.4); font-size: 0.76rem; font-weight: 800; text-transform: uppercase; color: #fef08a; margin-bottom: 12px;">
-                    <span>🚜</span> Du Lịch Canh Tác Trải Nghiệm
+            <div class="ns-experience-cta-text">
+                <span class="ns-experience-badge">
+                    <span aria-hidden="true">🚜</span> Du Lịch Canh Tác Trải Nghiệm
                 </span>
                 <h3 class="ns-experience-cta-title">
                     Từ Nông Trại & Làng Nghề Đến Bàn Ăn
@@ -422,12 +433,12 @@
                 </p>
             </div>
 
-            <div style="flex-shrink: 0; display: flex; flex-direction: column; gap: 10px; min-width: 210px;">
-                <a href="/exp-corner" class="ns-btn-quick-inquire" style="text-decoration: none; padding: 15px 24px; font-size: 0.95rem; text-align: center;">
+            <div class="ns-experience-cta-actions">
+                <a href="/exp-corner" class="ns-btn-experience-primary">
                     <span>🗺️</span> Khám Phá Tour Trải Nghiệm
                 </a>
-                <a href="tel:0983882119" style="text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 6px; color: #a7f3d0; font-weight: 700; font-size: 0.88rem; padding: 8px;">
-                    <span>📞</span> Đặt lịch tour: 0983.882.119
+                <a href="tel:0983882119" class="ns-experience-hotline-link">
+                    <span>📞</span> Đặt lịch tour: <strong>0983.882.119</strong>
                 </a>
             </div>
         </div>
@@ -437,8 +448,8 @@
     @include('nong-san.partials.modal')
 
     {{-- 6. LIGHTBOX MODAL FOR FULL RESOLUTION MENU IMAGES --}}
-    <div id="mamCoLightbox" class="ns-lightbox-modal" style="display: none;" onclick="closeMamCoLightbox()">
-        <button type="button" class="ns-close-x-btn" onclick="closeMamCoLightbox()" style="top: 24px; right: 24px;" aria-label="Đóng">✕</button>
+    <div id="mamCoLightbox" class="ns-lightbox-modal" style="display: none;" onclick="closeMamCoLightbox()" role="dialog" aria-modal="true" aria-label="Xem ảnh phóng to">
+        <button type="button" class="ns-close-x-btn" onclick="closeMamCoLightbox()" aria-label="Đóng phóng to">✕</button>
         <div class="ns-lightbox-content" onclick="event.stopPropagation()">
             <img id="lightbox-img" src="" alt="Ảnh thực đơn phóng to">
             <div id="lightbox-caption" class="ns-lightbox-caption"></div>

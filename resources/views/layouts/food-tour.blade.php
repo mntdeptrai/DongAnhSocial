@@ -46,11 +46,15 @@
         };
     </script>
 
-    <!-- Custom Theme Styling -->
-    <link rel="stylesheet" href="{{ asset('css/app.css') }}?v={{ file_exists(public_path('css/app.css')) ? filemtime(public_path('css/app.css')) : '1.0.0' }}">
+    <!-- Custom Theme Styling with Browser-Cacheable Timestamps -->
+    <link rel="stylesheet" href="{{ asset('css/app.css') }}?v={{ file_exists(public_path('css/app.css')) ? filemtime(public_path('css/app.css')) : '2.2' }}">
+    <link rel="stylesheet" href="{{ asset('css/4-screen-responsive.css') }}?v=2.2">
     
     <!-- Mobile Native Overrides (Only load for mobile and tablet screens) -->
-    <link rel="stylesheet" media="screen and (max-width: 991px)" href="{{ asset('css/mobile-native.css') }}?v={{ file_exists(public_path('css/mobile-native.css')) ? filemtime(public_path('css/mobile-native.css')) : '1.0.0' }}">
+    <link rel="stylesheet" media="screen and (max-width: 1199px)" href="{{ asset('css/mobile-native.css') }}?v={{ file_exists(public_path('css/mobile-native.css')) ? filemtime(public_path('css/mobile-native.css')) : '2.2' }}">
+
+    <!-- 📱 Mobile Viewport Fit Fix — Ôm gọn nội dung, không scroll ngang -->
+    <link rel="stylesheet" href="{{ asset('css/mobile-fix.css') }}?v=2.2">
     
     <!-- Alpine.js for Modern Client Interactions -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
@@ -207,23 +211,23 @@
     <header class="glass-nav">
         <div class="container nav-wrapper">
             <a href="/" class="logo">
-                <span>🗺️</span> DongAnh Map Discovery
+                <span>🗺️</span> DongAnh Discovery
             </a>
             
             <div class="nav-collapse main-nav-container" id="navCollapse">
                 <nav>
                 <ul class="nav-menu">
-                    <li><a href="/" class="nav-link {{ request()->is('/') && !request()->has('cat') ? 'active' : '' }}">Trang chủ</a></li>
-                    <li><a href="/ban-tin" class="nav-link {{ request()->is('ban-tin*') ? 'active' : '' }}">📰 Bản tin</a></li>
-                    <li><a href="/tim-kiem" class="nav-link {{ request()->is('tim-kiem*') ? 'active' : '' }}">Bản đồ & Tìm kiếm</a></li>
-                    <li><a href="/food-tours" class="nav-link {{ request()->is('food-tours*') || (request()->is('food-tour*') && !request()->is('food-tour/tu-tay-lam-dac-san-co-loa*')) ? 'active' : '' }}">Food Tour</a></li>
-                    <li><a href="/exp-corner" class="nav-link {{ request()->is('exp-corner*') || request()->is('food-tour/tu-tay-lam-dac-san-co-loa*') ? 'active' : '' }}">Góc trải nghiệm thực tế</a></li>
-                    <li><a href="/nong-san-dong-anh" class="nav-link {{ request()->is('nong-san*') ? 'active' : '' }}">🌾 Nông sản Đông Anh</a></li>
-                    <li><a href="/checkin" class="nav-link {{ request()->is('checkin*') ? 'active' : '' }}">📸 Góc Check-in</a></li>
+                    <li><a href="/" class="nav-link {{ request()->is('/') && !request()->has('cat') ? 'active' : '' }}"><span><span class="nav-icon">🏠</span>Trang chủ</span><span class="nav-arrow">➔</span></a></li>
+                    <li><a href="/ban-tin" class="nav-link {{ request()->is('ban-tin*') ? 'active' : '' }}"><span><span class="nav-icon">📰</span>Bản tin</span><span class="nav-arrow">➔</span></a></li>
+                    <li><a href="/tim-kiem" class="nav-link {{ request()->is('tim-kiem*') ? 'active' : '' }}"><span><span class="nav-icon">🗺️</span>Bản đồ & Tìm kiếm</span><span class="nav-arrow">➔</span></a></li>
+                    <li><a href="/food-tours" class="nav-link {{ request()->is('food-tours*') || (request()->is('food-tour*') && !request()->is('food-tour/tu-tay-lam-dac-san-co-loa*')) ? 'active' : '' }}"><span><span class="nav-icon">🍜</span>Food Tour</span><span class="nav-arrow">➔</span></a></li>
+                    <li><a href="/exp-corner" class="nav-link {{ request()->is('exp-corner*') || request()->is('food-tour/tu-tay-lam-dac-san-co-loa*') ? 'active' : '' }}"><span><span class="nav-icon">🏺</span>Góc trải nghiệm thực tế</span><span class="nav-arrow">➔</span></a></li>
+                    <li><a href="/nong-san-dong-anh" class="nav-link {{ request()->is('nong-san*') ? 'active' : '' }}"><span><span class="nav-icon">🌾</span>Nông sản Đông Anh</span><span class="nav-arrow">➔</span></a></li>
+                    <li><a href="/checkin" class="nav-link {{ request()->is('checkin*') ? 'active' : '' }}"><span><span class="nav-icon">📸</span>Góc Check-in</span><span class="nav-arrow">➔</span></a></li>
                     @if(session()->has('user_id'))
-                        <li><a href="/social" class="nav-link {{ request()->is('social*') ? 'active' : '' }}">💬 Kết nối bạn bè</a></li>
+                        <li><a href="/social" class="nav-link {{ request()->is('social*') ? 'active' : '' }}"><span><span class="nav-icon">💬</span>Kết nối bạn bè</span><span class="nav-arrow">➔</span></a></li>
                     @endif
-                    <li><a href="#" onclick="openGuideModal(event)" class="nav-link">Giới thiệu & Hướng dẫn</a></li>
+                    <li><a href="#" onclick="openGuideModal(event)" class="nav-link"><span><span class="nav-icon">📖</span>Giới thiệu & Hướng dẫn</span><span class="nav-arrow">➔</span></a></li>
                 </ul>
                 </nav>
             

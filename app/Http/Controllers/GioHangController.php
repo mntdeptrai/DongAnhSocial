@@ -2,202 +2,104 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Cart;
-use App\Models\CartItem;
+use App\Contracts\CartServiceInterface;
+use App\Http\Requests\AddToCartRequest;
+use App\Http\Requests\UpdateCartItemRequest;
 use App\Models\Dish;
 use App\Models\OcopProduct;
-use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 
 class GioHangController extends Controller
 {
-    private function resolveCart(): Cart
+    public function __construct(
+        protected CartServiceInterface $cartService
+    ) {}
+
+    /**
+     * Resolve active cart for user or guest session
+     */
+    private function getCurrentCart()
     {
         $user = Auth::user() ?: auth('sanctum')->user();
         $sessionId = request()->header('X-Session-ID');
 
-        if ($user) {
-            $userCart = Cart::firstOrCreate(['user_id' => $user->id]);
-
-            // Tự động gộp giỏ hàng tạm (Guest Cart) khi người dùng đăng nhập tài khoản
-            if ($sessionId) {
-                $guestCart = Cart::where('session_id', $sessionId)->first();
-                if ($guestCart && $guestCart->id !== $userCart->id) {
-                    foreach ($guestCart->items as $gItem) {
-                        $uItem = CartItem::firstOrNew([
-                            'cart_id'         => $userCart->id,
-                            'dish_id'         => $gItem->dish_id,
-                            'ocop_product_id' => $gItem->ocop_product_id,
-                        ]);
-                        $uItem->quantity = ($uItem->exists ? $uItem->quantity : 0) + $gItem->quantity;
-                        $uItem->save();
-                    }
-                    $guestCart->items()->delete();
-                    $guestCart->delete();
-                }
-            }
-
-            return $userCart;
-        }
-
-        $sid = $sessionId ?: session()->getId();
-        return Cart::firstOrCreate(['session_id' => $sid]);
+        return $this->cartService->resolveCart($user, $sessionId);
     }
 
-    private function formatCartResponse(Cart $cart)
+    /**
+     * Lấy toàn bộ thông tin giỏ hàng hiện tại
+     * GET /gio-hang /api/cart
+     */
+    public function index(): JsonResponse
     {
-        $cart->load('items');
-
-        $dishIds = $cart->items->pluck('dish_id')->filter()->unique()->toArray();
-        $ocopIds = $cart->items->pluck('ocop_product_id')->filter()->unique()->toArray();
-
-        $dishes = !empty($dishIds) ? Dish::on('mysql')->with('eatery')->whereIn('id', $dishIds)->get()->keyBy('id') : collect();
-        $ocopProducts = !empty($ocopIds) ? OcopProduct::on('mysql_market')->with('eatery')->whereIn('id', $ocopIds)->get()->keyBy('id') : collect();
-
-        foreach ($cart->items as $item) {
-            $product = null;
-            if ($item->dish_id) {
-                $product = $dishes->get($item->dish_id);
-            } elseif ($item->ocop_product_id) {
-                $product = $ocopProducts->get($item->ocop_product_id);
-            }
-            $item->setRelation('product', $product);
-        }
-
-        $foodColors = ['#FF6B6B','#FF8E53','#FFA726','#66BB6A','#26C6DA','#42A5F5','#AB47BC','#EF5350'];
-        $foodEmojis = ['🍜','🍲','🥘','🍛','🥗','🍤','🥩','🍱','🍝','🍣'];
-
-        $items = $cart->items->map(function ($item) use ($foodColors, $foodEmojis) {
-            $product = $item->product;
-            $eatery = $product ? $product->eatery : null;
-
-            // Resolve image URL
-            $imgRaw = $item->product_image;
-            if ($imgRaw) {
-                $imageUrl = asset($imgRaw);
-            } else {
-                // Generate a deterministic colored placeholder based on item id
-                $colorIndex = $item->id % count($foodColors);
-                $emojiIndex = $item->id % count($foodEmojis);
-                $color = ltrim($foodColors[$colorIndex], '#');
-                $emoji = $foodEmojis[$emojiIndex];
-                $name = urlencode(mb_substr($item->product_name, 0, 10));
-                $imageUrl = "https://placehold.co/80x80/{$color}/ffffff?text={$emoji}";
-            }
-
-            return [
-                'id'          => $item->id,
-                'dish_id'     => $item->dish_id,
-                'ocop_product_id' => $item->ocop_product_id,
-                'name'        => $item->product_name,
-                'price'       => (int)$item->product_price,
-                'image'       => $imageUrl,
-                'quantity'    => (int)$item->quantity,
-                'total'       => (int)$item->thanh_tien,
-                'eatery_id'   => $eatery ? $eatery->id : 0,
-                'eatery_name' => $eatery ? $eatery->name : 'Khác',
-                'stall_name'  => ($product && isset($product->stall_name)) ? $product->stall_name : null,
-            ];
-        })->values();
-
-        return response()->json([
-            'success' => true,
-            'data'    => $items,
-            'count'   => (int)$cart->tong_so_luong,
-            'total'   => (int)$cart->tong_tien,
-        ]);
+        $cart = $this->getCurrentCart();
+        return response()->json($this->cartService->formatCartResponse($cart));
     }
 
-    public function index()
+    /**
+     * Thêm sản phẩm (Món ăn hoặc OCOP) vào giỏ hàng
+     * POST /gio-hang /api/cart
+     */
+    public function store(AddToCartRequest $request): JsonResponse
     {
-        $cart = $this->resolveCart();
-        return $this->formatCartResponse($cart);
-    }
+        $dishId = $request->input('dish_id');
+        $ocopId = $request->input('ocop_product_id');
 
-    public function store(Request $request)
-    {
-        $request->validate([
-            'dish_id' => 'nullable|integer',
-            'ocop_product_id' => 'nullable|integer',
-            'quantity' => 'nullable|integer|min:1',
-        ]);
-
-        if (!$request->dish_id && !$request->ocop_product_id) {
-            return response()->json(['success' => false, 'message' => 'Yêu cầu mã món ăn hoặc sản phẩm OCOP'], 422);
-        }
-
-        // Validate item existence
-        if ($request->dish_id) {
-            $dish = Dish::on('mysql')->find($request->dish_id);
+        if ($dishId) {
+            $dish = Dish::on('mysql')->find($dishId);
             if (!$dish) {
                 return response()->json(['success' => false, 'message' => 'Món ăn không tồn tại'], 404);
             }
-        } else {
-            $ocop = OcopProduct::on('mysql_market')->find($request->ocop_product_id);
+        } elseif ($ocopId) {
+            $ocop = OcopProduct::on('mysql_market')->find($ocopId);
             if (!$ocop) {
                 return response()->json(['success' => false, 'message' => 'Sản phẩm OCOP không tồn tại'], 404);
             }
         }
 
-        $cart = $this->resolveCart();
+        $cart = $this->getCurrentCart();
+        $result = $this->cartService->addItem($cart, $dishId, $ocopId, (int)($request->input('quantity', 1)));
 
-        $item = CartItem::firstOrNew([
-            'cart_id' => $cart->id,
-            'dish_id' => $request->dish_id,
-            'ocop_product_id' => $request->ocop_product_id,
-        ]);
+        $responseData = $this->cartService->formatCartResponse($result['cart']);
+        $responseData['added_new'] = $result['added_new'];
 
-        $added_new = !$item->exists;
-        $item->quantity = ($item->exists ? $item->quantity : 0) + ($request->quantity ?? 1);
-        $item->save();
-
-        $res = $this->formatCartResponse($cart);
-        $data = $res->getData(true);
-        $data['added_new'] = $added_new;
-
-        return response()->json($data);
+        return response()->json($responseData);
     }
 
-    public function update(Request $request, $id)
+    /**
+     * Cập nhật số lượng của một mục trong giỏ
+     * PUT /gio-hang/{id} /api/cart/{id}
+     */
+    public function update(UpdateCartItemRequest $request, int|string $id): JsonResponse
     {
-        $request->validate(['quantity' => 'required|integer|min:0']);
+        $cart = $this->getCurrentCart();
+        $cart = $this->cartService->updateItemQuantity($cart, $id, (int)$request->input('quantity'));
 
-        $cart = $this->resolveCart();
-
-        $item = CartItem::where('cart_id', $cart->id)
-            ->where('id', $id)
-            ->first();
-
-        if (!$item) {
-            return $this->formatCartResponse($cart);
-        }
-
-        if ($request->quantity == 0) {
-            $item->delete();
-        } else {
-            $item->quantity = $request->quantity;
-            $item->save();
-        }
-
-        return $this->formatCartResponse($cart);
+        return response()->json($this->cartService->formatCartResponse($cart));
     }
 
-    public function destroy($id)
+    /**
+     * Xóa một mục khỏi giỏ hàng
+     * DELETE /gio-hang/{id} /api/cart/{id}
+     */
+    public function destroy(int|string $id): JsonResponse
     {
-        $cart = $this->resolveCart();
+        $cart = $this->getCurrentCart();
+        $cart = $this->cartService->removeItem($cart, $id);
 
-        CartItem::where('cart_id', $cart->id)
-            ->where('id', $id)
-            ->delete();
-
-        return $this->formatCartResponse($cart);
+        return response()->json($this->cartService->formatCartResponse($cart));
     }
 
-    public function clear()
+    /**
+     * Làm rỗng toàn bộ giỏ hàng
+     * DELETE /gio-hang /api/cart
+     */
+    public function clear(): JsonResponse
     {
-        $cart = $this->resolveCart();
-        CartItem::where('cart_id', $cart->id)->delete();
+        $cart = $this->getCurrentCart();
+        $cart = $this->cartService->clearCart($cart);
 
-        return $this->formatCartResponse($cart);
+        return response()->json($this->cartService->formatCartResponse($cart));
     }
 }

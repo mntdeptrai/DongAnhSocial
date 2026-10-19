@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Contracts\EateryServiceInterface;
 use App\Domain\Eatery\EateryData;
 use App\Helpers\R2Helper;
 use App\Models\Category;
@@ -14,7 +15,7 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 
-class EateryService
+class EateryService implements EateryServiceInterface
 {
     /**
      * In-memory cache for getEateries() without filters.
@@ -158,8 +159,8 @@ class EateryService
                 }
                 foreach ($keywords as $kw) {
                     $q->orWhere('slug', 'like', "{$kw}%")
-                      ->orWhere('name', 'like', "%{$kw}%")
-                      ->orWhere('address', 'like', "%{$kw}%");
+                      ->orWhere('name', 'like', "{$kw}%")
+                      ->orWhere('address', 'like', "{$kw}%");
                 }
             });
         }
@@ -532,4 +533,226 @@ class EateryService
         }
         return $url;
     }
+
+    /**
+     * Prepare full view presentation data for eatery detail page (Schema.org, checkins, posts, doctors, etc.)
+     */
+    public function getEateryDetailViewData(string $slug, ?int $currentUserId, ?string $currentSessionId): ?array
+    {
+        $eatery = EateryApiService::getEateryBySlug($slug);
+        if (!$eatery) {
+            return null;
+        }
+
+        // Tự động phân tích danh mục để chọn Schema Type thích hợp của Google
+        $schemaType = 'LocalBusiness';
+        $categorySlug = $eatery->category->slug ?? '';
+        if ($categorySlug === 'dong-anh-food-map') {
+            $schemaType = 'Restaurant';
+        } elseif ($categorySlug === 'stay-in-dong-anh') {
+            $schemaType = 'Hotel';
+        } elseif ($categorySlug === 'wellness-care') {
+            $schemaType = 'HealthAndBeautyBusiness';
+        } elseif (in_array($categorySlug, ['dong-anh-market', 'traditional-market', 'co-so-kinh-doanh'])) {
+            $schemaType = 'Store';
+        } elseif ($categorySlug === 'smart-education-map') {
+            $schemaType = 'School';
+        }
+
+        $currentUrl = request()->url();
+
+        // Khởi tạo mảng dữ liệu có cấu trúc Schema.org chuẩn Google
+        $schemaData = [
+            '@context' => 'https://schema.org',
+            '@type' => $schemaType,
+            'name' => $eatery->name,
+            'image' => $eatery->image_path ?: 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=800&q=80',
+            'telephone' => $eatery->phone ?: 'Chưa cập nhật',
+            'priceRange' => $eatery->price_range ?: 'Đang cập nhật',
+            'address' => [
+                '@type' => 'PostalAddress',
+                'streetAddress' => $eatery->address,
+                'addressLocality' => $eatery->commune->name ?? 'Đông Anh',
+                'addressRegion' => 'Đông Anh, Hà Nội',
+                'addressCountry' => 'VN'
+            ],
+            'geo' => [
+                '@type' => 'GeoCoordinates',
+                'latitude' => $eatery->latitude,
+                'longitude' => $eatery->longitude
+            ],
+            'url' => $currentUrl
+        ];
+
+        if ($schemaType === 'Restaurant' || $schemaType === 'CafeOrCoffeeShop') {
+            $schemaData['servesCuisine'] = $eatery->category->name ?? 'Ẩm thực';
+        }
+
+        // Thêm đánh giá trung bình vào Schema nếu đã có bình luận
+        if ($eatery->reviews && $eatery->reviews->count() > 0) {
+            $schemaData['aggregateRating'] = [
+                '@type' => 'AggregateRating',
+                'ratingValue' => $eatery->average_rating,
+                'reviewCount' => $eatery->reviews->count()
+            ];
+
+            $schemaData['review'] = [];
+            foreach ($eatery->reviews->take(3) as $rev) {
+                $schemaData['review'][] = [
+                    '@type' => 'Review',
+                    'author' => [
+                        '@type' => 'Person',
+                        'name' => $rev->user_name
+                    ],
+                    'reviewRating' => [
+                        '@type' => 'Rating',
+                        'ratingValue' => $rev->rating
+                    ],
+                    'reviewBody' => $rev->comment
+                ];
+            }
+        }
+
+        $sameEateryIds = [$eatery->id];
+
+        // Lấy danh sách ảnh check-in thực tế của thực khách tại địa điểm này
+        $checkinPhotos = \App\Models\Checkin::with('user')
+            ->whereIn('eatery_id', $sameEateryIds)
+            ->whereNotNull('image_path')
+            ->where('image_path', '!=', '')
+            ->latest()
+            ->take(15)
+            ->get();
+
+        $checkinReviews = \App\Models\Checkin::with('user')
+            ->whereIn('eatery_id', $sameEateryIds)
+            ->latest()
+            ->get();
+
+        // Lấy thông tin tài khoản cá nhân & bài viết mới nhất từ Hiệu trưởng/Nhà trường liên kết
+        $principalUser = null;
+        if ($eatery->user_id) {
+            $principalUser = \App\Models\User::find($eatery->user_id);
+        } else {
+            $principalUser = \App\Models\User::where('eatery_id', $eatery->id)->first();
+        }
+
+        $principalPosts = collect();
+        try {
+            $principalPosts = \App\Models\EducationProgram::on('mysql_education')
+                ->where('eatery_id', $eatery->id)
+                ->orderBy('created_at', 'desc')
+                ->get();
+        } catch (\Throwable $e) {}
+
+        if ($principalPosts->isEmpty()) {
+            try {
+                $principalPosts = \App\Models\EducationProgram::on('mysql')
+                    ->where('eatery_id', $eatery->id)
+                    ->orderBy('created_at', 'desc')
+                    ->get();
+            } catch (\Throwable $e) {}
+        }
+
+        $postIds = $principalPosts->pluck('id')->toArray();
+
+        if (!empty($postIds)) {
+            $realLikesMap = \App\Models\CheckinReaction::where('reactionable_type', 'post')
+                ->whereIn('reactionable_id', $postIds)
+                ->selectRaw('reactionable_id, count(*) as total')
+                ->groupBy('reactionable_id')
+                ->pluck('total', 'reactionable_id')
+                ->toArray();
+
+            $uQuery = \App\Models\CheckinReaction::where('reactionable_type', 'post')
+                ->whereIn('reactionable_id', $postIds);
+            if ($currentUserId) {
+                $uQuery->where('user_id', $currentUserId);
+            } elseif (!empty($currentSessionId)) {
+                $uQuery->whereNull('user_id')->where('session_id', $currentSessionId);
+            } else {
+                $uQuery->whereRaw('1 = 0');
+            }
+            $userLikedMap = $uQuery->pluck('reactionable_id')->toArray();
+
+            $realCommentsMap = \App\Models\Comment::where('commentable_type', 'post')
+                ->whereIn('commentable_id', $postIds)
+                ->selectRaw('commentable_id, count(*) as total')
+                ->groupBy('commentable_id')
+                ->pluck('total', 'commentable_id')
+                ->toArray();
+
+            foreach ($principalPosts as $p) {
+                $p->real_likes_count = (int) ($realLikesMap[$p->id] ?? $p->likes_count ?? 0);
+                $p->is_liked = in_array($p->id, $userLikedMap);
+                $p->real_comments_count = (int) ($realCommentsMap[$p->id] ?? 0);
+                $p->real_shares_count = (int) ($p->shares_count ?? 0);
+            }
+        }
+
+        // Mã hóa Schema dữ liệu có cấu trúc sang định dạng thẻ script JSON-LD
+        $jsonLd = '<script type="application/ld+json">' . PHP_EOL . 
+                  json_encode($schemaData, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT) . PHP_EOL . 
+                  '</script>';
+
+        $viewData = compact('eatery', 'jsonLd', 'checkinPhotos', 'checkinReviews', 'principalPosts', 'principalUser');
+
+        $viewName = match ($categorySlug) {
+            'traditional-market'                                               => 'detail-market',
+            'dong-anh-market'                                                  => 'detail-ocop',
+            'co-so-kinh-doanh'                                                 => 'detail-business',
+            'stay-in-dong-anh'                                                 => 'detail-stay',
+            'wellness-care'                                                    => 'detail-wellness',
+            'smart-education-map'                                              => 'detail-education',
+            'discover-dong-anh-community-culture-hub', 'hanh-trinh-di-san'     => 'detail-culture',
+            'dong-anh-food-map'                                                => 'detail-food',
+            default                                                            => 'detail',
+        };
+
+        if ($viewName === 'detail-wellness') {
+            $viewData['doctors'] = \Illuminate\Support\Facades\DB::table('wellness_doctors')
+                ->where('eatery_id', $eatery->id)
+                ->orderBy('id', 'asc')
+                ->get();
+        }
+
+        return [
+            'view' => $viewName,
+            'data' => $viewData,
+        ];
+    }
+
+    /**
+     * Handle user review submission for an eatery with media upload.
+     */
+    public function submitEateryReview(int $eateryId, array $data, array $mediaFiles = []): Review
+    {
+        $eatery = Eatery::with('category')->find($eateryId);
+        if (!$eatery) {
+            abort(404, 'Địa điểm không tồn tại.');
+        }
+
+        $uploadedMedia = [];
+        if (!empty($mediaFiles)) {
+            $uploaded = R2Helper::uploadMultiple($mediaFiles, 'reviews');
+            foreach ($uploaded as $item) {
+                $uploadedMedia[] = [
+                    'path' => $item['url'],
+                    'type' => $item['file_type'],
+                ];
+            }
+        }
+
+        return $this->storeReview(
+            $eatery->category->slug ?? 'dong-anh-food-map',
+            $eatery->id,
+            [
+                'user_name'   => $data['user_name'] ?? 'Khách vãng lai',
+                'rating'      => $data['rating'] ?? 5,
+                'comment'     => $data['comment'] ?? '',
+                'media_files' => $uploadedMedia,
+            ]
+        );
+    }
 }
+

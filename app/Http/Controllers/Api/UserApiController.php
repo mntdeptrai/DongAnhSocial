@@ -362,12 +362,12 @@ class UserApiController extends Controller
                       ->orWhere('name', 'LIKE', "{$query}%");
                 });
             } catch (\Throwable $e) {
-                // Fallback hỗ trợ quét chuỗi mềm dẻo
+                // Fallback hỗ trợ quét chuỗi tiền tố có Index
                 $usersQuery->where(function($q) use ($query) {
-                    $q->where('email', 'LIKE', "%{$query}%")
-                      ->orWhere('phone', 'LIKE', "%{$query}%")
-                      ->orWhere('username', 'LIKE', "%{$query}%")
-                      ->orWhere('name', 'LIKE', "%{$query}%");
+                    $q->where('username', 'LIKE', "{$query}%")
+                      ->orWhere('email', 'LIKE', "{$query}%")
+                      ->orWhere('phone', 'LIKE', "{$query}%")
+                      ->orWhere('name', 'LIKE', "{$query}%");
                 });
             }
         }

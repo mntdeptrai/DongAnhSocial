@@ -102,7 +102,7 @@
     <link rel="stylesheet" href="{{ asset('css/4-screen-responsive.css') }}?v=2.1">
     
     <!-- Mobile Native Overrides (Only load for mobile and tablet screens) -->
-    <link rel="stylesheet" media="screen and (max-width: 991px)" href="{{ asset('css/mobile-native.css') }}?v=2.1">
+    <link rel="stylesheet" media="screen and (max-width: 1199px)" href="{{ asset('css/mobile-native.css') }}?v=2.2">
 
     <!-- 📱 Mobile Viewport Fit Fix — Ôm gọn nội dung, không scroll ngang -->
     <link rel="stylesheet" href="{{ asset('css/mobile-fix.css') }}?v=2.1">
@@ -116,7 +116,9 @@
     <link rel="stylesheet" href="{{ asset('css/storytelling.css') }}?v=2.1">
     <link rel="stylesheet" href="{{ asset('css/storytelling-mobile.css') }}?v=2.1">
     <link rel="stylesheet" href="{{ asset('css/ocop-storytelling.css') }}?v=2.1">
-    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script defer src="{{ asset('js/gsap.min.js') }}"></script>
+    <script defer src="{{ asset('js/three.min.js') }}"></script>
+    <script defer src="{{ asset('js/hero-airplane-three.js') }}?v={{ file_exists(public_path('js/hero-airplane-three.js')) ? filemtime(public_path('js/hero-airplane-three.js')) : '1.0' }}"></script>
     @endif
     
     <!-- Dynamic Schema.org JSON-LD Structured Data for Google Indexing -->

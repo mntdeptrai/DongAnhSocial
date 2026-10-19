@@ -33,20 +33,6 @@
         padding-right: 20px !important;
     }
     
-    /* Header nav font & padding compacting to prevent avatar cut-off */
-    .glass-nav .nav-menu {
-        gap: 4px !important;
-    }
-    .glass-nav .nav-link {
-        padding: 6px 10px !important;
-        font-size: 0.82rem !important;
-    }
-    .glass-nav .logo {
-        font-size: 1.05rem !important;
-    }
-    .user-actions {
-        gap: 6px !important;
-    }
 
     .sch-hero {
         padding: 24px !important;

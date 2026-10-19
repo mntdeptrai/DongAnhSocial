@@ -2,26 +2,21 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use App\Services\CommentService;
-use App\Services\SpamProtectionService;
+use App\Contracts\CommentServiceInterface;
 use App\Domain\Comment\CommentData;
+use App\Http\Requests\StoreCommentRequest;
+use App\Services\SpamProtectionService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 
 class CommentController extends Controller
 {
     public function __construct(
-        protected CommentService $commentService
+        protected CommentServiceInterface $commentService
     ) {}
 
-    public function store(Request $request)
+    public function store(StoreCommentRequest $request): JsonResponse|RedirectResponse
     {
-        $request->validate([
-            'content'          => 'required|string|max:1000',
-            'commentable_id'   => 'required|integer',
-            'commentable_type' => 'required|string|in:App\Models\Checkin,App\Models\FoodTourDiary,App\Models\Post,post',
-            'guest_name'       => 'nullable|string|max:100',
-        ]);
-
         $content = (string) $request->input('content');
 
         // Kiểm tra chống bot và lọc spam toàn diện

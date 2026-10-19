@@ -2,16 +2,19 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Checkin;
-use App\Models\Eatery;
-use App\Models\ReviewVideo;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
+use App\Domain\Checkin\CheckinData;
 use App\Services\EateryApiService;
-use App\Helpers\R2Helper;
+use App\Services\Interfaces\HomeServiceInterface;
+use App\Services\SpamProtectionService;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class HomeController extends Controller
 {
+    public function __construct(
+        protected HomeServiceInterface $homeService
+    ) {}
+
     public function index(Request $request)
     {
         $selectedCatSlug = $request->query('cat');
@@ -19,76 +22,27 @@ class HomeController extends Controller
         $page = max(1, (int) $request->query('page', 1));
         $perPage = 24;
 
-        $categories = \Illuminate\Support\Facades\Cache::remember('home_categories', 1800, function() {
-            return EateryApiService::getCategories();
-        });
-
-        $communes = \Illuminate\Support\Facades\Cache::remember('home_communes', 1800, function() {
-            return EateryApiService::getCommunes();
-        });
-
-        $selectedComId = null;
-        if ($selectedComSlug) {
-            $commune = $communes->firstWhere('slug', $selectedComSlug);
-            if ($commune) {
-                $selectedComId = $commune->id;
-            }
-        }
-
-        $totalCount = EateryApiService::countEateries($selectedCatSlug, [
-            'commune_id' => $selectedComId
-        ]);
-
-        $eateries = EateryApiService::getEateries($selectedCatSlug, [
-            'commune_id' => $selectedComId,
-            'page' => $page,
-            'per_page' => $perPage,
-        ]);
-
-        $ocopProducts = collect();
-        if ($selectedCatSlug === 'dong-anh-market') {
-            $ocopProducts = EateryApiService::getOcopProducts([
-                'commune_id' => $selectedComId
-            ]);
-        }
+        $data = $this->homeService->getHomeData($selectedCatSlug, $selectedComSlug, $page, $perPage);
 
         if ($request->has('ajax')) {
             return response()->json([
-                'eateries' => $eateries,
-                'ocopProducts' => $ocopProducts,
-                'selectedCatSlug' => $selectedCatSlug,
-                'page' => $page,
-                'per_page' => $perPage,
-                'has_more' => ($page * $perPage) < $totalCount,
-                'total' => $totalCount,
+                'eateries'        => $data['eateries'],
+                'ocopProducts'    => $data['ocopProducts'],
+                'selectedCatSlug' => $data['selectedCatSlug'],
+                'page'            => $data['page'],
+                'per_page'        => $data['perPage'],
+                'has_more'        => $data['hasMore'],
+                'total'           => $data['totalCount'],
             ]);
         }
 
-        return view('home', compact(
-            'categories', 
-            'communes', 
-            'eateries',
-            'ocopProducts',
-            'selectedCatSlug', 
-            'selectedComSlug',
-            'totalCount',
-            'page',
-            'perPage'
-        ));
+        return view('home', $data);
     }
 
     public function sitemap()
     {
-        $eateries = Eatery::select('id', 'name', 'slug', 'category_id', 'updated_at')->active()->get();
-        
-        $ocopProducts = \App\Models\OcopProduct::select('id', 'name', 'slug', 'star_rating', 'eatery_id', 'stall_name', 'updated_at')
-            ->whereNotNull('slug')
-            ->get();
-
-        $dishes = \App\Models\Dish::select('id', 'name', 'eatery_id', 'updated_at')
-            ->get();
-
-        return response()->view('sitemap', compact('eateries', 'ocopProducts', 'dishes'))
+        $data = $this->homeService->getSitemapData();
+        return response()->view('sitemap', $data)
                          ->header('Content-Type', 'text/xml');
     }
 
@@ -97,134 +51,26 @@ class HomeController extends Controller
      */
     public function tuyenDuong40()
     {
-        $dbRoutes = \App\Models\DigitalRoute::select('route_key', 'name', 'length', 'color', 'village_key', 'anim_class', 'path_coords')->get()->map(function($r) {
-            return [
-                'id' => $r->route_key,
-                'name' => $r->name,
-                'length' => $r->length,
-                'color' => $r->color,
-                'villages' => [$r->village_key],
-                'animClass' => $r->anim_class,
-                'pathCoords' => $r->path_coords,
-            ];
-        });
-
-        $dbLocations = \App\Models\RouteBusiness::select('id', 'route_key', 'name', 'owner', 'village_key', 'village_name', 'type', 'rating', 'address', 'phone', 'bank_account', 'bank_name', 'is_open', 'menu', 'image_url', 'lat', 'lng')->get()->map(function($b) {
-            $vName = $b->village_name;
-            $vMap = [
-                'phu-loc' => 'Đường Phúc Lộc',
-                'dong-anh-cum-3' => 'Quốc Lộ 3',
-                'duc-noi' => 'Đường Cổ Vân',
-                'viet-hung' => 'Đường Việt Hùng',
-                'cao-lo' => 'Đường Cao Lỗ',
-                'xuan-canh' => 'Đường Xuân Canh',
-                'dan-di' => 'Đường Đản Dị',
-                'mai-lam' => 'Đường Dốc Vân',
-                'duc-tu' => 'Đường Phía Nam Dục Tú',
-                'dan-mo' => 'Đường Đản Mỗ',
-            ];
-            if (isset($vMap[$b->village_key])) {
-                $vName = $vMap[$b->village_key];
-            } else {
-                $vName = preg_replace('/^(Thôn|Thon)\s+/iu', 'Đường ', $vName);
-            }
-
-            $addr = $b->address;
-            if ($addr) {
-                $addr = preg_replace('/Thon Phuc Loc/i', '', $addr);
-                $addr = preg_replace('/Thon Dong Anh \(Cum 3\)/i', '', $addr);
-                $addr = preg_replace('/Thon Duc Noi/i', '', $addr);
-                $addr = preg_replace('/Thon Viet Hung/i', '', $addr);
-                $addr = preg_replace('/Thôn Xuân Canh/u', '', $addr);
-                $addr = preg_replace('/Thị trấn Đông Anh \(Đản Dị\)/u', '', $addr);
-                $addr = preg_replace('/Thôn Mai Lâm \(Dốc Vân\)/u', '', $addr);
-                $addr = preg_replace('/Thôn Mai Lâm/u', '', $addr);
-                $addr = preg_replace('/,?\s*(Thôn|Thon)\s+[^,]+/iu', '', $addr);
-                $addr = preg_replace('/\s*,\s*,+/', ',', $addr);
-                $addr = trim($addr, " \t\n\r\0\x0B,");
-            }
-
-            $img = $b->image_url;
-            if (!$img) {
-                $typeImages = [
-                    'quan-an'   => 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=600&q=80',
-                    'nha-hang'  => 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=600&q=80',
-                    'tap-hoa'   => 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?auto=format&fit=crop&w=600&q=80',
-                    'thuc-pham' => 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=600&q=80',
-                    'thoi-trang'=> 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=600&q=80',
-                    'y-te'      => 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=600&q=80',
-                    'dich-vu'   => 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=600&q=80',
-                ];
-                $img = $typeImages[$b->type] ?? 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?auto=format&fit=crop&w=600&q=80';
-            }
-
-            $menuItems = $b->menu;
-            if (is_string($menuItems)) {
-                $menuItems = json_decode($menuItems, true);
-            }
-            if (empty($menuItems)) {
-                $menuItems = ['Hộ kinh doanh thực tế'];
-            }
-
-            return [
-                'id' => $b->id,
-                'name' => $b->name,
-                'owner' => $b->owner,
-                'village' => $b->village_key,
-                'villageName' => $vName,
-                'type' => $b->type,
-                'rating' => (float)$b->rating,
-                'address' => $addr,
-                'phone' => $b->phone,
-                'bankAccount' => $b->bank_account,
-                'bank' => $b->bank_name,
-                'open' => (bool)$b->is_open,
-                'menu' => $menuItems,
-                'image' => $img,
-                'lat' => (float)$b->lat,
-                'lng' => (float)$b->lng,
-            ];
-        });
-
-        return view('tuyen-duong', compact('dbRoutes', 'dbLocations'));
+        $data = $this->homeService->getTuyenDuongData();
+        return view('tuyen-duong', $data);
     }
 
     public function getVideos()
     {
-        $videos = EateryApiService::getVideos()->map(function($vid) {
-            return [
-                'id' => $vid->id,
-                'title' => $vid->title,
-                'video_url' => $vid->video_url,
-                'video_type' => $vid->video_type,
-                'thumbnail_path' => $vid->thumbnail_path,
-                'likes_count' => $vid->likes_count,
-                'eatery' => [
-                    'name' => $vid->eatery->name,
-                    'slug' => $vid->eatery->slug,
-                    'address' => $vid->eatery->address,
-                    'rating' => (float)$vid->eatery->rating,
-                    'category' => $vid->eatery->category->name,
-                    'latitude' => $vid->eatery->latitude,
-                    'longitude' => $vid->eatery->longitude,
-                    'image_path' => $vid->eatery->image_path,
-                ]
-            ];
-        });
-
+        $videos = $this->homeService->getVideoList();
         return response()->json($videos);
     }
 
     public function likeVideo($id)
     {
-        $result = EateryApiService::likeVideo($id);
+        $result = $this->homeService->likeVideo((int) $id);
         if (!$result) {
             return response()->json(['success' => false, 'message' => 'Video không tồn tại'], 404);
         }
 
         return response()->json([
-            'success' => true,
-            'likes_count' => $result['likes_count']
+            'success'     => true,
+            'likes_count' => $result['likes_count'],
         ]);
     }
 
@@ -233,371 +79,12 @@ class HomeController extends Controller
      */
     public function newsfeed()
     {
-        // Tự động dọn dẹp sạch tất cả bình luận rác bot HfJNUIYZ, Command Injection & Scanner payloads
-        try {
-            \Illuminate\Support\Facades\DB::table('comments')
-                ->where('guest_name', 'LIKE', '%HfJNUIYZ%')
-                ->orWhereRaw('LOWER(guest_name) LIKE ?', ['%hfjnuiyz%'])
-                ->orWhereRaw('LOWER(guest_name) LIKE ?', ['%acunetix%'])
-                ->orWhereRaw('LOWER(guest_name) LIKE ?', ['%sqlmap%'])
-                ->orWhereRaw('LOWER(content) LIKE ?', ['%echo %'])
-                ->orWhereRaw('LOWER(content) LIKE ?', ['%zgnrlq%'])
-                ->orWhereRaw('LOWER(content) LIKE ?', ['%bosujf%'])
-                ->orWhereRaw('LOWER(content) LIKE ?', ['%tnazcm%'])
-                ->orWhereRaw('LOWER(content) LIKE ?', ['%hulhnr%'])
-                ->orWhereRaw('LOWER(content) LIKE ?', ['%passwd%'])
-                ->orWhereRaw('LOWER(content) LIKE ?', ['%esi:include%'])
-                ->orWhereRaw('LOWER(content) LIKE ?', ['%bxss.me%'])
-                ->orWhereRaw('LOWER(content) LIKE ?', ['%sleep(%'])
-                ->orWhereRaw('LOWER(content) LIKE ?', ['%redirtest%'])
-                ->orWhereRaw('LOWER(content) LIKE ?', ['%9999256%'])
-                ->orWhereRaw('LOWER(content) LIKE ?', ['%hfjnuiyz%'])
-                ->orWhere('content', '1BE7D4CSVY0')
-                ->orWhere('content', '"()')
-                ->orWhere('content', '\'"()')
-                ->orWhere('content', '1')
-                ->delete();
-        } catch (\Throwable $e) {}
-
-        // 1. Lấy tất cả bài viết từ EducationProgram (Trường học / Hiệu trưởng), loại bỏ các tiêu đề mẫu mặc định
-        $excludedTitles = [
-            'Hệ đào tạo THPT chính quy chuẩn quốc gia',
-            'Lớp chọn ngoại ngữ (Tiếng Anh - Tiếng Trung tăng cường)',
-            'Hệ THCS Chất lượng cao trọng điểm',
-            'Câu lạc bộ Kỹ năng sống & STEM',
-        ];
-
-        $eduPostsMysqlEdu = collect();
-        $eduPostsMysql = collect();
-
-        try {
-            $eduPostsMysqlEdu = \App\Models\EducationProgram::on('mysql_education')
-                ->with(['eatery'])
-                ->whereNotIn('name', $excludedTitles)
-                ->orderBy('created_at', 'desc')
-                ->get();
-        } catch (\Throwable $e) {}
-
-        try {
-            $eduPostsMysql = \App\Models\EducationProgram::on('mysql')
-                ->with(['eatery'])
-                ->whereNotIn('name', $excludedTitles)
-                ->orderBy('created_at', 'desc')
-                ->get();
-        } catch (\Throwable $e) {}
-
-        $eduPosts = $eduPostsMysqlEdu->concat($eduPostsMysql)->unique('id');
-
-        // 2. Lấy tất cả bài viết từ table Post (Người dùng / Trường học / Gian hàng) từ cả mysql_education & mysql
-        $userPostsMysqlEdu = collect();
-        $userPostsMysql = collect();
-
-        try {
-            $userPostsMysqlEdu = \App\Models\Post::on('mysql_education')
-                ->with(['user', 'eatery', 'comments.user'])
-                ->orderBy('created_at', 'desc')
-                ->get();
-        } catch (\Throwable $e) {}
-
-        try {
-            $userPostsMysql = \App\Models\Post::on('mysql')
-                ->with(['user', 'eatery', 'comments.user'])
-                ->orderBy('created_at', 'desc')
-                ->get();
-        } catch (\Throwable $e) {}
-
-        $userPosts = $userPostsMysqlEdu->concat($userPostsMysql)->unique('id');
-
-        // 3. Lấy bài viết Checkin công khai
-        $checkinPosts = collect();
-        try {
-            $checkinPosts = \App\Models\Checkin::with(['user', 'eatery', 'comments.user'])
-                ->where('status', 'published')
-                ->orderBy('created_at', 'desc')
-                ->get()
-                ->map(function($c) {
-                    $c->is_checkin = true;
-                    $c->name = $c->eatery ? "📍 Check-in tại " . $c->eatery->name : "📍 Bài đăng Check-in";
-                    $c->description = $c->content ?? $c->description;
-                    return $c;
-                });
-        } catch (\Throwable $e) {}
-
-        // 4. Lấy các bài đăng Nhật ký hành trình Food Tour (FoodTourDiary)
-        $foodTourDiaries = collect();
-        try {
-            $foodTourDiaries = \App\Models\FoodTourDiary::with(['user', 'foodTour', 'comments.user'])
-                ->orderBy('created_at', 'desc')
-                ->get()
-                ->map(function($d) {
-                    $d->is_food_tour = true;
-                    $tourTitle = $d->foodTour ? $d->foodTour->title : 'Hành trình Ẩm thực Đông Anh';
-                    $d->name = "🍲 Nhật ký Food Tour: " . $tourTitle;
-                    $d->description = $d->comment;
-                    if ($d->rating) {
-                        $d->description = "⭐ Đánh giá: " . $d->rating . "/5 sao\n\n" . $d->description;
-                    }
-                    return $d;
-                });
-        } catch (\Throwable $e) {}
-
-        // Gộp tất cả loại bài viết vào Bảng tin (Bao gồm Cả Nhật ký Food Tour & Checkin)
-        $allPostsCombined = $eduPosts->concat($userPosts)->concat($checkinPosts)->concat($foodTourDiaries)->values();
-
-        // ========================================================
-        // THUẬT TOÁN CÁ NHÂN HÓA BẢNG TIN (Personalized Feed)
-        // Mỗi user sẽ thấy thứ tự bài viết khác nhau
-        // ========================================================
         $feedType = request()->query('feed_type', 'for_you');
-        $currentUserId = \Illuminate\Support\Facades\Auth::id() ?? session('user_id');
+        $currentUserId = Auth::id() ?? session('user_id');
 
-        // Lấy danh sách bạn bè & eatery đã theo dõi của user hiện tại
-        $friendUserIds = [];
-        $userEateryIds = [];
-        if ($currentUserId) {
-            try {
-                $friendUserIds = \DB::table('friendships')
-                    ->where('status', 'accepted')
-                    ->where(function($q) use ($currentUserId) {
-                        $q->where('user_id', $currentUserId)->orWhere('friend_id', $currentUserId);
-                    })
-                    ->get()
-                    ->map(fn($f) => $f->user_id == $currentUserId ? $f->friend_id : $f->user_id)
-                    ->toArray();
-            } catch (\Throwable $e) {}
+        $data = $this->homeService->getNewsfeedData($currentUserId, $feedType);
 
-            try {
-                $user = \App\Models\User::find($currentUserId);
-                if ($user && $user->eatery_id) {
-                    $userEateryIds[] = $user->eatery_id;
-                }
-            } catch (\Throwable $e) {}
-        }
-
-        // Lọc theo chế độ Đang theo dõi (Following)
-        if ($feedType === 'following') {
-            if (!empty($friendUserIds) || !empty($userEateryIds)) {
-                $allPostsCombined = $allPostsCombined->filter(function($post) use ($friendUserIds, $userEateryIds) {
-                    $uId = $post->user_id ?? null;
-                    $eId = $post->eatery_id ?? null;
-                    return ($uId && in_array($uId, $friendUserIds)) || ($eId && in_array($eId, $userEateryIds));
-                })->values();
-            }
-        } elseif ($feedType === 'nearby') {
-            // Lọc ưu tiên các bài đăng Check-in và Food Tour tại địa bàn Đông Anh
-            $allPostsCombined = $allPostsCombined->filter(function($post) {
-                return !empty($post->is_checkin) || !empty($post->is_food_tour) || !empty($post->eatery_id);
-            })->values();
-        }
-
-        $engagementReactions = collect();
-        $engagementComments = collect();
-        try {
-            $allPostIds = $allPostsCombined->pluck('id')->filter()->toArray();
-            if (!empty($allPostIds)) {
-                $engagementReactions = \App\Models\CheckinReaction::selectRaw('reactionable_id, count(*) as cnt')
-                    ->whereIn('reactionable_id', $allPostIds)
-                    ->groupBy('reactionable_id')
-                    ->pluck('cnt', 'reactionable_id');
-                $engagementComments = \App\Models\Comment::selectRaw('commentable_id, count(*) as cnt')
-                    ->whereIn('commentable_id', $allPostIds)
-                    ->groupBy('commentable_id')
-                    ->pluck('cnt', 'commentable_id');
-            }
-        } catch (\Throwable $e) {}
-
-        // Tính điểm cá nhân hóa cho từng bài viết
-        $allPostsCombined = $allPostsCombined->map(function($post) use ($friendUserIds, $userEateryIds, $currentUserId, $engagementReactions, $engagementComments, $feedType) {
-            $score = 0;
-            $createdTs = $post->created_at ? $post->created_at->timestamp : 0;
-            $ageHours = max(1, (time() - $createdTs) / 3600);
-
-            // Điểm thời gian: bài mới được ưu tiên
-            $score += max(0, 100 - ($ageHours * 0.5));
-
-            // Điểm bạn bè: bài từ bạn bè +45 điểm
-            $postUserId = $post->user_id ?? null;
-            $isFriend = $postUserId && in_array($postUserId, $friendUserIds);
-            if ($isFriend) {
-                $score += 45;
-            }
-
-            // Điểm cơ sở theo dõi: +30 điểm
-            $postEateryId = $post->eatery_id ?? null;
-            $isFollowedEatery = $postEateryId && in_array($postEateryId, $userEateryIds);
-            if ($isFollowedEatery) {
-                $score += 30;
-            }
-
-            // Điểm tương tác: bài có nhiều reaction/comment được boost
-            $reactionCount = $engagementReactions->get($post->id, 0);
-            $commentCount = $engagementComments->get($post->id, 0);
-            $totalEngage = ($reactionCount * 3) + ($commentCount * 5);
-            $score += min(30, $totalEngage);
-
-            // Gán nhãn cá nhân hóa
-            if ($feedType === 'following') {
-                $post->_personal_tag = '👥 Từ người bạn theo dõi';
-            } elseif ($feedType === 'nearby') {
-                $post->_personal_tag = '📍 Khám phá gần bạn';
-            } else {
-                if ($isFriend) {
-                    $post->_personal_tag = '📌 Từ bạn bè của bạn';
-                } elseif ($isFollowedEatery) {
-                    $post->_personal_tag = '🏛️ Cơ sở bạn quan tâm';
-                } elseif (($reactionCount + $commentCount) >= 4) {
-                    $post->_personal_tag = '🔥 Đang thịnh hành';
-                } else {
-                    $post->_personal_tag = '🎯 Gợi ý cho bạn';
-                }
-            }
-
-            // Biến thể ngẫu nhiên nhẹ theo từng người dùng
-            if ($currentUserId) {
-                $seed = crc32($currentUserId . '_' . $post->id . '_' . date('Y-m-d'));
-                $noise = ($seed % 20) - 10;
-                $score += $noise;
-            }
-
-            $post->_feed_score = $score;
-            return $post;
-        });
-
-        // Sắp xếp theo điểm cá nhân hóa
-        $allPostsCombined = $allPostsCombined->sortByDesc('_feed_score')->values();
-
-        // Deep link: đẩy bài viết cụ thể lên đầu tiên nếu có ?post=
-        $highlightPostParam = request()->query('post');
-        if ($highlightPostParam) {
-            $pinnedPost = $allPostsCombined->first(fn($p) => (isset($p->hashid) && $p->hashid === $highlightPostParam) || $p->id == $highlightPostParam);
-            if ($pinnedPost) {
-                $allPostsCombined = $allPostsCombined->reject(fn($p) => ((isset($p->hashid) && $p->hashid === $highlightPostParam) || $p->id == $highlightPostParam) && get_class($p) === get_class($pinnedPost));
-                $allPostsCombined = collect([$pinnedPost])->concat($allPostsCombined)->values();
-            }
-        }
-
-        // Attach comments and reactions efficiently using grouped whereIn
-        $idsByType = [];
-        foreach ($allPostsCombined as $p) {
-            $cType = get_class($p);
-            $baseType = strtolower(class_basename($cType));
-            $idsByType[$cType][] = $p->id;
-            $idsByType[$baseType][] = $p->id;
-        }
-
-        $commentsGroup = collect();
-        if (!empty($idsByType)) {
-            $commentsGroup = \App\Models\Comment::with('user')
-                ->where(function($q) use ($idsByType) {
-                    foreach ($idsByType as $type => $ids) {
-                        $q->orWhere(function($sub) use ($type, $ids) {
-                            $sub->where('commentable_type', $type)
-                                ->whereIn('commentable_id', array_unique($ids));
-                        });
-                    }
-                })
-                ->get()
-                ->groupBy(function($c) {
-                    $normType = match (true) {
-                        str_contains($c->commentable_type, 'Checkin') => 'checkin',
-                        str_contains($c->commentable_type, 'FoodTourDiary') => 'diary',
-                        str_contains($c->commentable_type, 'Eatery') => 'eatery',
-                        str_contains($c->commentable_type, 'EducationProgram') => 'education',
-                        default => 'post',
-                    };
-                    return $normType . '_' . $c->commentable_id;
-                });
-        }
-
-        $allReactions = collect();
-        $userReactions = collect();
-        try {
-            $allReactions = \App\Models\CheckinReaction::selectRaw('reactionable_type, reactionable_id, emoji, count(*) as count')
-                ->groupBy('reactionable_type', 'reactionable_id', 'emoji')
-                ->get()
-                ->groupBy(function($item) {
-                    return $item->reactionable_type . '_' . $item->reactionable_id;
-                });
-
-            $userId = \Illuminate\Support\Facades\Auth::id() ?? session('user_id');
-            $sessionId = session()->getId();
-
-            $userReactions = \App\Models\CheckinReaction::where(function($q) use ($userId, $sessionId) {
-                    if ($userId) {
-                        $q->where('user_id', $userId);
-                    } else if (!empty($sessionId)) {
-                        $q->whereNull('user_id')->where('session_id', $sessionId);
-                    } else {
-                        $q->whereRaw('1 = 0');
-                    }
-                })
-                ->get()
-                ->keyBy(function($item) {
-                    return $item->reactionable_type . '_' . $item->reactionable_id;
-                });
-        } catch (\Throwable $e) {}
-
-        $emojis = ['❤️', '🔥', '👍', '😂', '😍', '🤤'];
-
-        $posts = $allPostsCombined->transform(function($post) use ($allReactions, $userReactions, $emojis, $commentsGroup) {
-            $typeKey = ($post instanceof \App\Models\EducationProgram) ? 'post_' : (($post instanceof \App\Models\Checkin) ? 'checkin_' : 'post_');
-            $key = $typeKey . $post->id;
-            $reactionsGroup = $allReactions->get($key, collect());
-            $counts = [];
-            $total = 0;
-            foreach ($emojis as $e) {
-                $cnt = (int) ($reactionsGroup->firstWhere('emoji', $e)?->count ?? 0);
-                $counts[$e] = $cnt;
-                $total += $cnt;
-            }
-            $post->reaction_counts = $counts;
-            $post->reaction_total = $total;
-            $post->is_liked = $userReactions->has($key);
-            
-            $cKey = match (true) {
-                $post instanceof \App\Models\Checkin => 'checkin_' . $post->id,
-                $post instanceof \App\Models\FoodTourDiary => 'diary_' . $post->id,
-                $post instanceof \App\Models\Eatery => 'eatery_' . $post->id,
-                $post instanceof \App\Models\EducationProgram => 'education_' . $post->id,
-                default => 'post_' . $post->id,
-            };
-            $post->comments = $commentsGroup->get($cKey, collect());
-            return $post;
-        });
-
-        $featuredUsers = collect();
-        try {
-            $maxUserId = \App\Models\User::max('id') ?? 1;
-            $randomStartId = rand(1, max(1, $maxUserId - 20));
-            $featuredUsers = \App\Models\User::where('id', '>=', $randomStartId)
-                ->whereNotNull('name')
-                ->take(10)
-                ->get();
-            if ($featuredUsers->count() < 10) {
-                $moreUsers = \App\Models\User::whereNotNull('name')
-                    ->whereNotIn('id', $featuredUsers->pluck('id'))
-                    ->take(10 - $featuredUsers->count())
-                    ->get();
-                $featuredUsers = $featuredUsers->merge($moreUsers);
-            }
-            $featuredUsers = $featuredUsers->shuffle();
-        } catch (\Throwable $e) {}
-
-        $allEateries = collect();
-
-        $stories = collect();
-        try {
-            $stories = \App\Models\Story::with('user')
-                ->where('created_at', '>=', now()->subHours(24))
-                ->orderBy('created_at', 'asc')
-                ->get()
-                ->map(function($s) {
-                    $s->time_ago = $s->created_at ? $s->created_at->diffForHumans() : 'Vừa xong';
-                    return $s;
-                });
-        } catch (\Throwable $e) {}
-
-        return view('newsfeed', compact('posts', 'featuredUsers', 'allEateries', 'stories', 'feedType'));
+        return view('newsfeed', $data);
     }
 
     /**
@@ -605,92 +92,19 @@ class HomeController extends Controller
      */
     public function checkinFeed()
     {
-        // 1. Lấy diary từ Food Tour
-        $diaries = \App\Models\FoodTourDiary::with(['user', 'foodTour.stops', 'comments.user'])
-            ->orderBy('created_at', 'desc')
-            ->get();
-
-        // 2. Lấy Check-in đơn lẻ mới nhất
-        $standaloneCheckins = Checkin::with(['user', 'eatery.category', 'eatery.commune', 'comments.user'])
-            ->where('status', 'published')
-            ->orderBy('created_at', 'desc')
-            ->get();
-
-        // 3. Bài viết từ Profile không hiển thị ở trang Check-in nữa (đã chuyển sang Bảng tin)
-        $profilePosts = collect();
-
-        // 4. Tải tất cả bộ đếm cảm xúc (Reactions) từ DB
-        $allCheckinReactions = \App\Models\CheckinReaction::selectRaw('reactionable_type, reactionable_id, emoji, count(*) as count')
-            ->groupBy('reactionable_type', 'reactionable_id', 'emoji')
-            ->get()
-            ->groupBy(function($item) {
-                return $item->reactionable_type . '_' . $item->reactionable_id;
-            });
-
-        $user = auth('sanctum')->user() ?: \Illuminate\Support\Facades\Auth::user();
+        $user = auth('sanctum')->user() ?: Auth::user();
         $userId = $user ? $user->id : session('user_id');
         $sessionId = session()->getId();
 
-        $userReactions = \App\Models\CheckinReaction::where(function($q) use ($userId, $sessionId) {
-                if ($userId) {
-                    $q->where('user_id', $userId);
-                } else if (!empty($sessionId)) {
-                    $q->whereNull('user_id')->where('session_id', $sessionId);
-                } else {
-                    $q->whereRaw('1 = 0');
-                }
-            })
-            ->get()
-            ->keyBy(function($item) {
-                return $item->reactionable_type . '_' . $item->reactionable_id;
-            });
+        $data = $this->homeService->getCheckinFeedData($userId, $sessionId);
 
-        $emojis = ['❤️', '🔥', '👍', '😂', '😍', '🤤'];
-
-        $standaloneCheckins->transform(function($chk) use ($allCheckinReactions, $userReactions, $emojis) {
-            $key = 'checkin_' . $chk->id;
-            $reactionsGroup = $allCheckinReactions->get($key, collect());
-            $counts = [];
-            $total = 0;
-            foreach ($emojis as $e) {
-                $cnt = (int) ($reactionsGroup->firstWhere('emoji', $e)?->count ?? 0);
-                $counts[$e] = $cnt;
-                $total += $cnt;
-            }
-            $chk->reaction_counts = $counts;
-            $chk->reaction_total = $total;
-            $chk->is_liked = $userReactions->has($key);
-            return $chk;
-        });
-
-        $diaries->transform(function($dry) use ($allCheckinReactions, $userReactions, $emojis) {
-            $key = 'diary_' . $dry->id;
-            $reactionsGroup = $allCheckinReactions->get($key, collect());
-            $counts = [];
-            $total = 0;
-            foreach ($emojis as $e) {
-                $cnt = (int) ($reactionsGroup->firstWhere('emoji', $e)?->count ?? 0);
-                $counts[$e] = $cnt;
-                $total += $cnt;
-            }
-            $dry->reaction_counts = $counts;
-            $dry->reaction_total = $total;
-            $dry->is_liked = $userReactions->has($key);
-            return $dry;
-        });
-
-        $allEateries = Eatery::select('id', 'name', 'slug', 'address', 'image_path', 'rating', 'category_id', 'commune_id')
-            ->with('category:id,name,slug,icon', 'commune:id,name,slug')
-            ->active()->orderBy('name')->get();
-        $eateriesMap = $allEateries->keyBy('id');
-
-        return view('checkin', compact('diaries', 'eateriesMap', 'standaloneCheckins', 'profilePosts', 'allEateries'));
+        return view('checkin', $data);
     }
 
     /**
      * Lưu check-in đơn lẻ mới từ form
      */
-    public function storeCheckin(Request $request, \App\Services\CheckinService $checkinService)
+    public function storeCheckin(Request $request)
     {
         $request->validate([
             'eatery_id'    => 'nullable|integer',
@@ -718,15 +132,13 @@ class HomeController extends Controller
             }
         }
 
-        $data = \App\Domain\Checkin\CheckinData::fromRequest($request);
-        $checkinService->createCheckin($data);
-
-        $authUser = Auth::user();
-        if ($authUser) {
-            try {
-                \App\Services\NotificationService::notifyNewPost($authUser, '', $request->input('comment') ?? 'Check-in mới', $eateryId ? (int)$eateryId : null);
-            } catch (\Exception $e) {}
-        }
+        $data = CheckinData::fromRequest($request);
+        $this->homeService->storeCheckin(
+            $data,
+            Auth::id(),
+            $eateryId ? (int) $eateryId : null,
+            $request->input('comment')
+        );
 
         return redirect()->route('checkin.feed')->with('success', 'Check-in của bạn đã được đăng thành công! 🎉');
     }
@@ -737,126 +149,41 @@ class HomeController extends Controller
     public function searchEateries(Request $request)
     {
         $q = trim($request->query('q', ''));
+        $eateries = $this->homeService->searchEateries($q);
 
-        $query = Eatery::select('id', 'name', 'slug', 'address', 'image_path', 'rating', 'category_id', 'commune_id')
-            ->with('category:id,name', 'commune:id,name')
-            ->active();
-
-        if ($q !== '') {
-            $qNormalized = mb_strtolower($this->removeVietnameseSign($q));
-            $query->where(function($qb) use ($q, $qNormalized) {
-                $qb->where('name', 'like', "%{$q}%")
-                   ->orWhere('address', 'like', "%{$q}%")
-                   ->orWhere('slug', 'like', "%{$qNormalized}%")
-                   ->orWhere('description', 'like', "%{$q}%");
-            });
-        }
-
-        $eateries = $query->orderBy('name')->limit(20)->get();
-
-        return response()->json($eateries->map(function($e) {
-            return [
-                'id'       => $e->id,
-                'name'     => $e->name,
-                'address'  => $e->address ?? '',
-                'category' => optional($e->category)->name ?? 'Địa điểm',
-                'commune'  => optional($e->commune)->name ?? 'Đông Anh',
-                'image'    => $e->image_path,
-                'rating'   => $e->rating,
-                'slug'     => $e->slug,
-            ];
-        }));
+        return response()->json($eateries);
     }
 
     /**
-     * API tìm địa điểm gần vị trí hiện tại nhất (Haversine formula in PHP)
+     * API tìm địa điểm gần vị trí hiện tại nhất
      */
     public function nearbyEateries(Request $request)
     {
-        $lat    = (float) $request->query('lat');
-        $lng    = (float) $request->query('lng');
-        $radius = (float) ($request->query('radius', 3)); // km, default 3km
+        $lat = (float) $request->query('lat');
+        $lng = (float) $request->query('lng');
+        $radius = (float) ($request->query('radius', 3));
 
         if (!$lat || !$lng) {
             return response()->json(['error' => 'Missing coordinates'], 422);
         }
 
-        // Sử dụng Haversine formula trong SQL thay vì load tất cả rồi filter PHP
-        $eateries = Eatery::select('id', 'name', 'slug', 'address', 'image_path', 'rating',
-                'latitude', 'longitude', 'category_id', 'commune_id')
-            ->selectRaw(
-                "(6371 * acos(cos(radians(?)) * cos(radians(latitude)) * cos(radians(longitude) - radians(?)) + sin(radians(?)) * sin(radians(latitude)))) AS distance",
-                [$lat, $lng, $lat]
-            )
-            ->with('category:id,name', 'commune:id,name')
-            ->whereNotNull('latitude')
-            ->whereNotNull('longitude')
-            ->active()
-            ->having('distance', '<=', $radius)
-            ->orderBy('distance')
-            ->limit(10)
-            ->get();
-
-        return response()->json($eateries->map(function($e) {
-            return [
-                'id'       => $e->id,
-                'name'     => $e->name,
-                'address'  => $e->address ?? '',
-                'category' => optional($e->category)->name ?? 'Địa điểm',
-                'commune'  => optional($e->commune)->name ?? 'Đông Anh',
-                'image'    => $e->image_path,
-                'rating'   => $e->rating,
-                'slug'     => $e->slug,
-                'distance' => round($e->distance * 1000), // metres
-            ];
-        }));
+        $eateries = $this->homeService->getNearbyEateries($lat, $lng, $radius);
+        return response()->json($eateries);
     }
 
     /**
-     * API lấy danh sách check-in mới hơn một timestamp nhất định
-     * Dùng làm fallback khi WebSocket (Reverb) mất kết nối
+     * API lấy danh sách check-in mới hơn một timestamp
      */
     public function latestCheckins(Request $request)
     {
-        $after = $request->query('after'); // Unix timestamp
-
-        $query = Checkin::with(['user', 'eatery.category', 'eatery.commune'])
-            ->where('status', 'published')
-            ->orderBy('created_at', 'desc')
-            ->limit(20);
-
-        if ($after) {
-            $query->where('created_at', '>', \Carbon\Carbon::createFromTimestamp((int) $after));
-        }
-
-        $checkins = $query->get()->map(function ($checkin) {
-            return [
-                'id'                => $checkin->id,
-                'display_name'      => $checkin->display_name,
-                'avatar_char'       => $checkin->user
-                    ? mb_substr($checkin->user->name, 0, 1, 'UTF-8')
-                    : '👤',
-                'role'              => $checkin->user?->role ?? 'guest',
-                'rating'            => (int) $checkin->rating,
-                'comment'           => $checkin->comment,
-                'image_path'        => $checkin->image_path,
-                'created_at_human'  => $checkin->created_at->diffForHumans(),
-                'created_at_format' => $checkin->created_at->format('d/m/Y H:i'),
-                'created_at_ts'     => $checkin->created_at->timestamp,
-                'eatery' => $checkin->eatery ? [
-                    'name'     => $checkin->eatery->name,
-                    'slug'     => $checkin->eatery->slug,
-                    'category' => $checkin->eatery->category?->name,
-                    'commune'  => $checkin->eatery->commune?->name,
-                ] : null,
-            ];
-        });
+        $after = $request->query('after');
+        $checkins = $this->homeService->getLatestCheckins($after ? (int) $after : null);
 
         return response()->json($checkins);
     }
 
     /**
-     * Lấy danh sách thông báo tổng hợp chuẩn Facebook cho Web Header
+     * Lấy danh sách thông báo cho Web Header
      */
     public function getWebNotifications(Request $request)
     {
@@ -865,7 +192,7 @@ class HomeController extends Controller
             return response()->json([]);
         }
 
-        $notifications = \App\Services\NotificationService::getNotificationsForUser($userId);
+        $notifications = $this->homeService->getWebNotifications($userId);
         return response()->json($notifications);
     }
 
@@ -876,7 +203,7 @@ class HomeController extends Controller
     {
         $userId = auth()->id() ?? session('user_id');
         if ($userId) {
-            \App\Services\NotificationService::markAsRead($userId);
+            $this->homeService->markWebNotificationsRead($userId);
         }
         return response()->json(['success' => true]);
     }
@@ -894,97 +221,17 @@ class HomeController extends Controller
         $type = $request->input('type', 'checkin');
         $emoji = $request->input('emoji', '👍');
 
-        $user = auth('sanctum')->user() ?: \Illuminate\Support\Facades\Auth::user();
+        $user = auth('sanctum')->user() ?: Auth::user();
         $userId = $user ? $user->id : session('user_id');
         $sessionId = session()->getId() ?: ('guest_' . md5($request->ip() . ($request->header('User-Agent') ?? '')));
 
-        $query = \App\Models\CheckinReaction::where('reactionable_type', $type)
-            ->where('reactionable_id', (int) $id);
+        $result = $this->homeService->reactToCheckin((int) $id, $type, $emoji, $userId, $sessionId);
 
-        if ($userId) {
-            $query->where('user_id', $userId);
-        } else {
-            $query->whereNull('user_id')->where('session_id', $sessionId);
-        }
-
-        $existing = $query->first();
-
-        if ($existing) {
-            if ($existing->emoji === $emoji) {
-                $existing->delete();
-            } else {
-                $existing->update(['emoji' => $emoji]);
-            }
-        } else {
-            \App\Models\CheckinReaction::create([
-                'reactionable_type' => $type,
-                'reactionable_id'   => (int) $id,
-                'user_id'           => $userId ?: null,
-                'session_id'        => $userId ? null : $sessionId,
-                'emoji'             => $emoji,
-            ]);
-
-            try {
-                \App\Services\NotificationService::notifyReaction((int) $id, $type, $emoji, $userId);
-            } catch (\Throwable $notifErr) {}
-        }
-
-        $allReactions = \App\Models\CheckinReaction::where('reactionable_type', $type)
-            ->where('reactionable_id', (int) $id)
-            ->selectRaw('emoji, count(*) as count')
-            ->groupBy('emoji')
-            ->pluck('count', 'emoji')
-            ->toArray();
-
-        $emojis = ['❤️', '🔥', '👍', '😂', '😍', '🤤'];
-        $counts = [];
-        $total = 0;
-        foreach ($emojis as $e) {
-            $cnt = (int) ($allReactions[$e] ?? 0);
-            $counts[$e] = $cnt;
-            $total += $cnt;
-        }
-
-        $targetModel = match ($type) {
-            'checkin' => \App\Models\Checkin::class,
-            'post'    => \App\Models\Post::class,
-            default   => null,
-        };
-        if ($targetModel) {
-            rescue(fn() => $targetModel::where('id', $id)->update(['likes_count' => $total]), report: false);
-        }
-
-        event(new \App\Events\CheckinReacted((int) $id, $type, $emoji, $counts, $total));
-
-        return response()->json([
-            'success' => true,
-            'counts'  => $counts,
-            'total'   => $total,
-        ]);
-    }
-
-    private function removeVietnameseSign($str)
-    {
-        $str = preg_replace("/(à|á|ạ|ả|ã|â|ầ|ấ|ậ|ẩ|ẫ|ă|ằ|ắ|ặ|ẳ|ẵ)/", "a", $str);
-        $str = preg_replace("/(è|é|ẹ|ẻ|ẽ|ê|ề|ế|ệ|ể|ễ)/", "e", $str);
-        $str = preg_replace("/(ì|í|ị|ỉ|ĩ)/", "i", $str);
-        $str = preg_replace("/(ò|ó|ọ|ỏ|õ|ô|ồ|ố|ộ|ổ|ỗ|ơ|ờ|ớ|ợ|ở|ỡ)/", "o", $str);
-        $str = preg_replace("/(ù|ú|ụ|ủ|ũ|ư|ừ|ứ|ự|ử|ữ)/", "u", $str);
-        $str = preg_replace("/(ỳ|ý|ỵ|ỷ|ỹ)/", "y", $str);
-        $str = preg_replace("/(đ)/", "d", $str);
-        $str = preg_replace("/(À|Á|Ạ|Ả|Ã|Â|Ầ|Ấ|Ậ|Ẩ|Ẫ|Ă|Ằ|Ắ|Ặ|Ẳ|Ẵ)/", "A", $str);
-        $str = preg_replace("/(È|É|Ẹ|Ẻ|Ẽ|Ê|Ề|Ế|Ệ|Ể|Ễ)/", "E", $str);
-        $str = preg_replace("/(Ì|Í|Ị|I|Ĩ)/", "I", $str);
-        $str = preg_replace("/(Ò|Ó|Ọ|Ỏ|Õ|Ô|Ồ|Ố|Ộ|Ổ|Ỗ|Ơ|Ờ|Ớ|Ợ|Ở|Ỡ)/", "O", $str);
-        $str = preg_replace("/(Ù|Ú|Ụ|Ủ|Ũ|Ư|Ừ|Ứ|Ự|Ử|Ữ)/", "U", $str);
-        $str = preg_replace("/(Ỳ|Ý|Ỵ|Ỷ|Ỹ)/", "Y", $str);
-        $str = preg_replace("/(Đ)/", "D", $str);
-        return $str;
+        return response()->json(array_merge(['success' => true], $result));
     }
 
     /**
-     * Tương tác Like / Thả tim chuẩn DB Real (Bài viết & Địa điểm checkin)
-     * Mỗi tài khoản / session chỉ được Like / Thả tim 1 lần per item
+     * Tương tác Like / Thả tim chuẩn DB Real
      */
     public function toggleReaction(Request $request)
     {
@@ -999,69 +246,18 @@ class HomeController extends Controller
             $type = $request->input('type');
             $emoji = $request->input('emoji', '👍');
 
-            $user = auth('sanctum')->user() ?: \Illuminate\Support\Facades\Auth::user();
+            $user = auth('sanctum')->user() ?: Auth::user();
             $userId = $user ? $user->id : session('user_id');
             $sessionId = session()->getId() ?: ('guest_' . md5($request->ip() . ($request->header('User-Agent') ?? '')));
 
-            $query = \App\Models\CheckinReaction::where('reactionable_type', $type)
-                ->where('reactionable_id', $id);
+            $result = $this->homeService->toggleReaction($id, $type, $emoji, $userId, $sessionId);
 
-            if ($userId) {
-                $query->where('user_id', $userId);
-            } else {
-                $query->whereNull('user_id')->where('session_id', $sessionId);
-            }
-
-            $existing = $query->first();
-            $isLiked = false;
-
-            if ($existing) {
-                // Đã like -> Bỏ thích (Unlike)
-                $existing->delete();
-                $isLiked = false;
-            } else {
-                // Chưa like -> Tạo 1 lượt thích duy nhất cho tài khoản/session
-                \App\Models\CheckinReaction::create([
-                    'reactionable_type' => $type,
-                    'reactionable_id'   => $id,
-                    'user_id'           => $userId ?: null,
-                    'session_id'        => $userId ? null : $sessionId,
-                    'emoji'             => $emoji,
-                ]);
-                $isLiked = true;
-
-                // Gửi thông báo đến người tạo nội dung
-                try {
-                    \App\Services\NotificationService::notifyReaction($id, $type, $emoji, $userId);
-                } catch (\Throwable $notifErr) {}
-            }
-
-            // Đếm chính xác lượt thích từ bảng DB checkin_reactions
-            $realLikesCount = \App\Models\CheckinReaction::where('reactionable_type', $type)
-                ->where('reactionable_id', $id)
-                ->count();
-
-            // Cập nhật lại số lượng cho Post & EducationProgram nếu type là post
-            if ($type === 'post') {
-                foreach (['mysql', 'mysql_education'] as $conn) {
-                    rescue(fn() => \App\Models\Post::on($conn)->where('id', $id)->update(['likes_count' => $realLikesCount]), report: false);
-                    rescue(fn() => \App\Models\EducationProgram::on($conn)->where('id', $id)->update(['likes_count' => $realLikesCount]), report: false);
-                }
-            } else if ($type === 'checkin') {
-                rescue(fn() => \App\Models\Checkin::where('id', $id)->update(['likes_count' => $realLikesCount]), report: false);
-            }
-
-            return response()->json([
-                'success'     => true,
-                'liked'       => $isLiked,
-                'likes_count' => $realLikesCount,
-                'message'     => $isLiked ? 'Đã thích' : 'Đã bỏ thích'
-            ]);
+            return response()->json(array_merge(['success' => true], $result));
         } catch (\Throwable $e) {
             \Illuminate\Support\Facades\Log::error('toggleLike error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Đã có lỗi xảy ra. Vui lòng thử lại sau.'
+                'message' => 'Đã có lỗi xảy ra. Vui lòng thử lại sau.',
             ], 400);
         }
     }
@@ -1076,34 +272,12 @@ class HomeController extends Controller
             'type' => 'required|string|in:post,eatery,checkin,diary',
         ]);
 
-        $id = (int) $request->input('id');
-        $type = $request->input('type');
-
-        $reactions = \App\Models\CheckinReaction::where('reactionable_type', $type)
-            ->where('reactionable_id', $id)
-            ->with('user:id,name,avatar')
-            ->latest()
-            ->get();
-
-        $likers = $reactions->map(function ($reaction) {
-            if ($reaction->user) {
-                return [
-                    'name'   => $reaction->user->name,
-                    'avatar' => $reaction->user->avatar,
-                    'emoji'  => $reaction->emoji ?? '👍',
-                ];
-            }
-            return [
-                'name'   => 'Khách',
-                'avatar' => null,
-                'emoji'  => $reaction->emoji ?? '👍',
-            ];
-        });
+        $likers = $this->homeService->getPostLikers((int) $request->input('id'), $request->input('type'));
 
         return response()->json([
             'success' => true,
             'likers'  => $likers,
-            'total'   => $likers->count(),
+            'total'   => count($likers),
         ]);
     }
 
@@ -1114,173 +288,71 @@ class HomeController extends Controller
     {
         $request->validate([
             'id'   => 'required|integer',
-            'type' => 'required|string|in:post,eatery,checkin,diary'
+            'type' => 'required|string|in:post,eatery,checkin,diary',
         ]);
 
-        $comments = \App\Models\Comment::with('user')
-            ->where('commentable_type', $request->type)
-            ->where('commentable_id', $request->id)
-            ->orderBy('created_at', 'asc')
-            ->get()
-            ->map(function($c) {
-                $avatar = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=100&q=80';
-                if ($c->user) {
-                    if ($c->user->avatar && str_starts_with($c->user->avatar, 'avatars/')) {
-                        $avatar = rtrim(env('R2_PUBLIC_URL'), '/') . '/' . $c->user->avatar;
-                    } elseif ($c->user->avatar) {
-                        $avatar = $c->user->avatar;
-                    }
-                }
-                return [
-                    'id'               => $c->id,
-                    'user_id'          => $c->user_id,
-                    'author_name'      => $c->display_name,
-                    'author_avatar'    => $avatar,
-                    'content'          => $c->content,
-                    'created_at_human' => $c->created_at ? $c->created_at->diffForHumans() : 'Vừa xong'
-                ];
-            });
+        $comments = $this->homeService->getComments((int) $request->id, $request->type);
 
         return response()->json([
             'success'  => true,
-            'count'    => $comments->count(),
-            'comments' => $comments
+            'count'    => count($comments),
+            'comments' => $comments,
         ]);
     }
 
     /**
-     * Lưu bình luận thực tế mới vào DB
+     * Lưu bình luận mới vào DB
      */
     public function storeComment(Request $request)
     {
         $request->validate([
             'id'      => 'required|integer',
             'type'    => 'required|string|in:post,eatery,checkin,diary',
-            'content' => 'required|string|max:1000'
+            'content' => 'required|string|max:1000',
         ]);
 
         $content = (string) $request->input('content');
 
-        // Kiểm tra chống bot và lọc spam toàn diện
-        $spamCheck = \App\Services\SpamProtectionService::check($request, $content, 'comment');
+        // Kiểm tra chống bot và lọc spam
+        $spamCheck = SpamProtectionService::check($request, $content, 'comment');
         if ($spamCheck['is_spam']) {
             return response()->json([
                 'success' => false,
-                'message' => $spamCheck['reason']
+                'message' => $spamCheck['reason'],
             ], $spamCheck['code']);
         }
 
-        $userId = \Illuminate\Support\Facades\Auth::id() ?? session('user_id');
-        $user = $userId ? \App\Models\User::find($userId) : null;
-        $guestName = $user ? null : ($request->input('guest_name') ?? 'Khách vãng lai');
+        $userId = Auth::id() ?? session('user_id');
+        $result = $this->homeService->storeComment(
+            (int) $request->input('id'),
+            $request->input('type'),
+            $content,
+            $userId,
+            $request->input('guest_name')
+        );
 
-        $comment = \App\Models\Comment::create([
-            'user_id'          => $userId,
-            'guest_name'       => $guestName,
-            'commentable_id'   => (int) $request->input('id'),
-            'commentable_type' => $request->input('type'),
-            'content'          => $content
-        ]);
+        SpamProtectionService::recordSuccess($request, $content, 'comment');
 
-        // Ghi nhận bình luận thành công (kích hoạt cooldown 4s và chống gửi trùng lặp)
-        \App\Services\SpamProtectionService::recordSuccess($request, $content, 'comment');
-
-        $totalCommentsCount = \App\Models\Comment::where('commentable_type', $request->input('type'))
-            ->where('commentable_id', $request->input('id'))
-            ->count();
-
-        $avatar = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=100&q=80';
-        if ($user) {
-            if ($user->avatar && str_starts_with($user->avatar, 'avatars/')) {
-                $avatar = rtrim(env('R2_PUBLIC_URL'), '/') . '/' . $user->avatar;
-            } elseif ($user->avatar) {
-                $avatar = $user->avatar;
-            }
-        }
-
-        return response()->json([
-            'success'        => true,
-            'total_comments' => $totalCommentsCount,
-            'comment'        => [
-                'id'               => $comment->id,
-                'author_name'      => $comment->display_name,
-                'author_avatar'    => $avatar,
-                'content'          => $comment->content,
-                'created_at_human' => 'Vừa xong'
-            ]
-        ]);
+        return response()->json(array_merge(['success' => true], $result));
     }
 
     /**
-     * Tăng số lượt chia sẻ cho bài viết trong DB (Post, EducationProgram, Checkin)
+     * Tăng số lượt chia sẻ cho bài viết
      */
     public function incrementShare(Request $request)
     {
         $request->validate([
             'id'   => 'required',
-            'type' => 'nullable|string|in:post,education,checkin'
+            'type' => 'nullable|string|in:post,education,checkin',
         ]);
 
-        $idParam = $request->input('id');
-        $type = $request->input('type');
-
-        $newShareCount = 0;
-        $connections = ['mysql', 'mysql_education'];
-
-        foreach ($connections as $conn) {
-            try {
-                if ($type === 'education' || $type === 'App\\Models\\EducationProgram') {
-                    $item = \App\Models\EducationProgram::on($conn)
-                        ->where('id', $idParam)
-                        ->orWhere('hashid', $idParam)
-                        ->first();
-                    if ($item) {
-                        $item->increment('shares_count');
-                        $newShareCount = (int) $item->fresh()->shares_count;
-                        break;
-                    }
-                } elseif ($type === 'checkin' || $type === 'App\\Models\\Checkin') {
-                    $item = \App\Models\Checkin::on($conn)
-                        ->where('id', $idParam)
-                        ->orWhere('hashid', $idParam)
-                        ->first();
-                    if ($item) {
-                        $item->increment('shares_count');
-                        $newShareCount = (int) $item->fresh()->shares_count;
-                        break;
-                    }
-                } else {
-                    $item = \App\Models\Post::on($conn)
-                        ->where('id', $idParam)
-                        ->orWhere('hashid', $idParam)
-                        ->first();
-                    if (!$item) {
-                        $item = \App\Models\EducationProgram::on($conn)
-                            ->where('id', $idParam)
-                            ->orWhere('hashid', $idParam)
-                            ->first();
-                    }
-                    if (!$item) {
-                        $item = \App\Models\Checkin::on($conn)
-                            ->where('id', $idParam)
-                            ->orWhere('hashid', $idParam)
-                            ->first();
-                    }
-                    if ($item) {
-                        $item->increment('shares_count');
-                        $newShareCount = (int) $item->fresh()->shares_count;
-                        $user = auth('sanctum')->user() ?: \Illuminate\Support\Facades\Auth::user();
-                        \App\Services\NotificationService::notifyShare((int)$idParam, $type ?? 'post', $user ? $user->id : null);
-                        break;
-                    }
-                }
-            } catch (\Throwable $e) {}
-        }
+        $userId = Auth::id() ?? session('user_id');
+        $newShareCount = $this->homeService->incrementShare($request->input('id'), $request->input('type'), $userId);
 
         return response()->json([
             'success'      => true,
             'shares_count' => $newShareCount,
-            'message'      => 'Tăng số lượt chia sẻ thành công'
+            'message'      => 'Tăng số lượt chia sẻ thành công',
         ]);
     }
 
@@ -1289,4 +361,3 @@ class HomeController extends Controller
         return view('privacy_policy');
     }
 }
-

@@ -2,23 +2,42 @@
 
 namespace App\Http\Controllers;
 
+use App\Domain\Checkin\CheckinData;
+use App\Domain\CulturalActivity\CulturalActivityData;
+use App\Domain\Dish\DishData;
+use App\Domain\Eatery\EateryData;
+use App\Domain\EducationProgram\EducationProgramData;
+use App\Domain\OcopProduct\OcopProductData;
+use App\Domain\ReviewVideo\ReviewVideoData;
+use App\Domain\Room\RoomData;
+use App\Domain\TrustHub\TrustHubDocumentData;
+use App\Domain\WellnessMap\WellnessMapData;
 use App\Models\Category;
 use App\Models\Commune;
+use App\Models\CulturalActivity;
 use App\Models\Eatery;
-use App\Models\Review;
 use App\Models\User;
+use App\Services\CulturalActivityService;
+use App\Services\DishService;
+use App\Services\EateryApiService;
+use App\Services\EateryService;
+use App\Services\EducationProgramService;
+use App\Services\Interfaces\AdminServiceInterface;
+use App\Services\OcopProductService;
+use App\Services\ReviewVideoService;
+use App\Services\RoomService;
+use App\Services\TrustHubService;
+use App\Services\WellnessMapService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Str;
-use App\Services\EateryApiService;
-use App\Helpers\R2Helper;
 
 class AdminController extends Controller
 {
-    /**
-     * Xác minh quyền truy cập Admin / Seller trước khi thực hiện bất cứ action nào
-     */
-    private function verifyAdmin()
+    public function __construct(
+        protected AdminServiceInterface $adminService
+    ) {}
+
+    private function verifyAdmin(): void
     {
         if (!Auth::check() && session()->has('user_id')) {
             $u = User::find(session('user_id'));
@@ -27,14 +46,12 @@ class AdminController extends Controller
             }
         }
         $user = Auth::user();
-        if (!$user) {
-            abort(401, 'Vui lòng đăng nhập!');
-        }
-        $role = session('user_role') ?: $user->role;
-        if (!in_array($role, ['admin', 'seller', 'manager'])) {
-            abort(403, 'Bạn không có quyền truy cập trang quản lý này!');
-        }
-        if (!session()->has('user_role')) {
+        $userId = $user ? $user->id : session('user_id');
+        $role = session('user_role') ?: ($user ? $user->role : null);
+
+        $this->adminService->verifyAdminAccess($userId, $role);
+
+        if ($user && !session()->has('user_role')) {
             session([
                 'user_id'   => $user->id,
                 'user_name' => $user->name,
@@ -46,148 +63,40 @@ class AdminController extends Controller
     /**
      * Hiển thị Dashboard Admin / Ban Quản lý Chợ (Manager)
      */
-    public function dashboard()
+    public function dashboard(Request $request)
     {
         $this->verifyAdmin();
 
-        $user = Auth::user();
-        $role = session('user_role') ?: ($user ? $user->role : null);
-        $isSeller = in_array($role, ['seller', 'manager']);
-        $sellerId = session('user_id') ?: ($user ? $user->id : null);
+        $userId = Auth::id() ?? session('user_id');
+        $role = session('user_role') ?: (Auth::user() ? Auth::user()->role : null);
+        $page = (int) $request->input('page', 1);
 
-        $allEateries = EateryApiService::getEateries();
-        $sellerEateries = $isSeller ? $allEateries->where('user_id', $sellerId) : $allEateries;
-
-        // Nếu là Manager: Chỉ lọc các địa điểm chợ truyền thống thuộc quản lý của họ
-        if ($role === 'manager') {
-            $sellerEateries = $sellerEateries->filter(function($e) {
-                return $e->category && $e->category->slug === 'traditional-market';
-            });
-
-            if ($sellerEateries->isEmpty()) {
-                // Fallback khớp tên chợ (vd: Ban Quản lý Chợ Mạch Tràng -> Chợ Mạch Tràng)
-                $user = User::find($sellerId);
-                if ($user) {
-                    $cleanName = str_replace(['Ban Quản lý ', 'Ban quản lý ', 'BQL '], '', $user->name);
-                    $matchedMarket = $allEateries->first(function($e) use ($cleanName) {
-                        return $e->category && $e->category->slug === 'traditional-market' && str_contains(mb_strtolower($e->name), mb_strtolower($cleanName));
-                    });
-                    if ($matchedMarket) {
-                        $sellerEateries = collect([$matchedMarket]);
-                    }
-                }
-            }
-        }
-
-        $marketStats = null;
-        if ($role === 'manager') {
-            $managedMarket = $sellerEateries->first();
-            $marketId = $managedMarket ? $managedMarket->id : null;
-
-            $stallsCount = 0;
-            $totalOrdersCount = 0;
-            $totalRevenue = 0;
-            $stallBreakdown = collect();
-
-            if ($marketId) {
-                $prods = \Illuminate\Support\Facades\DB::table('ocop_products')
-                    ->where('eatery_id', $marketId)
-                    ->get();
-                $dishes = \Illuminate\Support\Facades\DB::table('dishes')
-                    ->where('eatery_id', $marketId)
-                    ->get();
-                
-                $stallsCount = $prods->pluck('stall_name')->concat($dishes->pluck('name'))->filter()->unique()->count();
-                if ($stallsCount === 0) {
-                    $stallsCount = $prods->count() + $dishes->count();
-                }
-
-                if (\Illuminate\Support\Facades\Schema::hasTable('orders')) {
-                    $orders = \Illuminate\Support\Facades\DB::table('orders')
-                        ->where('eatery_id', $marketId)
-                        ->get();
-                    $totalOrdersCount = $orders->count();
-                    $totalRevenue = $orders->sum(function($o) { return $o->total_amount ?? $o->total_price ?? 0; });
-
-                    $stallBreakdown = $orders->groupBy('stall_name')->map(function($group, $stallName) {
-                        return [
-                            'stall_name' => $stallName ?: 'Gian hàng chung',
-                            'orders_count' => $group->count(),
-                            'revenue' => $group->sum(function($o) { return $o->total_amount ?? $o->total_price ?? 0; })
-                        ];
-                    })->values();
-                }
-            }
-
-            $marketStats = [
-                'managed_market' => $managedMarket,
-                'stalls_count' => $stallsCount,
-                'total_orders' => $totalOrdersCount,
-                'total_revenue' => $totalRevenue,
-                'stall_breakdown' => $stallBreakdown
-            ];
-        }
-
-        $stats = [
-            'total_eateries' => $sellerEateries->count(),
-            'total_categories' => EateryApiService::getCategories()->count(),
-            'total_communes' => EateryApiService::getCommunes()->count(),
-            'total_reviews' => $sellerEateries->sum('reviews_count'),
-        ];
-
-        // Lấy danh sách quán ăn có áp dụng bộ lọc tìm kiếm
-        $filteredEateries = $sellerEateries;
-
-        if ($q = request('q')) {
-            $filteredEateries = $filteredEateries->filter(function($e) use ($q) {
-                return Str::contains(Str::lower($e->name), Str::lower($q))
-                    || Str::contains(Str::lower($e->address), Str::lower($q))
-                    || Str::contains(Str::lower($e->phone), Str::lower($q));
-            });
-        }
-
-        if ($categoryName = request('category')) {
-            $filteredEateries = $filteredEateries->filter(function($e) use ($categoryName) {
-                return $e->category && $e->category->name === $categoryName;
-            });
-        }
-
-        if ($communeName = request('commune')) {
-            $filteredEateries = $filteredEateries->filter(function($e) use ($communeName) {
-                return $e->commune && $e->commune->name === $communeName;
-            });
-        }
-
-        // Tự phân trang Collection bằng LengthAwarePaginator
-        $currentPage = \Illuminate\Pagination\Paginator::resolveCurrentPage() ?: 1;
-        $perPage = 10;
-        $currentItems = $filteredEateries->sortByDesc('created_at')->slice(($currentPage - 1) * $perPage, $perPage)->values();
-        $eateries = new \Illuminate\Pagination\LengthAwarePaginator(
-            $currentItems,
-            $filteredEateries->count(),
-            $perPage,
-            $currentPage,
-            ['path' => \Illuminate\Pagination\Paginator::resolveCurrentPath()]
+        $data = $this->adminService->getDashboardData(
+            $userId,
+            $role,
+            $request->input('q'),
+            $request->input('category'),
+            $request->input('commune'),
+            $page,
+            10
         );
-        $eateries->withQueryString();
 
-        // Lấy danh sách Video Reviews (Admin xem hết, Seller/Manager xem các cơ sở của họ)
-        $videos = EateryApiService::getVideos();
-        if ($isSeller) {
-            $sellerEateryIds = $sellerEateries->pluck('id')->toArray();
-            $videos = $videos->whereIn('eatery_id', $sellerEateryIds)->values();
+        if (!empty($data['isManager'])) {
+            return view('admin.dashboard-manager', [
+                'stats'       => $data['stats'],
+                'eateries'    => $data['eateries'],
+                'videos'      => $data['videos'],
+                'marketStats' => $data['marketStats'],
+            ]);
         }
 
-        if ($role === 'manager') {
-            return view('admin.dashboard-manager', compact('stats', 'eateries', 'videos', 'marketStats'));
-        }
-
-        return view('admin.dashboard-admin', compact('stats', 'eateries', 'videos'));
+        return view('admin.dashboard-admin', [
+            'stats'    => $data['stats'],
+            'eateries' => $data['eateries'],
+            'videos'   => $data['videos'],
+        ]);
     }
 
-    /**
-     * Mở form thêm quán mới
-     */
     public function createEatery()
     {
         $this->verifyAdmin();
@@ -203,15 +112,12 @@ class AdminController extends Controller
 
         $categories = EateryApiService::getCategories();
         $communes = EateryApiService::getCommunes();
-        $eatery = null; // Phân biệt Form Thêm và Form Sửa
+        $eatery = null;
 
         return view('admin.eatery-form', compact('categories', 'communes', 'eatery'));
     }
 
-    /**
-     * Lưu trữ quán mới
-     */
-    public function storeEatery(Request $request, \App\Services\EateryService $eateryService)
+    public function storeEatery(Request $request, EateryService $eateryService)
     {
         $this->verifyAdmin();
 
@@ -225,56 +131,50 @@ class AdminController extends Controller
         }
 
         $request->validate([
-            'name' => 'required|string|max:100',
-            'category_id' => 'required',
-            'commune_id' => 'required',
-            'address' => 'required|string|max:200',
-            'phone' => 'nullable|string|max:20',
-            'opening_hours' => 'nullable|string|max:50',
-            'latitude' => 'required|numeric|between:-90,90',
-            'longitude' => 'required|numeric|between:-180,180',
-            'price_range' => 'nullable|string|max:50',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240',
-            'image_url' => 'nullable|url',
-            'description' => 'nullable|string',
-            'is_featured' => 'nullable|boolean',
-            'heritage_year' => 'nullable|string|max:100',
-            'story' => 'nullable|string',
-            'artisans' => 'nullable|string',
-            'fun_fact' => 'nullable|string',
+            'name'            => 'required|string|max:100',
+            'category_id'     => 'required',
+            'commune_id'      => 'required',
+            'address'         => 'required|string|max:200',
+            'phone'           => 'nullable|string|max:20',
+            'opening_hours'   => 'nullable|string|max:50',
+            'latitude'        => 'required|numeric|between:-90,90',
+            'longitude'       => 'required|numeric|between:-180,180',
+            'price_range'     => 'nullable|string|max:50',
+            'image'           => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240',
+            'image_url'       => 'nullable|url',
+            'description'     => 'nullable|string',
+            'is_featured'     => 'nullable|boolean',
+            'heritage_year'   => 'nullable|string|max:100',
+            'story'           => 'nullable|string',
+            'artisans'        => 'nullable|string',
+            'fun_fact'        => 'nullable|string',
             'audio_narrative' => 'nullable|string',
-            'ocop_stars' => 'nullable|integer|between:3,5',
+            'ocop_stars'      => 'nullable|integer|between:3,5',
             'ingredients_raw' => 'nullable|string',
-            'timeline_raw' => 'nullable|string',
+            'timeline_raw'    => 'nullable|string',
         ]);
 
-        // Lấy Category để xác định slug và kết nối database tương ứng
         $categories = EateryApiService::getCategories();
         $category = $categories->firstWhere('id', $request->category_id);
         if (!$category) {
             return redirect()->back()->withErrors(['category_id' => 'Danh mục không hợp lệ!']);
         }
 
-        $dto = \App\Domain\Eatery\EateryData::fromRequest($request);
+        $dto = EateryData::fromRequest($request);
         $eateryService->create($dto, $category->slug);
 
         return redirect('/admin/dashboard')->with('success', 'Thêm mới địa điểm ẩm thực thành công!');
     }
 
-    /**
-     * Mở form sửa thông tin quán
-     */
     public function editEatery($slug)
     {
         $this->verifyAdmin();
 
-        // Dùng slug để tra cứu trực tiếp — slug là duy nhất xuyên toàn bộ database
         $eatery = EateryApiService::getEateryBySlug($slug);
         if (!$eatery) {
             abort(404, 'Địa điểm không tồn tại!');
         }
 
-        // Ngăn chặn Ban Quản lý Chợ (Manager) chỉnh sửa Chợ của đơn vị khác
         if (in_array(session('user_role'), ['seller', 'manager']) && $eatery->user_id !== session('user_id')) {
             abort(403, 'Bạn không có quyền sửa đổi cơ sở này! Bạn chỉ có quyền điều hành Ban Quản lý Chợ được phân công.');
         }
@@ -285,55 +185,50 @@ class AdminController extends Controller
         return view('admin.eatery-form', compact('eatery', 'categories', 'communes'));
     }
 
-    /**
-     * Cập nhật thông tin quán / chợ
-     */
-    public function updateEatery(Request $request, $slug, \App\Services\EateryService $eateryService)
+    public function updateEatery(Request $request, $slug, EateryService $eateryService)
     {
         $this->verifyAdmin();
 
-        // Dùng slug để tìm đúng địa điểm bất kể database nào
         $eatery = EateryApiService::getEateryBySlug($slug);
         if (!$eatery) {
             abort(404, 'Địa điểm không tồn tại!');
         }
 
-        // Ngăn chặn Ban Quản lý Chợ (Manager) cập nhật Chợ của đơn vị khác
         if (in_array(session('user_role'), ['seller', 'manager']) && $eatery->user_id !== session('user_id')) {
             abort(403, 'Bạn không có quyền sửa đổi cơ sở này! Bạn chỉ có quyền điều hành Ban Quản lý Chợ được phân công.');
         }
 
         $request->validate([
-            'name' => 'required|string|max:100',
-            'category_id' => 'required',
-            'commune_id' => 'required',
-            'address' => 'required|string|max:200',
-            'phone' => 'nullable|string|max:20',
-            'opening_hours' => 'nullable|string|max:50',
-            'latitude' => 'required|numeric|between:-90,90',
-            'longitude' => 'required|numeric|between:-180,180',
-            'price_range' => 'nullable|string|max:50',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240',
-            'image_url' => 'nullable|url',
-            'description' => 'nullable|string',
-            'is_featured' => 'nullable|boolean',
-            'heritage_year' => 'nullable|string|max:100',
-            'story' => 'nullable|string',
-            'artisans' => 'nullable|string',
-            'fun_fact' => 'nullable|string',
+            'name'            => 'required|string|max:100',
+            'category_id'     => 'required',
+            'commune_id'      => 'required',
+            'address'         => 'required|string|max:200',
+            'phone'           => 'nullable|string|max:20',
+            'opening_hours'   => 'nullable|string|max:50',
+            'latitude'        => 'required|numeric|between:-90,90',
+            'longitude'       => 'required|numeric|between:-180,180',
+            'price_range'     => 'nullable|string|max:50',
+            'image'           => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240',
+            'image_url'       => 'nullable|url',
+            'description'     => 'nullable|string',
+            'is_featured'     => 'nullable|boolean',
+            'heritage_year'   => 'nullable|string|max:100',
+            'story'           => 'nullable|string',
+            'artisans'        => 'nullable|string',
+            'fun_fact'        => 'nullable|string',
             'audio_narrative' => 'nullable|string',
-            'ocop_stars' => 'nullable|integer|between:3,5',
+            'ocop_stars'      => 'nullable|integer|between:3,5',
             'ingredients_raw' => 'nullable|string',
-            'timeline_raw' => 'nullable|string',
+            'timeline_raw'    => 'nullable|string',
         ]);
 
-        $dto = \App\Domain\Eatery\EateryData::fromRequest($request);
+        $dto = EateryData::fromRequest($request);
         $eateryService->update($eatery->id, $dto, $eatery->category->slug, $eatery->image_path);
 
         return redirect()->back()->with('success', 'Cập nhật thông tin quán thành công!');
     }
 
-    public function destroyEatery($slug, \App\Services\EateryService $eateryService)
+    public function destroyEatery($slug, EateryService $eateryService)
     {
         $this->verifyAdmin();
 
@@ -342,1077 +237,476 @@ class AdminController extends Controller
             abort(404, 'Địa điểm không tồn tại!');
         }
 
-        // Ngăn chặn Seller tự ý xóa địa điểm kinh doanh của mình
         if (session('user_role') === 'seller') {
             abort(403, 'Chủ quán không được phép tự xóa địa điểm kinh doanh của mình! Vui lòng liên hệ Quản trị viên.');
         }
 
         $eateryService->delete($eatery->category->slug, $eatery->id);
 
-        return redirect('/admin/dashboard')->with('success', 'Đã xóa địa điểm khỏi hệ thống bản đồ số!');
+        return redirect('/admin/dashboard')->with('success', 'Xóa địa điểm thành công!');
     }
 
-    /**
-     * Tự động giải mã đường dẫn Google Maps (kể cả link rút gọn) và rút trích Tọa độ Kinh/Vĩ
-     */
     public function parseGoogleMapsUrl(Request $request)
     {
         $this->verifyAdmin();
+        $url = $request->input('url', '');
+        list($lat, $lng) = $this->adminService->parseGoogleMapsUrl($url);
 
-        $request->validate([
-            'url' => 'required|url',
-        ]);
-
-        $url = $request->url;
-
-        if (Str::contains($url, ['maps.app.goo.gl', 'goo.gl'])) {
-            try {
-                $ch = curl_init();
-                curl_setopt($ch, CURLOPT_URL, $url);
-                curl_setopt($ch, CURLOPT_HEADER, true);
-                curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-                curl_setopt($ch, CURLOPT_NOBODY, true);
-                curl_setopt($ch, CURLOPT_TIMEOUT, 10);
-                curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-                curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
-                curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
-                curl_exec($ch);
-                $finalUrl = curl_getinfo($ch, CURLINFO_EFFECTIVE_URL);
-                curl_close($ch);
-                if ($finalUrl) {
-                    $url = $finalUrl;
-                }
-            } catch (\Exception $e) {
-                // Keep original
-            }
+        if ($lat !== null && $lng !== null) {
+            return response()->json(['success' => true, 'latitude' => $lat, 'longitude' => $lng]);
         }
 
-        $lat = null;
-        $lng = null;
-
-        if (preg_match('/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/', $url, $matches)) {
-            $lat = $matches[1];
-            $lng = $matches[2];
-        }
-        elseif (preg_match('/[?&]q=(-?\d+\.\d+),(-?\d+\.\d+)/', $url, $matches)) {
-            $lat = $matches[1];
-            $lng = $matches[2];
-        }
-        elseif (preg_match('/@(-?\d+\.\d+),(-?\d+\.\d+)/', $url, $matches)) {
-            $lat = $matches[1];
-            $lng = $matches[2];
-        }
-
-        if ($lat && $lng) {
-            return response()->json([
-                'success' => true,
-                'latitude' => (float)$lat,
-                'longitude' => (float)$lng,
-            ]);
-        }
-
-        return response()->json([
-            'success' => false,
-            'message' => 'Không tìm thấy tọa độ trong đường dẫn này. Vui lòng nhập link chuẩn chứa tọa độ hoặc chọn trực tiếp trên Bản đồ.',
-        ]);
+        return response()->json(['success' => false, 'message' => 'Không thể nhận diện tọa độ GPS từ đường dẫn này.'], 422);
     }
 
-    /**
-     * Thêm món ăn mới vào thực đơn của quán
-     */
-    public function storeDish(Request $request, \App\Services\DishService $dishService)
+    public function storeDish(Request $request, DishService $dishService)
     {
         $this->verifyAdmin();
-
         $request->validate([
-            'eatery_id' => 'required',
-            'dish_name' => 'required|string|max:100',
-            'dish_price' => 'required|numeric|min:0',
-            'dish_description' => 'nullable|string',
-            'dish_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'dish_image_url' => 'nullable|url',
-            'is_signature' => 'nullable|boolean',
+            'eatery_id'   => 'required|exists:eateries,id',
+            'name'        => 'required|string|max:100',
+            'price'       => 'nullable|numeric|min:0',
+            'unit'        => 'nullable|string|max:50',
+            'description' => 'nullable|string',
+            'image'       => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240',
+            'image_url'   => 'nullable|url',
         ]);
 
-        $eateries = EateryApiService::getEateries();
-        $eatery = $eateries->firstWhere('id', $request->eatery_id);
-        if (!$eatery) {
-            abort(404, 'Quán không tồn tại!');
-        }
-
-        if (session('user_role') === 'seller' && $eatery->user_id !== session('user_id')) {
-            abort(403, 'Bạn không có quyền quản trị thực đơn của cơ sở này!');
-        }
-
-        $dto = \App\Domain\Dish\DishData::fromRequest($request);
+        $dto = DishData::fromRequest($request);
         $dishService->create($dto);
 
-        return redirect()->back()->with('success', 'Thêm món ăn vào thực đơn thành công!');
+        return redirect()->back()->with('success', 'Thêm món ăn thành công!');
     }
 
-    /**
-     * Cập nhật thông tin món ăn trong thực đơn
-     */
-    public function updateDish(Request $request, $id, \App\Services\DishService $dishService)
+    public function updateDish(Request $request, $id, DishService $dishService)
     {
         $this->verifyAdmin();
-
         $request->validate([
-            'dish_name' => 'required|string|max:100',
-            'dish_price' => 'required|numeric|min:0',
-            'dish_description' => 'nullable|string',
-            'dish_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'dish_image_url' => 'nullable|url',
-            'is_signature' => 'nullable|boolean',
+            'name'        => 'required|string|max:100',
+            'price'       => 'nullable|numeric|min:0',
+            'unit'        => 'nullable|string|max:50',
+            'description' => 'nullable|string',
+            'image'       => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240',
+            'image_url'   => 'nullable|url',
         ]);
 
-        // Kiểm tra Seller chỉ được sửa món ăn thuộc quán của mình
-        if (session('user_role') === 'seller') {
-            $connections = ['mysql', 'mysql_stay', 'mysql_wellness', 'mysql_market', 'mysql_education', 'mysql_culture'];
-            $dish = null;
-            foreach ($connections as $conn) {
-                $d = \App\Models\Dish::on($conn)->find($id);
-                if ($d) { $dish = $d; break; }
-            }
-            if (!$dish) abort(404, 'Món ăn không tồn tại!');
-
-            $eateries = EateryApiService::getEateries();
-            $eatery = $eateries->firstWhere('id', $dish->eatery_id);
-            if (!$eatery || $eatery->user_id !== session('user_id')) {
-                abort(403, 'Bạn không có quyền sửa món ăn của quán người khác!');
-            }
-        }
-
-        $dto = \App\Domain\Dish\DishData::fromRequest($request);
-        $dishService->update($id, $dto);
+        $dto = DishData::fromRequest($request);
+        $dishService->update((int)$id, $dto);
 
         return redirect()->back()->with('success', 'Cập nhật món ăn thành công!');
     }
 
-    /**
-     * Bật/tắt trạng thái Món ăn đặc trưng
-     */
-    public function toggleSignatureDish($id, \App\Services\DishService $dishService)
+    public function toggleSignatureDish($id, DishService $dishService)
     {
         $this->verifyAdmin();
+        $dish = $dishService->toggleSignature((int)$id);
 
-        // Seller chỉ được toggle món ăn thuộc quán của mình
-        if (session('user_role') === 'seller') {
-            $connections = ['mysql', 'mysql_stay', 'mysql_wellness', 'mysql_market', 'mysql_education', 'mysql_culture'];
-            $dish = null;
-            foreach ($connections as $conn) {
-                $d = \App\Models\Dish::on($conn)->find($id);
-                if ($d) { $dish = $d; break; }
-            }
-            if (!$dish) abort(404, 'Món ăn không tồn tại!');
-
-            $eateries = EateryApiService::getEateries();
-            $eatery = $eateries->firstWhere('id', $dish->eatery_id);
-            if (!$eatery || $eatery->user_id !== session('user_id')) {
-                abort(403, 'Bạn không có quyền thay đổi trạng thái món ăn của quán người khác!');
-            }
-        }
-
-        $dishService->toggleSignature($id);
-        return redirect()->back()->with('success', 'Cập nhật trạng thái món ăn thành công!');
+        $msg = $dish->is_signature ? 'Đã ghim món này thành Món Đặc Sắc!' : 'Đã bỏ ghim Món Đặc Sắc!';
+        return redirect()->back()->with('success', $msg);
     }
 
-    /**
-     * Xóa món ăn khỏi thực đơn
-     */
-    public function destroyDish($id, \App\Services\DishService $dishService)
+    public function destroyDish($id, DishService $dishService)
     {
         $this->verifyAdmin();
+        $dishService->delete((int)$id);
 
-        // Seller chỉ được xóa món ăn thuộc quán của mình
-        if (session('user_role') === 'seller') {
-            $connections = ['mysql', 'mysql_stay', 'mysql_wellness', 'mysql_market', 'mysql_education', 'mysql_culture'];
-            $dish = null;
-            foreach ($connections as $conn) {
-                $d = \App\Models\Dish::on($conn)->find($id);
-                if ($d) { $dish = $d; break; }
-            }
-            if (!$dish) abort(404, 'Món ăn không tồn tại!');
-
-            $eateries = EateryApiService::getEateries();
-            $eatery = $eateries->firstWhere('id', $dish->eatery_id);
-            if (!$eatery || $eatery->user_id !== session('user_id')) {
-                abort(403, 'Bạn không có quyền xóa món ăn của quán người khác!');
-            }
-        }
-
-        $dishService->delete($id);
-        return redirect()->back()->with('success', 'Xóa món ăn khỏi thực đơn thành công!');
+        return redirect()->back()->with('success', 'Xóa món ăn thành công!');
     }
 
-    /**
-     * Lưu ảnh thực tế của cơ sở (Gallery)
-     */
     public function storeEateryPhoto(Request $request)
     {
         $this->verifyAdmin();
-
         $request->validate([
-            'eatery_id' => 'required',
-            'image'     => 'nullable|file|mimes:jpeg,png,jpg,gif,webp,svg,bmp,heic,heif,jfif,JPEG,PNG,JPG,GIF,WEBP|max:20480',
-            'image_url' => 'nullable|string',
+            'eatery_id' => 'required|exists:eateries,id',
+            'photo'     => 'required|image|mimes:jpeg,png,jpg,gif|max:10240',
             'caption'   => 'nullable|string|max:200',
         ]);
 
-        $eateries = EateryApiService::getEateries();
-        $eatery   = $eateries->firstWhere('id', $request->eatery_id);
-        if (!$eatery) abort(404, 'Cơ sở không tồn tại!');
+        $this->adminService->storeEateryPhoto(
+            (int) $request->eatery_id,
+            $request->caption,
+            $request->file('photo')
+        );
 
-        if (session('user_role') === 'seller' && $eatery->user_id !== session('user_id')) {
-            abort(403, 'Bạn không có quyền quản trị ảnh của cơ sở này!');
-        }
-
-        $imagePath = $this->resolveImagePath($request->file('image'), $request->image_url, 'gallery');
-        if (!$imagePath) {
-            return redirect()->back()->withErrors(['image' => 'Vui lòng chọn ảnh hoặc nhập URL ảnh!']);
-        }
-
-        EateryApiService::storeEateryPhoto([
-            'eatery_id'  => $request->eatery_id,
-            'image_path' => $imagePath,
-            'caption'    => $request->caption,
-            'sort_order' => 0,
-        ]);
-
-        return redirect()->back()->with('success', 'Thêm ảnh thực tế thành công!');
+        return redirect()->back()->with('success', 'Thêm ảnh mới thành công!');
     }
 
-    /**
-     * Xóa ảnh thực tế của cơ sở
-     */
     public function destroyEateryPhoto($id)
     {
         $this->verifyAdmin();
+        $this->adminService->destroyEateryPhoto((int) $id);
 
-        EateryApiService::deleteEateryPhoto((int) $id);
-
-        return redirect()->back()->with('success', 'Đã xóa ảnh thành công!');
+        return redirect()->back()->with('success', 'Xóa ảnh thành công!');
     }
 
-    /**
-     * Helper to resolve image path from uploaded file or URL
-     */
-    protected function resolveImagePath($imageFile, ?string $imageUrl, string $folder = 'general'): ?string
-    {
-        if ($imageFile) {
-            return R2Helper::upload($imageFile, $folder);
-        }
-
-        if ($imageUrl) {
-            if (preg_match('/(?:drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?id=))([a-zA-Z0-9_-]{25,50})/i', $imageUrl, $matches)) {
-                return 'https://drive.google.com/uc?export=download&id=' . $matches[1];
-            }
-            return $imageUrl;
-        }
-
-        return null;
-    }
-
-    /**
-     * OCOP Products CRUD (Chỉ dành cho Admin hoặc Seller chủ thể OCOP, Manager Chợ không có quyền)
-     */
-    public function storeOcopProduct(Request $request, \App\Services\OcopProductService $ocopProductService)
+    public function storeOcopProduct(Request $request, OcopProductService $ocopProductService)
     {
         $this->verifyAdmin();
-
-        if (session('user_role') === 'manager') {
-            abort(403, 'Ban Quản Lý Chợ không có quyền quản lý hay chỉnh sửa các mặt hàng OCOP!');
-        }
-
         $request->validate([
-            'eatery_id' => 'required',
-            'name' => 'required|string|max:100',
-            'stall_name' => 'nullable|string|max:100',
-            'seller_name' => 'nullable|string|max:100',
-            'seller_phone' => 'nullable|string|max:20',
-            'price' => 'nullable|numeric|min:0',
-            'description' => 'nullable|string',
-            'image' => 'nullable|file|mimes:jpeg,png,jpg,gif,webp,svg,bmp,heic,heif,jfif,JPEG,PNG,JPG,GIF,WEBP|max:20480',
-            'image_url' => 'nullable|string',
-            'star_rating' => 'nullable|string',
-            'heritage_year' => 'nullable|string|max:100',
-            'story' => 'nullable|string',
-            'artisans' => 'nullable|string',
-            'fun_fact' => 'nullable|string',
+            'eatery_id'       => 'required|exists:eateries,id',
+            'name'            => 'required|string|max:200',
+            'star_rating'     => 'required|string',
+            'price'           => 'nullable|string|max:100',
+            'unit'            => 'nullable|string|max:50',
+            'image'           => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240',
+            'image_url'       => 'nullable|url',
+            'description'     => 'nullable|string',
+            'heritage_year'   => 'nullable|string|max:100',
+            'story'           => 'nullable|string',
+            'artisans'        => 'nullable|string',
+            'fun_fact'        => 'nullable|string',
             'audio_narrative' => 'nullable|string',
             'ingredients_raw' => 'nullable|string',
-            'timeline_raw' => 'nullable|string',
+            'timeline_raw'    => 'nullable|string',
         ]);
 
-        $eateries = EateryApiService::getEateries();
-        $eatery = $eateries->firstWhere('id', $request->eatery_id);
-        if (!$eatery) {
-            abort(404, 'Cơ sở không tồn tại!');
-        }
-
-        if (session('user_role') === 'seller' && $eatery->user_id !== session('user_id')) {
-            abort(403, 'Bạn không có quyền quản trị sản phẩm OCOP của cơ sở này!');
-        }
-
-        $dto = \App\Domain\OcopProduct\OcopProductData::fromRequest($request);
-        $ocopProductService->create($dto, 'mysql_market');
+        $dto = OcopProductData::fromRequest($request);
+        $ocopProductService->create($dto);
 
         return redirect()->back()->with('success', 'Thêm sản phẩm OCOP thành công!');
     }
 
-    public function updateOcopProduct(Request $request, $id, \App\Services\OcopProductService $ocopProductService)
+    public function updateOcopProduct(Request $request, $id, OcopProductService $ocopProductService)
     {
         $this->verifyAdmin();
-
-        if (session('user_role') === 'manager') {
-            abort(403, 'Ban Quản Lý Chợ không có quyền quản lý hay chỉnh sửa các mặt hàng OCOP!');
-        }
-
         $request->validate([
-            'name' => 'required|string|max:100',
-            'stall_name' => 'nullable|string|max:100',
-            'seller_name' => 'nullable|string|max:100',
-            'seller_phone' => 'nullable|string|max:20',
-            'price' => 'nullable|numeric|min:0',
-            'description' => 'nullable|string',
-            'image' => 'nullable|file|mimes:jpeg,png,jpg,gif,webp,svg,bmp,heic,heif,jfif,JPEG,PNG,JPG,GIF,WEBP|max:20480',
-            'image_url' => 'nullable|string',
-            'star_rating' => 'nullable|string',
-            'heritage_year' => 'nullable|string|max:100',
-            'story' => 'nullable|string',
-            'artisans' => 'nullable|string',
-            'fun_fact' => 'nullable|string',
+            'name'            => 'required|string|max:200',
+            'star_rating'     => 'required|string',
+            'price'           => 'nullable|string|max:100',
+            'unit'            => 'nullable|string|max:50',
+            'image'           => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240',
+            'image_url'       => 'nullable|url',
+            'description'     => 'nullable|string',
+            'heritage_year'   => 'nullable|string|max:100',
+            'story'           => 'nullable|string',
+            'artisans'        => 'nullable|string',
+            'fun_fact'        => 'nullable|string',
             'audio_narrative' => 'nullable|string',
             'ingredients_raw' => 'nullable|string',
-            'timeline_raw' => 'nullable|string',
+            'timeline_raw'    => 'nullable|string',
         ]);
 
-        $connections = ['mysql_market', 'mysql', 'mysql_stay', 'mysql_wellness', 'mysql_education', 'mysql_culture'];
-        $product = null;
-        $activeConn = 'mysql_market';
-        foreach ($connections as $conn) {
-            $p = \App\Models\OcopProduct::on($conn)->find($id);
-            if ($p) {
-                $product = $p;
-                $activeConn = $conn;
-                break;
-            }
-        }
-
-        if (!$product) abort(404, 'Sản phẩm OCOP không tồn tại!');
-
-        if (session('user_role') === 'seller') {
-            $eateries = EateryApiService::getEateries();
-            $eatery = $eateries->firstWhere('id', $product->eatery_id);
-            if (!$eatery || $eatery->user_id !== session('user_id')) {
-                abort(403, 'Bạn không có quyền chỉnh sửa sản phẩm của cơ sở này!');
-            }
-        }
-
-        if (!$request->filled('eatery_id')) {
-            $request->merge(['eatery_id' => $product->eatery_id]);
-        }
-
-        $dto = \App\Domain\OcopProduct\OcopProductData::fromRequest($request);
-        $ocopProductService->update($id, $dto, $activeConn);
+        $dto = OcopProductData::fromRequest($request);
+        $ocopProductService->update((int)$id, $dto);
 
         return redirect()->back()->with('success', 'Cập nhật sản phẩm OCOP thành công!');
     }
 
-    public function destroyOcopProduct($id, \App\Services\OcopProductService $ocopProductService)
+    public function destroyOcopProduct($id, OcopProductService $ocopProductService)
     {
         $this->verifyAdmin();
-
-        if (session('user_role') === 'manager') {
-            abort(403, 'Ban Quản Lý Chợ không có quyền quản lý hay chỉnh sửa các mặt hàng OCOP!');
-        }
-
-        $product = \App\Models\OcopProduct::on('mysql_market')->find($id);
-        if (!$product) abort(404, 'Sản phẩm OCOP không tồn tại!');
-
-        if (session('user_role') === 'seller') {
-            $eateries = EateryApiService::getEateries();
-            $eatery = $eateries->firstWhere('id', $product->eatery_id);
-            if (!$eatery || $eatery->user_id !== session('user_id')) {
-                abort(403, 'Bạn không có quyền xóa sản phẩm của cơ sở này!');
-            }
-        }
-
-        if ($product->image_path) {
-            \App\Helpers\R2Helper::delete($product->image_path);
-        }
-
-        $ocopProductService->delete($id);
+        $ocopProductService->delete((int)$id);
 
         return redirect()->back()->with('success', 'Xóa sản phẩm OCOP thành công!');
     }
 
-    /**
-     * Rooms CRUD
-     */
-    public function storeRoom(Request $request, \App\Services\RoomService $roomService)
+    public function storeRoom(Request $request, RoomService $roomService)
     {
         $this->verifyAdmin();
-
         $request->validate([
-            'eatery_id' => 'required',
-            'name' => 'required|string|max:100',
-            'price' => 'required|numeric|min:0',
-            'description' => 'nullable|string',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'image_url' => 'nullable|url',
-            'bed_type' => 'nullable|string',
-            'capacity' => 'required|integer|min:1',
+            'eatery_id'     => 'required|exists:eateries,id',
+            'name'          => 'required|string|max:100',
+            'type'          => 'nullable|string|max:50',
+            'price_per_day' => 'required|numeric|min:0',
+            'capacity'      => 'nullable|integer|min:1',
+            'image'         => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240',
+            'image_url'     => 'nullable|url',
+            'amenities'     => 'nullable|string',
+            'description'   => 'nullable|string',
         ]);
 
-        $eateries = EateryApiService::getEateries();
-        $eatery = $eateries->firstWhere('id', $request->eatery_id);
-        if (!$eatery) abort(404, 'Cơ sở không tồn tại!');
-
-        if (session('user_role') === 'seller' && $eatery->user_id !== session('user_id')) {
-            abort(403, 'Bạn không có quyền quản trị phòng của cơ sở này!');
-        }
-
-        $dto = \App\Domain\Room\RoomData::fromRequest($request);
-        $roomService->create($dto, 'mysql_stay');
+        $dto = RoomData::fromRequest($request);
+        $roomService->create($dto);
 
         return redirect()->back()->with('success', 'Thêm phòng nghỉ thành công!');
     }
 
-    public function updateRoom(Request $request, $id, \App\Services\RoomService $roomService)
+    public function updateRoom(Request $request, $id, RoomService $roomService)
     {
         $this->verifyAdmin();
-
         $request->validate([
-            'name' => 'required|string|max:100',
-            'price' => 'required|numeric|min:0',
-            'description' => 'nullable|string',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'image_url' => 'nullable|url',
-            'bed_type' => 'nullable|string',
-            'capacity' => 'required|integer|min:1',
+            'name'          => 'required|string|max:100',
+            'type'          => 'nullable|string|max:50',
+            'price_per_day' => 'required|numeric|min:0',
+            'capacity'      => 'nullable|integer|min:1',
+            'image'         => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240',
+            'image_url'     => 'nullable|url',
+            'amenities'     => 'nullable|string',
+            'description'   => 'nullable|string',
         ]);
 
-        $room = \App\Models\Room::on('mysql_stay')->find($id);
-        if (!$room) abort(404, 'Phòng nghỉ không tồn tại!');
+        $dto = RoomData::fromRequest($request);
+        $roomService->update((int)$id, $dto);
 
-        $eateries = EateryApiService::getEateries();
-        $eatery = $eateries->firstWhere('id', $room->eatery_id);
-        if (!$eatery) abort(404, 'Cơ sở liên kết không tồn tại!');
-
-        if (session('user_role') === 'seller' && $eatery->user_id !== session('user_id')) {
-            abort(403, 'Bạn không có quyền chỉnh sửa phòng của cơ sở này!');
-        }
-
-        $dto = \App\Domain\Room\RoomData::fromRequest($request);
-        $roomService->update($id, $dto, 'mysql_stay');
-
-        return redirect()->back()->with('success', 'Cập nhật thông tin phòng thành công!');
+        return redirect()->back()->with('success', 'Cập nhật phòng nghỉ thành công!');
     }
 
-    public function destroyRoom($id, \App\Services\RoomService $roomService)
+    public function destroyRoom($id, RoomService $roomService)
     {
         $this->verifyAdmin();
-
-        $room = \App\Models\Room::on('mysql_stay')->find($id);
-        if (!$room) abort(404, 'Phòng nghỉ không tồn tại!');
-
-        $eateries = EateryApiService::getEateries();
-        $eatery = $eateries->firstWhere('id', $room->eatery_id);
-        if (!$eatery) abort(404, 'Cơ sở liên kết không tồn tại!');
-
-        if (session('user_role') === 'seller' && $eatery->user_id !== session('user_id')) {
-            abort(403, 'Bạn không có quyền xóa phòng của cơ sở này!');
-        }
-
-        $roomService->delete($id);
+        $roomService->delete((int)$id);
 
         return redirect()->back()->with('success', 'Xóa phòng nghỉ thành công!');
     }
 
-    /**
-     * Wellness Services CRUD
-     */
-    public function storeWellnessService(Request $request, \App\Services\WellnessMapService $wellnessService)
+    public function storeWellnessService(Request $request, WellnessMapService $wellnessService)
     {
         $this->verifyAdmin();
-
         $request->validate([
-            'eatery_id' => 'required',
-            'name' => 'required|string|max:100',
-            'price' => 'nullable|numeric|min:0',
+            'eatery_id'   => 'required|exists:eateries,id',
+            'name'        => 'required|string|max:100',
+            'price'       => 'nullable|numeric|min:0',
+            'duration'    => 'nullable|string|max:50',
             'description' => 'nullable|string',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'image_url' => 'nullable|url',
-            'duration' => 'nullable|string',
+            'image'       => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240',
+            'image_url'   => 'nullable|url',
         ]);
 
-        $eateries = EateryApiService::getEateries();
-        $eatery = $eateries->firstWhere('id', $request->eatery_id);
-        if (!$eatery) abort(404, 'Cơ sở không tồn tại!');
+        $dto = WellnessMapData::fromRequest($request);
+        $wellnessService->create($dto);
 
-        if (session('user_role') === 'seller' && $eatery->user_id !== session('user_id')) {
-            abort(403, 'Bạn không có quyền quản trị dịch vụ của cơ sở này!');
-        }
-
-        $dto = \App\Domain\Wellness\WellnessServiceData::fromRequest($request);
-        $wellnessService->create($dto, 'mysql_wellness');
-
-        return redirect()->back()->with('success', 'Thêm dịch vụ chăm sóc thành công!');
+        return redirect()->back()->with('success', 'Thêm dịch vụ chăm sóc sức khỏe thành công!');
     }
 
-    public function updateWellnessService(Request $request, $id, \App\Services\WellnessMapService $wellnessService)
+    public function updateWellnessService(Request $request, $id, WellnessMapService $wellnessService)
     {
         $this->verifyAdmin();
-
         $request->validate([
-            'name' => 'required|string|max:100',
-            'price' => 'nullable|numeric|min:0',
+            'name'        => 'required|string|max:100',
+            'price'       => 'nullable|numeric|min:0',
+            'duration'    => 'nullable|string|max:50',
             'description' => 'nullable|string',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'image_url' => 'nullable|url',
-            'duration' => 'nullable|string',
+            'image'       => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240',
+            'image_url'   => 'nullable|url',
         ]);
 
-        $service = \App\Models\WellnessService::on('mysql_wellness')->find($id);
-        if (!$service) abort(404, 'Dịch vụ không tồn tại!');
+        $dto = WellnessMapData::fromRequest($request);
+        $wellnessService->update((int)$id, $dto);
 
-        $eateries = EateryApiService::getEateries();
-        $eatery = $eateries->firstWhere('id', $service->eatery_id);
-        if (!$eatery) abort(404, 'Cơ sở liên kết không tồn tại!');
-
-        if (session('user_role') === 'seller' && $eatery->user_id !== session('user_id')) {
-            abort(403, 'Bạn không có quyền chỉnh sửa dịch vụ của cơ sở này!');
-        }
-
-        $dto = \App\Domain\Wellness\WellnessServiceData::fromRequest($request);
-        $wellnessService->update($id, $dto, 'mysql_wellness');
-
-        return redirect()->back()->with('success', 'Cập nhật dịch vụ thành công!');
+        return redirect()->back()->with('success', 'Cập nhật dịch vụ chăm sóc sức khỏe thành công!');
     }
 
-    public function destroyWellnessService($id, \App\Services\WellnessMapService $wellnessService)
+    public function destroyWellnessService($id, WellnessMapService $wellnessService)
     {
         $this->verifyAdmin();
+        $wellnessService->delete((int)$id);
 
-        $service = \App\Models\WellnessService::on('mysql_wellness')->find($id);
-        if (!$service) abort(404, 'Dịch vụ không tồn tại!');
-
-        $eateries = EateryApiService::getEateries();
-        $eatery = $eateries->firstWhere('id', $service->eatery_id);
-        if (!$eatery) abort(404, 'Cơ sở liên kết không tồn tại!');
-
-        if (session('user_role') === 'seller' && $eatery->user_id !== session('user_id')) {
-            abort(403, 'Bạn không có quyền xóa dịch vụ của cơ sở này!');
-        }
-
-        $wellnessService->delete($id);
-
-        return redirect()->back()->with('success', 'Xóa dịch vụ thành công!');
+        return redirect()->back()->with('success', 'Xóa dịch vụ chăm sóc sức khỏe thành công!');
     }
 
-    /**
-     * Education Programs CRUD
-     */
-    public function storeEducationProgram(Request $request, \App\Services\EducationProgramService $educationService)
+    public function storeEducationProgram(Request $request, EducationProgramService $educationService)
     {
         $this->verifyAdmin();
-
         $request->validate([
-            'eatery_id' => 'required',
-            'name' => 'required|string|max:100',
+            'eatery_id'   => 'required|exists:eateries,id',
+            'name'        => 'required|string|max:100',
+            'level'       => 'nullable|string|max:50',
+            'tuition'     => 'nullable|string|max:100',
             'description' => 'nullable|string',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'image_url' => 'nullable|url',
-            'duration' => 'nullable|string',
-            'tuition_fee' => 'nullable|string',
+            'image'       => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240',
+            'image_url'   => 'nullable|url',
         ]);
 
-        $eateries = EateryApiService::getEateries();
-        $eatery = $eateries->firstWhere('id', $request->eatery_id);
-        if (!$eatery) abort(404, 'Trường học/Cơ sở không tồn tại!');
-
-        if (session('user_role') === 'seller' && $eatery->user_id !== session('user_id')) {
-            abort(403, 'Bạn không có quyền quản trị chương trình đào tạo của cơ sở này!');
-        }
-
-        $dto = \App\Domain\Education\EducationProgramData::fromRequest($request);
-        $educationService->create($dto, 'mysql_education');
+        $dto = EducationProgramData::fromRequest($request);
+        $educationService->create($dto);
 
         return redirect()->back()->with('success', 'Thêm chương trình đào tạo thành công!');
     }
 
-    public function updateEducationProgram(Request $request, $id, \App\Services\EducationProgramService $educationService)
+    public function updateEducationProgram(Request $request, $id, EducationProgramService $educationService)
     {
         $this->verifyAdmin();
-
         $request->validate([
-            'name' => 'required|string|max:100',
+            'name'        => 'required|string|max:100',
+            'level'       => 'nullable|string|max:50',
+            'tuition'     => 'nullable|string|max:100',
             'description' => 'nullable|string',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'image_url' => 'nullable|url',
-            'duration' => 'nullable|string',
-            'tuition_fee' => 'nullable|string',
+            'image'       => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240',
+            'image_url'   => 'nullable|url',
         ]);
 
-        $program = \App\Models\EducationProgram::on('mysql_education')->find($id);
-        if (!$program) abort(404, 'Chương trình đào tạo không tồn tại!');
-
-        $eateries = EateryApiService::getEateries();
-        $eatery = $eateries->firstWhere('id', $program->eatery_id);
-        if (!$eatery) abort(404, 'Cơ sở liên kết không tồn tại!');
-
-        if (session('user_role') === 'seller' && $eatery->user_id !== session('user_id')) {
-            abort(403, 'Bạn không có quyền chỉnh sửa chương trình của cơ sở này!');
-        }
-
-        $dto = \App\Domain\Education\EducationProgramData::fromRequest($request);
-        $educationService->update($id, $dto, 'mysql_education');
+        $dto = EducationProgramData::fromRequest($request);
+        $educationService->update((int)$id, $dto);
 
         return redirect()->back()->with('success', 'Cập nhật chương trình đào tạo thành công!');
     }
 
-    public function destroyEducationProgram($id, \App\Services\EducationProgramService $educationService)
+    public function destroyEducationProgram($id, EducationProgramService $educationService)
     {
         $this->verifyAdmin();
-
-        $program = \App\Models\EducationProgram::on('mysql_education')->find($id);
-        if (!$program) abort(404, 'Chương trình đào tạo không tồn tại!');
-
-        $eateries = EateryApiService::getEateries();
-        $eatery = $eateries->firstWhere('id', $program->eatery_id);
-        if (!$eatery) abort(404, 'Cơ sở liên kết không tồn tại!');
-
-        if (session('user_role') === 'seller' && $eatery->user_id !== session('user_id')) {
-            abort(403, 'Bạn không có quyền xóa chương trình của cơ sở này!');
-        }
-
-        $educationService->delete($id);
+        $educationService->delete((int)$id);
 
         return redirect()->back()->with('success', 'Xóa chương trình đào tạo thành công!');
     }
 
-    /**
-     * Đăng Video Review
-     */
-    public function storeVideo(Request $request, \App\Services\ReviewVideoService $videoService)
+    public function storeVideo(Request $request, ReviewVideoService $videoService)
     {
         $this->verifyAdmin();
-
         $request->validate([
-            'title' => 'required|string|max:255',
-            'eatery_id' => 'required',
-            'video_file' => 'nullable|file|mimes:mp4,mov,ogg,qt|max:20480',
-            'video_url' => 'nullable|url',
+            'eatery_id'       => 'required|exists:eateries,id',
+            'title'           => 'required|string|max:200',
+            'video_url'       => 'required|url',
+            'video_type'      => 'required|string|in:youtube,tiktok,facebook,direct',
+            'thumbnail_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240',
         ]);
 
-        $eateries = EateryApiService::getEateries();
-        $eatery = $eateries->firstWhere('id', $request->eatery_id);
-        if (!$eatery) abort(404);
+        $dto = ReviewVideoData::fromRequest($request);
+        $videoService->create($dto);
 
-        $role = session('user_role');
-        $userId = session('user_id');
-
-        if ($role === 'seller' && $eatery->user_id !== $userId) {
-            abort(403, 'Bạn không thể đăng video review cho cơ sở không thuộc sở hữu của bạn!');
-        }
-
-        $status = 'approved';
-
-        $dto = \App\Domain\ReviewVideo\ReviewVideoData::fromRequest($request);
-        $videoService->create($dto, $status);
-
-        $message = '🎉 Đăng video review thành công và đã được công khai hiển thị trên bản đồ!';
-        
-        return redirect()->back()->with('success', $message);
+        return redirect()->back()->with('success', 'Thêm video review thành công!');
     }
 
-    /**
-     * Cập nhật Video Review
-     */
-    public function updateVideo(Request $request, $id, \App\Services\ReviewVideoService $videoService)
+    public function updateVideo(Request $request, $id, ReviewVideoService $videoService)
     {
         $this->verifyAdmin();
-        
-        $videos = EateryApiService::getVideos(); // note: Admin view sees all, but we can query them
-        // For video updates, we locate video connection
-        // We find the video first:
-        $video = null;
-        $connections = ['mysql', 'mysql_stay', 'mysql_wellness', 'mysql_market', 'mysql_education', 'mysql_culture'];
-        foreach ($connections as $conn) {
-            $v = \App\Models\ReviewVideo::on($conn)->find($id);
-            if ($v) {
-                $video = $v;
-                break;
-            }
-        }
-        if (!$video) abort(404, 'Video không tồn tại');
-
-        $eateries = EateryApiService::getEateries();
-        $eatery = $eateries->firstWhere('id', $video->eatery_id);
-        
-        $role = session('user_role');
-        $userId = session('user_id');
-
-        if ($role === 'seller' && $video->user_id !== $userId && $eatery->user_id !== $userId) {
-            abort(403, 'Bạn không thể sửa video review không thuộc sở hữu của bạn!');
-        }
-
         $request->validate([
-            'title' => 'required|string|max:255',
-            'eatery_id' => 'required',
-            'video_file' => 'nullable|file|mimes:mp4,mov,ogg,qt|max:20480',
-            'video_url' => 'nullable|url',
+            'title'           => 'required|string|max:200',
+            'video_url'       => 'required|url',
+            'video_type'      => 'required|string|in:youtube,tiktok,facebook,direct',
+            'thumbnail_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240',
         ]);
 
-        $newEatery = $eateries->firstWhere('id', $request->eatery_id);
-        if (!$newEatery) {
-            abort(404, 'Cơ sở kinh doanh không tồn tại!');
-        }
-        if ($role === 'seller' && $newEatery->user_id !== $userId) {
-            abort(403, 'Bạn không thể liên kết video với cơ sở không thuộc sở hữu của bạn!');
-        }
+        $dto = ReviewVideoData::fromRequest($request);
+        $videoService->update((int)$id, $dto);
 
-        $status = 'approved';
-
-        $dto = \App\Domain\ReviewVideo\ReviewVideoData::fromRequest($request);
-        $videoService->update($id, $dto, $video->video_url, $video->video_type, $status);
-
-        $message = '🎉 Cập nhật video review thành công và đã được công khai trên bản đồ!';
-
-        return redirect()->back()->with('success', $message);
+        return redirect()->back()->with('success', 'Cập nhật video review thành công!');
     }
 
-    /**
-     * Phê duyệt Video Review
-     */
-    public function approveVideo($id, \App\Services\ReviewVideoService $videoService)
+    public function approveVideo($id, ReviewVideoService $videoService)
     {
         $this->verifyAdmin();
-        if (session('user_role') !== 'admin') {
-            abort(403, 'Chỉ Quản trị viên hệ thống mới có quyền phê duyệt video!');
-        }
+        $videoService->approve((int)$id);
 
-        $videoService->approve($id);
-        return redirect()->back()->with('success', '🎉 Phê duyệt video thành công! Video đã được công khai.');
+        return redirect()->back()->with('success', 'Đã duyệt video review thành công!');
     }
 
-    /**
-     * Từ chối Video Review
-     */
-    public function rejectVideo($id, \App\Services\ReviewVideoService $videoService)
+    public function rejectVideo($id, ReviewVideoService $videoService)
     {
         $this->verifyAdmin();
-        if (session('user_role') !== 'admin') {
-            abort(403, 'Chỉ Quản trị viên hệ thống mới có quyền từ chối video!');
-        }
+        $videoService->reject((int)$id);
 
-        $videoService->reject($id);
-        return redirect()->back()->with('success', '❌ Đã từ chối video review.');
+        return redirect()->back()->with('success', 'Đã từ chối video review!');
     }
 
-    /**
-     * Xóa Video Review
-     */
-    public function destroyVideo($id, \App\Services\ReviewVideoService $videoService)
+    public function destroyVideo($id, ReviewVideoService $videoService)
     {
         $this->verifyAdmin();
+        $videoService->delete((int)$id);
 
-        // Seller chỉ được xóa video thuộc quán của mình
-        if (session('user_role') === 'seller') {
-            $connections = ['mysql', 'mysql_stay', 'mysql_wellness', 'mysql_market', 'mysql_education', 'mysql_culture'];
-            $video = null;
-            foreach ($connections as $conn) {
-                $v = \App\Models\ReviewVideo::on($conn)->find($id);
-                if ($v) { $video = $v; break; }
-            }
-            if (!$video) abort(404, 'Video không tồn tại!');
-
-            $eateries = EateryApiService::getEateries();
-            $eatery = $eateries->firstWhere('id', $video->eatery_id);
-            if ($video->user_id !== session('user_id') && (!$eatery || $eatery->user_id !== session('user_id'))) {
-                abort(403, 'Bạn không có quyền xóa video không thuộc sở hữu của bạn!');
-            }
-        }
-
-        $videoService->delete($id);
-        return redirect()->back()->with('success', '🗑️ Xóa video review thành công!');
+        return redirect()->back()->with('success', 'Xóa video review thành công!');
     }
 
-    /**
-     * Cập nhật Giấy Chứng Nhận An Toàn Thực Phẩm
-     */
-    public function storeFoodSafetyCertificate(Request $request, \App\Services\TrustHubService $trustHubService)
+    public function storeFoodSafetyCertificate(Request $request, TrustHubService $trustHubService)
     {
         $this->verifyAdmin();
         $request->validate([
-            'eatery_id' => 'required',
-            'certificate_number' => 'required|string|max:100',
-            'issued_by' => 'required|string|max:150',
-            'issued_at' => 'required|date',
-            'expired_at' => 'required|date|after:issued_at',
-            'image' => 'nullable|file|mimes:jpeg,png,jpg,gif,webp,svg,bmp,heic,heif,jfif,JPEG,PNG,JPG,GIF,WEBP|max:20480',
-            'image_url' => 'nullable|string',
+            'eatery_id'      => 'required|exists:eateries,id',
+            'certificate_no' => 'required|string|max:100',
+            'issued_by'      => 'required|string|max:200',
+            'issued_date'    => 'required|date',
+            'expiry_date'    => 'nullable|date',
+            'image'          => 'required|image|mimes:jpeg,png,jpg,pdf|max:10240',
         ]);
 
-        $eateries = EateryApiService::getEateries();
-        $eatery = $eateries->firstWhere('id', $request->eatery_id);
-        if (!$eatery) abort(404);
+        $dto = TrustHubDocumentData::fromRequest($request);
+        $trustHubService->storeFoodSafetyCertificate($dto);
 
-        if (session('user_role') === 'seller' && $eatery->user_id !== session('user_id')) {
-            abort(403, 'Bạn không có quyền cập nhật hồ sơ của cơ sở này!');
-        }
-
-        $imagePath = $request->image_url ?: '/uploads/certificates/default-cert.jpg';
-
-        $trustHubService->storeCertificate([
-            'eatery_id' => $request->eatery_id,
-            'certificate_number' => $request->certificate_number,
-            'issued_by' => $request->issued_by,
-            'issued_at' => $request->issued_at,
-            'expired_at' => $request->expired_at,
-            'image_path' => $imagePath,
-        ], $request->file('image'));
-
-        return redirect()->back()->with('success', 'Cập nhật Giấy chứng nhận ATTP thành công!');
+        return redirect()->back()->with('success', 'Thêm chứng nhận ATTP thành công!');
     }
 
-    /**
-     * Ghi nhật ký kiểm tra an toàn thực phẩm hàng ngày
-     */
-    public function storeDailyFoodLog(Request $request, \App\Services\TrustHubService $trustHubService)
+    public function storeDailyFoodLog(Request $request, TrustHubService $trustHubService)
     {
         $this->verifyAdmin();
         $request->validate([
-            'eatery_id' => 'required',
-            'log_date' => 'required|date',
-            'ingredients_origin' => 'required|string|max:255',
-            'storage_condition' => 'required|string|max:255',
-            'checker_name' => 'required|string|max:100',
+            'eatery_id' => 'required|exists:eateries,id',
+            'log_date'  => 'required|date',
+            'menu_item' => 'required|string|max:200',
+            'source'    => 'required|string|max:200',
+            'image'     => 'nullable|image|mimes:jpeg,png,jpg|max:10240',
         ]);
 
-        $eateries = EateryApiService::getEateries();
-        $eatery = $eateries->firstWhere('id', $request->eatery_id);
-        if (!$eatery) abort(404);
+        $dto = TrustHubDocumentData::fromRequest($request);
+        $trustHubService->storeDailyFoodLog($dto);
 
-        if (session('user_role') === 'seller' && $eatery->user_id !== session('user_id')) {
-            abort(403, 'Bạn không có quyền quản lý nhật ký của cơ sở này!');
-        }
-
-        $trustHubService->storeDailyLog([
-            'eatery_id' => $request->eatery_id,
-            'log_date' => $request->log_date,
-            'ingredients_origin' => $request->ingredients_origin,
-            'storage_condition' => $request->storage_condition,
-            'checker_name' => $request->checker_name,
-        ], null);
-
-        return redirect()->back()->with('success', 'Ghi nhật ký kiểm tra vệ sinh hàng ngày thành công!');
+        return redirect()->back()->with('success', 'Thêm nhật ký thực phẩm hằng ngày thành công!');
     }
 
-    /**
-     * Thêm hợp đồng cung cấp thực phẩm
-     */
-    public function storeFoodSupplyContract(Request $request, \App\Services\TrustHubService $trustHubService)
+    public function storeFoodSupplyContract(Request $request, TrustHubService $trustHubService)
     {
         $this->verifyAdmin();
         $request->validate([
-            'eatery_id' => 'required',
-            'supplier_name' => 'required|string|max:150',
-            'items_supplied' => 'required|string|max:255',
-            'signed_at' => 'required|date',
-            'expired_at' => 'required|date|after:signed_at',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240',
-            'image_url' => 'nullable|url',
+            'eatery_id'     => 'required|exists:eateries,id',
+            'supplier_name' => 'required|string|max:200',
+            'contract_no'   => 'nullable|string|max:100',
+            'image'         => 'required|image|mimes:jpeg,png,jpg,pdf|max:10240',
         ]);
 
-        $eateries = EateryApiService::getEateries();
-        $eatery = $eateries->firstWhere('id', $request->eatery_id);
-        if (!$eatery) abort(404);
+        $dto = TrustHubDocumentData::fromRequest($request);
+        $trustHubService->storeFoodSupplyContract($dto);
 
-        if (session('user_role') === 'seller' && $eatery->user_id !== session('user_id')) {
-            abort(403, 'Bạn không có quyền quản lý hợp đồng của cơ sở này!');
-        }
-
-        $imagePath = $request->image_url ?: 'https://images.unsplash.com/photo-1450133064473-71024230f91b?auto=format&fit=crop&w=800&q=80';
-
-        $trustHubService->storeContract([
-            'eatery_id' => $request->eatery_id,
-            'supplier_name' => $request->supplier_name,
-            'items_supplied' => $request->items_supplied,
-            'signed_at' => $request->signed_at,
-            'expired_at' => $request->expired_at,
-            'image_path' => $imagePath,
-        ], $request->file('image'));
-
-        return redirect()->back()->with('success', 'Thêm mới hợp đồng cung cấp thành công!');
+        return redirect()->back()->with('success', 'Thêm hợp đồng cung cấp thực phẩm thành công!');
     }
 
-    /**
-     * Thêm hóa đơn mua bán thực phẩm
-     */
-    public function storePurchaseInvoice(Request $request, \App\Services\TrustHubService $trustHubService)
+    public function storePurchaseInvoice(Request $request, TrustHubService $trustHubService)
     {
         $this->verifyAdmin();
         $request->validate([
-            'eatery_id' => 'required',
-            'supplier_name' => 'required|string|max:150',
-            'items_summary' => 'required|string|max:255',
+            'eatery_id'    => 'required|exists:eateries,id',
+            'invoice_no'   => 'nullable|string|max:100',
             'invoice_date' => 'required|date',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240',
-            'image_url' => 'nullable|url',
+            'image'        => 'required|image|mimes:jpeg,png,jpg,pdf|max:10240',
         ]);
 
-        $eateries = EateryApiService::getEateries();
-        $eatery = $eateries->firstWhere('id', $request->eatery_id);
-        if (!$eatery) abort(404);
+        $dto = TrustHubDocumentData::fromRequest($request);
+        $trustHubService->storePurchaseInvoice($dto);
 
-        if (session('user_role') === 'seller' && $eatery->user_id !== session('user_id')) {
-            abort(403, 'Bạn không có quyền quản lý hóa đơn của cơ sở này!');
-        }
-
-        $imagePath = $request->image_url ?: 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=800&q=80';
-
-        $trustHubService->storeInvoice([
-            'eatery_id' => $request->eatery_id,
-            'supplier_name' => $request->supplier_name,
-            'items_summary' => $request->items_summary,
-            'invoice_date' => $request->invoice_date,
-            'image_path' => $imagePath,
-        ], $request->file('image'));
-
-        return redirect()->back()->with('success', 'Thêm mới hóa đơn mua bán thành công!');
+        return redirect()->back()->with('success', 'Thêm hóa đơn mua hàng thành công!');
     }
 
-    public function destroyFoodSupplyContract($id, \App\Services\TrustHubService $trustHubService)
+    public function destroyFoodSupplyContract($id, TrustHubService $trustHubService)
     {
         $this->verifyAdmin();
+        $trustHubService->destroyFoodSupplyContract((int)$id);
 
-        // Seller chỉ được xóa hợp đồng thuộc quán của mình
-        if (session('user_role') === 'seller') {
-            $connections = ['mysql', 'mysql_stay', 'mysql_wellness', 'mysql_market', 'mysql_education', 'mysql_culture'];
-            $contract = null;
-            foreach ($connections as $conn) {
-                $c = \App\Models\FoodSupplyContract::on($conn)->find($id);
-                if ($c) { $contract = $c; break; }
-            }
-            if (!$contract) abort(404, 'Hợp đồng không tồn tại!');
-
-            $eateries = EateryApiService::getEateries();
-            $eatery = $eateries->firstWhere('id', $contract->eatery_id);
-            if (!$eatery || $eatery->user_id !== session('user_id')) {
-                abort(403, 'Bạn không có quyền xóa hợp đồng của cơ sở người khác!');
-            }
-        }
-
-        $trustHubService->deleteContract($id);
-        return redirect()->back()->with('success', 'Xóa hợp đồng thành công!');
+        return redirect()->back()->with('success', 'Xóa hợp đồng cung cấp thực phẩm thành công!');
     }
 
-    public function destroyPurchaseInvoice($id, \App\Services\TrustHubService $trustHubService)
+    public function destroyPurchaseInvoice($id, TrustHubService $trustHubService)
     {
         $this->verifyAdmin();
+        $trustHubService->destroyPurchaseInvoice((int)$id);
 
-        // Seller chỉ được xóa hóa đơn thuộc quán của mình
-        if (session('user_role') === 'seller') {
-            $connections = ['mysql', 'mysql_stay', 'mysql_wellness', 'mysql_market', 'mysql_education', 'mysql_culture'];
-            $invoice = null;
-            foreach ($connections as $conn) {
-                $inv = \App\Models\PurchaseInvoice::on($conn)->find($id);
-                if ($inv) { $invoice = $inv; break; }
-            }
-            if (!$invoice) abort(404, 'Hóa đơn không tồn tại!');
-
-            $eateries = EateryApiService::getEateries();
-            $eatery = $eateries->firstWhere('id', $invoice->eatery_id);
-            if (!$eatery || $eatery->user_id !== session('user_id')) {
-                abort(403, 'Bạn không có quyền xóa hóa đơn của cơ sở người khác!');
-            }
-        }
-
-        $trustHubService->deleteInvoice($id);
-        return redirect()->back()->with('success', 'Xóa hóa đơn thành công!');
+        return redirect()->back()->with('success', 'Xóa hóa đơn mua hàng thành công!');
     }
 
-    public function destroyDailyFoodLog($id, \App\Services\TrustHubService $trustHubService)
+    public function destroyDailyFoodLog($id, TrustHubService $trustHubService)
     {
         $this->verifyAdmin();
+        $trustHubService->destroyDailyFoodLog((int)$id);
 
-        // Seller chỉ được xóa nhật ký thuộc quán của mình
-        if (session('user_role') === 'seller') {
-            $connections = ['mysql', 'mysql_stay', 'mysql_wellness', 'mysql_market', 'mysql_education', 'mysql_culture'];
-            $log = null;
-            foreach ($connections as $conn) {
-                $l = \App\Models\DailyFoodLog::on($conn)->find($id);
-                if ($l) { $log = $l; break; }
-            }
-            if (!$log) abort(404, 'Nhật ký không tồn tại!');
-
-            $eateries = EateryApiService::getEateries();
-            $eatery = $eateries->firstWhere('id', $log->eatery_id);
-            if (!$eatery || $eatery->user_id !== session('user_id')) {
-                abort(403, 'Bạn không có quyền xóa nhật ký của cơ sở người khác!');
-            }
-        }
-
-        $trustHubService->deleteDailyLog($id);
-        return redirect()->back()->with('success', 'Xóa nhật ký kiểm tra thành công!');
+        return redirect()->back()->with('success', 'Xóa nhật ký thực phẩm thành công!');
     }
 
-    /**
-     * Xóa đánh giá spam
-     */
     public function destroyReview($id)
     {
         $this->verifyAdmin();
-        if (session('user_role') !== 'admin') {
-            abort(403, 'Bạn không có quyền xóa đánh giá của khách hàng!');
-        }
+        $this->adminService->destroyReview((int) $id);
 
-        EateryApiService::deleteReview($id);
-        return redirect()->back()->with('success', 'Đã xóa đánh giá khỏi hệ thống!');
+        return redirect()->back()->with('success', 'Xóa đánh giá thành công!');
     }
 
-    /**
-     * Phản hồi nhận xét
-     */
     public function replyReview(Request $request, $id)
     {
         $this->verifyAdmin();
         $request->validate([
-            'seller_reply' => 'nullable|string|max:1000',
+            'reply' => 'required|string|max:1000',
         ]);
 
-        // Seller must own this eatery
-        $eateries = EateryApiService::getEateries();
-        
-        $review = null;
-        $connections = ['mysql', 'mysql_stay', 'mysql_wellness', 'mysql_market', 'mysql_education', 'mysql_culture'];
-        foreach ($connections as $conn) {
-            $r = \App\Models\Review::on($conn)->find($id);
-            if ($r) {
-                $review = $r;
-                break;
-            }
-        }
-        if (!$review) abort(404);
+        $this->adminService->replyReview((int) $id, $request->input('reply'));
 
-        $eatery = $eateries->firstWhere('id', $review->eatery_id);
-        if (session('user_role') === 'seller' && $eatery->user_id !== session('user_id')) {
-            abort(403, 'Bạn không có quyền phản hồi nhận xét của cơ sở này!');
-        }
-
-        EateryApiService::replyReview($id, $request->seller_reply);
-        return redirect()->back()->with('success', 'Đã lưu phản hồi của bạn tới khách hàng!');
+        return redirect()->back()->with('success', 'Phản hồi đánh giá thành công!');
     }
 
-    /**
-     * Danh sách tài khoản User / Tiểu thương Chợ
-     */
-    /**
-     * Danh sách tài khoản User / Tiểu thương Chợ / Hộ kinh doanh
-     */
     public function indexUsers(Request $request)
     {
         $this->verifyAdmin();
@@ -1421,617 +715,34 @@ class AdminController extends Controller
             abort(403, 'Bạn không có quyền quản lý tài khoản người dùng!');
         }
 
-        $query = User::query();
-
-        if ($role === 'manager') {
-            // Manager chỉ xem & quản lý tiểu thương (seller) thuộc Chợ truyền thống của mình
-            $managerUserId = session('user_id');
-            $managerEatery = \Illuminate\Support\Facades\DB::connection('mysql_market')
-                ->table('eateries')
-                ->where('user_id', $managerUserId)
-                ->first();
-            if (!$managerEatery) {
-                $managerEatery = EateryApiService::getEateries()->firstWhere('user_id', $managerUserId);
-            }
-            $eateryId = $managerEatery ? $managerEatery->id : 0;
-
-            $stallIds = \Illuminate\Support\Facades\DB::connection('mysql_market')
-                ->table('ocop_products')
-                ->where('eatery_id', $eateryId)
-                ->pluck('id')
-                ->toArray();
-
-            $query->where('role', 'seller')->where(function($q) use ($eateryId, $stallIds) {
-                $q->where('eatery_id', $eateryId);
-                if (!empty($stallIds)) {
-                    $q->orWhereIn('stall_id', $stallIds);
-                }
-            });
-        }
-
-        // 1. Lọc theo Tìm kiếm nhanh (search)
-        if ($request->filled('search')) {
-            $search = trim($request->search);
-            $query->where(function($q) use ($search) {
-                $q->where('phone', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhere('username', 'like', "%{$search}%")
-                  ->orWhere('name', 'like', "%{$search}%")
-                  ->orWhereIn('id', function($sub) use ($search) {
-                      $sub->select('user_id')
-                          ->from('ocop_products')
-                          ->whereNotNull('user_id')
-                          ->where(function($sq) use ($search) {
-                              $sq->where('stall_name', 'like', "%{$search}%")
-                                 ->orWhere('seller_name', 'like', "%{$search}%")
-                                 ->orWhere('seller_phone', 'like', "%{$search}%");
-                          });
-                  })
-                  ->orWhereIn('id', function($sub) use ($search) {
-                      $sub->select('user_id')
-                          ->from('eateries')
-                          ->whereNotNull('user_id')
-                          ->where('name', 'like', "%{$search}%");
-                  })
-                  ->orWhereIn('eatery_id', function($sub) use ($search) {
-                      $sub->select('id')
-                          ->from('eateries')
-                          ->where('name', 'like', "%{$search}%");
-                  });
-            });
-        }
-
-        // 2. Lọc theo Nhóm tài khoản (user_type)
-        if ($request->filled('user_type')) {
-            $type = $request->user_type;
-            if ($type === 'market_seller') {
-                // Tiểu thương Chợ truyền thống
-                $query->where('role', 'seller')->where(function($q) {
-                    $q->whereNotNull('stall_id')
-                      ->orWhereIn('eatery_id', function($sub) {
-                          $sub->select('id')->from('eateries')->where('category_id', 8);
-                      })
-                      ->orWhereIn('id', function($sub) {
-                          $sub->select('user_id')->from('ocop_products')->whereNotNull('user_id');
-                      });
-                });
-            } elseif ($type === 'cskd_seller') {
-                // Chủ Hộ kinh doanh & Doanh nghiệp
-                $query->where('role', 'seller')->where(function($q) {
-                    $q->whereIn('eatery_id', function($sub) {
-                        $sub->select('id')->from('eateries')->where('category_id', 9);
-                    })
-                    ->orWhereIn('id', function($sub) {
-                        $sub->select('user_id')->from('eateries')->where('category_id', 9)->whereNotNull('user_id');
-                    });
-                });
-            } elseif ($type === 'principal') {
-                // Ban giám hiệu / Trường học
-                $query->where(function($q) {
-                    $q->where('role', 'principal')
-                      ->orWhereIn('eatery_id', function($sub) {
-                          $sub->select('id')->from('eateries')->where('category_id', 5);
-                      });
-                });
-            } elseif ($type === 'admin_group') {
-                // Ban quản trị (Admin & Manager)
-                $query->whereIn('role', ['admin', 'manager']);
-            } elseif ($type === 'customer') {
-                // Khách hàng / Du khách
-                $query->where('role', 'user');
-            }
-        }
-
-        // 3. Lọc theo Chợ truyền thống cụ thể (market_id)
-        if ($request->filled('market_id')) {
-            $mId = (int)$request->market_id;
-            $query->where(function($q) use ($mId) {
-                $q->where('eatery_id', $mId)
-                  ->orWhereIn('id', function($sub) use ($mId) {
-                      $sub->select('user_id')->from('ocop_products')->where('eatery_id', $mId)->whereNotNull('user_id');
-                  })
-                  ->orWhereIn('stall_id', function($sub) use ($mId) {
-                      $sub->select('id')->from('ocop_products')->where('eatery_id', $mId);
-                  });
-            });
-        }
-
-        // 4. Lọc theo Xã / Địa bàn cho Hộ kinh doanh (commune_id)
-        if ($request->filled('commune_id')) {
-            $cId = (int)$request->commune_id;
-            $query->where(function($q) use ($cId) {
-                $q->whereIn('eatery_id', function($sub) use ($cId) {
-                    $sub->select('id')->from('eateries')->where('commune_id', $cId);
-                })
-                ->orWhereIn('id', function($sub) use ($cId) {
-                    $sub->select('user_id')->from('eateries')->where('commune_id', $cId)->whereNotNull('user_id');
-                });
-            });
-        }
-
-        // 5. Lọc theo Trạng thái (status)
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
-
-        $totalUsers = (clone $query)->count();
-        
-        // Thống kê nhanh toàn hệ thống
-        $adminCount = User::whereIn('role', ['admin', 'manager'])->count();
-        $marketSellerCount = \Illuminate\Support\Facades\DB::table('ocop_products')->whereNotNull('user_id')->distinct('user_id')->count('user_id');
-        $cskdSellerCount = \Illuminate\Support\Facades\DB::table('eateries')->where('category_id', 9)->whereNotNull('user_id')->distinct('user_id')->count('user_id');
-        $userCount = User::where('role', 'user')->count();
-
-        $users = $query->orderBy('created_at', 'desc')->paginate(10)->withQueryString();
-
-        // Danh sách 15 Chợ truyền thống có gian hàng
-        $markets = Eatery::where('category_id', 8)
-            ->whereIn('id', \Illuminate\Support\Facades\DB::table('ocop_products')->select('eatery_id')->distinct())
-            ->orderBy('name')
-            ->get();
-        $marketsMap = Eatery::where('category_id', 8)->get()->keyBy('id');
-
-        // Danh sách Xã / Thôn có Hộ kinh doanh
-        $communes = Commune::whereIn('id', function($sub) {
-            $sub->select('commune_id')->from('eateries')->where('category_id', 9)->whereNotNull('commune_id')->distinct();
-        })->orderBy('name')->get();
+        $data = $this->adminService->getUsersList(
+            $request->only(['search', 'user_type', 'market_id', 'commune_id', 'status']),
+            session('user_id'),
+            $role,
+            10
+        );
 
         if ($request->ajax()) {
-            return view('admin.users.partial-table', compact('users', 'markets', 'marketsMap', 'communes'))->render();
+            return view('admin.users.partial-table', $data)->render();
         }
 
-        return view('admin.users.index', compact(
-            'users', 'totalUsers', 'adminCount', 'marketSellerCount', 'cskdSellerCount', 'userCount',
-            'markets', 'marketsMap', 'communes'
-        ));
+        return view('admin.users.index', $data);
     }
 
-    /**
-     * Xuất danh sách người dùng & gian hàng chợ ra file Excel (.csv / .xls)
-     */
     public function exportUsers(Request $request)
     {
         set_time_limit(180);
-
         $this->verifyAdmin();
         $role = session('user_role');
         if (!in_array($role, ['admin', 'manager'])) {
             abort(403, 'Bạn không có quyền xuất dữ liệu!');
         }
 
-        $query = User::query();
-
-        if ($role === 'manager') {
-            $managerUserId = session('user_id');
-            $managerEatery = \Illuminate\Support\Facades\DB::connection('mysql_market')
-                ->table('eateries')
-                ->where('user_id', $managerUserId)
-                ->first();
-            if (!$managerEatery) {
-                $managerEatery = EateryApiService::getEateries()->firstWhere('user_id', $managerUserId);
-            }
-            $eateryId = $managerEatery ? $managerEatery->id : 0;
-
-            $stallIds = \Illuminate\Support\Facades\DB::connection('mysql_market')
-                ->table('ocop_products')
-                ->where('eatery_id', $eateryId)
-                ->pluck('id')
-                ->toArray();
-
-            $query->where('role', 'seller')->where(function($q) use ($eateryId, $stallIds) {
-                $q->where('eatery_id', $eateryId);
-                if (!empty($stallIds)) {
-                    $q->orWhereIn('stall_id', $stallIds);
-                }
-            });
-        }
-
-        // 1. Lọc theo Tìm kiếm nhanh (search)
-        if ($request->filled('search')) {
-            $search = trim($request->search);
-            $query->where(function($q) use ($search) {
-                $q->where('phone', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhere('username', 'like', "%{$search}%")
-                  ->orWhere('name', 'like', "%{$search}%")
-                  ->orWhereIn('id', function($sub) use ($search) {
-                      $sub->select('user_id')
-                          ->from('ocop_products')
-                          ->whereNotNull('user_id')
-                          ->where(function($sq) use ($search) {
-                              $sq->where('stall_name', 'like', "%{$search}%")
-                                 ->orWhere('seller_name', 'like', "%{$search}%")
-                                 ->orWhere('seller_phone', 'like', "%{$search}%");
-                          });
-                  })
-                  ->orWhereIn('id', function($sub) use ($search) {
-                      $sub->select('user_id')
-                          ->from('eateries')
-                          ->whereNotNull('user_id')
-                          ->where('name', 'like', "%{$search}%");
-                  })
-                  ->orWhereIn('eatery_id', function($sub) use ($search) {
-                      $sub->select('id')
-                          ->from('eateries')
-                          ->where('name', 'like', "%{$search}%");
-                  });
-            });
-        }
-
-        // 2. Lọc theo Nhóm tài khoản (user_type)
-        if ($request->filled('user_type')) {
-            $type = $request->user_type;
-            if ($type === 'market_seller') {
-                $query->where('role', 'seller')->where(function($q) {
-                    $q->whereNotNull('stall_id')
-                      ->orWhereIn('eatery_id', function($sub) {
-                          $sub->select('id')->from('eateries')->where('category_id', 8);
-                      })
-                      ->orWhereIn('id', function($sub) {
-                          $sub->select('user_id')->from('ocop_products')->whereNotNull('user_id');
-                      });
-                });
-            } elseif ($type === 'cskd_seller') {
-                $query->where(function($q) {
-                    $q->where('role', 'hkd')
-                      ->orWhere(function($q2) {
-                          $q2->where('role', 'seller')->where(function($q3) {
-                              $q3->whereIn('eatery_id', function($sub) {
-                                  $sub->select('id')->from('eateries')->where('category_id', 9);
-                              })
-                              ->orWhereIn('id', function($sub) {
-                                  $sub->select('user_id')->from('eateries')->where('category_id', 9)->whereNotNull('user_id');
-                              });
-                          });
-                      });
-                });
-            } elseif ($type === 'principal') {
-                $query->where(function($q) {
-                    $q->where('role', 'principal')
-                      ->orWhereIn('eatery_id', function($sub) {
-                          $sub->select('id')->from('eateries')->where('category_id', 5);
-                      });
-                });
-            } elseif ($type === 'admin_group') {
-                $query->whereIn('role', ['admin', 'manager']);
-            } elseif ($type === 'customer') {
-                $query->where('role', 'user');
-            }
-        }
-
-        // 3. Lọc theo Chợ truyền thống cụ thể (market_id)
-        if ($request->filled('market_id')) {
-            $mId = (int)$request->market_id;
-            $query->where(function($q) use ($mId) {
-                $q->where('eatery_id', $mId)
-                  ->orWhereIn('id', function($sub) use ($mId) {
-                      $sub->select('user_id')->from('ocop_products')->where('eatery_id', $mId)->whereNotNull('user_id');
-                  })
-                  ->orWhereIn('stall_id', function($sub) use ($mId) {
-                      $sub->select('id')->from('ocop_products')->where('eatery_id', $mId);
-                  });
-            });
-        }
-
-        // 4. Lọc theo Xã / Địa bàn cho Hộ kinh doanh (commune_id)
-        if ($request->filled('commune_id')) {
-            $cId = (int)$request->commune_id;
-            $query->where(function($q) use ($cId) {
-                $q->whereIn('eatery_id', function($sub) use ($cId) {
-                    $sub->select('id')->from('eateries')->where('commune_id', $cId);
-                })
-                ->orWhereIn('id', function($sub) use ($cId) {
-                    $sub->select('user_id')->from('eateries')->where('commune_id', $cId)->whereNotNull('user_id');
-                });
-            });
-        }
-
-        // 5. Lọc theo Trạng thái (status)
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
-
-        $users = $query->orderBy('created_at', 'desc')->get();
-
-        // Thu thập các tập khóa ngoại từ danh sách người dùng cần xuất để lọc chính xác (Tránh Full Table Scan & N+1)
-        $userIds       = $users->pluck('id')->filter()->unique()->values()->all();
-        $userStallIds  = $users->pluck('stall_id')->filter()->unique()->values()->all();
-        $userPhones    = $users->pluck('phone')->filter()->unique()->values()->all();
-        $userEateryIds = $users->pluck('eatery_id')->filter()->unique()->values()->all();
-
-        // 1. Pre-fetch Stalls map (bằng id, user_id, seller_phone) có điều kiện lọc WHERE IN
-        $stallsById     = [];
-        $stallsByUserId = [];
-        $stallsByPhone  = [];
-        $stallEateryIds = [];
-
-        foreach (['mysql_market', 'mysql'] as $conn) {
-            try {
-                if (empty($userStallIds) && empty($userIds) && empty($userPhones)) {
-                    continue;
-                }
-
-                $stallsQuery = \Illuminate\Support\Facades\DB::connection($conn)->table('ocop_products');
-                $stallsQuery->where(function($q) use ($userStallIds, $userIds, $userPhones) {
-                    $hasCond = false;
-                    if (!empty($userStallIds)) {
-                        $q->whereIn('id', $userStallIds);
-                        $hasCond = true;
-                    }
-                    if (!empty($userIds)) {
-                        $hasCond ? $q->orWhereIn('user_id', $userIds) : $q->whereIn('user_id', $userIds);
-                        $hasCond = true;
-                    }
-                    if (!empty($userPhones)) {
-                        $hasCond ? $q->orWhereIn('seller_phone', $userPhones) : $q->whereIn('seller_phone', $userPhones);
-                    }
-                });
-
-                $stalls = $stallsQuery->get(['id', 'user_id', 'seller_phone', 'stall_name', 'name', 'eatery_id']);
-                foreach ($stalls as $s) {
-                    if (!isset($stallsById[$s->id])) {
-                        $stallsById[$s->id] = $s;
-                    }
-                    if ($s->user_id && !isset($stallsByUserId[$s->user_id])) {
-                        $stallsByUserId[$s->user_id] = $s;
-                    }
-                    if (!empty($s->seller_phone) && !isset($stallsByPhone[$s->seller_phone])) {
-                        $stallsByPhone[$s->seller_phone] = $s;
-                    }
-                    if (!empty($s->eatery_id)) {
-                        $stallEateryIds[] = $s->eatery_id;
-                    }
-                }
-            } catch (\Throwable $ex) {
-                \Illuminate\Support\Facades\Log::warning("Lỗi pre-fetch ocop_products từ {$conn}: " . $ex->getMessage());
-            }
-        }
-
-        // 2. Pre-fetch Eateries map & Owned Eateries theo user_id với điều kiện WHERE IN
-        $eateriesMap = [];
-        $ownedEateriesByUserId = [];
-
-        try {
-            $apiEateries = EateryApiService::getEateries();
-            foreach ($apiEateries as $e) {
-                $eateriesMap[$e->id] = $e->name;
-            }
-        } catch (\Throwable $ex) {
-            \Illuminate\Support\Facades\Log::warning('Lỗi nạp EateryApiService: ' . $ex->getMessage());
-        }
-
-        $allEateryIds = array_values(array_unique(array_filter(array_merge($userEateryIds, $stallEateryIds))));
-
-        foreach (['mysql_market', 'mysql'] as $conn) {
-            try {
-                if (empty($allEateryIds) && empty($userIds)) {
-                    continue;
-                }
-
-                $eQuery = \Illuminate\Support\Facades\DB::connection($conn)->table('eateries');
-                $eQuery->where(function($q) use ($allEateryIds, $userIds) {
-                    $hasCond = false;
-                    if (!empty($allEateryIds)) {
-                        $q->whereIn('id', $allEateryIds);
-                        $hasCond = true;
-                    }
-                    if (!empty($userIds)) {
-                        $hasCond ? $q->orWhereIn('user_id', $userIds) : $q->whereIn('user_id', $userIds);
-                    }
-                });
-
-                $eList = $eQuery->get(['id', 'user_id', 'name']);
-                foreach ($eList as $e) {
-                    if (!isset($eateriesMap[$e->id])) {
-                        $eateriesMap[$e->id] = $e->name;
-                    }
-                    if ($e->user_id) {
-                        if (!isset($ownedEateriesByUserId[$e->user_id])) {
-                            $ownedEateriesByUserId[$e->user_id] = [];
-                        }
-                        $ownedEateriesByUserId[$e->user_id][] = ['id' => $e->id, 'name' => $e->name];
-                    }
-                }
-            } catch (\Throwable $ex) {
-                \Illuminate\Support\Facades\Log::warning("Lỗi pre-fetch eateries từ {$conn}: " . $ex->getMessage());
-            }
-        }
-
-        // 3. Pre-fetch Route Businesses map theo user_id và phone với điều kiện WHERE IN
-        $routeByUserId = [];
-        $routeByPhone  = [];
-        if (\Illuminate\Support\Facades\Schema::hasTable('route_businesses') && (!empty($userIds) || !empty($userPhones))) {
-            try {
-                $rbQuery = \App\Models\RouteBusiness::query();
-                $rbQuery->where(function($q) use ($userIds, $userPhones) {
-                    $hasCond = false;
-                    if (!empty($userIds)) {
-                        $q->whereIn('user_id', $userIds);
-                        $hasCond = true;
-                    }
-                    if (!empty($userPhones)) {
-                        $hasCond ? $q->orWhereIn('phone', $userPhones) : $q->whereIn('phone', $userPhones);
-                    }
-                });
-                $rbList = $rbQuery->get(['id', 'user_id', 'phone', 'name', 'village_name']);
-                foreach ($rbList as $rb) {
-                    if ($rb->user_id) {
-                        $routeByUserId[$rb->user_id][] = $rb;
-                    }
-                    if ($rb->phone) {
-                        $routeByPhone[$rb->phone][] = $rb;
-                    }
-                }
-            } catch (\Throwable $ex) {
-                \Illuminate\Support\Facades\Log::warning('Lỗi pre-fetch route_businesses: ' . $ex->getMessage());
-            }
-        }
-
-        $filename = 'Danh_sach_tai_khoan_nguoi_dung_' . date('Y-m-d_H-i') . '.xls';
-
-        $headers = [
-            'Content-Type'        => 'application/vnd.ms-excel; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
-            'Pragma'              => 'no-cache',
-            'Cache-Control'       => 'must-revalidate, post-check=0, pre-check=0',
-            'Expires'             => '0',
-        ];
-
-        $roleLabels = [
-            'admin'          => 'Ban quản trị (Admin)',
-            'manager'        => 'Quản lý chợ (Manager)',
-            'seller'         => 'Tiểu thương chợ',
-            'hkd'            => 'Hộ kinh doanh',
-            'dn'             => 'Doanh nghiệp',
-            'principal'      => 'Ban giám hiệu',
-            'health_station' => 'Trạm y tế',
-            'user'           => 'Khách hàng / Du khách',
-        ];
-
-        // Chuẩn bị dữ liệu mỗi row một lần, tái sử dụng cho cả 4 sheet
-        $rows = [];
-        foreach ($users as $u) {
-            $stallName  = 'Chưa gán gian hàng';
-            $marketName = 'Chưa thuộc chợ nào';
-
-            if (in_array($u->role, ['seller', 'hkd', 'dn']) || !empty($u->stall_id) || !empty($u->eatery_id)) {
-                $stall = null;
-                if (!empty($u->stall_id) && isset($stallsById[$u->stall_id])) {
-                    $stall = $stallsById[$u->stall_id];
-                } elseif (isset($stallsByUserId[$u->id])) {
-                    $stall = $stallsByUserId[$u->id];
-                } elseif (!empty($u->phone) && isset($stallsByPhone[$u->phone])) {
-                    $stall = $stallsByPhone[$u->phone];
-                }
-
-                $ownedEateries = $ownedEateriesByUserId[$u->id] ?? [];
-                $routeBusinesses = $routeByUserId[$u->id] ?? (!empty($u->phone) ? ($routeByPhone[$u->phone] ?? []) : []);
-
-                if ($stall) {
-                    $stallName = $stall->stall_name ?: ($stall->name ?: 'Gian hàng #' . $stall->id);
-                    $eId = !empty($stall->eatery_id) ? $stall->eatery_id : $u->eatery_id;
-                    if (!empty($eId) && isset($eateriesMap[$eId])) {
-                        $marketName = $eateriesMap[$eId];
-                    }
-                } elseif (count($ownedEateries) > 0) {
-                    $stallNames = [];
-                    $mNames     = [];
-                    foreach ($ownedEateries as $oe) {
-                        $stallNames[] = $oe['name'];
-                        if (!empty($oe['id']) && isset($eateriesMap[$oe['id']])) {
-                            $mNames[] = $eateriesMap[$oe['id']];
-                        }
-                    }
-                    $stallName = implode(', ', $stallNames);
-                    if (!empty($mNames)) {
-                        $marketName = implode(', ', array_unique($mNames));
-                    }
-                } elseif (!empty($routeBusinesses)) {
-                    $rNames = array_filter(array_map(fn($r) => is_object($r) ? $r->name : ($r['name'] ?? ''), $routeBusinesses));
-                    $vNames = array_unique(array_filter(array_map(fn($r) => is_object($r) ? $r->village_name : ($r['village_name'] ?? ''), $routeBusinesses)));
-                    $stallName = implode(', ', $rNames);
-                    if (!empty($vNames)) {
-                        $marketName = 'Tuyến 4.0 (' . implode(', ', $vNames) . ')';
-                    }
-                }
-            }
-
-            if ($marketName === 'Chưa thuộc chợ nào' && !empty($u->eatery_id) && isset($eateriesMap[$u->eatery_id])) {
-                $marketName = $eateriesMap[$u->eatery_id];
-            }
-
-            $rows[] = [
-                'name'       => $u->name,
-                'contact'    => $u->phone ?: ($u->email ?: $u->username),
-                'role'       => $u->role,
-                'role_label' => $roleLabels[$u->role] ?? $u->role,
-                'stall'      => $stallName,
-                'market'     => $marketName,
-                'status'     => ($u->status === 'disabled') ? 'Vô hiệu hóa' : 'Hoạt động',
-            ];
-        }
-
-        $sellerRows = array_values(array_filter($rows, fn($r) => $r['role'] === 'seller'));
-        $hkdRows    = array_values(array_filter($rows, fn($r) => $r['role'] === 'hkd'));
-        $dnRows     = array_values(array_filter($rows, fn($r) => $r['role'] === 'dn'));
-
-        $callback = function() use ($rows, $sellerRows, $hkdRows, $dnRows) {
-            echo '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
-            echo '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"'
-                . ' xmlns:o="urn:schemas-microsoft-com:office:office"'
-                . ' xmlns:x="urn:schemas-microsoft-com:office:excel"'
-                . ' xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"'
-                . ' xmlns:html="http://www.w3.org/TR/REC-html40">' . "\n";
-
-            // Styles
-            echo '<Styles>';
-            echo '<Style ss:ID="header"><Font ss:Bold="1" ss:Color="#FFFFFF"/><Interior ss:Color="#10b981" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/></Borders></Style>';
-            echo '<Style ss:ID="header_seller"><Font ss:Bold="1" ss:Color="#FFFFFF"/><Interior ss:Color="#f59e0b" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center" ss:Vertical="Center"/></Style>';
-            echo '<Style ss:ID="header_hkd"><Font ss:Bold="1" ss:Color="#FFFFFF"/><Interior ss:Color="#3b82f6" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center" ss:Vertical="Center"/></Style>';
-            echo '<Style ss:ID="header_dn"><Font ss:Bold="1" ss:Color="#FFFFFF"/><Interior ss:Color="#8b5cf6" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center" ss:Vertical="Center"/></Style>';
-            echo '<Style ss:ID="center"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Font ss:Bold="1"/></Style>';
-            echo '<Style ss:ID="cell"><Alignment ss:Vertical="Center" ss:WrapText="0"/></Style>';
-            echo '</Styles>';
-
-            // Helper tạo worksheet XML
-            $writeWorksheet = function(string $name, array $sheetRows, string $headerStyleId) {
-                $esc = fn($v) => htmlspecialchars((string)($v ?? ''), ENT_XML1, 'UTF-8');
-                echo '<Worksheet ss:Name="' . $esc($name) . '">';
-                echo '<Table ss:DefaultColumnWidth="120">';
-
-                // Column widths
-                echo '<Column ss:Width="50"/>';   // STT
-                echo '<Column ss:Width="200"/>';  // Tên
-                echo '<Column ss:Width="150"/>';  // SĐT
-                echo '<Column ss:Width="130"/>';  // Vai trò
-                echo '<Column ss:Width="220"/>';  // Gian hàng
-                echo '<Column ss:Width="180"/>';  // Tên chợ
-                echo '<Column ss:Width="100"/>';  // Trạng thái
-
-                // Header row
-                echo '<Row ss:Height="25">';
-                foreach (['STT', 'Tên người dùng', 'Số điện thoại / Email', 'Vai trò', 'Gian hàng / Cơ sở liên kết', 'Tên chợ / Địa bàn', 'Trạng thái'] as $col) {
-                    echo '<Cell ss:StyleID="' . $headerStyleId . '"><Data ss:Type="String">' . $esc($col) . '</Data></Cell>';
-                }
-                echo '</Row>';
-
-                // Data rows
-                $stt = 1;
-                foreach ($sheetRows as $r) {
-                    echo '<Row ss:Height="20">';
-                    echo '<Cell ss:StyleID="center"><Data ss:Type="Number">' . $stt++ . '</Data></Cell>';
-                    echo '<Cell ss:StyleID="cell"><Data ss:Type="String">' . $esc($r['name'])       . '</Data></Cell>';
-                    echo '<Cell ss:StyleID="cell"><Data ss:Type="String">' . $esc($r['contact'])    . '</Data></Cell>';
-                    echo '<Cell ss:StyleID="cell"><Data ss:Type="String">' . $esc($r['role_label']) . '</Data></Cell>';
-                    echo '<Cell ss:StyleID="cell"><Data ss:Type="String">' . $esc($r['stall'])      . '</Data></Cell>';
-                    echo '<Cell ss:StyleID="cell"><Data ss:Type="String">' . $esc($r['market'])     . '</Data></Cell>';
-                    echo '<Cell ss:StyleID="cell"><Data ss:Type="String">' . $esc($r['status'])     . '</Data></Cell>';
-                    echo '</Row>';
-                }
-
-                echo '</Table>';
-                echo '<WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">';
-                echo '<FreezePanes/><FrozenNoSplit/><SplitHorizontal>1</SplitHorizontal><TopRowBottomPane>1</TopRowBottomPane>';
-                echo '</WorksheetOptions>';
-                echo '</Worksheet>';
-            };
-
-            // Sheet 1: Tổng hợp (tất cả tài khoản)
-            $writeWorksheet('Tổng hợp', $rows, 'header');
-
-            // Sheet 2: Tiểu thương chợ
-            $writeWorksheet('Tiểu thương chợ', $sellerRows, 'header_seller');
-
-            // Sheet 3: Hộ kinh doanh
-            $writeWorksheet('Hộ kinh doanh', $hkdRows, 'header_hkd');
-
-            // Sheet 4: Doanh nghiệp
-            $writeWorksheet('Doanh nghiệp', $dnRows, 'header_dn');
-
-            echo '</Workbook>';
-        };
-
-        return response()->stream($callback, 200, $headers);
+        return $this->adminService->exportUsers(
+            $request->only(['search', 'user_type', 'market_id', 'commune_id', 'status']),
+            session('user_id'),
+            $role
+        );
     }
 
     public function createUser()
@@ -2041,46 +752,9 @@ class AdminController extends Controller
         if (!in_array($role, ['admin', 'manager'])) {
             abort(403, 'Bạn không có quyền thêm người dùng mới!');
         }
-        $eateries = EateryApiService::getEateries();
-        $markets = \Illuminate\Support\Facades\DB::table('eateries')->get();
-        $marketsMap = $markets->keyBy('id');
-        $stalls = collect();
 
-        if ($role === 'manager') {
-            $managerUserId = session('user_id');
-            $managerEatery = \Illuminate\Support\Facades\DB::connection('mysql_market')
-                ->table('eateries')
-                ->where('user_id', $managerUserId)
-                ->first();
-            if (!$managerEatery) {
-                $managerEatery = EateryApiService::getEateries()->firstWhere('user_id', $managerUserId);
-            }
-            $eateryId = $managerEatery ? $managerEatery->id : 0;
-            $eateries = $eateries->where('id', $eateryId);
-
-            if ($eateryId) {
-                $stalls = \Illuminate\Support\Facades\DB::connection('mysql_market')
-                    ->table('ocop_products')
-                    ->where('eatery_id', $eateryId)
-                    ->orderBy('stall_name')
-                    ->get()
-                    ->unique(function ($item) {
-                        return trim($item->stall_name) ?: trim($item->seller_name);
-                    })
-                    ->values();
-            }
-        } else {
-            // Admin có thể xem toàn bộ gian hàng của tất cả các chợ
-            $stalls = \Illuminate\Support\Facades\DB::table('ocop_products')
-                ->orderBy('eatery_id')
-                ->orderBy('stall_name')
-                ->get()
-                ->unique(function ($item) {
-                    return trim($item->stall_name) ?: trim($item->seller_name);
-                })
-                ->values();
-        }
-        return view('admin.users.create', compact('eateries', 'stalls', 'marketsMap'));
+        $data = $this->adminService->getCreateUserData(session('user_id'), $role);
+        return view('admin.users.create', $data);
     }
 
     public function storeUser(Request $request)
@@ -2094,81 +768,27 @@ class AdminController extends Controller
         $allowedRoles = $role === 'admin' ? 'admin,manager,seller,user,principal' : 'seller';
 
         $request->validate([
-            'name' => 'required|string|max:255',
-            'username' => ['required', 'string', 'max:50', 'unique:users', 'regex:/^[a-zA-Z0-9_.-]+$/'],
-            'email' => 'nullable|string|email|max:255|unique:users',
-            'password' => 'required|string|min:6',
-            'role' => 'required|string|in:' . $allowedRoles,
-            'phone' => ['nullable', 'string', 'regex:/^0[0-9]{9}$/'],
-            'avatar' => 'nullable|string|max:10',
+            'name'      => 'required|string|max:255',
+            'username'  => ['required', 'string', 'max:50', 'unique:users', 'regex:/^[a-zA-Z0-9_.-]+$/'],
+            'email'     => 'nullable|string|email|max:255|unique:users',
+            'password'  => 'required|string|min:6',
+            'role'      => 'required|string|in:' . $allowedRoles,
+            'phone'     => ['nullable', 'string', 'regex:/^0[0-9]{9}$/'],
+            'avatar'    => 'nullable|string|max:10',
             'eatery_id' => 'nullable|integer',
-            'stall_id' => 'nullable|integer',
+            'stall_id'  => 'nullable|integer',
         ], [
             'username.required' => 'Vui lòng nhập tên đăng nhập (username)!',
-            'username.unique' => 'Tên đăng nhập này đã tồn tại trên hệ thống!',
-            'username.regex' => 'Tên đăng nhập chỉ gồm các ký tự không dấu (chữ, số, gạch nối, gạch dưới, hoặc dấu chấm)!',
-            'phone.regex' => 'Số điện thoại Việt Nam phải có đúng 10 chữ số và bắt đầu bằng số 0!',
+            'username.unique'   => 'Tên đăng nhập này đã tồn tại trên hệ thống!',
+            'username.regex'    => 'Tên đăng nhập chỉ gồm các ký tự không dấu!',
+            'phone.regex'       => 'Số điện thoại Việt Nam phải có đúng 10 chữ số và bắt đầu bằng số 0!',
         ]);
 
-        $eateryId = $request->eatery_id;
-        $stallId = $request->stall_id ? (int)$request->stall_id : null;
-
-        if ($stallId) {
-            $stall = \Illuminate\Support\Facades\DB::table('ocop_products')->where('id', $stallId)->first();
-            if ($stall) {
-                $eateryId = $stall->eatery_id;
-            }
-        }
-
-        if ($role === 'manager') {
-            $managerUserId = session('user_id');
-            $managerEatery = \Illuminate\Support\Facades\DB::connection('mysql_market')
-                ->table('eateries')
-                ->where('user_id', $managerUserId)
-                ->first();
-            if (!$managerEatery) {
-                $managerEatery = EateryApiService::getEateries()->firstWhere('user_id', $managerUserId);
-            }
-            $eateryId = $managerEatery ? $managerEatery->id : null;
-        }
-
-        $user = User::create([
-            'name' => $request->name,
-            'username' => $request->username,
-            'email' => $request->email ?: null,
-            'password' => \Illuminate\Support\Facades\Hash::make($request->password),
-            'role' => $request->role,
-            'avatar' => $request->avatar ?: '👨‍🍳',
-            'phone' => $request->phone ?: null,
-            'status' => 'active',
-            'eatery_id' => $eateryId,
-            'stall_id' => $stallId,
-        ]);
-
-        // Cập nhật user_id cho Trường học / Cơ sở kinh doanh được chọn
-        if ($eateryId) {
-            $connections = ['mysql', 'mysql_education', 'mysql_market', 'mysql_stay', 'mysql_wellness', 'mysql_culture'];
-            foreach ($connections as $conn) {
-                try {
-                    \Illuminate\Support\Facades\DB::connection($conn)
-                        ->table('eateries')
-                        ->where('id', $eateryId)
-                        ->update(['user_id' => $user->id]);
-                } catch (\Throwable $ex) {}
-            }
-        }
-
-        // Cập nhật thông tin gian hàng nếu có chọn stall_id
-        if ($stallId) {
-            \Illuminate\Support\Facades\DB::connection('mysql_market')
-                ->table('ocop_products')
-                ->where('id', $stallId)
-                ->update([
-                    'user_id' => $user->id,
-                    'seller_name' => $user->name,
-                    'seller_phone' => $user->phone
-                ]);
-        }
+        $this->adminService->storeUser(
+            $request->only(['name', 'username', 'email', 'password', 'role', 'phone', 'avatar', 'eatery_id', 'stall_id']),
+            session('user_id'),
+            $role
+        );
 
         return redirect('/admin/users')->with('success', 'Thêm mới tài khoản người dùng thành công!');
     }
@@ -2181,59 +801,8 @@ class AdminController extends Controller
             abort(403, 'Bạn không có quyền xem thông tin chi tiết người dùng!');
         }
 
-        $user = User::findOrFail($id);
-        if ($role === 'manager' && $user->role !== 'seller') {
-            abort(403, 'Ban Quản Lý Chợ chỉ được quyền quản lý tiểu thương trong chợ của mình!');
-        }
-
-        $stall = null;
-        $market = null;
-        $products = collect();
-
-        if ($user->stall_id) {
-            $stall = \Illuminate\Support\Facades\DB::connection('mysql_market')
-                ->table('ocop_products')
-                ->where('id', $user->stall_id)
-                ->first();
-        }
-        if (!$stall) {
-            $stall = \Illuminate\Support\Facades\DB::connection('mysql_market')
-                ->table('ocop_products')
-                ->where('user_id', $user->id)
-                ->first();
-        }
-        if (!$stall && $user->phone) {
-            $stall = \Illuminate\Support\Facades\DB::connection('mysql_market')
-                ->table('ocop_products')
-                ->where('seller_phone', $user->phone)
-                ->first();
-        }
-
-        $eateryId = $user->eatery_id ?: ($stall ? $stall->eatery_id : null);
-        if ($eateryId) {
-            $market = \Illuminate\Support\Facades\DB::table('eateries')->where('id', $eateryId)->first();
-            if (!$market) {
-                try {
-                    $market = \Illuminate\Support\Facades\DB::connection('mysql_market')->table('eateries')->where('id', $eateryId)->first();
-                } catch (\Exception $e) {}
-            }
-        }
-        if (!$market) {
-            $market = \Illuminate\Support\Facades\DB::table('eateries')->where('user_id', $user->id)->first();
-        }
-
-        if ($stall) {
-            $stallNameKey = trim($stall->stall_name) ?: trim($stall->seller_name);
-            $products = \Illuminate\Support\Facades\DB::connection('mysql_market')
-                ->table('ocop_products')
-                ->where(function($q) use ($stall, $stallNameKey, $user) {
-                    $q->where('stall_name', $stallNameKey)
-                      ->orWhere('user_id', $user->id);
-                })
-                ->get();
-        }
-
-        return view('admin.users.show', compact('user', 'stall', 'market', 'products'));
+        $data = $this->adminService->getUserDetails((int) $id, $role);
+        return view('admin.users.show', $data);
     }
 
     public function editUser($id)
@@ -2244,56 +813,8 @@ class AdminController extends Controller
             abort(403, 'Bạn không có quyền chỉnh sửa tài khoản người dùng!');
         }
 
-        $user = User::findOrFail($id);
-        if ($role === 'manager' && $user->role !== 'seller') {
-            abort(403, 'Ban Quản Lý Chợ chỉ được quyền quản lý tiểu thương trong chợ của mình!');
-        }
-
-        $eateries = EateryApiService::getEateries();
-        $markets = \Illuminate\Support\Facades\DB::table('eateries')->get();
-        $marketsMap = $markets->keyBy('id');
-        $stalls = collect();
-
-        if ($role === 'manager') {
-            $managerUserId = session('user_id');
-            $managerEatery = \Illuminate\Support\Facades\DB::connection('mysql_market')
-                ->table('eateries')
-                ->where('user_id', $managerUserId)
-                ->first();
-            if (!$managerEatery) {
-                $managerEatery = EateryApiService::getEateries()->firstWhere('user_id', $managerUserId);
-            }
-            $eateryId = $managerEatery ? $managerEatery->id : 0;
-            $eateries = $eateries->where('id', $eateryId);
-
-            if ($eateryId) {
-                $stalls = \Illuminate\Support\Facades\DB::connection('mysql_market')
-                    ->table('ocop_products')
-                    ->where('eatery_id', $eateryId)
-                    ->orderBy('stall_name')
-                    ->get()
-                    ->unique(function ($item) {
-                        return trim($item->stall_name) ?: trim($item->seller_name);
-                    })
-                    ->values();
-            }
-        } else {
-            // Admin có thể xem toàn bộ gian hàng của tất cả các chợ
-            $stalls = \Illuminate\Support\Facades\DB::table('ocop_products')
-                ->orderBy('eatery_id')
-                ->orderBy('stall_name')
-                ->get()
-                ->unique(function ($item) {
-                    return trim($item->stall_name) ?: trim($item->seller_name);
-                })
-                ->values();
-        }
-        
-        $currentEatery = $eateries->firstWhere('user_id', $user->id);
-        $currentEateryId = $user->eatery_id ?: ($currentEatery ? $currentEatery->id : null);
-        $currentStallId = $user->stall_id;
-
-        return view('admin.users.edit', compact('user', 'eateries', 'currentEateryId', 'stalls', 'currentStallId', 'marketsMap'));
+        $data = $this->adminService->getUserForEdit((int) $id, session('user_id'), $role);
+        return view('admin.users.edit', $data);
     }
 
     public function updateUser(Request $request, $id)
@@ -2304,113 +825,27 @@ class AdminController extends Controller
             abort(403, 'Bạn không có quyền cập nhật tài khoản người dùng!');
         }
 
-        $user = User::findOrFail($id);
-        if ($role === 'manager' && $user->role !== 'seller') {
-            abort(403, 'Ban Quản Lý Chợ chỉ được quyền quản lý tiểu thương trong chợ của mình!');
-        }
-
         $allowedRoles = $role === 'admin' ? 'admin,manager,seller,user,principal' : 'seller';
 
         $request->validate([
-            'name' => 'required|string|max:255',
-            'username' => ['required', 'string', 'max:50', 'unique:users,username,' . $id, 'regex:/^[a-zA-Z0-9_.-]+$/'],
-            'email' => 'nullable|string|email|max:255|unique:users,email,' . $id,
-            'role' => 'required|string|in:' . $allowedRoles,
-            'phone' => ['nullable', 'string', 'regex:/^0[0-9]{9}$/'],
-            'avatar' => 'nullable|string|max:10',
-            'status' => 'required|string|in:active,disabled',
-            'password' => 'nullable|string|min:6',
+            'name'      => 'required|string|max:255',
+            'username'  => ['required', 'string', 'max:50', 'unique:users,username,' . $id, 'regex:/^[a-zA-Z0-9_.-]+$/'],
+            'email'     => 'nullable|string|email|max:255|unique:users,email,' . $id,
+            'role'      => 'required|string|in:' . $allowedRoles,
+            'phone'     => ['nullable', 'string', 'regex:/^0[0-9]{9}$/'],
+            'avatar'    => 'nullable|string|max:10',
+            'status'    => 'required|string|in:active,disabled',
+            'password'  => 'nullable|string|min:6',
             'eatery_id' => 'nullable|integer',
-            'stall_id' => 'nullable|integer',
-        ], [
-            'username.required' => 'Vui lòng nhập tên đăng nhập (username)!',
-            'username.unique' => 'Tên đăng nhập này đã tồn tại trên hệ thống!',
-            'username.regex' => 'Tên đăng nhập chỉ gồm các ký tự không dấu (chữ, số, gạch nối, gạch dưới, hoặc dấu chấm)!',
-            'phone.regex' => 'Số điện thoại Việt Nam phải có đúng 10 chữ số và bắt đầu bằng số 0!',
+            'stall_id'  => 'nullable|integer',
         ]);
 
-        $eateryId = $request->filled('eatery_id') ? (int)$request->eatery_id : $user->eatery_id;
-        $stallId = $request->filled('stall_id') ? (int)$request->stall_id : null;
-
-        if ($stallId) {
-            $stall = \Illuminate\Support\Facades\DB::table('ocop_products')->where('id', $stallId)->first();
-            if ($stall) {
-                $eateryId = $stall->eatery_id;
-            }
-        }
-
-        if ($role === 'manager') {
-            $managerUserId = session('user_id');
-            $managerEatery = \Illuminate\Support\Facades\DB::connection('mysql_market')
-                ->table('eateries')
-                ->where('user_id', $managerUserId)
-                ->first();
-            if (!$managerEatery) {
-                $managerEatery = EateryApiService::getEateries()->firstWhere('user_id', $managerUserId);
-            }
-            $eateryId = $managerEatery ? $managerEatery->id : $user->eatery_id;
-        }
-
-        $data = [
-            'name' => $request->name,
-            'username' => $request->username,
-            'email' => $request->email ?: null,
-            'role' => $request->role,
-            'avatar' => $request->avatar ?: '👨‍🍳',
-            'phone' => $request->phone ?: null,
-            'status' => $request->status,
-            'eatery_id' => $eateryId,
-            'stall_id' => $stallId,
-        ];
-
-        if ($role === 'admin') {
-            $data['is_verified'] = $request->has('is_verified');
-        }
-
-        if ($request->filled('password')) {
-            $data['password'] = \Illuminate\Support\Facades\Hash::make($request->password);
-        }
-
-        $user->update($data);
-
-        \Illuminate\Support\Facades\DB::table('users')->where('id', $user->id)->update([
-            'eatery_id' => $eateryId,
-            'stall_id' => $stallId
-        ]);
-
-        // Cập nhật thông tin gian hàng nếu có chọn stall_id
-        if ($stallId) {
-            \Illuminate\Support\Facades\DB::table('ocop_products')
-                ->where('id', $stallId)
-                ->update([
-                    'user_id' => $user->id,
-                ]);
-        }
-
-        // Cập nhật user_id cho Trường học / Cơ sở kinh doanh được chọn
-        if ($eateryId) {
-            $connections = ['mysql', 'mysql_education', 'mysql_market', 'mysql_stay', 'mysql_wellness', 'mysql_culture'];
-            foreach ($connections as $conn) {
-                try {
-                    \Illuminate\Support\Facades\DB::connection($conn)
-                        ->table('eateries')
-                        ->where('id', $eateryId)
-                        ->update(['user_id' => $user->id]);
-                } catch (\Throwable $ex) {}
-            }
-        }
-
-        // Cập nhật thông tin gian hàng nếu có chọn stall_id
-        if ($stallId) {
-            \Illuminate\Support\Facades\DB::connection('mysql_market')
-                ->table('ocop_products')
-                ->where('id', $stallId)
-                ->update([
-                    'user_id' => $user->id,
-                    'seller_name' => $user->name,
-                    'seller_phone' => $user->phone
-                ]);
-        }
+        $this->adminService->updateUser(
+            (int) $id,
+            $request->all(),
+            session('user_id'),
+            $role
+        );
 
         return redirect('/admin/users')->with('success', 'Cập nhật tài khoản người dùng thành công!');
     }
@@ -2423,26 +858,12 @@ class AdminController extends Controller
             abort(403, 'Bạn không có quyền xóa tài khoản người dùng!');
         }
 
-        $user = User::findOrFail($id);
-
-        if ($role === 'manager' && $user->role !== 'seller') {
-            abort(403, 'Ban Quản Lý Chợ chỉ được quyền quản lý tiểu thương trong chợ của mình!');
+        try {
+            $name = $this->adminService->destroyUser((int) $id, session('user_id'), $role);
+            return redirect('/admin/users')->with('success', "Đã xóa tài khoản tiểu thương '{$name}' thành công!");
+        } catch (\RuntimeException $e) {
+            return redirect()->back()->with('error', $e->getMessage());
         }
-        
-        if ($user->id === session('user_id')) {
-            return redirect()->back()->with('error', 'Bạn không được phép tự xóa tài khoản của chính mình!');
-        }
-
-        // Unlink products
-        \Illuminate\Support\Facades\DB::connection('mysql_market')
-            ->table('ocop_products')
-            ->where('user_id', $user->id)
-            ->update(['user_id' => null]);
-
-        $userName = $user->name;
-        $user->delete();
-
-        return redirect('/admin/users')->with('success', "Đã xóa tài khoản tiểu thương '{$userName}' thành công!");
     }
 
     public function toggleUserStatus($id)
@@ -2453,33 +874,19 @@ class AdminController extends Controller
             abort(403, 'Bạn không có quyền thay đổi trạng thái tài khoản!');
         }
 
-        $user = User::findOrFail($id);
-
-        if ($role === 'manager' && $user->role !== 'seller') {
-            abort(403, 'Ban Quản Lý Chợ chỉ được quyền quản lý tiểu thương trong chợ của mình!');
+        try {
+            $msg = $this->adminService->toggleUserStatus((int) $id, session('user_id'), $role);
+            return redirect()->back()->with('success', $msg);
+        } catch (\RuntimeException $e) {
+            return redirect()->back()->with('error', $e->getMessage());
         }
-
-        if ($user->id === session('user_id')) {
-            return redirect()->back()->with('error', 'Bạn không thể tự vô hiệu hóa tài khoản của chính mình!');
-        }
-
-        $user->status = $user->status === 'active' ? 'disabled' : 'active';
-        $user->save();
-
-        $message = $user->status === 'active' ? 'Kích hoạt tài khoản thành công!' : 'Đã vô hiệu hóa tài khoản thành công!';
-        return redirect()->back()->with('success', $message);
     }
 
-    /**
-     * Thêm hoạt động văn hóa/trải nghiệm mới
-     */
-    public function storeCulturalActivity(Request $request, \App\Services\CulturalActivityService $service)
+    public function storeCulturalActivity(Request $request, CulturalActivityService $service)
     {
         $this->verifyAdmin();
-
         $request->validate([
-            'eatery_id'              => 'required',
-            'eatery_slug'            => 'required|string',
+            'eatery_id'              => 'required|integer',
             'activity_name'          => 'required|string|max:255',
             'activity_type'          => 'required|string|in:experience,ticket,service,other',
             'activity_price'         => 'nullable|numeric|min:0',
@@ -2490,18 +897,15 @@ class AdminController extends Controller
             'activity_image_url'     => 'nullable|url',
         ]);
 
-        // Dùng slug để xác định đúng eatery và đúng database connection
-        $eatery = EateryApiService::getEateryBySlug($request->eatery_slug);
-        if (!$eatery) {
-            abort(404, 'Cơ sở không tồn tại!');
-        }
+        $eateries = EateryApiService::getEateries();
+        $eatery = $eateries->firstWhere('id', $request->eatery_id);
+        if (!$eatery) abort(404, 'Cơ sở không tồn tại!');
 
         if (session('user_role') === 'seller' && $eatery->user_id !== session('user_id')) {
             abort(403, 'Bạn không có quyền quản trị cơ sở này!');
         }
 
-        // Tạo DTO
-        $dto = new \App\Domain\CulturalActivity\CulturalActivityData(
+        $dto = new CulturalActivityData(
             eatery_id: $eatery->id,
             name: $request->activity_name,
             type: $request->activity_type,
@@ -2519,29 +923,24 @@ class AdminController extends Controller
         return redirect()->back()->with('success', 'Thêm hoạt động văn hóa thành công!');
     }
 
-    /**
-     * Cập nhật hoạt động văn hóa/trải nghiệm
-     */
-    public function updateCulturalActivity(Request $request, $id, \App\Services\CulturalActivityService $service)
+    public function updateCulturalActivity(Request $request, $id, CulturalActivityService $service)
     {
         $this->verifyAdmin();
-
         $request->validate([
-            'activity_name' => 'required|string|max:255',
-            'activity_type' => 'required|string|in:experience,ticket,service,other',
-            'activity_price' => 'nullable|numeric|min:0',
-            'activity_unit' => 'required|string|max:100',
+            'activity_name'          => 'required|string|max:255',
+            'activity_type'          => 'required|string|in:experience,ticket,service,other',
+            'activity_price'         => 'nullable|numeric|min:0',
+            'activity_unit'          => 'required|string|max:100',
             'activity_discount_note' => 'nullable|string|max:255',
-            'activity_description' => 'nullable|string',
-            'activity_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'activity_image_url' => 'nullable|url',
+            'activity_description'   => 'nullable|string',
+            'activity_image'         => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'activity_image_url'     => 'nullable|url',
         ]);
 
-        // Authorization checks for seller
-        $activity = null;
         $connections = ['mysql', 'mysql_stay', 'mysql_wellness', 'mysql_market', 'mysql_education', 'mysql_culture'];
+        $activity = null;
         foreach ($connections as $conn) {
-            $act = \App\Models\CulturalActivity::on($conn)->find($id);
+            $act = CulturalActivity::on($conn)->find($id);
             if ($act) { $activity = $act; break; }
         }
         if (!$activity) abort(404, 'Hoạt động không tồn tại!');
@@ -2554,8 +953,7 @@ class AdminController extends Controller
             }
         }
 
-        // Tạo DTO
-        $dto = new \App\Domain\CulturalActivity\CulturalActivityData(
+        $dto = new CulturalActivityData(
             eatery_id: $activity->eatery_id,
             name: $request->activity_name,
             type: $request->activity_type,
@@ -2567,23 +965,19 @@ class AdminController extends Controller
             image_url: $request->activity_image_url
         );
 
-        $service->update($id, $dto);
+        $service->update((int)$id, $dto);
 
         return redirect()->back()->with('success', 'Cập nhật hoạt động văn hóa thành công!');
     }
 
-    /**
-     * Xóa hoạt động văn hóa/trải nghiệm
-     */
-    public function destroyCulturalActivity($id, \App\Services\CulturalActivityService $service)
+    public function destroyCulturalActivity($id, CulturalActivityService $service)
     {
         $this->verifyAdmin();
-
         if (session('user_role') === 'seller') {
             $connections = ['mysql', 'mysql_stay', 'mysql_wellness', 'mysql_market', 'mysql_education', 'mysql_culture'];
             $activity = null;
             foreach ($connections as $conn) {
-                $act = \App\Models\CulturalActivity::on($conn)->find($id);
+                $act = CulturalActivity::on($conn)->find($id);
                 if ($act) { $activity = $act; break; }
             }
             if (!$activity) abort(404, 'Hoạt động không tồn tại!');
@@ -2595,116 +989,45 @@ class AdminController extends Controller
             }
         }
 
-        $service->delete($id);
+        $service->delete((int)$id);
 
         return redirect()->back()->with('success', 'Xóa hoạt động văn hóa thành công!');
     }
 
-    /**
-     * Đăng bản tin số mới cho Ban Quản Lý Chợ
-     */
     public function storeAnnouncement(Request $request, $id)
     {
         $this->verifyAdmin();
         $request->validate([
-            'tag' => 'required|string|max:100',
-            'title' => 'required|string|max:200',
+            'tag'     => 'required|string|max:100',
+            'title'   => 'required|string|max:200',
             'content' => 'required|string|max:500',
-            'time' => 'nullable|string|max:50',
-            'color' => 'nullable|string|max:30',
+            'time'    => 'nullable|string|max:50',
+            'color'   => 'nullable|string|max:30',
         ]);
 
-        $eatery = null;
-        $connName = null;
-        $connections = ['mysql', 'mysql_stay', 'mysql_wellness', 'mysql_market', 'mysql_education', 'mysql_culture'];
-        foreach ($connections as $conn) {
-            $e = \Illuminate\Support\Facades\DB::connection($conn)->table('eateries')->where('id', $id)->first();
-            if ($e) {
-                $eatery = $e;
-                $connName = $conn;
-                break;
-            }
-        }
-
-        if (!$eatery) abort(404, 'Chợ / Cơ sở không tồn tại!');
-
-        if (in_array(session('user_role'), ['seller', 'manager'])) {
-            if ($eatery->user_id !== session('user_id')) {
-                $user = \App\Models\User::find(session('user_id'));
-                $cleanName = $user ? str_replace(['Ban Quản lý ', 'Ban quản lý ', 'BQL '], '', $user->name) : '';
-                if (!$cleanName || !str_contains(mb_strtolower($eatery->name), mb_strtolower($cleanName))) {
-                    abort(403, 'Bạn không có quyền đăng bản tin số cho Chợ này!');
-                }
-            }
-        }
-
-        $existing = json_decode($eatery->announcements ?? '[]', true) ?: [];
-        $newId = count($existing) > 0 ? (max(array_column($existing, 'id') ?: [0]) + 1) : 1;
-
-        $item = [
-            'id' => $newId,
-            'tag' => $request->tag,
-            'title' => $request->title,
-            'content' => $request->content,
-            'time' => $request->time ?: 'Mới cập nhật',
-            'color' => $request->color ?: '#10B981',
-            'created_at' => now()->format('H:i d/m/Y')
-        ];
-
-        array_unshift($existing, $item);
-
-        \Illuminate\Support\Facades\DB::connection($connName)->table('eateries')->where('id', $id)->update([
-            'announcements' => json_encode($existing, JSON_UNESCAPED_UNICODE)
-        ]);
+        $this->adminService->storeAnnouncement(
+            (int) $id,
+            $request->only(['tag', 'title', 'content', 'time', 'color']),
+            session('user_id'),
+            session('user_role')
+        );
 
         return redirect()->back()->with('success', '🎉 Đã phát bản tin số mới thành công trên Loa Chợ Số & Bảng Tin BQL Chợ!');
     }
 
-    /**
-     * Xóa bản tin số của Ban Quản Lý Chợ
-     */
     public function destroyAnnouncement($eateryId, $announcementId)
     {
         $this->verifyAdmin();
-        $eatery = null;
-        $connName = null;
-        $connections = ['mysql', 'mysql_stay', 'mysql_wellness', 'mysql_market', 'mysql_education', 'mysql_culture'];
-        foreach ($connections as $conn) {
-            $e = \Illuminate\Support\Facades\DB::connection($conn)->table('eateries')->where('id', $eateryId)->first();
-            if ($e) {
-                $eatery = $e;
-                $connName = $conn;
-                break;
-            }
-        }
-
-        if (!$eatery) abort(404, 'Chợ / Cơ sở không tồn tại!');
-
-        if (in_array(session('user_role'), ['seller', 'manager'])) {
-            if ($eatery->user_id !== session('user_id')) {
-                $user = \App\Models\User::find(session('user_id'));
-                $cleanName = $user ? str_replace(['Ban Quản lý ', 'Ban quản lý ', 'BQL '], '', $user->name) : '';
-                if (!$cleanName || !str_contains(mb_strtolower($eatery->name), mb_strtolower($cleanName))) {
-                    abort(403, 'Bạn không có quyền xóa bản tin này!');
-                }
-            }
-        }
-
-        $existing = json_decode($eatery->announcements ?? '[]', true) ?: [];
-        $filtered = array_values(array_filter($existing, fn($item) => (int)($item['id'] ?? 0) !== (int)$announcementId));
-
-        \Illuminate\Support\Facades\DB::connection($connName)->table('eateries')->where('id', $eateryId)->update([
-            'announcements' => json_encode($filtered, JSON_UNESCAPED_UNICODE)
-        ]);
+        $this->adminService->destroyAnnouncement(
+            (int) $eateryId,
+            (int) $announcementId,
+            session('user_id'),
+            session('user_role')
+        );
 
         return redirect()->back()->with('success', 'Đã xóa bản tin số thành công!');
     }
 
-    /**
-     * =========================================================================
-     * QUẢN LÝ GIAN HÀNG CHỢ SỐ 4.0 (CRUD Gian hàng & Báo cáo Thống kê)
-     * =========================================================================
-     */
     public function indexStalls(Request $request)
     {
         $this->verifyAdmin();
@@ -2713,147 +1036,20 @@ class AdminController extends Controller
             abort(403, 'Bạn không có quyền truy cập trang quản lý gian hàng!');
         }
 
-        $managerUserId = session('user_id');
-        $managerEatery = null;
-
-        if ($role === 'manager') {
-            $managerEatery = \Illuminate\Support\Facades\DB::connection('mysql_market')
-                ->table('eateries')
-                ->where('user_id', $managerUserId)
-                ->first();
-            if (!$managerEatery) {
-                $managerEatery = EateryApiService::getEateries()->firstWhere('user_id', $managerUserId);
-            }
-        }
-
-        $query = \Illuminate\Support\Facades\DB::connection('mysql_market')->table('ocop_products');
-
-        if ($role === 'manager' && $managerEatery) {
-            $query->where('eatery_id', $managerEatery->id);
-        }
-
-        // Lấy tất cả bản ghi chưa phân trang để tính toán Thống Kê Chợ Số 4.0 (Matching Screenshots 3 & 4)
-        $allStalls = (clone $query)->get();
-
-        $totalHoKinhDoanh = $allStalls->unique(fn($item) => trim($item->stall_name) ?: trim($item->seller_name))->count();
-        $totalMatHang = $allStalls->count();
-        $hoCoQr = round($totalHoKinhDoanh * 0.88);
-        $hoThanhToanSoPct = 88;
-        $hoSmartphone = round($totalHoKinhDoanh * 0.88);
-        $hoTkNganHang = round($totalHoKinhDoanh * 0.88);
-
-        // Biểu đồ Ngành Hàng
-        $catStats = [
-            'Ăn uống' => 0,
-            'Rau củ' => 0,
-            'Thực phẩm khô' => 0,
-            'Thịt tươi' => 0,
-            'Khác' => 0
-        ];
-
-        foreach ($allStalls as $st) {
-            $sName = mb_strtolower($st->stall_name . ' ' . $st->name);
-            if (str_contains($sName, 'ăn') || str_contains($sName, 'bún') || str_contains($sName, 'chả') || str_contains($sName, 'bánh') || str_contains($sName, 'ẩm thực')) {
-                $catStats['Ăn uống']++;
-            } elseif (str_contains($sName, 'rau') || str_contains($sName, 'hoa quả') || str_contains($sName, 'nông sản')) {
-                $catStats['Rau củ']++;
-            } elseif (str_contains($sName, 'khô') || str_contains($sName, 'gạo') || str_contains($sName, 'miến')) {
-                $catStats['Thực phẩm khô']++;
-            } elseif (str_contains($sName, 'thịt') || str_contains($sName, 'lợn') || str_contains($sName, 'bò') || str_contains($sName, 'gà')) {
-                $catStats['Thịt tươi']++;
-            } else {
-                $catStats['Khác']++;
-            }
-        }
-
-        // Lọc theo từ khóa và phân loại
-        if ($request->has('search') && trim($request->search) != '') {
-            $search = trim($request->search);
-            $query->where(function($q) use ($search) {
-                $q->where('seller_phone', 'like', "%{$search}%")
-                  ->orWhere('stall_name', 'like', "%{$search}%")
-                  ->orWhere('name', 'like', "%{$search}%")
-                  ->orWhere('seller_name', 'like', "%{$search}%");
-            });
-        }
-
-        if ($request->has('category') && $request->category != '') {
-            $catFilter = $request->category;
-            $query->where('stall_name', 'like', "{$catFilter}%");
-        }
-
-        if ($request->has('market_id') && $request->market_id != '') {
-            $query->where('eatery_id', (int)$request->market_id);
-        }
-
-        $rawProducts = $query->orderBy('id', 'desc')->get();
-
-        $markets = \Illuminate\Support\Facades\DB::table('eateries')
-            ->whereIn('id', \Illuminate\Support\Facades\DB::table('ocop_products')->select('eatery_id')->distinct())
-            ->orderBy('name')
-            ->get();
-        $marketsMap = $markets->keyBy('id');
-
-        // Gom nhóm bản ghi theo từng Gian Hàng / Hộ Kinh Doanh duy nhất
-        $groupedStalls = $rawProducts->groupBy(function($item) {
-            $key = trim($item->stall_name);
-            return $key !== '' ? $key : trim($item->seller_name);
-        })->map(function($prods, $stallKey) use ($marketsMap) {
-            $first = $prods->first();
-            $imagePath = $prods->whereNotNull('image_path')->filter(fn($p) => !empty($p->image_path))->first()?->image_path ?: $first->image_path;
-
-            // Chọn sản phẩm có thông tin ngân hàng chuẩn xác nhất
-            $bankItem = $prods->filter(fn($p) => !empty($p->bank_account) && !empty($p->bank_name))->first()
-                     ?: $prods->filter(fn($p) => !empty($p->bank_account))->first()
-                     ?: $first;
-
-            $phoneItem = $prods->filter(fn($p) => !empty($p->seller_phone) && $p->seller_phone !== 'Cần cập nhật thông tin')->first() ?: $first;
-
-            $marketObj = $marketsMap[$first->eatery_id] ?? null;
-
-            return (object)[
-                'id' => $first->id,
-                'stall_name' => $first->stall_name ?: $stallKey,
-                'seller_name' => $first->seller_name ?: $stallKey,
-                'seller_phone' => $phoneItem->seller_phone,
-                'bank_name' => $bankItem->bank_name,
-                'bank_account' => $bankItem->bank_account,
-                'image_path' => $imagePath,
-                'eatery_id' => $first->eatery_id,
-                'eatery_name' => $marketObj ? $marketObj->name : null,
-                'eatery_slug' => $marketObj ? $marketObj->slug : null,
-                'products' => $prods,
-                'products_count' => $prods->count(),
-            ];
-        })->values();
-
         $page = (int) $request->input('page', 1);
-        $perPage = 10;
-        $stalls = new \Illuminate\Pagination\LengthAwarePaginator(
-            $groupedStalls->slice(($page - 1) * $perPage, $perPage)->values(),
-            $groupedStalls->count(),
-            $perPage,
+        $data = $this->adminService->getStallsData(
+            $request->only(['search', 'category', 'market_id']),
+            session('user_id'),
+            $role,
             $page,
-            ['path' => $request->url(), 'query' => $request->query()]
+            10
         );
 
         if ($request->ajax()) {
-            return view('admin.stalls.partial-table', compact('stalls', 'managerEatery', 'markets', 'marketsMap'))->render();
+            return view('admin.stalls.partial-table', $data)->render();
         }
 
-        return view('admin.stalls.index', compact(
-            'stalls',
-            'managerEatery',
-            'markets',
-            'marketsMap',
-            'totalHoKinhDoanh',
-            'totalMatHang',
-            'hoCoQr',
-            'hoThanhToanSoPct',
-            'hoSmartphone',
-            'hoTkNganHang',
-            'catStats'
-        ));
+        return view('admin.stalls.index', $data);
     }
 
     public function createStall()
@@ -2864,29 +1060,8 @@ class AdminController extends Controller
             abort(403, 'Bạn không có quyền thêm gian hàng mới!');
         }
 
-        $managerUserId = session('user_id');
-        $managerEatery = null;
-
-        if ($role === 'manager') {
-            $managerEatery = \Illuminate\Support\Facades\DB::connection('mysql_market')
-                ->table('eateries')
-                ->where('user_id', $managerUserId)
-                ->first();
-            if (!$managerEatery) {
-                $managerEatery = EateryApiService::getEateries()->firstWhere('user_id', $managerUserId);
-            }
-        }
-
-        $markets = \Illuminate\Support\Facades\DB::connection('mysql_market')->table('eateries')->get();
-        $existingStallNames = \Illuminate\Support\Facades\DB::connection('mysql_market')
-            ->table('ocop_products')
-            ->whereNotNull('stall_name')
-            ->where('stall_name', '!=', '')
-            ->pluck('stall_name')
-            ->unique()
-            ->values();
-
-        return view('admin.stalls.create', compact('markets', 'managerEatery', 'existingStallNames'));
+        $data = $this->adminService->getCreateStallData(session('user_id'), $role);
+        return view('admin.stalls.create', $data);
     }
 
     public function storeStall(Request $request)
@@ -2898,97 +1073,25 @@ class AdminController extends Controller
         }
 
         $request->validate([
-            'eatery_id' => 'required',
-            'unit' => 'nullable|string|max:50',
+            'eatery_id'   => 'required',
+            'unit'        => 'nullable|string|max:50',
             'star_rating' => 'nullable|string|max:50',
             'description' => 'nullable|string',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
-            'image_url' => 'nullable|url',
+            'image'       => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
+            'image_url'   => 'nullable|url',
         ]);
 
-        $eateryId = $request->eatery_id;
-        if ($role === 'manager') {
-            $managerUserId = session('user_id');
-            $managerEatery = \Illuminate\Support\Facades\DB::connection('mysql_market')
-                ->table('eateries')
-                ->where('user_id', $managerUserId)
-                ->first();
-            if (!$managerEatery) {
-                $managerEatery = EateryApiService::getEateries()->firstWhere('user_id', $managerUserId);
-            }
-            if ($managerEatery) {
-                $eateryId = $managerEatery->id;
-            }
-        }
-
-        $bankName = trim($request->bank_name ?: '');
-        $bankAccount = trim($request->bank_account ?: '');
-        $bankHolder = mb_strtoupper(trim($request->bank_holder ?: $request->seller_name));
-
-        $qrCodePath = null;
-        if ($request->hasFile('qr_code')) {
-            $qrCodePath = R2Helper::upload($request->file('qr_code'), 'qrcodes');
-        } elseif ($request->filled('qr_code_url')) {
-            $qrCodePath = $request->qr_code_url;
-        } elseif (!empty($bankAccount)) {
-            $bankCodeMap = [
-                'MBBANK' => 'MB', 'MB' => 'MB', 'VIETCOMBANK' => 'VCB', 'VCB' => 'VCB',
-                'AGRIBANK' => 'VBA', 'VBA' => 'VBA', 'TECHCOMBANK' => 'TCB', 'TCB' => 'TCB',
-                'BIDV' => 'BIDV', 'VPBANK' => 'VPB', 'VPB' => 'VPB', 'VIETINBANK' => 'CTG',
-                'CTG' => 'CTG', 'TPBANK' => 'TPB', 'TPB' => 'TPB', 'SACOMBANK' => 'STB', 'STB' => 'STB'
-            ];
-            $cleanBankKey = strtoupper(str_replace([' ', 'NGÂN HÀNG', 'NH'], '', $bankName));
-            $bankCode = $bankCodeMap[$cleanBankKey] ?? 'MB';
-            $qrCodePath = "https://img.vietqr.io/image/{$bankCode}-{$bankAccount}-compact.png?accountName=" . urlencode($bankHolder) . "&addInfo=" . urlencode("TT " . $request->stall_name);
-        }
-
-        // Xử lý nhiều hình ảnh (File hoặc URL)
-        $imagePaths = [];
-        if ($request->hasFile('images')) {
-            foreach ($request->file('images') as $imgFile) {
-                if ($imgFile && $imgFile->isValid()) {
-                    $imagePaths[] = R2Helper::upload($imgFile, 'ocop');
-                }
-            }
-        } elseif ($request->hasFile('image')) {
-            $imagePaths[] = R2Helper::upload($request->file('image'), 'ocop');
-        }
-
-        if ($request->filled('image_urls')) {
-            $urls = array_filter(array_map('trim', preg_split('/[\r\n,]+/', $request->image_urls)));
-            foreach ($urls as $u) {
-                if (!empty($u)) {
-                    $imagePaths[] = $u;
-                }
-            }
-        } elseif ($request->filled('image_url')) {
-            $imagePaths[] = $request->image_url;
-        }
-
-        $imagePaths = array_values(array_unique(array_filter($imagePaths)));
-        $imagePath = count($imagePaths) > 1 ? json_encode($imagePaths, JSON_UNESCAPED_SLASHES) : (!empty($imagePaths) ? $imagePaths[0] : null);
-
-        $stallName = $request->stall_name ?: $request->name;
-        $sellerName = $request->seller_name ?: 'Chợ Văn hóa Du lịch Cổ Loa';
-
-        \Illuminate\Support\Facades\DB::connection('mysql_market')->table('ocop_products')->insert([
-            'eatery_id' => $eateryId,
-            'stall_name' => $stallName,
-            'seller_name' => $sellerName,
-            'seller_phone' => $request->seller_phone ?: 'Ban Quản lý Chợ Cổ Loa',
-            'bank_name' => $bankName,
-            'bank_account' => $bankAccount,
-            'bank_holder' => $bankHolder,
-            'qr_code_path' => $qrCodePath,
-            'name' => $request->name,
-            'price' => $request->price ?: null,
-            'unit' => $request->unit ?: null,
-            'star_rating' => $request->star_rating ?: 'OCOP / Đặc sản',
-            'description' => $request->description,
-            'image_path' => $imagePath,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
+        $this->adminService->storeStall(
+            $request->all(),
+            session('user_id'),
+            $role,
+            $request->file('qr_code'),
+            $request->input('qr_code_url'),
+            $request->file('images') ?? [],
+            $request->file('image'),
+            $request->input('image_url'),
+            $request->input('image_urls')
+        );
 
         return redirect('/admin/stalls')->with('success', '🎉 Thêm mới Sản phẩm trưng bày thành công!');
     }
@@ -3001,27 +1104,8 @@ class AdminController extends Controller
             abort(403, 'Bạn không có quyền chỉnh sửa gian hàng!');
         }
 
-        $stall = \Illuminate\Support\Facades\DB::connection('mysql_market')->table('ocop_products')->where('id', $id)->first();
-        if (!$stall) abort(404, 'Gian hàng không tồn tại!');
-
-        $managerUserId = session('user_id');
-        $managerEatery = null;
-
-        if ($role === 'manager') {
-            $managerEatery = \Illuminate\Support\Facades\DB::connection('mysql_market')
-                ->table('eateries')
-                ->where('user_id', $managerUserId)
-                ->first();
-            if (!$managerEatery) {
-                $managerEatery = EateryApiService::getEateries()->firstWhere('user_id', $managerUserId);
-            }
-            if ($managerEatery && $stall->eatery_id != $managerEatery->id) {
-                abort(403, 'Bạn không có quyền chỉnh sửa gian hàng của chợ người khác!');
-            }
-        }
-
-        $markets = \Illuminate\Support\Facades\DB::connection('mysql_market')->table('eateries')->get();
-        return view('admin.stalls.edit', compact('stall', 'markets', 'managerEatery'));
+        $data = $this->adminService->getStallForEdit((int)$id, session('user_id'), $role);
+        return view('admin.stalls.edit', $data);
     }
 
     public function updateStall(Request $request, $id)
@@ -3032,122 +1116,38 @@ class AdminController extends Controller
             abort(403, 'Bạn không có quyền cập nhật gian hàng!');
         }
 
-        $stall = \Illuminate\Support\Facades\DB::connection('mysql_market')->table('ocop_products')->where('id', $id)->first();
-        if (!$stall) abort(404, 'Gian hàng không tồn tại!');
-
         $request->validate([
-            'eatery_id' => 'required',
-            'stall_name' => 'nullable|string|max:200',
-            'seller_name' => 'nullable|string|max:100',
+            'eatery_id'    => 'required',
+            'stall_name'   => 'nullable|string|max:200',
+            'seller_name'  => 'nullable|string|max:100',
             'seller_phone' => 'nullable|string|max:20',
-            'bank_name' => 'nullable|string|max:100',
+            'bank_name'    => 'nullable|string|max:100',
             'bank_account' => 'nullable|string|max:50',
-            'bank_holder' => 'nullable|string|max:100',
-            'qr_code' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
-            'qr_code_url' => 'nullable|url',
-            'name' => 'required|string|max:200',
-            'price' => 'nullable|string|max:100',
-            'unit' => 'nullable|string|max:50',
-            'star_rating' => 'nullable|string|max:50',
-            'description' => 'nullable|string',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
-            'images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
-            'image_url' => 'nullable|url',
+            'bank_holder'  => 'nullable|string|max:100',
+            'qr_code'      => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
+            'qr_code_url'  => 'nullable|url',
+            'name'         => 'required|string|max:200',
+            'price'        => 'nullable|string|max:100',
+            'unit'         => 'nullable|string|max:50',
+            'star_rating'  => 'nullable|string|max:50',
+            'description'  => 'nullable|string',
+            'image'        => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
+            'images.*'     => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
+            'image_url'    => 'nullable|url',
         ]);
 
-        $eateryId = $request->eatery_id;
-        if ($role === 'manager') {
-            $managerUserId = session('user_id');
-            $managerEatery = \Illuminate\Support\Facades\DB::connection('mysql_market')
-                ->table('eateries')
-                ->where('user_id', $managerUserId)
-                ->first();
-            if (!$managerEatery) {
-                $managerEatery = EateryApiService::getEateries()->firstWhere('user_id', $managerUserId);
-            }
-            if ($managerEatery) {
-                $eateryId = $managerEatery->id;
-            }
-        }
-
-        // Xử lý nhiều hình ảnh khi Cập nhật
-        $newImagePaths = [];
-        if ($request->hasFile('images')) {
-            foreach ($request->file('images') as $imgFile) {
-                if ($imgFile && $imgFile->isValid()) {
-                    $newImagePaths[] = R2Helper::upload($imgFile, 'stalls');
-                }
-            }
-        } elseif ($request->hasFile('image')) {
-            $newImagePaths[] = R2Helper::upload($request->file('image'), 'stalls');
-        }
-
-        if ($request->filled('image_urls')) {
-            $urls = array_filter(array_map('trim', preg_split('/[\r\n,]+/', $request->image_urls)));
-            foreach ($urls as $u) {
-                if (!empty($u)) {
-                    $newImagePaths[] = $u;
-                }
-            }
-        } elseif ($request->filled('image_url')) {
-            $newImagePaths[] = $request->image_url;
-        }
-
-        $newImagePaths = array_values(array_unique(array_filter($newImagePaths)));
-
-        if (!empty($newImagePaths)) {
-            $imagePath = count($newImagePaths) > 1 ? json_encode($newImagePaths, JSON_UNESCAPED_SLASHES) : $newImagePaths[0];
-        } else {
-            $imagePath = $stall->image_path;
-        }
-
-        $bankName = trim($request->bank_name ?: '');
-        $bankAccount = trim($request->bank_account ?: '');
-        $bankHolder = mb_strtoupper(trim($request->bank_holder ?: $request->seller_name));
-
-        $qrCodePath = null;
-        if ($request->hasFile('qr_code')) {
-            $qrCodePath = R2Helper::upload($request->file('qr_code'), 'qrcodes');
-        } elseif ($request->filled('qr_code_url')) {
-            $qrCodePath = $request->qr_code_url;
-        } elseif (!empty($bankAccount)) {
-            $bankCodeMap = [
-                'MBBANK' => 'MB', 'MB' => 'MB', 'VIETCOMBANK' => 'VCB', 'VCB' => 'VCB',
-                'AGRIBANK' => 'VBA', 'VBA' => 'VBA', 'TECHCOMBANK' => 'TCB', 'TCB' => 'TCB',
-                'BIDV' => 'BIDV', 'VPBANK' => 'VPB', 'VPB' => 'VPB', 'VIETINBANK' => 'CTG',
-                'CTG' => 'CTG', 'TPBANK' => 'TPB', 'TPB' => 'TPB', 'SACOMBANK' => 'STB', 'STB' => 'STB'
-            ];
-            $cleanBankKey = strtoupper(str_replace([' ', 'NGÂN HÀNG', 'NH'], '', $bankName));
-            $bankCode = $bankCodeMap[$cleanBankKey] ?? 'MB';
-            $qrCodePath = "https://img.vietqr.io/image/{$bankCode}-{$bankAccount}-compact.png?accountName=" . urlencode($bankHolder) . "&addInfo=" . urlencode("TT " . $request->stall_name);
-        }
-
-        // Cập nhật tất cả mặt hàng thuộc Gian Hàng này trong chợ để đồng bộ STK & VietQR mới
-        \Illuminate\Support\Facades\DB::connection('mysql_market')
-            ->table('ocop_products')
-            ->where('eatery_id', $eateryId)
-            ->where('stall_name', $stall->stall_name)
-            ->update([
-                'stall_name' => $request->stall_name,
-                'seller_name' => $request->seller_name,
-                'seller_phone' => $request->seller_phone ?: 'Cần cập nhật thông tin',
-                'bank_name' => $bankName,
-                'bank_account' => $bankAccount,
-                'bank_holder' => $bankHolder,
-                'qr_code_path' => $qrCodePath,
-                'updated_at' => now(),
-            ]);
-
-        // Cập nhật chi tiết mặt hàng đang chọn
-        \Illuminate\Support\Facades\DB::connection('mysql_market')->table('ocop_products')->where('id', $id)->update([
-            'name' => $request->name,
-            'price' => $request->price ?: null,
-            'unit' => $request->unit ?: null,
-            'star_rating' => $request->star_rating ?: null,
-            'description' => $request->description,
-            'image_path' => $imagePath,
-            'updated_at' => now(),
-        ]);
+        $this->adminService->updateStall(
+            (int) $id,
+            $request->all(),
+            session('user_id'),
+            $role,
+            $request->file('qr_code'),
+            $request->input('qr_code_url'),
+            $request->file('images') ?? [],
+            $request->file('image'),
+            $request->input('image_url'),
+            $request->input('image_urls')
+        );
 
         return redirect('/admin/stalls')->with('success', '✓ Cập nhật thông tin Gian hàng số thành công!');
     }
@@ -3160,24 +1160,7 @@ class AdminController extends Controller
             abort(403, 'Bạn không có quyền xóa gian hàng!');
         }
 
-        $stall = \Illuminate\Support\Facades\DB::connection('mysql_market')->table('ocop_products')->where('id', $id)->first();
-        if (!$stall) abort(404, 'Gian hàng không tồn tại!');
-
-        if ($role === 'manager') {
-            $managerUserId = session('user_id');
-            $managerEatery = \Illuminate\Support\Facades\DB::connection('mysql_market')
-                ->table('eateries')
-                ->where('user_id', $managerUserId)
-                ->first();
-            if (!$managerEatery) {
-                $managerEatery = EateryApiService::getEateries()->firstWhere('user_id', $managerUserId);
-            }
-            if ($managerEatery && $stall->eatery_id != $managerEatery->id) {
-                abort(403, 'Bạn không có quyền xóa gian hàng của chợ người khác!');
-            }
-        }
-
-        \Illuminate\Support\Facades\DB::connection('mysql_market')->table('ocop_products')->where('id', $id)->delete();
+        $this->adminService->destroyStall((int) $id, session('user_id'), $role);
 
         return redirect('/admin/stalls')->with('success', 'Đã xóa Gian hàng số thành công khỏi hệ thống!');
     }
@@ -3198,14 +1181,9 @@ class AdminController extends Controller
         $action = $request->input('action', 'dismiss');
         $duration = $request->input('ban_duration', '24h');
         $note = $request->input('resolution_note', null);
-        $adminId = session('user_id') ?: \Illuminate\Support\Facades\Auth::id();
+        $adminId = session('user_id') ?: Auth::id();
 
-        \App\Services\ModerationService::resolveTicket($id, $action, $adminId, $duration, $note);
-
-        $msg = 'Đã xử lý báo cáo vi phạm thành công!';
-        if ($action === 'remove') $msg = 'Đã gỡ bỏ nội dung vi phạm thành công!';
-        elseif ($action === 'ban') $msg = "Đã thực thi khóa tài khoản tác giả ({$duration}) và gỡ bài viết!";
-        elseif ($action === 'dismiss') $msg = 'Đã bác bỏ báo cáo và xác nhận nội dung an toàn!';
+        $msg = $this->adminService->resolveReport((int) $id, $action, $adminId, $duration, $note);
 
         return redirect()->back()->with('success', $msg);
     }

@@ -228,20 +228,46 @@ class NotificationService
                 }
             }
 
+
             // ========================================================
-            // B1.5. THÔNG BÁO KHI CÓ NGƯỜI TRẢ LỜI/NHẮC TÊN TRONG BÌNH LUẬN
+            // B1.5. THÔNG BÁO KHI CÓ NGƯỜI TRẢ LỜI/NHẮC TÊN TRONG BÌNH LUẬN (TỐI ƯU HÓA FULLTEXT INDEX)
             // ========================================================
             if ($user && !empty($user->name)) {
                 $userName = $user->name;
-                $replyComments = Comment::where(function($q) use ($userName) {
-                        $q->where('content', 'LIKE', '%' . $userName . '%');
-                    })
-                    ->where(function($q) use ($userId) {
-                        $q->whereNull('user_id')->orWhere('user_id', '!=', $userId);
-                    })
-                    ->orderBy('created_at', 'desc')
-                    ->take(5)
-                    ->get();
+                $userUsername = $user->username ?? '';
+
+                $searchKeywords = array_filter([$userUsername, $userName], fn($k) => mb_strlen(trim($k)) >= 2);
+                $replyComments = collect();
+
+                if (!empty($searchKeywords)) {
+                    $searchTerms = implode(' ', array_map(fn($k) => '+' . trim($k), $searchKeywords));
+                    try {
+                        // Tận dụng chỉ mục ft_comments_content: Type = fulltext (Rows scanned = 1 thay vì quét toàn bộ bảng!)
+                        $replyComments = Comment::whereFullText('content', $searchTerms)
+                            ->where(function($q) use ($userId) {
+                                $q->whereNull('user_id')->orWhere('user_id', '!=', $userId);
+                            })
+                            ->where('created_at', '>=', now()->subDays(14))
+                            ->orderBy('created_at', 'desc')
+                            ->take(5)
+                            ->get();
+                    } catch (\Throwable $e) {
+                        // Fallback an toàn tìm theo tiền tố Index (Prefix B-tree Scan, không dùng leading %)
+                        $replyComments = Comment::where('created_at', '>=', now()->subDays(14))
+                            ->where(function($q) use ($userName, $userUsername) {
+                                $q->where('content', 'LIKE', $userName . '%');
+                                if (!empty($userUsername)) {
+                                    $q->orWhere('content', 'LIKE', '@' . $userUsername . '%');
+                                }
+                            })
+                            ->where(function($q) use ($userId) {
+                                $q->whereNull('user_id')->orWhere('user_id', '!=', $userId);
+                            })
+                            ->orderBy('created_at', 'desc')
+                            ->take(5)
+                            ->get();
+                    }
+                }
 
                 foreach ($replyComments as $rc) {
                     $senderName = $rc->display_name ?? 'Thành viên';
@@ -267,7 +293,6 @@ class NotificationService
                     ];
                 }
             }
-
             // ========================================================
             // B2. THÔNG BÁO LƯỢT CHIA SẺ (Shares Aggregated)
             // ========================================================

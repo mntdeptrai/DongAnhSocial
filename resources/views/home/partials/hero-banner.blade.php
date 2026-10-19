@@ -15,8 +15,8 @@
         min-height: auto;
         padding: 40px 0 60px;
     }
-    .hero-airplane-container, .jet-contrail-container, .heart-contrail-sky-wrap {
-        display: none !important;
+    .hero-airplane-3d-stage {
+        opacity: 0.75;
     }
 }
 
@@ -30,125 +30,26 @@
     animation-play-state: paused !important;
 }
 
-/* ✈️ REAL PHOTOGRAPHIC PASSENGER AIRLINER & JET CONTRAIL TRAIL */
-.hero-airplane-container {
+/* ✈️ THREE.JS & GSAP 3D AIRPLANE & HEART SMOKE CONTRAIL STAGE */
+.hero-airplane-3d-stage {
     position: absolute;
-    top: 30px;
-    left: -320px;
-    z-index: 10;
-    pointer-events: none;
-    will-change: transform;
-    animation: flightPath3D 24s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-    backface-visibility: hidden;
-    -webkit-backface-visibility: hidden;
-    transform: translateZ(0);
-}
-
-.hero-airplane-photo-wrap {
-    position: relative;
-    width: 260px;
-    height: auto;
-    animation: airplaneBank3D 4.5s ease-in-out infinite alternate;
-    backface-visibility: hidden;
-}
-
-.real-airplane-photo-img {
+    top: 0;
+    left: 0;
     width: 100%;
-    height: auto;
+    height: 100%;
+    pointer-events: none;
+    z-index: 10;
+    overflow: hidden;
+}
+
+#heroAirplaneCanvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
     display: block;
-    filter: drop-shadow(0 22px 30px rgba(15, 23, 42, 0.38));
-    user-select: none;
     pointer-events: none;
-}
-
-/* Contrail Jet Smoke Trail behind airplane */
-.jet-contrail-container {
-    position: absolute;
-    top: 48px;
-    right: 210px;
-    display: flex;
-    align-items: center;
-    pointer-events: none;
-}
-
-.jet-contrail-line {
-    width: 280px;
-    height: 6px;
-    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.2) 20%, rgba(255, 255, 255, 0.7) 60%, rgba(255, 255, 255, 0.98) 100%);
-    border-radius: 6px;
-    filter: blur(1.8px);
-    box-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
-}
-
-.jet-contrail-puff {
-    position: absolute;
-    background: radial-gradient(circle, rgba(255, 255, 255, 0.95) 0%, rgba(240, 249, 255, 0.6) 40%, rgba(224, 242, 254, 0.2) 70%, transparent 100%);
-    border-radius: 50% !important;
-    animation: puffExpand 2.4s ease-out infinite;
-    filter: blur(2px);
-}
-
-/* 💖 Heart Smoke Contrail Sky Overlay */
-.heart-contrail-sky-wrap {
-    position: absolute;
-    top: 10px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 92%;
-    max-width: 900px;
-    height: 320px;
-    pointer-events: none;
-    z-index: 5;
-}
-
-.heart-smoke-path {
-    stroke-dasharray: 1200;
-    stroke-dashoffset: 1200;
-    animation: drawHeartSmoke 22s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-}
-
-@keyframes drawHeartSmoke {
-    0% { stroke-dashoffset: 1200; opacity: 0; }
-    12% { stroke-dashoffset: 1200; opacity: 0.95; }
-    70% { stroke-dashoffset: 0; opacity: 0.95; }
-    88% { opacity: 0.8; }
-    100% { stroke-dashoffset: 0; opacity: 0; }
-}
-
-@keyframes flightPath3D {
-    0% {
-        transform: translate3d(-320px, 110px, 30px) rotateX(6deg) rotateY(10deg) rotateZ(6deg) scale(0.72);
-        opacity: 0;
-    }
-    10% {
-        transform: translate3d(12vw, 75px, 70px) rotateX(4deg) rotateY(8deg) rotateZ(5deg) scale(0.85);
-        opacity: 1;
-    }
-    35% {
-        transform: translate3d(36vw, 30px, 110px) rotateX(1deg) rotateY(4deg) rotateZ(2deg) scale(1.0);
-    }
-    60% {
-        transform: translate3d(62vw, 45px, 120px) rotateX(-2deg) rotateY(3deg) rotateZ(-2deg) scale(1.06);
-    }
-    82% {
-        transform: translate3d(85vw, 15px, 70px) rotateX(3deg) rotateY(6deg) rotateZ(4deg) scale(0.88);
-        opacity: 1;
-    }
-    100% {
-        transform: translate3d(calc(100vw + 320px), -30px, 10px) rotateX(6deg) rotateY(8deg) rotateZ(6deg) scale(0.7);
-        opacity: 0;
-    }
-}
-
-@keyframes airplaneBank3D {
-    0% { transform: rotateX(0deg) rotateZ(0deg) translateY(0px); }
-    50% { transform: rotateX(3deg) rotateZ(2.5deg) translateY(-6px); }
-    100% { transform: rotateX(-2deg) rotateZ(-2deg) translateY(4px); }
-}
-
-@keyframes puffExpand {
-    0% { transform: scale(0.4); opacity: 0.9; }
-    100% { transform: scale(3.5); opacity: 0; }
 }
 
 /* ☁️ REAL PHOTOGRAPHIC CLOUDS WITH FLUFFY ATMOSPHERIC DEPTH */
@@ -1998,40 +1899,9 @@
         <img src="{{ asset('images/cloud_real_b.webp') }}" class="real-cloud-backdrop-sub-img" alt="Mây thật" />
     </div>
 
-    <!-- 💖 3D Heart Smoke Contrail Overlay (Delicate Aerobatics Smoke) -->
-    <div class="heart-contrail-sky-wrap">
-        <svg viewBox="0 0 800 350" preserveAspectRatio="none" style="width: 100%; height: 100%;">
-            <defs>
-                <filter id="glowSmoke" x="-20%" y="-20%" width="140%" height="140%">
-                    <feGaussianBlur stdDeviation="6" result="blur" />
-                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
-                </filter>
-                <linearGradient id="heartSmokeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stop-color="rgba(255, 255, 255, 0.95)"/>
-                    <stop offset="35%" stop-color="rgba(254, 205, 211, 0.85)"/>
-                    <stop offset="75%" stop-color="rgba(244, 63, 94, 0.7)"/>
-                    <stop offset="100%" stop-color="rgba(225, 29, 72, 0.35)"/>
-                </linearGradient>
-            </defs>
-            <path class="heart-smoke-path" d="M 400,65 C 400,65 280,5 280,75 C 280,145 400,240 400,240 C 400,240 520,145 520,75 C 520,5 400,65 400,65 Z" fill="none" stroke="url(#heartSmokeGrad)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" filter="url(#glowSmoke)"/>
-        </svg>
-    </div>
-
-    <!-- ✈️ REAL PHOTOGRAPHIC COMMERCIAL PASSENGER AIRLINER -->
-    <div class="hero-airplane-container">
-        <!-- Dual Engine Jet Contrail Vapors -->
-        <div class="jet-contrail-container">
-            <div class="jet-contrail-line"></div>
-            <div class="jet-contrail-puff" style="width: 14px; height: 14px; right: 10px;"></div>
-            <div class="jet-contrail-puff" style="width: 24px; height: 24px; right: 45px; animation-delay: 0.35s;"></div>
-            <div class="jet-contrail-puff" style="width: 36px; height: 36px; right: 90px; animation-delay: 0.75s;"></div>
-            <div class="jet-contrail-puff" style="width: 52px; height: 52px; right: 150px; animation-delay: 1.15s;"></div>
-            <div class="jet-contrail-puff" style="width: 70px; height: 70px; right: 220px; animation-delay: 1.6s;"></div>
-        </div>
-
-        <div class="hero-airplane-photo-wrap">
-            <img src="{{ asset('images/plane_60.webp') }}" class="real-airplane-photo-img" alt="Máy bay thật Đông Anh Discovery" />
-        </div>
+    <!-- ✈️ THREE.JS & GSAP 3D AIRPLANE & HEART SMOKE CONTRAIL STAGE -->
+    <div id="hero-airplane-3d-stage" class="hero-airplane-3d-stage">
+        <canvas id="heroAirplaneCanvas"></canvas>
     </div>
 
     <!-- ☁️ REAL PHOTOGRAPHIC PARALLAX CLOUDS -->

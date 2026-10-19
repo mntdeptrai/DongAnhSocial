@@ -130,12 +130,47 @@
     }
 
     /**
-     * Search filter products
+     * Search filter products with clear button toggle
      */
     function searchProducts() {
+        const searchInput = document.getElementById('nsSearchInput');
+        const clearBtn = document.getElementById('nsSearchClear');
+        const searchVal = (searchInput?.value || '').trim();
+
+        if (clearBtn) {
+            clearBtn.style.display = searchVal.length > 0 ? 'inline-flex' : 'none';
+        }
+
         const activePill = document.querySelector('.ns-filter-pill.active');
         const activeCat = activePill ? activePill.getAttribute('data-category') : 'all';
         filterProducts(activeCat, activePill);
+    }
+
+    /**
+     * Clear search input and restore filter
+     */
+    function clearSearch() {
+        const searchInput = document.getElementById('nsSearchInput');
+        const clearBtn = document.getElementById('nsSearchClear');
+        if (searchInput) searchInput.value = '';
+        if (clearBtn) clearBtn.style.display = 'none';
+
+        const activePill = document.querySelector('.ns-filter-pill.active');
+        const activeCat = activePill ? activePill.getAttribute('data-category') : 'all';
+        filterProducts(activeCat, activePill);
+    }
+
+    /**
+     * Clear search and reset to show all products with smooth scroll
+     */
+    function clearSearchAndShowAll() {
+        clearSearch();
+        const allPill = document.querySelector('.ns-filter-pill[data-category="all"]');
+        filterProducts('all', allPill);
+        const catalogElem = document.getElementById('ns-catalog-anchor');
+        if (catalogElem) {
+            catalogElem.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
     }
 
     /**

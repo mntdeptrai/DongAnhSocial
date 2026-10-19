@@ -8,7 +8,9 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
-class ModerationService
+use App\Contracts\ModerationServiceInterface;
+
+class ModerationService implements ModerationServiceInterface
 {
     private static function getStorageFilePath(): string
     {

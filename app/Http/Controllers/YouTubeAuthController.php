@@ -2,49 +2,42 @@
 
 namespace App\Http\Controllers;
 
+use App\Contracts\YouTubeAuthServiceInterface;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Http;
+use Throwable;
 
 class YouTubeAuthController extends Controller
 {
+    public function __construct(
+        protected YouTubeAuthServiceInterface $authService
+    ) {}
+
     /**
      * Chuyển hướng người dùng sang trang cấp quyền Google YouTube
      */
-    public function redirect(Request $request)
+    public function redirect(Request $request): RedirectResponse|JsonResponse
     {
-        $clientId = config('services.youtube.client_id');
-        $configuredRedirect = config('services.youtube.redirect_uri');
-        
         $currentHost = preg_replace('/^http:\/\//', 'https://', $request->getSchemeAndHttpHost());
-        $redirectUri = !empty($configuredRedirect) ? $configuredRedirect : ($currentHost . '/youtube/callback');
+        $redirectUri = config('services.youtube.redirect_uri') ?: ($currentHost . '/youtube/callback');
 
-        if (empty($clientId)) {
+        try {
+            $authUrl = $this->authService->getAuthUrl($redirectUri);
+            return redirect()->away($authUrl);
+        } catch (Throwable $e) {
             return response()->json([
-                'error' => 'YOUTUBE_CLIENT_ID chưa được cấu hình trong file .env'
+                'error' => $e->getMessage()
             ], 500);
         }
-
-        $authUrl = "https://accounts.google.com/o/oauth2/v2/auth?" . http_build_query([
-            'client_id'             => $clientId,
-            'redirect_uri'          => $redirectUri,
-            'response_type'         => 'code',
-            'scope'                 => 'https://www.googleapis.com/auth/youtube https://www.googleapis.com/auth/youtube.upload https://www.googleapis.com/auth/youtube.readonly https://www.googleapis.com/auth/youtube.force-ssl',
-            'access_type'           => 'offline',
-            'prompt'                => 'consent',
-            'include_granted_scopes'=> 'true',
-        ]);
-
-        return redirect()->away($authUrl);
     }
 
     /**
      * Nhận callback từ Google và tự động lưu refresh_token
      */
-    public function callback(Request $request)
+    public function callback(Request $request): JsonResponse
     {
-        $code = $request->get('code');
+        $code  = $request->get('code');
         $error = $request->get('error');
 
         if ($error) {
@@ -61,75 +54,23 @@ class YouTubeAuthController extends Controller
             ], 400);
         }
 
-        $clientId     = config('services.youtube.client_id');
-        $clientSecret = config('services.youtube.client_secret');
-        $configuredRedirect = config('services.youtube.redirect_uri');
-        $currentHost  = preg_replace('/^http:\/\//', 'https://', $request->getSchemeAndHttpHost());
-        $redirectUri  = !empty($configuredRedirect) ? $configuredRedirect : ($currentHost . '/youtube/callback');
+        $currentHost = preg_replace('/^http:\/\//', 'https://', $request->getSchemeAndHttpHost());
+        $redirectUri = config('services.youtube.redirect_uri') ?: ($currentHost . '/youtube/callback');
 
         try {
-            $response = Http::asForm()->post('https://oauth2.googleapis.com/token', [
-                'code'          => $code,
-                'client_id'     => $clientId,
-                'client_secret' => $clientSecret,
-                'redirect_uri'  => $redirectUri,
-                'grant_type'    => 'authorization_code',
-            ]);
-
-            if (!$response->successful()) {
-                return response()->json([
-                    'status'  => 'error',
-                    'message' => 'Google từ chối cấp token: ' . $response->body(),
-                ], 400);
-            }
-
-            $data = $response->json();
+            $data = $this->authService->handleCallback($code, $redirectUri);
             $refreshToken = $data['refresh_token'] ?? null;
 
-            // Lưu token vào storage/app/youtube_token.json
-            $tokenPath = storage_path('app/youtube_token.json');
-            File::ensureDirectoryExists(dirname($tokenPath));
-            File::put($tokenPath, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
-
-            // Đồng thời cập nhật hoặc thêm YOUTUBE_REFRESH_TOKEN vào .env
-            $envPath = base_path('.env');
-            if ($refreshToken && file_exists($envPath)) {
-                $envContent = file_get_contents($envPath);
-                if (str_contains($envContent, 'YOUTUBE_REFRESH_TOKEN=')) {
-                    $envContent = preg_replace('/YOUTUBE_REFRESH_TOKEN=.*/', "YOUTUBE_REFRESH_TOKEN=\"{$refreshToken}\"", $envContent);
-                } else {
-                    $envContent .= PHP_EOL . "YOUTUBE_REFRESH_TOKEN=\"{$refreshToken}\"" . PHP_EOL;
-                }
-                File::put($envPath, $envContent);
-            }
-
-            // Xóa cache access token cũ để nhận token mới ngay lập tức
-            Cache::forget('youtube_api_access_token');
-
-            return response()->view('youtube_auth_success', [
-                'hasRefresh' => !empty($refreshToken),
-                'data'       => $data
+            return response()->json([
+                'status'        => 'success',
+                'message'       => 'Xác thực Google YouTube thành công!',
+                'refresh_token' => $refreshToken ? (substr($refreshToken, 0, 10) . '...') : 'Đã có token từ trước',
             ]);
-
-        } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::error('Google OAuth error: ' . $e->getMessage());
+        } catch (Throwable $e) {
             return response()->json([
                 'status'  => 'error',
-                'message' => 'Không thể kết nối máy chủ xác thực lúc này. Vui lòng thử lại sau.',
-            ], 500);
+                'message' => $e->getMessage(),
+            ], 400);
         }
-    }
-
-    /**
-     * Kiểm tra trạng thái kết nối YouTube API
-     */
-    public function status(Request $request)
-    {
-        $test = \App\Services\YouTubeService::testConnection();
-        return response()->json([
-            'status'     => $test['ok'] ? 'connected' : 'error',
-            'details'    => $test,
-            'reauth_url' => url('/youtube/auth'),
-        ], $test['ok'] ? 200 : 400);
     }
 }
