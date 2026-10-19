@@ -218,6 +218,7 @@
         grid-template-columns: 1fr;
         padding: 24px;
         gap: 28px;
+    }
 }
 
 .ns-spotlight-title {

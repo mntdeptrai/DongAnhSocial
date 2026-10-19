@@ -275,7 +275,7 @@
             <h3 style="font-size: 1.3rem; font-weight: 800; color: var(--ns-text-dark); margin-bottom: 8px;">Không tìm thấy sản vật phù hợp</h3>
             <p style="font-size: 0.92rem; color: var(--ns-text-muted); margin-bottom: 22px;">Hãy thử tìm kiếm với các từ khóa như "bún", "bỏng", "dưa lưới", "mâm cỗ", "chuối"...</p>
             <button type="button" class="ns-filter-pill active" onclick="document.getElementById('nsSearchInput').value=''; filterProducts('all', document.querySelector('.ns-filter-pill[data-category=all]'));">
-                Xem toàn bộ 10 sản vật Đông Anh
+                Xem toàn bộ {{ $totalCount }} sản vật Đông Anh
             </button>
         </div>
     </main>
