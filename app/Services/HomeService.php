@@ -109,6 +109,8 @@ class HomeService implements HomeServiceInterface
                 'mai-lam'        => 'Đường Dốc Vân',
                 'duc-tu'         => 'Đường Phía Nam Dục Tú',
                 'dan-mo'         => 'Đường Đản Mỗ',
+                'co-loa'         => 'Đường Cổ Loa',
+                'thuong-loc'     => 'Đường Thượng Lộc',
             ];
             if (isset($vMap[$b->village_key])) {
                 $vName = $vMap[$b->village_key];

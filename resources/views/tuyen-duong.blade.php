@@ -744,7 +744,9 @@
                 { id: 'dan-di', name: 'Đường Đản Dị', routeName: 'Đường Đản Dị', color: '#06B6D4' },
                 { id: 'mai-lam', name: 'Đường Dốc Vân', routeName: 'Đường Dốc Vân', color: '#10B981' },
                 { id: 'duc-tu', name: 'Đường Phía Nam Dục Tú', routeName: 'Đường Phía Nam Dục Tú', color: '#F43F5E' },
-                { id: 'dan-mo', name: 'Đường Đản Mỗ', routeName: 'Đường Đản Mỗ', color: '#0EA5E9' }
+                { id: 'dan-mo', name: 'Đường Đản Mỗ', routeName: 'Đường Đản Mỗ', color: '#0EA5E9' },
+                { id: 'co-loa', name: 'Đường Cổ Loa', routeName: 'Đường Cổ Loa', color: '#7C3AED' },
+                { id: 'thuong-loc', name: 'Đường Thượng Lộc', routeName: 'Đường Thượng Lộc', color: '#D97706' }
             ],
 
             routes: @json($dbRoutes ?? []).length > 0 ? @json($dbRoutes) : [
@@ -870,6 +872,35 @@
                         [21.1175, 105.8970],
                         [21.1190, 105.8985]
                     ]
+                },
+                {
+                    id: 'route-co-loa',
+                    name: 'Tuyến 10: Đường Cổ Loa',
+                    length: '2.0km',
+                    color: '#7C3AED',
+                    villages: ['co-loa'],
+                    animClass: 'route-path-animated-2',
+                    pathCoords: [
+                        [21.1249, 105.8793],
+                        [21.1260, 105.8810],
+                        [21.1271, 105.8828],
+                        [21.1282, 105.8845],
+                        [21.1293, 105.8862]
+                    ]
+                },
+                {
+                    id: 'route-thuong-loc',
+                    name: 'Tuyến 11: Đường Thượng Lộc',
+                    length: '1.2km',
+                    color: '#D97706',
+                    villages: ['thuong-loc'],
+                    animClass: 'route-path-animated-3',
+                    pathCoords: [
+                        [21.1145, 105.8545],
+                        [21.1130, 105.8535],
+                        [21.1115, 105.8525],
+                        [21.1095, 105.8515]
+                    ]
                 }
             ],
 
@@ -884,7 +915,9 @@
                     'dan-di': 'Đường Đản Dị',
                     'mai-lam': 'Đường Dốc Vân',
                     'duc-tu': 'Đường Phía Nam Dục Tú',
-                    'dan-mo': 'Đường Đản Mỗ'
+                    'dan-mo': 'Đường Đản Mỗ',
+                    'co-loa': 'Đường Cổ Loa',
+                    'thuong-loc': 'Đường Thượng Lộc'
                 };
 
                 if (villageNameMap[loc.village]) {
