@@ -53,6 +53,12 @@ class RpcApiController extends Controller
         $params = $req['params'] ?? [];
         $id = $req['id'] ?? null; // Nếu không có id tức là client chỉ gửi Notification, không cần trả kết quả
 
+        // Yêu cầu xác thực tài khoản cho tất cả các RPC calls
+        $user = auth('sanctum')->user() ?: auth()->user();
+        if (!$user && $method !== 'ping') {
+            return $this->formatErrorResponse($id, -32001, 'Unauthorized: Authentication required');
+        }
+
         try {
             switch ($method) {
                 case 'ping':
@@ -60,11 +66,11 @@ class RpcApiController extends Controller
                     break;
 
                 case 'batchApproveVideos':
-                    $result = $this->batchApproveVideos($params);
+                    $result = $this->batchApproveVideos($params, $user);
                     break;
 
                 case 'batchUpdatePrices':
-                    $result = $this->batchUpdatePrices($params);
+                    $result = $this->batchUpdatePrices($params, $user);
                     break;
 
                 case 'getEateryDetails':
@@ -72,11 +78,11 @@ class RpcApiController extends Controller
                     break;
 
                 case 'batchUpdateOrderStatus':
-                    $result = $this->batchUpdateOrderStatus($params);
+                    $result = $this->batchUpdateOrderStatus($params, $user);
                     break;
 
                 case 'batchApproveStalls':
-                    $result = $this->batchApproveStalls($params);
+                    $result = $this->batchApproveStalls($params, $user);
                     break;
 
                 default:
@@ -104,8 +110,12 @@ class RpcApiController extends Controller
     /**
      * RPC Method: Duyệt hàng loạt Video đánh giá
      */
-    protected function batchApproveVideos($params)
+    protected function batchApproveVideos($params, $user = null)
     {
+        if (!$user || !in_array($user->role, ['admin', 'manager'])) {
+            throw new \InvalidArgumentException('Forbidden: Only admin or manager can approve videos.');
+        }
+
         $ids = $params['ids'] ?? null;
         if (!is_array($ids)) {
             throw new \InvalidArgumentException('Invalid params: "ids" must be an array.');
@@ -129,18 +139,34 @@ class RpcApiController extends Controller
     /**
      * RPC Method: Cập nhật giá hàng loạt cho món ăn/sản phẩm (tiết kiệm connection)
      */
-    protected function batchUpdatePrices($params)
+    protected function batchUpdatePrices($params, $user = null)
     {
+        if (!$user || !in_array($user->role, ['admin', 'seller'])) {
+            throw new \InvalidArgumentException('Forbidden: Only admin or seller can update dish prices.');
+        }
+
         $updates = $params['updates'] ?? null; // [{id: 1, price: 35000}, ...]
         if (!is_array($updates)) {
             throw new \InvalidArgumentException('Invalid params: "updates" must be an array.');
         }
 
+        $myEateryIds = ($user->role === 'admin') ? [] : Eatery::where('user_id', $user->id)->pluck('id')->toArray();
+        if ($user->role !== 'admin' && empty($myEateryIds)) {
+            throw new \InvalidArgumentException('Forbidden: You do not own any eatery stall.');
+        }
+
         $rows = [];
         foreach ($updates as $update) {
             if (isset($update['id']) && isset($update['price'])) {
+                $dishId = (int) $update['id'];
+                if ($user->role !== 'admin') {
+                    $dish = Dish::find($dishId);
+                    if (!$dish || !in_array($dish->eatery_id, $myEateryIds)) {
+                        continue; // Bỏ qua món ăn không thuộc quán của seller
+                    }
+                }
                 $rows[] = [
-                    'id'    => (int) $update['id'],
+                    'id'    => $dishId,
                     'price' => $update['price'],
                 ];
             }
@@ -176,10 +202,14 @@ class RpcApiController extends Controller
     }
 
     /**
-     * RPC Method: Cập nhật hàng loạt trạng thái đơn hàng (Seller)
+     * RPC Method: Cập nhật hàng loạt trạng thái đơn hàng (Seller/Manager/Admin)
      */
-    protected function batchUpdateOrderStatus($params)
+    protected function batchUpdateOrderStatus($params, $user = null)
     {
+        if (!$user || !in_array($user->role, ['admin', 'manager', 'seller'])) {
+            throw new \InvalidArgumentException('Forbidden: Only admin, manager, or seller can update order status.');
+        }
+
         $orderIds = $params['order_ids'] ?? null;
         $status = $params['status'] ?? 'confirmed';
 
@@ -187,7 +217,16 @@ class RpcApiController extends Controller
             throw new \InvalidArgumentException('Invalid params: "order_ids" must be an array.');
         }
 
-        $count = DB::table('orders')->whereIn('id', $orderIds)->update([
+        $query = DB::table('orders')->whereIn('id', $orderIds);
+        if ($user->role !== 'admin' && $user->role !== 'manager') {
+            $myEateryIds = Eatery::where('user_id', $user->id)->pluck('id')->toArray();
+            if (empty($myEateryIds)) {
+                return ['success' => true, 'updated_count' => 0, 'status' => $status];
+            }
+            $query->whereIn('eatery_id', $myEateryIds);
+        }
+
+        $count = $query->update([
             'status' => $status,
             'updated_at' => now(),
         ]);
@@ -196,10 +235,14 @@ class RpcApiController extends Controller
     }
 
     /**
-     * RPC Method: Duyệt hàng loạt gian hàng (Manager)
+     * RPC Method: Duyệt hàng loạt gian hàng (Manager/Admin)
      */
-    protected function batchApproveStalls($params)
+    protected function batchApproveStalls($params, $user = null)
     {
+        if (!$user || !in_array($user->role, ['admin', 'manager'])) {
+            throw new \InvalidArgumentException('Forbidden: Only admin or manager can approve stalls.');
+        }
+
         $ids = $params['ids'] ?? null;
         $status = $params['status'] ?? 'active';
 

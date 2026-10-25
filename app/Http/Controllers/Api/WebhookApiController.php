@@ -71,8 +71,8 @@ class WebhookApiController extends Controller
         Log::info('Stall Sync Webhook Received:', $request->all());
 
         $token = $request->header('Authorization');
-        // Token giả định
-        if ($token !== 'Bearer dong_anh_social_hub_token_xyz') {
+        $expectedToken = 'Bearer ' . config('services.sync.token', env('SYNC_STALL_TOKEN', 'dong_anh_social_hub_token_xyz'));
+        if (empty($token) || !hash_equals($expectedToken, (string)$token)) {
             return response()->json(['success' => false, 'message' => 'Invalid auth token'], 403);
         }
 

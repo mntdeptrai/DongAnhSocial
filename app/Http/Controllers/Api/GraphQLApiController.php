@@ -107,6 +107,11 @@ class GraphQLApiController extends Controller
                 return Eatery::select($dbFields)->limit($limit)->get()->toArray();
 
             case 'users':
+                $user = auth('sanctum')->user() ?: auth()->user();
+                if (!$user || $user->role !== 'admin') {
+                    throw new \Exception('Chỉ quản trị viên mới có quyền truy vấn danh sách người dùng.');
+                }
+
                 $dbFields = array_intersect($requestedFields, ['id', 'name', 'email', 'role', 'status']);
                 if (empty($dbFields)) $dbFields = ['id', 'name', 'email'];
 
@@ -136,12 +141,30 @@ class GraphQLApiController extends Controller
                 return \App\Models\Checkin::select($dbFields)->latest()->limit(10)->get()->toArray();
 
             case 'orders':
+                $user = auth('sanctum')->user() ?: auth()->user();
+                if (!$user) {
+                    throw new \Exception('Vui lòng đăng nhập để xem thông tin đơn hàng.');
+                }
+
+                $orderQuery = \Illuminate\Support\Facades\DB::table('orders');
+                if ($user->role === 'seller') {
+                    $myEateryIds = Eatery::where('user_id', $user->id)->pluck('id')->toArray();
+                    $orderQuery->whereIn('eatery_id', $myEateryIds);
+                } elseif ($user->role !== 'admin') {
+                    $orderQuery->where('user_id', $user->id);
+                }
+
                 $dbFields = array_intersect($requestedFields, ['id', 'customer_name', 'customer_phone', 'total_amount', 'status', 'created_at']);
                 if (empty($dbFields)) $dbFields = ['id', 'customer_name', 'total_amount', 'status'];
 
-                return \Illuminate\Support\Facades\DB::table('orders')->select($dbFields)->latest()->limit(10)->get()->toArray();
+                return $orderQuery->select($dbFields)->latest()->limit(10)->get()->toArray();
 
             case 'adminStats':
+                $user = auth('sanctum')->user() ?: auth()->user();
+                if (!$user || !in_array($user->role, ['admin', 'manager'])) {
+                    throw new \Exception('Chỉ quản trị viên mới có quyền xem thống kê.');
+                }
+
                 return [
                     'total_users'      => User::count(),
                     'total_eateries'   => Eatery::count(),

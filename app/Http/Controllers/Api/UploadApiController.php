@@ -104,11 +104,11 @@ class UploadApiController extends Controller
     public function uploadChunk(Request $request)
     {
         $request->validate([
-            'chunk'        => 'required|file',
-            'upload_id'    => 'required|string',
+            'chunk'        => 'required|file|max:51200',
+            'upload_id'    => 'required|string|regex:/^[a-zA-Z0-9_\-]+$/',
             'chunk_index'  => 'required|integer|min:0',
-            'total_chunks' => 'required|integer|min:1',
-            'folder'       => 'nullable|string'
+            'total_chunks' => 'required|integer|min:1|max:1000',
+            'folder'       => 'nullable|string|regex:/^[a-zA-Z0-9_\-]+$/'
         ]);
 
         $chunk       = $request->file('chunk');

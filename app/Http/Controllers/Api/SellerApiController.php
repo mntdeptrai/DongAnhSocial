@@ -59,16 +59,30 @@ class SellerApiController extends Controller
     public function getSellerOrders(Request $request)
     {
         $user = Auth::user() ?: auth('sanctum')->user();
-        $userId = $user ? $user->id : 0;
+        if (!$user) {
+            return response()->json(['message' => 'Unauthenticated'], 401);
+        }
 
-        $myEateryIds = Eatery::where('user_id', $userId)->pluck('id')->toArray();
+        if ($user->role === 'admin') {
+            $orders = DB::table('orders')->latest()->limit(50)->get();
+            return response()->json($orders, 200, [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        }
+
+        $myEateryIds = Eatery::where('user_id', $user->id)
+            ->when(!empty($user->phone), function ($q) use ($user) {
+                return $q->orWhere('phone', $user->phone);
+            })
+            ->pluck('id')
+            ->toArray();
+
+        if (empty($myEateryIds)) {
+            return response()->json([], 200, [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        }
 
         $orders = DB::table('orders')
-            ->when(!empty($myEateryIds), function ($q) use ($myEateryIds) {
-                return $q->whereIn('eatery_id', $myEateryIds);
-            })
+            ->whereIn('eatery_id', $myEateryIds)
             ->latest()
-            ->limit(20)
+            ->limit(50)
             ->get();
 
         return response()->json($orders, 200, [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
@@ -135,6 +149,25 @@ class SellerApiController extends Controller
             'price'     => 'required|numeric',
         ]);
 
+        $user = Auth::user() ?: auth('sanctum')->user();
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'Unauthenticated'], 401);
+        }
+
+        if ($user->role !== 'admin') {
+            $ownsEatery = Eatery::where('id', $request->eatery_id)
+                ->where(function ($q) use ($user) {
+                    $q->where('user_id', $user->id);
+                    if (!empty($user->phone)) {
+                        $q->orWhere('phone', $user->phone);
+                    }
+                })->exists();
+
+            if (!$ownsEatery) {
+                return response()->json(['success' => false, 'message' => 'Bạn không có quyền thêm sản phẩm cho gian hàng này'], 403);
+            }
+        }
+
         $dish = Dish::create([
             'eatery_id'    => $request->eatery_id,
             'name'         => $request->name,
@@ -161,6 +194,25 @@ class SellerApiController extends Controller
             return response()->json(['success' => false, 'message' => 'Sản phẩm không tồn tại'], 404);
         }
 
+        $user = Auth::user() ?: auth('sanctum')->user();
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'Unauthenticated'], 401);
+        }
+
+        if ($user->role !== 'admin') {
+            $ownsEatery = Eatery::where('id', $dish->eatery_id)
+                ->where(function ($q) use ($user) {
+                    $q->where('user_id', $user->id);
+                    if (!empty($user->phone)) {
+                        $q->orWhere('phone', $user->phone);
+                    }
+                })->exists();
+
+            if (!$ownsEatery) {
+                return response()->json(['success' => false, 'message' => 'Bạn không có quyền sửa sản phẩm này'], 403);
+            }
+        }
+
         if ($request->has('name')) $dish->name = $request->name;
         if ($request->has('price')) $dish->price = $request->price;
         if ($request->has('description')) $dish->description = $request->description;
@@ -182,9 +234,30 @@ class SellerApiController extends Controller
     public function deleteDish(Request $request, $id)
     {
         $dish = Dish::find($id);
-        if ($dish) {
-            $dish->delete();
+        if (!$dish) {
+            return response()->json(['success' => false, 'message' => 'Sản phẩm không tồn tại'], 404);
         }
+
+        $user = Auth::user() ?: auth('sanctum')->user();
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'Unauthenticated'], 401);
+        }
+
+        if ($user->role !== 'admin') {
+            $ownsEatery = Eatery::where('id', $dish->eatery_id)
+                ->where(function ($q) use ($user) {
+                    $q->where('user_id', $user->id);
+                    if (!empty($user->phone)) {
+                        $q->orWhere('phone', $user->phone);
+                    }
+                })->exists();
+
+            if (!$ownsEatery) {
+                return response()->json(['success' => false, 'message' => 'Bạn không có quyền xóa sản phẩm này'], 403);
+            }
+        }
+
+        $dish->delete();
         return response()->json(['success' => true, 'message' => 'Đã xóa sản phẩm']);
     }
 
@@ -193,7 +266,36 @@ class SellerApiController extends Controller
      */
     public function updateOrderStatus(Request $request, $id)
     {
+        $user = Auth::user() ?: auth('sanctum')->user();
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'Unauthenticated'], 401);
+        }
+
+        $order = DB::table('orders')->where('id', $id)->first();
+        if (!$order) {
+            return response()->json(['success' => false, 'message' => 'Đơn hàng không tồn tại'], 404);
+        }
+
+        if ($user->role !== 'admin') {
+            $ownsEatery = Eatery::where('id', $order->eatery_id)
+                ->where(function ($q) use ($user) {
+                    $q->where('user_id', $user->id);
+                    if (!empty($user->phone)) {
+                        $q->orWhere('phone', $user->phone);
+                    }
+                })->exists();
+
+            if (!$ownsEatery) {
+                return response()->json(['success' => false, 'message' => 'Bạn không có quyền cập nhật đơn hàng của gian hàng khác'], 403);
+            }
+        }
+
         $status = $request->input('status', 'confirmed');
+        $allowedStatuses = ['pending', 'confirmed', 'shipping', 'completed', 'cancelled'];
+        if (!in_array($status, $allowedStatuses, true)) {
+            return response()->json(['success' => false, 'message' => 'Trạng thái không hợp lệ'], 422);
+        }
+
         DB::table('orders')->where('id', $id)->update(['status' => $status, 'updated_at' => now()]);
 
         return response()->json([

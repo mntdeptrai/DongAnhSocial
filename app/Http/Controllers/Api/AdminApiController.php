@@ -36,6 +36,11 @@ class AdminApiController extends Controller
      */
     public function updateUserRole(Request $request, $id)
     {
+        $currentUser = $request->user() ?: auth('sanctum')->user();
+        if (!$currentUser || $currentUser->role !== 'admin') {
+            return response()->json(['success' => false, 'message' => 'Bạn không có quyền thực hiện hành động này'], 403);
+        }
+
         $request->validate([
             'role' => 'required|string|in:user,seller,manager,admin',
         ]);

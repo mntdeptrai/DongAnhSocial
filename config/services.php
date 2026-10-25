@@ -47,4 +47,8 @@ return [
         'redirect_uri'    => env('YOUTUBE_REDIRECT_URI', 'https://developers.google.com/oauthplayground'),
     ],
 
+    'sync' => [
+        'token' => env('SYNC_STALL_TOKEN', 'dong_anh_social_hub_token_xyz'),
+    ],
+
 ];

@@ -81,10 +81,7 @@ Route::prefix('v1')->group(function () {
     Route::post('/livestreams/{id}/comment', [\App\Http\Controllers\Api\LiveStreamApiController::class, 'comment']);
     Route::post('/livestreams/{id}/reaction', [\App\Http\Controllers\Api\LiveStreamApiController::class, 'reaction']);
 
-    // Protocols bổ trợ (GraphQL, RPC, SSE, Stream, Webhooks)
-    Route::post('/graphql', [\App\Http\Controllers\Api\GraphQLApiController::class, 'query']);
-
-    Route::post('/rpc', [\App\Http\Controllers\Api\RpcApiController::class, 'handle']);
+    // Protocols bổ trợ (SSE, Stream, Webhooks)
     Route::get('/stream/events', [\App\Http\Controllers\Api\SseApiController::class, 'streamEvents']);
     Route::post('/stream/ai/generate-tour', [\App\Http\Controllers\Api\StreamApiController::class, 'streamAiTour']);
     Route::post('/webhooks/payment', [\App\Http\Controllers\Api\WebhookApiController::class, 'handlePayment']);
@@ -94,6 +91,10 @@ Route::prefix('v1')->group(function () {
     // PROTECTED ROUTES — YÊU CẦU XÁC THỰC (Sanctum Token hoặc Web Session)
     // -----------------------------------------------------------------------
     Route::middleware(['auth:sanctum'])->group(function () {
+
+        // Protocols bổ trợ yêu cầu xác thực
+        Route::post('/graphql', [\App\Http\Controllers\Api\GraphQLApiController::class, 'query']);
+        Route::post('/rpc', [\App\Http\Controllers\Api\RpcApiController::class, 'handle']);
 
         Route::post('/auth/token/revoke', [AuthApiController::class, 'revokeToken']);
         Route::post('/upload', [UploadApiController::class, 'upload'])->middleware('throttle:uploads');
@@ -137,7 +138,7 @@ Route::prefix('v1')->group(function () {
         // ===================================================================
         // 🏪 ROLE 2: SELLER API (Tiểu Thương / Chủ Gian Hàng / OCOP / Ẩm Thực)
         // ===================================================================
-        Route::prefix('seller')->group(function () {
+        Route::prefix('seller')->middleware('role:seller,admin,manager')->group(function () {
             Route::get('/dashboard-data', [SellerApiController::class, 'getSellerDashboardData']);
             Route::get('/profile', [SellerApiController::class, 'getSellerProfile']);
             Route::post('/profile', [SellerApiController::class, 'updateSellerProfile']);
@@ -151,7 +152,7 @@ Route::prefix('v1')->group(function () {
         // ===================================================================
         // 🏫 ROLE 3: PRINCIPAL API (Hiệu Trưởng / Quản Lý Trường Học)
         // ===================================================================
-        Route::prefix('principal')->group(function () {
+        Route::prefix('principal')->middleware('role:principal,admin')->group(function () {
             Route::get('/dashboard-data', [PrincipalApiController::class, 'getPrincipalDashboardData']);
             Route::get('/posts', [PrincipalApiController::class, 'getSchoolPosts']);
             Route::post('/posts', [PrincipalApiController::class, 'storeSchoolPost']);
@@ -163,7 +164,7 @@ Route::prefix('v1')->group(function () {
         // ===================================================================
         // 🏛️ ROLE 4: MANAGER API (Ban Quản Lý Chợ / Quản Lý Địa Phương)
         // ===================================================================
-        Route::prefix('manager')->group(function () {
+        Route::prefix('manager')->middleware('role:manager,admin')->group(function () {
             Route::get('/dashboard-data', [ManagerApiController::class, 'getManagerDashboardData']);
             Route::post('/bulletins', [ManagerApiController::class, 'storeManagerBulletin']);
             Route::post('/stalls/{id}/status', [ManagerApiController::class, 'updateStallStatus']);
@@ -173,7 +174,7 @@ Route::prefix('v1')->group(function () {
         // ===================================================================
         // ⚡ ROLE 5: ADMIN API (Quản Trị Viên Toàn Hệ Thống)
         // ===================================================================
-        Route::prefix('admin')->group(function () {
+        Route::prefix('admin')->middleware('role:admin')->group(function () {
             Route::get('/dashboard', [AdminApiController::class, 'getAdminDashboardData']);
             Route::get('/users', [AdminApiController::class, 'getAdminUsers']);
             Route::post('/users', [AdminApiController::class, 'storeUser']);

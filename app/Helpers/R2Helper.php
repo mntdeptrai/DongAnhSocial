@@ -131,7 +131,8 @@ class R2Helper
      */
     public static function uploadChunk(UploadedFile $chunk, string $uploadId, int $chunkIndex, int $totalChunks, string $folder = 'videos'): array
     {
-        $safeUploadId = preg_replace('/[^a-zA-Z0-9_\-]/', '', $uploadId);
+        $safeUploadId = preg_replace('/[^a-zA-Z0-9_\-]/', '', $uploadId) ?: ('upload_' . Str::random(8));
+        $safeFolder = preg_replace('/[^a-zA-Z0-9_\-]/', '', $folder) ?: 'videos';
         $tempDir = storage_path('app/chunks/' . $safeUploadId);
         if (!file_exists($tempDir)) {
             mkdir($tempDir, 0755, true);
@@ -144,7 +145,9 @@ class R2Helper
         $receivedCount = count($receivedFiles);
 
         if ($receivedCount >= $totalChunks) {
-            $extension = strtolower($chunk->getClientOriginalExtension()) ?: 'mp4';
+            $allowedExtensions = ['mp4', 'mov', 'avi', 'mkv', 'webm', 'jpg', 'jpeg', 'png', 'webp'];
+            $rawExt = strtolower($chunk->getClientOriginalExtension());
+            $extension = in_array($rawExt, $allowedExtensions, true) ? $rawExt : 'mp4';
             $finalFilename = time() . '_' . Str::random(8) . '.' . $extension;
             $mergedPath = $tempDir . '/' . $finalFilename;
 
@@ -164,7 +167,7 @@ class R2Helper
             // 🎬 TỰ ĐỘNG ĐẨY VIDEO LÊN KÊNH YOUTUBE NẾU ĐÃ CẤU HÌNH
             if (\App\Services\YouTubeService::isConfigured()) {
                 try {
-                    $categoryName = ucfirst(str_replace('_', ' ', $folder));
+                    $categoryName = ucfirst(str_replace('_', ' ', $safeFolder));
                     $ytResult = \App\Services\YouTubeService::uploadVideo(
                         video: $mergedPath,
                         title: 'Video ' . $categoryName . ' - DongAnh Discovery (' . date('d/m/Y H:i') . ')',
@@ -182,7 +185,7 @@ class R2Helper
             }
 
             if (empty($finalUrl)) {
-                $safeName = $folder . '/' . $finalFilename;
+                $safeName = $safeFolder . '/' . $finalFilename;
                 $content = file_get_contents($mergedPath);
 
                 try {
@@ -190,12 +193,12 @@ class R2Helper
                     $finalUrl = rtrim(config('filesystems.disks.r2.url'), '/') . '/' . $safeName;
                 } catch (\Throwable $e) {
                     Log::error('[R2Helper] Chunk merge R2 upload failed: ' . $e->getMessage());
-                    $destDir = public_path('uploads/' . $folder);
+                    $destDir = public_path('uploads/' . $safeFolder);
                     if (!file_exists($destDir)) {
                         mkdir($destDir, 0755, true);
                     }
                     rename($mergedPath, $destDir . '/' . $finalFilename);
-                    $finalUrl = '/uploads/' . $folder . '/' . $finalFilename;
+                    $finalUrl = '/uploads/' . $safeFolder . '/' . $finalFilename;
                 }
             }
 

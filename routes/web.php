@@ -344,7 +344,7 @@ Route::get('/clean-spam-comments', function() {
 });
 
 // Route upload media đa đợt (Batch Upload) hỗ trợ chọn 33+ ảnh không bị giới hạn
-Route::post('/api/upload-media', [\App\Http\Controllers\Api\UploadApiController::class, 'upload']);
+Route::post('/api/upload-media', [\App\Http\Controllers\Api\UploadApiController::class, 'upload'])->middleware('auth');
 
 
 // --- ADMIN SIDE ROUTES (Giao diện quản trị viên & Ban Quản lý Chợ) ---
