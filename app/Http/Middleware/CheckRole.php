@@ -20,14 +20,14 @@ class CheckRole
     {
         if (! $request->user()) {
             if ($request->expectsJson() || $request->is('api/*')) {
-                abort(401, 'Chưa xác thực tài khoản!');
+                abort(401, 'Yêu cầu xác thực tài khoản');
             }
             return redirect('/auth/login')->with('error', 'Vui lòng đăng nhập để tiếp tục!');
         }
 
         if (! in_array($request->user()->role, $roles)) {
             if ($request->expectsJson() || $request->is('api/*')) {
-                abort(403, 'Bạn không có quyền truy cập trang quản lý này!');
+                abort(403, 'Không có quyền truy cập');
             }
 
             $userRole = $request->user()->role;

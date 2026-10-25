@@ -38,7 +38,7 @@ class AdminApiController extends Controller
     {
         $currentUser = $request->user() ?: auth('sanctum')->user();
         if (!$currentUser || $currentUser->role !== 'admin') {
-            return response()->json(['success' => false, 'message' => 'Bạn không có quyền thực hiện hành động này'], 403);
+            return response()->json(['success' => false, 'message' => 'Không có quyền thực hiện thao tác'], 403);
         }
 
         $request->validate([
@@ -47,7 +47,7 @@ class AdminApiController extends Controller
 
         $user = User::find($id);
         if (!$user) {
-            return response()->json(['success' => false, 'message' => 'Người dùng không tồn tại'], 404);
+            return response()->json(['success' => false, 'message' => 'Không tìm thấy dữ liệu yêu cầu'], 404);
         }
 
         $user->role = $request->role;

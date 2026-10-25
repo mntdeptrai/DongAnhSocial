@@ -73,12 +73,12 @@ class WebhookApiController extends Controller
         $token = $request->header('Authorization');
         $expectedToken = 'Bearer ' . config('services.sync.token', env('SYNC_STALL_TOKEN', 'dong_anh_social_hub_token_xyz'));
         if (empty($token) || !hash_equals($expectedToken, (string)$token)) {
-            return response()->json(['success' => false, 'message' => 'Invalid auth token'], 403);
+            return response()->json(['success' => false, 'message' => 'Không có quyền truy cập'], 403);
         }
 
         $stallData = $request->input('stall');
         if (!$stallData || empty($stallData['name'])) {
-            return response()->json(['success' => false, 'message' => 'Invalid stall data'], 400);
+            return response()->json(['success' => false, 'message' => 'Dữ liệu không hợp lệ'], 400);
         }
 
         // Đồng bộ dữ liệu gian hàng (Insert/Update) vào db mysql_market

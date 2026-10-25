@@ -109,7 +109,7 @@ class GraphQLApiController extends Controller
             case 'users':
                 $user = auth('sanctum')->user() ?: auth()->user();
                 if (!$user || $user->role !== 'admin') {
-                    throw new \Exception('Chỉ quản trị viên mới có quyền truy vấn danh sách người dùng.');
+                    throw new \Exception('Không có quyền truy cập dữ liệu.');
                 }
 
                 $dbFields = array_intersect($requestedFields, ['id', 'name', 'email', 'role', 'status']);
@@ -143,7 +143,7 @@ class GraphQLApiController extends Controller
             case 'orders':
                 $user = auth('sanctum')->user() ?: auth()->user();
                 if (!$user) {
-                    throw new \Exception('Vui lòng đăng nhập để xem thông tin đơn hàng.');
+                    throw new \Exception('Yêu cầu xác thực tài khoản.');
                 }
 
                 $orderQuery = \Illuminate\Support\Facades\DB::table('orders');
@@ -162,7 +162,7 @@ class GraphQLApiController extends Controller
             case 'adminStats':
                 $user = auth('sanctum')->user() ?: auth()->user();
                 if (!$user || !in_array($user->role, ['admin', 'manager'])) {
-                    throw new \Exception('Chỉ quản trị viên mới có quyền xem thống kê.');
+                    throw new \Exception('Không có quyền truy cập dữ liệu.');
                 }
 
                 return [

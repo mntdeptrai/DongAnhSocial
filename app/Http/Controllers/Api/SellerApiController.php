@@ -60,7 +60,7 @@ class SellerApiController extends Controller
     {
         $user = Auth::user() ?: auth('sanctum')->user();
         if (!$user) {
-            return response()->json(['message' => 'Unauthenticated'], 401);
+            return response()->json(['message' => 'Yêu cầu xác thực tài khoản'], 401);
         }
 
         if ($user->role === 'admin') {
@@ -151,7 +151,7 @@ class SellerApiController extends Controller
 
         $user = Auth::user() ?: auth('sanctum')->user();
         if (!$user) {
-            return response()->json(['success' => false, 'message' => 'Unauthenticated'], 401);
+            return response()->json(['success' => false, 'message' => 'Yêu cầu xác thực tài khoản'], 401);
         }
 
         if ($user->role !== 'admin') {
@@ -164,7 +164,7 @@ class SellerApiController extends Controller
                 })->exists();
 
             if (!$ownsEatery) {
-                return response()->json(['success' => false, 'message' => 'Bạn không có quyền thêm sản phẩm cho gian hàng này'], 403);
+                return response()->json(['success' => false, 'message' => 'Không có quyền thực hiện thao tác'], 403);
             }
         }
 
@@ -191,12 +191,12 @@ class SellerApiController extends Controller
     {
         $dish = Dish::find($id);
         if (!$dish) {
-            return response()->json(['success' => false, 'message' => 'Sản phẩm không tồn tại'], 404);
+            return response()->json(['success' => false, 'message' => 'Không tìm thấy dữ liệu yêu cầu'], 404);
         }
 
         $user = Auth::user() ?: auth('sanctum')->user();
         if (!$user) {
-            return response()->json(['success' => false, 'message' => 'Unauthenticated'], 401);
+            return response()->json(['success' => false, 'message' => 'Yêu cầu xác thực tài khoản'], 401);
         }
 
         if ($user->role !== 'admin') {
@@ -209,7 +209,7 @@ class SellerApiController extends Controller
                 })->exists();
 
             if (!$ownsEatery) {
-                return response()->json(['success' => false, 'message' => 'Bạn không có quyền sửa sản phẩm này'], 403);
+                return response()->json(['success' => false, 'message' => 'Không có quyền thực hiện thao tác'], 403);
             }
         }
 
@@ -235,12 +235,12 @@ class SellerApiController extends Controller
     {
         $dish = Dish::find($id);
         if (!$dish) {
-            return response()->json(['success' => false, 'message' => 'Sản phẩm không tồn tại'], 404);
+            return response()->json(['success' => false, 'message' => 'Không tìm thấy dữ liệu yêu cầu'], 404);
         }
 
         $user = Auth::user() ?: auth('sanctum')->user();
         if (!$user) {
-            return response()->json(['success' => false, 'message' => 'Unauthenticated'], 401);
+            return response()->json(['success' => false, 'message' => 'Yêu cầu xác thực tài khoản'], 401);
         }
 
         if ($user->role !== 'admin') {
@@ -253,7 +253,7 @@ class SellerApiController extends Controller
                 })->exists();
 
             if (!$ownsEatery) {
-                return response()->json(['success' => false, 'message' => 'Bạn không có quyền xóa sản phẩm này'], 403);
+                return response()->json(['success' => false, 'message' => 'Không có quyền thực hiện thao tác'], 403);
             }
         }
 
@@ -268,12 +268,12 @@ class SellerApiController extends Controller
     {
         $user = Auth::user() ?: auth('sanctum')->user();
         if (!$user) {
-            return response()->json(['success' => false, 'message' => 'Unauthenticated'], 401);
+            return response()->json(['success' => false, 'message' => 'Yêu cầu xác thực tài khoản'], 401);
         }
 
         $order = DB::table('orders')->where('id', $id)->first();
         if (!$order) {
-            return response()->json(['success' => false, 'message' => 'Đơn hàng không tồn tại'], 404);
+            return response()->json(['success' => false, 'message' => 'Không tìm thấy dữ liệu yêu cầu'], 404);
         }
 
         if ($user->role !== 'admin') {
@@ -286,14 +286,14 @@ class SellerApiController extends Controller
                 })->exists();
 
             if (!$ownsEatery) {
-                return response()->json(['success' => false, 'message' => 'Bạn không có quyền cập nhật đơn hàng của gian hàng khác'], 403);
+                return response()->json(['success' => false, 'message' => 'Không có quyền thực hiện thao tác'], 403);
             }
         }
 
         $status = $request->input('status', 'confirmed');
         $allowedStatuses = ['pending', 'confirmed', 'shipping', 'completed', 'cancelled'];
         if (!in_array($status, $allowedStatuses, true)) {
-            return response()->json(['success' => false, 'message' => 'Trạng thái không hợp lệ'], 422);
+            return response()->json(['success' => false, 'message' => 'Dữ liệu không hợp lệ'], 422);
         }
 
         DB::table('orders')->where('id', $id)->update(['status' => $status, 'updated_at' => now()]);

@@ -56,7 +56,7 @@ class RpcApiController extends Controller
         // Yêu cầu xác thực tài khoản cho tất cả các RPC calls
         $user = auth('sanctum')->user() ?: auth()->user();
         if (!$user && $method !== 'ping') {
-            return $this->formatErrorResponse($id, -32001, 'Unauthorized: Authentication required');
+            return $this->formatErrorResponse($id, -32001, 'Unauthorized');
         }
 
         try {
@@ -113,12 +113,12 @@ class RpcApiController extends Controller
     protected function batchApproveVideos($params, $user = null)
     {
         if (!$user || !in_array($user->role, ['admin', 'manager'])) {
-            throw new \InvalidArgumentException('Forbidden: Only admin or manager can approve videos.');
+            throw new \InvalidArgumentException('Forbidden: Access denied.');
         }
 
         $ids = $params['ids'] ?? null;
         if (!is_array($ids)) {
-            throw new \InvalidArgumentException('Invalid params: "ids" must be an array.');
+            throw new \InvalidArgumentException('Invalid parameters.');
         }
 
         $connections = ['mysql', 'mysql_stay', 'mysql_wellness', 'mysql_market', 'mysql_education', 'mysql_culture'];
@@ -142,17 +142,17 @@ class RpcApiController extends Controller
     protected function batchUpdatePrices($params, $user = null)
     {
         if (!$user || !in_array($user->role, ['admin', 'seller'])) {
-            throw new \InvalidArgumentException('Forbidden: Only admin or seller can update dish prices.');
+            throw new \InvalidArgumentException('Forbidden: Access denied.');
         }
 
         $updates = $params['updates'] ?? null; // [{id: 1, price: 35000}, ...]
         if (!is_array($updates)) {
-            throw new \InvalidArgumentException('Invalid params: "updates" must be an array.');
+            throw new \InvalidArgumentException('Invalid parameters.');
         }
 
         $myEateryIds = ($user->role === 'admin') ? [] : Eatery::where('user_id', $user->id)->pluck('id')->toArray();
         if ($user->role !== 'admin' && empty($myEateryIds)) {
-            throw new \InvalidArgumentException('Forbidden: You do not own any eatery stall.');
+            throw new \InvalidArgumentException('Forbidden: Access denied.');
         }
 
         $rows = [];
@@ -186,12 +186,12 @@ class RpcApiController extends Controller
     {
         $id = $params['id'] ?? null;
         if (!$id) {
-            throw new \InvalidArgumentException('Invalid params: "id" is required.');
+            throw new \InvalidArgumentException('Invalid parameters.');
         }
 
         $eatery = Eatery::find($id);
         if (!$eatery) {
-            throw new \InvalidArgumentException('Eatery not found.');
+            throw new \InvalidArgumentException('Record not found.');
         }
 
         return [
@@ -207,14 +207,14 @@ class RpcApiController extends Controller
     protected function batchUpdateOrderStatus($params, $user = null)
     {
         if (!$user || !in_array($user->role, ['admin', 'manager', 'seller'])) {
-            throw new \InvalidArgumentException('Forbidden: Only admin, manager, or seller can update order status.');
+            throw new \InvalidArgumentException('Forbidden: Access denied.');
         }
 
         $orderIds = $params['order_ids'] ?? null;
         $status = $params['status'] ?? 'confirmed';
 
         if (!is_array($orderIds)) {
-            throw new \InvalidArgumentException('Invalid params: "order_ids" must be an array.');
+            throw new \InvalidArgumentException('Invalid parameters.');
         }
 
         $query = DB::table('orders')->whereIn('id', $orderIds);
@@ -240,14 +240,14 @@ class RpcApiController extends Controller
     protected function batchApproveStalls($params, $user = null)
     {
         if (!$user || !in_array($user->role, ['admin', 'manager'])) {
-            throw new \InvalidArgumentException('Forbidden: Only admin or manager can approve stalls.');
+            throw new \InvalidArgumentException('Forbidden: Access denied.');
         }
 
         $ids = $params['ids'] ?? null;
         $status = $params['status'] ?? 'active';
 
         if (!is_array($ids)) {
-            throw new \InvalidArgumentException('Invalid params: "ids" must be an array.');
+            throw new \InvalidArgumentException('Invalid parameters.');
         }
 
         $count = Eatery::on('mysql_market')->whereIn('id', $ids)->update(['status' => $status]);
