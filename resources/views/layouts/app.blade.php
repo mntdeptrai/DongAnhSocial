@@ -520,14 +520,18 @@
     @include('partials.ocop-storytelling-modal')
     <script defer src="{{ asset('js/ocop-official-data.js') }}?v=2.1"></script>
     <script>
-        window.DB_OCOP_PRODUCTS = (window.OCOP_PRODUCTS && window.OCOP_PRODUCTS.length > 0) ? window.OCOP_PRODUCTS : window.OFFICIAL_OCOP_PRODUCTS;
+        document.addEventListener('DOMContentLoaded', function() {
+            window.DB_OCOP_PRODUCTS = (Array.isArray(window.OCOP_PRODUCTS) && window.OCOP_PRODUCTS.length > 0)
+                ? window.OCOP_PRODUCTS
+                : (window.OFFICIAL_OCOP_PRODUCTS || []);
+        });
     </script>
     <script defer src="{{ asset('js/ocop-story-data.js') }}?v=2.1"></script>
     <script defer src="{{ asset('js/ocop-story/camera-controller.js') }}?v=2.1"></script>
     <script defer src="{{ asset('js/ocop-story/marker-controller.js') }}?v=2.1"></script>
     <script defer src="{{ asset('js/ocop-story/card-controller.js') }}?v=2.1"></script>
     <script defer src="{{ asset('js/ocop-story/animation-controller.js') }}?v=2.1"></script>
-    <script defer src="{{ asset('js/ocop-story/story-controller.js') }}?v=2.1"></script>
+    <script defer src="{{ asset('js/ocop-story/story-controller.js') }}?v=2.2"></script>
     @endif
 
 

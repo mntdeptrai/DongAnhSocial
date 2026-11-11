@@ -143,7 +143,11 @@ class OcopStoryController {
         this.jumpRequestedIndex = -1;
 
         // Ingest DB products or fallback
-        let prods = window.DB_OCOP_PRODUCTS || [];
+        let prods = (Array.isArray(window.DB_OCOP_PRODUCTS) && window.DB_OCOP_PRODUCTS.length > 0)
+            ? window.DB_OCOP_PRODUCTS
+            : ((Array.isArray(window.OCOP_PRODUCTS) && window.OCOP_PRODUCTS.length > 0)
+                ? window.OCOP_PRODUCTS
+                : (window.OFFICIAL_OCOP_PRODUCTS || []));
         if (!prods || prods.length === 0) {
             prods = [
                 {
